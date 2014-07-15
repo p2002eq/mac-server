@@ -427,12 +427,12 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 
 	Mob *spell_target = entity_list.GetMob(target_id);
 	// check line of sight to target if it's a detrimental spell
-	if(spell_target)
+	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self)
 	{
 		if(!CheckRegion(spell_target) || 
 		((zone->IsCity() || !zone->CanCastOutdoor()) && 
 		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].effectid[0] != SE_BindSight))
+		!IsBindSightSpell(spell_id)))
 		{
 			mlog(SPELLS__CASTING, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_Red,spell_id);
@@ -4953,37 +4953,6 @@ bool Mob::RemoveDefensiveProc(uint16 spell_id, bool bAll)
 			DefensiveProcs[i].chance = 0;
 			DefensiveProcs[i].base_spellID = SPELL_UNKNOWN;
 			mlog(SPELLS__PROCS, "Removed defensive proc %d from slot %d", spell_id, i);
-		}
-	}
-	return true;
-}
-
-bool Mob::AddSkillProc(uint16 spell_id, uint16 iChance, uint16 base_spell_id)
-{
-	if(spell_id == SPELL_UNKNOWN)
-		return(false);
-
-	int i;
-	for (i = 0; i < MAX_PROCS; i++) {
-		if (SkillProcs[i].spellID == SPELL_UNKNOWN) {
-			SkillProcs[i].spellID = spell_id;
-			SkillProcs[i].chance = iChance;
-			SkillProcs[i].base_spellID = base_spell_id;
-			mlog(SPELLS__PROCS, "Added spell-granted skill proc spell %d with chance %d to slot %d", spell_id, iChance, i);
-			return true;
-		}
-	}
-	return false;
-}
-
-bool Mob::RemoveSkillProc(uint16 spell_id, bool bAll)
-{
-	for (int i = 0; i < MAX_PROCS; i++) {
-		if (bAll || SkillProcs[i].spellID == spell_id) {
-			SkillProcs[i].spellID = SPELL_UNKNOWN;
-			SkillProcs[i].chance = 0;
-			SkillProcs[i].base_spellID = SPELL_UNKNOWN;
-			mlog(SPELLS__PROCS, "Removed Skill proc %d from slot %d", spell_id, i);
 		}
 	}
 	return true;

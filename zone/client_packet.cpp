@@ -3257,9 +3257,6 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			}
 			spell_to_cast = SPELL_LAY_ON_HANDS;
 			p_timers.Start(pTimerLayHands, LayOnHandsReuseTime);
-			m_pp.ATR_PET_LOH_timer = static_cast<uint32>(time(nullptr));
-			m_pp.UnknownTimer = static_cast<uint32>(time(nullptr));
-			Message(0, "LoH set to %i in the database", m_pp.ATR_PET_LOH_timer);
 		}
 		else if ((castspell->spell_id == SPELL_HARM_TOUCH
 			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
@@ -3276,8 +3273,6 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				spell_to_cast = SPELL_HARM_TOUCH2;
 
 			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
-			m_pp.HarmTouchTimer = static_cast<uint32>(time(nullptr));
-			Message(0, "HT set to %i in the database", m_pp.HarmTouchTimer);
 		}
 		
 		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
@@ -7210,13 +7205,6 @@ void Client::CompleteConnect()
 					AddRangedProc(GetProcID(buffs[j1].spellid, x1), 100+spells[buffs[j1].spellid].base2[x1],buffs[j1].spellid);
 					break;
 					}
-				case SE_SkillProc2:
-				case SE_SkillProc:
-					{
-					AddSkillProc(GetProcID(buffs[j1].spellid, x1), 100+spells[buffs[j1].spellid].base2[x1],buffs[j1].spellid);
-					break;
-					}
-
 			}
 		}
 	}

@@ -1241,11 +1241,6 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 			break;
 		}
 
-		case EVENT_POPUP_RESPONSE:{
-			ExportVar(package_name.c_str(), "popupid", data);
-			break;
-		}
-
 		case EVENT_PROXIMITY_SAY: {
 			ExportVar(package_name.c_str(), "data", objid);
 			ExportVar(package_name.c_str(), "text", data);
