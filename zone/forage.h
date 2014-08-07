@@ -20,7 +20,7 @@
 #define FORAGE_H
 #include "../common/types.h"
 
-#define MAX_COMMON_FOOD_IDS 8
+#define MAX_COMMON_FOOD_IDS 7
 #define MAX_COMMON_FISH_IDS 9
 
 #endif
