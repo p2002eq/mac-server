@@ -413,7 +413,6 @@ void Client::ForageItem(bool guarantee) {
 		13048, // Rabbit Meat
 		13047, // Roots
 		13044, // Pod Of Water
-		14905, // mushroom
 		13106 // Fishing Grubs
 	};
 
