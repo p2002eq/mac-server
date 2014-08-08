@@ -10,7 +10,6 @@
 #include "lua_mob.h"
 #include "lua_hate_list.h"
 #include "lua_client.h"
-#include "common.h"
 
 struct SpecialAbilities { };
 
@@ -303,7 +302,7 @@ bool Lua_Mob::IsInvisible(Lua_Mob other) {
 
 void Lua_Mob::SetInvisible(int state) {
 	Lua_Safe_Call_Void();
-	self->SetInvisible(static_cast<InvisType>(state));
+	self->SetInvisible(state);
 }
 
 bool Lua_Mob::FindBuff(int spell_id) {
