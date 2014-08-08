@@ -528,12 +528,6 @@ typedef enum : uint16 {	//type arguments to DoAnim
 	MountedFall
 } Animation;
 
-typedef enum {
-    INVIS_NORMAL = 1,
-    INVIS_ANIMAL = 2,
-    INVIS_UNDEAD = 3,
-    INVIS_HIDDEN = 4
-} InvisType;
 
 typedef enum {
 	petFamiliar,		//only listens to /pet get lost

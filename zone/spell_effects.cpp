@@ -555,13 +555,23 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				break;
 			}
+
 			case SE_Invisibility:
 			case SE_Invisibility2:
 			{
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility");
 #endif
-				SetInvisible(InvisType::INVIS_NORMAL);
+				SetInvisible(spell.base[i]);
+				
+				if(HasPet())
+				{
+					Mob* mypet = GetPet();
+					SetPet(nullptr);
+					if(!mypet->IsCharmed())
+						mypet->CastToNPC()->Depop();
+				}
+				break;
 			}
 
 			case SE_InvisVsAnimals:
@@ -569,7 +579,18 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility to Animals");
 #endif
-				SetInvisible(InvisType::INVIS_ANIMAL);
+				invisible_animals = true;
+				//SetInvisible(spell.base[i], false);
+
+				if(HasPet())
+				{
+					Mob* mypet = GetPet();
+				 	if(mypet->GetBodyType() == BT_Animal)
+						SetPet(nullptr);
+						if(!mypet->IsCharmed())
+							mypet->CastToNPC()->Depop();
+				}
+
 				break;
 			}
 
@@ -579,7 +600,18 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility to Undead");
 #endif
-				SetInvisible(InvisType::INVIS_UNDEAD);
+				invisible_undead = true;
+				//SetInvisible(spell.base[i], false);
+
+				if(HasPet())
+				{
+					Mob* mypet = GetPet();
+				 	if(mypet->GetBodyType() == BT_Undead || mypet->GetBodyType() == BT_SummonedUndead)
+						SetPet(nullptr);
+						if(!mypet->IsCharmed())
+							mypet->CastToNPC()->Depop();
+				}
+
 				break;
 			}
 			case SE_SeeInvis:
@@ -3640,20 +3672,20 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_Invisibility2:
 			case SE_Invisibility:
 			{
-				BreakInvis();
+				SetInvisible(DROP_INVISIBLE);
 				break;
 			}
 
 			case SE_InvisVsUndead2:
 			case SE_InvisVsUndead:
 			{
-				BreakInvis();
+				invisible_undead = false;	// Mongrel: No longer IVU
 				break;
 			}
 
 			case SE_InvisVsAnimals:
 			{
-				BreakInvis();
+				invisible_animals = false;
 				break;
 			}
 

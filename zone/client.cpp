@@ -2786,7 +2786,7 @@ uint8 Client::SlotConvert2(uint8 slot){
 void Client::Escape()
 {
 	entity_list.RemoveFromTargets(this);
-	SetInvisible(InvisType::INVIS_HIDDEN);
+	SetInvisible(GO_INVISIBLE);
 	Message_StringID(MT_Skills, ESCAPE);
 }
 
