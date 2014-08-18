@@ -2114,6 +2114,10 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	if(give_exp && give_exp->IsClient())
 		give_exp_client = give_exp->CastToClient();
 
+	//do faction hits even if we are a merchant, so long as a player killed us
+	if (give_exp_client)
+		hate_list.DoFactionHits(GetNPCFactionID());
+
 	if (give_exp_client && !IsCorpse() && MerchantType == 0 && class_ != MERCHANT)
 	{
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
@@ -2229,10 +2233,6 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 			// End QueryServ Logging
 		}
 	}
-
-	//do faction hits even if we are a merchant, so long as a player killed us
-	if(give_exp_client)
-		hate_list.DoFactionHits(GetNPCFactionID());
 
 	if (give_exp_client && !HasOwner() && class_ != MERCHANT && !GetSwarmInfo()
 		&& MerchantType == 0 && killer && (killer->IsClient() || (killer->HasOwner() && killer->GetUltimateOwner()->IsClient()) ||
