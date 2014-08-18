@@ -263,12 +263,10 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 			Message_StringID(CC_Yellow, GAIN_LEVEL,ConvertArray(check_level,val1));
 			//Message(15, "You have gained a level! Welcome to level %i!", check_level);
 		}
-		else if (GetLevel() == check_level){
-			Message_StringID(CC_Yellow, LOSE_LEVEL,ConvertArray(check_level,val1));
+		else {
+			Message_StringID(CC_Yellow, LOSE_LEVEL, ConvertArray(check_level, val1));
 			//Message(15, "You lost a level! You are now level %i!", check_level);
 		}
-		else
-			Message(15, "Welcome to level %i!", check_level);
 
 		SetLevel(check_level);
 
