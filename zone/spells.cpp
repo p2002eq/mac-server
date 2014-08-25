@@ -71,13 +71,13 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include "masterentity.h"
 #include "../common/packet_dump.h"
 #include "../common/moremath.h"
-#include "../common/Item.h"
+#include "../common/item.h"
 #include "worldserver.h"
 #include "../common/skills.h"
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
 #include "../common/rulesys.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include <math.h>
 #include <assert.h>
 
@@ -90,8 +90,8 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 	#include "../common/packet_dump_file.h"
 #endif
 
-#include "StringIDs.h"
-#include "QuestParserCollection.h"
+#include "string_ids.h"
+#include "quest_parser_collection.h"
 
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
@@ -2143,7 +2143,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 					{
 						if(CheckLosFN((*iter)) || spells[spell_id].npc_no_los){
 							(*iter)->CalcSpellPowerDistanceMod(spell_id, 0, this);
-							SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
+							SpellOnTarget(spell_id, (*iter), false, true, resist_adjust);
 						}
 					}
 				}

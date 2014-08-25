@@ -17,10 +17,10 @@
 */
 #include "../common/debug.h"
 #include "masterentity.h"
-#include "StringIDs.h"
-#include "../common/StringUtil.h"
+#include "string_ids.h"
+#include "../common/string_util.h"
 #include "../common/rulesys.h"
-#include "QuestParserCollection.h"
+#include "quest_parser_collection.h"
 #include "worldserver.h"
 extern WorldServer worldserver;
 
@@ -642,7 +642,7 @@ void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer)
 				struct timeval read_time;
 				char buffer[50];
 				gettimeofday(&read_time, 0);
-				sprintf(buffer, "%i.%i \n", read_time.tv_sec, read_time.tv_usec);
+				sprintf(buffer, "%li.%li \n", read_time.tv_sec, read_time.tv_usec);
 				this->SetEntityVariable("Stop_Return", buffer);
 
 			}
