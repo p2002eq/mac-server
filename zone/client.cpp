@@ -402,7 +402,10 @@ void Client::ReportConnectingState() {
 }
 
 bool Client::Save(uint8 iCommitNow) {
+	iCommitNow = 2; // Temporary fix to saves not seeming to work right.
+	Message(15, "Server attempting to save '%s'", GetName());
 #if 0
+	//neither client requested save nor #save enters this.
 // Orig. Offset: 344 / 0x00000000
 //		Length: 36 / 0x00000024
 	unsigned char rawData[36] =
@@ -521,9 +524,13 @@ bool Client::Save(uint8 iCommitNow) {
 			SaveBackup();
 		}
 		safe_delete_array(query);
+		//when client requests save it exits here to the return.
+		//Only pet info is saved, character info is not, verified by mysql logs.
 		return true;
 	}
 	else if (database.SetPlayerProfile(account_id, character_id, &m_pp, &m_inv, &m_epp,0,0)) {
+		//Enters this on #save not client requested save
+		//This does save everything, also seems to work correct on logging out.
 		SaveBackup();
 	}
 	else {
