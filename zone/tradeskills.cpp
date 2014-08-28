@@ -44,7 +44,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 		LogFile->write(EQEMuLog::Error, "Client or NewCombine_Struct not set in Object::HandleCombine");
 		return;
 	}
-
+	//user->Save(); //tested to see if this does anything with desync "this works well for tradeskill desync issues.
 	Inventory& user_inv = user->GetInv();
 	PlayerProfile_Struct& user_pp = user->GetPP();
 	ItemInst* container = nullptr;
