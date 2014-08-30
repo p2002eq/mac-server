@@ -862,7 +862,7 @@ bool Client::IsBankSlot(uint32 slot)
 // Moves items around both internally and in the database
 // In the future, this can be optimized by pushing all changes through one database REPLACE call
 int Client::SwapItem(MoveItem_Struct* move_in) {
-	Save();//test to see if this does anything with inventory related desync
+	//Save();//test to see if this does anything with inventory related desync
 
 	uint32 src_slot_check = move_in->from_slot;
 	uint32 dst_slot_check = move_in->to_slot;
