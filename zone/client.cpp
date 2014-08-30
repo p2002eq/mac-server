@@ -402,7 +402,7 @@ void Client::ReportConnectingState() {
 }
 
 bool Client::Save(uint8 iCommitNow) {
-	iCommitNow = 2; // Temporary fix to saves not seeming to work right.
+	//iCommitNow = 2; // Temporary fix to saves not seeming to work right.
 	//Message(15, "Server attempting to save '%s'", GetName());
 #if 0
 	//neither client requested save nor #save enters this.
