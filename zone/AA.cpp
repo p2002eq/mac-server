@@ -19,7 +19,7 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 // Test 1
 
 #include "../common/debug.h"
-#include "AA.h"
+#include "aa.h"
 #include "mob.h"
 #include "client.h"
 #include "groups.h"
@@ -35,10 +35,10 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 #include "../common/eq_packet_structs.h"
 #include "../common/packet_dump.h"
 #include "../common/packet_dump_file.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include "../common/logsys.h"
 #include "zonedb.h"
-#include "StringIDs.h"
+#include "string_ids.h"
 
 //static data arrays, really not big enough to warrant shared mem.
 AA_DBAction AA_Actions[aaHighestID][MAX_AA_ACTION_RANKS];	//[aaid][rank]

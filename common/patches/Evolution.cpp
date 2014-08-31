@@ -1,17 +1,17 @@
 #include "../debug.h"
-#include "Evolution.h"
+#include "evolution.h"
 #include "../opcodemgr.h"
 #include "../logsys.h"
-#include "../EQStreamIdent.h"
+#include "../eq_stream_ident.h"
 #include "../crc32.h"
 
 #include "../eq_packet_structs.h"
 #include "../packet_dump_file.h"
-#include "../MiscFunctions.h"
+#include "../misc_functions.h"
 #include "../packet_functions.h"
-#include "../StringUtil.h"
-#include "../Item.h"
-#include "Evolution_structs.h"
+#include "../string_util.h"
+#include "../item.h"
+#include "evolution_structs.h"
 #include "../rulesys.h"
 
 namespace Evolution {
@@ -80,8 +80,8 @@ Strategy::Strategy()
 : StructStrategy()
 {
 	//all opcodes default to passthrough.
-	#include "SSRegister.h"
-	#include "Evolution_ops.h"
+	#include "ss_register.h"
+	#include "evolution_ops.h"
 }
 
 std::string Strategy::Describe() const {
@@ -92,7 +92,7 @@ std::string Strategy::Describe() const {
 }
 
 
-#include "SSDefine.h"
+#include "ss_define.h"
 
 
 

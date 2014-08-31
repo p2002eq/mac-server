@@ -2,8 +2,8 @@
 #include "../debug.h"
 #include "patches.h"
 
-#include "Mac.h"
-#include "Evolution.h"
+#include "mac.h"
+#include "evolution.h"
 
 void RegisterAllPatches(EQStreamIdentifier &into) {
 	Mac::Register(into);

@@ -1,7 +1,7 @@
 #ifndef EVOLUTION_H_
 #define EVOLUTION_H_
 
-#include "../StructStrategy.h"
+#include "../struct_strategy.h"
 
 class EQStreamIdentifier;
 
@@ -25,8 +25,8 @@ namespace Evolution {
 		virtual std::string Describe() const;
 		virtual const EQClientVersion ClientVersion() const;
 		//magic macro to declare our opcodes
-		#include "SSDeclare.h"
-		#include "Evolution_ops.h"
+		#include "ss_declare.h"
+		#include "evolution_ops.h"
 
 
 	};

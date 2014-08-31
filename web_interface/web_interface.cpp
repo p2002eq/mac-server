@@ -1,11 +1,11 @@
 #include "../common/debug.h"
 #include "../common/opcodemgr.h"
-#include "../common/EQStreamFactory.h"
+#include "../common/eq_stream_factory.h"
 #include "../common/rulesys.h"
 #include "../common/servertalk.h"
 #include "../common/platform.h"
 #include "../common/crash.h"
-#include "../common/EQEmuConfig.h"
+#include "../common/eqemu_config.h"
 #include "worldserver.h"
 #include <signal.h>
 

@@ -18,7 +18,7 @@
 #ifndef ZONE_H
 #define ZONE_H
 
-#include "../common/Mutex.h"
+#include "../common/mutex.h"
 #include "../common/linked_list.h"
 #include "../common/types.h"
 #include "../common/eqtime.h"
@@ -31,7 +31,7 @@
 #include "zonedump.h"
 #include "spawn2.h"
 #include "pathing.h"
-#include "QGlobals.h"
+#include "qglobals.h"
 #include <unordered_map>
 
 class Map;

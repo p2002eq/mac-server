@@ -18,12 +18,12 @@
 #include "../common/debug.h"
 #include "../common/types.h"
 #include "../common/opcodemgr.h"
-#include "../common/EQStreamFactory.h"
+#include "../common/eq_stream_factory.h"
 #include "../common/timer.h"
 #include "../common/platform.h"
 #include "../common/crash.h"
 #include "EQCrypto.h"
-#include "LoginServer.h"
+#include "login_server.h"
 #include <time.h>
 #include <stdlib.h>
 #include <string>

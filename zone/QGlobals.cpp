@@ -1,6 +1,6 @@
 #include "../common/debug.h"
-#include "../common/StringUtil.h"
-#include "QGlobals.h"
+#include "../common/string_util.h"
+#include "qglobals.h"
 #include "masterentity.h"
 #include "zone.h"
 #include "zonedb.h"

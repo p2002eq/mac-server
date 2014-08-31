@@ -1,54 +1,54 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 SET(common_sources
-	BasePacket.cpp
+	base_packet.cpp
 	classes.cpp
-	Condition.cpp
+	condition.cpp
 	crash.cpp
-	CRC16.cpp
+	crc16.cpp
 	crc32.cpp
 	database.cpp
 	dbasync.cpp
 	dbcore.cpp
 	debug.cpp
 	emu_opcodes.cpp
-	EmuTCPConnection.cpp
-	EmuTCPServer.cpp
-	EQDB.cpp
-	EQDBRes.cpp
+	emu_tcp_connection.cpp
+	emu_tcp_server.cpp
+	eqdb.cpp
+	eqdb_res.cpp
 	eqemu_exception.cpp
-	EQEmuConfig.cpp
-	EQEMuError.cpp
-	EQPacket.cpp
-	EQStream.cpp
-	EQStreamFactory.cpp
-	EQStreamIdent.cpp
-	EQStreamProxy.cpp
+	eqemu_config.cpp
+	eqemu_error.cpp
+	eq_packet.cpp
+	eq_stream.cpp
+	eq_stream_factory.cpp
+	eq_stream_ident.cpp
+	eq_stream_proxy.cpp
 	eqtime.cpp
 	extprofile.cpp
 	faction.cpp
 	guild_base.cpp
 	guilds.cpp
 	ipc_mutex.cpp
-	Item.cpp
+	item.cpp
 	logsys.cpp
 	logsys_eqemu.cpp
 	md5.cpp
 	memory_mapped_file.cpp
 	misc.cpp
-	MiscFunctions.cpp
+	misc_functions.cpp
 	moremath.cpp
-	Mutex.cpp
-	MySQLRequestResult.cpp
-	MySQLRequestRow.cpp
+	mutex.cpp
+	mysql_request_result.cpp
+	mysql_request_row.cpp
 	opcode_map.cpp
 	opcodemgr.cpp
 	packet_dump.cpp
 	packet_dump_file.cpp
 	packet_functions.cpp
-	perl_EQDB.cpp
-	perl_EQDBRes.cpp
-	ProcLauncher.cpp
+	perl_eqdb.cpp
+	perl_eqdb_res.cpp
+	proc_launcher.cpp
 	ptimer.cpp
 	races.cpp
 	rdtsc.cpp
@@ -57,19 +57,19 @@ SET(common_sources
 	sha1.cpp
 	shareddb.cpp
 	spdat.cpp
-    StringUtil.cpp
-	StructStrategy.cpp
-	TCPConnection.cpp
-	TCPServer.cpp
+    string_util.cpp
+	struct_strategy.cpp
+	tcp_connection.cpp
+	tcp_server.cpp
 	timeoutmgr.cpp
 	timer.cpp
 	unix.cpp
 	worldconn.cpp
-	XMLParser.cpp
+	xml_parser.cpp
 	platform.cpp
 	patches/patches.cpp
-	patches/Mac.cpp
-	patches/Evolution.cpp
+	patches/mac.cpp
+	patches/evolution.cpp
 	SocketLib/Base64.cpp
 	SocketLib/File.cpp
 	SocketLib/HttpdCookies.cpp
@@ -89,14 +89,14 @@ SET(common_sources
 )
 
 SET(common_headers
-	BasePacket.h
+	base_packet.h
 	base_data.h
 	bodytypes.h
 	breakdowns.h
 	classes.h
-	Condition.h
+	condition.h
 	crash.h
-	CRC16.h
+	crc16.h
 	crc32.h
 	database.h
 	dbasync.h
@@ -105,24 +105,24 @@ SET(common_headers
 	deity.h
 	emu_opcodes.h
 	emu_oplist.h
-	EmuTCPConnection.h
-	EmuTCPServer.h
+	emu_tcp_connection.h
+	emu_tcp_server.h
 	eq_constants.h
 	eq_packet_structs.h
-	EQDB.h
-	EQDBRes.h
+	eqdb.h
+	eqdb_res.h
 	eqemu_exception.h
-	EQEmuConfig.h
-	EQEmuConfig_elements.h
-	EQEMuError.h
-	EQPacket.h
-	EQStream.h
-	EQStreamFactory.h
-	EQStreamIdent.h
-	EQStreamIntf.h
-	EQStreamLocator.h
-	EQStreamProxy.h
-	EQStreamType.h
+	eqemu_config.h
+	eqemu_config_elements.h
+	eqemu_error.h
+	eq_packet.h
+	eq_stream.h
+	eq_stream_factory.h
+	eq_stream_ident.h
+	eq_stream_intf.h
+	eq_stream_locator.h
+	eq_stream_proxy.h
+	eq_stream_type.h
 	eqtime.h
 	errmsg.h
 	extprofile.h
@@ -133,7 +133,7 @@ SET(common_headers
 	guild_base.h
 	guilds.h
 	ipc_mutex.h
-	Item.h
+	item.h
 	item_fieldlist.h
 	item_struct.h
 	languages.h
@@ -145,18 +145,18 @@ SET(common_headers
 	md5.h
 	memory_mapped_file.h
 	misc.h
-	MiscFunctions.h
+	misc_functions.h
 	moremath.h
-	Mutex.h
-	MySQLRequestResult.h
-	MySQLRequestRow.h
+	mutex.h
+	mysql_request_result.h
+	mysql_request_row.h
 	op_codes.h
 	opcode_dispatch.h
 	opcodemgr.h
 	packet_dump.h
 	packet_dump_file.h
 	packet_functions.h
-	ProcLauncher.h
+	proc_launcher.h
 	profiler.h
 	ptimer.h
 	queue.h
@@ -171,11 +171,11 @@ SET(common_headers
 	shareddb.h
 	skills.h
 	spdat.h
-    StringUtil.h
-	StructStrategy.h
-	TCPBasicServer.h
-	TCPConnection.h
-	TCPServer.h
+    string_util.h
+	struct_strategy.h
+	tcp_basic_server.h
+	tcp_connection.h
+	tcp_server.h
 	timeoutmgr.h
 	timer.h
 	types.h
@@ -183,19 +183,19 @@ SET(common_headers
 	useperl.h
 	version.h
 	worldconn.h
-	XMLParser.h
-	ZoneNumbers.h
+	xml_parser.h
+	zone_numbers.h
 	platform.h
 	patches/patches.h
-	patches/Mac.h
-	patches/Mac_structs.h
-	patches/Mac_ops.h
-	patches/Evolution.h
-	patches/Evolution_structs.h
-	patches/Evolution_ops.h
-	patches/SSDeclare.h
-	patches/SSDefine.h
-	patches/SSRegister.h
+	patches/mac.h
+	patches/mac_structs.h
+	patches/mac_ops.h
+	patches/evolution.h
+	patches/evolution_structs.h
+	patches/evolution_ops.h
+	patches/ss_declare.h
+	patches/ss_define.h
+	patches/ss_register.h
 	SocketLib/Base64.h
 	SocketLib/File.h
 	SocketLib/HttpdCookies.h
@@ -215,18 +215,18 @@ SET(common_headers
 
 SOURCE_GROUP(Patches FILES
 	patches/patches.h
-	patches/SSDeclare.h
-	patches/SSDefine.h
-	patches/SSRegister.h
+	patches/ss_declare.h
+	patches/ss_define.h
+	patches/ss_register.h
 	patches/patches.cpp
-	patches/Mac.cpp
-	patches/Mac.h
-	patches/Mac_ops.h
-	patches/Mac_structs.h
-	patches/Evolution.cpp
-	patches/Evolution.h
-	patches/Evolution_structs.h
-	patches/Evolution_ops.h
+	patches/mac.cpp
+	patches/mac.h
+	patches/mac_ops.h
+	patches/mac_structs.h
+	patches/evolution.cpp
+	patches/evolution.h
+	patches/evolution_structs.h
+	patches/evolution_ops.h
 )
 
 SOURCE_GROUP(SocketLib FILES
