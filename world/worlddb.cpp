@@ -18,7 +18,7 @@
 
 #include "worlddb.h"
 //#include "../common/Item.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include "../common/eq_packet_structs.h"
 #include "../common/Item.h"
 #include "../common/dbasync.h"

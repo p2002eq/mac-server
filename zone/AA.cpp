@@ -35,7 +35,7 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 #include "../common/eq_packet_structs.h"
 #include "../common/packet_dump.h"
 #include "../common/packet_dump_file.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include "../common/logsys.h"
 #include "zonedb.h"
 #include "StringIDs.h"

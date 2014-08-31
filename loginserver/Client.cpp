@@ -20,7 +20,7 @@
 #include "LoginServer.h"
 #include "LoginStructures.h"
 #include "../common/md5.h"
-#include "../common/MiscFunctions.h"
+#include "../common/misc_functions.h"
 #include "EQCrypto.h"
 #include "../common/sha1.h"
 

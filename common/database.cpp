@@ -43,8 +43,8 @@
 #include "database.h"
 #include "eq_packet_structs.h"
 #include "guilds.h"
-//#include "MiscFunctions.h"
-#include "StringUtil.h"
+//#include "misc_functions.h"
+#include "string_util.h"
 #include "extprofile.h"
 extern Client client;
 

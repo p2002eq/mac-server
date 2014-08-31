@@ -17,8 +17,8 @@
 */
 
 #include "../common/debug.h"
-#include "../common/ProcLauncher.h"
-#include "../common/EQEmuConfig.h"
+#include "../common/proc_launcher.h"
+#include "../common/eqemu_config.h"
 #include "../common/servertalk.h"
 #include "../common/platform.h"
 #include "../common/crash.h"

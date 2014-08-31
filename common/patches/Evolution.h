@@ -1,7 +1,7 @@
 #ifndef EVOLUTION_H_
 #define EVOLUTION_H_
 
-#include "../StructStrategy.h"
+#include "../struct_strategy.h"
 
 class EQStreamIdentifier;
 

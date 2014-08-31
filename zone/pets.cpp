@@ -29,7 +29,7 @@
 #include "../common/skills.h"
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include "pets.h"
 #include <math.h>
 #include <assert.h>

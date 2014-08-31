@@ -26,10 +26,10 @@
 #include "dbcore.h"
 #include "linked_list.h"
 #include "eq_packet_structs.h"
-/*#include "EQStream.h"
+/*#include "eq_stream.h"
 #include "guilds.h"
-#include "MiscFunctions.h"
-#include "Mutex.h"
+#include "misc_functions.h"
+#include "mutex.h"
 #include "Item.h"
 #include "extprofile.h"*/
 #include <string>

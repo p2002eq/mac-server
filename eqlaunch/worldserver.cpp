@@ -19,8 +19,8 @@
 #include "worldserver.h"
 #include "../common/servertalk.h"
 #include "ZoneLaunch.h"
-#include "../common/EQEmuConfig.h"
-#include "../common/StringUtil.h"
+#include "../common/eqemu_config.h"
+#include "../common/string_util.h"
 
 
 WorldServer::WorldServer(std::map<std::string, ZoneLaunch *> &zones, const char *name, const EQEmuConfig *config)

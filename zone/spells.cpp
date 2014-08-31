@@ -77,7 +77,7 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
 #include "../common/rulesys.h"
-#include "../common/StringUtil.h"
+#include "../common/string_util.h"
 #include <math.h>
 #include <assert.h>
 
