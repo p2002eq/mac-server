@@ -30,7 +30,7 @@
 #include "guilds.h"
 #include "misc_functions.h"
 #include "mutex.h"
-#include "Item.h"
+#include "item.h"
 #include "extprofile.h"*/
 #include <string>
 #include <vector>

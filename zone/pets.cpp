@@ -23,7 +23,7 @@
 #include "masterentity.h"
 #include "../common/packet_dump.h"
 #include "../common/moremath.h"
-#include "../common/Item.h"
+#include "../common/item.h"
 #include "zonedb.h"
 #include "worldserver.h"
 #include "../common/skills.h"
@@ -38,7 +38,7 @@
 #include "../common/unix.h"
 #endif
 
-#include "StringIDs.h"
+#include "string_ids.h"
 ///////////////////////////////////////////////////////////////////////////////
 // pet related functions
 

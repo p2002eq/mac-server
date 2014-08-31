@@ -30,7 +30,7 @@ SET(common_sources
 	guild_base.cpp
 	guilds.cpp
 	ipc_mutex.cpp
-	Item.cpp
+	item.cpp
 	logsys.cpp
 	logsys_eqemu.cpp
 	md5.cpp
@@ -133,7 +133,7 @@ SET(common_headers
 	guild_base.h
 	guilds.h
 	ipc_mutex.h
-	Item.h
+	item.h
 	item_fieldlist.h
 	item_struct.h
 	languages.h

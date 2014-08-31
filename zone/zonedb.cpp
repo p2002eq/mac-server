@@ -1,6 +1,6 @@
 
 #include "zonedb.h"
-#include "../common/Item.h"
+#include "../common/item.h"
 #include "../common/string_util.h"
 #include "../common/extprofile.h"
 #include "../common/guilds.h"

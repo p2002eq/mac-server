@@ -15,7 +15,7 @@ SET(eqlogin_sources
 
 IF(MSVC OR MINGW)
 	ADD_DEFINITIONS(-DNOMINMAX)
-	SET(eqlogin_sources ${eqlogin_sources} Encryption.cpp)
+	SET(eqlogin_sources ${eqlogin_sources} encryption.cpp)
 ENDIF(MSVC OR MINGW)
 
 SET(eqlogin_headers

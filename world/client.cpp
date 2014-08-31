@@ -6,7 +6,7 @@
 #include "../common/emu_opcodes.h"
 #include "../common/eq_packet_structs.h"
 #include "../common/packet_dump.h"
-#include "../common/Item.h"
+#include "../common/item.h"
 #include "../common/races.h"
 #include "../common/classes.h"
 #include "../common/languages.h"

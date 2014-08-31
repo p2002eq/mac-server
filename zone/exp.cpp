@@ -18,10 +18,10 @@
 #include "../common/debug.h"
 #include "../common/features.h"
 #include "masterentity.h"
-#include "StringIDs.h"
+#include "string_ids.h"
 #include "../common/string_util.h"
 #include "../common/rulesys.h"
-#include "QuestParserCollection.h"
+#include "quest_parser_collection.h"
 
 void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 

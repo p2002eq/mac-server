@@ -67,15 +67,15 @@
 
 #endif
 
+#include "../common/dbasync.h"
+#include "../common/emu_tcp_server.h"
+#include "../common/patches/patches.h"
 #include "zoneserver.h"
 #include "console.h"
 #include "login_server.h"
 #include "login_server_list.h"
 #include "eqw_http_handler.h"
-#include "../common/dbasync.h"
-#include "../common/emu_tcp_server.h"
 #include "world_config.h"
-#include "../common/patches/patches.h"
 #include "zoneserver.h"
 #include "zonelist.h"
 #include "clientlist.h"

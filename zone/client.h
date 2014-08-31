@@ -32,7 +32,7 @@ class Client;
 #include "../common/races.h"
 #include "../common/deity.h"
 #include "../common/seperator.h"
-#include "../common/Item.h"
+#include "../common/item.h"
 #include "../common/guilds.h"
 #include "../common/item_struct.h"
 #include "../common/clientversions.h"
@@ -42,9 +42,9 @@ class Client;
 #include "mob.h"
 #include "npc.h"
 #include "zone.h"
-#include "AA.h"
+#include "aa.h"
 #include "questmgr.h"
-#include "QGlobals.h"
+#include "qglobals.h"
 
 #ifdef _WINDOWS
 	// since windows defines these within windef.h (which windows.h include)

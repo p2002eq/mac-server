@@ -10,7 +10,7 @@
 #include "../misc_functions.h"
 #include "../packet_functions.h"
 #include "../string_util.h"
-#include "../Item.h"
+#include "../item.h"
 #include "mac_structs.h"
 #include "../rulesys.h"
 

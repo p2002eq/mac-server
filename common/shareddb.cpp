@@ -4,7 +4,7 @@
 
 #include "shareddb.h"
 #include "mysql.h"
-#include "Item.h"
+#include "item.h"
 #include "classes.h"
 #include "rulesys.h"
 #include "seperator.h"

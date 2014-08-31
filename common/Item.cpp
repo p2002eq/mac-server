@@ -18,7 +18,7 @@
 
 #include "debug.h"
 #include "string_util.h"
-#include "Item.h"
+#include "item.h"
 #include "database.h"
 #include "misc.h"
 #include "races.h"
