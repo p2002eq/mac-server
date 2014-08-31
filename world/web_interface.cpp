@@ -1,6 +1,6 @@
 #include "../common/debug.h"
 #include "web_interface.h"
-#include "WorldConfig.h"
+#include "world_config.h"
 #include "clientlist.h"
 #include "zonelist.h"
 #include "../common/logsys.h"

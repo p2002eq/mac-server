@@ -6,25 +6,25 @@ SET(world_sources
 	clientlist.cpp
 	CMakeLists.txt
 	console.cpp
-	EQLConfig.cpp
-	EQW.cpp
-	EQWHTTPHandler.cpp
-	EQWParser.cpp
-	HTTPRequest.cpp
-	LauncherLink.cpp
-	LauncherList.cpp
-	LoginServer.cpp
-	LoginServerList.cpp
+	eql_config.cpp
+	eqw.cpp
+	eqw_http_handler.cpp
+	eqw_parser.cpp
+	http_request.cpp
+	launcher_link.cpp
+	launcher_list.cpp
+	login_server.cpp
+	login_server_list.cpp
 	net.cpp
-	perl_EQLConfig.cpp
-	perl_EQW.cpp
-	perl_HTTPRequest.cpp
+	perl_eql_config.cpp
+	perl_eqw.cpp
+	perl_http_request.cpp
 	queryserv.cpp
 	ucs.cpp
 	web_interface.cpp
 	wguild_mgr.cpp
 	world_logsys.cpp
-	WorldConfig.cpp
+	world_config.cpp
 	worlddb.cpp
 	zonelist.cpp
 	zoneserver.cpp
@@ -36,24 +36,24 @@ SET(world_headers
 	clientlist.h
 	CMakeLists.txt
 	console.h
-	EQLConfig.h
-	EQW.h
-	EQWHTTPHandler.h
-	EQWParser.h
-	HTTPRequest.h
-	LauncherLink.h
-	LauncherList.h
-	LoginServer.h
-	LoginServerList.h
+	eql_config.h
+	eqw.h
+	eqw_http_handler.h
+	eqw_parser.h
+	http_request.h
+	launcher_link.h
+	launcher_list.h
+	login_server.h
+	login_server_list.h
 	net.h
 	queryserv.h
-	SoFCharCreateData.h
+	sof_char_create_data.h
 	ucs.h
 	web_interface.h
 	wguild_mgr.h
-	WorldConfig.h
+	world_config.h
 	worlddb.h
-	WorldTCPConnection.h
+	world_tcp_connection.h
 	zonelist.h
 	zoneserver.h
 )

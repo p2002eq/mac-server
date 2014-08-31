@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "ServerManager.h"
-#include "LoginServer.h"
+#include "login_server.h"
 #include "ErrorLog.h"
 #include "LoginStructures.h"
 #include <stdlib.h>

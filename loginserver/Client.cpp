@@ -17,7 +17,7 @@
 */
 #include "Client.h"
 #include "ErrorLog.h"
-#include "LoginServer.h"
+#include "login_server.h"
 #include "LoginStructures.h"
 #include "../common/md5.h"
 #include "../common/misc_functions.h"

@@ -21,7 +21,7 @@
 #ifdef EQEMU_MYSQL_ENABLED
 #include "DatabaseMySQL.h"
 #include "ErrorLog.h"
-#include "LoginServer.h"
+#include "login_server.h"
 
 extern ErrorLog *server_log;
 extern LoginServer server;

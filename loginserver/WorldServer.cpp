@@ -17,7 +17,7 @@
 */
 #include "WorldServer.h"
 #include "ErrorLog.h"
-#include "LoginServer.h"
+#include "login_server.h"
 #include "LoginStructures.h"
 
 extern ErrorLog *server_log;

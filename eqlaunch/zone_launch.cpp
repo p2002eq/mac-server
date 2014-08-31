@@ -18,7 +18,7 @@
 
 
 
-#include "ZoneLaunch.h"
+#include "zone_launch.h"
 #include "worldserver.h"
 #include "../common/eqemu_config.h"
 

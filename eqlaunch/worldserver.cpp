@@ -18,7 +18,7 @@
 #include "../common/debug.h"
 #include "worldserver.h"
 #include "../common/servertalk.h"
-#include "ZoneLaunch.h"
+#include "zone_launch.h"
 #include "../common/eqemu_config.h"
 #include "../common/string_util.h"
 

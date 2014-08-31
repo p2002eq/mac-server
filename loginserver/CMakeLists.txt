@@ -29,7 +29,7 @@ SET(eqlogin_headers
 	EQCrypto.h
 	EQCryptoAPI.h
 	ErrorLog.h
-	LoginServer.h
+	login_server.h
 	LoginStructures.h
 	Options.h
 	ServerManager.h
