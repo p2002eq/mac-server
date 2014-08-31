@@ -862,6 +862,7 @@ bool Client::IsBankSlot(uint32 slot)
 // Moves items around both internally and in the database
 // In the future, this can be optimized by pushing all changes through one database REPLACE call
 int Client::SwapItem(MoveItem_Struct* move_in) {
+	//Save();//test to see if this does anything with inventory related desync
 
 	uint32 src_slot_check = move_in->from_slot;
 	uint32 dst_slot_check = move_in->to_slot;
@@ -1750,7 +1751,6 @@ EQApplicationPacket* Client::ReturnItemPacket(int16 slot_id, const ItemInst* ins
 }
 
 bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
-
 	// This is a support function for Client::SetBandolier, however it can be used anywhere it's functionality is required.
 	//
 	// When the client moves items around as Bandolier sets are activated, it does not send details to the
