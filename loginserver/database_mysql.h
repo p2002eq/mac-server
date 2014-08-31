@@ -18,7 +18,7 @@
 #ifndef EQEMU_DATABASEMYSQL_H
 #define EQEMU_DATABASEMYSQL_H
 
-#include "Database.h"
+#include "database.h"
 #ifdef EQEMU_MYSQL_ENABLED
 
 #include <string>

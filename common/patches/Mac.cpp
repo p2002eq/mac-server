@@ -1,5 +1,5 @@
 #include "../debug.h"
-#include "Mac.h"
+#include "mac.h"
 #include "../opcodemgr.h"
 #include "../logsys.h"
 #include "../eq_stream_ident.h"
@@ -11,7 +11,7 @@
 #include "../packet_functions.h"
 #include "../string_util.h"
 #include "../Item.h"
-#include "Mac_structs.h"
+#include "mac_structs.h"
 #include "../rulesys.h"
 
 namespace Mac {
@@ -83,8 +83,8 @@ Strategy::Strategy()
 : StructStrategy()
 {
 	//all opcodes default to passthrough.
-	#include "SSRegister.h"
-	#include "Mac_ops.h"
+	#include "ss_register.h"
+	#include "mac_ops.h"
 }
 
 std::string Strategy::Describe() const {
@@ -95,7 +95,7 @@ std::string Strategy::Describe() const {
 }
 
 
-#include "SSDefine.h"
+#include "ss_define.h"
 
 
 

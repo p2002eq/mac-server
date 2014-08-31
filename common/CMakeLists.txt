@@ -68,8 +68,8 @@ SET(common_sources
 	xml_parser.cpp
 	platform.cpp
 	patches/patches.cpp
-	patches/Mac.cpp
-	patches/Evolution.cpp
+	patches/mac.cpp
+	patches/evolution.cpp
 	SocketLib/Base64.cpp
 	SocketLib/File.cpp
 	SocketLib/HttpdCookies.cpp
@@ -187,15 +187,15 @@ SET(common_headers
 	zone_numbers.h
 	platform.h
 	patches/patches.h
-	patches/Mac.h
-	patches/Mac_structs.h
-	patches/Mac_ops.h
-	patches/Evolution.h
-	patches/Evolution_structs.h
-	patches/Evolution_ops.h
-	patches/SSDeclare.h
-	patches/SSDefine.h
-	patches/SSRegister.h
+	patches/mac.h
+	patches/mac_structs.h
+	patches/mac_ops.h
+	patches/evolution.h
+	patches/evolution_structs.h
+	patches/evolution_ops.h
+	patches/ss_declare.h
+	patches/ss_define.h
+	patches/ss_register.h
 	SocketLib/Base64.h
 	SocketLib/File.h
 	SocketLib/HttpdCookies.h
@@ -215,18 +215,18 @@ SET(common_headers
 
 SOURCE_GROUP(Patches FILES
 	patches/patches.h
-	patches/SSDeclare.h
-	patches/SSDefine.h
-	patches/SSRegister.h
+	patches/ss_declare.h
+	patches/ss_define.h
+	patches/ss_register.h
 	patches/patches.cpp
-	patches/Mac.cpp
-	patches/Mac.h
-	patches/Mac_ops.h
-	patches/Mac_structs.h
-	patches/Evolution.cpp
-	patches/Evolution.h
-	patches/Evolution_structs.h
-	patches/Evolution_ops.h
+	patches/mac.cpp
+	patches/mac.h
+	patches/mac_ops.h
+	patches/mac_structs.h
+	patches/evolution.cpp
+	patches/evolution.h
+	patches/evolution_structs.h
+	patches/evolution_ops.h
 )
 
 SOURCE_GROUP(SocketLib FILES

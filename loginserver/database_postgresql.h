@@ -18,7 +18,7 @@
 #ifndef EQEMU_DATABASEPOSTGRESQL_H
 #define EQEMU_DATABASEPOSTGRESQL_H
 
-#include "Database.h"
+#include "database.h"
 #ifdef EQEMU_POSTGRESQL_ENABLED
 
 #include <string>

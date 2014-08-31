@@ -25,8 +25,8 @@ namespace Mac {
 		virtual std::string Describe() const;
 		virtual const EQClientVersion ClientVersion() const;
 		//magic macro to declare our opcodes
-		#include "SSDeclare.h"
-		#include "Mac_ops.h"
+		#include "ss_declare.h"
+		#include "mac_ops.h"
 
 
 	};

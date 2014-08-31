@@ -25,8 +25,8 @@ namespace Evolution {
 		virtual std::string Describe() const;
 		virtual const EQClientVersion ClientVersion() const;
 		//magic macro to declare our opcodes
-		#include "SSDeclare.h"
-		#include "Evolution_ops.h"
+		#include "ss_declare.h"
+		#include "evolution_ops.h"
 
 
 	};
