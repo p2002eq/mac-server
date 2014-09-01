@@ -36,6 +36,7 @@
 #include "adventure_manager.h"
 #include "ucs.h"
 #include "queryserv.h"
+#include "web_interface.h"
 
 extern ClientList client_list;
 extern GroupLFPList LFPGroupList;
@@ -46,6 +47,7 @@ extern volatile bool RunLoops;
 extern AdventureManager adventure_manager;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
+extern WebInterfaceConnection WILink;
 void CatchSignal(int sig_num);
 
 ZoneServer::ZoneServer(EmuTCPConnection* itcpc)
@@ -1301,13 +1303,16 @@ bool ZoneServer::Process() {
 				QSLink.SendPacket(pack);
 				break;
 			}
+			case ServerOP_WIRemoteCallResponse:
+			case ServerOP_WIClientSession:
+			case ServerOP_WIRemoteCallToClient:
+			{
+				WILink.SendPacket(pack);
+				break;
+			}
 			case ServerOP_CZSignalClientByName:
 			case ServerOP_CZMessagePlayer:
 			case ServerOP_CZSignalClient:
-			{
-				zoneserver_list.SendPacket(pack);
-				break;
-			}
 			case ServerOP_DepopAllPlayersCorpses:
 			case ServerOP_DepopPlayerCorpse:
 			case ServerOP_ReloadTitles:

@@ -19,9 +19,11 @@
 #include "masterentity.h"
 #include "../common/spdat.h"
 #include "string_ids.h"
+#include "remote_call.h"
 #include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "../common/string_util.h"
+#include "remote_call_subscribe.h"
 
 #include <sstream>
 #include <math.h>
@@ -1216,6 +1218,18 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
 	spu->padding0014	=0x7f;
 	spu->padding0018	=0x5df27;
 
+	if(IsNPC()) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)zone->GetZoneID()));
+		params.push_back(std::to_string((long)zone->GetInstanceID()));
+		params.push_back(std::to_string((long)GetID()));
+		params.push_back(GetName());
+		params.push_back(std::to_string((double)x_pos));
+		params.push_back(std::to_string((double)y_pos));
+		params.push_back(std::to_string((double)z_pos));
+		params.push_back(std::to_string((double)heading));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+	}
 }
 
 // this is for SendPosUpdate()
@@ -1235,7 +1249,7 @@ void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
 	if(this->IsClient())
 		spu->animation = animation;
 	else
-		spu->animation	= pRunAnimSpeed;//animation;
+		spu->animation	= pRunAnimSpeed;
 	spu->delta_heading = NewFloatToEQ13(static_cast<float>(delta_heading));
 }
 
