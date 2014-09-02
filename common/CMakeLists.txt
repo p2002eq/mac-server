@@ -67,7 +67,7 @@ SET(common_sources
 	uuid.cpp
 	worldconn.cpp
 	web_interface_utils.cpp
-	XMLParser.cpp
+	xml_parser.cpp
 	platform.cpp
 	patches/client62.cpp
 	patches/patches.cpp
