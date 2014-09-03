@@ -63,7 +63,9 @@
 #include "guild_mgr.h"
 #include <string>
 #include "quest_parser_collection.h"
+#include "queryserv.h"
 
+extern QueryServ* QServ;
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
 extern WorldServer worldserver;
@@ -630,38 +632,40 @@ bool Client::Process() {
 	return ret;
 }
 
-//just a set of actions preformed all over in Client::Process
+/* Just a set of actions preformed all over in Client::Process */
 void Client::OnDisconnect(bool hard_disconnect) {
 	if(hard_disconnect) {
-		LeaveGroup();
-
+		LeaveGroup(); 
 		Raid *MyRaid = entity_list.GetRaidByClient(this);
 
 		if (MyRaid)
 			MyRaid->MemberZoned(this);
 
-		parse->EventPlayer(EVENT_DISCONNECT, this, "", 0);
+		parse->EventPlayer(EVENT_DISCONNECT, this, "", 0); 
+
+		/* QS: PlayerLogConnectDisconnect */
+		if (RuleB(QueryServ, PlayerLogConnectDisconnect)){
+			std::string event_desc = StringFormat("Disconnect :: in zoneid:%i instid:%i", this->GetZoneID(), this->GetInstanceID());
+			QServ->PlayerLogEvent(Player_Log_Connect_State, this->CharacterID(), event_desc);
+		} 
 	}
 
-	Mob *Other = trade->With();
-
-	if(Other)
-	{
-		mlog(TRADING__CLIENT, "Client disconnected during a trade. Returning their items.");
-
+	Mob *Other = trade->With(); 
+	if(Other) {
+		mlog(TRADING__CLIENT, "Client disconnected during a trade. Returning their items."); 
 		FinishTrade(this);
 
 		if(Other->IsClient())
 			Other->CastToClient()->FinishTrade(Other);
 
-		trade->Reset();
-
+		/* Reset both sides of the trade */
+		trade->Reset(); 
 		Other->trade->Reset();
 	}
 
 	database.SetFirstLogon(CharacterID(), 0); //We change firstlogon status regardless of if a player logs out to zone or not, because we only want to trigger it on their first login from world.
 
-	//remove ourself from all proximities
+	/* Remove ourself from all proximities */ 
 	ClearAllProximities();
 
 	//Prevent GMs from being kicked all the way when camping.
@@ -685,7 +689,6 @@ void Client::OnDisconnect(bool hard_disconnect) {
 
 // Sends the client complete inventory used in character login
 void Client::BulkSendInventoryItems() {
-	// For future reference: Only the parent item needs to be sent..the ItemInst already contains child ItemInst information
 
 	int16 slot_id = 0;
 	uint32 size = 0;
@@ -828,17 +831,18 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	uint8 handychance = 0;
 	for (itr = merlist.begin(); itr != merlist.end() && i < numItemSlots; ++itr) {
 		MerchantList ml = *itr;
-		if(GetLevel() < ml.level_required) {
+		if (merch->CastToNPC()->GetMerchantProbability() > ml.probability)
 			continue;
-		}
+			
+		if(GetLevel() < ml.level_required)
+			continue;
 
 		if (!(ml.classes_required & (1 << (GetClass() - 1))))
 			continue;
 
 		int32 fac = merch ? merch->GetPrimaryFaction() : 0;
-		if(fac != 0 && GetModCharacterFactionLevel(fac) < ml.faction_required) {
+		if(fac != 0 && GetModCharacterFactionLevel(fac) < ml.faction_required)
 			continue;
-		}
 
 		handychance = MakeRandomInt(0, merlist.size() + tmp_merlist.size() - 1 );
 

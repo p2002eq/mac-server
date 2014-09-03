@@ -660,10 +660,11 @@ enum MaterialUseSlots : uint8
 	_MaterialInvalid = 255
 };
 
+/*
 // Used for worn NPC inventory tracking. NPCs don't use
 // augments, so only the basic slots need to be kept track of.
 #define MAX_WORN_INVENTORY	22
-
+*/
 
 /*
 **	Inventory Slot Equipment Enum
@@ -693,11 +694,6 @@ enum MaterialUseSlots : uint8
 **
 */
 
-enum InventorySlot
-{
-	////////////////////////
-	// Equip slots
-	////////////////////////
 
 	SLOT_CURSOR		= 0,
 	SLOT_EAR01		= 1,

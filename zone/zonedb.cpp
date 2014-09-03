@@ -1020,8 +1020,10 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 			"npc_types.npc_spells_effects_id,"
 			"npc_types.d_meele_texture1,"
 			"npc_types.d_meele_texture2,"
+			"npc_types.ammo_idfile,"
 			"npc_types.prim_melee_type,"
 			"npc_types.sec_melee_type,"
+			"npc_types.ranged_type,"
 			"npc_types.runspeed,"
 			"npc_types.findable,"
 			"npc_types.trackable,"
@@ -1056,6 +1058,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 			"npc_types.see_improved_hide,"
 			"npc_types.ATK,"
 			"npc_types.Accuracy,"
+			"npc_types.Avoidance,"
 			"npc_types.slow_mitigation,"
 			"npc_types.maxlevel,"
 			"npc_types.scalerate,"
@@ -1065,7 +1068,8 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 			"npc_types.emoteid,"
 			"npc_types.spellscale,"
 			"npc_types.healscale,"
-			"npc_types.no_target_hotkey";
+			"npc_types.no_target_hotkey,"
+			"npc_types.raid_target";
 
 		MakeAnyLenString(&query, "%s FROM npc_types WHERE id=%d", basic_query, id);
 
@@ -1117,8 +1121,10 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 				tmpNPCType->npc_spells_effects_id = atoi(row[r++]);
 				tmpNPCType->d_meele_texture1 = atoi(row[r++]);
 				tmpNPCType->d_meele_texture2 = atoi(row[r++]);
+				strn0cpy(tmpNPCType->ammo_idfile, row[r++], 30);
 				tmpNPCType->prim_melee_type = atoi(row[r++]);
 				tmpNPCType->sec_melee_type = atoi(row[r++]);
+				tmpNPCType->ranged_type = atoi(row[r++]);
 				tmpNPCType->runspeed= atof(row[r++]);
 				tmpNPCType->findable = atoi(row[r++]) == 0? false : true;
 				tmpNPCType->trackable = atoi(row[r++]) == 0? false : true;
@@ -1237,6 +1243,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 				tmpNPCType->see_improved_hide = atoi(row[r++])==0?false:true;
 				tmpNPCType->ATK = atoi(row[r++]);
 				tmpNPCType->accuracy_rating = atoi(row[r++]);
+				tmpNPCType->avoidance_rating = atoi(row[r++]);
 				tmpNPCType->slow_mitigation = atoi(row[r++]);
 				tmpNPCType->maxlevel = atoi(row[r++]);
 				tmpNPCType->scalerate = atoi(row[r++]);
@@ -1247,6 +1254,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 				tmpNPCType->spellscale = atoi(row[r++]);
 				tmpNPCType->healscale = atoi(row[r++]);
 				tmpNPCType->no_target_hotkey = atoi(row[r++]) == 1 ? true : false;
+				tmpNPCType->raid_target = atoi(row[r++]) == 0 ? false : true;
 				
 				// If NPC with duplicate NPC id already in table,
 				// free item we attempted to add.
@@ -2139,7 +2147,7 @@ void ZoneDatabase::LoadPetInfo(Client *c) {
 				pi = suspended;
 			else
 				continue;
-
+			
 			int slot = atoi(row[1]);
 			if (slot < 0 || slot > MAX_WORN_INVENTORY)
 				continue;
@@ -2433,4 +2441,12 @@ bool ZoneDatabase::GetFactionIdsForNPC(uint32 nfl_id, std::list<struct NPCFactio
 		}
 	}
 	return true;
+}
+
+void ZoneDatabase::StoreCharacterLookup(uint32 char_id) {
+	std::string c_lookup = StringFormat("REPLACE INTO `character_lookup` (id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, lfp, lfg, mailkey, xtargets, firstlogon, inspectmessage)"
+		" SELECT id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, lfp, lfg, mailkey, xtargets, firstlogon, inspectmessage"
+		" FROM `character_` "
+		" WHERE `id` = %i ", char_id);  
+	QueryDatabase(c_lookup); 
 }

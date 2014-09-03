@@ -38,8 +38,9 @@
 // original source: 
 // https://github.com/facebook/folly/blob/master/folly/String.cpp
 //
-void vStringFormat(std::string& output, const char* format, va_list args)
+const std::string vStringFormat(const char* format, va_list args)
 {
+	std::string output;
 	va_list tmpargs;
 
 	va_copy(tmpargs,args);
@@ -48,26 +49,22 @@ void vStringFormat(std::string& output, const char* format, va_list args)
 
 	if (characters_used < 0) {
 		// Looks like we have an invalid format string.
-		// error out.
-		std::string errorMessage("Invalid format string; snprintf returned negative with format string: ");
-		errorMessage.append(format);
-		
-		throw std::runtime_error(errorMessage);
+		// return empty string.
+		return "";
 	}
 	else if ((unsigned int)characters_used > output.capacity()) {
-		output.resize(characters_used+1);
+		output.resize(characters_used + 1);
 		va_copy(tmpargs,args);
 		characters_used = vsnprintf(&output[0], output.capacity(), format, tmpargs);
 		va_end(tmpargs);
+		output.resize(characters_used);
 
 		if (characters_used < 0) {
 			// We shouldn't have a format error by this point, but I can't imagine what error we
-			// could have by this point. Still, error out and report it.
-			std::string errorMessage("Invalid format string or unknown vsnprintf error; vsnprintf returned negative with format string: ");
-			errorMessage.append(format);
-		
-			throw std::runtime_error(errorMessage);
+			// could have by this point. Still, return empty string;
+			return "";
 		}
+		return std::move(output);
 	} 
 	else {
 		output.resize(characters_used + 1);
@@ -76,25 +73,26 @@ void vStringFormat(std::string& output, const char* format, va_list args)
 		characters_used = vsnprintf(&output[0], output.capacity(), format, tmpargs);
 		va_end(tmpargs);
 
+		output.resize(characters_used);
+
 		if (characters_used < 0) {
 			// We shouldn't have a format error by this point, but I can't imagine what error we
-			// could have by this point. still error out and report it.
-			std::string errorMessage("Invalid format string or unknown vsnprintf error; vsnprintf returned negative with format string: ");
-			errorMessage.append(format);
-		
-			throw std::runtime_error(errorMessage);
+			// could have by this point. Still, return empty string;
+			return "";
 		}
-		
+		return std::move(output);
 	}
 }
 
-void StringFormat(std::string& output, const char* format, ...)
+const std::string StringFormat(const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	vStringFormat(output,format,args);
+	std::string output = vStringFormat(format,args);
 	va_end(args);
+	return std::move(output);
 }
+
 
 // normal strncpy doesnt put a null term on copied strings, this one does
 // ref: http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wcecrt/htm/_wcecrt_strncpy_wcsncpy.asp
@@ -383,4 +381,52 @@ std::string EscapeString(const std::string &s) {
 	}
 
 	return ret;
+}
+
+std::string EscapeString(const char *src, size_t sz) {
+	std::string ret;
+
+	for(size_t i = 0; i < sz; ++i) {
+		char c = src[i];
+		switch(c) {
+		case '\x00':
+			ret += "\\x00";
+			break;
+		case '\n':
+			ret += "\\n";
+			break;
+		case '\r':
+			ret += "\\r";
+			break;
+		case '\\':
+			ret += "\\\\";
+			break;
+		case '\'':
+			ret += "\\'";
+			break;
+		case '\"':
+			ret += "\\\"";
+			break;
+		case '\x1a':
+			ret += "\\x1a";
+			break;
+		default:
+			ret.push_back(c);
+			break;
+		}
+	}
+
+	return ret;
+}
+
+bool isAlphaNumeric(const char *text)
+{
+	for (unsigned int charIndex=0; charIndex<strlen(text); charIndex++) {
+		if ((text[charIndex] < 'a' || text[charIndex] > 'z') &&
+			(text[charIndex] < 'A' || text[charIndex] > 'Z') &&
+			(text[charIndex] < '0' || text[charIndex] > '9'))
+			return false;
+	}
+
+	return true;
 }

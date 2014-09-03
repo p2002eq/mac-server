@@ -64,7 +64,9 @@ SET(common_sources
 	timeoutmgr.cpp
 	timer.cpp
 	unix.cpp
+	uuid.cpp
 	worldconn.cpp
+	web_interface_utils.cpp
 	xml_parser.cpp
 	platform.cpp
 	patches/patches.cpp
@@ -89,6 +91,7 @@ SET(common_sources
 )
 
 SET(common_headers
+	any.h
 	base_packet.h
 	base_data.h
 	bodytypes.h
@@ -108,6 +111,7 @@ SET(common_headers
 	emu_tcp_connection.h
 	emu_tcp_server.h
 	eq_constants.h
+	eq_dictionary.h
 	eq_packet_structs.h
 	eqdb.h
 	eqdb_res.h
@@ -156,6 +160,7 @@ SET(common_headers
 	packet_dump.h
 	packet_dump_file.h
 	packet_functions.h
+	platform.h
 	proc_launcher.h
 	profiler.h
 	ptimer.h
@@ -180,9 +185,11 @@ SET(common_headers
 	timer.h
 	types.h
 	unix.h
+	uuid.h
 	useperl.h
 	version.h
 	worldconn.h
+	web_interface_utils.h
 	xml_parser.h
 	zone_numbers.h
 	platform.h
@@ -193,6 +200,9 @@ SET(common_headers
 	patches/evolution.h
 	patches/evolution_structs.h
 	patches/evolution_ops.h
+	patches/ss_declare.h
+	patches/ss_define.h
+	patches/ss_register.h
 	patches/ss_declare.h
 	patches/ss_define.h
 	patches/ss_register.h
@@ -275,6 +285,7 @@ ADD_LIBRARY(common ${common_sources} ${common_headers})
 
 IF(UNIX)
 	ADD_DEFINITIONS(-fPIC)
+	SET_SOURCE_FILES_PROPERTIES("patches/mac.cpp" "patches/evolution.cpp" PROPERTIES COMPILE_FLAGS -O0)
 ENDIF(UNIX)
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)

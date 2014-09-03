@@ -1,11 +1,15 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 SET(web_interface_sources
+	method_handler.cpp
+	remote_call.cpp
 	web_interface.cpp
 	worldserver.cpp
 )
 
 SET(web_interface_headers
+	method_handler.h
+	remote_call.h
 	worldserver.h
 )
 
@@ -15,11 +19,12 @@ INSTALL(TARGETS web_interface RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 ADD_DEFINITIONS(-DWEB_INTERFACE)
 
-TARGET_LINK_LIBRARIES(web_interface common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY})
+TARGET_LINK_LIBRARIES(web_interface common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY} ${LIBWEBSOCKETS_LIBRARIES})
 
 IF(MSVC)
 	SET_TARGET_PROPERTIES(web_interface PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
 	TARGET_LINK_LIBRARIES(web_interface "Ws2_32.lib")
+	TARGET_LINK_LIBRARIES(web_interface rpcrt4)
 ENDIF(MSVC)
 
 IF(MINGW)

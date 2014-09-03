@@ -19,9 +19,11 @@
 #include "masterentity.h"
 #include "../common/spdat.h"
 #include "string_ids.h"
+#include "remote_call.h"
 #include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "../common/string_util.h"
+#include "remote_call_subscribe.h"
 
 #include <sstream>
 #include <math.h>
@@ -183,6 +185,8 @@ Mob::Mob(const char* in_name,
 	has_numhits = false;
 	has_MGB = false;
 	has_ProjectIllusion = false;
+	SpellPowerDistanceMod = 0;
+	last_los_check = false;
 
 	if(in_aa_title>0)
 		aa_title	= in_aa_title;
@@ -239,9 +243,6 @@ Mob::Mob(const char* in_name,
 		RangedProcs[j].spellID = SPELL_UNKNOWN;
 		RangedProcs[j].chance = 0;
 		RangedProcs[j].base_spellID = SPELL_UNKNOWN;
-		SkillProcs[j].spellID = SPELL_UNKNOWN;
-		SkillProcs[j].chance = 0;
-		SkillProcs[j].base_spellID = SPELL_UNKNOWN;
 	}
 
 	for (i = 0; i < _MaterialCount; i++)
@@ -306,7 +307,7 @@ Mob::Mob(const char* in_name,
 		shielder[m].shielder_id = 0;
 		shielder[m].shielder_bonus = 0;
 	}
-	
+
 	destructibleobject = false;
 	wandertype=0;
 	pausetype=0;
@@ -337,6 +338,7 @@ Mob::Mob(const char* in_name,
 		viral_spells[i] = 0;
 	}
 	pStandingPetOrder = SPO_Follow;
+	pseudo_rooted = false;
 
 	see_invis = GetSeeInvisible(in_see_invis);
 	see_invis_undead = GetSeeInvisible(in_see_invis_undead);
@@ -1179,6 +1181,18 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
 	spu->padding0014	=0x7f;
 	spu->padding0018	=0x5df27;
 
+	if(IsNPC()) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)zone->GetZoneID()));
+		params.push_back(std::to_string((long)zone->GetInstanceID()));
+		params.push_back(std::to_string((long)GetID()));
+		params.push_back(GetName());
+		params.push_back(std::to_string((double)x_pos));
+		params.push_back(std::to_string((double)y_pos));
+		params.push_back(std::to_string((double)z_pos));
+		params.push_back(std::to_string((double)heading));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+	}
 }
 
 // this is for SendPosUpdate()
@@ -1198,7 +1212,7 @@ void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
 	if(this->IsClient())
 		spu->animation = animation;
 	else
-		spu->animation	= pRunAnimSpeed;//animation;
+		spu->animation	= pRunAnimSpeed;
 	spu->delta_heading =static_cast<float>(delta_heading);
 }
 
@@ -1802,7 +1816,7 @@ void Mob::SetAttackTimer() {
 		}
 
 		//special offhand stuff
-		if(i == SLOT_SECONDARY) {
+		if(i == MainSecondary) {
 			//if we have a 2H weapon in our main hand, no dual
 			if(PrimaryWeapon != nullptr) {
 				if(	PrimaryWeapon->ItemClass == ItemClassCommon
@@ -1905,7 +1919,7 @@ void Mob::SetAttackTimer() {
 			TimerToUse->SetAtTrigger(speed, true);
 		}
 
-		if(i == SLOT_PRIMARY)
+		if(i == MainPrimary)
 			PrimaryWeapon = ItemToUse;
 	}
 
@@ -2246,14 +2260,14 @@ bool Mob::HateSummon() {
 	{
 		if(summon_level == 1) {
 			entity_list.MessageClose(this, true, 500, MT_Say, "%s says,'You will not evade me, %s!' ", GetCleanName(), target->GetCleanName() );
-	
+
 			if (target->IsClient()) {
 				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x_pos, y_pos, z_pos, target->GetHeading(), 0, SummonPC);
 			}
 			else {
 				target->GMMove(x_pos, y_pos, z_pos, target->GetHeading());
 			}
-	
+
 			return true;
 		} else if(summon_level == 2) {
 			entity_list.MessageClose(this, true, 500, MT_Say, "%s says,'You will not evade me, %s!'", GetCleanName(), target->GetCleanName());
@@ -2876,7 +2890,7 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 	if (!on)
 		return;
 
-	on->TryDefensiveProc(weapon, this, hand, damage);
+	on->TryDefensiveProc(weapon, this, hand);
 
 	//Defensive Skill Procs
 	if (damage < 0 && damage >= -4) {
@@ -2885,7 +2899,7 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 			case (-1):
 				skillinuse = SkillBlock;
 			break;
-		
+
 			case (-2):
 				skillinuse = SkillParry;
 			break;
@@ -3118,7 +3132,7 @@ void Mob::TryTriggerOnValueAmount(bool IsHP, bool IsMana, bool IsEndur, bool IsP
 
 	if (!spellbonuses.TriggerOnValueAmount)
 		return;
-	
+
 	if (spellbonuses.TriggerOnValueAmount){
 
 		int buff_count = GetMaxTotalSlots();
@@ -3139,15 +3153,15 @@ void Mob::TryTriggerOnValueAmount(bool IsHP, bool IsMana, bool IsEndur, bool IsP
 						if (IsHP){
 							if ((base2 >= 500 && base2 <= 520) && GetHPRatio() < (base2 - 500)*5)
 								use_spell = true;
-		
+
 							else if (base2 = 1004 && GetHPRatio() < 80)
 								use_spell = true;
 						}
 
 						else if (IsMana){
-							if ( (base2 = 521 && GetManaRatio() < 20) || (base2 = 523 && GetManaRatio() < 40)) 
+							if ( (base2 = 521 && GetManaRatio() < 20) || (base2 = 523 && GetManaRatio() < 40))
 								use_spell = true;
-							
+
 							else if (base2 = 38311 && GetManaRatio() < 10)
 								use_spell = true;
 						}
@@ -3167,7 +3181,7 @@ void Mob::TryTriggerOnValueAmount(bool IsHP, bool IsMana, bool IsEndur, bool IsP
 
 						if (use_spell){
 							SpellFinished(spells[spell_id].base[i], this, 10, 0, -1, spells[spell_id].ResistDiff);
-							
+
 							if(!TryFadeEffect(e))
 								BuffFadeBySlot(e);
 						}
@@ -3227,7 +3241,7 @@ int32 Mob::GetVulnerability(Mob* caster, uint32 spell_id, uint32 ticsremaining)
 
 	if (!caster)
 		return 0;
-	
+
 	int32 value = 0;
 
 	//Apply innate vulnerabilities
@@ -3240,7 +3254,7 @@ int32 Mob::GetVulnerability(Mob* caster, uint32 spell_id, uint32 ticsremaining)
 
 	//Apply spell derived vulnerabilities
 	if (spellbonuses.FocusEffects[focusSpellVulnerability]){
-	
+
 		int32 tmp_focus = 0;
 		int tmp_buffslot = -1;
 
@@ -3301,15 +3315,15 @@ int16 Mob::GetSkillDmgTaken(const SkillUseTypes skill_used)
 }
 
 int16 Mob::GetHealRate(uint16 spell_id, Mob* caster) {
-	
+
 	int16 heal_rate = 0;
 
-	heal_rate += itembonuses.HealRate + spellbonuses.HealRate + aabonuses.HealRate; 
-	heal_rate += GetFocusIncoming(focusFcHealPctIncoming, SE_FcHealPctIncoming, caster, spell_id); 
+	heal_rate += itembonuses.HealRate + spellbonuses.HealRate + aabonuses.HealRate;
+	heal_rate += GetFocusIncoming(focusFcHealPctIncoming, SE_FcHealPctIncoming, caster, spell_id);
 
 	if(heal_rate < -99)
 		heal_rate = -99;
-	
+
 	return heal_rate;
 }
 
@@ -3319,7 +3333,7 @@ bool Mob::TryFadeEffect(int slot)
 	{
 		for(int i = 0; i < EFFECT_COUNT; i++)
 		{
-			if (spells[buffs[slot].spellid].effectid[i] == SE_CastOnFadeEffectAlways || 
+			if (spells[buffs[slot].spellid].effectid[i] == SE_CastOnFadeEffectAlways ||
 				spells[buffs[slot].spellid].effectid[i] == SE_CastOnRuneFadeEffect)
 			{
 				uint16 spell_id = spells[buffs[slot].spellid].base[i];
@@ -3377,12 +3391,12 @@ void Mob::TrySympatheticProc(Mob *target, uint32 spell_id)
 				else
 					SpellFinished(focus_trigger, target, 10, 0, -1, spells[focus_trigger].ResistDiff);
 			}
-			
+
 			CheckNumHitsRemaining(NUMHIT_MatchingSpells, 0, focus_spell);
 		}
 }
 
-uint32 Mob::GetItemStat(uint32 itemid, const char *identifier)
+int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 {
 	const ItemInst* inst = database.CreateItem(itemid);
 	if (!inst)
@@ -3395,7 +3409,7 @@ uint32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 	if (!identifier)
 		return 0;
 
-	uint32 stat = 0;
+	int32 stat = 0;
 
 	std::string id = identifier;
 	for(int i = 0; i < id.length(); ++i)
@@ -3404,308 +3418,310 @@ uint32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 	}
 
 	if (id == "itemclass")
-		stat = uint32(item->ItemClass);
+		stat = int32(item->ItemClass);
 	if (id == "id")
-		stat = uint32(item->ID);
+		stat = int32(item->ID);
+	if (id == "idfile")
+		stat = atoi(&item->IDFile[2]);
 	if (id == "weight")
-		stat = uint32(item->Weight);
+		stat = int32(item->Weight);
 	if (id == "norent")
-		stat = uint32(item->NoRent);
+		stat = int32(item->NoRent);
 	if (id == "nodrop")
-		stat = uint32(item->NoDrop);
+		stat = int32(item->NoDrop);
 	if (id == "size")
-		stat = uint32(item->Size);
+		stat = int32(item->Size);
 	if (id == "slots")
-		stat = uint32(item->Slots);
+		stat = int32(item->Slots);
 	if (id == "price")
-		stat = uint32(item->Price);
+		stat = int32(item->Price);
 	if (id == "icon")
-		stat = uint32(item->Icon);
+		stat = int32(item->Icon);
 	if (id == "loregroup")
-		stat = uint32(item->LoreGroup);
+		stat = int32(item->LoreGroup);
 	if (id == "loreflag")
-		stat = uint32(item->LoreFlag);
+		stat = int32(item->LoreFlag);
 	if (id == "pendingloreflag")
-		stat = uint32(item->PendingLoreFlag);
+		stat = int32(item->PendingLoreFlag);
 	if (id == "artifactflag")
-		stat = uint32(item->ArtifactFlag);
+		stat = int32(item->ArtifactFlag);
 	if (id == "summonedflag")
-		stat = uint32(item->SummonedFlag);
+		stat = int32(item->SummonedFlag);
 	if (id == "fvnodrop")
-		stat = uint32(item->FVNoDrop);
+		stat = int32(item->FVNoDrop);
 	if (id == "favor")
-		stat = uint32(item->Favor);
+		stat = int32(item->Favor);
 	if (id == "guildfavor")
-		stat = uint32(item->GuildFavor);
+		stat = int32(item->GuildFavor);
 	if (id == "pointtype")
-		stat = uint32(item->PointType);
+		stat = int32(item->PointType);
 	if (id == "bagtype")
-		stat = uint32(item->BagType);
+		stat = int32(item->BagType);
 	if (id == "bagslots")
-		stat = uint32(item->BagSlots);
+		stat = int32(item->BagSlots);
 	if (id == "bagsize")
-		stat = uint32(item->BagSize);
+		stat = int32(item->BagSize);
 	if (id == "bagwr")
-		stat = uint32(item->BagWR);
+		stat = int32(item->BagWR);
 	if (id == "benefitflag")
-		stat = uint32(item->BenefitFlag);
+		stat = int32(item->BenefitFlag);
 	if (id == "tradeskills")
-		stat = uint32(item->Tradeskills);
+		stat = int32(item->Tradeskills);
 	if (id == "cr")
-		stat = uint32(item->CR);
+		stat = int32(item->CR);
 	if (id == "dr")
-		stat = uint32(item->DR);
+		stat = int32(item->DR);
 	if (id == "pr")
-		stat = uint32(item->PR);
+		stat = int32(item->PR);
 	if (id == "mr")
-		stat = uint32(item->MR);
+		stat = int32(item->MR);
 	if (id == "fr")
-		stat = uint32(item->FR);
+		stat = int32(item->FR);
 	if (id == "astr")
-		stat = uint32(item->AStr);
+		stat = int32(item->AStr);
 	if (id == "asta")
-		stat = uint32(item->ASta);
+		stat = int32(item->ASta);
 	if (id == "aagi")
-		stat = uint32(item->AAgi);
+		stat = int32(item->AAgi);
 	if (id == "adex")
-		stat = uint32(item->ADex);
+		stat = int32(item->ADex);
 	if (id == "acha")
-		stat = uint32(item->ACha);
+		stat = int32(item->ACha);
 	if (id == "aint")
-		stat = uint32(item->AInt);
+		stat = int32(item->AInt);
 	if (id == "awis")
-		stat = uint32(item->AWis);
+		stat = int32(item->AWis);
 	if (id == "hp")
-		stat = uint32(item->HP);
+		stat = int32(item->HP);
 	if (id == "mana")
-		stat = uint32(item->Mana);
+		stat = int32(item->Mana);
 	if (id == "ac")
-		stat = uint32(item->AC);
+		stat = int32(item->AC);
 	if (id == "deity")
-		stat = uint32(item->Deity);
+		stat = int32(item->Deity);
 	if (id == "skillmodvalue")
-		stat = uint32(item->SkillModValue);
+		stat = int32(item->SkillModValue);
 	if (id == "skillmodtype")
-		stat = uint32(item->SkillModType);
+		stat = int32(item->SkillModType);
 	if (id == "banedmgrace")
-		stat = uint32(item->BaneDmgRace);
+		stat = int32(item->BaneDmgRace);
 	if (id == "banedmgamt")
-		stat = uint32(item->BaneDmgAmt);
+		stat = int32(item->BaneDmgAmt);
 	if (id == "banedmgbody")
-		stat = uint32(item->BaneDmgBody);
+		stat = int32(item->BaneDmgBody);
 	if (id == "magic")
-		stat = uint32(item->Magic);
+		stat = int32(item->Magic);
 	if (id == "casttime_")
-		stat = uint32(item->CastTime_);
+		stat = int32(item->CastTime_);
 	if (id == "reqlevel")
-		stat = uint32(item->ReqLevel);
+		stat = int32(item->ReqLevel);
 	if (id == "bardtype")
-		stat = uint32(item->BardType);
+		stat = int32(item->BardType);
 	if (id == "bardvalue")
-		stat = uint32(item->BardValue);
+		stat = int32(item->BardValue);
 	if (id == "light")
-		stat = uint32(item->Light);
+		stat = int32(item->Light);
 	if (id == "delay")
-		stat = uint32(item->Delay);
+		stat = int32(item->Delay);
 	if (id == "reclevel")
-		stat = uint32(item->RecLevel);
+		stat = int32(item->RecLevel);
 	if (id == "recskill")
-		stat = uint32(item->RecSkill);
+		stat = int32(item->RecSkill);
 	if (id == "elemdmgtype")
-		stat = uint32(item->ElemDmgType);
+		stat = int32(item->ElemDmgType);
 	if (id == "elemdmgamt")
-		stat = uint32(item->ElemDmgAmt);
+		stat = int32(item->ElemDmgAmt);
 	if (id == "range")
-		stat = uint32(item->Range);
+		stat = int32(item->Range);
 	if (id == "damage")
-		stat = uint32(item->Damage);
+		stat = int32(item->Damage);
 	if (id == "color")
-		stat = uint32(item->Color);
+		stat = int32(item->Color);
 	if (id == "classes")
-		stat = uint32(item->Classes);
+		stat = int32(item->Classes);
 	if (id == "races")
-		stat = uint32(item->Races);
+		stat = int32(item->Races);
 	if (id == "maxcharges")
-		stat = uint32(item->MaxCharges);
+		stat = int32(item->MaxCharges);
 	if (id == "itemtype")
-		stat = uint32(item->ItemType);
+		stat = int32(item->ItemType);
 	if (id == "material")
-		stat = uint32(item->Material);
+		stat = int32(item->Material);
 	if (id == "casttime")
-		stat = uint32(item->CastTime);
+		stat = int32(item->CastTime);
 	if (id == "elitematerial")
-		stat = uint32(item->EliteMaterial);
+		stat = int32(item->EliteMaterial);
 	if (id == "procrate")
-		stat = uint32(item->ProcRate);
+		stat = int32(item->ProcRate);
 	if (id == "combateffects")
-		stat = uint32(item->CombatEffects);
+		stat = int32(item->CombatEffects);
 	if (id == "shielding")
-		stat = uint32(item->Shielding);
+		stat = int32(item->Shielding);
 	if (id == "stunresist")
-		stat = uint32(item->StunResist);
+		stat = int32(item->StunResist);
 	if (id == "strikethrough")
-		stat = uint32(item->StrikeThrough);
+		stat = int32(item->StrikeThrough);
 	if (id == "extradmgskill")
-		stat = uint32(item->ExtraDmgSkill);
+		stat = int32(item->ExtraDmgSkill);
 	if (id == "extradmgamt")
-		stat = uint32(item->ExtraDmgAmt);
+		stat = int32(item->ExtraDmgAmt);
 	if (id == "spellshield")
-		stat = uint32(item->SpellShield);
+		stat = int32(item->SpellShield);
 	if (id == "avoidance")
-		stat = uint32(item->Avoidance);
+		stat = int32(item->Avoidance);
 	if (id == "accuracy")
-		stat = uint32(item->Accuracy);
+		stat = int32(item->Accuracy);
 	if (id == "charmfileid")
-		stat = uint32(item->CharmFileID);
+		stat = int32(item->CharmFileID);
 	if (id == "factionmod1")
-		stat = uint32(item->FactionMod1);
+		stat = int32(item->FactionMod1);
 	if (id == "factionmod2")
-		stat = uint32(item->FactionMod2);
+		stat = int32(item->FactionMod2);
 	if (id == "factionmod3")
-		stat = uint32(item->FactionMod3);
+		stat = int32(item->FactionMod3);
 	if (id == "factionmod4")
-		stat = uint32(item->FactionMod4);
+		stat = int32(item->FactionMod4);
 	if (id == "factionamt1")
-		stat = uint32(item->FactionAmt1);
+		stat = int32(item->FactionAmt1);
 	if (id == "factionamt2")
-		stat = uint32(item->FactionAmt2);
+		stat = int32(item->FactionAmt2);
 	if (id == "factionamt3")
-		stat = uint32(item->FactionAmt3);
+		stat = int32(item->FactionAmt3);
 	if (id == "factionamt4")
-		stat = uint32(item->FactionAmt4);
+		stat = int32(item->FactionAmt4);
 	if (id == "augtype")
-		stat = uint32(item->AugType);
+		stat = int32(item->AugType);
 	if (id == "banedmgraceamt")
-		stat = uint32(item->BaneDmgRaceAmt);
+		stat = int32(item->BaneDmgRaceAmt);
 	if (id == "augrestrict")
-		stat = uint32(item->AugRestrict);
+		stat = int32(item->AugRestrict);
 	if (id == "endur")
-		stat = uint32(item->Endur);
+		stat = int32(item->Endur);
 	if (id == "dotshielding")
-		stat = uint32(item->DotShielding);
+		stat = int32(item->DotShielding);
 	if (id == "attack")
-		stat = uint32(item->Attack);
+		stat = int32(item->Attack);
 	if (id == "regen")
-		stat = uint32(item->Regen);
+		stat = int32(item->Regen);
 	if (id == "manaregen")
-		stat = uint32(item->ManaRegen);
+		stat = int32(item->ManaRegen);
 	if (id == "enduranceregen")
-		stat = uint32(item->EnduranceRegen);
+		stat = int32(item->EnduranceRegen);
 	if (id == "haste")
-		stat = uint32(item->Haste);
+		stat = int32(item->Haste);
 	if (id == "damageshield")
-		stat = uint32(item->DamageShield);
+		stat = int32(item->DamageShield);
 	if (id == "recastdelay")
-		stat = uint32(item->RecastDelay);
+		stat = int32(item->RecastDelay);
 	if (id == "recasttype")
-		stat = uint32(item->RecastType);
+		stat = int32(item->RecastType);
 	if (id == "augdistiller")
-		stat = uint32(item->AugDistiller);
+		stat = int32(item->AugDistiller);
 	if (id == "attuneable")
-		stat = uint32(item->Attuneable);
+		stat = int32(item->Attuneable);
 	if (id == "nopet")
-		stat = uint32(item->NoPet);
+		stat = int32(item->NoPet);
 	if (id == "potionbelt")
-		stat = uint32(item->PotionBelt);
+		stat = int32(item->PotionBelt);
 	if (id == "stackable")
-		stat = uint32(item->Stackable);
+		stat = int32(item->Stackable);
 	if (id == "notransfer")
-		stat = uint32(item->NoTransfer);
+		stat = int32(item->NoTransfer);
 	if (id == "questitemflag")
-		stat = uint32(item->QuestItemFlag);
+		stat = int32(item->QuestItemFlag);
 	if (id == "stacksize")
-		stat = uint32(item->StackSize);
+		stat = int32(item->StackSize);
 	if (id == "potionbeltslots")
-		stat = uint32(item->PotionBeltSlots);
+		stat = int32(item->PotionBeltSlots);
 	if (id == "book")
-		stat = uint32(item->Book);
+		stat = int32(item->Book);
 	if (id == "booktype")
-		stat = uint32(item->BookType);
+		stat = int32(item->BookType);
 	if (id == "svcorruption")
-		stat = uint32(item->SVCorruption);
+		stat = int32(item->SVCorruption);
 	if (id == "purity")
-		stat = uint32(item->Purity);
+		stat = int32(item->Purity);
 	if (id == "backstabdmg")
-		stat = uint32(item->BackstabDmg);
+		stat = int32(item->BackstabDmg);
 	if (id == "dsmitigation")
-		stat = uint32(item->DSMitigation);
+		stat = int32(item->DSMitigation);
 	if (id == "heroicstr")
-		stat = uint32(item->HeroicStr);
+		stat = int32(item->HeroicStr);
 	if (id == "heroicint")
-		stat = uint32(item->HeroicInt);
+		stat = int32(item->HeroicInt);
 	if (id == "heroicwis")
-		stat = uint32(item->HeroicWis);
+		stat = int32(item->HeroicWis);
 	if (id == "heroicagi")
-		stat = uint32(item->HeroicAgi);
+		stat = int32(item->HeroicAgi);
 	if (id == "heroicdex")
-		stat = uint32(item->HeroicDex);
+		stat = int32(item->HeroicDex);
 	if (id == "heroicsta")
-		stat = uint32(item->HeroicSta);
+		stat = int32(item->HeroicSta);
 	if (id == "heroiccha")
-		stat = uint32(item->HeroicCha);
+		stat = int32(item->HeroicCha);
 	if (id == "heroicmr")
-		stat = uint32(item->HeroicMR);
+		stat = int32(item->HeroicMR);
 	if (id == "heroicfr")
-		stat = uint32(item->HeroicFR);
+		stat = int32(item->HeroicFR);
 	if (id == "heroiccr")
-		stat = uint32(item->HeroicCR);
+		stat = int32(item->HeroicCR);
 	if (id == "heroicdr")
-		stat = uint32(item->HeroicDR);
+		stat = int32(item->HeroicDR);
 	if (id == "heroicpr")
-		stat = uint32(item->HeroicPR);
+		stat = int32(item->HeroicPR);
 	if (id == "heroicsvcorrup")
-		stat = uint32(item->HeroicSVCorrup);
+		stat = int32(item->HeroicSVCorrup);
 	if (id == "healamt")
-		stat = uint32(item->HealAmt);
+		stat = int32(item->HealAmt);
 	if (id == "spelldmg")
-		stat = uint32(item->SpellDmg);
+		stat = int32(item->SpellDmg);
 	if (id == "scriptfileid")
-		stat = uint32(item->ScriptFileID);
+		stat = int32(item->ScriptFileID);
 	if (id == "expendablearrow")
-		stat = uint32(item->ExpendableArrow);
+		stat = int32(item->ExpendableArrow);
 	if (id == "clairvoyance")
-		stat = uint32(item->Clairvoyance);
+		stat = int32(item->Clairvoyance);
 	// Begin Effects
 	if (id == "clickeffect")
-		stat = uint32(item->Click.Effect);
+		stat = int32(item->Click.Effect);
 	if (id == "clicktype")
-		stat = uint32(item->Click.Type);
+		stat = int32(item->Click.Type);
 	if (id == "clicklevel")
-		stat = uint32(item->Click.Level);
+		stat = int32(item->Click.Level);
 	if (id == "clicklevel2")
-		stat = uint32(item->Click.Level2);
+		stat = int32(item->Click.Level2);
 	if (id == "proceffect")
-		stat = uint32(item->Proc.Effect);
+		stat = int32(item->Proc.Effect);
 	if (id == "proctype")
-		stat = uint32(item->Proc.Type);
+		stat = int32(item->Proc.Type);
 	if (id == "proclevel")
-		stat = uint32(item->Proc.Level);
+		stat = int32(item->Proc.Level);
 	if (id == "proclevel2")
-		stat = uint32(item->Proc.Level2);
+		stat = int32(item->Proc.Level2);
 	if (id == "worneffect")
-		stat = uint32(item->Worn.Effect);
+		stat = int32(item->Worn.Effect);
 	if (id == "worntype")
-		stat = uint32(item->Worn.Type);
+		stat = int32(item->Worn.Type);
 	if (id == "wornlevel")
-		stat = uint32(item->Worn.Level);
+		stat = int32(item->Worn.Level);
 	if (id == "wornlevel2")
-		stat = uint32(item->Worn.Level2);
+		stat = int32(item->Worn.Level2);
 	if (id == "focuseffect")
-		stat = uint32(item->Focus.Effect);
+		stat = int32(item->Focus.Effect);
 	if (id == "focustype")
-		stat = uint32(item->Focus.Type);
+		stat = int32(item->Focus.Type);
 	if (id == "focuslevel")
-		stat = uint32(item->Focus.Level);
+		stat = int32(item->Focus.Level);
 	if (id == "focuslevel2")
-		stat = uint32(item->Focus.Level2);
+		stat = int32(item->Focus.Level2);
 	if (id == "scrolleffect")
-		stat = uint32(item->Scroll.Effect);
+		stat = int32(item->Scroll.Effect);
 	if (id == "scrolltype")
-		stat = uint32(item->Scroll.Type);
+		stat = int32(item->Scroll.Type);
 	if (id == "scrolllevel")
-		stat = uint32(item->Scroll.Level);
+		stat = int32(item->Scroll.Level);
 	if (id == "scrolllevel2")
-		stat = uint32(item->Scroll.Level2);
+		stat = int32(item->Scroll.Level2);
 
 	safe_delete(inst);
 	return stat;
@@ -3763,36 +3779,26 @@ void Mob::TarGlobal(const char *varname, const char *value, const char *duration
 }
 
 void Mob::DelGlobal(const char *varname) {
-	// delglobal(varname)
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
+
 	int qgZoneid=zone->GetZoneID();
 	int qgCharid=0;
 	int qgNpcid=0;
 
 	if (this->IsNPC())
-	{
 		qgNpcid = this->GetNPCTypeID();
-	}
 
 	if (this->IsClient())
-	{
 		qgCharid = this->CastToClient()->CharacterID();
-	}
 	else
-	{
 		qgCharid = -qgNpcid;		// make char id negative npc id as a fudge
-	}
 
-	if (!database.RunQuery(query,
-		MakeAnyLenString(&query,
-		"DELETE FROM quest_globals WHERE name='%s'"
-		" && (npcid=0 || npcid=%i) && (charid=0 || charid=%i) && (zoneid=%i || zoneid=0)",
-		varname,qgNpcid,qgCharid,qgZoneid),errbuf))
-	{
-		//_log(QUESTS, "DelGlobal error deleting %s : %s", varname, errbuf);
-	}
-	safe_delete_array(query);
+    std::string query = StringFormat("DELETE FROM quest_globals "
+                                    "WHERE name='%s' && (npcid=0 || npcid=%i) "
+                                    "&& (charid=0 || charid=%i) "
+                                    "&& (zoneid=%i || zoneid=0)",
+                                    varname, qgNpcid, qgCharid, qgZoneid);
+
+	database.QueryDatabase(query);
 
 	if(zone)
 	{
@@ -3815,33 +3821,22 @@ void Mob::DelGlobal(const char *varname) {
 // Inserts global variable into quest_globals table
 void Mob::InsertQuestGlobal(int charid, int npcid, int zoneid, const char *varname, const char *varvalue, int duration) {
 
-	char *query = 0;
-	char errbuf[MYSQL_ERRMSG_SIZE];
-
 	// Make duration string either "unix_timestamp(now()) + xxx" or "NULL"
 	std::stringstream duration_ss;
 
 	if (duration == INT_MAX)
-	{
 		duration_ss << "NULL";
-	}
 	else
-	{
 		duration_ss << "unix_timestamp(now()) + " << duration;
-	}
 
 	//NOTE: this should be escaping the contents of arglist
 	//npcwise a malicious script can arbitrarily alter the DB
 	uint32 last_id = 0;
-	if (!database.RunQuery(query, MakeAnyLenString(&query,
-		"REPLACE INTO quest_globals (charid, npcid, zoneid, name, value, expdate)"
-		"VALUES (%i, %i, %i, '%s', '%s', %s)",
-		charid, npcid, zoneid, varname, varvalue, duration_ss.str().c_str()
-		), errbuf))
-	{
-		//_log(QUESTS, "SelGlobal error inserting %s : %s", varname, errbuf);
-	}
-	safe_delete_array(query);
+	std::string query = StringFormat("REPLACE INTO quest_globals "
+                                    "(charid, npcid, zoneid, name, value, expdate)"
+                                    "VALUES (%i, %i, %i, '%s', '%s', %s)",
+                                    charid, npcid, zoneid, varname, varvalue, duration_ss.str().c_str());
+	database.QueryDatabase(query);
 
 	if(zone)
 	{
@@ -3867,14 +3862,12 @@ void Mob::InsertQuestGlobal(int charid, int npcid, int zoneid, const char *varna
 		qgu->npc_id = npcid;
 		qgu->char_id = charid;
 		qgu->zone_id = zoneid;
+
 		if(duration == INT_MAX)
-		{
 			qgu->expdate = 0xFFFFFFFF;
-		}
 		else
-		{
 			qgu->expdate = Timer::GetTimeSeconds() + duration;
-		}
+
 		strcpy((char*)qgu->name, varname);
 		strcpy((char*)qgu->value, varvalue);
 		qgu->id = last_id;
@@ -4194,7 +4187,7 @@ int16 Mob::GetSkillDmgAmt(uint16 skill)
 }
 
 void Mob::MeleeLifeTap(int32 damage) {
-	
+
 	int16 lifetap_amt = 0;
 	lifetap_amt = spellbonuses.MeleeLifetap + itembonuses.MeleeLifetap + aabonuses.MeleeLifetap
 				+ spellbonuses.Vampirism + itembonuses.Vampirism + aabonuses.Vampirism;
@@ -4203,7 +4196,7 @@ void Mob::MeleeLifeTap(int32 damage) {
 
 		lifetap_amt = damage * lifetap_amt / 100;
 		mlog(COMBAT__DAMAGE, "Melee lifetap healing for %d damage.", damage);
-		
+
 		if (lifetap_amt > 0)
 			HealDamage(lifetap_amt); //Heal self for modified damage amount.
 		else
@@ -4215,9 +4208,9 @@ bool Mob::TryReflectSpell(uint32 spell_id)
 {
 	if (!spells[spell_id].reflectable)
  		return false;
-	
+
 	int chance = itembonuses.reflect_chance + spellbonuses.reflect_chance + aabonuses.reflect_chance;
- 	
+
 	if(chance && MakeRandomInt(0, 99) < chance)
 		return true;
 
@@ -4460,7 +4453,7 @@ void Mob::SlowMitigation(Mob* caster)
 		else if ((GetSlowMitigation() >= 74) && (GetSlowMitigation() < 101))
 			caster->Message_StringID(MT_SpellFailure, SLOW_SLIGHTLY_SUCCESSFUL);
 
-		else if (GetSlowMitigation() > 100) 
+		else if (GetSlowMitigation() > 100)
 			caster->Message_StringID(MT_SpellFailure, SPELL_OPPOSITE_EFFECT);
 	}
 }
@@ -4481,12 +4474,43 @@ uint16 Mob::GetSkillByItemType(int ItemType)
 			return Skill2HBlunt;
 		case ItemType2HPiercing:
 			return Skill1HPiercing; // change to 2HPiercing once activated
+		case ItemTypeBow:
+			return SkillArchery;
+		case ItemTypeLargeThrowing:
+		case ItemTypeSmallThrowing:
+			return SkillThrowing;
 		case ItemTypeMartial:
 			return SkillHandtoHand;
 		default:
 			return SkillHandtoHand;
 	}
 	return SkillHandtoHand;
+ }
+
+uint8 Mob::GetItemTypeBySkill(SkillUseTypes skill)
+{
+	switch (skill)
+	{
+		case SkillThrowing:
+			return ItemTypeSmallThrowing;
+		case SkillArchery:
+			return ItemTypeArrow;
+		case Skill1HSlashing:
+			return ItemType1HSlash;
+		case Skill2HSlashing:
+			return ItemType2HSlash;
+		case Skill1HPiercing:
+			return ItemType1HPiercing;
+		case Skill1HBlunt:
+			return ItemType1HBlunt;
+		case Skill2HBlunt:
+			return ItemType2HBlunt;
+		case SkillHandtoHand:
+			return ItemTypeMartial;
+		default:
+			return ItemTypeMartial;
+	}
+	return ItemTypeMartial;
  }
 
 
@@ -4506,10 +4530,10 @@ bool Mob::PassLimitToSkill(uint16 spell_id, uint16 skill) {
 }
 
 uint16 Mob::GetWeaponSpeedbyHand(uint16 hand) {
-	
+
 	uint16 weapon_speed = 0;
 	switch (hand) {
-		
+
 		case 13:
 			weapon_speed = attack_timer.GetDuration();
 			break;
@@ -4532,7 +4556,7 @@ int8 Mob::GetDecayEffectValue(uint16 spell_id, uint16 spelleffect) {
 	if (!IsValidSpell(spell_id))
 		return false;
 
-	int spell_level = spells[spell_id].classes[(GetClass()%16) - 1]; 
+	int spell_level = spells[spell_id].classes[(GetClass()%16) - 1];
 	int effect_value = 0;
 	int lvlModifier = 100;
 
@@ -4541,16 +4565,16 @@ int8 Mob::GetDecayEffectValue(uint16 spell_id, uint16 spelleffect) {
 		if (IsValidSpell(buffs[slot].spellid)){
 			for (int i = 0; i < EFFECT_COUNT; i++){
 				if(spells[buffs[slot].spellid].effectid[i] == spelleffect) {
-					
-					int critchance = spells[buffs[slot].spellid].base[i]; 
+
+					int critchance = spells[buffs[slot].spellid].base[i];
 					int decay = spells[buffs[slot].spellid].base2[i];
-					int lvldiff = spell_level - spells[buffs[slot].spellid].max[i]; 
-					
+					int lvldiff = spell_level - spells[buffs[slot].spellid].max[i];
+
 					if(lvldiff > 0 && decay > 0)
 					{
-						lvlModifier -= decay*lvldiff; 
+						lvlModifier -= decay*lvldiff;
 						if (lvlModifier > 0){
-							critchance = (critchance*lvlModifier)/100; 
+							critchance = (critchance*lvlModifier)/100;
 							effect_value += critchance;
 						}
 					}
@@ -4561,7 +4585,7 @@ int8 Mob::GetDecayEffectValue(uint16 spell_id, uint16 spelleffect) {
 			}
 		}
 	}
-	
+
 	return effect_value;
 }
 

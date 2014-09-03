@@ -44,7 +44,7 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 
 	int i;
 	if(where_to_check & invWhereWorn) {
-		for (i=0; i<=21; i++) { // Equipped
+		for (i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++) {
 			if (GetItemIDAt(i) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(i) != INVALID_ID)) {
 				cur = m_inv.GetItem(i);
 				if(cur && cur->GetItem()->Stackable) {
@@ -57,9 +57,8 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 			}
 		}
 
-		// Power Source Slot
-		if (GetItemIDAt(9999) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(9999) != INVALID_ID)) {
-			cur = m_inv.GetItem(9999);
+		if (GetItemIDAt(MainPowerSource) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(MainPowerSource) != INVALID_ID)) {
+			cur = m_inv.GetItem(MainPowerSource);
 			if(cur && cur->GetItem()->Stackable) {
 				x += cur->GetCharges();
 			} else {
@@ -169,6 +168,15 @@ bool Client::CheckLoreConflict(const Item_Struct* item) {
 }
 
 bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, bool attuned, uint16 to_slot) {
+	/* Set a timestamp in an entity variable for plugin check_handin.pl in return_items
+		This will stopgap players from items being returned if global_npc.pl has a catch all return_items
+	*/
+	struct timeval read_time;
+	char buffer[50];
+	gettimeofday(&read_time, 0);
+	sprintf(buffer, "%li.%li \n", read_time.tv_sec, read_time.tv_usec);
+	this->SetEntityVariable("Recieved_Item", buffer);
+
 	// TODO: update calling methods and script apis to handle a failure return
 
 	const Item_Struct* item = database.GetItem(item_id);
@@ -375,7 +383,7 @@ void Client::DropInst(const ItemInst* inst)
 }
 
 // Returns a slot's item ID (returns INVALID_ID if not found)
-uint32 Client::GetItemIDAt(int16 slot_id) {
+int32 Client::GetItemIDAt(int16 slot_id) {
 	const ItemInst* inst = m_inv[slot_id];
 	if (inst)
 		return inst->GetItem()->ID;
@@ -516,25 +524,24 @@ bool Client::PushItemOnCursor(const ItemInst& inst, bool client_update)
 	return database.SaveCursor(CharacterID(), s, e);
 }
 
-bool Client::PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client_update)
-{
+bool Client::PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client_update) {
 	mlog(INVENTORY__SLOTS, "Putting item %s (%d) into slot %d", inst.GetItem()->Name, inst.GetItem()->ID, slot_id);
-	if (slot_id==SLOT_CURSOR)
-	{
-		return PushItemOnCursor(inst,client_update);
-	}
+
+	if (slot_id == SLOT_CURSOR)
+		return PushItemOnCursor(inst, client_update);
 	else
 		m_inv.PutItem(slot_id, inst);
 
-	if (client_update) {
-		SendItemPacket(slot_id, &inst, (slot_id==SLOT_CURSOR)?ItemPacketSummonItem:ItemPacketTrade);
-	}
+	if (client_update)
+		SendItemPacket(slot_id, &inst, ((slot_id == SLOT_CURSOR) ? ItemPacketSummonItem : ItemPacketTrade));
 
-	if (slot_id==SLOT_CURSOR) {
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+	if (slot_id == SLOT_CURSOR) {
+		std::list<ItemInst*>::const_iterator s = m_inv.cursor_begin(), e = m_inv.cursor_end();
 		return database.SaveCursor(this->CharacterID(), s, e);
-	} else
+	}
+	else {
 		return database.SaveInventory(this->CharacterID(), &inst, slot_id);
+	}
 
 	CalcBonuses();
 }
@@ -546,7 +553,7 @@ void Client::PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootI
 
 	SendLootItemInPacket(&inst, slot_id);
 
-	if (slot_id==SLOT_CURSOR) {
+	if (slot_id == SLOT_CURSOR) {
 		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
 		database.SaveCursor(this->CharacterID(), s, e);
 	} else
@@ -842,10 +849,8 @@ bool Client::IsValidSlot(uint32 slot)
 		(slot == 9999))						// Power Source
 	{
 		return true;
-	}
-	else {
+	else
 		return false;
-	}
 }
 
 bool Client::IsBankSlot(uint32 slot)
@@ -965,15 +970,16 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		ItemInst* dstbag;
 		uint32 srcbagid =0;
 		uint32 dstbagid = 0;
-		if (src_slot_id>=250 && src_slot_id<330){
-			srcbag=m_inv.GetItem(((int)(src_slot_id/10))-3);
-			if(srcbag)
-				srcbagid=srcbag->GetItem()->ID;
+
+		if (src_slot_id >= 250 && src_slot_id < 330) {
+			srcbag = m_inv.GetItem(((int)(src_slot_id / 10)) - 3);
+			if (srcbag)
+				srcbagid = srcbag->GetItem()->ID;
 		}
-		if (dst_slot_id>=250 && dst_slot_id<330){
-			dstbag=m_inv.GetItem(((int)(dst_slot_id/10))-3);
-			if(dstbag)
-				dstbagid=dstbag->GetItem()->ID;
+		if (dst_slot_id >= 250 && dst_slot_id < 330) {
+			dstbag = m_inv.GetItem(((int)(dst_slot_id / 10)) - 3);
+			if (dstbag)
+				dstbagid = dstbag->GetItem()->ID;
 		}
 		if (srcitemid==17899 || srcbagid==17899 || dstitemid==17899 || dstbagid==17899){
 			this->Trader_EndTrader();
@@ -1254,6 +1260,9 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 }
 
 void Client::SwapItemResync(MoveItem_Struct* move_slots) {
+	// wow..this thing created a helluva memory leak...
+	// with any luck..this won't be needed in the future
+
 	// resync the 'from' and 'to' slots on an as-needed basis
 	// Not as effective as the full process, but less intrusive to gameplay -U
 	mlog(INVENTORY__ERROR, "Inventory desyncronization. (charname: %s, source: %i, destination: %i)", GetName(), move_slots->from_slot, move_slots->to_slot);
@@ -1279,6 +1288,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				QueuePacket(outapp);
 				safe_delete(outapp);
 			}
+			safe_delete(token_inst);
 			Message(14, "Source slot %i resyncronized.", move_slots->from_slot);
 		}
 		else { Message(13, "Could not resyncronize source slot %i.", move_slots->from_slot); }
@@ -1293,6 +1303,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				SendItemPacket(resync_slot, token_inst, ItemPacketTrade);
 				SendItemPacket(resync_slot, m_inv[resync_slot], ItemPacketTrade);
 
+				safe_delete(token_inst);
 				Message(14, "Source slot %i resyncronized.", move_slots->from_slot);
 			}
 			else { Message(13, "Could not resyncronize source slot %i.", move_slots->from_slot); }
@@ -1319,6 +1330,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				QueuePacket(outapp);
 				safe_delete(outapp);
 			}
+			safe_delete(token_inst);
 			Message(14, "Destination slot %i resyncronized.", move_slots->to_slot);
 		}
 		else { Message(13, "Could not resyncronize destination slot %i.", move_slots->to_slot); }
@@ -1333,6 +1345,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				SendItemPacket(resync_slot, token_inst, ItemPacketTrade);
 				SendItemPacket(resync_slot, m_inv[resync_slot], ItemPacketTrade);
 
+				safe_delete(token_inst);
 				Message(14, "Destination slot %i resyncronized.", move_slots->to_slot);
 			}
 			else { Message(13, "Could not resyncronize destination slot %i.", move_slots->to_slot); }
@@ -1933,4 +1946,3 @@ std::string Inventory::GetCustomItemData(int16 slot_id, std::string identifier) 
 	}
 	return "";
 }
-

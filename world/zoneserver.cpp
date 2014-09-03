@@ -34,6 +34,7 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
+#include "web_interface.h"
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
@@ -42,6 +43,7 @@ extern LoginServerList loginserverlist;
 extern volatile bool RunLoops;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
+extern WebInterfaceConnection WILink;
 void CatchSignal(int sig_num);
 
 ZoneServer::ZoneServer(EmuTCPConnection* itcpc)
@@ -442,31 +444,34 @@ bool ZoneServer::Process() {
 							zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
 					}
 					else if (cle->Online() == CLE_Status_Zoning) {
-						if (!scm->noreply) {
-							char errbuf[MYSQL_ERRMSG_SIZE];
-							char *query = 0;
-							MYSQL_RES *result;
-							//MYSQL_ROW row; Trumpcard - commenting. Currently unused.
+						if (!scm->noreply)
+						{
 							time_t rawtime;
 							struct tm * timeinfo;
 							time ( &rawtime );
 							timeinfo = localtime ( &rawtime );
 							char *telldate=asctime(timeinfo);
-							if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT name from character_ where name='%s'",scm->deliverto), errbuf, &result)) {
-								safe_delete(query);
-								if (result!=0) {
-									if (database.RunQuery(query, MakeAnyLenString(&query, "INSERT INTO tellque (Date,Receiver,Sender,Message) values('%s','%s','%s','%s')",telldate,scm->deliverto,scm->from,scm->message), errbuf, &result))
-										zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "Your message has been added to the %s's que.", scm->to);
-									else
-										zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
-									safe_delete(query);
-								}
-								else
-									zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
-								mysql_free_result(result);
-							}
-							else
-								safe_delete(query);
+
+							std::string query = StringFormat("SELECT name FROM character_ WHERE name = '%s'",scm->deliverto);
+							auto results = database.QueryDatabase(query);
+							if (!results.Success())
+                                break;
+
+                            if (results.RowCount() == 0) {
+                                zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
+                                break;
+                            }
+
+                            query = StringFormat("INSERT INTO tellque "
+                                                "(Date, Receiver, Sender, Message) "
+                                                "VALUES('%s', '%s', '%s', '%s')",
+                                                telldate, scm->deliverto, scm->from, scm->message);
+                            results = database.QueryDatabase(query);
+                            if (results.Success())
+                                zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "Your message has been added to the %s's que.", scm->to);
+                            else
+                                zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
+
 						}
 					//		zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
 					}
@@ -1180,7 +1185,7 @@ bool ZoneServer::Process() {
 				UCSLink.SendPacket(pack);
 				break;
 			}
-
+			case ServerOP_QSSendQuery:
 			case ServerOP_QueryServGeneric:
 			case ServerOP_Speech:
 			case ServerOP_QSPlayerLogTrades:
@@ -1208,18 +1213,21 @@ bool ZoneServer::Process() {
 				QSLink.SendPacket(pack);
 				break;
 			}
-			case ServerOP_QSMerchantLogTransactions:
+			case ServerOP_QSPlayerLogMerchantTransactions:
 			{
 				QSLink.SendPacket(pack);
+				break;
+			}
+			case ServerOP_WIRemoteCallResponse:
+			case ServerOP_WIClientSession:
+			case ServerOP_WIRemoteCallToClient:
+			{
+				WILink.SendPacket(pack);
 				break;
 			}
 			case ServerOP_CZSignalClientByName:
 			case ServerOP_CZMessagePlayer:
 			case ServerOP_CZSignalClient:
-			{
-				zoneserver_list.SendPacket(pack);
-				break;
-			}
 			case ServerOP_DepopAllPlayersCorpses:
 			case ServerOP_DepopPlayerCorpse:
 			case ServerOP_ReloadTitles:

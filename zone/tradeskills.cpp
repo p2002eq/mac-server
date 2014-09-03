@@ -34,6 +34,9 @@
 #include "../common/string_util.h"
 #include "../common/rulesys.h"
 #include "quest_parser_collection.h"
+#include "queryserv.h"
+
+extern QueryServ* QServ;
 
 static const SkillUseTypes TradeskillUnknown = Skill1HBlunt; /* an arbitrary non-tradeskill */
 
@@ -356,7 +359,7 @@ void Client::SendTradeskillDetails(uint32 recipe_id) {
 
 	uint32 *ffff_start = (uint32 *) startblock;
 	//fill in the FFFF's as if there were 0 items
-	for(r = 0; r < 10; r++) {
+	for(r = 0; r < 10; r++) { // world:item container size related?
 		*ffff_start = 0xFFFFFFFF;
 		ffff_start++;
 	}
@@ -392,7 +395,7 @@ void Client::SendTradeskillDetails(uint32 recipe_id) {
 		icon = htonl(icon);
 
 		//if we get more than 10 items, just start skipping them...
-		for(k = 0; k < num && count < 10; k++) {
+		for(k = 0; k < num && count < 10; k++) { // world:item container size related?
 			itemptr = (uint32 *) cblock;
 			cblock += sizeof(uint32);
 			datalen += sizeof(uint32);
@@ -651,7 +654,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		if(over_trivial < 0)
 			CheckIncreaseTradeskill(bonusstat, stat_modifier, skillup_modifier, success_modifier, spec->tradeskill);
 
-		Message_StringID(4,TRADESKILL_SUCCEED,spec->name.c_str());
+		Message_StringID(4, TRADESKILL_SUCCEED, spec->name.c_str());
 
 		_log(TRADESKILLS__TRACE, "Tradeskill success");
 
@@ -660,14 +663,15 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 			//should we check this crap?
 			SummonItem(itr->first, itr->second);
 			item = database.GetItem(itr->first);
-			if (this->GetGroup())
-			{
-				entity_list.MessageGroup(this,true,MT_Skills,"%s has successfully fashioned %s!",GetName(),item->Name);
+			if (this->GetGroup()) {
+				entity_list.MessageGroup(this, true, MT_Skills, "%s has successfully fashioned %s!", GetName(), item->Name);
 			}
 			++itr;
 		}
 		return(true);
-	} else {
+	} 
+	/* Tradeskill Fail */
+	else {
 		success_modifier = 2; // Halves the chance
 
 		if(over_trivial < 0)
@@ -679,6 +683,13 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 			if (this->GetGroup())
 		{
 			entity_list.MessageGroup(this,true,MT_Skills,"%s was unsuccessful in %s tradeskill attempt.",GetName(),this->GetGender() == 0 ? "his" : this->GetGender() == 1 ? "her" : "its");
+
+		}
+
+		/* QS: Player_Log_Trade_Skill_Events */
+		if (RuleB(QueryServ, PlayerLogTradeSkillEvents)){
+			std::string event_desc = StringFormat("Failed :: recipe_id:%i tskillid:%i trivial:%i chance:%4.2f  in zoneid:%i instid:%i", spec->recipe_id, spec->tradeskill, spec->trivial, chance, this->GetZoneID(), this->GetInstanceID());
+			QServ->PlayerLogEvent(Player_Log_Trade_Skill_Events, this->CharacterID(), event_desc);
 		}
 
 		itr = spec->onfail.begin();
@@ -687,6 +698,8 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 			SummonItem(itr->first, itr->second);
 			++itr;
 		}
+
+		/* Salvage Item rolls */
 
 		// Rolls on each item, is possible to return everything
 		int SalvageChance = aabonuses.SalvageChance + itembonuses.SalvageChance + spellbonuses.SalvageChance;
@@ -781,7 +794,7 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
 	bool first = true;
 	uint8 i;
 	char *pos = buf2;
-	for (i=0; i<10; i++) {
+	for (i = 0; i < 10; i++) { // <watch> TODO: need to determine if this is bound to world/item container size
 		const ItemInst* inst = container->GetItem(i);
 		if (inst) {
 			const Item_Struct* item = GetItem(inst->GetItem()->ID);

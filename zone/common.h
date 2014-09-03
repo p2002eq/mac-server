@@ -126,7 +126,8 @@ enum {
 	FLEE_PERCENT = 37,
 	ALLOW_BENEFICIAL = 38,
 	DISABLE_MELEE = 39,
-	MAX_SPECIAL_ATTACK = 40
+	NPC_CHASE_DISTANCE = 40,
+	MAX_SPECIAL_ATTACK = 41
 	
 };
 
@@ -265,6 +266,7 @@ struct StatBonuses {
 
 	int16	StrikeThrough;						// PoP: Strike Through %
 	int16	MeleeMitigation;					//i = Shielding
+	int16	MeleeMitigationEffect;				//i = Spell Effect Melee Mitigation
 	int16	CriticalHitChance[HIGHEST_SKILL+2];	//i
 	int16	CriticalSpellChance;				//i
 	int16	SpellCritDmgIncrease;				//i
@@ -274,7 +276,8 @@ struct StatBonuses {
 	int16	CriticalHealOverTime;				//i
 	int16	CriticalDoTChance;					//i
 	int16	CrippBlowChance;					//
-	int16	AvoidMeleeChance;					//AvoidMeleeChance/10 == % chance i = Avoidance
+	int16	AvoidMeleeChance;					//AvoidMeleeChance/10 == % chance i = Avoidance (item mod)
+	int16	AvoidMeleeChanceEffect;				//AvoidMeleeChance Spell Effect
 	int16	RiposteChance;						//i
 	int16	DodgeChance;						//i
 	int16	ParryChance;						//i
@@ -365,10 +368,10 @@ struct StatBonuses {
 	bool	NegateIfCombat;						// Bool Drop buff if cast or melee
 	int8	Screech;							// -1 = Will be blocked if another Screech is +(1)
 	int16	AlterNPCLevel;						// amount of lvls +/-
-	int16	AStacker[1];						// For buff stack blocking 0=Exists 1=Effect_value 
-	int16	BStacker[1];						// For buff stack blocking 0=Exists 1=Effect_value
-	int16	CStacker[1];						// For buff stack blocking 0=Exists 1=Effect_value
-	int16	DStacker[1];						// For buff stack blocking 0=Exists 1=Effect_value
+	int16	AStacker[2];						// For buff stack blocking 0=Exists 1=Effect_value
+	int16	BStacker[2];						// For buff stack blocking 0=Exists 1=Effect_value
+	int16	CStacker[2];						// For buff stack blocking 0=Exists 1=Effect_value
+	int16	DStacker[2];						// For buff stack blocking 0=Exists 1=Effect_value
 	bool	BerserkSPA;							// berserk effect
 	int16	Metabolism;							// Food/drink consumption rates.
 	bool	Sanctuary;							// Sanctuary effect, lowers place on hate list until cast on others.
@@ -583,7 +586,7 @@ public:
 	Mob* With();
 
 	// Add item from cursor slot to trade bucket (automatically does bag data too)
-	void AddEntity(uint16 from_slot_id, uint16 trade_slot_id);
+	void AddEntity(uint16 trade_slot_id, uint32 stack_size);
 
 	// Audit trade
 	void LogTrade();

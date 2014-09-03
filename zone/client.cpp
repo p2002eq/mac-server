@@ -62,10 +62,10 @@ extern volatile bool RunLoops;
 #include "client_logs.h"
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
-#include "../common/crc32.h"
+#include "queryserv.h"
 #include "../common/packet_dump_file.h"
 
-
+extern QueryServ* QServ;
 extern EntityList entity_list;
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
@@ -287,6 +287,9 @@ Client::Client(EQStreamInterface* ieqs)
 
 	last_used_slot = -1;
 //	walkspeed = 0.46;
+	
+	EngagedRaidTarget = false;
+	SavedRaidRestTimer = 0;
 }
 
 Client::~Client() {
@@ -538,6 +541,9 @@ bool Client::Save(uint8 iCommitNow) {
 		return false;
 	}
 
+	/* Mirror Character Data */
+	database.StoreCharacterLookup(this->CharacterID());
+
 	return true;
 }
 
@@ -718,8 +724,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 	}
 
-
-	if(RuleB(QueryServ, PlayerChatLogging)) {
+	/* Logs Player Chat */
+	if (RuleB(QueryServ, PlayerLogChat)) {
 		ServerPacket* pack = new ServerPacket(ServerOP_Speech, sizeof(Server_Speech_Struct) + strlen(message) + 1);
 		Server_Speech_Struct* sem = (Server_Speech_Struct*) pack->pBuffer;
 
@@ -754,7 +760,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 	switch(chan_num)
 	{
-	case 0: { // GuildChat
+	case 0: { /* Guild Chat */
 		if (!IsInAGuild())
 			Message_StringID(MT_DefaultText, GUILD_NOT_MEMBER2);	//You are not a member of any guild.
 		else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_SPEAK))
@@ -765,7 +771,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			eqmac_timer.Start(250, true);
 		break;
 	}
-	case 2: { // GroupChat
+	case 2: { /* Group Chat */
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid) {
 			raid->RaidGroupSay((const char*) message, this);
@@ -780,7 +786,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 		break;
 	}
-	case 15: { //raid say
+	case 15: { /* Raid Say */
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid){
 			raid->RaidSay((const char*) message, this);
@@ -788,7 +794,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 		break;
 	}
-	case 3: { // Shout
+	case 3: { /* Shout */
 		Mob *sender = this;
 		if (GetPet() && GetPet()->FindType(SE_VoiceGraft))
 			sender = GetPet();
@@ -797,7 +803,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		eqmac_timer.Start(250, true);
 		break;
 	}
-	case 4: { // Auction
+	case 4: { /* Auction */
 		if(RuleB(Chat, ServerWideAuction))
 		{
 			if(!global_channel_timer.Check())
@@ -839,7 +845,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 		break;
 	}
-	case 5: { // OOC
+	case 5: { /* OOC */
 		if(RuleB(Chat, ServerWideOOC))
 		{
 			if(!global_channel_timer.Check())
@@ -887,8 +893,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 		break;
 	}
-	case 6: // Broadcast
-	case 11: { // GMSay
+	case 6: /* Broadcast */
+	case 11: { /* GM Say */
 		if (!(admin >= 80))
 			Message(0, "Error: Only GMs can use this channel");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, 0, language, message))
@@ -897,7 +903,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			eqmac_timer.Start(250, true);
 		break;
 	}
-	case 7: { // Tell
+	case 7: { /* Tell */
 			if(!global_channel_timer.Check())
 			{
 				if(strlen(targetname) == 0)
@@ -947,7 +953,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				eqmac_timer.Start(250, true);
 		break;
 	}
-	case 8: { // /say
+	case 8: { /* Say */
 		if(message[0] == COMMAND_CHAR) {
 			if(command_dispatch(this, message) == -2) {
 				if(parse->PlayerHasQuestSub(EVENT_COMMAND)) {
@@ -1421,52 +1427,57 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	// (update: i think pp should do it, as this holds LoY dye - plus, this is ugly code with Inventory!)
 	const Item_Struct* item = nullptr;
 	const ItemInst* inst = nullptr;
-	if ((inst = m_inv[SLOT_HANDS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainHands]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHands]	= item->Material;
 		ns->spawn.colors[MaterialHands].color	= GetEquipmentColor(MaterialHands);
 	}
-	if ((inst = m_inv[SLOT_HEAD]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainHead]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHead]	= item->Material;
 		ns->spawn.colors[MaterialHead].color	= GetEquipmentColor(MaterialHead);
 	}
-	if ((inst = m_inv[SLOT_ARMS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainArms]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialArms]	= item->Material;
 		ns->spawn.colors[MaterialArms].color	= GetEquipmentColor(MaterialArms);
 	}
-	if ((inst = m_inv[SLOT_BRACER01]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainWrist1]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialWrist]= item->Material;
 		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
 	}
+
+	/*
+	// non-live behavior
 	if ((inst = m_inv[SLOT_BRACER02]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialWrist]= item->Material;
 		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
 	}
-	if ((inst = m_inv[SLOT_CHEST]) && inst->IsType(ItemClassCommon)) {
+	*/
+
+	if ((inst = m_inv[MainChest]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialChest]	= item->Material;
 		ns->spawn.colors[MaterialChest].color	= GetEquipmentColor(MaterialChest);
 	}
-	if ((inst = m_inv[SLOT_LEGS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainLegs]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialLegs]	= item->Material;
 		ns->spawn.colors[MaterialLegs].color	= GetEquipmentColor(MaterialLegs);
 	}
-	if ((inst = m_inv[SLOT_FEET]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainFeet]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialFeet]	= item->Material;
 		ns->spawn.colors[MaterialFeet].color	= GetEquipmentColor(MaterialFeet);
 	}
-	if ((inst = m_inv[SLOT_PRIMARY]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainPrimary]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
 	}
-	if ((inst = m_inv[SLOT_SECONDARY]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainSecondary]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
@@ -1766,6 +1777,15 @@ void Client::AddMoneyToPP(uint64 copper, bool updateclient){
 }
 
 void Client::AddMoneyToPP(uint32 copper, uint32 silver, uint32 gold, uint32 platinum, bool updateclient){
+
+	/* Set a timestamp in an entity variable for plugin check_handin.pl in return_items
+		This will stopgap players from items being returned if global_npc.pl has a catch all return_items
+	*/
+	struct timeval read_time;
+	char buffer[50];
+	gettimeofday(&read_time, 0);
+	sprintf(buffer, "%li.%li \n", read_time.tv_sec, read_time.tv_usec);
+	this->SetEntityVariable("Stop_Return", buffer);
 
 	int32 new_value = m_pp.platinum + platinum;
 	if(new_value >= 0 && new_value > m_pp.platinum)
@@ -2165,7 +2185,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 		if(!bindwound_timer.Enabled()) {
 			//make sure we actually have a bandage... and consume it.
 			int16 bslot = m_inv.HasItemByUse(ItemTypeBandage, 1, invWhereWorn|invWherePersonal);
-			if(bslot == SLOT_INVALID) {
+			if (bslot == INVALID_INDEX) {
 				bind_out->type = 3;
 				QueuePacket(outapp);
 				bind_out->type = 7;	//this is the wrong message, dont know the right one.
@@ -2317,7 +2337,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 	return true;
 }
 
-void Client::SetMaterial(int16 in_slot, uint32 item_id){
+void Client::SetMaterial(int16 in_slot, uint32 item_id) {
 	const Item_Struct* item = database.GetItem(item_id);
 	if (item && (item->ItemClass==ItemClassCommon)) {
 		if (in_slot==SLOT_HEAD)
@@ -3093,13 +3113,17 @@ void Client::KeyRingAdd(uint32 item_id)
 	bool bFound = KeyRingCheck(item_id);
 	if(!bFound){
 		sprintf(query, "INSERT INTO keyring(char_id,item_id) VALUES(%i,%i)",character_id,item_id);
-		if(database.RunQuery(query, strlen(query), errbuf, 0, &affected_rows))
-		{
+		if(database.RunQuery(query, strlen(query), errbuf, 0, &affected_rows)) {
 			Message(4,"Added to keyring.");
+
+			/* QS: PlayerLogKeyringAddition */
+			if (RuleB(QueryServ, PlayerLogKeyringAddition)){
+				std::string event_desc = StringFormat("itemid:%i in zoneid:%i instid:%i", item_id, this->GetZoneID(), this->GetInstanceID());
+				QServ->PlayerLogEvent(Player_Log_Keyring_Addition, this->CharacterID(), event_desc);
+			}
 			safe_delete_array(query);
 		}
-		else
-		{
+		else {
 			std::cerr << "Error in Doors::HandleClick query '" << query << "' " << errbuf << std::endl;
 			safe_delete_array(query);
 			return;
@@ -3180,14 +3204,14 @@ void Client::DiscoverItem(uint32 itemid) {
 uint16 Client::GetPrimarySkillValue()
 {
 	SkillUseTypes skill = HIGHEST_SKILL; //because nullptr == 0, which is 1H Slashing, & we want it to return 0 from GetSkill
-	bool equiped = m_inv.GetItem(13);
+	bool equiped = m_inv.GetItem(MainPrimary);
 
 	if (!equiped)
 		skill = SkillHandtoHand;
 
 	else {
 
-		uint8 type = m_inv.GetItem(13)->GetItem()->ItemType; //is this the best way to do this?
+		uint8 type = m_inv.GetItem(MainPrimary)->GetItem()->ItemType; //is this the best way to do this?
 
 		switch (type)
 		{
@@ -3318,7 +3342,7 @@ void Client::IncrementAggroCount() {
 
 	if(!RuleI(Character, RestRegenPercent))
 		return;
-
+	
 	// If we already had aggro before this method was called, the combat indicator should already be up for SoF clients,
 	// so we don't need to send it again.
 	//
@@ -3345,8 +3369,21 @@ void Client::DecrementAggroCount() {
 	// Something else is still aggro on us, can't rest yet.
 	if(AggroCount) return;
 
-	rest_timer.Start(RuleI(Character, RestRegenTimeToActivate) * 1000);
-
+	uint32 time_until_rest;
+	if (GetEngagedRaidTarget()) {
+		time_until_rest = RuleI(Character, RestRegenRaidTimeToActivate) * 1000;
+		SetEngagedRaidTarget(false);
+	} else {
+		if (SavedRaidRestTimer > (RuleI(Character, RestRegenTimeToActivate) * 1000)) {
+			time_until_rest = SavedRaidRestTimer;
+			SavedRaidRestTimer = 0;
+		} else {
+			time_until_rest = RuleI(Character, RestRegenTimeToActivate) * 1000;
+		}
+	}
+	
+	rest_timer.Start(time_until_rest);
+	
 }
 
 void Client::SendDisciplineTimers()
@@ -3952,7 +3989,7 @@ void Client::SuspendMinion()
 	}
 }
 
-// Processes a client request to inspect a SoF client's equipment.
+// Processes a client request to inspect a SoF+ client's equipment.
 void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
 	if(requestee && requester) {
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_InspectAnswer, sizeof(InspectResponse_Struct));
@@ -5128,29 +5165,67 @@ int32 Client::GetModCharacterFactionLevel(int32 faction_id) {
 	return Modded;
 }
 
-bool Client::HatedByClass(uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction)
+void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 {
+	int messageid = 0;
+	int32 tmpFactionValue = 0;
+	int32 lowestvalue = 0;
+	FactionMods fmod;
 
-	bool Result = false;
-
-	int32 tmpFactionValue;
-	FactionMods fmods;
-
-	//First get the NPC's Primary faction
-	if(pFaction > 0)
-	{
-		//Get the faction data from the database
-		if(database.GetFactionData(&fmods, p_class, p_race, p_deity, pFaction))
-		{
-			tmpFactionValue = GetCharacterFactionLevel(pFaction);
-			tmpFactionValue += GetFactionBonus(pFaction);
-			tmpFactionValue += GetItemFactionBonus(pFaction);
-			CalculateFaction(&fmods, tmpFactionValue);
-			if(fmods.class_mod < fmods.race_mod)
-				Result = true;
+	// If a faction is involved, get the data.
+	if (primaryfaction > 0) {
+		if (database.GetFactionData(&fmod, GetClass(), GetRace(), GetDeity(), primaryfaction)) {
+			tmpFactionValue = GetCharacterFactionLevel(primaryfaction);
+			lowestvalue = std::min(tmpFactionValue, std::min(fmod.class_mod, fmod.race_mod));
 		}
 	}
-	return Result;
+	// If no primary faction or biggest influence is your faction hit
+	if (primaryfaction <= 0 || lowestvalue == tmpFactionValue) {
+		merchant->Say_StringID(MakeRandomInt(WONT_SELL_DEEDS1, WONT_SELL_DEEDS6));
+	} else if (lowestvalue == fmod.race_mod) { // race biggest
+		// Non-standard race (ex. illusioned to wolf)
+		if (GetRace() > PLAYER_RACE_COUNT) {
+			messageid = MakeRandomInt(1, 3); // these aren't sequential StringIDs :(
+			switch (messageid) {
+			case 1:
+				messageid = WONT_SELL_NONSTDRACE1;
+				break;
+			case 2:
+				messageid = WONT_SELL_NONSTDRACE2;
+				break;
+			case 3:
+				messageid = WONT_SELL_NONSTDRACE3;
+				break;
+			default: // w/e should never happen
+				messageid = WONT_SELL_NONSTDRACE1;
+				break;
+			}
+			merchant->Say_StringID(messageid);
+		} else { // normal player races
+			messageid = MakeRandomInt(1, 4);
+			switch (messageid) {
+			case 1:
+				messageid = WONT_SELL_RACE1;
+				break;
+			case 2:
+				messageid = WONT_SELL_RACE2;
+				break;
+			case 3:
+				messageid = WONT_SELL_RACE3;
+				break;
+			case 4:
+				messageid = WONT_SELL_RACE4;
+				break;
+			default: // w/e should never happen
+				messageid = WONT_SELL_RACE1;
+				break;
+			}
+			merchant->Say_StringID(messageid, itoa(GetRace()));
+		}
+	} else if (lowestvalue == fmod.class_mod) {
+		merchant->Say_StringID(MakeRandomInt(WONT_SELL_CLASS1, WONT_SELL_CLASS5), itoa(GetClass()));
+	}
+	return;
 }
 
 //o--------------------------------------------------------------

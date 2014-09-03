@@ -107,7 +107,7 @@ protected:
 	bool	DBSetBankerFlag(uint32 charid, bool is_banker);
 	bool	DBSetAltFlag(uint32 charid, bool is_alt);
 	bool	DBSetPublicNote(uint32 charid, const char *note);
-	bool	_RunQuery(char *&query, int len, const char *errmsg);
+	bool	QueryWithLogging(std::string query, const char *errmsg);
 //	void	DBSetPublicNote(uint32 guild_id,char* charname, char* note);
 
 	bool	LocalDeleteGuild(uint32 guild_id);

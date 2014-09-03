@@ -170,11 +170,10 @@ void Group::SplitMoney(uint32 copper, uint32 silver, uint32 gold, uint32 platinu
 
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr && members[i]->IsClient()) { // If Group Member is Client
-			Client *c = members[i]->CastToClient();
-		//I could not get MoneyOnCorpse to work, so we use this
-		c->AddMoneyToPP(cpsplit, spsplit, gpsplit, ppsplit, true);
-
-		c->Message(2, msg.c_str());
+				Client *c = members[i]->CastToClient();
+			//I could not get MoneyOnCorpse to work, so we use this
+			c->AddMoneyToPP(cpsplit, spsplit, gpsplit, ppsplit, true); 
+			c->Message(2, msg.c_str());
 		}
 	}
 }
@@ -499,6 +498,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 	range = caster->GetAOERange(spell_id);
 
 	float range2 = range*range;
+	float min_range2 = spells[spell_id].min_range * spells[spell_id].min_range;
 
 //	caster->SpellOnTarget(spell_id, caster);
 
@@ -514,7 +514,8 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 		else if(members[z] != nullptr)
 		{
 			distance = caster->DistNoRoot(*members[z]);
-			if(distance <= range2) {
+			if(distance <= range2 && distance >= min_range2) {
+				members[z]->CalcSpellPowerDistanceMod(spell_id, distance);
 				caster->SpellOnTarget(spell_id, members[z]);
 #ifdef GROUP_BUFF_PETS
 				if(members[z]->GetPet() && members[z]->HasPetAffinity() && !members[z]->GetPet()->IsCharmed())

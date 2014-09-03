@@ -974,9 +974,8 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 		end = itemlist.end();
 
 		uint8 containercount = 0;
-		int corpselootlimit;
 
-		corpselootlimit = 30;
+		int corpselootlimit = 30;
 
 		for(; cur != end; ++cur) {
 			ServerLootItem_Struct* item_data = *cur;
@@ -1118,7 +1117,7 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app)
 		strcpy(corpse_name, orgname);
 		snprintf(buf, 87, "%d %d %s", inst->GetItem()->ID, inst->GetCharges(), EntityList::RemoveNumbers(corpse_name));
 		buf[87] = '\0';
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(inst);
 		args.push_back(this);
 		parse->EventPlayer(EVENT_LOOT, client, buf, 0, &args);
@@ -1988,6 +1987,17 @@ void Corpse::LoadPlayerCorpseDecayTime(uint32 dbid){
 	else
 		safe_delete_array(query);
 }
+
+/*
+uint32 Corpse::ServerToCorpseSlot(int16 server_slot) {
+	// reserved
+}
+*/
+/*
+int16 Corpse::CorpseToServerSlot(uint32 corpse_slot) {
+	// reserved
+}
+*/
 
 /*
 void Corpse::CastRezz(uint16 spellid, Mob* Caster){

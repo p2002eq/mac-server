@@ -32,7 +32,8 @@ static const uint32 MAX_MERC_GRADES = 10;
 static const uint32 MAX_MERC_STANCES = 10;
 static const uint32 BLOCKED_BUFF_COUNT = 20;
 
-#include "eq_constants.h"
+//#include "eq_constants.h"
+#include "eq_dictionary.h"
 
 /*
 ** Compiler override to ensure
@@ -668,6 +669,7 @@ static const uint32 MAX_PLAYER_BANDOLIER = 4;
 static const uint32 MAX_PLAYER_BANDOLIER_ITEMS = 4;
 static const uint32 MAX_POTIONS_IN_BELT = 4;
 static const uint32 TRIBUTE_NONE = 0xFFFFFFFF;
+
 struct Tribute_Struct {
 	uint32 tribute;
 	uint32 tier;
@@ -2963,6 +2965,7 @@ struct MerchantList {
 	int16	faction_required;
 	int8	level_required;
 	uint32	classes_required;
+	uint8	probability;
 };
 
 struct TempMerchantList {

@@ -139,7 +139,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 	if(IsNPC())
 	{
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&buffslot);
 		int i = parse->EventSpell(EVENT_SPELL_EFFECT_NPC, CastToNPC(), nullptr, spell_id, caster ? caster->GetID() : 0, &args);
 		if(i != 0){
@@ -149,7 +149,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	}
 	else if(IsClient())
 	{
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&buffslot);
 		int i = parse->EventSpell(EVENT_SPELL_EFFECT_CLIENT, nullptr, CastToClient(), spell_id, caster ? caster->GetID() : 0, &args);
 		if(i != 0){
@@ -186,6 +186,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 		buffs[buffslot].numhits = numhit;
 	}
 
+	if (!IsPowerDistModSpell(spell_id))
+		SetSpellPowerDistanceMod(0);
+
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
 	{
@@ -197,6 +200,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 		if(spell_id == SPELL_LAY_ON_HANDS && caster && caster->GetAA(aaImprovedLayOnHands))
 			effect_value = GetMaxHP();
+
+		if (GetSpellPowerDistanceMod())
+			effect_value = effect_value*(GetSpellPowerDistanceMod()/100);
 
 #ifdef SPELL_EFFECT_SPAM
 		effect_desc[0] = 0;
@@ -1438,7 +1444,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				for(int x = 0; x < 7; x++){
 					SendWearChange(x);
-				}
+				
 				if(caster && (caster->spellbonuses.IllusionPersistence ||  caster->aabonuses.IllusionPersistence
 					|| caster->itembonuses.IllusionPersistence))
 					buffs[buffslot].persistant_buff = 1;
@@ -1462,7 +1468,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						caster->SendAppearancePacket(AT_Size, caster->GetTarget()->GetSize());
 						for(int x = 0; x < 7; x++){
 							caster->SendWearChange(x);
-						}
 				}
 			}
 
@@ -2134,7 +2139,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Rampage");
 #endif
 				if(caster)
-					entity_list.AEAttack(caster, 30, 13, 0, true); // on live wars dont get a duration ramp, its a one shot deal
+					entity_list.AEAttack(caster, 30, SLOT_PRIMARY, 0, true); // on live wars dont get a duration ramp, its a one shot deal
 
 				break;
 			}
@@ -2638,7 +2643,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if (buffslot >= 0)
 					break;
 
-				if(IsCasting() && MakeRandomInt(0, 100) <= spells[spell_id].base[i])
+				if(!spells[spell_id].uninterruptable && IsCasting() && MakeRandomInt(0, 100) <= spells[spell_id].base[i])
 					InterruptSpell();
 				
 				break;
@@ -2918,7 +2923,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	if (SummonedItem) {
 		Client *c=CastToClient();
 		c->PushItemOnCursor(*SummonedItem);
-		c->SendItemPacket(SLOT_CURSOR, SummonedItem, ItemPacketSummonItem);
+		c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
 		safe_delete(SummonedItem);
 	}
 
@@ -3221,7 +3226,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 	if(IsNPC())
 	{
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&ticsremaining);
 		args.push_back(&caster_level);
 		args.push_back(&slot);
@@ -3232,7 +3237,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 	}
 	else
 	{
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&ticsremaining);
 		args.push_back(&caster_level);
 		args.push_back(&slot);
@@ -3579,12 +3584,12 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 	}
 
 	if(IsClient()) {
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&buffs[slot].casterid);
 
 		parse->EventSpell(EVENT_SPELL_FADE, nullptr, CastToClient(), buffs[slot].spellid, slot, &args);
 	} else if(IsNPC()) {
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&buffs[slot].casterid);
 
 		parse->EventSpell(EVENT_SPELL_FADE, CastToNPC(), nullptr, buffs[slot].spellid, slot, &args);
@@ -3656,7 +3661,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 				else{
 					SendAppearancePacket(AT_Size, 6);
 				}
-				for(int x = 0; x < 7; x++){
+				for(int x = EmuConstants::MATERIAL_BEGIN; x <= EmuConstants::MATERIAL_TINT_END; x++){
 					SendWearChange(x);
 				}
 				break;
@@ -4671,24 +4676,24 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 
 		case SE_LimitSpellClass:
 			if(focus_spell.base[i] < 0) {	//Exclude
-				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellClass));
+				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellClass))
 					return(0);
-			} 
+			}
 			else {
 				LimitInclude[12] = true;
-				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellClass)); //Include
+				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellClass)) //Include
 					LimitInclude[13] = true;
 			}
 			break;
 
 		case SE_LimitSpellSubclass:
 			if(focus_spell.base[i] < 0) {	//Exclude
-				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellSubclass));
+				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellSubclass))
 					return(0);
-			} 
+			}
 			else {
 				LimitInclude[14] = true;
-				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellSubclass)); //Include
+				if (CheckSpellCategory(spell_id, focus_spell.base[i], SE_LimitSpellSubclass)) //Include
 					LimitInclude[15] = true;
 			}
 			break;
@@ -4964,7 +4969,7 @@ int16 Client::GetSympatheticFocusEffect(focusType type, uint16 spell_id) {
 
 		const Item_Struct* TempItem = 0;
 
-		for(int x=0; x<=21; x++)
+		for(int x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::EQUIPMENT_END; x++)
 		{
 			if (SympatheticProcList.size() > MAX_SYMPATHETIC)
 				continue;
@@ -5584,8 +5589,6 @@ int32 Mob::GetFocusIncoming(focusType type, int effect, Mob *caster, uint32 spel
 	int value = 0;
 
 	if (spellbonuses.FocusEffects[type]){
-		uint32 buff_count = GetMaxTotalSlots();
-		for(int i = 0; i < buff_count; i++){
 
 			int32 tmp_focus = 0;
 			int tmp_buffslot = -1;
@@ -5618,7 +5621,7 @@ int32 Mob::GetFocusIncoming(focusType type, int effect, Mob *caster, uint32 spel
 				CheckNumHitsRemaining(NUMHIT_MatchingSpells, tmp_buffslot);
 		}
 
-	}
+	
 	return value;
 }
 

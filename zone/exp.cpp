@@ -22,8 +22,20 @@
 #include "../common/string_util.h"
 #include "../common/rulesys.h"
 #include "quest_parser_collection.h"
+#include "queryserv.h"
+
+extern QueryServ* QServ;
 
 void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
+
+	/* Set a timestamp in an entity variable for plugin check_handin.pl in return_items
+		This will stopgap players from items being returned if global_npc.pl has a catch all return_items
+	*/
+	struct timeval read_time;
+	char buffer[50];
+	gettimeofday(&read_time, 0);
+	sprintf(buffer, "%li.%li \n", read_time.tv_sec, read_time.tv_usec);
+	this->SetEntityVariable("Stop_Return", buffer);
 
 	uint32 add_exp = in_add_exp;
 
@@ -151,7 +163,6 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		return; // Must be invalid class/race
 	}
 
-
 	if ((set_exp + set_aaxp) > (m_pp.exp+m_pp.expAA)) {
 		if (isrezzexp)
 			this->Message_StringID(CC_Yellow, REZ_REGAIN);
@@ -223,6 +234,14 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		//Message(15, "You have gained %d skill points!!", m_pp.aapoints - last_unspentAA);
 		char val1[20]={0};
 		Message_StringID(CC_Yellow, GAIN_ABILITY_POINT,ConvertArray(m_pp.aapoints, val1),m_pp.aapoints == 1 ? "" : "(s)");	//You have gained an ability point! You now have %1 ability point%2.
+		
+		/* QS: PlayerLogAARate */
+		if (RuleB(QueryServ, PlayerLogAARate)){
+			int add_points = (m_pp.aapoints - last_unspentAA);
+			std::string query = StringFormat("INSERT INTO `qs_player_aa_rate_hourly` (char_id, aa_count, hour_time) VALUES (%i, %i, UNIX_TIMESTAMP() - MOD(UNIX_TIMESTAMP(), 3600)) ON DUPLICATE KEY UPDATE `aa_count` = `aa_count` + %i", this->CharacterID(), add_points, add_points);
+			QServ->SendQuery(query.c_str());
+		}
+
 		//Message(15, "You now have %d skill points available to spend.", m_pp.aapoints);
 	}
 
@@ -234,12 +253,10 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	if(check_level > maxlevel) {
 		check_level = maxlevel;
 
-		if(RuleB(Character, KeepLevelOverMax))
-		{
+		if(RuleB(Character, KeepLevelOverMax)) {
 			set_exp = GetEXPForLevel(GetLevel()+1);
 		}
-		else
-		{
+		else {
 			set_exp = GetEXPForLevel(maxlevel);
 		}
 	}
@@ -249,8 +266,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		if(MaxLevel){
 			if(GetLevel() >= MaxLevel){
 				uint32 expneeded = GetEXPForLevel(MaxLevel);
-				if(set_exp > expneeded)
-				{
+				if(set_exp > expneeded) {
 					set_exp = expneeded;
 				}
 			}
@@ -261,11 +277,11 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		char val1[20]={0};
 		if (GetLevel() == check_level-1){
 			Message_StringID(CC_Yellow, GAIN_LEVEL,ConvertArray(check_level,val1));
-			//Message(15, "You have gained a level! Welcome to level %i!", check_level);
+			/* Message(15, "You have gained a level! Welcome to level %i!", check_level); */
 		}
 		else {
 			Message_StringID(CC_Yellow, LOSE_LEVEL, ConvertArray(check_level, val1));
-			//Message(15, "You lost a level! You are now level %i!", check_level);
+			/* Message(15, "You lost a level! You are now level %i!", check_level); */
 		}
 
 		SetLevel(check_level);
@@ -275,8 +291,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	//If were at max level then stop gaining experience if we make it to the cap
 	if(GetLevel() == maxlevel - 1){
 		uint32 expneeded = GetEXPForLevel(maxlevel);
-		if(set_exp > expneeded)
-		{
+		if(set_exp > expneeded) {
 			set_exp = expneeded;
 		}
 	}
@@ -328,15 +343,13 @@ void Client::SetLevel(uint8 set_level, bool command)
 
 	level = set_level;
 
-	if(IsRaidGrouped())
-	{
+	if(IsRaidGrouped()) {
 		Raid *r = this->GetRaid();
 		if(r){
 			r->UpdateLevel(GetName(), set_level);
 		}
 	}
-	if(set_level > m_pp.level2)
-	{
+	if(set_level > m_pp.level2) {
 		if(m_pp.level2 == 0)
 			m_pp.points += 5;
 		else
@@ -346,6 +359,18 @@ void Client::SetLevel(uint8 set_level, bool command)
 	}
 	if(set_level > m_pp.level) {
 		parse->EventPlayer(EVENT_LEVEL_UP, this, "", 0);
+		/* QS: PlayerLogLevels */
+		if (RuleB(QueryServ, PlayerLogLevels)){
+			std::string event_desc = StringFormat("Leveled UP :: to Level:%i from Level:%i in zoneid:%i instid:%i", set_level, m_pp.level, this->GetZoneID(), this->GetInstanceID());
+			QServ->PlayerLogEvent(Player_Log_Levels, this->CharacterID(), event_desc); 
+		}
+	}
+	else if (set_level < m_pp.level){
+		/* QS: PlayerLogLevels */
+		if (RuleB(QueryServ, PlayerLogLevels)){
+			std::string event_desc = StringFormat("Leveled DOWN :: to Level:%i from Level:%i in zoneid:%i instid:%i", set_level, m_pp.level, this->GetZoneID(), this->GetInstanceID());
+			QServ->PlayerLogEvent(Player_Log_Levels, this->CharacterID(), event_desc);
+		}
 	}
 
 	m_pp.level = set_level;
@@ -355,25 +380,23 @@ void Client::SetLevel(uint8 set_level, bool command)
 		lu->exp = 0;
 	}
 	else {
-		float tmpxp = (float) ( (float) m_pp.exp - GetEXPForLevel( GetLevel() )) /
-						( (float) GetEXPForLevel(GetLevel()+1) - GetEXPForLevel(GetLevel()));
+		float tmpxp = (float) ( (float) m_pp.exp - GetEXPForLevel( GetLevel() )) / ( (float) GetEXPForLevel(GetLevel()+1) - GetEXPForLevel(GetLevel()));
 		lu->exp = (uint32)(330.0f * tmpxp);
 	}
 	QueuePacket(outapp);
 	safe_delete(outapp);
 	this->SendAppearancePacket(AT_WhoLevel, set_level); // who level change
 
-		LogFile->write(EQEMuLog::Normal,"Setting Level for %s to %i", GetName(), set_level);
+	LogFile->write(EQEMuLog::Normal,"Setting Level for %s to %i", GetName(), set_level);
 
 	CalcBonuses();
-	if(!RuleB(Character, HealOnLevel))
-	{
+
+	if(!RuleB(Character, HealOnLevel)) {
 		int mhp = CalcMaxHP();
 		if(GetHP() > mhp)
 			SetHP(mhp);
 	}
-	else
-	{
+	else {
 		SetHP(CalcMaxHP()); // Why not, lets give them a free heal
 	}
 	if(!RuleB(Character, ManaOnLevel))
@@ -438,23 +461,13 @@ uint32 Client::GetEXPForLevel(uint16 check_level)
 	uint32 finalxp = uint32(base * mod);
 	finalxp = mod_client_xp_for_level(finalxp, check_level);
 
-	return(finalxp);
+	return finalxp;
 }
 
-void Client::AddLevelBasedExp(uint8 exp_percentage, uint8 max_level) {
-
-	if (exp_percentage > 100)
-	{
-		exp_percentage = 100;
-	}
-
-	if (!max_level || GetLevel() < max_level)
-	{
-		max_level = GetLevel();
-	}
-
-	uint32 newexp = GetEXP() + ((GetEXPForLevel(max_level + 1) - GetEXPForLevel(max_level)) * exp_percentage / 100);
-
+void Client::AddLevelBasedExp(uint8 exp_percentage, uint8 max_level) { 
+	if (exp_percentage > 100) { exp_percentage = 100; } 
+	if (!max_level || GetLevel() < max_level) { max_level = GetLevel(); } 
+	uint32 newexp = GetEXP() + ((GetEXPForLevel(max_level + 1) - GetEXPForLevel(max_level)) * exp_percentage / 100); 
 	SetEXP(newexp, GetAAXP());
 }
 
@@ -562,28 +575,25 @@ void Raid::SplitExp(uint32 exp, Mob* other) {
 }
 
 uint32 Client::GetCharMaxLevelFromQGlobal() {
+	QGlobalCache *char_c = nullptr;
+	char_c = this->GetQGlobals();
 
-		QGlobalCache *char_c = nullptr;
-		char_c = this->GetQGlobals();
+	std::list<QGlobal> globalMap;
+	uint32 ntype = 0;
 
-		std::list<QGlobal> globalMap;
-		uint32 ntype = 0;
+	if(char_c) {
+		QGlobalCache::Combine(globalMap, char_c->GetBucket(), ntype, this->CharacterID(), zone->GetZoneID());
+	}
 
-		if(char_c)
-		{
-			QGlobalCache::Combine(globalMap, char_c->GetBucket(), ntype, this->CharacterID(), zone->GetZoneID());
-		}
+	std::list<QGlobal>::iterator iter = globalMap.begin();
+	uint32 gcount = 0;
+	while(iter != globalMap.end()) {
+		if((*iter).name.compare("CharMaxLevel") == 0){
+			return atoi((*iter).value.c_str());
+		} 
+		++iter;
+		++gcount;
+	}
 
-		std::list<QGlobal>::iterator iter = globalMap.begin();
-		uint32 gcount = 0;
-		while(iter != globalMap.end())
-		{
-			if((*iter).name.compare("CharMaxLevel") == 0){
-				return atoi((*iter).value.c_str());
-			}
-			++iter;
-			++gcount;
-		}
-
-	return false; // Default is false
+	return false;
 }

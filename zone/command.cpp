@@ -62,8 +62,9 @@
 #include "guild_mgr.h"
 #include "titles.h"
 #include "../common/patches/patches.h"
+#include "queryserv.h"
 
-// these should be in the headers...
+extern QueryServ* QServ;
 extern WorldServer worldserver;
 void CatchSignal(int sig_num);
 
@@ -586,6 +587,12 @@ int command_realdispatch(Client *c, const char *message){
 	if(c->Admin() < cur->access){
 		c->Message(13,"Your access level is not high enough to use this command.");
 		return(-1);
+	}
+
+	/* QS: Player_Log_Issued_Commands */
+	if (RuleB(QueryServ, PlayerLogIssuedCommandes)){
+		std::string event_desc = StringFormat("Issued command :: '%s' in zoneid:%i instid:%i", message, c->GetZoneID(), c->GetInstanceID());
+		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc); 
 	}
 
 #ifdef COMMANDS_LOGGING
@@ -2564,14 +2571,14 @@ void command_texture(Client *c, const Seperator *sep){
 		// Player Races Wear Armor, so Wearchange is sent instead
 		int i;
 		if (!c->GetTarget())
-			for (i = 0; i < 7; i++)
+			for (i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++)
 			{
 				c->SendTextureWC(i, texture);
 			}
 		else if ((c->GetTarget()->GetRace() > 0 && c->GetTarget()->GetRace() <= 12) ||
 			c->GetTarget()->GetRace() == 128 || c->GetTarget()->GetRace() == 130 ||
 			c->GetTarget()->GetRace() == 330 || c->GetTarget()->GetRace() == 522) {
-			for (i = 0; i < 7; i++)
+			for (i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++)
 			{
 				c->GetTarget()->SendTextureWC(i, texture);
 			}
@@ -3248,6 +3255,8 @@ void command_equipitem(Client *c, const Seperator *sep){
 			}
 			else if(c->SwapItem(mi) == 1) {
 				c->FastQueuePacket(&outapp);
+
+				// if the below code is still needed..just send an an item trade packet to each slot..it should overwrite the client instance
 
 				// below code has proper logic, but client does not like to have cursor charges changed
 				// (we could delete the cursor item and resend, but issues would arise if there are queued items)
@@ -4306,7 +4315,7 @@ void command_goto(Client *c, const Seperator *sep){
 }
 
 void command_iteminfo(Client *c, const Seperator *sep){
-	const ItemInst* inst = c->GetInv()[SLOT_CURSOR];
+	const ItemInst* inst = c->GetInv()[MainCursor];
 
 	if (!inst)
 		c->Message(13, "Error: You need an item on your cursor for this command");
@@ -7254,16 +7263,19 @@ void command_path(Client *c, const Seperator *sep)
 }
 
 void Client::Undye(){
-	for (int cur_slot = 0; cur_slot < 9 ; cur_slot++ ){
+	for (int cur_slot = EmuConstants::MATERIAL_BEGIN; cur_slot <= EmuConstants::MATERIAL_END; cur_slot++ ) {
 		uint8 slot2=SlotConvert(cur_slot);
 		ItemInst* inst = m_inv.GetItem(slot2);
+
 		if(inst != nullptr) {
 			inst->SetColor(inst->GetItem()->Color);
 			database.SaveInventory(CharacterID(), inst, slot2);
 		}
+
 		m_pp.item_tint[cur_slot].color = 0;
 		SendWearChange(cur_slot);
 	}
+
 	Save(0);
 }
 

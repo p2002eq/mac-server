@@ -856,7 +856,7 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				newbon->PetMaxHP += base1;
 				break;
 			case SE_AvoidMeleeChance:
-				newbon->AvoidMeleeChance += base1;
+				newbon->AvoidMeleeChanceEffect += base1;
 				break;
 			case SE_CombatStability:
 				newbon->CombatStability += base1;
@@ -951,7 +951,7 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				newbon->FlurryChance += base1;
 				break;
 			case SE_PetFlurry:
-				newbon->PetFlurry = base1;
+				newbon->PetFlurry += base1;
 				break;
 			case SE_BardSongRange:
 				newbon->SongRange += base1;
@@ -965,6 +965,14 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_CrippBlowChance:
 				newbon->CrippBlowChance += base1;
 				break;
+
+			case SE_HitChance:
+			{
+				if(base2 == -1)
+					newbon->HitChanceEffect[HIGHEST_SKILL+1] += base1;
+				else
+					newbon->HitChanceEffect[base2] += base1;
+			}
 
 			case SE_ProcOnKillShot:
 				for(int i = 0; i < MAX_SPELL_TRIGGER*3; i+=3)
@@ -1344,6 +1352,10 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				}
 				break;
 			}
+
+			case SE_MeleeMitigation:
+				newbon->MeleeMitigationEffect -= base1;
+				break;
 
 		}
 	}
@@ -1765,7 +1777,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_MeleeMitigation:
 				//for some reason... this value is negative for increased mitigation
-				newbon->MeleeMitigation -= effect_value;
+				newbon->MeleeMitigationEffect -= effect_value;
 				break;
 
 			case SE_CriticalHitChance:
@@ -1810,16 +1822,14 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_AvoidMeleeChance:
 			{
-				//multiplier is to be compatible with item effects, watching for overflow too
-				effect_value = effect_value<3000? effect_value * 10 : 30000;
 				if (RuleB(Spells, AdditiveBonusValues) && item_bonus)
-					newbon->AvoidMeleeChance += effect_value;
+					newbon->AvoidMeleeChanceEffect += effect_value;
 
-				else if((effect_value < 0) && (newbon->AvoidMeleeChance > effect_value))
-					newbon->AvoidMeleeChance = effect_value;
+				else if((effect_value < 0) && (newbon->AvoidMeleeChanceEffect > effect_value))
+					newbon->AvoidMeleeChanceEffect = effect_value;
 
-				else if(newbon->AvoidMeleeChance < effect_value)
-					newbon->AvoidMeleeChance = effect_value;
+				else if(newbon->AvoidMeleeChanceEffect < effect_value)
+					newbon->AvoidMeleeChanceEffect = effect_value;
 				break;
 			}
 
@@ -3022,8 +3032,7 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 	}
 }
 
-void Client::CalcItemScale()
-{
+void Client::CalcItemScale() {
 	bool changed = false;
 
 	if(CalcItemScale(0, 21))
@@ -3041,14 +3050,25 @@ void Client::CalcItemScale()
 	}
 }
 
-bool Client::CalcItemScale(uint32 slot_x, uint32 slot_y)
-{
+bool Client::CalcItemScale(uint32 slot_x, uint32 slot_y) {
 	bool changed = false;
 	int i;
-	for (i = slot_x; i < slot_y; i++) {
-		ItemInst* inst = m_inv.GetItem(i);
-		if(inst == 0)
+	for (i = slot_x; i <= slot_y; i++) {
+		if (i == 22) // moved here from calling procedure to facilitate future range changes where MainAmmo may not be the last slot
 			continue;
+
+		ItemInst* inst = m_inv.GetItem(i);
+
+		if(inst == nullptr)
+			continue;
+
+		// TEST CODE: test for bazaar trader crashing with charm items
+		if (Trader)
+			if (i >= 250 && i <= 329) {
+				ItemInst* parent_item = m_inv.GetItem(Inventory::CalcSlotId(i));
+				if (parent_item && parent_item->GetItem()->ID == 17899) // trader satchel
+					continue;
+			}
 
 		bool update_slot = false;
 		if(inst->IsScaling())
@@ -3091,10 +3111,22 @@ void Client::DoItemEnterZone() {
 
 bool Client::DoItemEnterZone(uint32 slot_x, uint32 slot_y) {
 	bool changed = false;
-	for(int i = slot_x; i < slot_y; i++) {
+	for(int i = slot_x; i <= slot_y; i++) {
+		if (i == 22) // moved here from calling procedure to facilitate future range changes where MainAmmo may not be the last slot
+			continue;
+
 		ItemInst* inst = m_inv.GetItem(i);
+
 		if(!inst)
 			continue;
+
+		// TEST CODE: test for bazaar trader crashing with charm items
+		if (Trader)
+			if (i >= 250 && i <= 329) {
+				ItemInst* parent_item = m_inv.GetItem(Inventory::CalcSlotId(i));
+				if (parent_item && parent_item->GetItem()->ID == 17899) // trader satchel
+					continue;
+			}
 
 		bool update_slot = false;
 		if(inst->IsScaling())
@@ -3506,9 +3538,9 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					break;
 
 				case SE_MeleeMitigation:
-					spellbonuses.MeleeMitigation = effect_value;
-					itembonuses.MeleeMitigation = effect_value;
-					aabonuses.MeleeMitigation = effect_value;
+					spellbonuses.MeleeMitigationEffect = effect_value;
+					itembonuses.MeleeMitigationEffect = effect_value;
+					aabonuses.MeleeMitigationEffect = effect_value;
 					break;
 
 				case SE_CriticalHitChance:
@@ -3528,9 +3560,9 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					break;
 
 				case SE_AvoidMeleeChance:
-					spellbonuses.AvoidMeleeChance = effect_value;
-					aabonuses.AvoidMeleeChance = effect_value;
-					itembonuses.AvoidMeleeChance = effect_value;
+					spellbonuses.AvoidMeleeChanceEffect = effect_value;
+					aabonuses.AvoidMeleeChanceEffect = effect_value;
+					itembonuses.AvoidMeleeChanceEffect = effect_value;
 					break;
 
 				case SE_RiposteChance:

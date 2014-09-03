@@ -25,7 +25,6 @@
 #include "clientlist.h"
 #include "wguild_mgr.h"
 #include "sof_char_create_data.h"
-#include "console.h"
 
 #include <iostream>
 #include <iomanip>
