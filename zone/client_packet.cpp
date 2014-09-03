@@ -265,7 +265,6 @@ void MapOpcodes() {
 	ConnectedOpcodes[OP_Action2] = &Client::Handle_OP_Action;
 	ConnectedOpcodes[OP_Discipline] = &Client::Handle_OP_Discipline;
 	ConnectedOpcodes[OP_ZoneEntryResend] = &Client::Handle_OP_ZoneEntryResend;
-	ConnectedOpcodes[OP_ClientTimeStamp] = &Client::Handle_OP_ClientTimeStamp;
 }
 
 void ClearMappedOpcode(EmuOpcode op) {
@@ -8280,8 +8279,4 @@ void Client::Handle_OP_SenseHeading(const EQApplicationPacket *app)
 {
 	CheckIncreaseSkill(SkillSenseHeading, nullptr, -12);
 	return;
-}
-
-void Client::Handle_OP_ClientTimeStamp(const EQApplicationPacket *app) {
-	// handle as needed or ignore like we have been doing...
 }

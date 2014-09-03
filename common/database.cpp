@@ -725,8 +725,9 @@ void Database::GetCharName(uint32 char_id, char* name) {
 		return;
 	}
 
-	auto row = results.begin();
-	strcpy(name, row[0]);
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		strcpy(name, row[0]);
+	}
 }
 
 bool Database::LoadVariables() {

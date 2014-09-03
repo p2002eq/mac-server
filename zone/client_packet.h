@@ -176,4 +176,3 @@
 	void Handle_OP_Action(const EQApplicationPacket *app);
 	void Handle_OP_Discipline(const EQApplicationPacket *app);
 	void Handle_OP_ZoneEntryResend(const EQApplicationPacket *app);
-	void Handle_OP_ClientTimeStamp(const EQApplicationPacket *app);
