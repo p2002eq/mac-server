@@ -428,8 +428,8 @@ uint32 Client::GetClassHPFactor() {
 int16 Client::GetRawItemAC() {
 	int16 Total = 0;
 
-	// this skips MainAmmo..add an '=' conditional if that slot is required (original behavior)
-	for (int16 slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id < EmuConstants::EQUIPMENT_END; slot_id++) {
+	// this skips SLOT_AMMO..add an '=' conditional if that slot is required (original behavior)
+	for (int16 slot_id = 0; slot_id < 21; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst && inst->IsType(ItemClassCommon)) {
 			Total += inst->GetItem()->AC;
@@ -853,9 +853,9 @@ int16 Client::CalcAC() {
 
 	// Shield AC bonus for HeroicSTR
 	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
+		bool equiped = CastToClient()->m_inv.GetItem(SLOT_SECONDARY);
 		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
+			uint8 shield = CastToClient()->m_inv.GetItem(SLOT_SECONDARY)->GetItem()->ItemType;
 			if(shield == ItemTypeShield)
 				displayed += itembonuses.HeroicSTR/2;
 		}
@@ -883,9 +883,9 @@ int16 Client::GetACMit() {
 
 	// Shield AC bonus for HeroicSTR
 	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
+		bool equiped = CastToClient()->m_inv.GetItem(SLOT_SECONDARY);
 		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
+			uint8 shield = CastToClient()->m_inv.GetItem(SLOT_SECONDARY)->GetItem()->ItemType;
 			if(shield == ItemTypeShield)
 				mitigation += itembonuses.HeroicSTR/2;
 		}

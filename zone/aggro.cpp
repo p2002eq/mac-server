@@ -484,7 +484,7 @@ to see how the decision is made. Yea, it could be condensed and made
 faster, but I'm doing it this way to make it readable and easy to modify
 */
 
-bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack, int16 spellid)
+bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack,int16 spellid)
 {
 
 	Mob *mob1, *mob2, *tempmob;

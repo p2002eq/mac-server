@@ -537,6 +537,7 @@ void Zone::GetMerchantDataForZoneLoad(){
 	}
 }
 
+void Zone::LoadLevelEXPMods(){
 	level_exp_mod.clear();
     const std::string query = "SELECT level, exp_mod, aa_exp_mod FROM level_exp_mods";
     auto results = database.QueryDatabase(query);

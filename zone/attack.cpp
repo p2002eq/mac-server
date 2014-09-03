@@ -168,7 +168,7 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 	}
 
 	// If we're attacking with the secondary hand, play the dual wield anim
-	if (Hand == MainSecondary)	// DW anim
+	if (Hand == SLOT_SECONDARY)	// DW anim
 		type = Animation::DualWield;
 
 	DoAnim(type);
@@ -456,9 +456,9 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 
 	if(damage > 0 && (aabonuses.TwoHandBluntBlock || spellbonuses.TwoHandBluntBlock || itembonuses.TwoHandBluntBlock)
 		&& (other->InFrontMob(this, other->GetX(), other->GetY()) || bShieldBlockFromRear)) {
-		bool equiped2 = CastToClient()->m_inv.GetItem(MainPrimary);
+		bool equiped2 = CastToClient()->m_inv.GetItem(SLOT_PRIMARY);
 		if(equiped2) {
-			uint8 TwoHandBlunt = CastToClient()->m_inv.GetItem(MainPrimary)->GetItem()->ItemType;
+			uint8 TwoHandBlunt = CastToClient()->m_inv.GetItem(SLOT_PRIMARY)->GetItem()->ItemType;
 			float bonusStaffBlock = 0.0f;
 			if(TwoHandBlunt == ItemType2HBlunt) {
 
@@ -1691,28 +1691,28 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	FaceTarget(GetTarget());
 
 	SkillUseTypes skillinuse = SkillHandtoHand;
-	if (Hand == MainPrimary) {
+	if (Hand == SLOT_PRIMARY) {
 		skillinuse = static_cast<SkillUseTypes>(GetPrimSkill());
 		OffHandAtk(false);
 	}
-	if (Hand == MainSecondary) {
+	if (Hand == SLOT_SECONDARY) {
 		skillinuse = static_cast<SkillUseTypes>(GetSecSkill());
 		OffHandAtk(true);
 	}
 
 	//figure out what weapon they are using, if any
 	const Item_Struct* weapon = nullptr;
-	if (Hand == MainPrimary && equipment[MainPrimary] > 0)
-		weapon = database.GetItem(equipment[MainPrimary]);
-	else if (equipment[MainSecondary])
-		weapon = database.GetItem(equipment[MainSecondary]);
+	if (Hand == SLOT_PRIMARY && equipment[SLOT_PRIMARY] > 0)
+		weapon = database.GetItem(equipment[SLOT_PRIMARY]);
+	else if (equipment[SLOT_SECONDARY])
+		weapon = database.GetItem(equipment[SLOT_SECONDARY]);
 
 	//We dont factor much from the weapon into the attack.
 	//Just the skill type so it doesn't look silly using punching animations and stuff while wielding weapons
 	if(weapon) {
 		mlog(COMBAT__ATTACKS, "Attacking with weapon: %s (%d) (too bad im not using it for much)", weapon->Name, weapon->ID);
 
-		if(Hand == MainSecondary && weapon->ItemType == ItemTypeShield){
+		if(Hand == SLOT_SECONDARY && weapon->ItemType == ItemTypeShield){
 			mlog(COMBAT__ATTACKS, "Attack with shield canceled.");
 			return false;
 		}
@@ -3740,7 +3740,7 @@ void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
 	float ProcChance, ProcBonus;
 	on->GetDefensiveProcChances(ProcBonus, ProcChance, hand , this);
 
-	if(hand != MainPrimary)
+	if(hand != SLOT_PRIMARY)
 		ProcChance /= 2;
 
 		if (bDefensiveProc){
@@ -3859,7 +3859,7 @@ void Mob::TrySpellProc(const ItemInst *inst, const Item_Struct *weapon, Mob *on,
 			rangedattk = true;
 	}
 
-	if (!weapon && hand == MainRange && GetSpecialAbility(SPECATK_RANGED_ATK))
+	if (!weapon && hand == SLOT_RANGE && GetSpecialAbility(SPECATK_RANGED_ATK))
 		rangedattk = true;
 
 	for (uint32 i = 0; i < MAX_PROCS; i++) {
@@ -3916,7 +3916,7 @@ void Mob::TrySpellProc(const ItemInst *inst, const Item_Struct *weapon, Mob *on,
 		}
 	}
 
-	if (HasSkillProcs() && hand != MainRange){ //We check ranged skill procs within the attack functions.
+	if (HasSkillProcs() && hand != SLOT_RANGE){ //We check ranged skill procs within the attack functions.
 		uint16 skillinuse = 28;
 		if (weapon)
 			skillinuse = GetSkillByItemType(weapon->ItemType);

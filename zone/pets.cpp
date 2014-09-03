@@ -420,12 +420,12 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	// the base items for the pet. These are always loaded
 	// so that a rank 1 suspend minion does not kill things
 	// like the special back items some focused pets may receive.
-	uint32 petinv[EmuConstants::EQUIPMENT_SIZE];
+	uint32 petinv[MAX_WORN_INVENTORY];
 	memset(petinv, 0, sizeof(petinv));
 	const Item_Struct *item = 0;
 
 	if (database.GetBasePetItems(record.equipmentset, petinv)) {
-		for (int i = 0; i<EmuConstants::EQUIPMENT_SIZE; i++)
+		for (int i = 0; i<MAX_WORN_INVENTORY; i++)
 			if (petinv[i]) {
 				item = database.GetItem(petinv[i]);
 				npc->AddLootDrop(item, &npc->itemlist, 0, 1, 127, true, true);

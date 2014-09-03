@@ -237,7 +237,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 
 	int32 skill_reduction = this->GetSkillReuseTime(ca_atk->m_skill);
 
-	// not sure what the '100' indicates..if ->m_atk is not used as 'slot' reference, then change MainRange above back to '11'
+	// not sure what the '100' indicates..if ->m_atk is not used as 'slot' reference, then change SLOT_RANGE above back to '11'
 	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillBash)) { // SLAM - Bash without a shield equipped
 		if (GetTarget() != this) {
 
@@ -793,14 +793,18 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	CommonBreakInvisible();
 }
 
-void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const ItemInst* Ammo, uint16 weapon_damage, int16 chance_mod, int16 focus, int ReuseTime) {
+void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const ItemInst* Ammo, uint16 weapon_damage, int16 chance_mod, int16 focus, int ReuseTime)
+{
 	if (!CanDoSpecialAttack(other))
 		return;
 
-	if (!other->CheckHitChance(this, SkillArchery, 13,chance_mod)) {
+	if (!other->CheckHitChance(this, SkillArchery, 13,chance_mod))
+	{
 		mlog(COMBAT__RANGED, "Ranged attack missed %s.", other->GetName());
 		other->Damage(this, 0, SPELL_UNKNOWN, SkillArchery);
-	} else {
+	} 
+	else 
+	{
 		mlog(COMBAT__RANGED, "Ranged attack hit %s.", other->GetName());
 
 
@@ -812,7 +816,8 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 			int32 TotalDmg = 0;
 			int16 WDmg = 0;
 			int16 ADmg = 0;
-			if (!weapon_damage){
+			if (!weapon_damage)
+			{
 				WDmg = GetWeaponDamage(other, RangeWeapon);
 				ADmg = GetWeaponDamage(other, Ammo);
 			}
@@ -822,7 +827,8 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 			if (focus) //From FcBaseEffects
 				WDmg += WDmg*focus/100;
 
-			if((WDmg > 0) || (ADmg > 0)) {
+			if((WDmg > 0) || (ADmg > 0))
+			{
 				if(WDmg < 0)
 					WDmg = 0;
 				if(ADmg < 0)
@@ -881,7 +887,8 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 					TotalDmg = MakeRandomInt(1, MaxDmg);
 
 				int minDmg = 1;
-				if(GetLevel() > 25){
+				if(GetLevel() > 25)
+				{
 					//twice, for ammo and weapon
 					TotalDmg += (2*((GetLevel()-25)/3));
 					minDmg += (2*((GetLevel()-25)/3));
@@ -914,7 +921,8 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 			
 			other->Damage(this, TotalDmg, SPELL_UNKNOWN, SkillArchery);
 			
-			if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && other && !other->HasDied()){
+			if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && other && !other->HasDied())
+			{
 				if (ReuseTime)
 					TrySkillProc(other, SkillArchery, ReuseTime);
 				else
@@ -925,8 +933,6 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 	//try proc on hits and misses
 	if((RangeWeapon != nullptr) && GetTarget() && other && !other->HasDied())
 	{
-		TryWeaponProc(RangeWeapon, other, 11);
-	if((RangeWeapon != nullptr) && GetTarget() && other && !other->HasDied()){
 		TryWeaponProc(RangeWeapon, other, SLOT_RANGE);
 	}
 
@@ -975,9 +981,8 @@ void NPC::RangedAttack(Mob* other)
 		int sa_min_range = GetSpecialAbilityParam(SPECATK_RANGED_ATK, 4); //Min Range of NPC attack
 		int sa_max_range = GetSpecialAbilityParam(SPECATK_RANGED_ATK, 1); //Max Range of NPC attack
 
-	if(ammo)
-		//SendItemAnimation(GetTarget(), ammo, SkillArchery);
-		ProjectileAnimation(GetTarget(), ammo->ID,true,-1,-1,-1,-1,SkillArchery);
+		float min_range = static_cast<float>(RuleI(Combat, MinRangedAttackDist));
+		float max_range = 250; // needs to be longer than 200(most spells)
 
 		if (sa_min_range)
 			min_range = static_cast<float>(sa_min_range);
@@ -1010,10 +1015,9 @@ void NPC::RangedAttack(Mob* other)
 			ammo = database.GetItem(8005);
 
 		if(ammo)
-			SendItemAnimation(other, ammo, SkillArchery);
-		else 
-			ProjectileAnimation(other, 0,false,0,0,0,0,GetAmmoIDfile(),skillinuse);
-	
+			//SendItemAnimation(GetTarget(), ammo, SkillArchery);
+			ProjectileAnimation(GetTarget(), ammo->ID, true, -1, -1, -1, -1, SkillArchery);
+
 		FaceTarget(other);
 
 		if (!other->CheckHitChance(this, skillinuse, SLOT_RANGE, GetSpecialAbilityParam(SPECATK_RANGED_ATK, 2)))
@@ -1755,7 +1759,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		if(ca_target!=this){
 			DoAnim(Animation::Kick);
 
-			if(GetWeaponDamage(ca_target, GetInv().GetItem(MainFeet)) <= 0){
+			if(GetWeaponDamage(ca_target, GetInv().GetItem(SLOT_FEET)) <= 0){
 				dmg = -5;
 			}
 			else{

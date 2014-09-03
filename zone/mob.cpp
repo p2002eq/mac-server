@@ -1816,7 +1816,7 @@ void Mob::SetAttackTimer() {
 		}
 
 		//special offhand stuff
-		if(i == MainSecondary) {
+		if(i == SLOT_SECONDARY) {
 			//if we have a 2H weapon in our main hand, no dual
 			if(PrimaryWeapon != nullptr) {
 				if(	PrimaryWeapon->ItemClass == ItemClassCommon
@@ -1919,7 +1919,7 @@ void Mob::SetAttackTimer() {
 			TimerToUse->SetAtTrigger(speed, true);
 		}
 
-		if(i == MainPrimary)
+		if(i == SLOT_PRIMARY)
 			PrimaryWeapon = ItemToUse;
 	}
 

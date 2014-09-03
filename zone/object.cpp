@@ -330,7 +330,7 @@ void Object::Close() {
 		ItemInst* container = this->m_inst;
 		if(container != nullptr)
 		{
-			for (uint8 i = SUB_BEGIN; i < EmuConstants::ITEM_CONTAINER_SIZE; i++)
+			for (uint8 i = 0; i < 10; i++)
 			{
 				ItemInst* inst = container->PopItem(i);
 				if(inst != nullptr)
@@ -437,7 +437,7 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 			// the client updates itself and takes care of sending "duplicate lore item" messages
 			if(sender->CheckLoreConflict(m_inst->GetItem())) {
 				int16 loreslot = sender->GetInv().HasItem(m_inst->GetItem()->ID, 0, invWhereBank);
-				if (loreslot != INVALID_INDEX) // if the duplicate is in the bank, delete it.
+				if (loreslot != SLOT_INVALID) // if the duplicate is in the bank, delete it.
 					sender->DeleteItemInInventory(loreslot);
 				else
 					cursordelete = true;	// otherwise, we delete the new one

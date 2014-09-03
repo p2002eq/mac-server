@@ -219,7 +219,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 		// it is an improvement.
 
 		if (!item2->NoPet) {
-			for (int i = 0; !found && i<EmuConstants::EQUIPMENT_SIZE; i++) {
+			for (int i = 0; !found && i<MAX_WORN_INVENTORY; i++) {
 				uint32 slots = (1 << i);
 				if (item2->Slots & slots) {
 					if(equipment[i])
@@ -260,7 +260,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 		// @merth: IDFile size has been increased, this needs to change
 		uint16 emat;
 		if(item2->Material <= 0
-			|| item2->Slots & (1 << MainPrimary | 1 << MainSecondary)) {
+			|| item2->Slots & (1 << SLOT_PRIMARY | 1 << SLOT_SECONDARY)) {
 			memset(newid, 0, sizeof(newid));
 			for(int i=0;i<7;i++){
 				if (!isalpha(item2->IDFile[i])){
@@ -274,13 +274,13 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 			emat = item2->Material;
 		}
 
-		if (foundslot == MainPrimary) {
+		if (foundslot == SLOT_PRIMARY) {
 			if (item2->Proc.Effect != 0)
 				CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
 
 			eslot = MaterialPrimary;
 		}
-		else if (foundslot == MainSecondary
+		else if (foundslot == SLOT_SECONDARY
 			&& (GetOwner() != nullptr || (GetLevel() >= 13 && MakeRandomInt(0,99) < NPC_DW_CHANCE) || (item2->Damage==0)) &&
 			(item2->ItemType == ItemType1HSlash || item2->ItemType == ItemType1HBlunt || item2->ItemType == ItemTypeShield ||
 			item2->ItemType == ItemType1HPiercing))
@@ -290,25 +290,25 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 
 			eslot = MaterialSecondary;
 		}
-		else if (foundslot == MainHead) {
+		else if (foundslot == SLOT_HEAD) {
 			eslot = MaterialHead;
 		}
-		else if (foundslot == MainChest) {
+		else if (foundslot == SLOT_CHEST) {
 			eslot = MaterialChest;
 		}
-		else if (foundslot == MainArms) {
+		else if (foundslot == SLOT_ARMS) {
 			eslot = MaterialArms;
 		}
-		else if (foundslot == MainWrist1 || foundslot == MainWrist2) {
+		else if (foundslot == SLOT_BRACER01 || foundslot == SLOT_BRACER02) {
 			eslot = MaterialWrist;
 		}
-		else if (foundslot == MainHands) {
+		else if (foundslot == SLOT_HANDS) {
 			eslot = MaterialHands;
 		}
-		else if (foundslot == MainLegs) {
+		else if (foundslot == SLOT_LEGS) {
 			eslot = MaterialLegs;
 		}
-		else if (foundslot == MainFeet) {
+		else if (foundslot == SLOT_FEET) {
 			eslot = MaterialFeet;
 		}
 

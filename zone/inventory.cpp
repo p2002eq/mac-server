@@ -44,7 +44,7 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 
 	int i;
 	if(where_to_check & invWhereWorn) {
-		for (i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++) {
+		for (i = 0; i <= 21; i++) {
 			if (GetItemIDAt(i) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(i) != INVALID_ID)) {
 				cur = m_inv.GetItem(i);
 				if(cur && cur->GetItem()->Stackable) {
@@ -57,8 +57,8 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 			}
 		}
 
-		if (GetItemIDAt(MainPowerSource) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(MainPowerSource) != INVALID_ID)) {
-			cur = m_inv.GetItem(MainPowerSource);
+		if (GetItemIDAt(9999) == itemnum || (itemnum == 0xFFFE && GetItemIDAt(9999) != INVALID_ID)) {
+			cur = m_inv.GetItem(9999);
 			if(cur && cur->GetItem()->Stackable) {
 				x += cur->GetCharges();
 			} else {
@@ -847,7 +847,7 @@ bool Client::IsValidSlot(uint32 slot)
 		(slot >= 3000 && slot <= 3007) ||	// Trade window
 		(slot >= 4000 && slot <= 4009) ||	// Tradeskill container
 		(slot == 9999))						// Power Source
-	{
+
 		return true;
 	else
 		return false;

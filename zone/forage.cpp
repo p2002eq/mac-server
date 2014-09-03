@@ -196,10 +196,10 @@ uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, 
 //we need this function to immediately determine, after we receive OP_Fishing, if we can even try to fish, otherwise we have to wait a while to get the failure
 bool Client::CanFish() {
 	//make sure we still have a fishing pole on:
-	const ItemInst* Pole = m_inv[MainPrimary];
+	const ItemInst* Pole = m_inv[SLOT_PRIMARY];
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
 	const ItemInst* Bait = nullptr;
-	if (bslot != INVALID_INDEX)
+	if (bslot != SLOT_INVALID)
 		Bait = m_inv.GetItem(bslot);
 
 	if(!Pole || !Pole->IsType(ItemClassCommon) || Pole->GetItem()->ItemType != ItemTypeFishingPole) {

@@ -166,19 +166,21 @@ ItemInst* Inventory::GetItem(int16 slot_id) const
 	ItemInst* result = nullptr;
 
 	// Cursor
-	if (slot_id == MainCursor) {
+	if (slot_id == SLOT_CURSOR) {
 		// Cursor slot
 		result = m_cursor.peek_front();
 	}
 
 	// Non bag slots
+	else if (slot_id >= 3000 && slot_id <= 3007) {
+		// Trade slots
 		result = _GetItem(m_trade, slot_id);
 	}
 	else if (slot_id >= 2000 && slot_id <= 2007) {
 		// Bank slots
 		result = _GetItem(m_bank, slot_id);
 	}
-	else if ((slot_id >= EmuConstants::GENERAL_BEGIN && slot_id <= EmuConstants::GENERAL_END)) {
+	else if ((slot_id >= 22 && slot_id <= 29)) {
 		// Personal inventory slots
 		result = _GetItem(m_inv, slot_id);
 	}

@@ -3054,7 +3054,7 @@ bool Client::CalcItemScale(uint32 slot_x, uint32 slot_y) {
 	bool changed = false;
 	int i;
 	for (i = slot_x; i <= slot_y; i++) {
-		if (i == 22) // moved here from calling procedure to facilitate future range changes where MainAmmo may not be the last slot
+		if (i == 22) // moved here from calling procedure to facilitate future range changes where SLOT_AMMO may not be the last slot
 			continue;
 
 		ItemInst* inst = m_inv.GetItem(i);
@@ -3112,7 +3112,7 @@ void Client::DoItemEnterZone() {
 bool Client::DoItemEnterZone(uint32 slot_x, uint32 slot_y) {
 	bool changed = false;
 	for(int i = slot_x; i <= slot_y; i++) {
-		if (i == 22) // moved here from calling procedure to facilitate future range changes where MainAmmo may not be the last slot
+		if (i == 22) // moved here from calling procedure to facilitate future range changes where SLOT_AMMO may not be the last slot
 			continue;
 
 		ItemInst* inst = m_inv.GetItem(i);

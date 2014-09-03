@@ -608,7 +608,7 @@ bool ZoneDatabase::LoadDoors(int32 iDoorCount, Door *into, const char *zone_name
     std::string query = StringFormat("SELECT id, doorid, zone, name, pos_x, pos_y, pos_z, heading, "
                                     "opentype, guild, lockpick, keyitem, nokeyring, triggerdoor, triggertype, "
                                     "dest_zone, dest_instance, dest_x, dest_y, dest_z, dest_heading, "
-                                    "door_param, invert_state, incline, size, is_ldon_door, client_version_mask "
+                                    "door_param, invert_state, incline, size, client_version_mask "
                                     "FROM doors WHERE zone = '%s' AND (version = %u OR version = -1) "
                                     "ORDER BY doorid asc", zone_name, version);
 	auto results = QueryDatabase(query);
@@ -655,8 +655,7 @@ bool ZoneDatabase::LoadDoors(int32 iDoorCount, Door *into, const char *zone_name
 		into[rowIndex].invert_state=atoi(row[22]);
 		into[rowIndex].incline=atoi(row[23]);
 		into[rowIndex].size=atoi(row[24]);
-		into[rowIndex].is_ldon_door=atoi(row[25]);
-		into[rowIndex].client_version_mask = (uint32)strtoul(row[26], nullptr, 10);
+		into[rowIndex].client_version_mask = (uint32)strtoul(row[25], nullptr, 10);
     }
 
 	return true;

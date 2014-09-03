@@ -917,7 +917,7 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 
 	//gear stuff, need to make sure there's
 	//no situation where this stuff can be duped
-	for(int x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::EQUIPMENT_END; x++) // (< 21) added MainAmmo
+	for(int x = 0; x <= 21; x++) // (< 21) added SLOT_AMMO
 	{
 		uint32 sitem = 0;
 		sitem = CorpseToUse->GetWornItem(x);
@@ -1516,19 +1516,18 @@ uint32 ZoneDatabase::GetSizeAA(){
 void ZoneDatabase::LoadAAs(SendAA_Struct **load){
 	if(!load)
 		return;
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT skill_id from altadv_vars order by eqmacid"), errbuf, &result)) {
-		int skill=0,ndx=0;
-		while((row = mysql_fetch_row(result))!=nullptr) {
-			skill=atoi(row[0]);
-			load[ndx] = GetAASkillVars(skill);
-			load[ndx]->seq = ndx+1;
-			ndx++;
+
+	std::string query = "SELECT skill_id from altadv_vars order by eqmacid";
+	auto results = QueryDatabase(query);
+	if (results.Success()) {
+		int skill = 0, index = 0;
+		for (auto row = results.begin(); row != results.end(); ++row, ++index) {
+			skill = atoi(row[0]);
+			load[index] = GetAASkillVars(skill);
+			load[index]->seq = index + 1;
 		}
-	} else {
+	}
+	else {
 		LogFile->write(EQEMuLog::Error, "Error in ZoneDatabase::LoadAAs query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 	}
 
@@ -1540,85 +1539,47 @@ void ZoneDatabase::LoadAAs(SendAA_Struct **load){
         return;
     }
 
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT skill_id, level, cost from aa_required_level_cost order by eqmacid"), errbuf, &result))
+	AALevelCost_Struct aalcs;
+	for (auto row = results.begin(); row != results.end(); ++row)
 	{
-		AALevelCost_Struct aalcs;
-		while((row = mysql_fetch_row(result))!=nullptr)
-		{
-			aalcs.Level = atoi(row[1]);
-			aalcs.Cost = atoi(row[2]);
-			AARequiredLevelAndCost[atoi(row[0])] = aalcs;
-		}
-		mysql_free_result(result);
+		aalcs.Level = atoi(row[1]);
+		aalcs.Cost = atoi(row[2]);
+		AARequiredLevelAndCost[atoi(row[0])] = aalcs;
 	}
-	else
-		LogFile->write(EQEMuLog::Error, "Error in ZoneDatabase::LoadAAs query '%s': %s", query, errbuf);
-
 }
 
 SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
 {
 	std::string query = "SET @row = 0"; //initialize "row" variable in database for next query
     auto results = QueryDatabase(query);
-    if (!results.Success()) {
+    if (!results.Success())
+	{
         LogFile->write(EQEMuLog::Error, "Error in GetAASkillVars '%s': %s", query.c_str(), results.ErrorMessage().c_str());
         return nullptr;
     }
 
-		if (RunQuery(query, MakeAnyLenString(&query,
-			"SELECT "
-				"a.cost, "
-				"a.max_level, "
-				"a.hotkey_sid, "
-				"a.hotkey_sid2, "
-				"a.title_sid, "
-				"a.desc_sid, "
-				"a.type, "
-				"COALESCE("	//so we can return 0 if it's null
-					"("	//this is our derived table that has the row # that we can SELECT from, because the client is stupid
-					"SELECT "
-						"p.prereq_index_num "
-					"FROM "
-						"("
-						"SELECT "
-							"a2.skill_id, "
-							"@row := @row + 1 AS prereq_index_num "
-						"FROM "
-							"altadv_vars a2"
-						") AS p "
-					"WHERE "
-						"p.skill_id = a.prereq_skill"
-					"), "
-					"0) AS prereq_skill_index, "
-				"a.prereq_minpoints, "
-				"a.spell_type, "
-				"a.spell_refresh, "
-				"a.classes, "
-				"a.berserker, "
-				"a.spellid, "
-				"a.class_type, "
-				"a.name, "
-				"a.cost_inc, "
-				"a.aa_expansion, "
-				"a.special_category, "
-				"a.sof_type, "
-				"a.sof_cost_inc, "
-				"a.sof_max_level, "
-				"a.sof_next_skill, "
-				"a.clientver, "	// Client Version 0 = None, 1 = All, 2 = Titanium/6.2, 4 = SoF 5 = SOD 6 = UF
-				"a.account_time_required, "
-				"a.sof_current_level,"
-				"a.sof_next_id, "
-				"a.level_inc, "
-				"a.eqmacid "
-			" FROM altadv_vars a WHERE skill_id=%i", skill_id), errbuf, &result)) {
-			safe_delete_array(query);
-			if (mysql_num_rows(result) == 1) {
-				int total_abilities = GetTotalAALevels(skill_id);	//eventually we'll want to use zone->GetTotalAALevels(skill_id) since it should save queries to the DB
-				int totalsize = total_abilities * sizeof(AA_Ability) + sizeof(SendAA_Struct);
+	query = StringFormat("SELECT a.cost, a.max_level, a.hotkey_sid, a.hotkey_sid2, a.title_sid, a.desc_sid, a.type, "
+						"COALESCE("	//So we can return 0 if it's null.
+						"("	// this is our derived table that has the row #
+						// that we can SELECT from, because the client is stupid.
+						"SELECT p.prereq_index_num "
+						"FROM (SELECT a2.skill_id, @row := @row + 1 AS prereq_index_num "
+						"FROM altadv_vars a2) AS p "
+						"WHERE p.skill_id = a.prereq_skill), 0) "
+						"AS prereq_skill_index, a.prereq_minpoints, a.spell_type, a.spell_refresh, a.classes, "
+						"a.berserker, a.spellid, a.class_type, a.name, a.cost_inc, a.aa_expansion, a.special_category, "
+						"a.sof_type, a.sof_cost_inc, a.sof_max_level, a.sof_next_skill, "
+						"a.clientver, "	// Client Version 0 = None, 1 = All, 2 = Titanium/6.2, 4 = SoF 5 = SOD 6 = UF
+						"a.account_time_required, a.sof_current_level, a.sof_next_id, a.level_inc, a.eqmacid "
+						"FROM altadv_vars a WHERE skill_id=%i", skill_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		LogFile->write(EQEMuLog::Error, "Error in GetAASkillVars '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		return nullptr;
+	}
 
-    if (results.RowCount() != 1)
-        return nullptr;
+	if (results.RowCount() != 1)
+		return nullptr;
 
     int total_abilities = GetTotalAALevels(skill_id);	//eventually we'll want to use zone->GetTotalAALevels(skill_id) since it should save queries to the DB
 	int totalsize = total_abilities * sizeof(AA_Ability) + sizeof(SendAA_Struct);
@@ -1632,31 +1593,49 @@ SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
 
 	auto row = results.begin();
 
-				sendaa->cost_inc = atoi(row[16]);
-				// Begin SoF Specific/Adjusted AA Fields
-				sendaa->aa_expansion = atoul(row[17]);
-				sendaa->special_category = atoul(row[18]);
-				sendaa->sof_type = atoul(row[19]);
-				sendaa->sof_cost_inc = atoi(row[20]);
-				sendaa->sof_max_level = atoul(row[21]);
-				sendaa->sof_next_skill = atoul(row[22]);
-				sendaa->clientver = atoul(row[23]);
-				sendaa->account_time_required = atoul(row[24]);
-				//Internal use only - not sent to client
-				sendaa->sof_current_level = atoul(row[25]);
-				sendaa->sof_next_id = atoul(row[26]);
-				sendaa->level_inc = static_cast<uint8>(atoul(row[27]));
-				sendaa->eqmacid = static_cast<uint8>(atoul(row[28]));
-			}
-			mysql_free_result(result);
-		} else {
-			LogFile->write(EQEMuLog::Error, "Error in GetAASkillVars '%s': %s", query, errbuf);
-			safe_delete_array(query);
-		}
-	} else {
-		LogFile->write(EQEMuLog::Error, "Error in GetAASkillVars '%s': %s", query, errbuf);
-		safe_delete_array(query);
-	}
+	sendaa->cost = atoul(row[0]);
+	sendaa->cost2 = sendaa->cost;
+	sendaa->max_level = atoul(row[1]);
+	sendaa->hotkey_sid = atoul(row[2]);
+	sendaa->id = skill_id;
+	sendaa->hotkey_sid2 = atoul(row[3]);
+	sendaa->title_sid = atoul(row[4]);
+	sendaa->desc_sid = atoul(row[5]);
+	sendaa->type = atoul(row[6]);
+	sendaa->prereq_skill = atoul(row[7]);
+	sendaa->prereq_minpoints = atoul(row[8]);
+	sendaa->spell_type = atoul(row[9]);
+	sendaa->spell_refresh = atoul(row[10]);
+	sendaa->classes = static_cast<uint16>(atoul(row[11]));
+	sendaa->berserker = static_cast<uint16>(atoul(row[12]));
+	sendaa->last_id = 0xFFFFFFFF;
+	sendaa->current_level = 1;
+	sendaa->spellid = atoul(row[13]);
+	sendaa->class_type = atoul(row[14]);
+	strcpy(sendaa->name, row[15]);
+
+	sendaa->total_abilities = total_abilities;
+	if (sendaa->max_level > 1)
+		sendaa->next_id = skill_id + 1;
+	else
+		sendaa->next_id = 0xFFFFFFFF;
+
+	sendaa->cost_inc = atoi(row[16]);
+	// Begin SoF Specific/Adjusted AA Fields
+	sendaa->aa_expansion = atoul(row[17]);
+	sendaa->special_category = atoul(row[18]);
+	sendaa->sof_type = atoul(row[19]);
+	sendaa->sof_cost_inc = atoi(row[20]);
+	sendaa->sof_max_level = atoul(row[21]);
+	sendaa->sof_next_skill = atoul(row[22]);
+	sendaa->clientver = atoul(row[23]);
+	sendaa->account_time_required = atoul(row[24]);
+	//Internal use only - not sent to client
+	sendaa->sof_current_level = atoul(row[25]);
+	sendaa->sof_next_id = atoul(row[26]);
+	sendaa->level_inc = static_cast<uint8>(atoul(row[27]));
+	sendaa->eqmacid = static_cast<uint8>(atoul(row[28]));
+
 	return sendaa;
 }
 

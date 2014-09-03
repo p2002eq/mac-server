@@ -564,7 +564,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 
 	// now the inventory
 	std::string invquery;
-	for (int16 i=EmuConstants::EQUIPMENT_BEGIN; i<=EmuConstants::BANK_BAGS_END;)
+	for (int16 i=0; i<=2109;)
 	{
 		const ItemInst* newinv = inv->GetItem(i);
 		if (newinv)
@@ -586,8 +586,8 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 			i = 250;
 			continue;
 		}
-		else if (i == EmuConstants::CURSOR_BAG_END) {
-			i = EmuConstants::BANK_BEGIN;
+		else if (i == 339) {
+			i = 2000;
 			continue;
 		} else if(i==2007){ //end of bank slots, jump to internals of bank bags
 			i = 2030;
@@ -1527,13 +1527,36 @@ bool Database::GetLiveChar(uint32 account_id, char* cname) {
 	return true;
 }
 
-void Database::SetGroupID(const char* name, uint32 id, uint32 charid, uint32 ismerc){
+void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) {
+
+	std::string query = StringFormat("update character_ set firstlogon=%i where id=%i", firstlogon, CharID);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+		LogFile->write(EQEMuLog::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
+}
+
+void Database::AddReport(std::string who, std::string against, std::string lines)
+{
+
+	char *escape_str = new char[lines.size() * 2 + 1];
+	DoEscapeString(escape_str, lines.c_str(), lines.size());
+
+	std::string query = StringFormat("INSERT INTO reports (name, reported, reported_text) VALUES('%s', '%s', '%s')", who.c_str(), against.c_str(), escape_str);
+	auto results = QueryDatabase(query);
+	safe_delete_array(escape_str);
+
+	if (!results.Success())
+		LogFile->write(EQEMuLog::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
+}
+
+void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 	
 	std::string query;
 	if (id == 0)
 	{
 		// removing from group
-		query = StringFormat("delete from group_id where charid=%i and name='%s' and ismerc=%i",charid, name, ismerc);
+		query = StringFormat("delete from group_id where charid=%i and name='%s'",charid, name);
 		auto results = QueryDatabase(query);
 
 		if (!results.Success())
@@ -1543,7 +1566,7 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid, uint32 ism
 	}
 
 	// adding to group
-	query = StringFormat("replace into group_id set charid=%i, groupid=%i, name='%s', ismerc='%i'",charid, id, name, ismerc);
+	query = StringFormat("replace into group_id set charid=%i, groupid=%i, name='%s'",charid, id, name);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -2352,25 +2375,6 @@ bool Database::GlobalInstance(uint16 instance_id)
 	return (atoi(row[0]) == 1) ? true : false;
 }
 
-uint32 Database::GetGuildDBIDByCharID(uint32 char_id) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	int retVal = 0;
-
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT guild_id FROM guild_members WHERE char_id='%i'", char_id), errbuf, &result)) {
-		if (mysql_num_rows(result) == 1) {
-			MYSQL_ROW row = mysql_fetch_row(result);
-			retVal = atoi(row[0]);
-		}
-		mysql_free_result(result);
-	}
-	else {
-		std::cerr << "Error in GetAccountIDByChar query '" << query << "' " << errbuf << std::endl;
-	}
-	safe_delete_array(query);
-	return retVal;
-}
 
 struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 {

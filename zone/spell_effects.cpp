@@ -1442,7 +1442,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						SendAppearancePacket(AT_Size, 6);
 					}
 				}
-				for(int x = 0; x < 7; x++){
+
+				for(int x = 0; x < 7; x++)
 					SendWearChange(x);
 				
 				if(caster && (caster->spellbonuses.IllusionPersistence ||  caster->aabonuses.IllusionPersistence
@@ -1450,6 +1451,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					buffs[buffslot].persistant_buff = 1;
 				else
 					buffs[buffslot].persistant_buff = 0;
+
 				break;
 			}
 
@@ -1466,7 +1468,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							caster->GetTarget()->GetTexture()
 						);
 						caster->SendAppearancePacket(AT_Size, caster->GetTarget()->GetSize());
-						for(int x = 0; x < 7; x++){
+						for(int x = 0; x < 7; x++)
 							caster->SendWearChange(x);
 				}
 			}
@@ -2923,7 +2925,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	if (SummonedItem) {
 		Client *c=CastToClient();
 		c->PushItemOnCursor(*SummonedItem);
-		c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
+		c->SendItemPacket(SLOT_CURSOR, SummonedItem, ItemPacketSummonItem);
 		safe_delete(SummonedItem);
 	}
 
@@ -3661,7 +3663,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 				else{
 					SendAppearancePacket(AT_Size, 6);
 				}
-				for(int x = EmuConstants::MATERIAL_BEGIN; x <= EmuConstants::MATERIAL_TINT_END; x++){
+				for(int x = 0; x <= 7; x++){
 					SendWearChange(x);
 				}
 				break;
@@ -4969,7 +4971,7 @@ int16 Client::GetSympatheticFocusEffect(focusType type, uint16 spell_id) {
 
 		const Item_Struct* TempItem = 0;
 
-		for(int x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::EQUIPMENT_END; x++)
+		for(int x = 0; x <= 21; x++)
 		{
 			if (SympatheticProcList.size() > MAX_SYMPATHETIC)
 				continue;
@@ -6190,3 +6192,23 @@ bool Mob::CheckSpellCategory(uint16 spell_id, int category_id, int effect_id){
 	return false;
 }
 
+void Mob::CalcSpellPowerDistanceMod(uint16 spell_id, float range, Mob* caster)
+{
+	if (IsPowerDistModSpell(spell_id)){
+
+		float distance = 0;
+
+		if (caster && !range)
+			distance = caster->CalculateDistance(GetX(), GetY(), GetZ());
+		else
+			distance = sqrt(range);
+
+		float dm_range = spells[spell_id].max_dist - spells[spell_id].min_dist;
+		float dm_mod_interval = spells[spell_id].max_dist_mod - spells[spell_id].min_dist_mod;
+		float dist_from_min = distance - spells[spell_id].min_dist;
+		float mod = spells[spell_id].min_dist_mod + (dist_from_min * (dm_mod_interval / dm_range));
+		mod *= 100.0f;
+
+		SetSpellPowerDistanceMod(static_cast<int>(mod));
+	}
+}

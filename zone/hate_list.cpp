@@ -533,7 +533,7 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 		if(cur)
 		{
 			for(int i = 0; i < count; ++i) {
-				caster->Attack(cur, MainPrimary, false, false, false, opts);
+				caster->Attack(cur, SLOT_PRIMARY, false, false, false, opts);
 			}
 		}
 		iter++;

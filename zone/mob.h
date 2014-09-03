@@ -134,11 +134,11 @@ public:
 	virtual void ThrowingAttack(Mob* other) { }
 	uint16 GetThrownDamage(int16 wDmg, int32& TotalDmg, int& minDmg);
 	// 13 = Primary (default), 14 = secondary
-	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
+	virtual bool Attack(Mob* other, int Hand = SLOT_PRIMARY, bool FromRiposte = false, bool IsStrikethrough = false,
 		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
-	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
+	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = SLOT_PRIMARY, int damage = 0);
 	virtual bool AvoidDamage(Mob* attacker, int32 &damage, bool CanRiposte = true);
 	virtual bool CheckHitChance(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod = 0);
 	virtual void TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttackOptions *opts = nullptr);
@@ -520,7 +520,7 @@ public:
 
 	//More stuff to sort:
 	virtual bool IsRaidTarget() { return false; };
-	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false);
+	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false,int16 spellid = 0);
 	bool IsTargeted() const { return (targeted > 0); }
 	inline void IsTargeted(int in_tar) { targeted += in_tar; if(targeted < 0) targeted = 0;}
 	void SetFollowID(uint32 id) { follow = id; }
@@ -996,13 +996,13 @@ protected:
 	void TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success = false, uint16 hand = 0, bool IsDefensive = false); // hand = MainCharm?
 	bool PassLimitToSkill(uint16 spell_id, uint16 skill);
 	bool PassLimitClass(uint32 Classes_, uint16 Class_);
-	void TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary);
-	void TryWeaponProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = MainPrimary);
-	void TrySpellProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = MainPrimary);
-	void TryWeaponProc(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary);
+	void TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand = SLOT_PRIMARY);
+	void TryWeaponProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = SLOT_PRIMARY);
+	void TrySpellProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = SLOT_PRIMARY);
+	void TryWeaponProc(const ItemInst* weapon, Mob *on, uint16 hand = SLOT_PRIMARY);
 	void ExecWeaponProc(const ItemInst* weapon, uint16 spell_id, Mob *on);
-	virtual float GetProcChances(float ProcBonus, uint16 hand = MainPrimary);
-	virtual float GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand = MainPrimary, Mob *on = nullptr);
+	virtual float GetProcChances(float ProcBonus, uint16 hand = SLOT_PRIMARY);
+	virtual float GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand = SLOT_PRIMARY, Mob *on = nullptr);
 	virtual float GetSpecialProcChances(uint16 hand);
 	virtual float GetAssassinateProcChances(uint16 ReuseTime);
 	virtual float GetSkillProcChances(uint16 ReuseTime, uint16 hand = 0); // hand = MainCharm?

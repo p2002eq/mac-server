@@ -76,6 +76,8 @@ And then at then end of embparser.cpp, add:
 #include "qglobals.h"
 #include "quest_parser_collection.h"
 #include "queryserv.h"
+
+extern QueryServ* QServ;
 extern Zone* zone;
 extern WorldServer worldserver;
 extern EntityList entity_list;

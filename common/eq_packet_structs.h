@@ -32,8 +32,8 @@ static const uint32 MAX_MERC_GRADES = 10;
 static const uint32 MAX_MERC_STANCES = 10;
 static const uint32 BLOCKED_BUFF_COUNT = 20;
 
-//#include "eq_constants.h"
-#include "eq_dictionary.h"
+#include "eq_constants.h"
+
 
 /*
 ** Compiler override to ensure

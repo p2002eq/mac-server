@@ -443,9 +443,11 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 
 	// Retrieve character inventory
 	if (RunQuery(query, MakeAnyLenString(&query, "SELECT slotid,itemid,charges,color,"
-		"instnodrop,custom_data FROM inventory WHERE charid=%i ORDER BY slotid", char_id), errbuf, &result)) {
+		"instnodrop,custom_data FROM inventory WHERE charid=%i ORDER BY slotid", char_id), errbuf, &result)) 
+	{
 
-		while ((row = mysql_fetch_row(result))) {
+		while ((row = mysql_fetch_row(result))) 
+		{
 			int16 slot_id	= atoi(row[0]);
 			int16 item_id	= atoi(row[1]);
 			int8 charges	= atoi(row[2]);
@@ -454,33 +456,39 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 
 			const Item_Struct* item = GetItem(item_id);
 
-			if (item) {
+			if (item) 
+			{
 				int16 put_slot_id = SLOT_INVALID;
 
 				ItemInst* inst = CreateBaseItem(item, charges);
 
-				if(row[5]) {
+				if(row[5]) 
+				{
 					std::string data_str(row[5]);
 					std::string id;
 					std::string value;
 					bool use_id = true;
 
-					for(int i = 0; i < data_str.length(); ++i) {
-						if(data_str[i] == '^') {
-							if(!use_id) {
+					for(int i = 0; i < data_str.length(); ++i)
+					{
+						if(data_str[i] == '^') 
+						{
+							if(!use_id)
+							{
 								inst->SetCustomData(id, value);
 								id.clear();
 								value.clear();
 							}
 							use_id = !use_id;
 						}
-						else {
+						else 
+						{
 							char v = data_str[i];
-							if(use_id) {
+
+							if(use_id) 
 								id.push_back(v);
-							} else {
+							else 
 								value.push_back(v);
-							}
 						}
 					}
 				}
@@ -496,28 +504,30 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 
 				if (slot_id>=8000 && slot_id <= 8999)
 					put_slot_id = inv->PushCursor(*inst);
-				}
+
 				// Admins: please report any occurrences of this error
-				else if (slot_id >= 3111 && slot_id <= 3179) {
+				else if (slot_id >= 3111 && slot_id <= 3179) 
+				{
 					LogFile->write(EQEMuLog::Error,
 						"Warning: Defunct location for item in inventory: charid=%i, item_id=%i, slot_id=%i .. pushing to cursor...",
 						char_id, item_id, slot_id);
 					put_slot_id = inv->PushCursor(*inst);
 				}
-				else {
+				else 
 					put_slot_id = inv->PutItem(slot_id, *inst);
-				}
 
 				safe_delete(inst);
 
 				// Save ptr to item in inventory
-				if (put_slot_id == SLOT_INVALID) {
+				if (put_slot_id == SLOT_INVALID)
+				{
 					LogFile->write(EQEMuLog::Error,
 						"Warning: Invalid slot_id for item in inventory: charid=%i, item_id=%i, slot_id=%i",
 						char_id, item_id, slot_id);
 				}
 			}
-			else {
+			else 
+			{
 				LogFile->write(EQEMuLog::Error,
 					"Warning: charid %i has an invalid item_id %i in inventory slot %i",
 					char_id, item_id, slot_id);
@@ -528,7 +538,8 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 		// Retrieve shared inventory
 		ret = GetSharedBank(char_id, inv, true);
 	}
-	else {
+	else 
+	{
 		LogFile->write(EQEMuLog::Error, "GetInventory query '%s' %s", query, errbuf);
 		LogFile->write(EQEMuLog::Error, "If you got an error related to the 'instnodrop' field, run the following SQL Queries:\nalter table inventory add instnodrop tinyint(1) unsigned default 0 not null;\n");
 	}
@@ -550,7 +561,8 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 		"instnodrop,custom_data FROM inventory INNER JOIN character_ ch ON ch.id=charid WHERE ch.name='%s' AND ch.account_id=%i ORDER BY slotid",
 		name, account_id), errbuf, &result))
 	{
-		while ((row = mysql_fetch_row(result))) {
+		while ((row = mysql_fetch_row(result))) 
+		{
 			int16 slot_id	= atoi(row[0]);
 			int16 item_id	= atoi(row[1]);
 			int8 charges	= atoi(row[2]);
@@ -564,28 +576,32 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			ItemInst* inst = CreateBaseItem(item, charges);
 			inst->SetInstNoDrop(instnodrop);
 
-			if(row[5]) {
+			if(row[5])
+			{
 				std::string data_str(row[5]);
 				std::string id;
 				std::string value;
 				bool use_id = true;
 
-				for(int i = 0; i < data_str.length(); ++i) {
-					if(data_str[i] == '^') {
-						if(!use_id) {
+				for(int i = 0; i < data_str.length(); ++i) 
+				{
+					if(data_str[i] == '^')
+					{
+						if(!use_id)
+						{
 							inst->SetCustomData(id, value);
 							id.clear();
 							value.clear();
 						}
 						use_id = !use_id;
 					}
-					else {
+					else 
+					{
 						char v = data_str[i];
-						if(use_id) {
+						if(use_id)
 							id.push_back(v);
-						} else {
+						else
 							value.push_back(v);
-						}
 					}
 				}
 			}
@@ -601,7 +617,8 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			safe_delete(inst);
 
 			// Save ptr to item in inventory
-			if (put_slot_id == SLOT_INVALID) {
+			if (put_slot_id == SLOT_INVALID) 
+			{
 				LogFile->write(EQEMuLog::Error,
 					"Warning: Invalid slot_id for item in inventory: name=%s, acctid=%i, item_id=%i, slot_id=%i",
 					name, account_id, item_id, slot_id);
@@ -612,7 +629,8 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 		// Retrieve shared inventory
 		ret = GetSharedBank(account_id, inv, false);
 	}
-	else {
+	else 
+	{
 		LogFile->write(EQEMuLog::Error, "GetInventory query '%s' %s", query, errbuf);
 		LogFile->write(EQEMuLog::Error, "If you got an error related to the 'instnodrop' field, run the following SQL Queries:\nalter table inventory add instnodrop tinyint(1) unsigned default 0 not null;\n");
 	}
@@ -1986,4 +2004,36 @@ const LootDrop_Struct* SharedDatabase::GetLootDrop(uint32 lootdrop_id) {
 		LogFile->write(EQEMuLog::Error, "Could not get loot drop: %s", ex.what());
 	}
 	return nullptr;
+}
+
+bool SharedDatabase::VerifyToken(std::string token, int& status) {
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char *query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	bool res = false;
+	status = 0;
+	if (token.length() > 64) {
+		token = token.substr(0, 64);
+	}
+
+	token = EscapeString(token);
+
+	if (RunQuery(query, MakeAnyLenString(&query, "SELECT status FROM tokens WHERE token='%s'", token.c_str()), errbuf, &result)) {
+		safe_delete_array(query);
+
+		row = mysql_fetch_row(result);
+		if (row) {
+			status = atoi(row[0]);
+			res = true;
+		}
+
+		mysql_free_result(result);
+	}
+	else {
+		std::cerr << "Error in SharedDatabase::VerifyToken query '" << query << "' " << errbuf << std::endl;
+		safe_delete_array(query);
+	}
+
+	return res;
 }

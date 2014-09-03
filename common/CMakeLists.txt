@@ -111,7 +111,6 @@ SET(common_headers
 	emu_tcp_connection.h
 	emu_tcp_server.h
 	eq_constants.h
-	eq_dictionary.h
 	eq_packet_structs.h
 	eqdb.h
 	eqdb_res.h

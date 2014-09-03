@@ -1320,7 +1320,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 	Shielding_Struct* shield = (Shielding_Struct*)app->pBuffer;
 	shield_target = entity_list.GetMob(shield->target_id);
 	bool ack = false;
-	ItemInst* inst = GetInv().GetItem(MainSecondary);
+	ItemInst* inst = GetInv().GetItem(SLOT_SECONDARY);
 	if (!shield_target)
 		 return;
 	if (inst)
@@ -7139,77 +7139,34 @@ void Client::CompleteConnect() {
 						SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
 					}
 					switch(spell.base[x1]){
-						case OGRE:
-							SendAppearancePacket(AT_Size, 9);
-							break;
-						case TROLL:
-							SendAppearancePacket(AT_Size, 8);
-							break;
-						case VAHSHIR:
-						case BARBARIAN:
-							SendAppearancePacket(AT_Size, 7);
-							break;
-						case HALF_ELF:
-						case WOOD_ELF:
-						case DARK_ELF:
-						case FROGLOK:
-							SendAppearancePacket(AT_Size, 5);
-							break;
-						case HALFLING:
-						case DWARF:
-							SendAppearancePacket(AT_Size, 4);
-							break;
-						case GNOME:
-							SendAppearancePacket(AT_Size, 3);
-							break;
-						default:
-							SendAppearancePacket(AT_Size, 6);
-							break;
+					case OGRE:
+						SendAppearancePacket(AT_Size, 9);
+						break;
+					case TROLL:
+						SendAppearancePacket(AT_Size, 8);
+						break;
+					case VAHSHIR:
+					case BARBARIAN:
+						SendAppearancePacket(AT_Size, 7);
+						break;
+					case HALF_ELF:
+					case WOOD_ELF:
+					case DARK_ELF:
+					case FROGLOK:
+						SendAppearancePacket(AT_Size, 5);
+						break;
+					case HALFLING:
+					case DWARF:
+						SendAppearancePacket(AT_Size, 4);
+						break;
+					case GNOME:
+						SendAppearancePacket(AT_Size, 3);
+						break;
+					default:
+						SendAppearancePacket(AT_Size, 6);
+						break;
 					}
 					break;
-				}
-				else if (spell.base[x1] == -2)
-				{
-					if (GetRace() == 128 || GetRace() == 130 || GetRace() <= 12)
-						SendIllusionPacket(GetRace(), GetGender(), spell.max[x1], spell.max[x1]);
-				}
-				else if (spell.max[x1] > 0)
-				{
-					SendIllusionPacket(spell.base[x1], 0xFF, spell.max[x1], spell.max[x1]);
-				}
-				else
-				{
-					SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
-				}
-				switch (spell.base[x1]){
-				case OGRE:
-					SendAppearancePacket(AT_Size, 9);
-					break;
-				case TROLL:
-					SendAppearancePacket(AT_Size, 8);
-					break;
-				case VAHSHIR:
-				case BARBARIAN:
-					SendAppearancePacket(AT_Size, 7);
-					break;
-				case HALF_ELF:
-				case WOOD_ELF:
-				case DARK_ELF:
-				case FROGLOK:
-					SendAppearancePacket(AT_Size, 5);
-					break;
-				case DWARF:
-					SendAppearancePacket(AT_Size, 4);
-					break;
-				case HALFLING:
-				case GNOME:
-					SendAppearancePacket(AT_Size, 3);
-					break;
-				default:
-					SendAppearancePacket(AT_Size, 6);
-					break;
-				}
-				break;
 			}
 			case SE_SummonHorse: {
 				SummonHorse(buffs[j1].spellid);
@@ -8235,8 +8192,6 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 
     popupText += "</table>";
 
-    SendPopupToClient("Corpses", popupText.c_str());
-
 }
 
 void Client::Handle_OP_CorpseDrag(const EQApplicationPacket *app)
@@ -8325,4 +8280,8 @@ void Client::Handle_OP_SenseHeading(const EQApplicationPacket *app)
 {
 	CheckIncreaseSkill(SkillSenseHeading, nullptr, -12);
 	return;
+}
+
+void Client::Handle_OP_ClientTimeStamp(const EQApplicationPacket *app) {
+	// handle as needed or ignore like we have been doing...
 }

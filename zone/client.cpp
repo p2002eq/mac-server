@@ -63,6 +63,7 @@ extern volatile bool RunLoops;
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
 #include "queryserv.h"
+#include "../common/crc32.h"
 #include "../common/packet_dump_file.h"
 
 extern QueryServ* QServ;
@@ -1427,22 +1428,22 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	// (update: i think pp should do it, as this holds LoY dye - plus, this is ugly code with Inventory!)
 	const Item_Struct* item = nullptr;
 	const ItemInst* inst = nullptr;
-	if ((inst = m_inv[MainHands]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_HANDS]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHands]	= item->Material;
 		ns->spawn.colors[MaterialHands].color	= GetEquipmentColor(MaterialHands);
 	}
-	if ((inst = m_inv[MainHead]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_HEAD]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHead]	= item->Material;
 		ns->spawn.colors[MaterialHead].color	= GetEquipmentColor(MaterialHead);
 	}
-	if ((inst = m_inv[MainArms]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_ARMS]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialArms]	= item->Material;
 		ns->spawn.colors[MaterialArms].color	= GetEquipmentColor(MaterialArms);
 	}
-	if ((inst = m_inv[MainWrist1]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_BRACER01]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialWrist]= item->Material;
 		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
@@ -1457,27 +1458,27 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	}
 	*/
 
-	if ((inst = m_inv[MainChest]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_CHEST]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialChest]	= item->Material;
 		ns->spawn.colors[MaterialChest].color	= GetEquipmentColor(MaterialChest);
 	}
-	if ((inst = m_inv[MainLegs]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_LEGS]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialLegs]	= item->Material;
 		ns->spawn.colors[MaterialLegs].color	= GetEquipmentColor(MaterialLegs);
 	}
-	if ((inst = m_inv[MainFeet]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_FEET]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialFeet]	= item->Material;
 		ns->spawn.colors[MaterialFeet].color	= GetEquipmentColor(MaterialFeet);
 	}
-	if ((inst = m_inv[MainPrimary]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_PRIMARY]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
 	}
-	if ((inst = m_inv[MainSecondary]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[SLOT_SECONDARY]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
@@ -2185,7 +2186,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 		if(!bindwound_timer.Enabled()) {
 			//make sure we actually have a bandage... and consume it.
 			int16 bslot = m_inv.HasItemByUse(ItemTypeBandage, 1, invWhereWorn|invWherePersonal);
-			if (bslot == INVALID_INDEX) {
+			if (bslot == SLOT_INVALID) {
 				bind_out->type = 3;
 				QueuePacket(outapp);
 				bind_out->type = 7;	//this is the wrong message, dont know the right one.
@@ -3204,14 +3205,14 @@ void Client::DiscoverItem(uint32 itemid) {
 uint16 Client::GetPrimarySkillValue()
 {
 	SkillUseTypes skill = HIGHEST_SKILL; //because nullptr == 0, which is 1H Slashing, & we want it to return 0 from GetSkill
-	bool equiped = m_inv.GetItem(MainPrimary);
+	bool equiped = m_inv.GetItem(SLOT_PRIMARY);
 
 	if (!equiped)
 		skill = SkillHandtoHand;
 
 	else {
 
-		uint8 type = m_inv.GetItem(MainPrimary)->GetItem()->ItemType; //is this the best way to do this?
+		uint8 type = m_inv.GetItem(SLOT_PRIMARY)->GetItem()->ItemType; //is this the best way to do this?
 
 		switch (type)
 		{
