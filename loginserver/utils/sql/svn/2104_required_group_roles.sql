@@ -1,2 +1,0 @@
-ALTER TABLE `group_leaders`  ADD COLUMN `maintank` VARCHAR(64) NOT NULL DEFAULT '' AFTER `leadershipaa`;
-ALTER TABLE `group_leaders`  ADD COLUMN `puller` VARCHAR(64) NOT NULL DEFAULT '' AFTER `assist`;

@@ -1,2 +1,0 @@
-INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`, `notes`) VALUES (1, 'Character:CheckCursorEmptyWhenLooting', 'true', 'If true, a player cannot loot a corpse (player or NPC) with an item on their cursor');
-INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`, `notes`) VALUES (1, 'Character:MaintainIntoxicationAcrossZones', 'true', 'If true, alcohol effects are maintained across zoning and logging out/in.');

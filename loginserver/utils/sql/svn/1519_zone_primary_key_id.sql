@@ -1,1 +1,0 @@
-ALTER TABLE `zone` ADD `id` int(10) NOT NULL auto_increment PRIMARY KEY AFTER `short_name`;

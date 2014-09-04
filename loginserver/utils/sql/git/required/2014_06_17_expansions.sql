@@ -1,1 +1,0 @@
-alter table `account` add column expansion tinyint(4) not null default 0;

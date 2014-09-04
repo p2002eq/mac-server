@@ -1,1 +1,0 @@
-ALTER TABLE `altadv_vars`  CHANGE COLUMN `aa_expansion` `aa_expansion` SMALLINT(3) UNSIGNED NOT NULL DEFAULT '3' AFTER `cost_inc`;

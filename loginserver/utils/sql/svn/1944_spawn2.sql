@@ -1,1 +1,0 @@
-ALTER TABLE `spawn2`  ADD COLUMN `animation` TINYINT(3) UNSIGNED NOT NULL DEFAULT '0' AFTER `enabled`;

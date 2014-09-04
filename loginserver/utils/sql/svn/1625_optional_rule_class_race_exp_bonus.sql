@@ -1,1 +1,0 @@
-INSERT INTO `rule_values` VALUES ('1', 'Character:UseRaceClassExpBonuses', 'true', 'Setting this to true will enable Class and Racial experience rate bonuses');
