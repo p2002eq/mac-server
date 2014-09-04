@@ -281,10 +281,10 @@ bool Client::Process() {
 				{
 					entity_list.AEAttack(this, 30);
 				} else {
-					Attack(auto_attack_target, 13); // Kaiyodo - added attacking hand to arguments
+					Attack(auto_attack_target, MainPrimary); // Kaiyodo - added attacking hand to arguments
 				}
-				ItemInst *wpn = GetInv().GetItem(SLOT_PRIMARY);
-				TryWeaponProc(wpn, auto_attack_target, 13);
+				ItemInst *wpn = GetInv().GetItem(MainPrimary);
+				TryWeaponProc(wpn, auto_attack_target, MainPrimary);
 
 				bool tripleAttackSuccess = false;
 				if( auto_attack_target && CanThisClassDoubleAttack() ) {
@@ -295,7 +295,7 @@ bool Client::Process() {
 						if(CheckAAEffect(aaEffectRampage)) {
 							entity_list.AEAttack(this, 30);
 						} else {
-							Attack(auto_attack_target, 13, false);
+							Attack(auto_attack_target, MainPrimary, false);
 						}
 					}
 
@@ -305,13 +305,13 @@ bool Client::Process() {
 						&& CheckDoubleAttack(true))
 					{
 						tripleAttackSuccess = true;
-						Attack(auto_attack_target, 13, false);
+						Attack(auto_attack_target, MainPrimary, false);
 					}
 
 					//quad attack, does this belong here??
 					if(GetSpecialAbility(SPECATK_QUAD) && CheckDoubleAttack(true))
 					{
-						Attack(auto_attack_target, 13, false);
+						Attack(auto_attack_target, MainPrimary, false);
 					}
 				}
 
@@ -323,15 +323,15 @@ bool Client::Process() {
 					if(MakeRandomInt(0, 99) < flurrychance)
 					{
 						Message_StringID(MT_NPCFlurry, YOU_FLURRY);
-						Attack(auto_attack_target, 13, false);
-						Attack(auto_attack_target, 13, false);
+						Attack(auto_attack_target, MainPrimary, false);
+						Attack(auto_attack_target, MainPrimary, false);
 					}
 				}
 
 				int16 ExtraAttackChanceBonus = spellbonuses.ExtraAttackChance + itembonuses.ExtraAttackChance + aabonuses.ExtraAttackChance;
 
 				if (auto_attack_target && ExtraAttackChanceBonus) {
-					ItemInst *wpn = GetInv().GetItem(SLOT_PRIMARY);
+					ItemInst *wpn = GetInv().GetItem(MainPrimary);
 					if(wpn){
 						if(wpn->GetItem()->ItemType == ItemType2HSlash ||
 							wpn->GetItem()->ItemType == ItemType2HBlunt ||
@@ -339,7 +339,7 @@ bool Client::Process() {
 						{
 							if(MakeRandomInt(0, 99) < ExtraAttackChanceBonus)
 							{
-								Attack(auto_attack_target, 13, false);
+								Attack(auto_attack_target, MainPrimary, false);
 							}
 						}
 					}
@@ -386,19 +386,19 @@ bool Client::Process() {
 				CheckIncreaseSkill(SkillDualWield, auto_attack_target, -10);
 				if (random < DualWieldProbability){ // Max 78% of DW
 					if(CheckAAEffect(aaEffectRampage)) {
-						entity_list.AEAttack(this, 30, 14);
+						entity_list.AEAttack(this, 30, MainSecondary);
 					} else {
-						Attack(auto_attack_target, 14);	// Single attack with offhand
+						Attack(auto_attack_target, MainSecondary);	// Single attack with offhand
 					}
-					ItemInst *wpn = GetInv().GetItem(SLOT_SECONDARY);
-					TryWeaponProc(wpn, auto_attack_target, 14);
+					ItemInst *wpn = GetInv().GetItem(MainSecondary);
+					TryWeaponProc(wpn, auto_attack_target, MainSecondary);
 
 					if( CanThisClassDoubleAttack() && CheckDoubleAttack()) {
 						if(CheckAAEffect(aaEffectRampage)) {
-							entity_list.AEAttack(this, 30, 14);
+							entity_list.AEAttack(this, 30, MainSecondary);
 						} else {
 							if(auto_attack_target && auto_attack_target->GetHP() > -10)
-								Attack(auto_attack_target, 14);	// Single attack with offhand
+								Attack(auto_attack_target, MainSecondary);	// Single attack with offhand
 						}
 					}
 				}
@@ -697,7 +697,7 @@ void Client::BulkSendInventoryItems() {
 	std::map<uint16, std::string>::iterator itr;
 
 	//Inventory items
-	for(slot_id = 1; slot_id <= 29; slot_id++) {
+	for(slot_id = MAIN_BEGIN; slot_id < EmuConstants::MAP_POSSESSIONS_SIZE; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if(inst) {
 			std::string packet = inst->Serialize(slot_id);
@@ -708,16 +708,16 @@ void Client::BulkSendInventoryItems() {
 
 	//Items in containers
 	for (slot_id=250; slot_id<=339; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+		const ItemInst* inst = m_inv[MainPowerSource];
 		if(inst) {
-			std::string packet = inst->Serialize(slot_id);
+			std::string packet = inst->Serialize(MainPowerSource);
 			ser_items[i++] = packet;
 			size += packet.length();
 		}
 	}	
 
 	// Bank items
-	for(slot_id = 2000; slot_id <= 2007; slot_id++) {
+	for(slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if(inst) {
 			std::string packet = inst->Serialize(slot_id);
@@ -782,7 +782,7 @@ void Client::BulkSendItems()
 	}
 
 	//Items in containers
-		for (slot_id=250; slot_id<=339; slot_id++) {
+		for (slot_id=EmuConstants::GENERAL_BAGS_BEGIN; slot_id<=EmuConstants::GENERAL_BAGS_END; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
@@ -790,12 +790,13 @@ void Client::BulkSendItems()
 	}
 
 	// Bank items
-	for (slot_id=2000; slot_id<=2015; slot_id++) {
+	for (slot_id=EmuConstants::BANK_BEGIN; slot_id<=EmuConstants::BANK_END; slot_id++) { // 2015...
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
 		}
 	}
+
 
 		// Bank items
 	for (slot_id=2030; slot_id<=2109; slot_id++) {
@@ -831,8 +832,8 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	uint8 handychance = 0;
 	for (itr = merlist.begin(); itr != merlist.end() && i < numItemSlots; ++itr) {
 		MerchantList ml = *itr;
-		if (merch->CastToNPC()->GetMerchantProbability() > ml.probability)
-			continue;
+		//if (merch->CastToNPC()->GetMerchantProbability() > ml.probability)
+			//continue;
 			
 		if(GetLevel() < ml.level_required)
 			continue;
@@ -1090,7 +1091,7 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 	switch(memspell->scribing)
 	{
 		case memSpellScribing:	{	// scribing spell to book
-			const ItemInst* inst = m_inv[SLOT_CURSOR];
+			const ItemInst* inst = m_inv[MainCursor];
 
 			if(inst && inst->IsType(ItemClassCommon))
 			{
@@ -1099,7 +1100,7 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 				if(item && item->Scroll.Effect == (int32)(memspell->spell_id))
 				{
 					ScribeSpell(memspell->spell_id, memspell->slot);
-					DeleteItemInInventory(SLOT_CURSOR, 0, true);
+					DeleteItemInInventory(MainCursor, 1, true);
 				}
 				else
 					Message(0,"Scribing spell: inst exists but item does not or spell ids do not match.");

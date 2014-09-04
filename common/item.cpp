@@ -166,52 +166,51 @@ ItemInst* Inventory::GetItem(int16 slot_id) const
 	ItemInst* result = nullptr;
 
 	// Cursor
-	if (slot_id == SLOT_CURSOR) {
+	if (slot_id == MainCursor) {
 		// Cursor slot
 		result = m_cursor.peek_front();
 	}
 
 	// Non bag slots
-	else if (slot_id >= 3000 && slot_id <= 3007) {
-		// Trade slots
+	else if (slot_id >= EmuConstants::TRADE_BEGIN && slot_id <= EmuConstants::TRADE_END) {
 		result = _GetItem(m_trade, slot_id);
 	}
-	else if (slot_id >= 2000 && slot_id <= 2007) {
+	else if (slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END) {
 		// Bank slots
 		result = _GetItem(m_bank, slot_id);
 	}
-	else if ((slot_id >= 22 && slot_id <= 29)) {
+	else if ((slot_id >= EmuConstants::GENERAL_BEGIN && slot_id <= EmuConstants::GENERAL_END)) {
 		// Personal inventory slots
 		result = _GetItem(m_inv, slot_id);
 	}
-	else if ((slot_id >= 1 && slot_id <= 21)) {
+	else if ((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) {
 		// Equippable slots (on body)
 		result = _GetItem(m_worn, slot_id);
 	}
 
-	// Trade bag slots
-	else if (slot_id >= 3030 && slot_id <= 3109) {
+	// Inner bag slots
+	else if (slot_id >= EmuConstants::TRADE_BAGS_BEGIN && slot_id <= EmuConstants::TRADE_BAGS_END) {
 		// Trade bag slots
 		ItemInst* inst = _GetItem(m_trade, Inventory::CalcSlotId(slot_id));
 		if (inst && inst->IsType(ItemClassContainer)) {
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id >= 2030 && slot_id <= 2109) {
+	else if (slot_id >= EmuConstants::BANK_BAGS_BEGIN && slot_id <= EmuConstants::BANK_BAGS_END) {
 		// Bank bag slots
 		ItemInst* inst = _GetItem(m_bank, Inventory::CalcSlotId(slot_id));
 		if (inst && inst->IsType(ItemClassContainer)) {
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id >= 330 && slot_id <= 339) {
+	else if (slot_id >= EmuConstants::CURSOR_BAG_BEGIN && slot_id <= EmuConstants::CURSOR_BAG_END) {
 		// Cursor bag slots
 		ItemInst* inst = m_cursor.peek_front();
 		if (inst && inst->IsType(ItemClassContainer)) {
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id >= 250 && slot_id <= 329) {
+	else if (slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && slot_id <= EmuConstants::GENERAL_BAGS_END) {
 		// Personal inventory bag slots
 		ItemInst* inst = _GetItem(m_inv, Inventory::CalcSlotId(slot_id));
 		if (inst && inst->IsType(ItemClassContainer)) {
@@ -264,7 +263,7 @@ int16 Inventory::RefPutItem(int16 slot_id, ItemInst* inst)
 int16 Inventory::PushCursor(const ItemInst& inst)
 {
 	m_cursor.push(inst.Clone());
-	return SLOT_CURSOR;
+	return MainCursor;
 }
 
 // Swap items in inventory
@@ -324,7 +323,7 @@ bool Inventory::CheckNoDrop(int16 slot_id) {
 	if (!inst) return false;
 	if (!inst->GetItem()->NoDrop) return true;
 	if (inst->GetItem()->ItemClass == 1) {
-		for (uint8 i = 0; i < 10; i++) {
+		for (uint8 i = SUB_BEGIN; i < EmuConstants::ITEM_CONTAINER_SIZE; i++) {
 			ItemInst* bagitem = GetItem(Inventory::CalcSlotId(slot_id, i));
 			if (bagitem && !bagitem->GetItem()->NoDrop) return true;
 		}
@@ -338,22 +337,22 @@ ItemInst* Inventory::PopItem(int16 slot_id)
 {
 	ItemInst* p = nullptr;
 
-	if (slot_id == SLOT_CURSOR) { // Cursor
+	if (slot_id == MainCursor) {
 		p = m_cursor.pop();
 	}
-	else if ((slot_id >= 1 && slot_id <= 21)) { // Worn slots
+	else if ((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END) || (slot_id == MainPowerSource)) {
 		p = m_worn[slot_id];
 		m_worn.erase(slot_id);
 	}
-	else if ((slot_id >= 22 && slot_id <= 29)) {
+	else if ((slot_id >= EmuConstants::GENERAL_BEGIN && slot_id <= EmuConstants::GENERAL_END)) {
 		p = m_inv[slot_id];
 		m_inv.erase(slot_id);
 	}
-	else if (slot_id >= 2000 && slot_id <= 2007) { // Bank slots
+	else if (slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END) {
 		p = m_bank[slot_id];
 		m_bank.erase(slot_id);
 	}
-	else if (slot_id >= 3000 && slot_id <= 3007) { // Trade window slots
+	else if (slot_id >= EmuConstants::TRADE_BEGIN && slot_id <= EmuConstants::TRADE_END) {
 		p = m_trade[slot_id];
 		m_trade.erase(slot_id);
 	}
@@ -373,7 +372,7 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 
 	if (ItemToTry->Stackable) {
 
-		for (int16 i = 22; i <= 29; i++) {
+		for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
 
 			ItemInst* InvItem = GetItem(i);
 
@@ -389,9 +388,9 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 			}
 			if (InvItem && InvItem->IsType(ItemClassContainer)) {
 
-				int16 BaseSlotID = Inventory::CalcSlotId(i, 0);
+				int16 BaseSlotID = Inventory::CalcSlotId(i, SUB_BEGIN);
 				uint8 BagSize = InvItem->GetItem()->BagSlots;
-				for (uint8 BagSlot = 0; BagSlot < BagSize; BagSlot++) {
+				for (uint8 BagSlot = SUB_BEGIN; BagSlot < BagSize; BagSlot++) {
 
 					InvItem = GetItem(BaseSlotID + BagSlot);
 
@@ -410,7 +409,7 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 		}
 	}
 
-	for (int16 i = 22; i <= 29; i++) {
+	for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
 
 		ItemInst* InvItem = GetItem(i);
 
@@ -433,11 +432,11 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 		}
 		else if (InvItem->IsType(ItemClassContainer) && CanItemFitInContainer(ItemToTry, InvItem->GetItem())) {
 
-			int16 BaseSlotID = Inventory::CalcSlotId(i, 0);
+			int16 BaseSlotID = Inventory::CalcSlotId(i, SUB_BEGIN);
 
 			uint8 BagSize = InvItem->GetItem()->BagSlots;
 
-			for (uint8 BagSlot = 0; BagSlot<BagSize; BagSlot++) {
+			for (uint8 BagSlot = SUB_BEGIN; BagSlot<BagSize; BagSlot++) {
 
 				InvItem = GetItem(BaseSlotID + BagSlot);
 
@@ -465,13 +464,13 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 }
 
 // Checks that user has at least 'quantity' number of items in a given inventory slot
-// Returns first slot it was found in, or SLOT_INVALID if not found
+// Returns first slot it was found in, or INVALID_INDEX if not found
 
 //This function has a flaw in that it only returns the last stack that it looked at
 //when quantity is greater than 1 and not all of quantity can be found in 1 stack.
 int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
 {
-	int16 slot_id = SLOT_INVALID;
+	int16 slot_id = INVALID_INDEX;
 
 	//Altered by Father Nitwit to support a specification of
 	//where to search, with a default value to maintain compatibility
@@ -479,32 +478,32 @@ int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
 	// Check each inventory bucket
 	if (where & invWhereWorn) {
 		slot_id = _HasItem(m_worn, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWherePersonal) {
 		slot_id = _HasItem(m_inv, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereBank) {
 		slot_id = _HasItem(m_bank, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereTrading) {
 		slot_id = _HasItem(m_trade, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereCursor) {
 		// Check cursor queue
 		slot_id = _HasItem(m_cursor, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
@@ -514,37 +513,37 @@ int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
 //this function has the same quantity flaw mentioned above in HasItem()
 int16 Inventory::HasItemByUse(uint8 use, uint8 quantity, uint8 where)
 {
-	int16 slot_id = SLOT_INVALID;
+	int16 slot_id = INVALID_INDEX;
 
 	// Check each inventory bucket
 	if (where & invWhereWorn) {
 		slot_id = _HasItemByUse(m_worn, use, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWherePersonal) {
 		slot_id = _HasItemByUse(m_inv, use, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereBank) {
 		slot_id = _HasItemByUse(m_bank, use, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereTrading) {
 		slot_id = _HasItemByUse(m_trade, use, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereCursor) {
 		// Check cursor queue
 		slot_id = _HasItemByUse(m_cursor, use, quantity);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
@@ -553,37 +552,37 @@ int16 Inventory::HasItemByUse(uint8 use, uint8 quantity, uint8 where)
 
 int16 Inventory::HasItemByLoreGroup(uint32 loregroup, uint8 where)
 {
-	int16 slot_id = SLOT_INVALID;
+	int16 slot_id = INVALID_INDEX;
 
 	// Check each inventory bucket
 	if (where & invWhereWorn) {
 		slot_id = _HasItemByLoreGroup(m_worn, loregroup);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWherePersonal) {
 		slot_id = _HasItemByLoreGroup(m_inv, loregroup);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereBank) {
 		slot_id = _HasItemByLoreGroup(m_bank, loregroup);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereTrading) {
 		slot_id = _HasItemByLoreGroup(m_trade, loregroup);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
 	if (where & invWhereCursor) {
 		// Check cursor queue
 		slot_id = _HasItemByLoreGroup(m_cursor, loregroup);
-		if (slot_id != SLOT_INVALID)
+		if (slot_id != INVALID_INDEX)
 			return slot_id;
 	}
 
@@ -591,18 +590,18 @@ int16 Inventory::HasItemByLoreGroup(uint32 loregroup, uint8 where)
 }
 
 // Locate an available inventory slot
-// Returns slot_id when there's one available, else SLOT_INVALID
+// Returns slot_id when there's one available, else INVALID_INDEX
 int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, bool is_arrow)
 {
 	// Check basic inventory
-	for (int16 i = 22; i <= 29; i++) {
+	for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
 		if (!GetItem(i))
 			// Found available slot in personal inventory
 			return i;
 	}
 
 	if (!for_bag) {
-		for (int16 i = 22; i <= 29; i++) {
+		for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
 			const ItemInst* inst = GetItem(i);
 			if (inst && inst->IsType(ItemClassContainer)
 				&& inst->GetItem()->BagSize >= min_size)
@@ -612,11 +611,11 @@ int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, boo
 					continue;
 				}
 
-				int16 base_slot_id = Inventory::CalcSlotId(i, 0);
+				int16 base_slot_id = Inventory::CalcSlotId(i, SUB_BEGIN);
 
 				uint8 slots = inst->GetItem()->BagSlots;
 				uint8 j;
-				for (j = 0; j<slots; j++) {
+				for (j = SUB_BEGIN; j<slots; j++) {
 					if (!GetItem(base_slot_id + j))
 						// Found available slot within bag
 						return (base_slot_id + j);
@@ -628,68 +627,178 @@ int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, boo
 	if (try_cursor)
 		// Always room on cursor (it's a queue)
 		// (we may wish to cap this in the future)
-		return SLOT_CURSOR;
+		return MainCursor;
 
 	// No available slots
-	return SLOT_INVALID;
+	return INVALID_INDEX;
+}
+
+
+// This is a mix of HasSpaceForItem and FindFreeSlot..due to existing coding behavior, it was better to add a new helper function...
+int16 Inventory::FindFreeSlotForTradeItem(const ItemInst* inst) {
+	// Do not arbitrarily use this function..it is designed for use with Client::ResetTrade() and Client::FinishTrade().
+	// If you have a need, use it..but, understand it is not a compatible replacement for Inventory::FindFreeSlot().
+	//
+	// I'll probably implement a bitmask in the new inventory system to avoid having to adjust stack bias -U
+
+	if (!inst || !inst->GetID())
+		return INVALID_INDEX;
+
+	// step 1: find room for bags (caller should really ask for slots for bags first to avoid sending them to cursor..and bag item loss)
+	if (inst->IsType(ItemClassContainer)) {
+		for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot)
+			if (!m_inv[free_slot])
+				return free_slot;
+
+		return MainCursor; // return cursor since bags do not stack and will not fit inside other bags..yet...)
+	}
+
+	// step 2: find partial room for stackables
+	if (inst->IsStackable()) {
+		for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot) {
+			const ItemInst* main_inst = m_inv[free_slot];
+
+			if (!main_inst)
+				continue;
+
+			if ((main_inst->GetID() == inst->GetID()) && (main_inst->GetCharges() < main_inst->GetItem()->StackSize))
+				return free_slot;
+
+			if (main_inst->IsType(ItemClassContainer)) { // if item-specific containers already have bad items, we won't fix it here...
+				for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot) {
+					const ItemInst* sub_inst = main_inst->GetItem(free_bag_slot);
+
+					if (!sub_inst)
+						continue;
+
+					if ((sub_inst->GetID() == inst->GetID()) && (sub_inst->GetCharges() < sub_inst->GetItem()->StackSize))
+						return Inventory::CalcSlotId(free_slot, free_bag_slot);
+				}
+			}
+		}
+	}
+
+	// step 3a: find room for container-specific items (ItemClassArrow)
+	if (inst->GetItem()->ItemType == ItemTypeArrow) {
+		for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot) {
+			const ItemInst* main_inst = m_inv[free_slot];
+
+			if (!main_inst || (main_inst->GetItem()->BagType != BagTypeQuiver) || !main_inst->IsType(ItemClassContainer))
+				continue;
+
+			for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot)
+				if (!main_inst->GetItem(free_bag_slot))
+					return Inventory::CalcSlotId(free_slot, free_bag_slot);
+		}
+	}
+
+	// step 3b: find room for container-specific items (ItemClassSmallThrowing)
+	if (inst->GetItem()->ItemType == ItemTypeSmallThrowing) {
+		for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot) {
+			const ItemInst* main_inst = m_inv[free_slot];
+
+			if (!main_inst || (main_inst->GetItem()->BagType != BagTypeBandolier) || !main_inst->IsType(ItemClassContainer))
+				continue;
+
+			for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot)
+				if (!main_inst->GetItem(free_bag_slot))
+					return Inventory::CalcSlotId(free_slot, free_bag_slot);
+		}
+	}
+
+	// step 4: just find an empty slot
+	for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot) {
+		const ItemInst* main_inst = m_inv[free_slot];
+
+		if (!main_inst)
+			return free_slot;
+
+		if (main_inst->IsType(ItemClassContainer)) {
+			if ((main_inst->GetItem()->BagSize < inst->GetItem()->Size) || (main_inst->GetItem()->BagType == BagTypeBandolier) || (main_inst->GetItem()->BagType == BagTypeQuiver))
+				continue;
+
+			for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot)
+				if (!main_inst->GetItem(free_bag_slot))
+					return Inventory::CalcSlotId(free_slot, free_bag_slot);
+		}
+	}
+
+	//return INVALID_INDEX; // everything else pushes to the cursor
+	return MainCursor;
 }
 
 // Opposite of below: Get parent bag slot_id from a slot inside of bag
-int16 Inventory::CalcSlotId(int16 slot_id)
-{
-	int16 parent_slot_id = SLOT_INVALID;
+int16 Inventory::CalcSlotId(int16 slot_id) {
+	int16 parent_slot_id = INVALID_INDEX;
 
-	if (slot_id >= 250 && slot_id <= 329)
-		parent_slot_id = IDX_INV + (slot_id - 250) / MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 330 && slot_id <= 339)
-		parent_slot_id = SLOT_CURSOR;
-	else if (slot_id >= 2000 && slot_id <= 2007)
-		parent_slot_id = IDX_BANK + (slot_id - 2000) / MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 2030 && slot_id <= 2109)
-		parent_slot_id = IDX_BANK + (slot_id - 2030) / MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 3030 && slot_id <= 3109)
-		parent_slot_id = IDX_TRADE + (slot_id - 3030) / MAX_ITEMS_PER_BAG;
+	if (slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && slot_id <= EmuConstants::GENERAL_BAGS_END)
+		parent_slot_id = EmuConstants::GENERAL_BEGIN + (slot_id - EmuConstants::GENERAL_BAGS_BEGIN) / EmuConstants::ITEM_CONTAINER_SIZE;
+
+	else if (slot_id >= EmuConstants::CURSOR_BAG_BEGIN && slot_id <= EmuConstants::CURSOR_BAG_END)
+		parent_slot_id = MainCursor;
+
+	/*
+	// this is not a bag range... using this risks over-writing existing items
+	else if (slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END)
+		parent_slot_id = EmuConstants::BANK_BEGIN + (slot_id - EmuConstants::BANK_BEGIN) / EmuConstants::ITEM_CONTAINER_SIZE;
+	*/
+
+	else if (slot_id >= EmuConstants::BANK_BAGS_BEGIN && slot_id <= EmuConstants::BANK_BAGS_END)
+		parent_slot_id = EmuConstants::BANK_BEGIN + (slot_id - EmuConstants::BANK_BAGS_BEGIN) / EmuConstants::ITEM_CONTAINER_SIZE;
+
+	//else if (slot_id >= 3100 && slot_id <= 3179) should be {3031..3110}..where did this range come from!!? (verified db save range)
+	else if (slot_id >= EmuConstants::TRADE_BAGS_BEGIN && slot_id <= EmuConstants::TRADE_BAGS_END)
+		parent_slot_id = EmuConstants::TRADE_BEGIN + (slot_id - EmuConstants::TRADE_BAGS_BEGIN) / EmuConstants::ITEM_CONTAINER_SIZE;
 
 	return parent_slot_id;
 }
 
 // Calculate slot_id for an item within a bag
-int16 Inventory::CalcSlotId(int16 bagslot_id, uint8 bagidx)
-{
-	if (!Inventory::SupportsContainers(bagslot_id)) {
-		return SLOT_INVALID;
-	}
+int16 Inventory::CalcSlotId(int16 bagslot_id, uint8 bagidx) {
+	if (!Inventory::SupportsContainers(bagslot_id))
+		return INVALID_INDEX;
 
-	int16 slot_id = SLOT_INVALID;
+	int16 slot_id = INVALID_INDEX;
 
-	if (bagslot_id == SLOT_CURSOR || bagslot_id == 8000) // Cursor
-		slot_id = IDX_CURSOR_BAG + bagidx;
-	else if (bagslot_id >= 22 && bagslot_id <= 29) // Inventory slots
-		slot_id = IDX_INV_BAG + (bagslot_id - 22)*MAX_ITEMS_PER_BAG + bagidx;
-	else if (bagslot_id >= 2000 && bagslot_id <= 2007) // Bank slots
-		slot_id = IDX_BANK_BAG + (bagslot_id - 2000)*MAX_ITEMS_PER_BAG + bagidx;
-	else if (bagslot_id >= 3000 && bagslot_id <= 3007) // Trade window slots
-		slot_id = IDX_TRADE_BAG + (bagslot_id - 3000)*MAX_ITEMS_PER_BAG + bagidx;
+	if (bagslot_id == MainCursor || bagslot_id == 8000)
+		slot_id = EmuConstants::CURSOR_BAG_BEGIN + bagidx;
+
+	else if (bagslot_id >= EmuConstants::GENERAL_BEGIN && bagslot_id <= EmuConstants::GENERAL_END)
+		slot_id = EmuConstants::GENERAL_BAGS_BEGIN + (bagslot_id - EmuConstants::GENERAL_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE + bagidx;
+
+	else if (bagslot_id >= EmuConstants::BANK_BEGIN && bagslot_id <= EmuConstants::BANK_END)
+		slot_id = EmuConstants::BANK_BAGS_BEGIN + (bagslot_id - EmuConstants::BANK_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE + bagidx;
+
+	else if (bagslot_id >= EmuConstants::TRADE_BEGIN && bagslot_id <= EmuConstants::TRADE_END)
+		slot_id = EmuConstants::TRADE_BAGS_BEGIN + (bagslot_id - EmuConstants::TRADE_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE + bagidx;
 
 	return slot_id;
 }
 
-uint8 Inventory::CalcBagIdx(int16 slot_id)
-{
+uint8 Inventory::CalcBagIdx(int16 slot_id) {
 	uint8 index = 0;
 
-	if (slot_id >= 250 && slot_id <= 329)
-		index = (slot_id - 250) % MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 330 && slot_id <= 339)
-		index = (slot_id - 330) % MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 2000 && slot_id <= 2007)
-		index = (slot_id - 2000) % MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 2030 && slot_id <= 2109)
-		index = (slot_id - 2030) % MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 3030 && slot_id <= 3109)
-		index = (slot_id - 3030) % MAX_ITEMS_PER_BAG;
-	else if (slot_id >= 4000 && slot_id <= 4009)
-		index = (slot_id - 4000) % MAX_ITEMS_PER_BAG;
+	if (slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && slot_id <= EmuConstants::GENERAL_BAGS_END)
+		index = (slot_id - EmuConstants::GENERAL_BAGS_BEGIN) % EmuConstants::ITEM_CONTAINER_SIZE;
+
+	else if (slot_id >= EmuConstants::CURSOR_BAG_BEGIN && slot_id <= EmuConstants::CURSOR_BAG_END)
+		index = (slot_id - EmuConstants::CURSOR_BAG_BEGIN); // % EmuConstants::ITEM_CONTAINER_SIZE; - not needed since range is 10 slots
+
+	/*
+	// this is not a bag range... using this risks over-writing existing items
+	else if (slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END)
+		index = (slot_id - EmuConstants::BANK_BEGIN) % EmuConstants::ITEM_CONTAINER_SIZE;
+	*/
+
+	else if (slot_id >= EmuConstants::BANK_BAGS_BEGIN && slot_id <= EmuConstants::BANK_BAGS_END)
+		index = (slot_id - EmuConstants::BANK_BAGS_BEGIN) % EmuConstants::ITEM_CONTAINER_SIZE;
+
+	else if (slot_id >= EmuConstants::TRADE_BAGS_BEGIN && slot_id <= EmuConstants::TRADE_BAGS_END)
+		index = (slot_id - EmuConstants::TRADE_BAGS_BEGIN) % EmuConstants::ITEM_CONTAINER_SIZE;
+
+	// odd..but, ok... (probably a range-slot conversion for ItemInst* Object::item
+	else if (slot_id >= EmuConstants::WORLD_BEGIN && slot_id <= EmuConstants::WORLD_END)
+		index = (slot_id - EmuConstants::WORLD_BEGIN); // % EmuConstants::ITEM_CONTAINER_SIZE; - not needed since range is 10 slots
 
 	return index;
 }
@@ -699,25 +808,25 @@ int16 Inventory::CalcSlotFromMaterial(uint8 material)
 	switch (material)
 	{
 	case MaterialHead:
-		return SLOT_HEAD;
+		return MainHead;
 	case MaterialChest:
-		return SLOT_CHEST;
+		return MainChest;
 	case MaterialArms:
-		return SLOT_ARMS;
+		return MainArms;
 	case MaterialWrist:
-		return SLOT_BRACER01;	// there's 2 bracers, only one bracer material
+		return MainWrist1;	// there's 2 bracers, only one bracer material
 	case MaterialHands:
-		return SLOT_HANDS;
+		return MainHands;
 	case MaterialLegs:
-		return SLOT_LEGS;
+		return MainLegs;
 	case MaterialFeet:
-		return SLOT_FEET;
+		return MainFeet;
 	case MaterialPrimary:
-		return SLOT_PRIMARY;
+		return MainPrimary;
 	case MaterialSecondary:
-		return SLOT_SECONDARY;
+		return MainSecondary;
 	default:
-		return SLOT_INVALID;
+		return INVALID_INDEX;
 	}
 }
 
@@ -725,24 +834,24 @@ uint8 Inventory::CalcMaterialFromSlot(int16 equipslot)
 {
 	switch (equipslot)
 	{
-	case SLOT_HEAD:
+	case MainHead:
 		return MaterialHead;
-	case SLOT_CHEST:
+	case MainChest:
 		return MaterialChest;
-	case SLOT_ARMS:
+	case MainArms:
 		return MaterialArms;
-	case SLOT_BRACER01:
-	case SLOT_BRACER02:
+	case MainWrist1:
+	//case SLOT_BRACER02: // non-live behavior
 		return MaterialWrist;
-	case SLOT_HANDS:
+	case MainHands:
 		return MaterialHands;
-	case SLOT_LEGS:
+	case MainLegs:
 		return MaterialLegs;
-	case SLOT_FEET:
+	case MainFeet:
 		return MaterialFeet;
-	case SLOT_PRIMARY:
+	case MainPrimary:
 		return MaterialPrimary;
-	case SLOT_SECONDARY:
+	case MainSecondary:
 		return MaterialSecondary;
 	default:
 		return _MaterialInvalid;
@@ -763,48 +872,48 @@ bool Inventory::CanItemFitInContainer(const Item_Struct *ItemToTry, const Item_S
 // Test whether a given slot can support a container item
 bool Inventory::SupportsContainers(int16 slot_id)
 {
-	if ((slot_id >= 22 && slot_id <= 30) ||		// Personal inventory slots
-		(slot_id >= 2000 && slot_id <= 2007) ||	// Bank slots
-		(slot_id == SLOT_CURSOR) ||			// Cursor
-		(slot_id >= 3000 && slot_id <= 3007))	// Trade window
+	if ((slot_id == MainCursor) ||
+		(slot_id >= EmuConstants::GENERAL_BEGIN && slot_id <= EmuConstants::GENERAL_END) ||
+		(slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END) ||
+		(slot_id >= EmuConstants::TRADE_BEGIN && slot_id <= EmuConstants::TRADE_END))
 		return true;
 	return false;
 }
 
 int Inventory::GetSlotByItemInst(ItemInst *inst) {
 	if (!inst)
-		return -1;
+		return INVALID_INDEX;
 
 	int i = GetSlotByItemInstCollection(m_worn, inst);
-	if (i != -1) {
+	if (i != INVALID_INDEX) {
 		return i;
 	}
 
 	i = GetSlotByItemInstCollection(m_inv, inst);
-	if (i != -1) {
+	if (i != INVALID_INDEX) {
 		return i;
 	}
 
 	i = GetSlotByItemInstCollection(m_bank, inst);
-	if (i != -1) {
+	if (i != INVALID_INDEX) {
 		return i;
 	}
 
 	i = GetSlotByItemInstCollection(m_shbank, inst);
-	if (i != -1) {
+	if (i != INVALID_INDEX) {
 		return i;
 	}
 
 	i = GetSlotByItemInstCollection(m_trade, inst);
-	if (i != -1) {
+	if (i != INVALID_INDEX) {
 		return i;
 	}
 
 	if (m_cursor.peek_front() == inst) {
-		return SLOT_CURSOR;
+		return MainCursor;
 	}
 
-	return -1;
+	return INVALID_INDEX;
 }
 
 void Inventory::dumpEntireInventory() {
@@ -917,27 +1026,27 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 		return slot_id;
 	}
 
-	int16 result = SLOT_INVALID;
+	int16 result = INVALID_INDEX;
 
-	if (slot_id == SLOT_CURSOR) { // Cursor
+	if (slot_id == MainCursor) {
 		// Replace current item on cursor, if exists
 		m_cursor.pop(); // no memory delete, clients of this function know what they are doing
 		m_cursor.push_front(inst);
 		result = slot_id;
 	}
-	else if ((slot_id >= 1 && slot_id <= 21)) { // Worn slots
+	else if ((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) {
 		m_worn[slot_id] = inst;
 		result = slot_id;
 	}
-	else if ((slot_id >= 22 && slot_id <= 29)) {
+	else if ((slot_id >= EmuConstants::GENERAL_BEGIN && slot_id <= EmuConstants::GENERAL_END)) {
 		m_inv[slot_id] = inst;
 		result = slot_id;
 	}
-	else if (slot_id >= 2000 && slot_id <= 2007) { // Bank slots
+	else if (slot_id >= EmuConstants::BANK_BEGIN && slot_id <= EmuConstants::BANK_END) {
 		m_bank[slot_id] = inst;
 		result = slot_id;
 	}
-	else if (slot_id >= 3000 && slot_id <= 3007) { // Trade window slots
+	else if (slot_id >= EmuConstants::TRADE_BEGIN && slot_id <= EmuConstants::TRADE_END) {
 		m_trade[slot_id] = inst;
 		result = slot_id;
 	}
@@ -950,7 +1059,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 		}
 	}
 
-	if (result == SLOT_INVALID) {
+	if (result == INVALID_INDEX) {
 		LogFile->write(EQEMuLog::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
 		Inventory::MarkDirty(inst); // Slot not found, clean up
 	}
@@ -991,7 +1100,7 @@ int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, ui
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 // Internal Method: Checks an inventory queue type bucket for a particular item
@@ -1009,7 +1118,7 @@ int16 Inventory::_HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity)
 			if (inst->GetID() == item_id) {
 				quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
 				if (quantity_found >= quantity)
-					return SLOT_CURSOR;
+					return MainCursor;
 			}
 		}
 		// Go through bag, if bag
@@ -1020,14 +1129,14 @@ int16 Inventory::_HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity)
 				if (baginst->GetID() == item_id) {
 					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
 					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
+						return Inventory::CalcSlotId(MainCursor, itb->first);
 				}
 			}
 		}
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 // Internal Method: Checks an inventory bucket for a particular item
@@ -1062,7 +1171,7 @@ int16 Inventory::_HasItemByUse(std::map<int16, ItemInst*>& bucket, uint8 use, ui
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 // Internal Method: Checks an inventory queue type bucket for a particular item
@@ -1078,7 +1187,7 @@ int16 Inventory::_HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity)
 		if (inst && inst->IsType(ItemClassCommon) && inst->GetItem()->ItemType == use) {
 			quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
 			if (quantity_found >= quantity)
-				return SLOT_CURSOR;
+				return MainCursor;
 		}
 
 		// Go through bag, if bag
@@ -1089,14 +1198,14 @@ int16 Inventory::_HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity)
 				if (baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->ItemType == use) {
 					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
 					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
+						return Inventory::CalcSlotId(MainCursor, itb->first);
 				}
 			}
 		}
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 int16 Inventory::_HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 loregroup)
@@ -1126,7 +1235,7 @@ int16 Inventory::_HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 // Internal Method: Checks an inventory queue type bucket for a particular item
@@ -1141,7 +1250,7 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 		if (inst)
 		{
 			if (inst->GetItem()->LoreGroup == loregroup)
-				return SLOT_CURSOR;
+				return MainCursor;
 
 		}
 		// Go through bag, if bag
@@ -1150,13 +1259,13 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 			for (itb = inst->_begin(); itb != inst->_end(); ++itb) {
 				ItemInst* baginst = itb->second;
 				if (baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->LoreGroup == loregroup)
-					return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
+					return Inventory::CalcSlotId(MainCursor, itb->first);
 			}
 		}
 	}
 
 	// Not found
-	return SLOT_INVALID;
+	return INVALID_INDEX;
 }
 
 
@@ -1324,14 +1433,15 @@ bool ItemInst::IsEquipable(int16 slot_id) const
 	if (!m_item)
 		return false;
 
-	if (slot_id == 9999) {
-		slot_id = 22;
+	// another "shouldn't do" fix..will be fixed in future updates (requires code and database work)
+	if (slot_id == MainPowerSource) {
+		slot_id = MainGeneral1;
 		uint32 slot_mask = (1 << slot_id);
 		if (slot_mask & m_item->Slots)
 			return true;
 	}
 
-	if (slot_id < 22) {
+	if ((uint16)slot_id <= EmuConstants::EQUIPMENT_END+1) {
 		uint32 slot_mask = (1 << slot_id);
 		if (slot_mask & m_item->Slots)
 			return true;
@@ -1355,7 +1465,7 @@ ItemInst* ItemInst::GetItem(uint8 index) const
 int16 ItemInst::GetItemID(uint8 slot) const
 {
 	const ItemInst *item;
-	int16 id = 0;
+	int16 id = NO_ITEM;
 	if ((item = GetItem(slot)) != nullptr)
 		id = item->GetItem()->ID;
 
@@ -1448,12 +1558,12 @@ void ItemInst::ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent)
 uint8 ItemInst::FirstOpenSlot() const
 {
 	uint8 slots = m_item->BagSlots, i;
-	for (i = 0; i<slots; i++) {
+	for (i = SUB_BEGIN; i < slots; i++) {
 		if (!GetItem(i))
 			break;
 	}
 
-	return (i<slots) ? i : 0xff;
+	return (i < slots) ? i : INVALID_INDEX;
 }
 
 uint8 ItemInst::GetTotalItemCount() const
@@ -1462,7 +1572,7 @@ uint8 ItemInst::GetTotalItemCount() const
 
 	if (m_item->ItemClass != ItemClassContainer) { return item_count; }
 
-	for (int idx = 0; idx < m_item->BagSlots; idx++) { if (GetItem(idx)) { item_count++; } }
+	for (int idx = SUB_BEGIN; idx < m_item->BagSlots; idx++) { if (GetItem(idx)) { item_count++; } }
 
 	return item_count;
 }
@@ -1472,7 +1582,7 @@ bool ItemInst::IsNoneEmptyContainer()
 	if (m_item->ItemClass != ItemClassContainer)
 		return false;
 
-	for (int i = 0; i < m_item->BagSlots; ++i)
+	for (int i = SUB_BEGIN; i < m_item->BagSlots; ++i)
 		if (GetItem(i))
 			return true;
 
@@ -1589,8 +1699,8 @@ bool ItemInst::IsSlotAllowed(int16 slot_id) const {
 	if (!m_item) { return false; }
 	else if (Inventory::SupportsContainers(slot_id)) { return true; }
 	else if (m_item->Slots & (1 << slot_id)) { return true; }
-	else if (slot_id == 9999 && (m_item->Slots & (1 << 22))) { return true; }
-	else if (slot_id != 9999 && slot_id > 21) { return true; }
+	else if (slot_id == MainPowerSource && (m_item->Slots & (1 << 22))) { return true; } // got lazy... <watch>
+	else if (slot_id != MainPowerSource && slot_id > EmuConstants::EQUIPMENT_END) { return true; }
 	else { return false; }
 }
 

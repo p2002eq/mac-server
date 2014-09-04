@@ -62,9 +62,9 @@ extern volatile bool RunLoops;
 #include "client_logs.h"
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
-#include "queryserv.h"
 #include "../common/crc32.h"
 #include "../common/packet_dump_file.h"
+#include "queryserv.h"
 
 extern QueryServ* QServ;
 extern EntityList entity_list;
@@ -1428,22 +1428,22 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	// (update: i think pp should do it, as this holds LoY dye - plus, this is ugly code with Inventory!)
 	const Item_Struct* item = nullptr;
 	const ItemInst* inst = nullptr;
-	if ((inst = m_inv[SLOT_HANDS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainHands]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHands]	= item->Material;
 		ns->spawn.colors[MaterialHands].color	= GetEquipmentColor(MaterialHands);
 	}
-	if ((inst = m_inv[SLOT_HEAD]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainHead]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialHead]	= item->Material;
 		ns->spawn.colors[MaterialHead].color	= GetEquipmentColor(MaterialHead);
 	}
-	if ((inst = m_inv[SLOT_ARMS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainArms]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialArms]	= item->Material;
 		ns->spawn.colors[MaterialArms].color	= GetEquipmentColor(MaterialArms);
 	}
-	if ((inst = m_inv[SLOT_BRACER01]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainWrist1]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialWrist]= item->Material;
 		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
@@ -1458,27 +1458,27 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	}
 	*/
 
-	if ((inst = m_inv[SLOT_CHEST]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainChest]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialChest]	= item->Material;
 		ns->spawn.colors[MaterialChest].color	= GetEquipmentColor(MaterialChest);
 	}
-	if ((inst = m_inv[SLOT_LEGS]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainLegs]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialLegs]	= item->Material;
 		ns->spawn.colors[MaterialLegs].color	= GetEquipmentColor(MaterialLegs);
 	}
-	if ((inst = m_inv[SLOT_FEET]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainFeet]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialFeet]	= item->Material;
 		ns->spawn.colors[MaterialFeet].color	= GetEquipmentColor(MaterialFeet);
 	}
-	if ((inst = m_inv[SLOT_PRIMARY]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainPrimary]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
 	}
-	if ((inst = m_inv[SLOT_SECONDARY]) && inst->IsType(ItemClassCommon)) {
+	if ((inst = m_inv[MainSecondary]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		if (strlen(item->IDFile) > 2)
 			ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
@@ -2186,7 +2186,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 		if(!bindwound_timer.Enabled()) {
 			//make sure we actually have a bandage... and consume it.
 			int16 bslot = m_inv.HasItemByUse(ItemTypeBandage, 1, invWhereWorn|invWherePersonal);
-			if (bslot == SLOT_INVALID) {
+			if (bslot == INVALID_INDEX) {
 				bind_out->type = 3;
 				QueuePacket(outapp);
 				bind_out->type = 7;	//this is the wrong message, dont know the right one.
@@ -2341,25 +2341,25 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 void Client::SetMaterial(int16 in_slot, uint32 item_id) {
 	const Item_Struct* item = database.GetItem(item_id);
 	if (item && (item->ItemClass==ItemClassCommon)) {
-		if (in_slot==SLOT_HEAD)
+		if (in_slot==MainHead)
 			m_pp.item_material[MaterialHead]		= item->Material;
-		else if (in_slot==SLOT_CHEST)
+		else if (in_slot==MainChest)
 			m_pp.item_material[MaterialChest]		= item->Material;
-		else if (in_slot==SLOT_ARMS)
+		else if (in_slot==MainArms)
 			m_pp.item_material[MaterialArms]		= item->Material;
-		else if (in_slot==SLOT_BRACER01)
+		else if (in_slot==MainWrist1)
 			m_pp.item_material[MaterialWrist]		= item->Material;
-		else if (in_slot==SLOT_BRACER02)
+		else if (in_slot == MainWrist2)
 			m_pp.item_material[MaterialWrist]		= item->Material;
-		else if (in_slot==SLOT_HANDS)
+		else if (in_slot==MainHands)
 			m_pp.item_material[MaterialHands]		= item->Material;
-		else if (in_slot==SLOT_LEGS)
+		else if (in_slot==MainLegs)
 			m_pp.item_material[MaterialLegs]		= item->Material;
-		else if (in_slot==SLOT_FEET)
+		else if (in_slot==MainFeet)
 			m_pp.item_material[MaterialFeet]		= item->Material;
-		else if (in_slot==SLOT_PRIMARY)
-			m_pp.item_material[MaterialPrimary]	= atoi(item->IDFile+2);
-		else if (in_slot==SLOT_SECONDARY)
+		else if (in_slot==MainPrimary)
+			m_pp.item_material[MaterialPrimary]		= atoi(item->IDFile+2);
+		else if (in_slot==MainSecondary)
 			m_pp.item_material[MaterialSecondary]	= atoi(item->IDFile+2);
 	}
 }
@@ -2665,25 +2665,25 @@ void Client::SetTint(int16 in_slot, uint32 color) {
 
 // Still need to reconcile bracer01 versus bracer02
 void Client::SetTint(int16 in_slot, Color_Struct& color) {
-	if (in_slot==SLOT_HEAD)
+	if (in_slot==MainHead)
 		m_pp.item_tint[MaterialHead].color=color.color;
-	else if (in_slot==SLOT_ARMS)
+	else if (in_slot==MainArms)
 		m_pp.item_tint[MaterialArms].color=color.color;
-	else if (in_slot==SLOT_BRACER01)
+	else if (in_slot==MainWrist1)
 		m_pp.item_tint[MaterialWrist].color=color.color;
-	else if (in_slot==SLOT_BRACER02)
+	else if (in_slot == MainWrist2)
 		m_pp.item_tint[MaterialWrist].color=color.color;
-	else if (in_slot==SLOT_HANDS)
+	else if (in_slot==MainHands)
 		m_pp.item_tint[MaterialHands].color=color.color;
-	else if (in_slot==SLOT_PRIMARY)
+	else if (in_slot==MainPrimary)
 		m_pp.item_tint[MaterialPrimary].color=color.color;
-	else if (in_slot==SLOT_SECONDARY)
+	else if (in_slot==MainSecondary)
 		m_pp.item_tint[MaterialSecondary].color=color.color;
-	else if (in_slot==SLOT_CHEST)
+	else if (in_slot==MainChest)
 		m_pp.item_tint[MaterialChest].color=color.color;
-	else if (in_slot==SLOT_LEGS)
+	else if (in_slot==MainLegs)
 		m_pp.item_tint[MaterialLegs].color=color.color;
-	else if (in_slot==SLOT_FEET)
+	else if (in_slot==MainFeet)
 		m_pp.item_tint[MaterialFeet].color=color.color;
 }
 
@@ -2754,57 +2754,57 @@ void Client::LinkDead()
 }
 
 uint8 Client::SlotConvert(uint8 slot,bool bracer){
-	uint8 slot2=0;
+	uint8 slot2=0; // why are we returning MainCursor instead of INVALID_INDEX? (must be a pre-charm segment...)
 	if(bracer)
-		return SLOT_BRACER02;
+		return MainWrist2;
 	switch(slot){
 		case MaterialHead:
-			slot2=SLOT_HEAD;
+			slot2=MainHead;
 			break;
 		case MaterialChest:
-			slot2=SLOT_CHEST;
+			slot2=MainChest;
 			break;
 		case MaterialArms:
-			slot2=SLOT_ARMS;
+			slot2=MainArms;
 			break;
 		case MaterialWrist:
-			slot2=SLOT_BRACER01;
+			slot2=MainWrist1;
 			break;
 		case MaterialHands:
-			slot2=SLOT_HANDS;
+			slot2=MainHands;
 			break;
 		case MaterialLegs:
-			slot2=SLOT_LEGS;
+			slot2=MainLegs;
 			break;
 		case MaterialFeet:
-			slot2=SLOT_FEET;
+			slot2=MainFeet;
 			break;
 		}
 	return slot2;
 }
 
 uint8 Client::SlotConvert2(uint8 slot){
-	uint8 slot2=0;
+	uint8 slot2=0; // same as above...
 	switch(slot){
-		case SLOT_HEAD:
+		case MainHead:
 			slot2=MaterialHead;
 			break;
-		case SLOT_CHEST:
+		case MainChest:
 			slot2=MaterialChest;
 			break;
-		case SLOT_ARMS:
+		case MainArms:
 			slot2=MaterialArms;
 			break;
-		case SLOT_BRACER01:
+		case MainWrist1:
 			slot2=MaterialWrist;
 			break;
-		case SLOT_HANDS:
+		case MainHands:
 			slot2=MaterialHands;
 			break;
-		case SLOT_LEGS:
+		case MainLegs:
 			slot2=MaterialLegs;
 			break;
-		case SLOT_FEET:
+		case MainFeet:
 			slot2=MaterialFeet;
 			break;
 		}
@@ -3205,14 +3205,14 @@ void Client::DiscoverItem(uint32 itemid) {
 uint16 Client::GetPrimarySkillValue()
 {
 	SkillUseTypes skill = HIGHEST_SKILL; //because nullptr == 0, which is 1H Slashing, & we want it to return 0 from GetSkill
-	bool equiped = m_inv.GetItem(SLOT_PRIMARY);
+	bool equiped = m_inv.GetItem(MainPrimary);
 
 	if (!equiped)
 		skill = SkillHandtoHand;
 
 	else {
 
-		uint8 type = m_inv.GetItem(SLOT_PRIMARY)->GetItem()->ItemType; //is this the best way to do this?
+		uint8 type = m_inv.GetItem(MainPrimary)->GetItem()->ItemType; //is this the best way to do this?
 
 		switch (type)
 		{
@@ -4015,7 +4015,7 @@ void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
 			}
 		}
 
-		inst = requestee->GetInv().GetItem(9999);
+		inst = requestee->GetInv().GetItem(MainPowerSource);
 
 		if(inst) {
 			item = inst->GetItem();
@@ -4256,8 +4256,8 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	made_npc->PR = GetPR();
 	made_npc->Corrup = GetCorrup();
 	// looks
-	made_npc->texture = GetEquipmentMaterial(1);
-	made_npc->helmtexture = GetEquipmentMaterial(0);
+	made_npc->texture = GetEquipmentMaterial(MaterialChest);
+	made_npc->helmtexture = GetEquipmentMaterial(MaterialHead);
 	made_npc->haircolor = GetHairColor();
 	made_npc->beardcolor = GetBeardColor();
 	made_npc->eyecolor1 = GetEyeColor1();
@@ -4268,9 +4268,9 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	made_npc->drakkin_heritage = GetDrakkinHeritage();
 	made_npc->drakkin_tattoo = GetDrakkinTattoo();
 	made_npc->drakkin_details = GetDrakkinDetails();
-	made_npc->d_meele_texture1 = GetEquipmentMaterial(7);
-	made_npc->d_meele_texture2 = GetEquipmentMaterial(8);
-	for (int i = 0; i < _MaterialCount; i++)	{
+	made_npc->d_meele_texture1 = GetEquipmentMaterial(MaterialPrimary);
+	made_npc->d_meele_texture2 = GetEquipmentMaterial(MaterialSecondary);
+	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)	{
 		made_npc->armor_tint[i] = GetEquipmentColor(i);
 	}
 	made_npc->loottable_id = 0;
@@ -5313,17 +5313,17 @@ void Client::TickItemCheck()
 	if(zone->tick_items.empty()) { return; }
 
 	//Scan equip slots for items
-	for(i = 0; i <= 21; i++)
+	for(i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++)
 	{
 		TryItemTick(i);
 	}
 	//Scan main inventory + cursor
-	for(i = 22; i < 31; i++)
+	for(i = EmuConstants::GENERAL_BEGIN; i <= MainCursor; i++)
 	{
 		TryItemTick(i);
 	}
 	//Scan bags
-	for(i = 250; i < 340; i++)
+	for(i = EmuConstants::GENERAL_BAGS_BEGIN; i <= EmuConstants::CURSOR_BAG_END; i++)
 	{
 		TryItemTick(i);
 	}
@@ -5339,7 +5339,7 @@ void Client::TryItemTick(int slot)
 
 	if(zone->tick_items.count(iid) > 0)
 	{
-		if( GetLevel() >= zone->tick_items[iid].level && MakeRandomInt(0, 100) >= (100 - zone->tick_items[iid].chance) && (zone->tick_items[iid].bagslot || slot < 22) )
+		if( GetLevel() >= zone->tick_items[iid].level && MakeRandomInt(0, 100) >= (100 - zone->tick_items[iid].chance) && (zone->tick_items[iid].bagslot || slot <= EmuConstants::EQUIPMENT_END) )
 		{
 			ItemInst* e_inst = (ItemInst*)inst;
 			parse->EventItem(EVENT_ITEM_TICK, this, e_inst, nullptr, "", slot);
@@ -5347,24 +5347,24 @@ void Client::TryItemTick(int slot)
 	}
 
 	//Only look at augs in main inventory
-	if(slot > 21) { return; }
+	if(slot > EmuConstants::EQUIPMENT_END) { return; }
 
 }
 
 void Client::ItemTimerCheck()
 {
 	int i;
-	for(i = 0; i <= 21; i++)
+	for(i = MainCursor; i <= EmuConstants::EQUIPMENT_END; i++)
 	{
 		TryItemTimer(i);
 	}
 
-	for(i = 22; i < 31; i++)
+	for(i = EmuConstants::GENERAL_BAGS_BEGIN; i <= MainCursor+31; i++)
 	{
 		TryItemTimer(i);
 	}
 
-	for(i = 250; i < 340; i++)
+	for(i = EmuConstants::GENERAL_BAGS_BEGIN; i <= EmuConstants::CURSOR_BAG_END; i++)
 	{
 		TryItemTimer(i);
 	}
@@ -5386,7 +5386,7 @@ void Client::TryItemTimer(int slot)
 		++it_iter;
 	}
 	
-	if(slot > 21) {
+	if(slot > EmuConstants::EQUIPMENT_END) {
 		return;
 	}
 }
@@ -5618,7 +5618,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if(itemid > 0)
-		SummonItem(itemid,1,0,0,0,0,0,false,SLOT_QUEST);
+		SummonItem(itemid,1,0,0,0,0,0,false,MainQuest);
 
 	if(faction)
 	{

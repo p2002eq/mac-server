@@ -564,7 +564,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 
 	// now the inventory
 	std::string invquery;
-	for (int16 i=0; i<=2109;)
+	for (int16 i=EmuConstants::EQUIPMENT_BEGIN; i<=EmuConstants::BANK_BAGS_END;)
 	{
 		const ItemInst* newinv = inv->GetItem(i);
 		if (newinv)
@@ -582,15 +582,16 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 #endif
 		}
 
-		if(i==30){ //end of standard inventory/cursor, jump to internals of bags/cursor
-			i = 250;
+		if (i == 30) {
+			i = EmuConstants::GENERAL_BAGS_BEGIN;
 			continue;
 		}
-		else if (i == 339) {
-			i = 2000;
+		else if (i == EmuConstants::CURSOR_BAG_END) {
+			i = EmuConstants::BANK_BEGIN;
 			continue;
-		} else if(i==2007){ //end of bank slots, jump to internals of bank bags
-			i = 2030;
+		}
+		else if (i == EmuConstants::BANK_END) {
+			i = EmuConstants::BANK_BAGS_BEGIN;
 			continue;
 		}
 
@@ -725,6 +726,7 @@ void Database::GetCharName(uint32 char_id, char* name) {
 		return;
 	}
 
+	auto row = results.begin();
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		strcpy(name, row[0]);
 	}
@@ -1529,8 +1531,8 @@ bool Database::GetLiveChar(uint32 account_id, char* cname) {
 }
 
 void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) {
-
-	std::string query = StringFormat("update character_ set firstlogon=%i where id=%i", firstlogon, CharID);
+	
+	std::string query = StringFormat( "update character_ set firstlogon=%i where id=%i",firstlogon, CharID);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -1539,8 +1541,8 @@ void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) {
 
 void Database::AddReport(std::string who, std::string against, std::string lines)
 {
-
-	char *escape_str = new char[lines.size() * 2 + 1];
+	
+	char *escape_str = new char[lines.size()*2+1];
 	DoEscapeString(escape_str, lines.c_str(), lines.size());
 
 	std::string query = StringFormat("INSERT INTO reports (name, reported, reported_text) VALUES('%s', '%s', '%s')", who.c_str(), against.c_str(), escape_str);
@@ -2376,7 +2378,6 @@ bool Database::GlobalInstance(uint16 instance_id)
 	return (atoi(row[0]) == 1) ? true : false;
 }
 
-
 struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 {
 	char errbuf[MYSQL_ERRMSG_SIZE];
@@ -2384,7 +2385,8 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	TimeOfDay_Struct eqTime;
-	if(RunQuery(query, MakeAnyLenString(&query, "SELECT minute,hour,day,month,year,realtime FROM eqtime limit 1"), errbuf, &result)) {
+	if(RunQuery(query, MakeAnyLenString(&query, "SELECT minute,hour,day,month,year,realtime FROM eqtime limit 1"), errbuf, &result))
+	{
 		safe_delete_array(query);
 		while((row = mysql_fetch_row(result)) != nullptr)
 		{
@@ -2396,7 +2398,9 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 			realtime = atoi(row[5]);
 		}
 		mysql_free_result(result);
-	} else {
+	} 
+	else
+	{
 		safe_delete_array(query);
 		_log(WORLD__INIT, "Loading EQ time of day failed. Using defaults.");
 		eqTime.minute = 0;
@@ -2404,7 +2408,7 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 		eqTime.day = 1;
 		eqTime.month = 1;
 		eqTime.year = 3100;
-		realtime = time(0); 
+		realtime = time(0);
 	}
 
 	return eqTime;

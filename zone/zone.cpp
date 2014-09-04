@@ -220,23 +220,23 @@ bool Zone::LoadZoneObjects() {
         uint32 idx = 0;
         int16 charges = 0;
 
- 			id							= (uint32)atoi(row[0]);
-			data.zone_id				= atoi(row[1]);
-			data.x						= atof(row[2]);
-			data.y						= atof(row[3]);
-			data.z						= atof(row[4]);
-			data.heading				= atof(row[5]);
-			itemid						= (uint32)atoi(row[6]);
-			charges						= (int16)atoi(row[7]);
-			strcpy(data.object_name, row[8]);
-			type						= (uint8)atoi(row[9]);
-			icon						= (uint32)atoi(row[10]);
-			data.object_type			= type;
-			data.linked_list_addr[0]	= 0;
-			data.linked_list_addr[1]	= 0;
-			data.unknown010				= (uint32)atoi(row[12]);
-			data.charges				= charges;
-			data.maxcharges				= charges;
+        id	= (uint32)atoi(row[0]);
+        data.zone_id = atoi(row[1]);
+        data.x = atof(row[2]);
+        data.y = atof(row[3]);
+        data.z = atof(row[4]);
+        data.heading = atof(row[5]);
+		itemid = (uint32)atoi(row[6]);
+		charges	= (int16)atoi(row[7]);
+        strcpy(data.object_name, row[8]);
+        type = (uint8)atoi(row[9]);
+        icon = (uint32)atoi(row[10]);
+		data.object_type = type;
+		data.linked_list_addr[0] = 0;
+        data.linked_list_addr[1] = 0;
+		data.unknown010				= (uint32)atoi(row[11]);
+		data.charges				= charges;
+		data.maxcharges				= charges;
 			
 
         ItemInst* inst = nullptr;
@@ -452,7 +452,7 @@ void Zone::LoadTempMerchantData_result(MYSQL_RES* result) {
 void Zone::LoadNewMerchantData(uint32 merchantid){
 
 	std::list<MerchantList> merlist;
-	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, "
+	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, alt_currency_cost, "
                                     "classes_required FROM merchantlist WHERE merchantid=%d", merchantid);
     auto results = database.QueryDatabase(query);
     if (!results.Success()) {
@@ -510,7 +510,7 @@ void Zone::LoadMerchantData_result(MYSQL_RES* result) {
 		ml.faction_required = atoul(row[3]);
 		ml.level_required = atoul(row[4]);
 		ml.classes_required = atoul(row[5]);
-		ml.probability = atoul(row[6]);
+		//ml.probability = atoul(row[6]);
 		cur->second.push_back(ml);
 	}
 }
@@ -627,6 +627,7 @@ void Zone::Shutdown(bool quite)
 	while (mob_itr != mob_list.end()) {
 		Mob* mob_inst = *mob_itr;
 		mob_inst->AI_Stop();
+		mob_inst->AI_ShutDown();
 		++mob_itr;
 	}
 
