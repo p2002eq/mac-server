@@ -58,6 +58,8 @@
 #include "../common/rulesys.h"
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -149,115 +151,105 @@ bool Zone::Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 
 //this really loads the objects into entity_list
 bool Zone::LoadZoneObjects() {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = nullptr;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 
-	uint32 len_query = MakeAnyLenString(&query, "SELECT "
-		"id,zoneid,xpos,ypos,zpos,heading,itemid,charges,objectname,type,icon,"
-		"unknown08,unknown10,unknown20,unknown24,unknown76"
-		" from object where zoneid=%i and (version=%u or version=-1)", zoneid, instanceversion);
+	std::string query = StringFormat("SELECT id, zoneid, xpos, ypos, zpos, heading, "
+                                    "itemid, charges, objectname, type, icon, unknown08, "
+                                    "unknown10, unknown20, unknown24, unknown76 fROM object "
+                                    "WHERE zoneid = %i AND (version = %u OR version = -1)",
+                                    zoneid, instanceversion);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+		LogFile->write(EQEMuLog::Error, "Error Loading Objects from DB: %s",results.ErrorMessage().c_str());
+		return false;
+    }
 
-	if (database.RunQuery(query, len_query, errbuf, &result)) {
-		safe_delete_array(query);
-		LogFile->write(EQEMuLog::Status, "Loading Objects from DB...");
-		while ((row = mysql_fetch_row(result))) {
-			if (atoi(row[9]) == 0)
-			{
-				// Type == 0 - Static Object
-				const char* shortname = database.GetZoneName(atoi(row[1]), false); // zoneid -> zone_shortname
+    LogFile->write(EQEMuLog::Status, "Loading Objects from DB...");
+    for (auto row = results.begin(); row != results.end(); ++row) {
+        if (atoi(row[9]) == 0)
+        {
+            // Type == 0 - Static Object
+            const char* shortname = database.GetZoneName(atoi(row[1]), false); // zoneid -> zone_shortname
 
-				if (shortname)
-				{
-					Door d;
-					memset(&d, 0, sizeof(d));
+            if (!shortname)
+                continue;
 
-					strn0cpy(d.zone_name, shortname, sizeof(d.zone_name));
-					d.db_id = 1000000000 + atoi(row[0]); // Out of range of normal use for doors.id
-					d.door_id = -1; // Client doesn't care if these are all the same door_id
-					d.pos_x = atof(row[2]); // xpos
-					d.pos_y = atof(row[3]); // ypos
-					d.pos_z = atof(row[4]); // zpos
-					d.heading = atof(row[5]); // heading
+            Door d;
+            memset(&d, 0, sizeof(d));
 
-					strn0cpy(d.door_name, row[8], sizeof(d.door_name)); // objectname
-					// Strip trailing "_ACTORDEF" if present. Client won't accept it for doors.
-					int len = strlen(d.door_name);
-					if ((len > 9) && (memcmp(&d.door_name[len - 9], "_ACTORDEF", 10) == 0))
-					{
-						d.door_name[len - 9] = '\0';
-					}
+            strn0cpy(d.zone_name, shortname, sizeof(d.zone_name));
+            d.db_id = 1000000000 + atoi(row[0]); // Out of range of normal use for doors.id
+            d.door_id = -1; // Client doesn't care if these are all the same door_id
+            d.pos_x = atof(row[2]); // xpos
+            d.pos_y = atof(row[3]); // ypos
+            d.pos_z = atof(row[4]); // zpos
+            d.heading = atof(row[5]); // heading
 
-					memcpy(d.dest_zone, "NONE", 5);
+            strn0cpy(d.door_name, row[8], sizeof(d.door_name)); // objectname
+            // Strip trailing "_ACTORDEF" if present. Client won't accept it for doors.
+            int len = strlen(d.door_name);
+            if ((len > 9) && (memcmp(&d.door_name[len - 9], "_ACTORDEF", 10) == 0))
+                d.door_name[len - 9] = '\0';
 
-					if ((d.size = atoi(row[11])) == 0) // unknown08 = optional size percentage
-					{
-						d.size = 100;
-					}
+            memcpy(d.dest_zone, "NONE", 5);
 
-					switch (d.opentype = atoi(row[12])) // unknown10 = optional request_nonsolid (0 or 1 or experimental number)
-					{
-						case 0:
-							d.opentype = 31;
-							break;
-						case 1:
-							d.opentype = 9;
-							break;
-					}
+            if ((d.size = atoi(row[11])) == 0) // unknown08 = optional size percentage
+                d.size = 100;
 
-					d.incline = atoi(row[13]); // unknown20 = optional model incline value
-					d.client_version_mask = 0xFFFFFFFF; //We should load the mask from the zone.
+            switch (d.opentype = atoi(row[12])) // unknown10 = optional request_nonsolid (0 or 1 or experimental number)
+            {
+                case 0:
+                    d.opentype = 31;
+                    break;
+                case 1:
+                    d.opentype = 9;
+                    break;
+            }
 
-					Doors* door = new Doors(&d);
-					entity_list.AddDoor(door);
-				}
+            d.incline = atoi(row[13]); // unknown20 = optional model incline value
+            d.client_version_mask = 0xFFFFFFFF; //We should load the mask from the zone.
 
-				continue;
-			}
-			Object_Struct data = {0};
-			uint32 id = 0;
-			uint32 icon = 0;
-			uint32 type = 0;
-			uint32 itemid = 0;
-			uint32 idx = 0;
-			int16 charges = 0;
+            Doors* door = new Doors(&d);
+            entity_list.AddDoor(door);
+        }
 
-			id							= (uint32)atoi(row[0]);
-			data.zone_id				= atoi(row[1]);
-			data.x						= atof(row[2]);
-			data.y						= atof(row[3]);
-			data.z						= atof(row[4]);
-			data.heading				= atof(row[5]);
-			itemid						= (uint32)atoi(row[6]);
-			charges						= (int16)atoi(row[7]);
-			strcpy(data.object_name, row[8]);
-			type						= (uint8)atoi(row[9]);
-			icon						= (uint32)atoi(row[10]);
-			data.object_type			= type;
-			data.linked_list_addr[0]	= 0;
-			data.linked_list_addr[1]	= 0;
-			data.unknown010				= (uint32)atoi(row[12]);
-			data.charges				= charges;
-			data.maxcharges				= charges;
+        Object_Struct data = {0};
+        uint32 id = 0;
+        uint32 icon = 0;
+        uint32 type = 0;
+        uint32 itemid = 0;
+        uint32 idx = 0;
+        int16 charges = 0;
+
+        id	= (uint32)atoi(row[0]);
+        data.zone_id = atoi(row[1]);
+        data.x = atof(row[2]);
+        data.y = atof(row[3]);
+        data.z = atof(row[4]);
+        data.heading = atof(row[5]);
+		itemid = (uint32)atoi(row[6]);
+		charges	= (int16)atoi(row[7]);
+        strcpy(data.object_name, row[8]);
+        type = (uint8)atoi(row[9]);
+        icon = (uint32)atoi(row[10]);
+		data.object_type = type;
+		data.linked_list_addr[0] = 0;
+        data.linked_list_addr[1] = 0;
+		data.unknown010				= (uint32)atoi(row[11]);
+		data.charges				= charges;
+		data.maxcharges				= charges;
 			
 
-			ItemInst* inst = nullptr;
-			//FatherNitwit: this dosent seem to work...
-			//tradeskill containers do not have an itemid of 0... at least what I am seeing
-			if (itemid == 0) {
-				// Generic tradeskill container
-				inst = new ItemInst(ItemInstWorldContainer);
-			}
-			else {
-				// Groundspawn object
-				inst = database.CreateItem(itemid);
-			}
-
-			//Father Nitwit's fix... not perfect...
-			if(inst == nullptr && type != OT_DROPPEDITEM) {
-				inst = new ItemInst(ItemInstWorldContainer);
-			}
+        ItemInst* inst = nullptr;
+        //FatherNitwit: this dosent seem to work...
+        //tradeskill containers do not have an itemid of 0... at least what I am seeing
+        if (itemid == 0) {
+            // Generic tradeskill container
+            inst = new ItemInst(ItemInstWorldContainer);
+        }
+        else {
+            // Groundspawn object
+            inst = database.CreateItem(itemid);
+        }
 
 			// Load child objects if container
 			if (inst && inst->IsType(ItemClassContainer)) {
@@ -270,23 +262,20 @@ bool Zone::LoadZoneObjects() {
 				}
 			}
 
-			Object* object = new Object(id, type, icon, data, inst);
-			entity_list.AddObject(object, false);
-			if(type == OT_DROPPEDITEM && itemid != 0)
-			{
-				entity_list.RemoveObject(object->GetID());
-			}
+        // Load child objects if container
+        if (inst && inst->IsType(ItemClassContainer)) {
+            database.LoadWorldContainer(id, inst);
+        }
 
-			safe_delete(inst);
-		}
-		mysql_free_result(result);
-	}
-	else {
-		safe_delete_array(query);
-		LogFile->write(EQEMuLog::Error, "Error Loading Objects from DB: %s",errbuf);
-		return(false);
-	}
-	return(true);
+        Object* object = new Object(id, type, icon, data, inst);
+        entity_list.AddObject(object, false);
+        if(type == OT_DROPPEDITEM && itemid != 0)
+            entity_list.RemoveObject(object->GetID());
+
+        safe_delete(inst);
+    }
+
+	return true;
 }
 
 //this also just loads into entity_list, not really into zone
@@ -461,28 +450,28 @@ void Zone::LoadTempMerchantData_result(MYSQL_RES* result) {
 
 //there should prolly be a temp counterpart of this...
 void Zone::LoadNewMerchantData(uint32 merchantid){
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
+
 	std::list<MerchantList> merlist;
-	if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT item, slot, faction_required, level_required,  classes_required FROM merchantlist WHERE merchantid=%d", merchantid), errbuf, &result)) {
-		while((row = mysql_fetch_row(result))) {
-			MerchantList ml;
-			ml.id = merchantid;
-			ml.item = atoul(row[0]);
-			ml.slot = atoul(row[1]);
-			ml.faction_required = atoul(row[2]);
-			ml.level_required = atoul(row[3]);
-			ml.classes_required = atoul(row[4]);
-			merlist.push_back(ml);
-		}
-		merchanttable[merchantid] = merlist;
-		mysql_free_result(result);
-	}
-	else
-		LogFile->write(EQEMuLog::Error, "Error in LoadNewMerchantData query '%s' %s", query, errbuf);
-	safe_delete_array(query);
+	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, alt_currency_cost, "
+                                    "classes_required FROM merchantlist WHERE merchantid=%d", merchantid);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        LogFile->write(EQEMuLog::Error, "Error in LoadNewMerchantData query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
+        return;
+    }
+
+    for(auto row = results.begin(); row != results.end(); ++row) {
+        MerchantList ml;
+        ml.id = merchantid;
+        ml.item = atoul(row[0]);
+        ml.slot = atoul(row[1]);
+        ml.faction_required = atoul(row[2]);
+        ml.level_required = atoul(row[3]);
+        ml.classes_required = atoul(row[4]);
+        merlist.push_back(ml);
+    }
+
+    merchanttable[merchantid] = merlist;
 }
 
 void Zone::LoadMerchantData_result(MYSQL_RES* result) {
@@ -521,6 +510,7 @@ void Zone::LoadMerchantData_result(MYSQL_RES* result) {
 		ml.faction_required = atoul(row[3]);
 		ml.level_required = atoul(row[4]);
 		ml.classes_required = atoul(row[5]);
+		//ml.probability = atoul(row[6]);
 		cur->second.push_back(ml);
 	}
 }
@@ -548,34 +538,24 @@ void Zone::GetMerchantDataForZoneLoad(){
 }
 
 void Zone::LoadLevelEXPMods(){
-	std::string errorMessage;
-	char* Query = 0;
-	char TempErrorMessageBuffer[MYSQL_ERRMSG_SIZE];
-	MYSQL_RES* DatasetResult;
-	MYSQL_ROW DataRow;
 	level_exp_mod.clear();
+    const std::string query = "SELECT level, exp_mod, aa_exp_mod FROM level_exp_mods";
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        LogFile->write(EQEMuLog::Error, "Error in ZoneDatabase::LoadEXPLevelMods()");
+        return;
+    }
 
-	if(!database.RunQuery(Query, MakeAnyLenString(&Query, "SELECT level, exp_mod, aa_exp_mod FROM level_exp_mods"), TempErrorMessageBuffer, &DatasetResult)) {
-		errorMessage = std::string(TempErrorMessageBuffer);
-	}
-	else {
-		while(DataRow = mysql_fetch_row(DatasetResult)) {
-			uint32 index = atoi(DataRow[0]);
-			float exp_mod = atof(DataRow[1]);
-			float aa_exp_mod = atof(DataRow[2]);
-			level_exp_mod[index].ExpMod = exp_mod;
-			level_exp_mod[index].AAExpMod = aa_exp_mod;
-		}
-		mysql_free_result(DatasetResult);
-	}
+    for (auto row = results.begin(); row != results.end(); ++row) {
+        uint32 index = atoi(row[0]);
+		float exp_mod = atof(row[1]);
+		float aa_exp_mod = atof(row[2]);
+		level_exp_mod[index].ExpMod = exp_mod;
+		level_exp_mod[index].AAExpMod = aa_exp_mod;
+    }
 
-	safe_delete_array(Query);
-	Query = 0;
-
-	if(!errorMessage.empty()) {
-		LogFile->write(EQEMuLog::Error, "Error in ZoneDatabase::LoadEXPLevelMods()");
-	}
 }
+
 
 void Zone::DBAWComplete(uint8 workpt_b1, DBAsyncWork* dbaw) {
 //	LogFile->write(EQEMuLog::Debug, "Zone work complete...");
@@ -632,10 +612,24 @@ void Zone::DBAWComplete(uint8 workpt_b1, DBAsyncWork* dbaw) {
 	}
 }
 
+bool Zone::IsLoaded() {
+	return ZoneLoaded;
+}
+
 void Zone::Shutdown(bool quite)
 {
 	if (!ZoneLoaded)
 		return;
+
+	std::list<Mob*> mob_list;
+	entity_list.GetMobList(mob_list);
+	std::list<Mob*>::iterator mob_itr = mob_list.begin();
+	while (mob_itr != mob_list.end()) {
+		Mob* mob_inst = *mob_itr;
+		mob_inst->AI_Stop();
+		mob_inst->AI_ShutDown();
+		++mob_itr;
+	}
 
 	std::map<uint32,NPCType *>::iterator itr;
 	while(zone->npctable.size()) {
@@ -650,7 +644,8 @@ void Zone::Shutdown(bool quite)
 	if (!quite)
 		LogFile->write(EQEMuLog::Normal, "Zone shutdown: going to sleep");
 	ZoneLoaded = false;
-	
+
+	RemoteCallSubscriptionHandler::Instance()->ClearAllConnections();
 	zone->ResetAuth();
 	safe_delete(zone);
 	dbasync->CommitWrites();
@@ -1185,7 +1180,7 @@ bool Zone::Process() {
 	return true;
 }
 
-void Zone::ChangeWeather() 
+void Zone::ChangeWeather()
 {
 	if(!HasWeather())
 	{
@@ -1518,45 +1513,41 @@ ZonePoint* Zone::GetClosestZonePointWithoutZone(float x, float y, float z, Clien
 
 bool ZoneDatabase::LoadStaticZonePoints(LinkedList<ZonePoint*>* zone_point_list, const char* zonename, uint32 version)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
+
 	zone_point_list->Clear();
 	zone->numzonepoints = 0;
-	MakeAnyLenString(&query, "SELECT x, y, z, target_x, target_y, "
-		"target_z, target_zone_id, heading, target_heading, number, "
-		"target_instance, client_version_mask FROM zone_points "
-		"WHERE zone='%s' AND (version=%i OR version=-1) order by number desc", zonename, version);
-	if (RunQuery(query, strlen(query), errbuf, &result))
-	{
-		safe_delete_array(query);
-		while((row = mysql_fetch_row(result)))
-		{
-			ZonePoint* zp = new ZonePoint;
-			zp->x = atof(row[0]);
-			zp->y = atof(row[1]);
-			zp->z = atof(row[2]);
-			zp->target_x = atof(row[3]);
-			zp->target_y = atof(row[4]);
-			zp->target_z = atof(row[5]);
-			zp->target_zone_id = atoi(row[6]);
-			zp->heading = atof(row[7]);
-			zp->target_heading = atof(row[8]);
-			zp->number = atoi(row[9]);
-			zp->target_zone_instance = atoi(row[10]);
-			zp->client_version_mask = (uint32)strtoul(row[11], nullptr, 0);
-			zone_point_list->Insert(zp);
-			zone->numzonepoints++;
-		}
-		mysql_free_result(result);
-	}
-	else
-	{
-		std::cerr << "Error1 in LoadStaticZonePoints query '" << query << "' " << errbuf << std::endl;
-		safe_delete_array(query);
+	std::string query = StringFormat("SELECT x, y, z, target_x, target_y, "
+                                    "target_z, target_zone_id, heading, target_heading, "
+                                    "number, target_instance, client_version_mask "
+                                    "FROM zone_points WHERE zone='%s' AND (version=%i OR version=-1) "
+                                    "ORDER BY number", zonename, version);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+        std::cerr << "Error1 in LoadStaticZonePoints query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
+
+    for (auto row = results.begin(); row != results.end(); ++row) {
+        ZonePoint* zp = new ZonePoint;
+
+        zp->x = atof(row[0]);
+        zp->y = atof(row[1]);
+        zp->z = atof(row[2]);
+        zp->target_x = atof(row[3]);
+        zp->target_y = atof(row[4]);
+        zp->target_z = atof(row[5]);
+        zp->target_zone_id = atoi(row[6]);
+        zp->heading = atof(row[7]);
+        zp->target_heading = atof(row[8]);
+        zp->number = atoi(row[9]);
+        zp->target_zone_instance = atoi(row[10]);
+        zp->client_version_mask = (uint32)strtoul(row[11], nullptr, 0);
+
+        zone_point_list->Insert(zp);
+
+        zone->numzonepoints++;
+    }
+
 	return true;
 }
 
@@ -1686,32 +1677,26 @@ bool Zone::RemoveSpawnGroup(uint32 in_id) {
 
 // Added By Hogie
 bool ZoneDatabase::GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	int i = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT varname, value FROM variables WHERE varname like 'decaytime%%' ORDER BY varname"), errbuf, &result)) {
-		safe_delete_array(query);
-		while((row = mysql_fetch_row(result))) {
-			Seperator sep(row[0]);
-			npcCorpseDecayTimes[i].minlvl = atoi(sep.arg[1]);
-			npcCorpseDecayTimes[i].maxlvl = atoi(sep.arg[2]);
-			if (atoi(row[1]) > 7200)
-				npcCorpseDecayTimes[i].seconds = 720;
-			else
-				npcCorpseDecayTimes[i].seconds = atoi(row[1]);
-			i++;
-		}
-		mysql_free_result(result);
-	}
-	else {
-		safe_delete_array(query);
-		return false;
-	}
+	const std::string query = "SELECT varname, value FROM variables WHERE varname LIKE 'decaytime%%' ORDER BY varname";
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+        return false;
+
+	int index = 0;
+    for (auto row = results.begin(); row != results.end(); ++row, ++index) {
+        Seperator sep(row[0]);
+        npcCorpseDecayTimes[index].minlvl = atoi(sep.arg[1]);
+        npcCorpseDecayTimes[index].maxlvl = atoi(sep.arg[2]);
+
+        if (atoi(row[1]) > 7200)
+            npcCorpseDecayTimes[index].seconds = 720;
+        else
+            npcCorpseDecayTimes[index].seconds = atoi(row[1]);
+    }
+
 	return true;
-}// Added By Hogie -- End
+}
 
 void Zone::weatherSend()
 {
@@ -1912,31 +1897,25 @@ void Zone::DeleteQGlobal(std::string name, uint32 npcID, uint32 charID, uint32 z
 
 void Zone::LoadNPCEmotes(LinkedList<NPC_Emote_Struct*>* NPCEmoteList)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	NPCEmoteList->Clear();
 
-	if(database.RunQuery(query,MakeAnyLenString(&query,"SELECT emoteid, event_, type, text FROM npc_emotes"), errbuf, &result))
-	{
-		while((row = mysql_fetch_row(result)))
-		{
-			NPC_Emote_Struct* nes = new NPC_Emote_Struct;
-			nes->emoteid = atoi(row[0]);
-			nes->event_ = atoi(row[1]);
-			nes->type = atoi(row[2]);
-			strn0cpy(nes->text, row[3], sizeof(nes->text));
-			NPCEmoteList->Insert(nes);
-		}
-		mysql_free_result(result);
-		safe_delete_array(query);
-	}
-	else
-	{
-		LogFile->write(EQEMuLog::Error, "Error in Zone::LoadNPCEmotes: %s (%s)", query, errbuf);
-		safe_delete_array(query);
-	}
+	NPCEmoteList->Clear();
+    const std::string query = "SELECT emoteid, event_, type, text FROM npc_emotes";
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        LogFile->write(EQEMuLog::Error, "Error in Zone::LoadNPCEmotes: %s (%s)", query.c_str(), results.ErrorMessage().c_str());
+        return;
+    }
+
+    for (auto row = results.begin(); row != results.end(); ++row)
+    {
+        NPC_Emote_Struct* nes = new NPC_Emote_Struct;
+        nes->emoteid = atoi(row[0]);
+        nes->event_ = atoi(row[1]);
+        nes->type = atoi(row[2]);
+        strn0cpy(nes->text, row[3], sizeof(nes->text));
+        NPCEmoteList->Insert(nes);
+    }
+
 }
 
 void Zone::ReloadWorld(uint32 Option){
@@ -1949,35 +1928,30 @@ void Zone::ReloadWorld(uint32 Option){
 
 void Zone::LoadTickItems()
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 	tick_items.clear();
 
-	if(database.RunQuery(query, MakeAnyLenString(&query, "SELECT it_itemid, it_chance, it_level, it_qglobal, it_bagslot FROM item_tick"), errbuf, &result))
-	{
-		while((row = mysql_fetch_row(result)))
-		{
-			if(atoi(row[0]) >= 1)
-			{
-				item_tick_struct ti_tmp;
-				ti_tmp.itemid = atoi(row[0]);
-				ti_tmp.chance = atoi(row[1]);
-				ti_tmp.level = atoi(row[2]);
-				ti_tmp.bagslot = (int16)atoi(row[4]);
-				ti_tmp.qglobal = std::string(row[3]);
-				tick_items[atoi(row[0])] = ti_tmp;
-			}
-		}
-		mysql_free_result(result);
-		safe_delete_array(query);
-	}
-	else
-	{
-		LogFile->write(EQEMuLog::Error, "Error in Zone::LoadTickItems: %s (%s)", query, errbuf);
-		safe_delete_array(query);
-	}
+    const std::string query = "SELECT it_itemid, it_chance, it_level, it_qglobal, it_bagslot FROM item_tick";
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        LogFile->write(EQEMuLog::Error, "Error in Zone::LoadTickItems: %s (%s)", query.c_str(), results.ErrorMessage().c_str());
+        return;
+    }
+
+
+    for (auto row = results.begin(); row != results.end(); ++row) {
+        if(atoi(row[0]) == 0)
+            continue;
+
+        item_tick_struct ti_tmp;
+		ti_tmp.itemid = atoi(row[0]);
+		ti_tmp.chance = atoi(row[1]);
+		ti_tmp.level = atoi(row[2]);
+		ti_tmp.bagslot = (int16)atoi(row[4]);
+		ti_tmp.qglobal = std::string(row[3]);
+		tick_items[atoi(row[0])] = ti_tmp;
+
+    }
+
 }
 
 uint32 Zone::GetSpawnKillCount(uint32 in_spawnid) {
@@ -1997,24 +1971,15 @@ uint32 Zone::GetSpawnKillCount(uint32 in_spawnid) {
 
 void Zone::UpdateHotzone()
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	bool updh;
+    std::string query = StringFormat("SELECT hotzone FROM zone WHERE short_name = '%s'", GetShortName());
+    auto results = database.QueryDatabase(query);
+    if (!results.Success())
+        return;
 
-	if(database.RunQuery(query, MakeAnyLenString(&query,"SELECT  hotzone FROM zone WHERE short_name = '%s'", GetShortName()), errbuf, &result) )
-	{
-		if( (row = mysql_fetch_row(result)) )
-		{
-			updh = atoi(row[0]) == 0 ? false:true;
-			//Hotzone status has changed
-			if(is_hotzone != updh)
-			{
-				is_hotzone = updh;
-			}
-		}
-		mysql_free_result(result);
-	}
-	safe_delete_array(query);
+    if (results.RowCount() == 0)
+        return;
+
+    auto row = results.begin();
+
+    is_hotzone = atoi(row[0]) == 0 ? false: true;
 }

@@ -28,8 +28,6 @@
 #include "../common/rulesys.h"
 
 
-
-
 int Mob::GetKickDamage() {
 	int multiple=(GetLevel()*100/5);
 	multiple += 100;
@@ -64,27 +62,25 @@ int Mob::GetBashDamage() {
 }
 
 void Mob::ApplySpecialAttackMod(SkillUseTypes skill, int32 &dmg, int32 &mindmg) {
-
 	int item_slot = -1;
 	//1: Apply bonus from AC (BOOT/SHIELD/HANDS) est. 40AC=6dmg
 	if (IsClient()){
-
 		switch (skill){
 
 			case SkillFlyingKick:
 			case SkillRoundKick:
 			case SkillKick:
-				item_slot = SLOT_FEET;
+				item_slot = MainFeet;
 				break;
 
 			case SkillBash:
-				item_slot = SLOT_SECONDARY;
+				item_slot = MainSecondary;
 				break;
 
 			case SkillDragonPunch:
 			case SkillEagleStrike:
 			case SkillTigerClaw:
-				item_slot = SLOT_HANDS;
+				item_slot = MainHands;
 				break;
 
 			default:
@@ -105,15 +101,16 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 	//this really should go through the same code as normal melee damage to
 	//pick up all the special behavior there
 
+	if (!who)
+		return;
+
 	int32 hate = max_damage;
 	if(hate_override > -1)
 		hate = hate_override;
 
-	if(skill == SkillBash)
-	{
-		if(IsClient())
-		{
-			ItemInst *item = CastToClient()->GetInv().GetItem(SLOT_SECONDARY);
+	if(skill == SkillBash){
+		if(IsClient()){
+			ItemInst *item = CastToClient()->GetInv().GetItem(MainSecondary);
 			if(item)
 			{
 				if(item->GetItem()->ItemType == ItemTypeShield)
@@ -128,7 +125,7 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	min_damage += min_damage * GetMeleeMinDamageMod_SE(skill) / 100;
 
-	if(HitChance && !who->CheckHitChance(this, skill, 13))
+	if(HitChance && !who->CheckHitChance(this, skill, MainPrimary))
 		max_damage = 0;
 
 	else{
@@ -141,25 +138,17 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 		who->MeleeMitigation(this, max_damage, min_damage);
 
-		if(max_damage > 0) {
-			ApplyMeleeDamageBonus(skill, max_damage);
-			max_damage += who->GetFcDamageAmtIncoming(this, 0, true, skill);
-			max_damage += (itembonuses.HeroicSTR / 10) + (max_damage * who->GetSkillDmgTaken(skill) / 100) + GetSkillDmgAmt(skill);
-			TryCriticalHit(who, skill, max_damage);
-		}
+		if(max_damage > 0) 
+			CommonOutgoingHitSuccess(who, max_damage, skill);
+		
 	}
 
-	if(max_damage >= 0) //You should probably get aggro no matter what, but unclear why it was set like this.
-		who->AddToHateList(this, hate);
-
+	who->AddToHateList(this, hate, 0, false);
 	who->Damage(this, max_damage, SPELL_UNKNOWN, skill, false);
 
 	//Make sure 'this' has not killed the target and 'this' is not dead (Damage shield ect).
 	if(!GetTarget())return;
 	if (HasDied())	return;
-
-	if (max_damage > 0)
-		CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
 
 	//[AA Dragon Punch] value[0] = 100 for 25%, chance value[1] = skill
 	if(aabonuses.SpecialAttackKBProc[0] && aabonuses.SpecialAttackKBProc[1] == skill){
@@ -191,6 +180,10 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 
 	CombatAbility_Struct* ca_atk = (CombatAbility_Struct*) app->pBuffer;
 
+	/* Check to see if actually have skill */
+	if (!MaxSkill(static_cast<SkillUseTypes>(ca_atk->m_skill)))
+		return;
+
 	if(GetTarget()->GetID() != ca_atk->m_target)
 		return;	//invalid packet.
 
@@ -200,7 +193,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	//These two are not subject to the combat ability timer, as they
 	//allready do their checking in conjunction with the attack timer
 	//throwing weapons
-	if(ca_atk->m_atk == 11) {
+	if(ca_atk->m_atk == MainRange) {
 		if (ca_atk->m_skill == SkillThrowing) {
 			SetAttackTimer();
 			ThrowingAttack(GetTarget());
@@ -242,6 +235,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 
 	int32 skill_reduction = this->GetSkillReuseTime(ca_atk->m_skill);
 
+	// not sure what the '100' indicates..if ->m_atk is not used as 'slot' reference, then change MainRange above back to '11'
 	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillBash)) { // SLAM - Bash without a shield equipped
 		if (GetTarget() != this) {
 
@@ -249,8 +243,8 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 			DoAnim(Animation::Slam);
 
 			int32 ht = 0;
-			if(GetWeaponDamage(GetTarget(), GetInv().GetItem(SLOT_SECONDARY)) <= 0 &&
-				GetWeaponDamage(GetTarget(), GetInv().GetItem(SLOT_SHOULDER)) <= 0){
+			if(GetWeaponDamage(GetTarget(), GetInv().GetItem(MainSecondary)) <= 0 &&
+				GetWeaponDamage(GetTarget(), GetInv().GetItem(MainShoulders)) <= 0){
 				dmg = -5;
 			}
 			else{
@@ -278,8 +272,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 		return;
 	}
 
-	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillFrenzy))
-	{
+	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillFrenzy)){
 		CheckIncreaseSkill(SkillFrenzy, GetTarget(), 10);
 		int AtkRounds = 3;
 		int skillmod = 100*GetSkill(SkillFrenzy)/MaxSkill(SkillFrenzy);
@@ -315,8 +308,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 		return;
 	}
 
-	switch(GetClass())
-	{
+	switch(GetClass()){
 		case BERSERKER:
 		case WARRIOR:
 		case RANGER:
@@ -329,7 +321,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 				DoAnim(Animation::Kick);
 
 				int32 ht = 0;
-				if(GetWeaponDamage(GetTarget(), GetInv().GetItem(SLOT_FEET)) <= 0){
+				if(GetWeaponDamage(GetTarget(), GetInv().GetItem(MainFeet)) <= 0){
 					dmg = -5;
 				}
 				else{
@@ -388,8 +380,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	}
 
 	ReuseTime = (ReuseTime*HasteMod)/100;
-	if(ReuseTime > 0)
-	{
+	if(ReuseTime > 0){
 		p_timers.Start(pTimerCombatAbility, ReuseTime);
 	}
 }
@@ -405,10 +396,9 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 	int32 min_dmg = 1;
 	int reuse = 0;
 	SkillUseTypes skill_type;	//to avoid casting... even though it "would work"
-	uint8 itemslot = SLOT_FEET;
+	uint8 itemslot = MainFeet;
 
-	switch(unchecked_type)
-	{
+	switch(unchecked_type){
 		case SkillFlyingKick:{
 			skill_type = SkillFlyingKick;
 			max_dmg = ((GetSTR()+GetSkill(skill_type)) * RuleI(Combat, FlyingKickBonus) / 100) + 35;
@@ -421,7 +411,7 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 		case SkillDragonPunch:{
 			skill_type = SkillDragonPunch;
 			max_dmg = ((GetSTR()+GetSkill(skill_type)) * RuleI(Combat, DragonPunchBonus) / 100) + 26;
-			itemslot = SLOT_HANDS;
+			itemslot = MainHands;
 			ApplySpecialAttackMod(skill_type, max_dmg, min_dmg);
 			DoAnim(Animation::Slam);
 			reuse = TailRakeReuseTime;
@@ -431,7 +421,7 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 		case SkillEagleStrike:{
 			skill_type = SkillEagleStrike;
 			max_dmg = ((GetSTR()+GetSkill(skill_type)) * RuleI(Combat, EagleStrikeBonus) / 100) + 19;
-			itemslot = SLOT_HANDS;
+			itemslot = MainHands;
 			ApplySpecialAttackMod(skill_type, max_dmg, min_dmg);
 			DoAnim(Animation::EagleStrike);
 			reuse = EagleStrikeReuseTime;
@@ -441,7 +431,7 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 		case SkillTigerClaw:{
 			skill_type = SkillTigerClaw;
 			max_dmg = ((GetSTR()+GetSkill(skill_type)) * RuleI(Combat, TigerClawBonus) / 100) + 12;
-			itemslot = SLOT_HANDS;
+			itemslot = MainHands;
 			ApplySpecialAttackMod(skill_type, max_dmg, min_dmg);
 			DoAnim(Animation::TigerClaw);
 			reuse = TigerClawReuseTime;
@@ -488,8 +478,7 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 			else
 				ht = ndamage = MakeRandomInt(min_dmg, max_dmg);
 		}
-		else
-		{
+		else{
 			ht = max_dmg;
 		}
 	}
@@ -511,7 +500,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 
 	//make sure we have a proper weapon if we are a client.
 	if(IsClient()) {
-		const ItemInst *wpn = CastToClient()->GetInv().GetItem(SLOT_PRIMARY);
+		const ItemInst *wpn = CastToClient()->GetInv().GetItem(MainPrimary);
 		if(!wpn || (wpn->GetItem()->ItemType != ItemType1HPiercing)){
 			Message_StringID(CC_Red, BACKSTAB_WEAPON);
 			return;
@@ -539,7 +528,6 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 		
 		RogueBackstab(other,false,ReuseTime);
 		if (level > 54) {
-
 			if(IsClient() && CastToClient()->CheckDoubleAttack(false))
 			{
 				if(other->GetHP() > 0)
@@ -574,7 +562,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 			CastToClient()->CheckIncreaseSkill(SkillBackstab, other, 10);
 	}
 	else { //We do a single regular attack if we attack from the front without chaotic stab
-		Attack(other, 13);
+		Attack(other, MainPrimary);
 	}
 }
 
@@ -593,7 +581,7 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 
 	if(IsClient()){
 		const ItemInst *wpn = nullptr;
-		wpn = CastToClient()->GetInv().GetItem(SLOT_PRIMARY);
+		wpn = CastToClient()->GetInv().GetItem(MainPrimary);
 		if(wpn) {
 			primaryweapondamage = GetWeaponDamage(other, wpn);
 			backstab_dmg = wpn->GetItem()->BackstabDmg;
@@ -615,12 +603,10 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 		}
 
 		// determine minimum hits
-		if (level < 51)
-		{
+		if (level < 51) {
 			min_hit = (level*15/10);
 		}
-		else
-		{
+		else {
 			// Trumpcard: Replaced switch statement with formula calc. This will give minhit increases all the way to 65.
 			min_hit = (level * ( level*5 - 105)) / 100;
 		}
@@ -632,8 +618,7 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 			if(min_damage){
 				ndamage = min_hit;
 			}
-			else
-			{
+			else {
 				if (max_hit < min_hit)
 					max_hit = min_hit;
 
@@ -641,7 +626,6 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 					ndamage = max_hit;
 				else
 					ndamage = MakeRandomInt(min_hit, max_hit);
-
 			}
 		}
 	}
@@ -668,7 +652,7 @@ void Mob::RogueAssassinate(Mob* other)
 {
 	//can you dodge, parry, etc.. an assassinate??
 	//if so, use DoSpecialAttackDamage(other, BACKSTAB, 32000); instead
-	if(GetWeaponDamage(other, IsClient()?CastToClient()->GetInv().GetItem(SLOT_PRIMARY):(const ItemInst*)nullptr) > 0){
+	if(GetWeaponDamage(other, IsClient()?CastToClient()->GetInv().GetItem(MainPrimary):(const ItemInst*)nullptr) > 0){
 		other->Damage(this, 32000, SPELL_UNKNOWN, SkillBackstab);
 	}else{
 		other->Damage(this, -5, SPELL_UNKNOWN, SkillBackstab);
@@ -687,20 +671,20 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
-	const ItemInst* RangeWeapon = m_inv[SLOT_RANGE];
+	const ItemInst* RangeWeapon = m_inv[MainRange];
 
 	//locate ammo
-	int ammo_slot = SLOT_AMMO;
-	const ItemInst* Ammo = m_inv[SLOT_AMMO];
+	int ammo_slot = MainAmmo;
+	const ItemInst* Ammo = m_inv[MainAmmo];
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
-		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(SLOT_RANGE), SLOT_RANGE);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(SLOT_RANGE));
+		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
+		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
 		return;
 	}
 	if (!Ammo || !Ammo->IsType(ItemClassCommon)) {
-		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(SLOT_AMMO), SLOT_AMMO);
-		Message(0, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(SLOT_AMMO));
+		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(MainAmmo), MainAmmo);
+		Message(0, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
 		return;
 	}
 
@@ -725,7 +709,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		//first look for quivers
 		int r;
 		bool found = false;
-		for(r = SLOT_PERSONAL_BEGIN; r <= SLOT_PERSONAL_END; r++) {
+		for(r = EmuConstants::GENERAL_BEGIN; r <= EmuConstants::GENERAL_END; r++) {
 			const ItemInst *pi = m_inv[r];
 			if(pi == nullptr || !pi->IsType(ItemClassContainer))
 				continue;
@@ -757,7 +741,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 			//if we dont find a quiver, look through our inventory again
 			//not caring if the thing is a quiver.
 			int32 aslot = m_inv.HasItem(AmmoItem->ID, 1, invWherePersonal);
-			if(aslot != SLOT_INVALID) {
+			if (aslot != INVALID_INDEX) {
 				ammo_slot = aslot;
 				Ammo = m_inv[aslot];
 				mlog(COMBAT__RANGED, "Using ammo from inventory stack at slot %d. %d in stack.", ammo_slot, Ammo->GetCharges());
@@ -796,57 +780,22 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	//EndlessQuiver AA base1 = 100% Chance to avoid consumption arrow.
 	int ChanceAvoidConsume = aabonuses.ConsumeProjectile + itembonuses.ConsumeProjectile + spellbonuses.ConsumeProjectile;
 
-	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && MakeRandomInt(0,99) > ChanceAvoidConsume)){
-
+	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && MakeRandomInt(0,99) > ChanceAvoidConsume)){ 
 		DeleteItemInInventory(ammo_slot, 1, false);
 		mlog(COMBAT__RANGED, "Consumed one arrow from slot %d", ammo_slot);
 	} else {
 		mlog(COMBAT__RANGED, "Endless Quiver prevented ammo consumption.");
 	}
 
-	CheckIncreaseSkill(SkillArchery, GetTarget(), -15);
-
-	//break invis when you attack
-	if(invisible) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility due to melee attack.");
-		BuffFadeByEffect(SE_Invisibility);
-		BuffFadeByEffect(SE_Invisibility2);
-		invisible = false;
-	}
-	if(invisible_undead) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. undead due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsUndead);
-		BuffFadeByEffect(SE_InvisVsUndead2);
-		invisible_undead = false;
-	}
-	if(invisible_animals){
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. animals due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsAnimals);
-		invisible_animals = false;
-	}
-
-	if (spellbonuses.NegateIfCombat)
-		BuffFadeByEffect(SE_NegateIfCombat);
-
-	if(hidden || improved_hidden){
-		hidden = false;
-		improved_hidden = false;
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
-		sa_out->spawn_id = GetID();
-		sa_out->type = 0x03;
-		sa_out->parameter = 0;
-		entity_list.QueueClients(this, outapp, true);
-		safe_delete(outapp);
-	}
+	CheckIncreaseSkill(SkillArchery, GetTarget(), -15); 
+	CommonBreakInvisible();
 }
 
-void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const ItemInst* Ammo, uint16 weapon_damage, int16 chance_mod, int16 focus, int ReuseTime)
-{
+void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const ItemInst* Ammo, uint16 weapon_damage, int16 chance_mod, int16 focus, int ReuseTime) {
 	if (!CanDoSpecialAttack(other))
 		return;
 
-	if (!other->CheckHitChance(this, SkillArchery, 13,chance_mod)) {
+	if (!other->CheckHitChance(this, SkillArchery, MainPrimary, chance_mod)) {
 		mlog(COMBAT__RANGED, "Ranged attack missed %s.", other->GetName());
 		other->Damage(this, 0, SPELL_UNKNOWN, SkillArchery);
 	} else {
@@ -871,8 +820,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 			if (focus) //From FcBaseEffects
 				WDmg += WDmg*focus/100;
 
-			if((WDmg > 0) || (ADmg > 0))
-			{
+			if((WDmg > 0) || (ADmg > 0)) {
 				if(WDmg < 0)
 					WDmg = 0;
 				if(ADmg < 0)
@@ -968,159 +916,158 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 				if (ReuseTime)
 					TrySkillProc(other, SkillArchery, ReuseTime);
 				else
-					TrySkillProc(other, SkillArchery, 0, true, 11);
+					TrySkillProc(other, SkillArchery, 0, true, MainRange);
 			}
 	}
 
 	//try proc on hits and misses
-	if((RangeWeapon != nullptr) && GetTarget() && other && !other->HasDied())
-	{
-		TryWeaponProc(RangeWeapon, other, 11);
+	if((RangeWeapon != nullptr) && GetTarget() && other && !other->HasDied()){
+		TryWeaponProc(RangeWeapon, other, MainRange);
 	}
 
 	//Arrow procs because why not?
     if((Ammo != NULL) && GetTarget() && other && !other->HasDied())
     {
-        TryWeaponProc(Ammo, other, 11);
+        TryWeaponProc(Ammo, other, MainRange);
     }
 
 	if (HasSkillProcs() && GetTarget() && other && !other->HasDied()){
 		if (ReuseTime)
 			TrySkillProc(other, SkillArchery, ReuseTime);
 		else
-			TrySkillProc(other, SkillArchery, 0, false, 11);
+			TrySkillProc(other, SkillArchery, 0, false, MainRange);
 	}
 }
 
 void NPC::RangedAttack(Mob* other)
 {
+
+	if (!other)
+		return;
 	//make sure the attack and ranged timers are up
 	//if the ranged timer is disabled, then they have no ranged weapon and shouldent be attacking anyhow
-	if((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))
-	{
+	if((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check())){
 		mlog(COMBAT__RANGED, "Archery canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 
-	//if we have SPECATK_RANGED_ATK set then we range attack without weapon or ammo
-	const Item_Struct* weapon = nullptr;
-	const Item_Struct* ammo = nullptr;
-	if(!GetSpecialAbility(SPECATK_RANGED_ATK))
-	{
-		//find our bow and ammo return if we can't find them...
+	if(!CheckLosFN(other))
 		return;
-	}
 
-	float range = 250; // needs to be longer than 200(most spells)
-	mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", range);
-	range *= range;
-	if(DistNoRootNoZ(*GetTarget()) > range) {
-		mlog(COMBAT__RANGED, "Ranged attack out of range...%.2f vs %.2f", DistNoRootNoZ(*GetTarget()), range);
-		//target is out of range, client does a message
-		return;
-	}
-	else if(DistNoRootNoZ(*GetTarget()) < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
-		return;
-	}
+	int attacks = GetSpecialAbilityParam(SPECATK_RANGED_ATK, 0);
+	attacks = attacks > 0 ? attacks : 1;
+	for(int i = 0; i < attacks; ++i) {
 
-	if(!IsAttackAllowed(GetTarget()) ||
-		IsCasting() ||
-		DivineAura() ||
-		IsStunned() ||
-		IsFeared() ||
-		IsMezzed() ||
-		(GetAppearance() == eaDead)){
-		return;
-	}
-
-	if(!ammo)
-	{
-		ammo = database.GetItem(8005);
-	}
-
-	if(ammo)
-		//SendItemAnimation(GetTarget(), ammo, SkillArchery);
-		ProjectileAnimation(GetTarget(), ammo->ID,true,-1,-1,-1,-1,SkillArchery);
-
-	// Face the Target
-	FaceTarget(GetTarget());
-
-	// Hit?
-	if (!GetTarget()->CheckHitChance(this, SkillArchery, 13))
-	{
-		mlog(COMBAT__RANGED, "Ranged attack missed %s.", GetTarget()->GetName());
-		GetTarget()->Damage(this, 0, SPELL_UNKNOWN, SkillArchery);
-	}
-	else
-	{
-		int16 WDmg = GetWeaponDamage(GetTarget(), weapon);
-		int16 ADmg = GetWeaponDamage(GetTarget(), ammo);
-		if(WDmg > 0 || ADmg > 0)
+		//if we have SPECATK_RANGED_ATK set then we range attack without weapon or ammo
+		const Item_Struct* weapon = nullptr;
+		const Item_Struct* ammo = nullptr;
+		if(!GetSpecialAbility(SPECATK_RANGED_ATK))
 		{
-			mlog(COMBAT__RANGED, "Ranged attack hit %s.", GetTarget()->GetName());
-			int32 TotalDmg = 0;
+			//find our bow and ammo return if we can't find them...
+			return;
+		}
 
-			int32 MaxDmg = max_dmg * RuleR(Combat, ArcheryNPCMultiplier); // should add a field to npc_types
-			int32 MinDmg = min_dmg * RuleR(Combat, ArcheryNPCMultiplier);
+		int sa_min_range = GetSpecialAbilityParam(SPECATK_RANGED_ATK, 4); //Min Range of NPC attack
+		int sa_max_range = GetSpecialAbilityParam(SPECATK_RANGED_ATK, 1); //Max Range of NPC attack
 
-			if(RuleB(Combat, UseIntervalAC))
-				TotalDmg = MaxDmg;
-			else
-				TotalDmg = MakeRandomInt(MinDmg, MaxDmg);
+		float min_range = static_cast<float>(RuleI(Combat, MinRangedAttackDist));
+		float max_range = 250; // needs to be longer than 200(most spells)
+	
+		if (sa_max_range)
+			max_range = static_cast<float>(sa_max_range);
 
-			int32 hate = TotalDmg;
+		if (sa_min_range)
+			min_range = static_cast<float>(sa_min_range);
 
-			GetTarget()->MeleeMitigation(this, TotalDmg, MinDmg);
-			ApplyMeleeDamageBonus(SkillArchery, TotalDmg);
-			TryCriticalHit(GetTarget(), SkillArchery, TotalDmg);
-			GetTarget()->AddToHateList(this, hate, 0, false);
-			GetTarget()->Damage(this, TotalDmg, SPELL_UNKNOWN, SkillArchery);
-			CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
+		mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", max_range);
+		max_range *= max_range;
+		if(DistNoRootNoZ(*other) > max_range) {
+			mlog(COMBAT__RANGED, "Ranged attack out of range...%.2f vs %.2f", DistNoRootNoZ(*other), max_range);
+			//target is out of range, client does a message
+			return;
+		}
+		else if(DistNoRootNoZ(*other) < (min_range * min_range))
+			return;
+	
+
+		if(!other || !IsAttackAllowed(other) ||
+			IsCasting() ||
+			DivineAura() ||
+			IsStunned() ||
+			IsFeared() ||
+			IsMezzed() ||
+			(GetAppearance() == eaDead)){
+			return;
+		}
+
+		SkillUseTypes skillinuse = SkillArchery;
+		skillinuse = static_cast<SkillUseTypes>(GetRangedSkill());
+
+		if(!ammo && !GetAmmoIDfile())
+			ammo = database.GetItem(8005);
+
+		if (ammo)
+			//SendItemAnimation(GetTarget(), ammo, SkillArchery);
+			ProjectileAnimation(GetTarget(), ammo->ID, true, -1, -1, -1, -1, SkillArchery);
+
+		FaceTarget(other);
+
+		if (!other->CheckHitChance(this, skillinuse, MainRange, GetSpecialAbilityParam(SPECATK_RANGED_ATK, 2)))
+		{
+			mlog(COMBAT__RANGED, "Ranged attack missed %s.", other->GetName());
+			other->Damage(this, 0, SPELL_UNKNOWN, skillinuse);
 		}
 		else
 		{
-			GetTarget()->Damage(this, -5, SPELL_UNKNOWN, SkillArchery);
+			int16 WDmg = GetWeaponDamage(other, weapon);
+			int16 ADmg = GetWeaponDamage(other, ammo);
+			int32 TotalDmg = 0;
+			if(WDmg > 0 || ADmg > 0)
+			{
+				mlog(COMBAT__RANGED, "Ranged attack hit %s.", other->GetName());
+			
+				int32 MaxDmg = max_dmg * RuleR(Combat, ArcheryNPCMultiplier); // should add a field to npc_types
+				int32 MinDmg = min_dmg * RuleR(Combat, ArcheryNPCMultiplier);
+
+				if(RuleB(Combat, UseIntervalAC))
+					TotalDmg = MaxDmg;
+				else
+					TotalDmg = MakeRandomInt(MinDmg, MaxDmg);
+
+				TotalDmg += TotalDmg *  GetSpecialAbilityParam(SPECATK_RANGED_ATK, 3) / 100; //Damage modifier
+			
+				other->AvoidDamage(this, TotalDmg, false);
+				other->MeleeMitigation(this, TotalDmg, MinDmg);
+				if (TotalDmg > 0)
+					CommonOutgoingHitSuccess(other, TotalDmg, skillinuse);
+			}
+
+			else
+				TotalDmg = -5;
+
+			if (TotalDmg > 0)
+				other->AddToHateList(this, TotalDmg, 0, false);
+			else
+				other->AddToHateList(this, 0, 0, false);
+
+			other->Damage(this, TotalDmg, SPELL_UNKNOWN, skillinuse);
+
+			if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && !other->HasDied())
+				TrySkillProc(other, skillinuse, 0, true, MainRange);
 		}
-	}
 
-	//break invis when you attack
-	if(invisible) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility due to melee attack.");
-		BuffFadeByEffect(SE_Invisibility);
-		BuffFadeByEffect(SE_Invisibility2);
-		invisible = false;
-	}
-	if(invisible_undead) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. undead due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsUndead);
-		BuffFadeByEffect(SE_InvisVsUndead2);
-		invisible_undead = false;
-	}
-	if(invisible_animals){
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. animals due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsAnimals);
-		invisible_animals = false;
-	}
+		//try proc on hits and misses
+		if(other && !other->HasDied())
+			TrySpellProc(nullptr, (const Item_Struct*)nullptr, other, MainRange);
 
-	if (spellbonuses.NegateIfCombat)
-		BuffFadeByEffect(SE_NegateIfCombat);
+		if (HasSkillProcs() && other && !other->HasDied())
+				TrySkillProc(other, skillinuse, 0, false, MainRange);
 
-	if(hidden || improved_hidden){
-		hidden = false;
-		improved_hidden = false;
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
-		sa_out->spawn_id = GetID();
-		sa_out->type = 0x03;
-		sa_out->parameter = 0;
-		entity_list.QueueClients(this, outapp, true);
-		safe_delete(outapp);
+		CommonBreakInvisible();
 	}
 }
 
-uint16 Mob::GetThrownDamage(int16 wDmg, int32& TotalDmg, int& minDmg)
-{
-
+uint16 Mob::GetThrownDamage(int16 wDmg, int32& TotalDmg, int& minDmg) {
 	uint16 MaxDmg = (((2 * wDmg) * GetDamageTable(SkillThrowing)) / 100);
 
 	if (MaxDmg == 0)
@@ -1132,8 +1079,7 @@ uint16 Mob::GetThrownDamage(int16 wDmg, int32& TotalDmg, int& minDmg)
 		TotalDmg = MakeRandomInt(1, MaxDmg);
 
 	minDmg = 1;
-	if(GetLevel() > 25)
-	{
+	if(GetLevel() > 25){
 		TotalDmg += ((GetLevel()-25)/3);
 		minDmg += ((GetLevel()-25)/3);
 		minDmg += minDmg * GetMeleeMinDamageMod_SE(SkillThrowing) / 100;
@@ -1159,19 +1105,19 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 		return;
 	}
 
-	int ammo_slot = SLOT_RANGE;
-	const ItemInst* RangeWeapon = m_inv[SLOT_RANGE];
+	int ammo_slot = MainRange;
+	const ItemInst* RangeWeapon = m_inv[MainRange];
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
-		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(SLOT_RANGE), SLOT_RANGE);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(SLOT_RANGE));
+		mlog(COMBAT__RANGED, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
+		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	const Item_Struct* item = RangeWeapon->GetItem();
 	if(item->ItemType != ItemTypeLargeThrowing && item->ItemType != ItemTypeSmallThrowing) {
 		mlog(COMBAT__RANGED, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(SLOT_RANGE));
+		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
@@ -1179,16 +1125,16 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 
 	if(RangeWeapon->GetCharges() == 1) {
 		//first check ammo
-		const ItemInst* AmmoItem = m_inv[SLOT_AMMO];
+		const ItemInst* AmmoItem = m_inv[MainAmmo];
 		if(AmmoItem != nullptr && AmmoItem->GetID() == RangeWeapon->GetID()) {
 			//more in the ammo slot, use it
 			RangeWeapon = AmmoItem;
-			ammo_slot = SLOT_AMMO;
+			ammo_slot = MainAmmo;
 			mlog(COMBAT__RANGED, "Using ammo from ammo slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
 		} else {
 			//look through our inventory for more
 			int32 aslot = m_inv.HasItem(item->ID, 1, invWherePersonal);
-			if(aslot != SLOT_INVALID) {
+			if (aslot != INVALID_INDEX) {
 				//the item wont change, but the instance does, not that it matters
 				ammo_slot = aslot;
 				RangeWeapon = m_inv[aslot];
@@ -1227,41 +1173,8 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 
 	//consume ammo
 		DeleteItemInInventory(ammo_slot, 1, false);
-	CheckIncreaseSkill(SkillThrowing, GetTarget());
-
-	//break invis when you attack
-	if(invisible) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility due to melee attack.");
-		BuffFadeByEffect(SE_Invisibility);
-		BuffFadeByEffect(SE_Invisibility2);
-		invisible = false;
-	}
-	if(invisible_undead) {
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. undead due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsUndead);
-		BuffFadeByEffect(SE_InvisVsUndead2);
-		invisible_undead = false;
-	}
-	if(invisible_animals){
-		mlog(COMBAT__ATTACKS, "Removing invisibility vs. animals due to melee attack.");
-		BuffFadeByEffect(SE_InvisVsAnimals);
-		invisible_animals = false;
-	}
-
-	if (spellbonuses.NegateIfCombat)
-		BuffFadeByEffect(SE_NegateIfCombat);
-
-	if(hidden || improved_hidden){
-		hidden = false;
-		improved_hidden = false;
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
-		sa_out->spawn_id = GetID();
-		sa_out->type = 0x03;
-		sa_out->parameter = 0;
-		entity_list.QueueClients(this, outapp, true);
-		safe_delete(outapp);
-	}
+	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
+	CommonBreakInvisible();
 }
 
 void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item_Struct* item, uint16 weapon_damage, int16 chance_mod,int16 focus, int ReuseTime)
@@ -1269,7 +1182,7 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 	if (!CanDoSpecialAttack(other))
 		return;
 
-	if (!other->CheckHitChance(this, SkillThrowing, 13, chance_mod)){
+	if (!other->CheckHitChance(this, SkillThrowing, MainPrimary, chance_mod)){
 		mlog(COMBAT__RANGED, "Ranged attack missed %s.", other->GetName());
 		other->Damage(this, 0, SPELL_UNKNOWN, SkillThrowing);
 	} else {
@@ -1291,8 +1204,7 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 		if (GetClass() == ROGUE && (BehindMob(other, GetX(), GetY())))
 			Assassinate_Dmg = TryAssassinate(other, SkillThrowing, ranged_timer.GetDuration());
 
-		if(WDmg > 0)
-		{
+		if(WDmg > 0){
 			int minDmg = 1;
 			uint16 MaxDmg = GetThrownDamage(WDmg, TotalDmg, minDmg);
 
@@ -1307,38 +1219,31 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 			
 			other->MeleeMitigation(this, TotalDmg, minDmg);
 			if(TotalDmg > 0)
-			{
-				ApplyMeleeDamageBonus(SkillThrowing, TotalDmg);
-				TotalDmg += other->GetFcDamageAmtIncoming(this, 0, true, SkillThrowing);
-				TotalDmg += (itembonuses.HeroicDEX / 10) + (TotalDmg * other->GetSkillDmgTaken(SkillThrowing) / 100) + GetSkillDmgAmt(SkillThrowing);
-				TryCriticalHit(other, SkillThrowing, TotalDmg);
-				int32 hate = (2*WDmg);
-				other->AddToHateList(this, hate, 0, false);
-				CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
-			}
+				CommonOutgoingHitSuccess(other, TotalDmg,  SkillThrowing);
 		}
 
 		else
 			TotalDmg = -5;
 
+		other->AddToHateList(this, 2*WDmg, 0, false);
 		other->Damage(this, TotalDmg, SPELL_UNKNOWN, SkillThrowing);
 
 		if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && other && !other->HasDied()){
 			if (ReuseTime)
 				TrySkillProc(other, SkillThrowing, ReuseTime);
 			else
-				TrySkillProc(other, SkillThrowing, 0, true, 11);
+				TrySkillProc(other, SkillThrowing, 0, true, MainRange);
 		}
 	}
 
 	if((RangeWeapon != nullptr) && GetTarget() && other && (other->GetHP() > -10))
-		TryWeaponProc(RangeWeapon, other, 11);
+		TryWeaponProc(RangeWeapon, other, MainRange);
 
 	if (HasSkillProcs() && GetTarget() && other && !other->HasDied()){
 		if (ReuseTime)
 			TrySkillProc(other, SkillThrowing, ReuseTime);
 		else
-			TrySkillProc(other, SkillThrowing, 0, false, 11);
+			TrySkillProc(other, SkillThrowing, 0, false, MainRange);
 	}
 
 }
@@ -1390,6 +1295,9 @@ void Mob::SendItemAnimation(Mob *to, const Item_Struct *item, SkillUseTypes skil
 }
 
 void Mob::ProjectileAnimation(Mob* to, int id, bool IsItem, float speed, float angle, float tilt, float arc, SkillUseTypes skillInUse) {
+	if (!to)
+		return;
+
 	const Item_Struct* item = nullptr;
 	uint8 effect_type = 0;
 	char name[16];
@@ -1547,17 +1455,11 @@ void NPC::DoClassAttacks(Mob *target) {
 			break;
 		case MONK: case MONKGM: {
 			uint8 satype = SkillKick;
-			if(level > 29) {
-				satype = SkillFlyingKick;
-			} else if(level > 24) {
-				satype = SkillDragonPunch;
-			} else if(level > 19) {
-				satype = SkillEagleStrike;
-			} else if(level > 9) {
-				satype = SkillTigerClaw;
-			} else if(level > 4) {
-				satype = SkillRoundKick;
-			}
+			if(level > 29) { satype = SkillFlyingKick; }
+			else if(level > 24) { satype = SkillDragonPunch; }
+			else if(level > 19) { satype = SkillEagleStrike; }
+			else if(level > 9) { satype = SkillTigerClaw; }
+			else if(level > 4) { satype = SkillRoundKick; }
 			reuse = MonkSpecialAttack(target, satype);
 
 			reuse *= 1000;
@@ -1566,8 +1468,7 @@ void NPC::DoClassAttacks(Mob *target) {
 		}
 		case WARRIOR: case WARRIORGM:{
 			if(level >= RuleI(Combat, NPCBashKickLevel)){
-				if(MakeRandomInt(0, 100) > 25) //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
-				{
+				if(MakeRandomInt(0, 100) > 25){ //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
 					DoAnim(Animation::Kick);
 					int32 dmg = 0;
 
@@ -1588,8 +1489,7 @@ void NPC::DoClassAttacks(Mob *target) {
 					DoSpecialAttackDamage(target, SkillKick, dmg, 1, -1, reuse);
 					did_attack = true;
 				}
-				else
-				{
+				else {
 					DoAnim(Animation::Slam);
 					int32 dmg = 0;
 
@@ -1612,8 +1512,7 @@ void NPC::DoClassAttacks(Mob *target) {
 			}
 			break;
 		}
-		case BERSERKER: case BERSERKERGM:
-		{
+		case BERSERKER: case BERSERKERGM:{
 			int AtkRounds = 3;
 			int32 max_dmg = 26 + ((GetLevel()-6) * 2);
 			int32 min_dmg = 0;
@@ -1629,8 +1528,7 @@ void NPC::DoClassAttacks(Mob *target) {
 
 			reuse = FrenzyReuseTime * 1000;
 
-			while(AtkRounds > 0) {
-
+			while(AtkRounds > 0) { 
 				if (GetTarget() && (AtkRounds == 1 || MakeRandomInt(0,100) < 75)){
 					DoSpecialAttackDamage(GetTarget(), SkillFrenzy, max_dmg, min_dmg, -1 , reuse, true);
 				}
@@ -1668,8 +1566,7 @@ void NPC::DoClassAttacks(Mob *target) {
 		}
 		case CLERIC: case CLERICGM: //clerics can bash too.
 		case SHADOWKNIGHT: case SHADOWKNIGHTGM:
-		case PALADIN: case PALADINGM:
-		{
+		case PALADIN: case PALADINGM:{
 			if(level >= RuleI(Combat, NPCBashKickLevel)){
 				DoAnim(Animation::Slam);
 				int32 dmg = 0;
@@ -1709,8 +1606,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		return;
 
 	//check range for all these abilities, they are all close combat stuff
-	if(!CombatRange(ca_target))
-	{
+	if(!CombatRange(ca_target)){
 		return;
 	}
 
@@ -1732,10 +1628,8 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 
 	uint16 skill_to_use = -1;
 
-	if (skill == -1){
-
-		switch(GetClass())
-		{
+	if (skill == -1){ 
+		switch(GetClass()){
 		case WARRIOR:
 		case RANGER:
 		case BEASTLORD:
@@ -1786,14 +1680,11 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 	if(skill_to_use == -1)
 		return;
 
-	if(skill_to_use == SkillBash)
-	{
-		if (ca_target!=this)
-		{
+	if(skill_to_use == SkillBash) {
+		if (ca_target!=this) {
 			DoAnim(Animation::Slam);
 
-			if(GetWeaponDamage(ca_target, GetInv().GetItem(SLOT_SECONDARY)) <= 0 &&
-				GetWeaponDamage(ca_target, GetInv().GetItem(SLOT_SHOULDER)) <= 0){
+			if(GetWeaponDamage(ca_target, GetInv().GetItem(MainSecondary)) <= 0 && GetWeaponDamage(ca_target, GetInv().GetItem(MainShoulders)) <= 0){
 				dmg = -5;
 			}
 			else{
@@ -1814,16 +1705,14 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 
 			DoSpecialAttackDamage(ca_target, SkillBash, dmg, 1,-1,ReuseTime);
 
-			if(ReuseTime > 0 && !IsRiposte)
-			{
+			if(ReuseTime > 0 && !IsRiposte) {
 				p_timers.Start(pTimerCombatAbility, ReuseTime);
 			}
 		}
 		return;
 	}
 
-	if(skill_to_use == SkillFrenzy)
-	{
+	if(skill_to_use == SkillFrenzy){
 		CheckIncreaseSkill(SkillFrenzy, GetTarget(), 10);
 		int AtkRounds = 3;
 		int skillmod = 100*GetSkill(SkillFrenzy)/MaxSkill(SkillFrenzy);
@@ -1857,13 +1746,11 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		return;
 	}
 
-	if(skill_to_use == SkillKick)
-	{
-		if(ca_target!=this)
-		{
+	if(skill_to_use == SkillKick){
+		if(ca_target!=this){
 			DoAnim(Animation::Kick);
 
-			if(GetWeaponDamage(ca_target, GetInv().GetItem(SLOT_FEET)) <= 0){
+			if(GetWeaponDamage(ca_target, GetInv().GetItem(MainFeet)) <= 0){
 				dmg = -5;
 			}
 			else{
@@ -1884,12 +1771,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		}
 	}
 
-	if(skill_to_use == SkillFlyingKick ||
-		skill_to_use == SkillDragonPunch ||
-		skill_to_use == SkillEagleStrike ||
-		skill_to_use == SkillTigerClaw ||
-		skill_to_use == SkillRoundKick)
-	{
+	if(skill_to_use == SkillFlyingKick || skill_to_use == SkillDragonPunch || skill_to_use == SkillEagleStrike || skill_to_use == SkillTigerClaw || skill_to_use == SkillRoundKick) {
 		ReuseTime = MonkSpecialAttack(ca_target, skill_to_use) - 1;
 		MonkSpecialAttack(ca_target, skill_to_use);
 
@@ -1903,8 +1785,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 			int MonkSPA [5] = { SkillFlyingKick, SkillDragonPunch, SkillEagleStrike, SkillTigerClaw, SkillRoundKick };
 			MonkSpecialAttack(ca_target, MonkSPA[MakeRandomInt(0,4)]);
 
-			int TripleChance = 25;
-
+			int TripleChance = 25; 
 			if (bDoubleSpecialAttack > 100)
 				TripleChance += TripleChance*(100-bDoubleSpecialAttack)/100;
 
@@ -1914,8 +1795,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		}
 	}
 
-	if(skill_to_use == SkillBackstab)
-	{
+	if(skill_to_use == SkillBackstab){
 		ReuseTime = BackstabReuseTime-1;
 
 		if (IsRiposte)
@@ -1925,8 +1805,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 	}
 
 	ReuseTime = (ReuseTime*HasteMod)/100;
-	if(ReuseTime > 0 && !IsRiposte)
-	{
+	if(ReuseTime > 0 && !IsRiposte){ 
 		p_timers.Start(pTimerCombatAbility, ReuseTime);
 	}
 }
@@ -1993,8 +1872,7 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 
 		tauntchance /= 100.0f;
 
-		if (tauntchance > MakeRandomFloat(0, 1)) {
-
+		if (tauntchance > MakeRandomFloat(0, 1)) { 
 			if (hate_top && hate_top != this){
 				newhate = (who->GetNPCHate(hate_top) - who->GetNPCHate(this)) + 1;
 				who->CastToNPC()->AddToHateList(this, newhate);
@@ -2016,8 +1894,7 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 
 	if (HasSkillProcs())
 		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000);
-	
-
+	 
 	if (Success && HasSkillProcSuccess())
 		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000, true);
 }
@@ -2038,8 +1915,7 @@ void Mob::InstillDoubt(Mob *who) {
 	if(!CombatRange(who))
 		return;
 
-	if(IsClient())
-	{
+	if(IsClient()) {
 		CastToClient()->CheckIncreaseSkill(SkillIntimidation, who, 10);
 	}
 
@@ -2069,14 +1945,12 @@ void Mob::InstillDoubt(Mob *who) {
 	}
 }
 
-uint32 Mob::TryHeadShot(Mob* defender, SkillUseTypes skillInUse) {
-
+uint32 Mob::TryHeadShot(Mob* defender, SkillUseTypes skillInUse) { 
 	//Only works on YOUR target.
 	if(defender && (defender->GetBodyType() == BT_Humanoid) && !defender->IsClient() 
 		&& (skillInUse == SkillArchery) && (GetTarget() == defender)) {
 		
-		uint32 HeadShot_Dmg = aabonuses.HeadShot[1] + spellbonuses.HeadShot[1] + itembonuses.HeadShot[1];
-		
+		uint32 HeadShot_Dmg = aabonuses.HeadShot[1] + spellbonuses.HeadShot[1] + itembonuses.HeadShot[1]; 
 		uint8 HeadShot_Level = 0; //Get Highest Headshot Level
 		HeadShot_Level = aabonuses.HSLevel;
 		if (HeadShot_Level < spellbonuses.HSLevel)
@@ -2084,9 +1958,8 @@ uint32 Mob::TryHeadShot(Mob* defender, SkillUseTypes skillInUse) {
 		else if (HeadShot_Level < itembonuses.HSLevel)
 			HeadShot_Level = itembonuses.HSLevel;
 
-		if(HeadShot_Dmg && HeadShot_Level && (defender->GetLevel() <= HeadShot_Level)){
-
-			float ProcChance = GetSpecialProcChances(11);
+		if(HeadShot_Dmg && HeadShot_Level && (defender->GetLevel() <= HeadShot_Level)){ 
+			float ProcChance = GetSpecialProcChances(MainRange);
 			if(ProcChance > MakeRandomFloat(0,1)) 
 				return HeadShot_Dmg;
 		}
@@ -2114,7 +1987,7 @@ float Mob::GetSpecialProcChances(uint16 hand)
 		ProcBonus +=  static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25);
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 	} else {
-		/*PRE 2014 CHANGE Dev Quote - "Elidroth SOE:Proc chance is a function of your base hardcapped Dexterity / 35 + Heroic Dexterity / 25.”
+		/*PRE 2014 CHANGE Dev Quote - "Elidroth SOE:Proc chance is a function of your base hardcapped Dexterity / 35 + Heroic Dexterity / 25.Â”
 		Kayen: Most reports suggest a ~ 6% chance to Headshot which consistent with above.*/
 		
 		ProcChance = (static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25))/100.0f;
@@ -2149,7 +2022,7 @@ uint32 Mob::TryAssassinate(Mob* defender, SkillUseTypes skillInUse, uint16 Reuse
 			float ProcChance = 0.0f;
 			
 			if (skillInUse == SkillThrowing)
-				ProcChance = GetSpecialProcChances(11);
+				ProcChance = GetSpecialProcChances(MainRange);
 			else
 				ProcChance = GetAssassinateProcChances(ReuseTime);
 
@@ -2178,7 +2051,7 @@ float Mob::GetAssassinateProcChances(uint16 ReuseTime)
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 
 	} else {
-		/*Kayen: Unable to find data on old proc rate of assassinate, no idea if our formula is real or made up.*/
+		/* Kayen: Unable to find data on old proc rate of assassinate, no idea if our formula is real or made up. */
 		ProcChance = (10 + (static_cast<float>(mydex/10) + static_cast<float>(itembonuses.HeroicDEX /10)))/100.0f;
 
 	}
@@ -2191,18 +2064,19 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 	if (!CanDoSpecialAttack(other))
 		return;
 
-	//For spells using skill value 98 (feral swipe ect) server sets this to 67 automatically.
-	//Kayen: This is unlikely to be completely accurate but use OFFENSE skill value for these effects.
+	/*
+		For spells using skill value 98 (feral swipe ect) server sets this to 67 automatically.
+		Kayen: This is unlikely to be completely accurate but use OFFENSE skill value for these effects.
+	*/
 	if (skillinuse == SkillBegging)
 		skillinuse = SkillOffense;
 
 	int damage = 0;
-	uint32 hate = 0;
-	int Hand = 13;
+	int32 hate = 0;
+	int Hand = MainPrimary;
 	if (hate == 0 && weapon_damage > 1) hate = weapon_damage;
 
-	if(weapon_damage > 0){
-
+	if(weapon_damage > 0){ 
 		if (focus) //From FcBaseEffects
 			weapon_damage += weapon_damage*focus/100;
 
@@ -2212,19 +2086,29 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 		}
 
 		int32 min_hit = 1;
-		int32 max_hit = (2*weapon_damage*GetDamageTable(skillinuse)) / 100;
+		int32 max_hit = (2 * weapon_damage*GetDamageTable(skillinuse)) / 100;
 
-		if(GetLevel() >= 28 && IsWarriorClass() )
-		{
-			int ucDamageBonus = GetWeaponDamageBonus((const Item_Struct*) nullptr );
-
+		if(GetLevel() >= 28 && IsWarriorClass() ) {
+			int ucDamageBonus = GetWeaponDamageBonus((const Item_Struct*) nullptr ); 
 			min_hit += (int) ucDamageBonus;
 			max_hit += (int) ucDamageBonus;
 			hate += ucDamageBonus;
 		}
 
-		ApplySpecialAttackMod(skillinuse, max_hit, min_hit);
+		if(skillinuse == SkillBash){
+			if(IsClient()){
+				ItemInst *item = CastToClient()->GetInv().GetItem(MainSecondary);
+				if(item){
+					if(item->GetItem()->ItemType == ItemTypeShield)	{
+						hate += item->GetItem()->AC;
+					}
+					const Item_Struct *itm = item->GetItem();
+					hate = hate * (100 + GetFuriousBash(itm->Focus.Effect)) / 100;
+				}
+			}
+		}
 
+		ApplySpecialAttackMod(skillinuse, max_hit, min_hit); 
 		min_hit += min_hit * GetMeleeMinDamageMod_SE(skillinuse) / 100;
 
 		if(max_hit < min_hit)
@@ -2234,18 +2118,14 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 			damage = max_hit;
 		else
 			damage = MakeRandomInt(min_hit, max_hit);
-
+		
 		if(!other->CheckHitChance(this, skillinuse, Hand, chance_mod)) {
 			damage = 0;
 		} else {
 			other->AvoidDamage(this, damage, CanRiposte);
 			other->MeleeMitigation(this, damage, min_hit);
-			if(damage > 0) {
-				ApplyMeleeDamageBonus(skillinuse, damage);
-				damage += other->GetFcDamageAmtIncoming(this, 0, true, skillinuse);
-				damage += (itembonuses.HeroicSTR / 10) + (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
-				TryCriticalHit(other, skillinuse, damage);
-			}
+			if(damage > 0) 
+				CommonOutgoingHitSuccess(other, damage, skillinuse);
 		}
 
 		if (damage == -3) {
@@ -2258,19 +2138,6 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 	else
 		damage = -5;
 
-	if(skillinuse == SkillBash){
-		if(IsClient()){
-			ItemInst *item = CastToClient()->GetInv().GetItem(SLOT_SECONDARY);
-			if(item){
-				if(item->GetItem()->ItemType == ItemTypeShield)	{
-					hate += item->GetItem()->AC;
-				}
-				const Item_Struct *itm = item->GetItem();
-				hate = hate * (100 + GetFuriousBash(itm->Focus.Effect)) / 100;
-			}
-		}
-	}
-
 	other->AddToHateList(this, hate);
 
 	bool CanSkillProc = true;
@@ -2279,6 +2146,7 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 		CanSkillProc = false; //Disable skill procs
 	}
 
+	other->AddToHateList(this, hate, 0, false);
 	other->Damage(this, damage, SPELL_UNKNOWN, skillinuse);
 
 	if (HasDied())
@@ -2301,8 +2169,7 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 		TrySkillProc(other, skillinuse, ReuseTime, true);
 }
 
-bool Mob::CanDoSpecialAttack(Mob *other)
-{
+bool Mob::CanDoSpecialAttack(Mob *other) {
 	//Make sure everything is valid before doing any attacks.
 	if (!other) {
 		SetTarget(nullptr);
@@ -2312,8 +2179,7 @@ bool Mob::CanDoSpecialAttack(Mob *other)
 	if(!GetTarget())
 		SetTarget(other);
 
-	if ((other == nullptr || ((IsClient() && CastToClient()->dead) || (other->IsClient() && other->CastToClient()->dead))
-		|| HasDied() || (!IsAttackAllowed(other)))) {
+	if ((other == nullptr || ((IsClient() && CastToClient()->dead) || (other->IsClient() && other->CastToClient()->dead)) || HasDied() || (!IsAttackAllowed(other)))) {
 		return false;
 	}
 

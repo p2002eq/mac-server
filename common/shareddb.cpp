@@ -149,10 +149,10 @@ bool ret=true;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char* query = 0;
 	// Delete cursor items
-	if ((ret = RunQuery(query, MakeAnyLenString(&query, "DELETE FROM inventory WHERE charid=%i AND ( (slotid >=8000 and slotid<=8999) or slotid=0 or (slotid>=330 and slotid<=339))", char_id), errbuf))) {
+	if ((ret = RunQuery(query, MakeAnyLenString(&query, "DELETE FROM inventory WHERE charid=%i AND ( (slotid >=8000 and slotid<=8999) or slotid=%i or (slotid>=%i and slotid<=%i))", char_id, MainCursor,EmuConstants::CURSOR_BAG_BEGIN,EmuConstants::CURSOR_BAG_END), errbuf))) {
 		for(it=start,i=8000;it!=end;++it,i++) {
 			ItemInst *inst=*it;
-			if (!(ret=SaveInventory(char_id,inst,(i==8000) ? 0 : i)))
+			if (!(ret=SaveInventory(char_id,inst,(i==8000) ? MainCursor : i)))
 				break;
 		}
 		//_log(EQMAC__LOG, "Cursor Saved Query: %s.", query);
@@ -243,7 +243,7 @@ bool SharedDatabase::SaveInventory(uint32 char_id, const ItemInst* inst, int16 s
 
 	// Save bag contents, if slot supports bag contents
 	if (inst && inst->IsType(ItemClassContainer) && Inventory::SupportsContainers(slot_id)) {
-		for (uint8 idx=0; idx<10; idx++) {
+		for (uint8 idx = SUB_BEGIN; idx < EmuConstants::ITEM_CONTAINER_SIZE; idx++) {
 			const ItemInst* baginst = inst->GetItem(idx);
 			SaveInventory(char_id, baginst, Inventory::CalcSlotId(slot_id, idx));
 		}
@@ -372,7 +372,7 @@ bool SharedDatabase::GetSharedBank(uint32 id, Inventory* inv, bool is_charid) {
 			const Item_Struct* item = GetItem(item_id);
 
 			if (item) {
-				int16 put_slot_id = SLOT_INVALID;
+				int16 put_slot_id = INVALID_INDEX;
 
 				ItemInst* inst = CreateBaseItem(item, charges);
 				if(row[3]) {
@@ -405,13 +405,13 @@ bool SharedDatabase::GetSharedBank(uint32 id, Inventory* inv, bool is_charid) {
 				safe_delete(inst);
 
 				// Save ptr to item in inventory
-				if (put_slot_id == SLOT_INVALID) {
+				if (put_slot_id == INVALID_INDEX) {
 					LogFile->write(EQEMuLog::Error,
 						"Warning: Invalid slot_id for item in shared bank inventory: %s=%i, item_id=%i, slot_id=%i",
 						((is_charid==true) ? "charid" : "acctid"), id, item_id, slot_id);
 
-					if(is_charid)
-						SaveInventory(id,nullptr,slot_id);
+					if (is_charid)
+						SaveInventory(id, nullptr, slot_id);
 				}
 			}
 			else {
@@ -455,7 +455,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 			const Item_Struct* item = GetItem(item_id);
 
 			if (item) {
-				int16 put_slot_id = SLOT_INVALID;
+				int16 put_slot_id = INVALID_INDEX;
 
 				ItemInst* inst = CreateBaseItem(item, charges);
 
@@ -485,7 +485,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 					}
 				}
 
-				if (instnodrop || (slot_id >= 1 && slot_id <= 21 && inst->GetItem()->Attuneable))
+				if (instnodrop || (((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) && inst->GetItem()->Attuneable))
 						inst->SetInstNoDrop(true);
 				if (color > 0)
 					inst->SetColor(color);
@@ -494,14 +494,24 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 				else
 					inst->SetCharges(charges);
 
-				if (slot_id>=8000 && slot_id <= 8999)
+				if (slot_id >= 8000 && slot_id <= 8999) {
 					put_slot_id = inv->PushCursor(*inst);
-				else
+				}
+				// Admins: please report any occurrences of this error
+				else if (slot_id >= 3111 && slot_id <= 3179) {
+					LogFile->write(EQEMuLog::Error,
+						"Warning: Defunct location for item in inventory: charid=%i, item_id=%i, slot_id=%i .. pushing to cursor...",
+						char_id, item_id, slot_id);
+					put_slot_id = inv->PushCursor(*inst);
+				}
+				else {
 					put_slot_id = inv->PutItem(slot_id, *inst);
+				}
+
 				safe_delete(inst);
 
 				// Save ptr to item in inventory
-				if (put_slot_id == SLOT_INVALID) {
+				if (put_slot_id == INVALID_INDEX) {
 					LogFile->write(EQEMuLog::Error,
 						"Warning: Invalid slot_id for item in inventory: charid=%i, item_id=%i, slot_id=%i",
 						char_id, item_id, slot_id);
@@ -547,7 +557,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			uint32 color		= atoul(row[3]);
 			bool instnodrop	= (row[4] && (uint16)atoi(row[4])) ? true : false;
 			const Item_Struct* item = GetItem(item_id);
-			int16 put_slot_id = SLOT_INVALID;
+			int16 put_slot_id = INVALID_INDEX;
 			if(!item)
 				continue;
 
@@ -591,7 +601,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			safe_delete(inst);
 
 			// Save ptr to item in inventory
-			if (put_slot_id == SLOT_INVALID) {
+			if (put_slot_id == INVALID_INDEX) {
 				LogFile->write(EQEMuLog::Error,
 					"Warning: Invalid slot_id for item in inventory: name=%s, acctid=%i, item_id=%i, slot_id=%i",
 					name, account_id, item_id, slot_id);
@@ -1493,6 +1503,13 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 
 		int tempid = 0;
 		int counter = 0;
+
+		if(result && mysql_field_count(getMySQL()) <= SPELL_LOAD_FIELD_COUNT) {
+			_log(SPELLS__LOAD_ERR, "Fatal error loading spells: Spell field count < SPELL_LOAD_FIELD_COUNT(%u)", SPELL_LOAD_FIELD_COUNT);
+			mysql_free_result(result);
+			return;
+		}
+
 		while (row = mysql_fetch_row(result)) {
 			tempid = atoi(row[0]);
 			if(tempid >= max_spells) {
@@ -1571,7 +1588,7 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 			for (y = 0; y < 16; y++)
 				sp[tempid].deities[y]=atoi(row[126+y]);
 
-			sp[tempid].uninterruptable=atoi(row[146]);
+			sp[tempid].uninterruptable=atoi(row[146]) != 0;
 			sp[tempid].ResistDiff=atoi(row[147]);
 			sp[tempid].dot_stacking_exempt=atoi(row[148]);
 			sp[tempid].RecourseLink = atoi(row[150]);
@@ -1581,11 +1598,13 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 			sp[tempid].descnum = atoi(row[155]);
 			sp[tempid].effectdescnum = atoi(row[157]);
 
+			sp[tempid].npc_no_los = atoi(row[159]) != 0;
 			sp[tempid].reflectable = atoi(row[161]) != 0;
 			sp[tempid].bonushate=atoi(row[162]);
 
 			sp[tempid].EndurCost=atoi(row[166]);
 			sp[tempid].EndurTimerIndex=atoi(row[167]);
+			sp[tempid].IsDisciplineBuff = atoi(row[168]) != 0;
 			sp[tempid].HateAdded=atoi(row[173]);
 			sp[tempid].EndurUpkeep=atoi(row[174]);
 			sp[tempid].numhitstype = atoi(row[175]);
@@ -1601,17 +1620,26 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 			sp[tempid].viral_targets = atoi(row[191]);
 			sp[tempid].viral_timer = atoi(row[192]);
 			sp[tempid].NimbusEffect = atoi(row[193]);
-			sp[tempid].directional_start = (float)atoi(row[194]);
-			sp[tempid].directional_end = (float)atoi(row[195]);
+			sp[tempid].directional_start = static_cast<float>(atoi(row[194]));
+			sp[tempid].directional_end = static_cast<float>(atoi(row[195]));
 			sp[tempid].not_extendable = atoi(row[197]) != 0;
 			sp[tempid].suspendable = atoi(row[200]) != 0;
+			sp[tempid].viral_range = atoi(row[201]);
 			sp[tempid].spellgroup=atoi(row[207]);
+			sp[tempid].rank = atoi(row[208]);
 			sp[tempid].powerful_flag=atoi(row[209]);
 			sp[tempid].CastRestriction = atoi(row[211]);
 			sp[tempid].AllowRest = atoi(row[212]) != 0;
-			sp[tempid].NotOutofCombat = atoi(row[213]) != 0;
-			sp[tempid].NotInCombat = atoi(row[214]) != 0;
+			sp[tempid].InCombat = atoi(row[213]) != 0;
+			sp[tempid].OutofCombat = atoi(row[214]) != 0;
+			sp[tempid].aemaxtargets = atoi(row[218]);
+			sp[tempid].maxtargets = atoi(row[219]);
 			sp[tempid].persistdeath = atoi(row[224]) != 0;
+			sp[tempid].min_dist = atof(row[227]);
+			sp[tempid].min_dist_mod = atof(row[228]);
+			sp[tempid].max_dist = atof(row[229]);
+			sp[tempid].max_dist_mod = atof(row[230]);
+			sp[tempid].min_range = static_cast<float>(atoi(row[231]));
 			sp[tempid].DamageShieldType = 0;
 		}
 		mysql_free_result(result);
@@ -1625,7 +1653,7 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 
 int SharedDatabase::GetMaxBaseDataLevel() {
 	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = "SELECT MAX(level) FROM base_data";
+	const char *query = "SELECT MAX(level) FROM base_data";
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int32 ret = 0;
@@ -1676,7 +1704,7 @@ bool SharedDatabase::LoadBaseData() {
 void SharedDatabase::LoadBaseData(void *data, int max_level) {
 	char *base_ptr = reinterpret_cast<char*>(data);
 	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = "SELECT * FROM base_data ORDER BY level, class ASC";
+	const char *query = "SELECT * FROM base_data ORDER BY level, class ASC";
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	
@@ -1958,4 +1986,36 @@ const LootDrop_Struct* SharedDatabase::GetLootDrop(uint32 lootdrop_id) {
 		LogFile->write(EQEMuLog::Error, "Could not get loot drop: %s", ex.what());
 	}
 	return nullptr;
+}
+
+bool SharedDatabase::VerifyToken(std::string token, int& status) {
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char *query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	bool res = false;
+	status = 0;
+	if (token.length() > 64) {
+		token = token.substr(0, 64);
+	}
+
+	token = EscapeString(token);
+
+	if (RunQuery(query, MakeAnyLenString(&query, "SELECT status FROM tokens WHERE token='%s'", token.c_str()), errbuf, &result)) {
+		safe_delete_array(query);
+
+		row = mysql_fetch_row(result);
+		if (row) {
+			status = atoi(row[0]);
+			res = true;
+		}
+
+		mysql_free_result(result);
+	}
+	else {
+		std::cerr << "Error in SharedDatabase::VerifyToken query '" << query << "' " << errbuf << std::endl;
+		safe_delete_array(query);
+	}
+
+	return res;
 }

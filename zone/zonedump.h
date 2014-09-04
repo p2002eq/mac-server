@@ -92,8 +92,10 @@ struct NPCType
 	char special_abilities[512];
 	uint16	d_meele_texture1;
 	uint16	d_meele_texture2;
+	char	ammo_idfile[30];
 	uint8	prim_melee_type;
 	uint8	sec_melee_type;
+	uint8	ranged_type;
 	int32	hp_regen;
 	int32	mana_regen;
 	int32	aggroradius; // added for AI improvement - neotokyo
@@ -108,6 +110,7 @@ struct NPCType
 	uint8	mount_color;	//only used by horse class
 	float	attack_speed;	//%+- on attack delay of the mob.
 	int		accuracy_rating;	//10 = 1% accuracy
+	int		avoidance_rating;	//10 = 1% avoidance
 	bool	findable;		//can be found with find command
 	bool	trackable;
 	int16	slow_mitigation;	
@@ -120,6 +123,8 @@ struct NPCType
 	float	spellscale;
 	float	healscale;
 	bool	no_target_hotkey;
+	bool	raid_target;
+	uint8 	probability;
 };
 
 /*

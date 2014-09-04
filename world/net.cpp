@@ -29,8 +29,6 @@
 #include "../common/timer.h"
 #include "../common/eq_stream_factory.h"
 #include "../common/eq_packet.h"
-#include "client.h"
-#include "worlddb.h"
 #include "../common/seperator.h"
 #include "../common/version.h"
 #include "../common/eqtime.h"
@@ -42,6 +40,8 @@
 #include "../common/rulesys.h"
 #include "../common/platform.h"
 #include "../common/crash.h"
+#include "client.h"
+#include "worlddb.h"
 #ifdef _WINDOWS
 	#include <process.h>
 	#define snprintf	_snprintf
@@ -84,6 +84,7 @@
 #include "ucs.h"
 #include "queryserv.h"
 #include "web_interface.h"
+#include "remote_call.h"
 
 TimeoutManager timeout_manager;
 EQStreamFactory eqsf(WorldStream,9000);
@@ -102,7 +103,6 @@ uint32 numclients = 0;
 uint32 numzones = 0;
 bool holdzones = false;
 
-
 extern ConsoleList console_list;
 
 void CatchSignal(int sig_num);
@@ -110,12 +110,7 @@ void CatchSignal(int sig_num);
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
 	set_exception_handler();
-#ifdef _WINDOWS //Starts window minimized on Windows.
-	HWND handleWindow;
-	AllocConsole();
-	handleWindow = FindWindowA("ConsoleWindowClass", nullptr);
-	ShowWindow(handleWindow, 2);
-#endif
+	register_remote_call_handlers();
 
 	// Load server configuration
 	_log(WORLD__INIT, "Loading server configuration..");

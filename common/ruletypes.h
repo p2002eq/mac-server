@@ -79,6 +79,7 @@ RULE_BOOL ( Character, SharedBankPlat, false) //off by default to prevent duping
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
 RULE_INT ( Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.
+RULE_INT ( Character, RestRegenRaidTimeToActivate, 300) // Time in seconds for rest state regen to kick in with a raid target.
 RULE_BOOL ( Character, RestRegenEndurance, false) // Whether rest regen will work for endurance or not.
 RULE_INT ( Character, KillsPerGroupLeadershipAA, 250) // Number of dark blues or above per Group Leadership AA
 RULE_INT ( Character, KillsPerRaidLeadershipAA, 250) // Number of dark blues or above per Raid Leadership AA
@@ -297,6 +298,19 @@ RULE_INT ( Spells, SuccorFailChance, 2) //Determines chance for a succor spell n
 RULE_BOOL ( Spells, FocusCombatProcs, false) //Allow all combat procs to receive focus effects.
 RULE_INT ( Spells, BaseFizzleChance, 20) //Base percentage you will fizzle. The chance then is modified by skill to go up or down.
 RULE_BOOL ( Spells, PreNerfBardAEDoT, false) //Allow bard AOE dots to damage targets when moving.
+RULE_INT ( Spells, AI_SpellCastFinishedFailRecast, 800) // AI spell recast time(MS) when an spell is cast but fails (ie stunned).
+RULE_INT ( Spells, AI_EngagedNoSpellMinRecast, 500) // AI spell recast time(MS) check when no spell is cast while engaged. (min time in random)
+RULE_INT ( Spells, AI_EngagedNoSpellMaxRecast, 1000) // AI spell recast time(MS) check when no spell is cast engaged.(max time in random)
+RULE_INT ( Spells, AI_EngagedBeneficialSelfChance, 100) // Chance during first AI Cast check to do a beneficial spell on self.
+RULE_INT ( Spells, AI_EngagedBeneficialOtherChance, 25) // Chance during second AI Cast check to do a beneficial spell on others.
+RULE_INT ( Spells, AI_EngagedDetrimentalChance, 20) // Chance during third AI Cast check to do a determental spell on others.
+RULE_INT ( Spells, AI_PursueNoSpellMinRecast, 500) // AI spell recast time(MS) check when no spell is cast while chasing target. (min time in random)
+RULE_INT ( Spells, AI_PursueNoSpellMaxRecast, 2000) // AI spell recast time(MS) check when no spell is cast while chasing target. (max time in random)
+RULE_INT ( Spells, AI_PursueDetrimentalChance, 90) // Chance while chasing target to cast a detrimental spell.
+RULE_INT ( Spells, AI_IdleNoSpellMinRecast, 500) // AI spell recast time(MS) check when no spell is cast while idle. (min time in random)
+RULE_INT ( Spells, AI_IdleNoSpellMaxRecast, 2000) // AI spell recast time(MS) check when no spell is cast while chasing target. (max time in random)
+RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a beneficial spell on self or others.
+
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Combat )
@@ -331,6 +345,8 @@ RULE_REAL ( Combat, HitBonusPerLevel, 1.2) //You gain this % of hit for every le
 RULE_REAL ( Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
 RULE_REAL ( Combat, ArcheryHitPenalty, 0.25) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
 RULE_REAL ( Combat, AgiHitFactor, 0.01)
+RULE_REAL ( Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular melee/ranged 
+RULE_REAL ( Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT ( Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL ( Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
 RULE_REAL ( Combat, ArcheryBaseDamageBonus, 1) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
@@ -488,14 +504,28 @@ RULE_INT ( Console, SessionTimeOut, 600000 )	// Amount of time in ms for the con
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( QueryServ )
-RULE_BOOL( QueryServ, PlayerChatLogging, false) // Logs Player Chat
+RULE_BOOL( QueryServ, PlayerLogChat, false) // Logs Player Chat 
 RULE_BOOL( QueryServ, PlayerLogTrades, false) // Logs Player Trades
 RULE_BOOL( QueryServ, PlayerLogHandins, false) // Logs Player Handins
 RULE_BOOL( QueryServ, PlayerLogNPCKills, false) // Logs Player NPC Kills
 RULE_BOOL( QueryServ, PlayerLogDeletes, false) // Logs Player Deletes
 RULE_BOOL( QueryServ, PlayerLogMoves, false) // Logs Player Moves
-RULE_BOOL( QueryServ, MerchantLogTransactions, false) // Logs Merchant Transactions
+RULE_BOOL( QueryServ, PlayerLogMerchantTransactions, false) // Logs Merchant Transactions
 RULE_BOOL( QueryServ, PlayerLogPCCoordinates, false) // Logs Player Coordinates with certain events
+RULE_BOOL( QueryServ, PlayerLogDropItem, false) // Logs Player Drop Item
+RULE_BOOL( QueryServ, PlayerLogZone, false) // Logs Player Zone Events
+RULE_BOOL( QueryServ, PlayerLogDeaths, false) // Logs Player Deaths
+RULE_BOOL( QueryServ, PlayerLogConnectDisconnect, false) // Logs Player Connect Disconnect State
+RULE_BOOL( QueryServ, PlayerLogLevels, false) // Logs Player Leveling/Deleveling
+RULE_BOOL( QueryServ, PlayerLogAARate, false) // Logs Player AA Experience Rates 
+RULE_BOOL( QueryServ, PlayerLogQGlobalUpdate, false) // Logs Player QGlobal Updates
+RULE_BOOL( QueryServ, PlayerLogTaskUpdates, false) // Logs Player Task Updates
+RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring additions
+RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
+RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
+RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
+RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
+RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

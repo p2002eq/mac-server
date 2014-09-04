@@ -166,7 +166,7 @@ public:
 	//abstract virtual function implementations requird by base abstract class
 	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill);
 	virtual void Damage(Mob* from, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false);
-	virtual bool Attack(Mob* other, int Hand = 13, bool FromRiposte = false, bool IsStrikethrough = false, bool IsFromSpell = false,
+	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false, bool IsFromSpell = false,
 		ExtraAttackOptions *opts = nullptr);
 	virtual bool HasRaid() { return (GetRaid() ? true : false); }
 	virtual bool HasGroup() { return (GetGroup() ? true : false); }
@@ -221,7 +221,7 @@ public:
 	void	TradeRequestFailed(const EQApplicationPacket* app);
 	void	BuyTraderItem(TraderBuy_Struct* tbs,Client* trader,const EQApplicationPacket* app);
 	void	TraderUpdate(uint16 slot_id,uint32 trader_id);
-	void	FinishTrade(Mob* with, ServerPacket* qspack = nullptr, bool finalizer = false);
+	void	FinishTrade(Mob* with, bool finalizer = false, void* event_entry = nullptr, std::list<void*>* event_details = nullptr);
 	void	SendZonePoints();
 
 	void	FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho);
@@ -509,7 +509,7 @@ public:
 	FACTION_VALUE	GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
 	int32	GetCharacterFactionLevel(int32 faction_id);
 	int32	GetModCharacterFactionLevel(int32 faction_id);
-	bool	HatedByClass(uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction);
+	void	MerchantRejectMessage(Mob *merchant, int primaryfaction);
 	void	SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalvalue, uint8 temp);
 
 	void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
@@ -683,7 +683,7 @@ public:
 	void	SetTint(int16 slot_id, Color_Struct& color);
 	void	SetMaterial(int16 slot_id, uint32 item_id);
 	void	Undye();
-	uint32	GetItemIDAt(int16 slot_id);
+	int32	GetItemIDAt(int16 slot_id);
 	bool	PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client_update = false);
 	bool	PushItemOnCursor(const ItemInst& inst, bool client_update = false);
 	void	DeleteItemInInventory(int16 slot_id, int8 quantity = 0, bool client_update = false, bool update_db = true);
@@ -692,7 +692,7 @@ public:
 	void	QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call = false);
 	void	PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootItem_Struct** bag_item_data = 0);
 	bool	AutoPutLootInInventory(ItemInst& inst, bool try_worn = false, bool try_cursor = true, ServerLootItem_Struct** bag_item_data = 0);
-	bool	SummonItem(uint32 item_id, int16 charges = -1, uint32 aug1=0, uint32 aug2=0, uint32 aug3=0, uint32 aug4=0, uint32 aug5=0, bool attuned=false, uint16 to_slot=SLOT_CURSOR);
+	bool	SummonItem(uint32 item_id, int16 charges = -1, uint32 aug1 = 0, uint32 aug2 = 0, uint32 aug3 = 0, uint32 aug4 = 0, uint32 aug5 = 0, bool attuned = false, uint16 to_slot = MainCursor);
 	void	DropItem(int16 slot_id);
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
@@ -809,9 +809,9 @@ public:
 	void CheckEmoteHail(Mob *target, const char* message);
 
 	void CalcItemScale();
-	bool CalcItemScale(uint32 slot_x, uint32 slot_y);
+	bool CalcItemScale(uint32 slot_x, uint32 slot_y); // behavior change: 'slot_y' is now [RANGE]_END and not [RANGE]_END + 1
 	void DoItemEnterZone();
-	bool DoItemEnterZone(uint32 slot_x, uint32 slot_y);
+	bool DoItemEnterZone(uint32 slot_x, uint32 slot_y); // behavior change: 'slot_y' is now [RANGE]_END and not [RANGE]_END + 1
 	void SummonAndRezzAllCorpses();
 	void SummonAllCorpses(float dest_x, float dest_y, float dest_z, float dest_heading);
 	void DepopAllCorpses();
@@ -898,6 +898,9 @@ public:
 	void RewindCommand();
 	void DumpPlayerProfile();
 
+	void SetEngagedRaidTarget(bool value) { EngagedRaidTarget = value; }
+	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }
+	
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);
@@ -1110,6 +1113,9 @@ private:
 	unsigned int	RestRegenHP;
 	unsigned int	RestRegenMana;
 	unsigned int	RestRegenEndurance;
+	
+	bool EngagedRaidTarget;
+	uint32 SavedRaidRestTimer;
 
 	std::set<uint32> zone_flags;
 

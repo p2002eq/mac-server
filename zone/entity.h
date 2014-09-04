@@ -278,7 +278,7 @@ public:
 
 	void	QueueManaged(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, bool ackreq = true);
 
-	void	AEAttack(Mob *attacker, float dist, int Hand = 13, int count = 0, bool IsFromSpell = false);
+	void	AEAttack(Mob *attacker, float dist, int Hand = MainPrimary, int count = 0, bool IsFromSpell = false);
 	void	AETaunt(Client *caster, float range = 0);
 	void	AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_caster = true, int16 resist_adjust = 0);
 	void	MassGroupBuff(Mob *caster, Mob *center, uint16 spell_id, bool affect_caster = true);
@@ -363,6 +363,7 @@ public:
 	void	DeleteQGlobal(std::string name, uint32 npcID, uint32 charID, uint32 zoneID);
 	void	HideCorpses(Client *c, uint8 CurrentMode, uint8 NewMode);
 
+	uint16 GetClientCount();
 	void GetMobList(std::list<Mob*> &m_list);
 	void GetNPCList(std::list<NPC*> &n_list);
 	void GetClientList(std::list<Client*> &c_list);
@@ -370,7 +371,7 @@ public:
 	void GetObjectList(std::list<Object*> &o_list);
 	void GetDoorsList(std::list<Doors*> &d_list);
 	void GetSpawnList(std::list<Spawn2*> &d_list);
-	void GetTargetsForConeArea(Mob *start, uint32 radius, uint32 height, std::list<Mob*> &m_list);
+	void GetTargetsForConeArea(Mob *start, float min_radius, float radius, float height, std::list<Mob*> &m_list);
 
 	void	DepopAll(int NPCTypeID, bool StartSpawnTimer = true);
 

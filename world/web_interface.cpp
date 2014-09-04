@@ -3,6 +3,8 @@
 #include "world_config.h"
 #include "clientlist.h"
 #include "zonelist.h"
+#include "zoneserver.h"
+#include "remote_call.h"
 #include "../common/logsys.h"
 #include "../common/logtypes.h"
 #include "../common/md5.h"
@@ -11,6 +13,7 @@
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
+extern std::map<std::string, RemoteCallHandler> remote_call_methods;
 
 WebInterfaceConnection::WebInterfaceConnection()
 {
@@ -97,6 +100,61 @@ bool WebInterfaceConnection::Process()
 			case ServerOP_ZAAuth:
 			{
 				_log(WEB_INTERFACE__ERROR, "Got authentication from WebInterface when they are already authenticated.");
+				break;
+			}
+			case ServerOP_WIRemoteCall:
+			{
+				char *id = nullptr;
+				char *session_id = nullptr;
+				char *method = nullptr;
+
+				id = new char[pack->ReadUInt32() + 1];
+				pack->ReadString(id);
+
+				session_id = new char[pack->ReadUInt32() + 1];
+				pack->ReadString(session_id);
+
+				method = new char[pack->ReadUInt32() + 1];
+				pack->ReadString(method);
+
+				uint32 param_count = pack->ReadUInt32();
+				std::vector<std::string> params;
+				for(uint32 i = 0; i < param_count; ++i) {
+					char *p = new char[pack->ReadUInt32() + 1];
+					pack->ReadString(p);
+					params.push_back(p);
+					safe_delete_array(p);
+				}
+
+				if (remote_call_methods.count(method) != 0) {
+					auto f = remote_call_methods[method];
+					f(method, session_id, id, params);
+				}
+
+				safe_delete_array(id);
+				safe_delete_array(session_id);
+				safe_delete_array(method);
+				break;
+			}
+			case ServerOP_WIClientSessionResponse: {
+				uint32 zone_id = pack->ReadUInt32();
+				uint32 instance_id = pack->ReadUInt32();
+				
+				ZoneServer *zs = nullptr;
+				if(instance_id != 0) {
+					zs = zoneserver_list.FindByInstanceID(instance_id);
+				} else {
+					zs = zoneserver_list.FindByZoneID(zone_id);
+				}
+
+				if(zs) {
+					ServerPacket *npack = new ServerPacket(ServerOP_WIClientSessionResponse, pack->size - 8);
+					memcpy(npack->pBuffer, pack->pBuffer + 8, pack->size - 8);
+
+					zs->SendPacket(npack);
+					safe_delete(npack);
+				}
+
 				break;
 			}
 			default:

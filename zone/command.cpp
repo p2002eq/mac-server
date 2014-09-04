@@ -62,8 +62,9 @@
 #include "guild_mgr.h"
 #include "titles.h"
 #include "../common/patches/patches.h"
+#include "queryserv.h"
 
-// these should be in the headers...
+extern QueryServ* QServ;
 extern WorldServer worldserver;
 void CatchSignal(int sig_num);
 
@@ -586,6 +587,12 @@ int command_realdispatch(Client *c, const char *message){
 	if(c->Admin() < cur->access){
 		c->Message(13,"Your access level is not high enough to use this command.");
 		return(-1);
+	}
+
+	/* QS: Player_Log_Issued_Commands */
+	if (RuleB(QueryServ, PlayerLogIssuedCommandes)){
+		std::string event_desc = StringFormat("Issued command :: '%s' in zoneid:%i instid:%i", message, c->GetZoneID(), c->GetInstanceID());
+		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc); 
 	}
 
 #ifdef COMMANDS_LOGGING
@@ -2564,14 +2571,14 @@ void command_texture(Client *c, const Seperator *sep){
 		// Player Races Wear Armor, so Wearchange is sent instead
 		int i;
 		if (!c->GetTarget())
-			for (i = 0; i < 7; i++)
+			for (i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++)
 			{
 				c->SendTextureWC(i, texture);
 			}
 		else if ((c->GetTarget()->GetRace() > 0 && c->GetTarget()->GetRace() <= 12) ||
 			c->GetTarget()->GetRace() == 128 || c->GetTarget()->GetRace() == 130 ||
 			c->GetTarget()->GetRace() == 330 || c->GetTarget()->GetRace() == 522) {
-			for (i = 0; i < 7; i++)
+			for (i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++)
 			{
 				c->GetTarget()->SendTextureWC(i, texture);
 			}
@@ -2746,7 +2753,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "worn")==0)) {
 		// Worn items
 		bFound = true;
-		for (int16 i=0; i<=21; i++) {
+		for (int16 i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
 			item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -2760,7 +2767,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "inv")==0)) {
 		// Personal inventory items
 		bFound = true;
-		for (int16 i=22; i<=29; i++) {
+		for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
 			item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -2771,7 +2778,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 					((item==0)?0:inst->GetCharges()));
 
 			if (inst && inst->IsType(ItemClassContainer)) {
-				for (uint8 j=0; j<10; j++) {
+				for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
 					item = (instbag) ? instbag->GetItem() : nullptr;
 						static char itemid[7];
@@ -2795,8 +2802,6 @@ void command_peekinv(Client *c, const Seperator *sep){
 		int i=0;
 
 		if(client->GetInv().CursorEmpty()) { // Display 'front' cursor slot even if 'empty' (item(30[0]) == null)
-				c->Message((item==0), "CursorSlot: %i, Depth: %i, Item: %i (%c%06X%s%c), Charges: %i", SLOT_CURSOR,i,
-					0, 0x12, 0, "null", 0x12, 0);
 		}
 		else {
 			for(it=client->GetInv().cursor_begin();it!=client->GetInv().cursor_end();++it,i++) {
@@ -2804,20 +2809,20 @@ void command_peekinv(Client *c, const Seperator *sep){
 				item = (inst) ? inst->GetItem() : nullptr;
 					static char itemid[7];
 					sprintf(itemid, "%06d", (item==0)?0:item->ID);
-					c->Message((item==0), "CursorSlot: %i, Depth: %i, Item: %i (%c%c%s%s%c), Charges: %i", SLOT_CURSOR,i,
-						((item==0)?0:item->ID),0x12, 0x30,((item==0)?0:itemid),
+					c->Message((item == 0), "CursorSlot: %i, Depth: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", MainCursor, i,
+						((item==0)?0:item->ID),0x12, ((item==0)?0:item->ID),
 						((item==0)?"null":item->Name), 0x12,
 						((item==0)?0:inst->GetCharges()));
 
 				if (inst && inst->IsType(ItemClassContainer) && i==0) { // 'CSD 1' - only display contents of slot 30[0] container..higher ones don't exist
-					for (uint8 j=0; j<10; j++) {
-						const ItemInst* instbag = client->GetInv().GetItem(SLOT_CURSOR, j);
+					for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
+						const ItemInst* instbag = client->GetInv().GetItem(MainCursor, j);
 						item = (instbag) ? instbag->GetItem() : nullptr;
 							static char itemid[7];
 							sprintf(itemid, "%06d", (item==0)?0:item->ID);
 							c->Message((item==0), "   CursorBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%c%s%s%c), Charges: %i",
-								Inventory::CalcSlotId(SLOT_CURSOR, j),
-								SLOT_CURSOR, j, ((item==0)?0:item->ID),0x12, 0x30, ((item==0)?0:itemid),
+								Inventory::CalcSlotId(MainCursor, j),
+								MainCursor, j, ((item == 0) ? 0 : item->ID), 0x12, ((item == 0) ? 0 : item->ID),
 								((item==0)?"null":item->Name), 0x12,
 								((item==0)?0:instbag->GetCharges()));
 					}
@@ -2830,7 +2835,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 		// Bank
 		bFound = true;
 		int16 i = 0;
-		for (i=2000; i<=2007; i++) {
+		for (i = EmuConstants::BANK_BEGIN; i <= EmuConstants::BANK_END; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
 			item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -2841,7 +2846,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 				((item==0)?0:inst->GetCharges()));
 
 			if (inst && inst->IsType(ItemClassContainer)) {
-				for (uint8 j=0; j<10; j++) {
+				for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
 					item = (instbag) ? instbag->GetItem() : nullptr;
 						static char itemid[7];
@@ -2858,7 +2863,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "trade")==0)) {
 		// Items in trade window (current trader only, not the other trader)
 		bFound = true;
-		for (int16 i=3000; i<=3007; i++) {
+		for (int16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
 			item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -2869,7 +2874,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 					((item==0)?0:inst->GetCharges()));
 
 			if (inst && inst->IsType(ItemClassContainer)) {
-				for (uint8 j=0; j<10; j++) {
+				for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
 					item = (instbag) ? instbag->GetItem() : nullptr;
 						static char itemid[7];
@@ -3213,8 +3218,8 @@ void command_listpetition(Client *c, const Seperator *sep){
 
 void command_equipitem(Client *c, const Seperator *sep){
 	uint32 slot_id = atoi(sep->arg[1]);
-	if (sep->IsNumber(1) && (slot_id>=0) && (slot_id<=21)) {
-		const ItemInst* from_inst = c->GetInv().GetItem(SLOT_CURSOR);
+	if (sep->IsNumber(1) && ((slot_id >= EmuConstants::EQUIPMENT_BEGIN) && (slot_id <= EmuConstants::EQUIPMENT_END) || (slot_id == MainPowerSource))) {
+		const ItemInst* from_inst = c->GetInv().GetItem(MainCursor);
 		const ItemInst* to_inst = c->GetInv().GetItem(slot_id); // added (desync issue when forcing stack to stack)
 		bool partialmove = false;
 		int16 movecount;
@@ -3222,7 +3227,7 @@ void command_equipitem(Client *c, const Seperator *sep){
 		if (from_inst && from_inst->IsType(ItemClassCommon)) {
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_MoveItem, sizeof(MoveItem_Struct));
 			MoveItem_Struct* mi	= (MoveItem_Struct*)outapp->pBuffer;
-			mi->from_slot		= SLOT_CURSOR;
+			mi->from_slot		= MainCursor;
 			mi->to_slot			= slot_id;
 			// mi->number_in_stack	= from_inst->GetCharges(); // replaced with con check for stacking
 
@@ -3249,12 +3254,14 @@ void command_equipitem(Client *c, const Seperator *sep){
 			else if(c->SwapItem(mi) == 1) {
 				c->FastQueuePacket(&outapp);
 
+				// if the below code is still needed..just send an an item trade packet to each slot..it should overwrite the client instance
+
 				// below code has proper logic, but client does not like to have cursor charges changed
 				// (we could delete the cursor item and resend, but issues would arise if there are queued items)
 				//if (partialmove) {
 				//	EQApplicationPacket* outapp2 = new EQApplicationPacket(OP_DeleteItem, sizeof(DeleteItem_Struct));
 				//	DeleteItem_Struct* di	= (DeleteItem_Struct*)outapp2->pBuffer;
-				//	di->from_slot			= SLOT_CURSOR;
+				//	di->from_slot			= MainCursor;
 				//	di->to_slot				= 0xFFFFFFFF;
 				//	di->number_in_stack		= 0xFFFFFFFF;
 
@@ -4292,7 +4299,7 @@ void command_spawnfix(Client *c, const Seperator *sep){
 void command_loc(Client *c, const Seperator *sep){
 	Mob *t=c->GetTarget()?c->GetTarget():c->CastToMob();
 
-	c->Message(0, "%s's Location (XYZ): %1.1f, %1.1f, %1.1f; heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f; heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
 }
 
 void command_goto(Client *c, const Seperator *sep){
@@ -4306,7 +4313,7 @@ void command_goto(Client *c, const Seperator *sep){
 }
 
 void command_iteminfo(Client *c, const Seperator *sep){
-	const ItemInst* inst = c->GetInv()[SLOT_CURSOR];
+	const ItemInst* inst = c->GetInv()[MainCursor];
 
 	if (!inst)
 		c->Message(13, "Error: You need an item on your cursor for this command");
@@ -7254,16 +7261,19 @@ void command_path(Client *c, const Seperator *sep)
 }
 
 void Client::Undye(){
-	for (int cur_slot = 0; cur_slot < 9 ; cur_slot++ ){
+	for (int cur_slot = EmuConstants::MATERIAL_BEGIN; cur_slot <= EmuConstants::MATERIAL_END; cur_slot++ ) {
 		uint8 slot2=SlotConvert(cur_slot);
 		ItemInst* inst = m_inv.GetItem(slot2);
+
 		if(inst != nullptr) {
 			inst->SetColor(inst->GetItem()->Color);
 			database.SaveInventory(CharacterID(), inst, slot2);
 		}
+
 		m_pp.item_tint[cur_slot].color = 0;
 		SendWearChange(cur_slot);
 	}
+
 	Save(0);
 }
 

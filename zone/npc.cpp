@@ -194,6 +194,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	}
 
 	accuracy_rating = d->accuracy_rating;
+	avoidance_rating = d->avoidance_rating;
 	ATK = d->ATK;
 
 	CalcMaxMana();
@@ -251,9 +252,11 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 
 	d_meele_texture1 = d->d_meele_texture1;
 	d_meele_texture2 = d->d_meele_texture2;
+	ammo_idfile = d->ammo_idfile;
 	memset(equipment, 0, sizeof(equipment));
 	prim_melee_type = d->prim_melee_type;
 	sec_melee_type = d->sec_melee_type;
+	ranged_type = d->ranged_type;
 
 	// If Melee Textures are not set, set attack type to Hand to Hand as default
 	if(!d_meele_texture1)
@@ -277,6 +280,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	SetEmoteID(d->emoteid);
 	InitializeBuffSlots();
 	CalcBonuses();
+	raid_target = d->raid_target;
 }
 
 NPC::~NPC()
@@ -1184,7 +1188,7 @@ void NPC::PickPocket(Client* thief) {
 				bool is_arrow = (item->ItemType == ItemTypeArrow) ? true : false;
 				int slot_id = thief->GetInv().FindFreeSlot(false, true, inst->GetItem()->Size, is_arrow);
 				if (/*!Equipped(item->ID) &&*/
-					!item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer) && slot_id != SLOT_INVALID
+					!item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer) && slot_id != INVALID_INDEX
 					/*&& steal_skill > item->StealSkill*/ )
 				{
 					slot[x] = slot_id;
@@ -1655,246 +1659,49 @@ void NPC::ModifyNPCStat(const char *identifier, const char *newValue)
 {
 	std::string id = identifier;
 	std::string val = newValue;
-	for(int i = 0; i < id.length(); ++i)
-	{
+	for(int i = 0; i < id.length(); ++i) {
 		id[i] = std::tolower(id[i]);
 	}
 
-	if(id == "ac")
-	{
-		AC = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "str")
-	{
-		STR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "sta")
-	{
-		STA = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "agi")
-	{
-		AGI = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "dex")
-	{
-		DEX = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "wis")
-	{
-		WIS = atoi(val.c_str());
-		CalcMaxMana();
-		return;
-	}
-
-	if(id == "int" || id == "_int")
-	{
-		INT = atoi(val.c_str());
-		CalcMaxMana();
-		return;
-	}
-
-	if(id == "cha")
-	{
-		CHA = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "max_hp")
-	{
-		base_hp = atoi(val.c_str());
-		CalcMaxHP();
-		if(cur_hp > max_hp)
-			cur_hp = max_hp;
-		return;
-	}
-
-	if(id == "max_mana")
-	{
-		npc_mana = atoi(val.c_str());
-		CalcMaxMana();
-		if(cur_mana > max_mana)
-			cur_mana = max_mana;
-		return;
-	}
-
-	if(id == "mr")
-	{
-		MR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "fr")
-	{
-		FR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "cr")
-	{
-		CR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "pr")
-	{
-		PR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "dr")
-	{
-		DR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "PhR")
-	{
-		PhR = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "runspeed")
-	{
-		runspeed = (float)atof(val.c_str());
-		CalcBonuses();
-		return;
-	}
-
-	if(id == "special_attacks")
-	{
-		//Added reset flag.
-		NPCSpecialAttacks(val.c_str(), 0, 1);
-		return;
-	}
-
-	if(id == "attack_speed")
-	{
-		attack_speed = (float)atof(val.c_str());
-		CalcBonuses();
-		return;
-	}
-
-	if(id == "atk")
-	{
-		ATK = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "accuracy")
-	{
-		accuracy_rating = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "trackable")
-	{
-		trackable = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "min_hit")
-	{
-		min_dmg = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "max_hit")
-	{
-		max_dmg = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "attack_count")
-	{
-		attack_count = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "see_invis")
-	{
-		see_invis = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "see_invis_undead")
-	{
-		see_invis_undead = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "see_hide")
-	{
-		see_hide = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "see_improved_hide")
-	{
-		see_improved_hide = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "hp_regen")
-	{
-		hp_regen = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "mana_regen")
-	{
-		mana_regen = atoi(val.c_str());
-		return;
-	}
-
-	if(id == "level")
-	{
-		SetLevel(atoi(val.c_str()));
-		return;
-	}
-
-	if(id == "aggro")
-	{
-		pAggroRange = atof(val.c_str());
-		return;
-	}
-
-	if(id == "assist")
-	{
-		pAssistRange = atof(val.c_str());
-		return;
-	}
-
-	if(id == "slow_mitigation")
-	{
-		slow_mitigation = atoi(val.c_str());
-		return;
-	}
-	if(id == "loottable_id")
-	{
-		loottable_id = atof(val.c_str());
-		return;
-	}
-	if(id == "healscale")
-	{
-		healscale = atof(val.c_str());
-		return;
-	}
-	if(id == "spellscale")
-	{
-		spellscale = atof(val.c_str());
-		return;
-	}
+	if(id == "ac") { AC = atoi(val.c_str()); return; }
+	else if(id == "str") { STR = atoi(val.c_str()); return; }
+	else if(id == "sta") { STA = atoi(val.c_str()); return; }
+	else if(id == "agi") { AGI = atoi(val.c_str()); return; }
+	else if(id == "dex") { DEX = atoi(val.c_str()); return; }
+	else if(id == "wis") { WIS = atoi(val.c_str()); CalcMaxMana(); return; }
+	else if(id == "int" || id == "_int") { INT = atoi(val.c_str()); CalcMaxMana(); return; }
+	else if(id == "cha") { CHA = atoi(val.c_str()); return; }
+	else if(id == "max_hp") { base_hp = atoi(val.c_str()); CalcMaxHP(); if (cur_hp > max_hp) { cur_hp = max_hp; } return; }
+	else if(id == "max_mana") { npc_mana = atoi(val.c_str()); CalcMaxMana(); if (cur_mana > max_mana){ cur_mana = max_mana; } return; }
+	else if(id == "mr") { MR = atoi(val.c_str()); return; }
+	else if(id == "fr") { FR = atoi(val.c_str()); return; }
+	else if(id == "cr") { CR = atoi(val.c_str()); return; }
+	else if(id == "pr") { PR = atoi(val.c_str()); return; }
+	else if(id == "dr") { DR = atoi(val.c_str()); return; }
+	else if(id == "PhR") { PhR = atoi(val.c_str()); return; }
+	else if(id == "runspeed") { runspeed = (float)atof(val.c_str()); CalcBonuses(); return; }
+	else if(id == "special_attacks") { NPCSpecialAttacks(val.c_str(), 0, 1); return; }
+	else if(id == "attack_speed") { attack_speed = (float)atof(val.c_str()); CalcBonuses(); return; }
+	else if(id == "atk") { ATK = atoi(val.c_str()); return; }
+	else if(id == "accuracy") { accuracy_rating = atoi(val.c_str()); return; }
+	else if(id == "avoidance") { avoidance_rating = atoi(val.c_str()); return; }
+	else if(id == "trackable") { trackable = atoi(val.c_str()); return; }
+	else if(id == "min_hit") { min_dmg = atoi(val.c_str()); return; }
+	else if(id == "max_hit") { max_dmg = atoi(val.c_str()); return; }
+	else if(id == "attack_count") { attack_count = atoi(val.c_str()); return; }
+	else if(id == "see_invis") { see_invis = atoi(val.c_str()); return; }
+	else if(id == "see_invis_undead") { see_invis_undead = atoi(val.c_str()); return; }
+	else if(id == "see_hide") { see_hide = atoi(val.c_str()); return; }
+	else if(id == "see_improved_hide") { see_improved_hide = atoi(val.c_str()); return; }
+	else if(id == "hp_regen") { hp_regen = atoi(val.c_str()); return; }
+	else if(id == "mana_regen") { mana_regen = atoi(val.c_str()); return; }
+	else if(id == "level") { SetLevel(atoi(val.c_str())); return; }
+	else if(id == "aggro") { pAggroRange = atof(val.c_str()); return; }
+	else if(id == "assist") { pAssistRange = atof(val.c_str()); return; }
+	else if(id == "slow_mitigation") { slow_mitigation = atoi(val.c_str()); return; }
+	else if(id == "loottable_id") { loottable_id = atof(val.c_str()); return; }
+	else if(id == "healscale") { healscale = atof(val.c_str()); return; }
+	else if(id == "spellscale") { spellscale = atof(val.c_str()); return; }
 }
 
 void NPC::LevelScale() {

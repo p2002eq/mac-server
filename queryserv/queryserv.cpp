@@ -32,61 +32,46 @@
 
 volatile bool RunLoops = true;
 
-uint32 MailMessagesSent = 0;
-uint32 ChatMessagesSent = 0;
-
 TimeoutManager timeout_manager;
-
 Database database;
 std::string WorldShortName;
-
 const queryservconfig *Config;
-
 WorldServer *worldserver = 0;
 
-
-void CatchSignal(int sig_num) {
-
-	RunLoops = false;
-
+void CatchSignal(int sig_num) { 
+	RunLoops = false; 
 	if(worldserver)
 		worldserver->Disconnect();
 }
 
 int main() {
 	RegisterExecutablePlatform(ExePlatformQueryServ);
-	set_exception_handler();
-#ifdef _WINDOWS //Starts window minimized on Windows.
-	HWND handleWindow;
-	AllocConsole();
-	handleWindow = FindWindowA("ConsoleWindowClass", nullptr);
-	ShowWindow(handleWindow, 2);
-#endif
-
-	Timer LFGuildExpireTimer(60000);
-
+	set_exception_handler(); 
+	Timer LFGuildExpireTimer(60000);  
 	Timer InterserverTimer(INTERSERVER_TIMER); // does auto-reconnect
 
+	/* Load XML from eqemu_config.xml 
+		<qsdatabase>
+			<host>127.0.0.1</host>
+			<port>3306</port>
+			<username>user</username>
+			<password>password</password>
+			<db>dbname</db>
+		</qsdatabase>
+	*/
+
 	_log(QUERYSERV__INIT, "Starting EQEmu QueryServ.");
-
 	if (!queryservconfig::LoadConfig()) {
-
 		_log(QUERYSERV__INIT, "Loading server configuration failed.");
-
 		return 1;
 	}
 
-	Config = queryservconfig::get();
-
-	if(!load_log_settings(Config->LogSettingsFile.c_str()))
-		_log(QUERYSERV__INIT, "Warning: Unable to read %s", Config->LogSettingsFile.c_str());
-	else
-		_log(QUERYSERV__INIT, "Log settings loaded from %s", Config->LogSettingsFile.c_str());
-
-	WorldShortName = Config->ShortName;
+	Config = queryservconfig::get(); 
+	WorldShortName = Config->ShortName; 
 
 	_log(QUERYSERV__INIT, "Connecting to MySQL...");
-
+	
+	/* MySQL Connection */
 	if (!database.Connect(
 		Config->QSDatabaseHost.c_str(),
 		Config->QSDatabaseUsername.c_str(),
@@ -97,6 +82,12 @@ int main() {
 		return 1;
 	}
 
+	/* Initialize Logging */
+	if (!load_log_settings(Config->LogSettingsFile.c_str()))
+		_log(QUERYSERV__INIT, "Warning: Unable to read %s", Config->LogSettingsFile.c_str());
+	else
+		_log(QUERYSERV__INIT, "Log settings loaded from %s", Config->LogSettingsFile.c_str());
+
 	if (signal(SIGINT, CatchSignal) == SIG_ERR)	{
 		_log(QUERYSERV__ERROR, "Could not set signal handler");
 		return 1;
@@ -106,22 +97,19 @@ int main() {
 		return 1;
 	}
 
+	/* Initial Connection to Worldserver */
 	worldserver = new WorldServer;
+	worldserver->Connect(); 
 
-	worldserver->Connect();
-
-	while(RunLoops) {
-
-		Timer::SetCurrentTime();
-
+	/* Load Looking For Guild Manager */
+	while(RunLoops) { 
+		Timer::SetCurrentTime(); 
 		if (InterserverTimer.Check()) {
 			if (worldserver->TryReconnect() && (!worldserver->Connected()))
 				worldserver->AsyncConnect();
 		}
-		worldserver->Process();
-
-		timeout_manager.CheckTimeouts();
-
+		worldserver->Process(); 
+		timeout_manager.CheckTimeouts(); 
 		Sleep(100);
 	}
 }

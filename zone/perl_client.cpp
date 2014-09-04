@@ -1178,7 +1178,22 @@ XS(XS_Client_MovePC)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		THIS->MovePC(zoneID, x, y, z, heading);
+		if (THIS->IsClient()) {
+			THIS->MovePC(zoneID, x, y, z, heading);
+		}
+		else {
+			if (THIS->IsNPC())
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process a type NPC reference");
+		#ifdef BOTS
+			else if (THIS->IsBot())
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process a type Bot reference");
+		#endif	 
+			else
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
+
+			Perl_croak(aTHX_ "THIS is not of type Client");
+		}
+
 	}
 	XSRETURN_EMPTY;
 }
@@ -1207,7 +1222,23 @@ XS(XS_Client_MovePCInstance)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		THIS->MovePC(zoneID, instanceID, x, y, z, heading);
+		if (THIS->IsClient()) {
+			THIS->MovePC(zoneID, instanceID, x, y, z, heading);
+		}
+		else {
+			if (THIS->IsNPC())
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
+		#ifdef BOTS
+			else if (THIS->IsBot())
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process a type Bot reference");
+		#endif
+			else
+				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
+
+			Perl_croak(aTHX_ "THIS is not of type Client"); 
+
+			Perl_croak(aTHX_ "THIS is not of type Client");
+		}
 	}
 	XSRETURN_EMPTY;
 }
@@ -2874,7 +2905,7 @@ XS(XS_Client_GetItemIDAt)
 		Perl_croak(aTHX_ "Usage: Client::GetItemIDAt(THIS, slot_id)");
 	{
 		Client *		THIS;
-		uint32		RETVAL;
+		int32		RETVAL;
 		dXSTARG;
 		int16		slot_id = (int16)SvIV(ST(1));
 
@@ -2888,7 +2919,7 @@ XS(XS_Client_GetItemIDAt)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
 		RETVAL = THIS->GetItemIDAt(slot_id);
-		XSprePUSH; PUSHu((UV)RETVAL);
+		XSprePUSH; PUSHi((IV)RETVAL);
 	}
 	XSRETURN(1);
 }

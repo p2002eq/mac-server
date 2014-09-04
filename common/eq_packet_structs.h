@@ -32,7 +32,8 @@ static const uint32 MAX_MERC_GRADES = 10;
 static const uint32 MAX_MERC_STANCES = 10;
 static const uint32 BLOCKED_BUFF_COUNT = 20;
 
-#include "eq_constants.h"
+//#include "eq_constants.h"
+#include "eq_dictionary.h"
 
 /*
 ** Compiler override to ensure
@@ -661,13 +662,8 @@ struct ClientDiscipline_Struct {
     uint8	disc_id;	// There are only a few discs < 60
     uint8	unknown3[3];	// Which leaves room for ??
 };
-
-static const uint32 TRIBUTE_SLOT_START = 400;
-static const uint32 MAX_PLAYER_TRIBUTES = 5;
-static const uint32 MAX_PLAYER_BANDOLIER = 4;
-static const uint32 MAX_PLAYER_BANDOLIER_ITEMS = 4;
-static const uint32 MAX_POTIONS_IN_BELT = 4;
 static const uint32 TRIBUTE_NONE = 0xFFFFFFFF;
+
 struct Tribute_Struct {
 	uint32 tribute;
 	uint32 tier;
@@ -687,12 +683,13 @@ enum { //bandolier item positions
 	bandolierRange,
 	bandolierAmmo
 };
+
 struct Bandolier_Struct {
 	char name[32];
-	BandolierItem_Struct items[MAX_PLAYER_BANDOLIER_ITEMS];
+	BandolierItem_Struct items[EmuConstants::BANDOLIER_SIZE];
 };
 struct PotionBelt_Struct {
-	BandolierItem_Struct items[MAX_POTIONS_IN_BELT];
+	BandolierItem_Struct items[EmuConstants::POTION_BELT_SIZE];
 };
 
 struct MovePotionToBelt_Struct {
@@ -942,7 +939,7 @@ struct PlayerProfile_Struct
 /*7212*/	uint32				tribute_points;
 /*7216*/	uint32				unknown7252;
 /*7220*/	uint32				tribute_active;		//1=active
-/*7224*/	Tribute_Struct		tributes[MAX_PLAYER_TRIBUTES];
+/*7224*/	Tribute_Struct		tributes[EmuConstants::TRIBUTE_SIZE];
 /*7264*/	Disciplines_Struct	disciplines;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7744*/	char				unknown7780[160];
@@ -970,7 +967,7 @@ struct PlayerProfile_Struct
 /*12804*/	uint32				aapoints;			//avaliable, unspent
 /*12808*/	uint8				perAA;				//For Mac
 /*12809*/	uint8				unknown12844[35];
-/*12844*/	Bandolier_Struct	bandoliers[MAX_PLAYER_BANDOLIER];
+/*12844*/	Bandolier_Struct	bandoliers[EmuConstants::BANDOLIERS_COUNT];
 /*14124*/	uint32				ATR_PET_LOH_timer;
 			uint32				UnknownTimer;
 			uint32				HarmTouchTimer;
@@ -1390,6 +1387,16 @@ struct Consume_Struct
 };
 
 struct MoveItem_Struct
+{
+/*0000*/ uint32 from_slot;
+/*0004*/ uint32 to_slot;
+/*0008*/ uint32 number_in_stack;
+};
+
+// both MoveItem_Struct/DeleteItem_Struct server structures will be changing to a structure-based slot format..this will
+// be used for handling SoF/SoD/etc... time stamps sent using the MoveItem_Struct format. (nothing will be done with this
+// info at the moment..but, it forwards it on to the server for handling/future use)
+struct ClientTimeStamp_Struct
 {
 /*0000*/ uint32 from_slot;
 /*0004*/ uint32 to_slot;
@@ -2899,8 +2906,8 @@ struct SelectTributeReply_Struct {
 
 struct TributeInfo_Struct {
 	uint32	active;		//0 == inactive, 1 == active
-	uint32	tributes[MAX_PLAYER_TRIBUTES];	//-1 == NONE
-	uint32	tiers[MAX_PLAYER_TRIBUTES];		//all 00's
+	uint32	tributes[EmuConstants::TRIBUTE_SIZE];	//-1 == NONE
+	uint32	tiers[EmuConstants::TRIBUTE_SIZE];		//all 00's
 	uint32	tribute_master_id;
 };
 
@@ -2963,6 +2970,7 @@ struct MerchantList {
 	int16	faction_required;
 	int8	level_required;
 	uint32	classes_required;
+	uint8	probability;
 };
 
 struct TempMerchantList {

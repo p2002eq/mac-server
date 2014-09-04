@@ -69,12 +69,6 @@ std::string GetMailPrefix() {
 int main() {
 	RegisterExecutablePlatform(ExePlatformUCS);
 	set_exception_handler();
-#ifdef _WINDOWS //Starts window minimized on Windows.
-	HWND handleWindow;
-	AllocConsole();
-	handleWindow = FindWindowA("ConsoleWindowClass", nullptr);
-	ShowWindow(handleWindow, 2);
-#endif
 
 	// Check every minute for unused channels we can delete
 	//

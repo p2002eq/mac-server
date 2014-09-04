@@ -76,7 +76,6 @@ void Client::SendGuildSpawnAppearance() {
 		SendAppearancePacket(AT_GuildID, GuildID());
 		SendAppearancePacket(AT_GuildRank, rank);
 	}
-
 	UpdateWho();
 }
 

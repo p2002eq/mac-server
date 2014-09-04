@@ -34,12 +34,6 @@
 int main(int argc, char **argv) {
 	RegisterExecutablePlatform(ExePlatformSharedMemory);
 	set_exception_handler();
-#ifdef _WINDOWS //Starts window minimized on Windows.
-	HWND handleWindow;
-	AllocConsole();
-	handleWindow = FindWindowA("ConsoleWindowClass", nullptr);
-	ShowWindow(handleWindow, 2);
-#endif
 
 	LogFile->write(EQEMuLog::Status, "Shared Memory Loader Program");
 	if(!EQEmuConfig::LoadConfig()) {

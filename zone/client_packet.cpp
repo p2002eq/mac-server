@@ -16,16 +16,17 @@
 */
 
 #include "../common/debug.h"
-#include <iostream>
-#include <iomanip>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <zlib.h>
 #include <assert.h>
-#include <sstream>
+#include <iomanip>
+#include <iostream>
+#include <math.h>
 #include <set>
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <zlib.h>
+
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -38,8 +39,6 @@
 	#include <unistd.h>
 #endif
 
-#include "masterentity.h"
-#include "zonedb.h"
 #include "../common/packet_functions.h"
 #include "../common/packet_dump.h"
 #include "worldserver.h"
@@ -61,14 +60,20 @@
 #include "string_ids.h"
 #include "map.h"
 #include "titles.h"
-#include "pets.h"
+#include "worldserver.h"
+#include "zone.h"
 #include "zone_config.h"
 #include "guild_mgr.h"
 #include "pathing.h"
 #include "water_map.h"
+#include "pets.h"
 #include "../common/zone_numbers.h"
 #include "quest_parser_collection.h"
+#include "queryserv.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
+extern QueryServ* QServ;
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
 extern WorldServer worldserver;
@@ -301,7 +306,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	case CLIENT_CONNECTING: {
 		if(ConnectingOpcodes.count(opcode) != 1) {
 			//Hate const cast but everything in lua needs to be non-const even if i make it non-mutable
-			std::vector<void*> args;
+			std::vector<EQEmu::Any> args;
 			args.push_back(const_cast<EQApplicationPacket*>(app));
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 1, &args);
 
@@ -332,7 +337,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 		ClientPacketProc p;
 		p = ConnectedOpcodes[opcode];
 		if(p == nullptr) {
-			std::vector<void*> args;
+			std::vector<EQEmu::Any> args;
 			args.push_back(const_cast<EQApplicationPacket*>(app));
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 0, &args);
 
@@ -584,9 +589,9 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 
 	SendGuildMOTD();
 
-	const ItemInst* inst = m_inv[SLOT_CURSOR];
+	const ItemInst* inst = m_inv[MainCursor];
 	if (inst){
-		SendItemPacket(SLOT_CURSOR, inst, ItemPacketSummonItem);
+		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 	}
 
 	return;
@@ -765,6 +770,20 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 	}
 	PlayerPositionUpdateClient_Struct* ppu = (PlayerPositionUpdateClient_Struct*)app->pBuffer;
+
+	/* Web Interface */
+	if (IsClient()) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)zone->GetZoneID()));
+		params.push_back(std::to_string((long)zone->GetInstanceID()));
+		params.push_back(std::to_string((long)GetID()));
+		params.push_back(GetCleanName());
+		params.push_back(std::to_string((double)ppu->x_pos));
+		params.push_back(std::to_string((double)ppu->y_pos));
+		params.push_back(std::to_string((double)ppu->z_pos));
+		params.push_back(std::to_string((double)heading));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
+	}
 
 	if(ppu->spawn_id != GetID()) {
 		// check if the id is for a boat the player is controlling
@@ -1003,12 +1022,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = y_pos;
 
 	// Outgoing client packet
-	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->animation != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
+	float tmpheading = ppu->heading;
+
+	if (!FCMP(ppu->y_pos, y_pos) || !FCMP(ppu->x_pos, x_pos) || !FCMP(tmpheading, heading) || ppu->animation != animation)
 	{
 		x_pos			= ppu->x_pos;
 		y_pos			= ppu->y_pos;
 		z_pos			= ppu->z_pos;
 		animation		= ppu->animation;
+		heading			= tmpheading;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
 		PlayerPositionUpdateServer_Struct* ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
@@ -1298,7 +1320,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 	Shielding_Struct* shield = (Shielding_Struct*)app->pBuffer;
 	shield_target = entity_list.GetMob(shield->target_id);
 	bool ack = false;
-	ItemInst* inst = GetInv().GetItem(14);
+	ItemInst* inst = GetInv().GetItem(MainSecondary);
 	if (!shield_target)
 		 return;
 	if (inst)
@@ -2094,7 +2116,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 
 	if(spellend_timer.Enabled() && casting_spell_id && !IsBardSong(casting_spell_id))
 	{
-		if(mi->from_slot != mi->to_slot && (mi->from_slot > 0 && mi->from_slot < 30 || mi->from_slot > 39) && IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot))
+		if(mi->from_slot != mi->to_slot && (mi->from_slot <= EmuConstants::GENERAL_END || mi->from_slot > 39) && IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot))
 		{
 			char *detect = nullptr;
 			const ItemInst *itm_from = GetInv().GetItem(mi->from_slot);
@@ -2115,8 +2137,8 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	// Illegal bagslot useage checks. Currently, user only receives a message if this check is triggered.
 	bool mi_hack = false;
 
-	if(mi->from_slot >= 250 && mi->from_slot <= 339) {
-		if(mi->from_slot > 329) { mi_hack = true; }
+	if(mi->from_slot >= EmuConstants::GENERAL_BAGS_BEGIN && mi->from_slot <= EmuConstants::CURSOR_BAG_END) {
+		if(mi->from_slot >= EmuConstants::CURSOR_BAG_BEGIN) { mi_hack = true; }
 		else {
 			int16 from_parent = m_inv.CalcSlotId(mi->from_slot);
 			if(!m_inv[from_parent]) { mi_hack = true; }
@@ -2125,8 +2147,8 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		}
 	}
 
-	if(mi->to_slot >= 250 && mi->to_slot <= 339) {
-		if(mi->to_slot > 329) { mi_hack = true; }
+	if(mi->to_slot >= EmuConstants::GENERAL_BAGS_BEGIN && mi->to_slot <= EmuConstants::CURSOR_BAG_END) {
+		if(mi->to_slot >= EmuConstants::CURSOR_BAG_BEGIN) { mi_hack = true; }
 		else {
 			int16 to_parent = m_inv.CalcSlotId(mi->to_slot);
 			if(!m_inv[to_parent]) { mi_hack = true; }
@@ -2794,7 +2816,7 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 	GuildMakeLeader* gml=(GuildMakeLeader*)app->pBuffer;
 	if (!IsInAGuild())
 		Message(0, "Error: You arent in a guild!");
-	else if (!guild_mgr.IsGuildLeader(GuildID(), CharacterID()))
+	else if (GuildRank() != GUILD_LEADER)
 		Message(0, "Error: You arent the guild leader!");
 	else if (!worldserver.Connected())
 		Message(0, "Error: World server disconnected");
@@ -3081,8 +3103,11 @@ void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 				guild_mgr.GetGuildName(gj->guildeqid), gj->guildeqid,
 				gj->response);
 
-			//change guild and rank.
-			if(!guild_mgr.SetGuild(CharacterID(), gj->guildeqid, gj->response)) {
+			//change guild and rank
+
+			uint32 guildrank = gj->response;
+
+			if(!guild_mgr.SetGuild(CharacterID(), gj->guildeqid, guildrank)) {
 				Message(13, "There was an error during the invite, DB may now be inconsistent.");
 				return;
 			}
@@ -3178,7 +3203,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			}
 			return;
 		}
-		else if ((castspell->inventoryslot < 30) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
+		else if ((castspell->inventoryslot <= EmuConstants::GENERAL_END) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
 		{
 			const ItemInst* inst = m_inv[castspell->inventoryslot]; //slot values are int16, need to check packet on this field
 			//bool cancast = true;
@@ -3243,7 +3268,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		}
 		else
 		{
-			Message(0, "Error: castspell->inventoryslot >= 30 (0x%04x)", castspell->inventoryslot);
+			Message(0, "Error: castspell->inventoryslot >= %i (0x%04x)", MainCursor, castspell->inventoryslot);
 			InterruptSpell(castspell->spell_id);
 		}
 	}
@@ -3282,7 +3307,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
 		}
-		
+
 		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
 			CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
 	}
@@ -3490,6 +3515,7 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 {
 	Mob* with = trade->With();
 	trade->state = TradeAccepted;
+
 	if (with && with->IsClient()) {
 		//finish trade...
 		// Have both accepted?
@@ -3500,6 +3526,7 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 			other->trade->state = TradeCompleting;
 			trade->state = TradeCompleting;
 
+			// should we do this for NoDrop items as well?
 			if (CheckTradeLoreConflict(other) || other->CheckTradeLoreConflict(this)) {
 				Message_StringID(CC_Red, TRADE_CANCEL_LORE);
 				other->Message_StringID(CC_Red, TRADE_CANCEL_LORE);
@@ -3515,23 +3542,38 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 
 				// start QS code
 				if(RuleB(QueryServ, PlayerLogTrades)) {
-					uint16 trade_count = 0;
+					QSPlayerLogTrade_Struct event_entry;
+					std::list<void*> event_details;
 
-					// Item trade count for packet sizing
-					for(int16 slot_id=3000; slot_id<=3007; slot_id++) {
-						if(other->GetInv().GetItem(slot_id)) { trade_count += other->GetInv().GetItem(slot_id)->GetTotalItemCount(); }
-						if(m_inv[slot_id]) { trade_count += m_inv[slot_id]->GetTotalItemCount(); }
-					}
-
-					ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogTrades, sizeof(QSPlayerLogTrade_Struct) + (sizeof(QSTradeItems_Struct) * trade_count));
+					memset(&event_entry, 0, sizeof(QSPlayerLogTrade_Struct));
 
 					// Perform actual trade
-					this->FinishTrade(other, qspack, true);
-					other->FinishTrade(this, qspack, false);
+					this->FinishTrade(other, true, &event_entry, &event_details);
+					other->FinishTrade(this, false, &event_entry, &event_details);
 
-					qspack->Deflate();
-					if(worldserver.Connected()) { worldserver.SendPacket(qspack); }
-					safe_delete(qspack);
+					event_entry._detail_count = event_details.size();
+
+					ServerPacket* qs_pack = new ServerPacket(ServerOP_QSPlayerLogTrades, sizeof(QSPlayerLogTrade_Struct)+(sizeof(QSTradeItems_Struct)* event_entry._detail_count));
+					QSPlayerLogTrade_Struct* qs_buf = (QSPlayerLogTrade_Struct*)qs_pack->pBuffer;
+
+					memcpy(qs_buf, &event_entry, sizeof(QSPlayerLogTrade_Struct));
+
+					int offset = 0;
+
+					for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset) {
+						QSTradeItems_Struct* detail = reinterpret_cast<QSTradeItems_Struct*>(*iter);
+						qs_buf->items[offset] = *detail;
+						safe_delete(detail);
+					}
+
+					event_details.clear();
+
+					qs_pack->Deflate();
+
+					if(worldserver.Connected())
+						worldserver.SendPacket(qs_pack);
+
+					safe_delete(qs_pack);
 					// end QS code
 				}
 				else {
@@ -3561,19 +3603,36 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 		if(with->IsNPC()) {
 			// Audit trade to database for player trade stream
 			if(RuleB(QueryServ, PlayerLogHandins)) {
-				uint16 handin_count = 0;
+				QSPlayerLogHandin_Struct event_entry;
+				std::list<void*> event_details;
 
-				for(int16 slot_id=3000; slot_id<=3003; slot_id++) {
-					if(m_inv[slot_id]) { handin_count += m_inv[slot_id]->GetTotalItemCount(); }
+				memset(&event_entry, 0, sizeof(QSPlayerLogHandin_Struct));
+
+				FinishTrade(with->CastToNPC(), false, &event_entry, &event_details);
+
+				event_entry._detail_count = event_details.size();
+
+				ServerPacket* qs_pack = new ServerPacket(ServerOP_QSPlayerLogHandins, sizeof(QSPlayerLogHandin_Struct)+(sizeof(QSHandinItems_Struct)* event_entry._detail_count));
+				QSPlayerLogHandin_Struct* qs_buf = (QSPlayerLogHandin_Struct*)qs_pack->pBuffer;
+
+				memcpy(qs_buf, &event_entry, sizeof(QSPlayerLogHandin_Struct));
+
+				int offset = 0;
+
+				for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset) {
+					QSHandinItems_Struct* detail = reinterpret_cast<QSHandinItems_Struct*>(*iter);
+					qs_buf->items[offset] = *detail;
+					safe_delete(detail);
 				}
 
-				ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogHandins, sizeof(QSPlayerLogHandin_Struct) + (sizeof(QSHandinItems_Struct) * handin_count));
+				event_details.clear();
 
-				FinishTrade(with->CastToNPC(), qspack);
+				qs_pack->Deflate();
 
-				qspack->Deflate();
-				if(worldserver.Connected()) { worldserver.SendPacket(qspack); }
-				safe_delete(qspack);
+				if(worldserver.Connected())
+					worldserver.SendPacket(qs_pack);
+
+				safe_delete(qs_pack);
 			}
 			else {
 				FinishTrade(with->CastToNPC());
@@ -3981,36 +4040,15 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 		Message(0,"You cannot use a merchant right now.");
 		action = 0;
 	}
-	int factionlvl = GetFactionLevel(CharacterID(), tmp->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), tmp->CastToNPC()->GetPrimaryFaction(), tmp);
-	if(factionlvl >= 7)
-	{
-		char playerp[16] = "players";
-		if(HatedByClass(GetRace(), GetClass(), GetDeity(), tmp->CastToNPC()->GetPrimaryFaction()))
-			strcpy(playerp,GetClassPlural(this));
-		else
-			strcpy(playerp,GetRacePlural(this));
+	int primaryfaction = tmp->CastToNPC()->GetPrimaryFaction();
+	int factionlvl = GetFactionLevel(CharacterID(), tmp->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), primaryfaction, tmp);
+	if (factionlvl >= 7) {
+		MerchantRejectMessage(tmp, primaryfaction);
+		action = 0;
+	}
 
-		uint8 rand_ = rand() % 4;
-		switch(rand_){
-			case 1:
-				Message(0,"%s says 'It's not enough that you %s have ruined your own lands. Now get lost!'", tmp->GetCleanName(), playerp);
-				break;
-			case 2:
-				Message(0,"%s says 'I have something here that %s use... let me see... it's the EXIT, now get LOST!'", tmp->GetCleanName(), playerp);
-				break;
-			case 3:
-				Message(0,"%s says 'Don't you %s have your own merchants? Whatever, I'm not selling anything to you!'", tmp->GetCleanName(), playerp);
-				break;
-			default:
-				Message(0,"%s says 'I don't like to speak to %s much less sell to them!'", tmp->GetCleanName(), playerp);
-				break;
-		}
-		action = 0;
-	}
 	if (tmp->Charmed())
-	{
 		action = 0;
-	}
 
 	// 1199 I don't have time for that now. etc
 	if (!tmp->CastToNPC()->IsMerchantOpen()) {
@@ -4229,9 +4267,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
 
 	//make sure we are not completely full...
-	if(freeslotid == SLOT_CURSOR || freeslotid == SLOT_INVALID) {
-		if(m_inv.GetItem(SLOT_CURSOR) != nullptr || freeslotid == SLOT_INVALID) {
-			Message(13,"You have no more room. The item falls to the ground.");
+	if (freeslotid == MainCursor) {
+		if (m_inv.GetItem(MainCursor) != nullptr) {
+			Message(13, "You do not have room for any more items.");
 			DropInst(inst);
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -4243,7 +4281,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	std::string packet;
 	if (!stacked && inst) {
 		PutItemInInventory(freeslotid, *inst);
-		if(freeslotid == SLOT_CURSOR)
+		if(freeslotid == MainCursor)
 			SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
 		else
 			SendItemPacket(freeslotid, inst, ItemPacketTrade);
@@ -4273,7 +4311,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			inst->SetPrice(SinglePrice);
 			inst->SetMerchantSlot(mp->itemslot);
 			inst->SetMerchantCount(new_charges);
-			if(freeslotid == SLOT_CURSOR)
+			if(freeslotid == MainCursor)
 				SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
 			else
 				SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);			
@@ -4283,8 +4321,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	safe_delete(outapp);
 
 	// start QS code
-	if(RuleB(QueryServ, MerchantLogTransactions)) {
-		ServerPacket* qspack = new ServerPacket(ServerOP_QSMerchantLogTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
+	if(RuleB(QueryServ, PlayerLogMerchantTransactions)) {
+		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
 		QSMerchantLogTransaction_Struct* qsaudit = (QSMerchantLogTransaction_Struct*)qspack->pBuffer;
 
 		qsaudit->zone_id					= zone->GetZoneID();
@@ -4414,8 +4452,8 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	}
 
 	// start QS code
-	if(RuleB(QueryServ, MerchantLogTransactions)) {
-		ServerPacket* qspack = new ServerPacket(ServerOP_QSMerchantLogTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
+	if(RuleB(QueryServ, PlayerLogMerchantTransactions)) {
+		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
 		QSMerchantLogTransaction_Struct* qsaudit = (QSMerchantLogTransaction_Struct*)qspack->pBuffer;
 
 		qsaudit->zone_id					= zone->GetZoneID();
@@ -4448,9 +4486,9 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	else
 		this->DeleteItemInInventory(mp->itemslot,mp->quantity,false);
 
-	//This forces the price to show up correctly for charged items. 
+	//This forces the price to show up correctly for charged items.
 	if(inst->IsCharged())
-		mp->quantity = 1; 
+		mp->quantity = 1;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopPlayerSell, sizeof(OldMerchant_Purchase_Struct));
 		OldMerchant_Purchase_Struct* mco=(OldMerchant_Purchase_Struct*)outapp->pBuffer;
@@ -4528,7 +4566,7 @@ void Client::Handle_OP_ClickObject(const EQApplicationPacket *app)
 
 		object->HandleClick(this, click_object);
 
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(object);
 
 		char buf[10];
@@ -4571,13 +4609,13 @@ void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 	if(!currentdoor)
 	{
 		Message(0,"Unable to find door, please notify a GM (DoorID: %i).",cd->doorid);
-			return;
+		return;
 	}
 
 	char buf[20];
 	snprintf(buf, 19, "%u", cd->doorid);
 	buf[19] = '\0';
-	std::vector<void*> args;
+	std::vector<EQEmu::Any> args;
 	args.push_back(currentdoor);
 	parse->EventPlayer(EVENT_CLICK_DOOR, this, buf, 0, &args);
 
@@ -4587,7 +4625,7 @@ void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 
 void Client::Handle_OP_CreateObject(const EQApplicationPacket *app)
 {
-	DropItem(SLOT_CURSOR);
+	DropItem(MainCursor);
 	return;
 }
 
@@ -5727,7 +5765,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 	int mendhp = GetMaxHP() / 4;
 	int currenthp = GetHP();
 	if (MakeRandomInt(0, 199) < (int)GetSkill(SkillMend)) {
-		
+
 		int criticalchance = spellbonuses.CriticalMend + itembonuses.CriticalMend + aabonuses.CriticalMend;
 
 		if(MakeRandomInt(0,99) < criticalchance){
@@ -6719,7 +6757,7 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 			continue;
 		}
 
-		if(aa[a]->value > 1)	//hack in some stuff for sony's new AA method (where each level of each AA has a seperate ID)
+		if(aa[a]->value > 1)	//hack in some stuff for sony's new AA method (where each level of each aa.has a seperate ID)
 			aa_points[(id - aa[a]->value +1)] = aa[a]->value;
 		else
 			aa_points[id] = aa[a]->value;
@@ -6928,8 +6966,7 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
-	////////////////////////////////////////////////////////////
-	// Server Zone Entry Packet
+	/* Server Zone Entry Packet */
 	outapp = new EQApplicationPacket(OP_ZoneEntry, sizeof(ServerZoneEntry_Struct));
 	ServerZoneEntry_Struct* sze = (ServerZoneEntry_Struct*)outapp->pBuffer;
 
@@ -6940,24 +6977,18 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
-	//safe_delete(outapp);
 
-	////////////////////////////////////////////////////////////
-	// Zone Spawns Packet
+	/* Zone Spawns Packet */
 	entity_list.SendZoneSpawnsBulk(this);
 	entity_list.SendZoneCorpsesBulk(this);
 	entity_list.SendZonePVPUpdates(this);	//hack until spawn struct is fixed.
 
-
-
-	////////////////////////////////////////////////////////////
-	// Time of Day packet
+	/* Time of Day packet */
 	outapp = new EQApplicationPacket(OP_TimeOfDay, sizeof(TimeOfDay_Struct));
 	TimeOfDay_Struct* tod = (TimeOfDay_Struct*)outapp->pBuffer;
 	zone->zone_time.getEQTimeOfDay(time(0), tod);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
-	//safe_delete(outapp);
 
 	////////////////////////////////////////////////////////////
 	// Character Inventory Packet
@@ -6974,7 +7005,7 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 			if (it==m_inv.cursor_begin())
 				continue;
 			const ItemInst *inst=*it;
-			SendItemPacket(SLOT_CURSOR, inst, ItemPacketSummonItem);
+			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
 
 		//Items in cursor container
@@ -6989,10 +7020,11 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 		}
 	}
 
-	//////////////////////////////////////
-	// Weather Packet
-	// This shouldent be moved, this seems to be what the client
-	// uses to advance to the next state (sending ReqNewZone)
+	/*
+		Weather Packet
+		This shouldent be moved, this seems to be what the client
+		uses to advance to the next state (sending ReqNewZone)
+	*/
 
 	outapp = new EQApplicationPacket(OP_Weather, 8);
 	outapp->pBuffer[0] = 0;
@@ -7009,9 +7041,8 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 	return true;
 }
 
-// Finish client connecting state
-void Client::CompleteConnect()
-{
+/* Finish client connecting state */
+void Client::CompleteConnect() {
 	UpdateWho();
 	client_state = CLIENT_CONNECTED;
 
@@ -7024,14 +7055,15 @@ void Client::CompleteConnect()
 	EnteringMessages(this);
 	LoadZoneFlags();
 
-	// Sets GM Flag if needed & Sends Petition Queue
+	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
 
-	if(IsInAGuild()){
+	if (IsInAGuild()){
+		uint8 rank = GuildRank();
 		SendAppearancePacket(AT_GuildID, GuildID(), false);
-		SendAppearancePacket(AT_GuildRank, GuildRank(), false);
+		SendAppearancePacket(AT_GuildRank, rank, false);
 	}
-	for(uint32 spellInt= 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
+	for (uint32 spellInt = 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
 	{
 		if (m_pp.spell_book[spellInt] < 3 || m_pp.spell_book[spellInt] > 50000)
 			m_pp.spell_book[spellInt] = 0xFFFFFFFF;
@@ -7041,35 +7073,37 @@ void Client::CompleteConnect()
 
 	uint32 raidid = database.GetRaidID(GetName());
 	Raid *raid = nullptr;
-	if(raidid > 0){
+	if (raidid > 0){
 		raid = entity_list.GetRaidByID(raidid);
-		if(!raid){
+		if (!raid){
 			raid = new Raid(raidid);
-			if(raid->GetID() != 0){
+			if (raid->GetID() != 0){
 				entity_list.AddRaid(raid, raidid);
 			}
 			else
 				raid = nullptr;
 		}
-		if(raid){
+		if (raid){
 			SetRaidGrouped(true);
 			raid->LearnMembers();
 			raid->VerifyRaid();
 			raid->GetRaidDetails();
-			//only leader should get this; send to all for now till
-			//I figure out correct creation; can probably also send a no longer leader packet for non leaders
-			//but not important for now.
+			/*
+				Only leader should get this; send to all for now till
+				I figure out correct creation; can probably also send a no longer leader packet for non leaders
+				but not important for now.
+			*/
 			raid->SendRaidCreate(this);
 			raid->SendMakeLeaderPacketTo(raid->leadername, this);
 			raid->SendRaidAdd(GetName(), this);
 			raid->SendBulkRaid(this);
 			raid->SendGroupUpdate(this);
 			uint32 grpID = raid->GetGroup(GetName());
-			if(grpID < 12){
+			if (grpID < 12){
 				raid->SendRaidGroupRemove(GetName(), grpID);
 				raid->SendRaidGroupAdd(GetName(), grpID);
 			}
-			if(raid->IsLocked())
+			if (raid->IsLocked())
 				raid->SendRaidLockTo(this);
 		}
 	}
@@ -7078,13 +7112,13 @@ void Client::CompleteConnect()
 
 	//reapply some buffs
 	uint32 buff_count = GetMaxTotalSlots();
-	for (uint32 j1=0; j1 < buff_count; j1++) {
-		if (buffs[j1].spellid > (uint32)SPDAT_RECORDS)
+	for (uint32 j1 = 0; j1 < buff_count; j1++) {
+		if (buffs[j1].spellid >(uint32)SPDAT_RECORDS)
 			continue;
 
 		const SPDat_Spell_Struct &spell = spells[buffs[j1].spellid];
 
-		for (int x1=0; x1 < EFFECT_COUNT; x1++) {
+		for (int x1 = 0; x1 < EFFECT_COUNT; x1++) {
 			switch (spell.effectid[x1]) {
 				case SE_IllusionCopy:
 				case SE_Illusion: {
@@ -7138,91 +7172,92 @@ void Client::CompleteConnect()
 					}
 					break;
 				}
-				case SE_SummonHorse: {
-					SummonHorse(buffs[j1].spellid);
-					//hasmount = true;	//this was false, is that the correct thing?
-					break;
+			case SE_SummonHorse: {
+				SummonHorse(buffs[j1].spellid);
+				//hasmount = true;	//this was false, is that the correct thing?
+				break;
+			}
+			case SE_Silence:
+			{
+				Silence(true);
+				break;
+			}
+			case SE_Amnesia:
+			{
+				Amnesia(true);
+				break;
+			}
+			case SE_DivineAura:
+			{
+				invulnerable = true;
+				break;
+			}
+			case SE_Invisibility2:
+			case SE_Invisibility:
+			{
+				invisible = true;
+				SendAppearancePacket(AT_Invis, 1);
+				break;
+			}
+			case SE_Levitate:
+			{
+				if (!zone->CanLevitate())
+				{
+					if (!GetGM())
+					{
+						SendAppearancePacket(AT_Levitate, 0);
+						BuffFadeByEffect(SE_Levitate);
+						Message(13, "You can't levitate in this zone.");
+					}
 				}
-				case SE_Silence:
-					{
-						Silence(true);
-						break;
-					}
-				case SE_Amnesia:
-					{
-						Amnesia(true);
-						break;
-					}
-				case SE_DivineAura:
-					{
-					invulnerable = true;
-					break;
-					}
-				case SE_Invisibility2:
-				case SE_Invisibility:
-					{
-					invisible = true;
-					SendAppearancePacket(AT_Invis, 1);
-					break;
-					}
-				case SE_Levitate:
-					{
-						if( !zone->CanLevitate() )
-						{
-							if(!GetGM())
-							{
-								SendAppearancePacket(AT_Levitate, 0);
-								BuffFadeByEffect(SE_Levitate);
-								Message(13, "You can't levitate in this zone.");
-							}
-						}else{
-							SendAppearancePacket(AT_Levitate, 2);
-						}
-					break;
-					}
-				case SE_InvisVsUndead2:
-				case SE_InvisVsUndead:
-					{
-					invisible_undead = true;
-					break;
-					}
-				case SE_InvisVsAnimals:
-					{
-					invisible_animals = true;
-					break;
-					}
-				case SE_AddMeleeProc:
-				case SE_WeaponProc:
-					{
-					AddProcToWeapon(GetProcID(buffs[j1].spellid, x1), false, 100+spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
-					break;
-					}
-				case SE_DefensiveProc:
-					{
-					AddDefensiveProc(GetProcID(buffs[j1].spellid, x1), 100+spells[buffs[j1].spellid].base2[x1],buffs[j1].spellid);
-					break;
-					}
-				case SE_RangedProc:
-					{
-					AddRangedProc(GetProcID(buffs[j1].spellid, x1), 100+spells[buffs[j1].spellid].base2[x1],buffs[j1].spellid);
-					break;
-					}
+				else{
+					SendAppearancePacket(AT_Levitate, 2);
+				}
+				break;
+			}
+			case SE_InvisVsUndead2:
+			case SE_InvisVsUndead:
+			{
+				invisible_undead = true;
+				break;
+			}
+			case SE_InvisVsAnimals:
+			{
+				invisible_animals = true;
+				break;
+			}
+			case SE_AddMeleeProc:
+			case SE_WeaponProc:
+			{
+				AddProcToWeapon(GetProcID(buffs[j1].spellid, x1), false, 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
+				break;
+			}
+			case SE_DefensiveProc:
+			{
+				AddDefensiveProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
+				break;
+			}
+			case SE_RangedProc:
+			{
+				AddRangedProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
+				break;
+			}
 			}
 		}
 	}
 
-	//sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead
+	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
 	entity_list.SendUntargetable(this);
 
 	client_data_loaded = true;
 	int x;
-	for(x=0;x<8;x++)
+	for (x = 0; x < 8; x++)
 		SendWearChange(x);
 	Mob *pet = GetPet();
-	if(pet != nullptr) {
-		for(x=0;x<8;x++)
+	if (pet != nullptr) {
+		for (x = 0; x < 8; x++)
 			pet->SendWearChange(x);
 	}
 
@@ -7230,23 +7265,22 @@ void Client::CompleteConnect()
 
 	zoneinpacket_timer.Start();
 
-	if(GetGroup())
+	if (GetGroup())
 		database.RefreshGroupFromDB(this);
 
 	conn_state = ClientConnectFinished;
 
 	//enforce some rules..
-	if(!CanBeInZone()) {
+	if (!CanBeInZone()) {
 		_log(CLIENT__ERROR, "Kicking char from zone, not allowed here");
 		GoToSafeCoords(database.GetZoneID("arena"), 0);
 		return;
 	}
 
-	if(zone)
+	if (zone)
 		zone->weatherSend();
 
 	TotalKarma = database.GetKarma(AccountID());
-
 	if(GetClientVersion() > EQClientMac)
 	{
 		SendDisciplineTimers();
@@ -7254,15 +7288,20 @@ void Client::CompleteConnect()
 
 	parse->EventPlayer(EVENT_ENTER_ZONE, this, "", 0);
 
-	//This sub event is for if a player logs in for the first time since entering world.
-	if(firstlogon == 1)
+	/* This sub event is for if a player logs in for the first time since entering world. */
+	if (firstlogon == 1){
 		parse->EventPlayer(EVENT_CONNECT, this, "", 0);
+		/* QS: PlayerLogConnectDisconnect */
+		if (RuleB(QueryServ, PlayerLogConnectDisconnect)){
+			std::string event_desc = StringFormat("Connect :: Logged into zoneid:%i instid:%i", this->GetZoneID(), this->GetInstanceID());
+			QServ->PlayerLogEvent(Player_Log_Connect_State, this->CharacterID(), event_desc);
+		}
+	}
 
 	CalcItemScale();
 	DoItemEnterZone();
 
-	if(IsInAGuild())
-	{
+	if(IsInAGuild()) {
 		guild_mgr.RequestOnlineGuildMembers(this->CharacterID(), this->GuildID());
 	}
 
@@ -7948,8 +7987,8 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) {
 	}
 	uint32 ApplyPoisonSuccessResult = 0;
 	ApplyPoison_Struct* ApplyPoisonData = (ApplyPoison_Struct*)app->pBuffer;
-	const ItemInst* PrimaryWeapon = GetInv().GetItem(SLOT_PRIMARY);
-	const ItemInst* SecondaryWeapon = GetInv().GetItem(SLOT_SECONDARY);
+	const ItemInst* PrimaryWeapon = GetInv().GetItem(MainPrimary);
+	const ItemInst* SecondaryWeapon = GetInv().GetItem(MainSecondary);
 	const ItemInst* PoisonItemInstance = GetInv()[ApplyPoisonData->inventorySlot];
 
 	bool IsPoison = PoisonItemInstance && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
@@ -8096,7 +8135,7 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 	//
 	const int MaxResults = 10;
 
-	if(app->size < sizeof(GMSearchCorpse_Struct))
+	if (app->size < sizeof(GMSearchCorpse_Struct))
 	{
 		LogFile->write(EQEMuLog::Debug, "OP_GMSearchCorpse size lower than expected: got %u expected at least %u",
 			app->size, sizeof(GMSearchCorpse_Struct));
@@ -8117,20 +8156,20 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 	database.DoEscapeString(EscSearchString, gmscs->Name, strlen(gmscs->Name));
 
 	if (database.RunQuery(Query, MakeAnyLenString(&Query, "select charname, zoneid, x, y, z, timeofdeath, rezzed, IsBurried from "
-								"player_corpses where charname like '%%%s%%' order by charname limit %i",
-								EscSearchString, MaxResults), errbuf, &Result))
+		"player_corpses where charname like '%%%s%%' order by charname limit %i",
+		EscSearchString, MaxResults), errbuf, &Result))
 	{
 
 		int NumberOfRows = mysql_num_rows(Result);
 
-		if(NumberOfRows == MaxResults)
+		if (NumberOfRows == MaxResults)
 			Message(clientMessageError, "Your search found too many results; some are not displayed.");
 		else {
 			Message(clientMessageYellow, "There are %i corpse(s) that match the search string '%s'.",
 				NumberOfRows, gmscs->Name);
 		}
 
-		if(NumberOfRows == 0)
+		if (NumberOfRows == 0)
 		{
 			mysql_free_result(Result);
 			safe_delete_array(Query);
@@ -8164,7 +8203,7 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 
 			PopupText += Buffer;
 
-			if(PopupText.size() > 4000)
+			if (PopupText.size() > 4000)
 			{
 				Message(clientMessageError, "Unable to display all the results.");
 				break;
@@ -8174,7 +8213,7 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 
 		mysql_free_result(Result);
 
-		Message(0,"%s",PopupText.c_str());
+		Message(0, "%s", PopupText.c_str());
 	}
 	else{
 		Message(0, "Query failed: %s.", errbuf);

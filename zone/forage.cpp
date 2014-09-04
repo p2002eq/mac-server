@@ -85,12 +85,7 @@ CREATE TABLE fishing (
 
 // This allows EqEmu to have zone specific foraging - BoB
 uint32 ZoneDatabase::GetZoneForage(uint32 ZoneID, uint8 skill) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 
-	uint8 index = 0;
 	uint32 item[FORAGE_ITEM_LIMIT];
 	uint32 chance[FORAGE_ITEM_LIMIT];
 	uint32 ret;
@@ -100,31 +95,32 @@ uint32 ZoneDatabase::GetZoneForage(uint32 ZoneID, uint8 skill) {
 	}
 
 	uint32 chancepool = 0;
-
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT itemid,chance FROM forage WHERE zoneid= '%i' and level <= '%i' LIMIT %i", ZoneID, skill, FORAGE_ITEM_LIMIT), errbuf, &result))
-	{
-		safe_delete_array(query);
-		while ((row = mysql_fetch_row(result)) && (index < FORAGE_ITEM_LIMIT)) {
-			item[index] = atoi(row[0]);
-			chance[index] = atoi(row[1])+chancepool;
-LogFile->write(EQEMuLog::Error, "Possible Forage: %d with a %d chance", item[index], chance[index]);
-			chancepool = chance[index];
-			index++;
-		}
-
-		mysql_free_result(result);
-	}
-	else {
-		LogFile->write(EQEMuLog::Error, "Error in Forage query '%s': %s", query, errbuf);
-		safe_delete_array(query);
+    std::string query = StringFormat("SELECT itemid, chance FROM "
+                                    "forage WHERE zoneid = '%i' and level <= '%i' "
+                                    "LIMIT %i", ZoneID, skill, FORAGE_ITEM_LIMIT);
+    auto results = QueryDatabase(query);
+	if (!results.Success()) {
+        LogFile->write(EQEMuLog::Error, "Error in Forage query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return 0;
 	}
 
+	uint8 index = 0;
+    for (auto row = results.begin(); row != results.end(); ++row, ++index) {
+        if (index >= FORAGE_ITEM_LIMIT)
+            break;
+
+        item[index] = atoi(row[0]);
+        chance[index] = atoi(row[1]) + chancepool;
+        LogFile->write(EQEMuLog::Error, "Possible Forage: %d with a %d chance", item[index], chance[index]);
+        chancepool = chance[index];
+    }
+
+
 	if(chancepool == 0 || index < 1)
-		return(0);
+		return 0;
 
 	if(index == 1) {
-		return(item[0]);
+		return item[0];
 	}
 
 	ret = 0;
@@ -143,12 +139,6 @@ LogFile->write(EQEMuLog::Error, "Possible Forage: %d with a %d chance", item[ind
 
 uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, uint8 &npc_chance)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-
-	uint8 index = 0;
 	uint32 item[50];
 	uint32 chance[50];
 	uint32 npc_ids[50];
@@ -161,44 +151,44 @@ uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, 
 		chance[c]=0;
 	}
 
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT itemid,chance,npc_id,npc_chance FROM fishing WHERE (zoneid= '%i' || zoneid = 0) and skill_level <= '%i'",ZoneID, skill ), errbuf, &result))
-	{
-		safe_delete_array(query);
-		while ((row = mysql_fetch_row(result))&&(index<50)) {
-			item[index] = atoi(row[0]);
-			chance[index] = atoi(row[1])+chancepool;
-			chancepool = chance[index];
-
-			npc_ids[index] = atoi(row[2]);
-			npc_chances[index] = atoi(row[3]);
-			index++;
-		}
-
-		mysql_free_result(result);
-	}
-	else {
-		std::cerr << "Error in Fishing query '" << query << "' " << errbuf << std::endl;
-		safe_delete_array(query);
+    std::string query = StringFormat("SELECT itemid, chance, npc_id, npc_chance "
+                                    "FROM fishing WHERE (zoneid = '%i' || zoneid = 0) AND skill_level <= '%i'",
+                                    ZoneID, skill);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        std::cerr << "Error in Fishing query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
-	}
+    }
+
+    uint8 index = 0;
+    for (auto row = results.begin(); row != results.end(); ++row, ++index) {
+        if (index >= 50)
+            break;
+
+        item[index] = atoi(row[0]);
+        chance[index] = atoi(row[1])+chancepool;
+        chancepool = chance[index];
+
+        npc_ids[index] = atoi(row[2]);
+        npc_chances[index] = atoi(row[3]);
+    }
 
 	npc_id = 0;
 	npc_chance = 0;
-	if (index>0) {
-		uint32 random = MakeRandomInt(1, chancepool);
-		for (int i = 0; i < index; i++)
-		{
-			if (random <= chance[i])
-			{
-				ret = item[i];
-				npc_id = npc_ids[i];
-				npc_chance = npc_chances[i];
-				break;
-			}
-		}
-	} else {
-		ret = 0;
-	}
+	if (index <= 0)
+        return 0;
+
+    uint32 random = MakeRandomInt(1, chancepool);
+    for (int i = 0; i < index; i++)
+    {
+        if (random > chance[i])
+            continue;
+
+        ret = item[i];
+        npc_id = npc_ids[i];
+        npc_chance = npc_chances[i];
+        break;
+    }
 
 	return ret;
 }
@@ -206,10 +196,10 @@ uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, 
 //we need this function to immediately determine, after we receive OP_Fishing, if we can even try to fish, otherwise we have to wait a while to get the failure
 bool Client::CanFish() {
 	//make sure we still have a fishing pole on:
-	const ItemInst* Pole = m_inv[SLOT_PRIMARY];
+	const ItemInst* Pole = m_inv[MainPrimary];
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
 	const ItemInst* Bait = nullptr;
-	if(bslot != SLOT_INVALID)
+	if (bslot != INVALID_INDEX)
 		Bait = m_inv.GetItem(bslot);
 
 	if(!Pole || !Pole->IsType(ItemClassCommon) || Pole->GetItem()->ItemType != ItemTypeFishingPole) {
@@ -297,11 +287,11 @@ void Client::GoFish()
 	//make sure we still have a fishing pole on:
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
 	const ItemInst* Bait = nullptr;
-	if(bslot != SLOT_INVALID)
+	if (bslot != INVALID_INDEX)
 		Bait = m_inv.GetItem(bslot);
 
 	//if the bait isnt equipped, need to add its skill bonus
-	if(bslot >= IDX_INV && Bait->GetItem()->SkillModType == SkillFishing) {
+	if(bslot >= EmuConstants::GENERAL_BEGIN && Bait->GetItem()->SkillModType == SkillFishing) {
 		fishing_skill += Bait->GetItem()->SkillModValue;
 	}
 
@@ -358,16 +348,16 @@ void Client::GoFish()
 			else
 			{
 				PushItemOnCursor(*inst);
-				SendItemPacket(SLOT_CURSOR,inst,ItemPacketSummonItem);
+				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 
 				safe_delete(inst);
-				inst = m_inv.GetItem(SLOT_CURSOR);
+				inst = m_inv.GetItem(MainCursor);
 			}
-		}
 
-		std::vector<void*> args;
-		args.push_back(inst);
-		parse->EventPlayer(EVENT_FISH_SUCCESS, this, "", inst != nullptr ? inst->GetItem()->ID : 0, &args);
+			std::vector<EQEmu::Any> args;
+			args.push_back(inst);
+			parse->EventPlayer(EVENT_FISH_SUCCESS, this, "", inst->GetID(), &args);
+		}
 	}
 	else
 	{
@@ -391,7 +381,7 @@ void Client::GoFish()
 	//and then swap out items in primary slot... too lazy to fix right now
 	if (MakeRandomInt(0, 49) == 1) {
 		Message_StringID(MT_Skills, FISHING_POLE_BROKE);	//Your fishing pole broke!
-		DeleteItemInInventory(13,0,true);
+		DeleteItemInInventory(MainPrimary, 0, true);
 	}
 
 	if(CheckIncreaseSkill(SkillFishing, nullptr, 5))
@@ -469,16 +459,16 @@ void Client::ForageItem(bool guarantee) {
 			}
 			else {
 				PushItemOnCursor(*inst);
-				SendItemPacket(SLOT_CURSOR, inst, ItemPacketSummonItem);
+				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 
 				safe_delete(inst);
-				inst = m_inv.GetItem(SLOT_CURSOR);
+				inst = m_inv.GetItem(MainCursor);
 			}
-		}
 
-		std::vector<void*> args;
-		args.push_back(inst);
-		parse->EventPlayer(EVENT_FORAGE_SUCCESS, this, "", inst ? inst->GetItem()->ID : 0, &args);
+			std::vector<EQEmu::Any> args;
+			args.push_back(inst);
+			parse->EventPlayer(EVENT_FORAGE_SUCCESS, this, "", inst->GetID(), &args);
+		}
 
 		int ChanceSecondForage = aabonuses.ForageAdditionalItems + itembonuses.ForageAdditionalItems + spellbonuses.ForageAdditionalItems;
 		if(!guarantee && MakeRandomInt(0,99) < ChanceSecondForage) {

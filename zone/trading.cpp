@@ -22,7 +22,10 @@
 #include "../common/rulesys.h"
 #include "quest_parser_collection.h"
 #include "worldserver.h"
+#include "queryserv.h"
+
 extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 // The maximum amount of a single bazaar/barter transaction expressed in copper.
 // Equivalent to 2 Million plat
@@ -71,8 +74,9 @@ void Trade::Start(uint32 mob_id, bool initiate_with)
 }
 
 // Add item from a given slot to trade bucket (automatically does bag data too)
-void Trade::AddEntity(uint16 from_slot_id, uint16 trade_slot_id)
-{
+void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
+	// TODO: review for inventory saves / consider changing return type to bool so failure can be passed to desync handler
+
 	if (!owner || !owner->IsClient()) {
 		// This should never happen
 		LogFile->write(EQEMuLog::Debug, "Programming error: NPC's should not call Trade::AddEntity()");
@@ -87,45 +91,56 @@ void Trade::AddEntity(uint16 from_slot_id, uint16 trade_slot_id)
 
 	// Item always goes into trade bucket from cursor
 	Client* client = owner->CastToClient();
-	const ItemInst* inst = client->GetInv().GetItem(SLOT_CURSOR);
+	ItemInst* inst = client->GetInv().GetItem(MainCursor);
+
 	if (!inst) {
 		client->Message(13, "Error: Could not find item on your cursor!");
 		return;
 	}
 
-	_log(TRADING__HOLDER, "%s added item '%s' to trade slot %i", owner->GetName(), inst->GetItem()->Name, trade_slot_id);
-
 	ItemInst* inst2 = client->GetInv().GetItem(trade_slot_id);
-	int new_charges = 0;
-	if (!inst2 || !inst2->GetItem()) {
-		// Send all item data to other client
-		SendItemData(inst, trade_slot_id);
-		// Move item on cursor to the trade slots
-		client->PutItemInInventory(trade_slot_id, *inst);
-	}
-	else
-	{
-		if (client->GetInv().GetItem(SLOT_CURSOR)->GetID() != client->GetInv().GetItem(trade_slot_id)->GetID()) {
+
+	// it looks like the original code attempted to allow stacking...
+	// (it just didn't handle partial stack move actions -U)
+	if (stack_size > 0) {
+		if (!inst->IsStackable() || !inst2 || !inst2->GetItem() || (inst->GetID() != inst2->GetID()) || (stack_size > inst->GetCharges())) {
 			client->Kick();
 			return;
 		}
-		new_charges = (inst2->GetCharges()+inst->GetCharges());
-		if (new_charges < inst2->GetItem()->StackSize)
-		{
-			inst2->SetCharges(new_charges);
-			new_charges = 0;
-		}
-		else
-		{
-			new_charges = inst->GetCharges()-(inst2->GetItem()->StackSize-inst2->GetCharges()); //Leftover charges = charges - difference
+
+		uint32 _stack_size = 0;
+
+		if ((stack_size + inst2->GetCharges()) > inst2->GetItem()->StackSize) {
+			_stack_size = (stack_size + inst2->GetCharges()) - inst->GetItem()->StackSize;
 			inst2->SetCharges(inst2->GetItem()->StackSize);
 		}
+		else {
+			_stack_size = inst->GetCharges() - stack_size;
+			inst2->SetCharges(stack_size + inst2->GetCharges());
+		}
+
+		_log(TRADING__HOLDER, "%s added partial item '%s' stack (qty: %i) to trade slot %i", owner->GetName(), inst->GetItem()->Name, stack_size, trade_slot_id);
+
+		if (_stack_size > 0)
+			inst->SetCharges(_stack_size);
+		else
+			client->DeleteItemInInventory(MainCursor);
+
 		SendItemData(inst2, trade_slot_id);
 	}
-	if (new_charges > 0)
-		client->GetInv().GetItem(from_slot_id)->SetCharges(new_charges);
-	else
-		client->DeleteItemInInventory(from_slot_id);//, (ItemInst&)trade_inst);
+	else {
+		if (inst2 && inst2->GetID()) {
+			client->Kick();
+			return;
+		}
+		
+		SendItemData(inst, trade_slot_id);
+
+		_log(TRADING__HOLDER, "%s added item '%s' to trade slot %i", owner->GetName(), inst->GetItem()->Name, trade_slot_id);
+
+		client->PutItemInInventory(trade_slot_id, *inst);
+		client->DeleteItemInInventory(MainCursor);
+	}
 }
 
 // Retrieve mob the owner is trading with
@@ -150,11 +165,11 @@ void Trade::SendItemData(const ItemInst* inst, int16 dest_slot_id)
 		fromid = trader->GetID();
 		with->SendItemPacket(dest_slot_id -IDX_TRADE,inst,ItemPacketTradeView,fromid);
 		if (inst->GetItem()->ItemClass == 1) {
-			for (uint16 i=0; i<10; i++) {
+			for (uint16 i = SUB_BEGIN; i < EmuConstants::ITEM_CONTAINER_SIZE; i++) {
 				uint16 bagslot_id = Inventory::CalcSlotId(dest_slot_id, i);
 				const ItemInst* bagitem = trader->GetInv().GetItem(bagslot_id);
 				if (bagitem) {
-					with->SendItemPacket(bagslot_id-IDX_TRADE,bagitem,ItemPacketTradeView,fromid);
+					with->SendItemPacket(bagslot_id - EmuConstants::TRADE_BEGIN, bagitem, ItemPacketTradeView);
 				}
 			}
 		}
@@ -176,7 +191,7 @@ void Trade::LogTrade()
 	uint8 item_count = 0;
 
 	if (zone->tradevar != 0) {
-		for (uint16 i=3000; i<=3007; i++) {
+		for (uint16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++) {
 			if (trader->GetInv().GetItem(i))
 				item_count++;
 		}
@@ -228,7 +243,7 @@ void Trade::LogTrade()
 			if (item_count > 0) {
 				strcat(logtext, "items {");
 
-				for (uint16 i=3000; i<=3007; i++) {
+				for (uint16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++) {
 					const ItemInst* inst = trader->GetInv().GetItem(i);
 
 					if (!comma)
@@ -244,7 +259,7 @@ void Trade::LogTrade()
 						strcat(logtext, item_num);
 
 						if (inst->IsType(ItemClassContainer)) {
-							for (uint8 j=0; j<10; j++) {
+							for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 								inst = trader->GetInv().GetItem(i, j);
 								if (inst) {
 									strcat(logtext, ",");
@@ -280,7 +295,7 @@ void Trade::DumpTrade()
 		return;
 
 	Client* trader = owner->CastToClient();
-	for (uint16 i=3000; i<=3007; i++) {
+	for (uint16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++) {
 		const ItemInst* inst = trader->GetInv().GetItem(i);
 
 		if (inst) {
@@ -289,7 +304,7 @@ void Trade::DumpTrade()
 				i, ((inst->IsType(ItemClassContainer)) ? "True" : "False"));
 
 			if (inst->IsType(ItemClassContainer)) {
-				for (uint8 j=0; j<10; j++) {
+				for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 					inst = trader->GetInv().GetItem(i, j);
 					if (inst) {
 						LogFile->write(EQEMuLog::Debug, "\tBagItem %i (Charges=%i, Slot=%i)",
@@ -306,190 +321,444 @@ void Trade::DumpTrade()
 #endif
 
 void Client::ResetTrade() {
-	const Item_Struct* TempItem = 0;
-	ItemInst* ins;
-	int x;
 	AddMoneyToPP(trade->cp, trade->sp, trade->gp, trade->pp, true);
-	for(x=3000; x <= 3007; x++)
-	{
-		TempItem = 0;
-		ins = GetInv().GetItem(x);
-		if (ins)
-			TempItem = ins->GetItem();
-		if (TempItem)
-		{
-			bool is_arrow = (TempItem->ItemType == ItemTypeArrow) ? true : false;
-			int freeslotid = GetInv().FindFreeSlot(ins->IsType(ItemClassContainer), true, TempItem->Size, is_arrow);
-			if (freeslotid == SLOT_INVALID)
-			{
-				DropInst(ins);
+
+	// step 1: process bags
+	for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+		const ItemInst* inst = m_inv[trade_slot];
+
+		if (inst && inst->IsType(ItemClassContainer)) {
+			int16 free_slot = m_inv.FindFreeSlotForTradeItem(inst);
+
+			if (free_slot != INVALID_INDEX) {
+				PutItemInInventory(free_slot, *inst);
+				SendItemPacket(free_slot, inst, ItemPacketTrade);
 			}
-			else
-			{
-				PutItemInInventory(freeslotid, *ins);
-				SendItemPacket(freeslotid, ins, ItemPacketTrade);
+			else {
+				DropInst(inst);
 			}
-			DeleteItemInInventory(x);
+
+			DeleteItemInInventory(trade_slot);
+		}
+	}
+
+	// step 2a: process stackables
+	for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+		ItemInst* inst = GetInv().GetItem(trade_slot);
+
+		if (inst && inst->IsStackable()) {
+			while (true) {
+				// there's no built-in safety check against an infinite loop..but, it should break on one of the conditional checks
+				int16 free_slot = m_inv.FindFreeSlotForTradeItem(inst);
+
+				if ((free_slot == MainCursor) || (free_slot == INVALID_INDEX))
+					break;
+
+				ItemInst* partial_inst = GetInv().GetItem(free_slot);
+
+				if (!partial_inst)
+					break;
+
+				if (partial_inst->GetID() != inst->GetID()) {
+					_log(TRADING__ERROR, "Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
+
+					break;
+				}
+
+				if ((partial_inst->GetCharges() + inst->GetCharges()) > partial_inst->GetItem()->StackSize) {
+					int16 new_charges = (partial_inst->GetCharges() + inst->GetCharges()) - partial_inst->GetItem()->StackSize;
+
+					partial_inst->SetCharges(partial_inst->GetItem()->StackSize);
+					inst->SetCharges(new_charges);
+				}
+				else {
+					partial_inst->SetCharges(partial_inst->GetCharges() + inst->GetCharges());
+					inst->SetCharges(0);
+				}
+
+				PutItemInInventory(free_slot, *partial_inst);
+				SendItemPacket(free_slot, partial_inst, ItemPacketTrade);
+
+				if (inst->GetCharges() == 0) {
+					DeleteItemInInventory(trade_slot);
+
+					break;
+				}
+			}
+		}
+	}
+
+	// step 2b: adjust trade stack bias
+	// (if any partial stacks exist before the final stack, FindFreeSlotForTradeItem() will return that slot in step 3 and an overwrite will occur)
+	for (int16 trade_slot = EmuConstants::TRADE_END; trade_slot >= EmuConstants::TRADE_BEGIN; --trade_slot) {
+		ItemInst* inst = GetInv().GetItem(trade_slot);
+
+		if (inst && inst->IsStackable()) {
+			for (int16 bias_slot = EmuConstants::TRADE_BEGIN; bias_slot <= EmuConstants::TRADE_END; ++bias_slot) {
+				if (bias_slot >= trade_slot)
+					break;
+
+				ItemInst* bias_inst = GetInv().GetItem(bias_slot);
+
+				if (!bias_inst || (bias_inst->GetID() != inst->GetID()) || (bias_inst->GetCharges() >= bias_inst->GetItem()->StackSize))
+					continue;
+
+				if ((bias_inst->GetCharges() + inst->GetCharges()) > bias_inst->GetItem()->StackSize) {
+					int16 new_charges = (bias_inst->GetCharges() + inst->GetCharges()) - bias_inst->GetItem()->StackSize;
+
+					bias_inst->SetCharges(bias_inst->GetItem()->StackSize);
+					inst->SetCharges(new_charges);
+				}
+				else {
+					bias_inst->SetCharges(bias_inst->GetCharges() + inst->GetCharges());
+					inst->SetCharges(0);
+				}
+
+				if (inst->GetCharges() == 0) {
+					DeleteItemInInventory(trade_slot);
+
+					break;
+				}
+			}
+		}
+	}
+
+	// step 3: process everything else
+	for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+		const ItemInst* inst = m_inv[trade_slot];
+
+		if (inst) {
+			int16 free_slot = m_inv.FindFreeSlotForTradeItem(inst);
+
+			if (free_slot != INVALID_INDEX) {
+				PutItemInInventory(free_slot, *inst);
+				SendItemPacket(free_slot, inst, ItemPacketTrade);
+			}
+			else {
+				DropInst(inst);
+			}
+
+			DeleteItemInInventory(trade_slot);
 		}
 	}
 }
 
-void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer) {
-
+void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, std::list<void*>* event_details) {
 	if(tradingWith && tradingWith->IsClient()) {
 		Client* other = tradingWith->CastToClient();
+		QSPlayerLogTrade_Struct* qs_audit = nullptr;
+		bool qs_log = false;
 
 		if(other) {
 			mlog(TRADING__CLIENT, "Finishing trade with client %s", other->GetName());
 
-			int16 slot_id;
-			const Item_Struct* item				= nullptr;
-			QSPlayerLogTrade_Struct* qsaudit	= nullptr;
-			bool QSPLT							= false;
-
+			this->AddMoneyToPP(other->trade->cp, other->trade->sp, other->trade->gp, other->trade->pp, true);
+			
+			// step 0: pre-processing
 			// QS code
-			if(qspack && RuleB(QueryServ, PlayerLogTrades)) {
-				qsaudit = (QSPlayerLogTrade_Struct*) qspack->pBuffer;
-				QSPLT	= true;
+			if (RuleB(QueryServ, PlayerLogTrades) && event_entry && event_details) {
+				qs_audit = (QSPlayerLogTrade_Struct*)event_entry;
+				qs_log = true;
+				
+				if (finalizer) {
+					qs_audit->char2_id = this->character_id;
 
-				if(finalizer) { qsaudit->char2_id = this->character_id; }
-				else { qsaudit->char1_id = this->character_id; }
+					qs_audit->char2_money.platinum = this->trade->pp;
+					qs_audit->char2_money.gold = this->trade->gp;
+					qs_audit->char2_money.silver = this->trade->sp;
+					qs_audit->char2_money.copper = this->trade->cp;
+				}
+				else {
+					qs_audit->char1_id = this->character_id;
+
+					qs_audit->char1_money.platinum = this->trade->pp;
+					qs_audit->char1_money.gold = this->trade->gp;
+					qs_audit->char1_money.silver = this->trade->sp;
+					qs_audit->char1_money.copper = this->trade->cp;
+				}
 			}
 
-			// Move each trade slot into free inventory slot
-			for(int16 i = 3000; i <= 3007; i++){
-				const ItemInst* inst = m_inv[i];
-				uint16 parent_offset = 0;
+			// step 1: process bags
+			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+				const ItemInst* inst = m_inv[trade_slot];
 
-				if(inst == nullptr) { continue; }
+				if (inst && inst->IsType(ItemClassContainer)) {
+					mlog(TRADING__CLIENT, "Giving container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
 
-				mlog(TRADING__CLIENT, "Giving %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, i, other->GetName());
+					// TODO: need to check bag items/augments for no drop..everything for attuned...
+					if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
+						int16 free_slot = other->GetInv().FindFreeSlotForTradeItem(inst);
 
-				/// Log Player Trades through QueryServ if Rule Enabled
-				if(QSPLT) {
-					uint16 item_count	= qsaudit->char1_count + qsaudit->char2_count;
-					parent_offset		= item_count;
+						if (free_slot != INVALID_INDEX) {
+							if (other->PutItemInInventory(free_slot, *inst, true)) {
+								mlog(TRADING__CLIENT, "Container %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
+								if (qs_log) {
+									QSTradeItems_Struct* detail = new QSTradeItems_Struct;
 
-					qsaudit->items[item_count].from_id		= this->character_id;
-					qsaudit->items[item_count].from_slot	= i;
-					qsaudit->items[item_count].to_id		= other->CharacterID();
-					qsaudit->items[item_count].to_slot		= 0;
-					qsaudit->items[item_count].item_id		= inst->GetID();
-					qsaudit->items[item_count].charges		= inst->GetCharges();
+									detail->from_id = this->character_id;
+									detail->from_slot = trade_slot;
+									detail->to_id = other->CharacterID();
+									detail->to_slot = free_slot;
+									detail->item_id = inst->GetID();
+									detail->charges = 1;
 
-					if(finalizer) { qsaudit->char2_count++; }
-					else { qsaudit->char1_count++; }
+									event_details->push_back(detail);
+									
+									if (finalizer)
+										qs_audit->char2_count += detail->charges;
+									else
+										qs_audit->char1_count += detail->charges;
 
-					if(inst->IsType(ItemClassContainer)) {
-						// Pseudo-Slot ID's are generated based on how the db saves bag items...
-						for(uint8 j = 0; j < inst->GetItem()->BagSlots; j++) {
-							const ItemInst* baginst = inst->GetItem(j);
+									//for (uint8 sub_slot = SUB_BEGIN; ((sub_slot < inst->GetItem()->BagSlots) && (sub_slot < EmuConstants::ITEM_CONTAINER_SIZE)); ++sub_slot) {
+									for (uint8 sub_slot = SUB_BEGIN; (sub_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++sub_slot) { // this is to catch ALL items
+										const ItemInst* bag_inst = inst->GetItem(sub_slot);
 
-							if(baginst == nullptr) { continue; }
+										if (bag_inst) {
+											detail = new QSTradeItems_Struct;
 
-							int16 k=Inventory::CalcSlotId(i, j);
-							item_count = qsaudit->char1_count + qsaudit->char2_count;
+											detail->from_id = this->character_id;
+											detail->from_slot = Inventory::CalcSlotId(trade_slot, sub_slot);
+											detail->to_id = other->CharacterID();
+											detail->to_slot = Inventory::CalcSlotId(free_slot, sub_slot);
+											detail->item_id = bag_inst->GetID();
+											detail->charges = (!bag_inst->IsStackable() ? 1 : bag_inst->GetCharges());
 
-							qsaudit->items[item_count].from_id		= this->character_id;
-							qsaudit->items[item_count].from_slot	= k;
-							qsaudit->items[item_count].to_id		= other->CharacterID();
-							qsaudit->items[item_count].to_slot		= 0;
-							qsaudit->items[item_count].item_id		= baginst->GetID();
-							qsaudit->items[item_count].charges		= baginst->GetCharges();
+											event_details->push_back(detail);
 
-							if(finalizer) { qsaudit->char2_count++; }
-							else { qsaudit->char1_count++; }
-						}
-					}
-				}
-
-				if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
-					bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
-					slot_id = other->GetInv().FindFreeSlot(inst->IsType(ItemClassContainer), true, inst->GetItem()->Size, is_arrow);
-
-					mlog(TRADING__CLIENT, "Trying to put %s (%d) into slot %d", inst->GetItem()->Name, inst->GetItem()->ID, slot_id);
-
-					if(other->PutItemInInventory(slot_id, *inst, true)) {
-						mlog(TRADING__CLIENT, "Item %s (%d) successfully transfered, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
-
-						if(QSPLT) {
-							qsaudit->items[parent_offset].to_slot = slot_id;
-
-							if(inst->IsType(ItemClassContainer)) {
-								for(uint8 bagslot_idx = 0; bagslot_idx < inst->GetItem()->BagSlots; bagslot_idx++) {
-									const ItemInst* bag_inst = inst->GetItem(bagslot_idx);
-
-									if(bag_inst == nullptr) { continue; }
-									int16 to_bagslot_id = Inventory::CalcSlotId(slot_id, bagslot_idx);
-
-									qsaudit->items[++parent_offset].to_slot = to_bagslot_id;
+											if (finalizer)
+												qs_audit->char2_count += detail->charges;
+											else
+												qs_audit->char1_count += detail->charges;
+										}
+									}
 								}
 							}
+							else {
+								mlog(TRADING__ERROR, "Transfer of container %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
+								PushItemOnCursor(*inst, true);
+							}
+						}
+						else {
+							mlog(TRADING__ERROR, "%s's inventory is full, returning container %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
+							PushItemOnCursor(*inst, true);
 						}
 					}
 					else {
+						mlog(TRADING__ERROR, "Container %s (%d) is NoDrop, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID);
 						PushItemOnCursor(*inst, true);
-						mlog(TRADING__ERROR, "Unable to give item %d (%d) to %s, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
-
-						if(QSPLT) {
-							qsaudit->items[parent_offset].to_id	= this->character_id;
-							qsaudit->items[parent_offset].to_slot = SLOT_CURSOR;
-
-							if(inst->IsType(ItemClassContainer)) {
-								for(uint8 bagslot_idx = 0; bagslot_idx < inst->GetItem()->BagSlots; bagslot_idx++) {
-									const ItemInst* bag_inst = inst->GetItem(bagslot_idx);
-
-									if(bag_inst == nullptr) { continue; }
-									int16 to_bagslot_id = Inventory::CalcSlotId(SLOT_CURSOR, bagslot_idx);
-
-									qsaudit->items[++parent_offset].to_id = this->character_id;
-									qsaudit->items[parent_offset].to_slot = to_bagslot_id;
-								}
-							}
-						}
 					}
 
-					DeleteItemInInventory(i);
+					DeleteItemInInventory(trade_slot);
 				}
-				else {
-					PushItemOnCursor(*inst, true);
-					DeleteItemInInventory(i);
+			}
 
-					if(QSPLT) {
-						qsaudit->items[parent_offset].to_id	= this->character_id;
-						qsaudit->items[parent_offset].to_slot = SLOT_CURSOR;
+			// step 2a: process stackables
+			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+				ItemInst* inst = GetInv().GetItem(trade_slot);
 
-						if(inst->IsType(ItemClassContainer)) {
-							for(uint8 bagslot_idx = 0; bagslot_idx < inst->GetItem()->BagSlots; bagslot_idx++) {
-								const ItemInst* bag_inst = inst->GetItem(bagslot_idx);
+				if (inst && inst->IsStackable()) {
+					while (true) {
+						// there's no built-in safety check against an infinite loop..but, it should break on one of the conditional checks
+						int16 partial_slot = other->GetInv().FindFreeSlotForTradeItem(inst);
 
-								if(bag_inst == nullptr) { continue; }
-								int16 to_bagslot_id = Inventory::CalcSlotId(SLOT_CURSOR, bagslot_idx);
+						if ((partial_slot == MainCursor) || (partial_slot == INVALID_INDEX))
+							break;
 
-								qsaudit->items[++parent_offset].to_id = this->character_id;
-								qsaudit->items[parent_offset].to_slot = to_bagslot_id;
+						ItemInst* partial_inst = other->GetInv().GetItem(partial_slot);
+
+						if (!partial_inst)
+							break;
+
+						if (partial_inst->GetID() != inst->GetID()) {
+							_log(TRADING__ERROR, "Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
+							break;
+						}
+
+						int16 old_charges = inst->GetCharges();
+						int16 partial_charges = partial_inst->GetCharges();
+
+						if ((partial_inst->GetCharges() + inst->GetCharges()) > partial_inst->GetItem()->StackSize) {
+							int16 new_charges = (partial_inst->GetCharges() + inst->GetCharges()) - partial_inst->GetItem()->StackSize;
+
+							partial_inst->SetCharges(partial_inst->GetItem()->StackSize);
+							inst->SetCharges(new_charges);
+						}
+						else {
+							partial_inst->SetCharges(partial_inst->GetCharges() + inst->GetCharges());
+							inst->SetCharges(0);
+						}
+
+						mlog(TRADING__CLIENT, "Transferring partial stack %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
+
+						if (other->PutItemInInventory(partial_slot, *partial_inst, true)) {
+							mlog(TRADING__CLIENT, "Partial stack %s (%d) successfully transferred, deleting %i charges from trade slot.",
+								inst->GetItem()->Name, inst->GetItem()->ID, (old_charges - inst->GetCharges()));
+							if (qs_log) {
+								QSTradeItems_Struct* detail = new QSTradeItems_Struct;
+
+								detail->from_id = this->character_id;
+								detail->from_slot = trade_slot;
+								detail->to_id = other->CharacterID();
+								detail->to_slot = partial_slot;
+								detail->item_id = inst->GetID();
+								detail->charges = (old_charges - inst->GetCharges());
+								detail->aug_1 = 0;
+								detail->aug_2 = 0;
+								detail->aug_3 = 0;
+								detail->aug_4 = 0;
+								detail->aug_5 = 0;
+
+								event_details->push_back(detail);
+
+								if (finalizer)
+									qs_audit->char2_count += detail->charges;
+								else
+									qs_audit->char1_count += detail->charges;
 							}
+						}
+						else {
+							mlog(TRADING__ERROR, "Transfer of partial stack %s (%d) to %s failed, returning %i charges to trade slot.",
+								inst->GetItem()->Name, inst->GetItem()->ID, other->GetName(), (old_charges - inst->GetCharges()));
+
+							inst->SetCharges(old_charges);
+							partial_inst->SetCharges(partial_charges);
+							break;
+						}
+
+						if (inst->GetCharges() == 0) {
+							DeleteItemInInventory(trade_slot);
+							break;
 						}
 					}
 				}
 			}
 
-			// Money - look into how NPC's receive cash
-			this->AddMoneyToPP(other->trade->cp, other->trade->sp, other->trade->gp, other->trade->pp, true);
+			// step 2b: adjust trade stack bias
+			// (if any partial stacks exist before the final stack, FindFreeSlotForTradeItem() will return that slot in step 3 and an overwrite will occur)
+			for (int16 trade_slot = EmuConstants::TRADE_END; trade_slot >= EmuConstants::TRADE_BEGIN; --trade_slot) {
+				ItemInst* inst = GetInv().GetItem(trade_slot);
 
-			// This is currently setup to show character offers, not receipts
-			if(QSPLT) {
-				if(finalizer) {
-					qsaudit->char2_money.platinum	= this->trade->pp;
-					qsaudit->char2_money.gold		= this->trade->gp;
-					qsaudit->char2_money.silver		= this->trade->sp;
-					qsaudit->char2_money.copper		= this->trade->cp;
+				if (inst && inst->IsStackable()) {
+					for (int16 bias_slot = EmuConstants::TRADE_BEGIN; bias_slot <= EmuConstants::TRADE_END; ++bias_slot) {
+						if (bias_slot >= trade_slot)
+							break;
+
+						ItemInst* bias_inst = GetInv().GetItem(bias_slot);
+
+						if (!bias_inst || (bias_inst->GetID() != inst->GetID()) || (bias_inst->GetCharges() >= bias_inst->GetItem()->StackSize))
+							continue;
+
+						int16 old_charges = inst->GetCharges();
+
+						if ((bias_inst->GetCharges() + inst->GetCharges()) > bias_inst->GetItem()->StackSize) {
+							int16 new_charges = (bias_inst->GetCharges() + inst->GetCharges()) - bias_inst->GetItem()->StackSize;
+
+							bias_inst->SetCharges(bias_inst->GetItem()->StackSize);
+							inst->SetCharges(new_charges);
+						}
+						else {
+							bias_inst->SetCharges(bias_inst->GetCharges() + inst->GetCharges());
+							inst->SetCharges(0);
+						}
+
+						if (qs_log) {
+							QSTradeItems_Struct* detail = new QSTradeItems_Struct;
+
+							detail->from_id = this->character_id;
+							detail->from_slot = trade_slot;
+							detail->to_id = this->character_id;
+							detail->to_slot = bias_slot;
+							detail->item_id = inst->GetID();
+							detail->charges = (old_charges - inst->GetCharges());
+							detail->aug_1 = 0;
+							detail->aug_2 = 0;
+							detail->aug_3 = 0;
+							detail->aug_4 = 0;
+							detail->aug_5 = 0;
+
+							event_details->push_back(detail);
+						}
+
+						if (inst->GetCharges() == 0) {
+							DeleteItemInInventory(trade_slot);
+							break;
+						}
+					}
 				}
-				else {
-					qsaudit->char1_money.platinum = this->trade->pp;
-					qsaudit->char1_money.gold		= this->trade->gp;
-					qsaudit->char1_money.silver		= this->trade->sp;
-					qsaudit->char1_money.copper		= this->trade->cp;
+			}
+
+			// step 3: process everything else
+			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
+				const ItemInst* inst = m_inv[trade_slot];
+
+				if (inst) {
+					mlog(TRADING__CLIENT, "Giving item %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
+
+					// TODO: need to check bag items/augments for no drop..everything for attuned...
+					if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
+						int16 free_slot = other->GetInv().FindFreeSlotForTradeItem(inst);
+
+						if (free_slot != INVALID_INDEX) {
+							if (other->PutItemInInventory(free_slot, *inst, true)) {
+								mlog(TRADING__CLIENT, "Item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
+								if (qs_log) {
+									QSTradeItems_Struct* detail = new QSTradeItems_Struct;
+
+									detail->from_id = this->character_id;
+									detail->from_slot = trade_slot;
+									detail->to_id = other->CharacterID();
+									detail->to_slot = free_slot;
+									detail->item_id = inst->GetID();
+									detail->charges = (!inst->IsStackable() ? 1 : inst->GetCharges());
+
+									event_details->push_back(detail);
+
+									if (finalizer)
+										qs_audit->char2_count += detail->charges;
+									else
+										qs_audit->char1_count += detail->charges;
+
+									// 'step 3' should never really see containers..but, just in case...
+									//for (uint8 sub_slot = SUB_BEGIN; ((sub_slot < inst->GetItem()->BagSlots) && (sub_slot < EmuConstants::ITEM_CONTAINER_SIZE)); ++sub_slot) {
+									for (uint8 sub_slot = SUB_BEGIN; (sub_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++sub_slot) { // this is to catch ALL items
+										const ItemInst* bag_inst = inst->GetItem(sub_slot);
+
+										if (bag_inst) {
+											detail = new QSTradeItems_Struct;
+
+											detail->from_id = this->character_id;
+											detail->from_slot = trade_slot;
+											detail->to_id = other->CharacterID();
+											detail->to_slot = free_slot;
+											detail->item_id = bag_inst->GetID();
+											detail->charges = (!bag_inst->IsStackable() ? 1 : bag_inst->GetCharges());
+
+											event_details->push_back(detail);
+
+											if (finalizer)
+												qs_audit->char2_count += detail->charges;
+											else
+												qs_audit->char1_count += detail->charges;
+										}
+									}
+								}
+							}
+							else {
+								mlog(TRADING__ERROR, "Transfer of Item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
+								PushItemOnCursor(*inst, true);
+							}
+						}
+						else {
+							mlog(TRADING__ERROR, "%s's inventory is full, returning item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
+							PushItemOnCursor(*inst, true);
+						}
+					}
+					else {
+						mlog(TRADING__ERROR, "Item %s (%d) is NoDrop, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID);
+						PushItemOnCursor(*inst, true);
+					}
+
+					DeleteItemInInventory(trade_slot);
 				}
 			}
 
@@ -497,52 +766,62 @@ void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer)
 		}
 	}
 	else if(tradingWith && tradingWith->IsNPC()) {
-		QSPlayerLogHandin_Struct* qsaudit = nullptr;
-		bool QSPLH = false;
+		QSPlayerLogHandin_Struct* qs_audit = nullptr;
+		bool qs_log = false;
 
 		// QS code
-		if(qspack && RuleB(QueryServ, PlayerLogTrades)) {
+		if(RuleB(QueryServ, PlayerLogTrades) && event_entry && event_details) {
 			// Currently provides only basic functionality. Calling method will also
 			// need to be modified before item returns and rewards can be logged. -U
-			qsaudit = (QSPlayerLogHandin_Struct*) qspack->pBuffer;
-			QSPLH	= true;
+			qs_audit = (QSPlayerLogHandin_Struct*)event_entry;
+			qs_log = true;
 
-			qsaudit->quest_id				= 0;
-			qsaudit->char_id				= character_id;
-			qsaudit->char_money.platinum	= trade->pp;
-			qsaudit->char_money.gold		= trade->gp;
-			qsaudit->char_money.silver		= trade->sp;
-			qsaudit->char_money.copper		= trade->cp;
-			qsaudit->char_count				= 0;
-			qsaudit->npc_id					= tradingWith->GetNPCTypeID();
-			qsaudit->npc_money.platinum		= 0;
-			qsaudit->npc_money.gold			= 0;
-			qsaudit->npc_money.silver		= 0;
-			qsaudit->npc_money.copper		= 0;
-			qsaudit->npc_count				= 0;
+			qs_audit->quest_id = 0;
+			qs_audit->char_id = character_id;
+			qs_audit->char_money.platinum = trade->pp;
+			qs_audit->char_money.gold = trade->gp;
+			qs_audit->char_money.silver = trade->sp;
+			qs_audit->char_money.copper = trade->cp;
+			qs_audit->char_count = 0;
+			qs_audit->npc_id = tradingWith->GetNPCTypeID();
+			qs_audit->npc_money.platinum = 0;
+			qs_audit->npc_money.gold = 0;
+			qs_audit->npc_money.silver = 0;
+			qs_audit->npc_money.copper = 0;
+			qs_audit->npc_count = 0;
 		}
 
-		if(QSPLH) { // This can be incoporated below when revisions are made -U
-			for(int16 slot_id = 3000; slot_id <= 3003; slot_id++) {
-				const ItemInst* trade_inst = m_inv[slot_id];
+		if(qs_log) { // This can be incorporated below when revisions are made -U
+			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_NPC_END; ++trade_slot) {
+				const ItemInst* trade_inst = m_inv[trade_slot];
 
 				if(trade_inst) {
-					strcpy(qsaudit->items[qsaudit->char_count].action_type, "HANDIN");
+					QSHandinItems_Struct* detail = new QSHandinItems_Struct;
 
-					qsaudit->items[qsaudit->char_count].char_slot	= slot_id;
-					qsaudit->items[qsaudit->char_count].item_id		= trade_inst->GetID();
-					qsaudit->items[qsaudit->char_count++].charges		= trade_inst->GetCharges();
+					strcpy(detail->action_type, "HANDIN");
+
+					detail->char_slot = trade_slot;
+					detail->item_id = trade_inst->GetID();
+					detail->charges = (!trade_inst->IsStackable() ? 1 : trade_inst->GetCharges());
+
+					event_details->push_back(detail);
+					qs_audit->char_count += detail->charges;
 
 					if(trade_inst->IsType(ItemClassContainer)) {
-						for(uint8 bag_idx = 0; bag_idx < trade_inst->GetItem()->BagSlots; bag_idx++) {
-							const ItemInst* trade_baginst = trade_inst->GetItem(bag_idx);
+						for (uint8 sub_slot = SUB_BEGIN; sub_slot < trade_inst->GetItem()->BagSlots; ++sub_slot) {
+							const ItemInst* trade_baginst = trade_inst->GetItem(sub_slot);
 
 							if(trade_baginst) {
-								strcpy(qsaudit->items[qsaudit->char_count].action_type, "HANDIN");
+								detail = new QSHandinItems_Struct;
 
-								qsaudit->items[qsaudit->char_count].char_slot	= Inventory::CalcSlotId(slot_id, bag_idx);
-								qsaudit->items[qsaudit->char_count].item_id		= trade_baginst->GetID();
-								qsaudit->items[qsaudit->char_count++].charges		= trade_baginst->GetCharges();
+								strcpy(detail->action_type, "HANDIN");
+
+								detail->char_slot = Inventory::CalcSlotId(trade_slot, sub_slot);
+								detail->item_id = trade_baginst->GetID();
+								detail->charges = (!trade_inst->IsStackable() ? 1 : trade_inst->GetCharges());
+
+								event_details->push_back(detail);
+								qs_audit->char_count += detail->charges;
 							}
 						}
 					}
@@ -556,15 +835,15 @@ void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer)
 			quest_npc = true;
 		}
 
-		std::vector<void*> item_list;
+		std::vector<EQEmu::Any> item_list;
 		uint32 items[4] = { 0 };
-		for(int i = 3000; i < 3004; ++i) {
+		for(int i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_NPC_END; ++i) {
 			ItemInst *inst = m_inv.GetItem(i);
 			if(inst) {
-				items[i - 3000] = inst->GetItem()->ID;
+				items[i - EmuConstants::TRADE_BEGIN] = inst->GetItem()->ID;
 				item_list.push_back(inst);
 			} else {
-				item_list.push_back(nullptr);
+				item_list.push_back((ItemInst*)nullptr);
 				continue;
 			}
 
@@ -574,7 +853,7 @@ void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer)
 				if(GetGM() || (item->NoDrop != 0 && inst->IsInstNoDrop() == false)) {
 					// pets need to look inside bags and try to equip items found there
 					if(item->ItemClass == ItemClassContainer && item->BagSlots > 0) {
-						for(int16 bslot=0; bslot < item->BagSlots; bslot++) {
+						for(int16 bslot = SUB_BEGIN; bslot < item->BagSlots; bslot++) {
 							const ItemInst* baginst = inst->GetItem(bslot);
 							if (baginst) {
 								const Item_Struct* bagitem = baginst->GetItem();
@@ -620,8 +899,8 @@ void Client::FinishTrade(Mob* tradingWith, ServerPacket* qspack, bool finalizer)
 		}
 		
 		ItemInst *insts[4] = { 0 };
-		for(int i = 3000; i < 3004; ++i) {
-			insts[i - 3000] = m_inv.PopItem(i);
+		for(int i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_NPC_END; ++i) {
+			insts[i - EmuConstants::TRADE_BEGIN] = m_inv.PopItem(i);
 			database.SaveInventory(CharacterID(), nullptr, i);
 		}
 
@@ -640,8 +919,7 @@ bool Client::CheckTradeLoreConflict(Client* other)
 	if (!other)
 		return true;
 	// Move each trade slot into free inventory slot
-	for (int16 i=3000; i<=3179; i++){
-		if(i == 3008) { i = 3100; }
+	for (int16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++){
 		const ItemInst* inst = m_inv[i];
 
 		if (inst && inst->GetItem()) {
@@ -649,6 +927,16 @@ bool Client::CheckTradeLoreConflict(Client* other)
 				return true;
 		}
 	}
+
+	for (int16 i = EmuConstants::TRADE_BAGS_BEGIN; i <= EmuConstants::TRADE_BAGS_END; i++){
+		const ItemInst* inst = m_inv[i];
+
+		if (inst && inst->GetItem()) {
+			if (other->CheckLoreConflict(inst->GetItem()))
+				return true;
+		}
+	}
+
 	return false;
 }
 
@@ -923,11 +1211,12 @@ ItemInst* Client::FindTraderItemBySerialNumber(int32 SerialNumber){
 
 	ItemInst* item = nullptr;
 	uint16 SlotID = 0;
-	for(int i = 0; i < 8;i++){
-		item = this->GetInv().GetItem(22 + i);
+	for(int i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++){
+		item = this->GetInv().GetItem(i);
 		if(item && item->GetItem()->ID == 17899){ //Traders Satchel
-			for(int x = 0; x < 10; x++){
-				SlotID = (((22 + i + 3) * 10) + x + 1);
+			for(int x = SUB_BEGIN; x < EmuConstants::ITEM_CONTAINER_SIZE; x++) {
+				// we already have the parent bag and a contents iterator..why not just iterate the bag!??
+				SlotID = Inventory::CalcSlotId(i, x);
 				item = this->GetInv().GetItem(SlotID);
 				if(item) {
 					if(item->GetSerialNumber() == SerialNumber)
@@ -972,11 +1261,11 @@ GetItems_Struct* Client::GetTraderItems(){
 
 	uint8 ndx = 0;
 
-	for(int i = 0; i < 8; i++){
-		item = this->GetInv().GetItem(22 + i);
+	for(int i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
+		item = this->GetInv().GetItem(i);
 		if(item && item->GetItem()->ID == 17899){ //Traders Satchel
-			for(int x = 0; x < 10; x++){
-				SlotID = (((22 + i +3 ) *10) + x + 1);
+			for(int x = SUB_BEGIN; x < EmuConstants::ITEM_CONTAINER_SIZE; x++) {
+				SlotID = Inventory::CalcSlotId(i, x);
 
 				item = this->GetInv().GetItem(SlotID);
 
@@ -996,11 +1285,11 @@ uint16 Client::FindTraderItem(int32 ItemID, uint16 Quantity){
 
 	const ItemInst* item= nullptr;
 	uint16 SlotID = 0;
-	for(int i = 0; i < 8;i++){
-		item = this->GetInv().GetItem(22+i);
+	for(int i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) {
+		item = this->GetInv().GetItem(i);
 		if(item && item->GetItem()->ID == 17899){ //Traders Satchel
-			for(int x = 0; x < 10; x++){
-				SlotID= (((22 + i + 3) * 10) + x + 1);
+			for(int x = SUB_BEGIN; x < EmuConstants::ITEM_CONTAINER_SIZE; x++){
+				SlotID = Inventory::CalcSlotId(i, x);
 
 				item = this->GetInv().GetItem(SlotID);
 
@@ -1700,7 +1989,7 @@ static void UpdateTraderCustomerItemsAdded(uint32 SellerID, uint32 CustomerID, T
 			_log(TRADING__CLIENT, "Sending price update for %s, Serial No. %i with %i charges",
 							item->Name, gis->SerialNumber[i], gis->Charges[i]);
 
-			Customer->BulkSendTraderInventory(SellerCharID);
+			Customer->SendItemPacket(30, inst, ItemPacketMerchant); // MainCursor?
 		}
 	}
 
@@ -1775,7 +2064,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 		_log(TRADING__CLIENT, "Sending price update for %s, Serial No. %i with %i charges",
 						item->Name, gis->SerialNumber[i], gis->Charges[i]);
 
-		Customer->BulkSendTraderInventory(SellerCharID);
+		Customer->SendItemPacket(30, inst, ItemPacketMerchant); // MainCursor??
 	}
 	safe_delete(inst);
 }

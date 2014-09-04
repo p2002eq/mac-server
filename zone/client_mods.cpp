@@ -428,7 +428,8 @@ uint32 Client::GetClassHPFactor() {
 int16 Client::GetRawItemAC() {
 	int16 Total = 0;
 
-	for (int16 slot_id=0; slot_id<21; slot_id++) {
+	// this skips MainAmmo..add an '=' conditional if that slot is required (original behavior)
+	for (int16 slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id < EmuConstants::EQUIPMENT_END; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst && inst->IsType(ItemClassCommon)) {
 			Total += inst->GetItem()->AC;
@@ -852,9 +853,9 @@ int16 Client::CalcAC() {
 
 	// Shield AC bonus for HeroicSTR
 	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(14);
+		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
 		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(14)->GetItem()->ItemType;
+			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
 			if(shield == ItemTypeShield)
 				displayed += itembonuses.HeroicSTR/2;
 		}
@@ -882,9 +883,9 @@ int16 Client::GetACMit() {
 
 	// Shield AC bonus for HeroicSTR
 	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(14);
+		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
 		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(14)->GetItem()->ItemType;
+			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
 			if(shield == ItemTypeShield)
 				mitigation += itembonuses.HeroicSTR/2;
 		}
@@ -1067,7 +1068,7 @@ uint32 Client::CalcCurrentWeight() {
 	ItemInst* ins;
 	uint32 Total = 0;
 	int x;
-	for(x = 0; x <= 30; x++)
+	for(x = EmuConstants::EQUIPMENT_BEGIN; x <= MainCursor; x++) // include cursor or not?
 	{
 		TempItem = 0;
 		ins = GetInv().GetItem(x);
@@ -1076,7 +1077,7 @@ uint32 Client::CalcCurrentWeight() {
 		if (TempItem)
 			Total += TempItem->Weight;
 	}
-	for (x = 250; x < 330; x++)
+	for (x = EmuConstants::GENERAL_BAGS_BEGIN; x <= EmuConstants::GENERAL_BAGS_END; x++) // include cursor bags or not?
 	{
 		int TmpWeight = 0;
 		TempItem = 0;
@@ -1087,9 +1088,11 @@ uint32 Client::CalcCurrentWeight() {
 			TmpWeight = TempItem->Weight;
 		if (TmpWeight > 0)
 		{
-			int bagslot = 22;
+			// this code indicates that weight redux bags can only be in the first general inventory slot to be effective...
+			// is this correct? or can we scan for the highest weight redux and use that? (need client verifications)
+			int bagslot = MainGeneral1;
 			int reduction = 0;
-			for (int m = 261; m < 331; m += 10)
+			for (int m = EmuConstants::GENERAL_BAGS_BEGIN + 10; m <= EmuConstants::GENERAL_BAGS_END; m += 10) // include cursor bags or not?
 			{
 				if (x >= m)
 					bagslot += 1;
@@ -1871,9 +1874,9 @@ int32 Client::CalcEnduranceRegenCap() {
 
 int Client::GetRawACNoShield(int &shield_ac) const
 {
-	int ac = itembonuses.AC + spellbonuses.AC;
+	int ac = itembonuses.AC + spellbonuses.AC + aabonuses.AC;
 	shield_ac = 0;
-	const ItemInst *inst = m_inv.GetItem(SLOT_SECONDARY);
+	const ItemInst *inst = m_inv.GetItem(MainSecondary);
 	if(inst)
 	{
 		if(inst->GetItem()->ItemType == ItemTypeShield)

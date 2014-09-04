@@ -48,16 +48,18 @@
 #include "worldserver.h"
 #include "net.h"
 #include "zone.h"
+#include "queryserv.h"
 #include "command.h"
 #include "zone_config.h"
 #include "titles.h"
 #include "guild_mgr.h"
-
 #include "quest_parser_collection.h"
 #include "embparser.h"
 #include "lua_parser.h"
 #include "client_logs.h"
 #include "questmgr.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 #include <iostream>
 #include <string>
@@ -97,6 +99,7 @@ npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
 DBAsyncFinishedQueue MTdbafq;
 DBAsync *dbasync = nullptr;
+QueryServ *QServ = 0; 
 QuestParserCollection *parse = 0;
 
 const SPDat_Spell_Struct* spells;
@@ -109,8 +112,11 @@ extern void MapOpcodes();
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformZone);
 	set_exception_handler();
+	register_remote_call_handlers();
 
 	const char *zone_name;
+
+	QServ = new QueryServ;
 
 	if(argc == 3) {
 		worldserver.SetLauncherName(argv[2]);
@@ -299,6 +305,7 @@ int main(int argc, char** argv) {
 	}
 
 	Timer InterserverTimer(INTERSERVER_TIMER); // does MySQL pings and auto-reconnect
+	Timer RemoteCallProcessTimer(5000);
 #ifdef EQPROFILE
 #ifdef PROFILE_DUMP_TIME
 	Timer profile_dump_timer(PROFILE_DUMP_TIME*1000);
@@ -439,6 +446,9 @@ int main(int argc, char** argv) {
 				if(quest_timers.Check())
 					quest_manager.Process();
 
+				if(RemoteCallProcessTimer.Check()) {
+					RemoteCallSubscriptionHandler::Instance()->Process();
+				}
 			}
 		}
 		DBAsyncWork* dbaw = 0;
@@ -622,7 +632,7 @@ void LoadSpells(EQEmu::MemoryMappedFile **mmf) {
 	SPDAT_RECORDS = records;
 }
 
-
+/* Update Window Title with relevant information */
 void UpdateWindowTitle(char* iNewTitle) {
 #ifdef _WINDOWS
 	char tmp[500];
@@ -634,7 +644,7 @@ void UpdateWindowTitle(char* iNewTitle) {
 			#if defined(GOTFRAGS) || defined(_EQDEBUG)
 				snprintf(tmp, sizeof(tmp), "%i: %s, %i clients, %i", ZoneConfig::get()->ZonePort, zone->GetShortName(), numclients, getpid());
 			#else
-				snprintf(tmp, sizeof(tmp), "%i: %s, %i clients", ZoneConfig::get()->ZonePort, zone->GetShortName(), numclients);
+			snprintf(tmp, sizeof(tmp), "%s :: clients: %i inst_id: %i inst_ver: %i :: port: %i", zone->GetShortName(), numclients, zone->GetInstanceID(), zone->GetInstanceVersion(), ZoneConfig::get()->ZonePort);
 			#endif
 		}
 		else {
