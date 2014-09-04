@@ -984,15 +984,14 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			int8 offset = 0;
 			// Dont display the item if it's in a bag
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
-			if(!IsPlayerCorpse() || item_data->equipSlot <= MainCursor || item_data->equipSlot == MainPowerSource || tCanLoot>=3 ||
+			if(!IsPlayerCorpse() || item_data->equipSlot <= MainCursor + 30 || item_data->equipSlot == MainPowerSource || tCanLoot>=3 ||
 				(item_data->equipSlot >= 8000 && item_data->equipSlot <= 8999)) {
 				if(i < corpselootlimit) {
 					item = database.GetItem(item_data->item_id);
 					if(client && item) {
 						ItemInst* inst = database.CreateItem(item, item_data->charges);
 						if(inst) {
-							// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
-							client->SendItemPacket(i + EmuConstants::CORPSE_BEGIN, inst, ItemPacketLoot);
+							client->SendItemPacket(i + offset, inst, ItemPacketLoot); // 22 is the corpse inventory start offset for Ti(EMu) but not EQMac!
 							safe_delete(inst);
 						}
 
