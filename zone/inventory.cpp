@@ -1204,7 +1204,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 	}
 	else {
 		// Not dealing with charges - just do direct swap
-		if(src_inst && (dst_slot_id <= EmuConstants::EQUIPMENT_END) && dst_slot_id >= EmuConstants::EQUIPMENT_BEGIN) {
+		if(src_inst && dst_slot_id <= EmuConstants::EQUIPMENT_END && dst_slot_id >= EmuConstants::EQUIPMENT_BEGIN) {
 			if (src_inst->GetItem()->Attuneable) {
 				src_inst->SetInstNoDrop(true);
 			}

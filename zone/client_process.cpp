@@ -697,7 +697,7 @@ void Client::BulkSendInventoryItems() {
 	std::map<uint16, std::string>::iterator itr;
 
 	//Inventory items
-	for(slot_id = MAIN_BEGIN; slot_id < EmuConstants::MAP_POSSESSIONS_SIZE; slot_id++) {
+	for(slot_id = MAIN_BEGIN+1; slot_id < EmuConstants::MAP_POSSESSIONS_SIZE-1; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if(inst) {
 			std::string packet = inst->Serialize(slot_id);
@@ -708,9 +708,9 @@ void Client::BulkSendInventoryItems() {
 
 	//Items in containers
 	for (slot_id=250; slot_id<=339; slot_id++) {
-		const ItemInst* inst = m_inv[MainPowerSource];
+		const ItemInst* inst = m_inv[slot_id];
 		if(inst) {
-			std::string packet = inst->Serialize(MainPowerSource);
+			std::string packet = inst->Serialize(slot_id);
 			ser_items[i++] = packet;
 			size += packet.length();
 		}

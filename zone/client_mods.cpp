@@ -1068,7 +1068,7 @@ uint32 Client::CalcCurrentWeight() {
 	ItemInst* ins;
 	uint32 Total = 0;
 	int x;
-	for(x = EmuConstants::EQUIPMENT_BEGIN; x <= MainCursor; x++) // include cursor or not?
+	for (x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::GENERAL_END; x++) // include cursor or not?
 	{
 		TempItem = 0;
 		ins = GetInv().GetItem(x);

@@ -68,7 +68,7 @@ namespace MAC {
 			MainGeneral7,
 			MainGeneral8,
 			//MainCursor,
-			_MainCount = 31,
+			_MainCount,
 			_MainEquipmentBegin = MainEar1,
 			_MainEquipmentEnd = MainAmmo,
 			_MainEquipmentCount = (_MainEquipmentEnd - _MainEquipmentBegin + 1),
@@ -105,7 +105,7 @@ namespace MAC {
 		static const uint16 MAP_KRONO_SIZE = NOT_USED;
 		static const uint16 MAP_OTHER_SIZE = 0;
 
-		static const int16 EQUIPMENT_BEGIN = slots::MainCursor;
+		static const int16 EQUIPMENT_BEGIN = slots::MainEar1;
 		static const int16 EQUIPMENT_END = slots::MainAmmo;
 		static const uint16 EQUIPMENT_SIZE = slots::_MainEquipmentCount;
 
