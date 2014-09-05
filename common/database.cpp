@@ -582,7 +582,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 #endif
 		}
 
-		if (i == 30) {
+		if (i == 29) {
 			i = EmuConstants::GENERAL_BAGS_BEGIN;
 			continue;
 		}

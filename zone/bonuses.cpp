@@ -3044,7 +3044,7 @@ void Client::CalcItemScale() {
 
 	// I excluded cursor bag slots here because cursor was excluded above..if this is incorrect, change 'slot_y' here to CURSOR_BAG_END
 	// and 'slot_y' above to CURSOR from GENERAL_END above - or however it is supposed to be...
-	if(CalcItemScale(EmuConstants::GENERAL_BAGS_BEGIN, EmuConstants::GENERAL_BAGS_END)) // (< 341)
+	if (CalcItemScale(EmuConstants::GENERAL_BAGS_BEGIN, EmuConstants::CURSOR_BAG_END)) // (< 341)
 		changed = true;
 
 	if(changed)
@@ -3107,7 +3107,7 @@ void Client::DoItemEnterZone() {
 
 	// I excluded cursor bag slots here because cursor was excluded above..if this is incorrect, change 'slot_y' here to CURSOR_BAG_END
 	// and 'slot_y' above to CURSOR from GENERAL_END above - or however it is supposed to be...
-	if(DoItemEnterZone(EmuConstants::GENERAL_BAGS_BEGIN, EmuConstants::GENERAL_BAGS_END)) // (< 341)
+	if (DoItemEnterZone(EmuConstants::GENERAL_BAGS_BEGIN, EmuConstants::CURSOR_BAG_END)) // (< 341)
 		changed = true;
 
 	if(changed)

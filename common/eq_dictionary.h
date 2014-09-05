@@ -81,7 +81,7 @@ public:
 
 	// most of these definitions will go away with the structure-based system..this maintains compatibility for now
 	// (these are mainly to assign specific values to constants used in conversions and to identify per-client ranges/offsets)
-	static const int16 EQUIPMENT_BEGIN = MainCursor;
+	static const int16 EQUIPMENT_BEGIN = MainEar1;
 	static const int16 EQUIPMENT_END = MainAmmo;
 	static const uint16 EQUIPMENT_SIZE = 21; // does not account for 'Power Source' - used mainly for npc equipment arrays
 
