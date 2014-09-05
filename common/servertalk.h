@@ -187,9 +187,13 @@
 #define ServerOP_QSPlayerLogMerchantTransactions	0x4015
 #define ServerOP_QSSendQuery				0x4016
 
+#define ServerOP_WIRemoteCall 0x5001
+#define ServerOP_WIRemoteCallResponse 0x5002
+#define ServerOP_WIRemoteCallToClient 0x5003
+#define ServerOP_WIClientSession 0x5004
+#define ServerOP_WIClientSessionResponse 0x5005
 /* Query Serv Generic Packet Flag/Type Enumeration */
-enum { QSG_LFGuild = 0 }; 
-enum {	QSG_LFGuild_PlayerMatches = 0, QSG_LFGuild_UpdatePlayerInfo, QSG_LFGuild_RequestPlayerInfo, QSG_LFGuild_UpdateGuildInfo, QSG_LFGuild_GuildMatches,
+enum { QSG_LFGuild = 0 }; enum {	QSG_LFGuild_PlayerMatches = 0, QSG_LFGuild_UpdatePlayerInfo, QSG_LFGuild_RequestPlayerInfo, QSG_LFGuild_UpdateGuildInfo, QSG_LFGuild_GuildMatches,
 	QSG_LFGuild_RequestGuildInfo };
 
 #define ServerOP_Speech			0x4513
@@ -1118,6 +1122,7 @@ struct QSPlayerLogTrade_Struct {
 	uint32				char2_id;
 	MoneyUpdate_Struct	char2_money;
 	uint16				char2_count;
+	uint16				_detail_count;
 	QSTradeItems_Struct items[0];
 };
 
@@ -1141,6 +1146,7 @@ struct QSPlayerLogHandin_Struct {
 	uint32				npc_id;
 	MoneyUpdate_Struct	npc_money;
 	uint16				npc_count;
+	uint16				_detail_count;
 	QSHandinItems_Struct items[0];
 };
 

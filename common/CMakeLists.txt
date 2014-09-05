@@ -64,7 +64,9 @@ SET(common_sources
 	timeoutmgr.cpp
 	timer.cpp
 	unix.cpp
+	uuid.cpp
 	worldconn.cpp
+	web_interface_utils.cpp
 	xml_parser.cpp
 	platform.cpp
 	patches/client62.cpp
@@ -93,6 +95,7 @@ SET(common_sources
 )
 
 SET(common_headers
+	any.h
 	base_packet.h
 	base_data.h
 	bodytypes.h
@@ -185,17 +188,16 @@ SET(common_headers
 	timer.h
 	types.h
 	unix.h
+	uuid.h
 	useperl.h
 	version.h
 	worldconn.h
-	xml_parser.h
-	zone_numbers.h
-	patches/client62.h
+	web_interface_utils.h
+	xml_parser.h	zone_numbers.h	platform.h	patches/client62.h
 	patches/client62_constants.h
 	patches/client62_itemfields.h
 	patches/client62_ops.h
-	patches/client62_structs.h
-	patches/patches.h
+	patches/client62_structs.h	patches/patches.h
 	patches/sod.h
 	patches/sod_constants.h
 	patches/sod_itemfields.h

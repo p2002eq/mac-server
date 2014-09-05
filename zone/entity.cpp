@@ -23,6 +23,7 @@
 #include <string.h>
 #include <iostream>
 
+
 #ifdef _WINDOWS
 #include <process.h>
 #else
@@ -44,6 +45,8 @@
 #include "guild_mgr.h"
 #include "raids.h"
 #include "quest_parser_collection.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -1476,7 +1479,7 @@ void EntityList::QueueClientsStatus(Mob *sender, const EQApplicationPacket *app,
 void EntityList::DuelMessage(Mob *winner, Mob *loser, bool flee)
 {
 	if (winner->GetLevelCon(winner->GetLevel(), loser->GetLevel()) > 2) {
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(winner);
 		args.push_back(loser);
 
@@ -2368,6 +2371,11 @@ void EntityList::Depop(bool StartSpawnTimer)
 			if (pnpc->IsFindable())
 				UpdateFindableNPCState(pnpc, true);
 
+			/* Web Interface Depop Entities */
+			std::vector<std::string> params;
+			params.push_back(std::to_string((long)pnpc->GetID()));
+			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);
+
 			pnpc->Depop(StartSpawnTimer);
 		}
 	}
@@ -2377,8 +2385,14 @@ void EntityList::DepopAll(int NPCTypeID, bool StartSpawnTimer)
 {
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC *pnpc = it->second;
-		if (pnpc && (pnpc->GetNPCTypeID() == (uint32)NPCTypeID))
-			pnpc->Depop(StartSpawnTimer);
+		if (pnpc && (pnpc->GetNPCTypeID() == (uint32)NPCTypeID)){
+			pnpc->Depop(StartSpawnTimer); 
+
+			/* Web Interface Depop Entities */
+			std::vector<std::string> params;
+			params.push_back(std::to_string((long)pnpc->GetID()));
+			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);
+		}
 	}
 }
 
@@ -2847,7 +2861,7 @@ void EntityList::ClearFeignAggro(Mob *targ)
 			}
 
 			if (targ->IsClient()) {
-				std::vector<void*> args;
+				std::vector<EQEmu::Any> args;
 				args.push_back(it->second);
 				int i = parse->EventPlayer(EVENT_FEIGN_DEATH, targ->CastToClient(), "", 0, &args);
 				if (i != 0) {
@@ -3242,9 +3256,10 @@ void EntityList::ProcessMove(Client *c, float x, float y, float z)
 	for (auto iter = events.begin(); iter != events.end(); ++iter) {
 		quest_proximity_event& evt = (*iter);
 		if (evt.npc) {
-			parse->EventNPC(evt.event_id, evt.npc, evt.client, "", 0);
+			std::vector<EQEmu::Any> args;
+			parse->EventNPC(evt.event_id, evt.npc, evt.client, "", 0, &args);
 		} else {
-			std::vector<void*> args;
+			std::vector<EQEmu::Any> args;
 			args.push_back(&evt.area_id);
 			args.push_back(&evt.area_type);
 			parse->EventPlayer(evt.event_id, evt.client, "", 0, &args);
@@ -3298,7 +3313,7 @@ void EntityList::ProcessMove(NPC *n, float x, float y, float z)
 
 	for (auto iter = events.begin(); iter != events.end(); ++iter) {
 		quest_proximity_event& evt = (*iter);
-		std::vector<void*> args;
+		std::vector<EQEmu::Any> args;
 		args.push_back(&evt.area_id);
 		args.push_back(&evt.area_type);
 		parse->EventNPC(evt.event_id, evt.npc, evt.client, "", 0, &args);

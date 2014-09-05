@@ -85,6 +85,8 @@
 #include "adventure_manager.h"
 #include "ucs.h"
 #include "queryserv.h"
+#include "web_interface.h"
+#include "remote_call.h"
 
 TimeoutManager timeout_manager;
 EQStreamFactory eqsf(WorldStream,9000);
@@ -96,6 +98,7 @@ LoginServerList loginserverlist;
 EQWHTTPServer http_server;
 UCSConnection UCSLink;
 QueryServConnection QSLink;
+WebInterfaceConnection WILink;
 LauncherList launcher_list;
 AdventureManager adventure_manager;
 DBAsync *dbasync = nullptr;
@@ -104,7 +107,6 @@ uint32 numclients = 0;
 uint32 numzones = 0;
 bool holdzones = false;
 
-
 extern ConsoleList console_list;
 
 void CatchSignal(int sig_num);
@@ -112,6 +114,7 @@ void CatchSignal(int sig_num);
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
 	set_exception_handler();
+	register_remote_call_handlers();
 
 	// Load server configuration
 	_log(WORLD__INIT, "Loading server configuration..");
@@ -452,6 +455,8 @@ int main(int argc, char** argv) {
 		UCSLink.Process();
 
 		QSLink.Process();
+
+		WILink.Process();
 
 		LFPGroupList.Process();
 

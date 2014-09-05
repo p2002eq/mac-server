@@ -54,12 +54,13 @@
 #include "titles.h"
 #include "guild_mgr.h"
 #include "tasks.h"
-
 #include "quest_parser_collection.h"
 #include "embparser.h"
 #include "lua_parser.h"
 #include "client_logs.h"
 #include "questmgr.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 #include <iostream>
 #include <string>
@@ -113,6 +114,7 @@ extern void MapOpcodes();
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformZone);
 	set_exception_handler();
+	register_remote_call_handlers();
 
 	const char *zone_name;
 
@@ -314,6 +316,7 @@ int main(int argc, char** argv) {
 	}
 
 	Timer InterserverTimer(INTERSERVER_TIMER); // does MySQL pings and auto-reconnect
+	Timer RemoteCallProcessTimer(5000);
 #ifdef EQPROFILE
 #ifdef PROFILE_DUMP_TIME
 	Timer profile_dump_timer(PROFILE_DUMP_TIME*1000);
@@ -442,6 +445,9 @@ int main(int argc, char** argv) {
 				if(quest_timers.Check())
 					quest_manager.Process();
 
+				if(RemoteCallProcessTimer.Check()) {
+					RemoteCallSubscriptionHandler::Instance()->Process();
+				}
 			}
 		}
 		DBAsyncWork* dbaw = 0;
