@@ -582,7 +582,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 #endif
 		}
 
-		if (i == MainCursor) {
+		if (i == EmuConstants::GENERAL_END) {
 			i = EmuConstants::GENERAL_BAGS_BEGIN;
 			continue;
 		}
