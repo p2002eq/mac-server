@@ -5312,13 +5312,13 @@ void Client::TickItemCheck()
 
 	if(zone->tick_items.empty()) { return; }
 
-	//Scan equip slots for items
-	for(i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++)
+	//Scan equip slots for items  + cursor
+	for(i = MainCursor; i <= EmuConstants::EQUIPMENT_END; i++)
 	{
 		TryItemTick(i);
 	}
-	//Scan main inventory + cursor
-	for(i = EmuConstants::GENERAL_BEGIN; i <= MainCursor; i++)
+	//Scan main inventory
+	for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
 	{
 		TryItemTick(i);
 	}
@@ -5359,7 +5359,7 @@ void Client::ItemTimerCheck()
 		TryItemTimer(i);
 	}
 
-	for(i = EmuConstants::GENERAL_BAGS_BEGIN; i <= MainCursor+31; i++)
+	for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
 	{
 		TryItemTimer(i);
 	}
