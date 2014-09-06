@@ -54,7 +54,7 @@ public:
 
 	// these are currently hard-coded for existing inventory system..do not use in place of special client version handlers until ready
 	static const uint16	MAP_POSSESSIONS_SIZE = _MainCount;
-	static const uint16 MAP_BANK_SIZE = 16;
+	static const uint16 MAP_BANK_SIZE = 8;
 	static const uint16 MAP_SHARED_BANK_SIZE = 2;
 	static const uint16 MAP_TRADE_SIZE = 8;
 	static const uint16 MAP_WORLD_SIZE = 10;

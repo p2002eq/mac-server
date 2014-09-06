@@ -427,7 +427,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 	returnlist.push_back(equipslot);
 
 	// Qualified bag slot iterations. processing bag slots that don't exist is probably not a good idea.
-	if(item->IsType(ItemClassContainer) && ((equipslot >= EmuConstants::GENERAL_BEGIN && equipslot <= MainCursor))) // Limit the bag check to inventory and cursor slots.
+	if (item->IsType(ItemClassContainer) && ((equipslot >= EmuConstants::GENERAL_BEGIN && equipslot <= EmuConstants::GENERAL_END && equipslot == MainCursor))) // Limit the bag check to inventory and cursor slots.
 	{
 		for(bagindex = SUB_BEGIN; bagindex <= EmuConstants::ITEM_CONTAINER_SIZE; bagindex++)
 		{
@@ -1083,9 +1083,9 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app)
 	if(GetPKItem()>1)
 		item = database.GetItem(GetPKItem());
 	else if(GetPKItem()==-1 || GetPKItem()==1)
-		item_data = GetItem(lootitem->slot_id - EmuConstants::CORPSE_BEGIN); //dont allow them to loot entire bags of items as pvp reward
+		item_data = GetItem(lootitem->slot_id - offset); //dont allow them to loot entire bags of items as pvp reward
 	else
-		item_data = GetItem(lootitem->slot_id - EmuConstants::CORPSE_BEGIN, bag_item_data);
+		item_data = GetItem(lootitem->slot_id - offset, bag_item_data);
 
 	if (GetPKItem()<=1 && item_data != 0)
 	{
