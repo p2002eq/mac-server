@@ -167,6 +167,7 @@ void MapOpcodes() {
 	ConnectedOpcodes[OP_GuildPeace] = &Client::Handle_OP_GuildPeace;
 	ConnectedOpcodes[OP_GuildWar] = &Client::Handle_OP_GuildWar;
 	ConnectedOpcodes[OP_GuildLeader] = &Client::Handle_OP_GuildLeader;
+	ConnectedOpcodes[OP_GuildPromote] = &Client::Handle_OP_GuildPromote;
 	ConnectedOpcodes[OP_GuildInvite] = &Client::Handle_OP_GuildInvite;
 	ConnectedOpcodes[OP_GuildRemove] = &Client::Handle_OP_GuildRemove;
 	ConnectedOpcodes[OP_GuildInviteAccept] = &Client::Handle_OP_GuildInviteAccept;
@@ -2846,6 +2847,57 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 	return;
 }
 
+
+void Client::Handle_OP_GuildPromote(const EQApplicationPacket *app)
+{
+	mlog(GUILDS__IN_PACKETS, "Received OP_GuildPromote");
+	mpkt(GUILDS__IN_PACKET_TRACE, app);
+
+	if(app->size != sizeof(GuildPromoteStruct)) {
+		mlog(GUILDS__ERROR, "Error: app size of %i != size of GuildDemoteStruct of %i\n",app->size,sizeof(GuildPromoteStruct));
+		return;
+	}
+
+	if (!IsInAGuild())
+		Message(0, "Error: You arent in a guild!");
+	else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PROMOTE))
+		Message(0, "You dont have permission to invite.");
+	else if (!worldserver.Connected())
+		Message(0, "Error: World server disconnected");
+	else {
+		GuildPromoteStruct* promote = (GuildPromoteStruct*)app->pBuffer;
+
+		CharGuildInfo gci;
+		if(!guild_mgr.GetCharInfo(promote->target, gci)) {
+			Message(0, "Unable to find '%s'", promote->target);
+			return;
+		}
+		if(gci.guild_id != GuildID()) {
+			Message(0, "You aren't in the same guild, what do you think you are doing?");
+			return;
+		}
+
+		uint8 rank = gci.rank + 1;
+
+		if(rank > GUILD_OFFICER)
+			return;
+
+
+		mlog(GUILDS__ACTIONS, "Promoting %s (%d) from rank %s (%d) to %s (%d) in %s (%d)",
+			promote->target, gci.char_id,
+			guild_mgr.GetRankName(GuildID(), gci.rank), gci.rank,
+			guild_mgr.GetRankName(GuildID(), rank), rank,
+			guild_mgr.GetGuildName(GuildID()), GuildID());
+
+		if(!guild_mgr.SetGuildRank(gci.char_id, rank)) {
+			Message(13, "Error while setting rank %d on '%s'.", rank, promote->target);
+			return;
+		}
+		Message(0, "Successfully promoted %s to rank %d", promote->target, rank);
+	}
+	return;
+}
+
 void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildInvite");
@@ -3058,6 +3110,16 @@ void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 
 	GuildInviteAccept_Struct* gj = (GuildInviteAccept_Struct*) app->pBuffer;
 
+	if(GetClientVersion() >= EQClientRoF)
+	{
+		if(gj->response > 9)
+		{
+		//dont care if the check fails (since we dont know the rank), just want to clear the entry.
+		guild_mgr.VerifyAndClearInvite(CharacterID(), gj->guildeqid, gj->response);
+		worldserver.SendEmoteMessage(gj->inviter, 0, 0, "%s has declined to join the guild.", this->GetName());
+		return;
+		}
+	}
 	if (gj->response == 5 || gj->response == 4) {
 		//dont care if the check fails (since we dont know the rank), just want to clear the entry.
 		guild_mgr.VerifyAndClearInvite(CharacterID(), gj->guildeqid, gj->response);

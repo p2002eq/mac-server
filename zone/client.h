@@ -900,7 +900,9 @@ public:
 
 	void SetEngagedRaidTarget(bool value) { EngagedRaidTarget = value; }
 	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }
-	
+
+	void ShowNumHits(); // work around function for numhits not showing on buffs
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);
