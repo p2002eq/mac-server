@@ -5664,3 +5664,15 @@ void Client::DumpPlayerProfile()
 	FileDumpPacketHex(packet_dump, noutapp);
 	safe_delete(noutapp);
 }
+
+void Client::ShowNumHits()
+{
+	uint32 buffcount = GetMaxTotalSlots();
+	for (uint32 buffslot = 0; buffslot < buffcount; buffslot++) {
+		const Buffs_Struct &curbuff = buffs[buffslot];
+		if (curbuff.spellid != SPELL_UNKNOWN && curbuff.numhits)
+			Message(0, "You have %d hits left on %s", curbuff.numhits, GetSpellName(curbuff.spellid));
+	}
+	return;
+}
+
