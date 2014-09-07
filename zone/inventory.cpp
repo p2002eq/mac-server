@@ -1216,7 +1216,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		mlog(INVENTORY__SLOTS, "Moving entire item from slot %d to slot %d", src_slot_id, dst_slot_id);
 
-		if(src_slot_id <= EmuConstants::EQUIPMENT_END) {
+		if (src_slot_id >= EmuConstants::EQUIPMENT_BEGIN && src_slot_id <= EmuConstants::EQUIPMENT_END) {
 			if(src_inst) {
 				parse->EventItem(EVENT_UNEQUIP_ITEM, this, src_inst, nullptr, "", src_slot_id);
 			}
@@ -1226,7 +1226,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			}
 		}
 
-		if(dst_slot_id <= EmuConstants::EQUIPMENT_END || dst_slot_id == MainPowerSource) {
+		if (dst_slot_id >= EmuConstants::EQUIPMENT_BEGIN && dst_slot_id <= EmuConstants::EQUIPMENT_END || dst_slot_id == MainPowerSource) {
 			if(dst_inst) {
 				parse->EventItem(EVENT_UNEQUIP_ITEM, this, dst_inst, nullptr, "", dst_slot_id);
 			}
@@ -1238,7 +1238,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 	}
 
 	int matslot = SlotConvert2(dst_slot_id);
-	if (dst_slot_id <= EmuConstants::EQUIPMENT_END && matslot != MaterialHead) { // think this is to allow the client to update with /showhelm
+	if (dst_slot_id >= EmuConstants::EQUIPMENT_BEGIN && dst_slot_id <= EmuConstants::EQUIPMENT_END && matslot != MaterialHead) { // think this is to allow the client to update with /showhelm
 		SendWearChange(matslot);
 	}
 
