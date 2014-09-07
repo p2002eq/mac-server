@@ -172,7 +172,7 @@ public:
 
 	// Check whether item exists in inventory
 	// where argument specifies OR'd list of invWhere constants to look
-	int16 HasItem(uint32 item_id, uint8 quantity = 0, uint8 where = 0xFF);
+	int16 HasItem(int16 item_id, uint8 quantity = 0, uint8 where = 0xFF);
 
 	// Check whether item exists in inventory
 	// where argument specifies OR'd list of invWhere constants to look
@@ -227,8 +227,8 @@ protected:
 	int16 _PutItem(int16 slot_id, ItemInst* inst);
 
 	// Checks an inventory bucket for a particular item
-	int16 _HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity);
-	int16 _HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity);
+	int16 _HasItem(std::map<int16, ItemInst*>& bucket, int16 item_id, uint8 quantity);
+	int16 _HasItem(ItemInstQueue& iqueue, int16 item_id, uint8 quantity);
 	int16 _HasItemByUse(std::map<int16, ItemInst*>& bucket, uint8 use, uint8 quantity);
 	int16 _HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity);
 	int16 _HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 loregroup);
@@ -290,7 +290,7 @@ public:
 	int16 GetItemID(uint8 slot) const;
 	inline const ItemInst* operator[](uint8 slot) const { return GetItem(slot); }
 	void PutItem(uint8 slot, const ItemInst& inst);
-	void PutItem(SharedDatabase *db, uint8 slot, uint32 item_id) { return; } // not defined anywhere...
+	void PutItem(SharedDatabase *db, uint8 slot, int16 item_id) { return; } // not defined anywhere...
 	void DeleteItem(uint8 slot);
 	ItemInst* PopItem(uint8 index);
 	void Clear();

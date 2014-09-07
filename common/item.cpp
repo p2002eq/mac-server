@@ -468,7 +468,7 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 
 //This function has a flaw in that it only returns the last stack that it looked at
 //when quantity is greater than 1 and not all of quantity can be found in 1 stack.
-int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
+int16 Inventory::HasItem(int16 item_id, uint8 quantity, uint8 where)
 {
 	int16 slot_id = INVALID_INDEX;
 
@@ -1079,7 +1079,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 }
 
 // Internal Method: Checks an inventory bucket for a particular item
-int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity)
+int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, int16 item_id, uint8 quantity)
 {
 	iter_inst it;
 	iter_contents itb;
@@ -1115,7 +1115,7 @@ int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, ui
 }
 
 // Internal Method: Checks an inventory queue type bucket for a particular item
-int16 Inventory::_HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity)
+int16 Inventory::_HasItem(ItemInstQueue& iqueue, int16 item_id, uint8 quantity)
 {
 	iter_queue it;
 	iter_contents itb;
