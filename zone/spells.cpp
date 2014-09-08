@@ -4373,13 +4373,12 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		}
 		else
 		{
-			resist_chance -= roll;
 			if(resist_chance < 1)
 			{
 				resist_chance = 1;
 			}
 
-			int partial_modifier = ((150 * (roll - resist_chance)) / resist_chance);
+			int partial_modifier = ((150 * (resist_chance - roll)) / resist_chance);
 
 			if(IsNPC())
 			{
@@ -4407,17 +4406,16 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				}
 			}
 
-			if(partial_modifier < 0)
+			if(partial_modifier <= 0)
+			{
+				return 100;
+			} 
+			else if(partial_modifier >= 100)
 			{
 				return 0;
 			}
 
-			if(partial_modifier > 100)
-			{
-				return 100;
-			}
-
-			return partial_modifier;
+			return (100.0f - partial_modifier);
 		}
 	}
 }
