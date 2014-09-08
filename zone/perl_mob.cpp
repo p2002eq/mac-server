@@ -7052,7 +7052,7 @@ XS(XS_Mob_SendIllusion)
 		uint32		drakkin_heritage = 0xFFFFFFFF;
 		uint32		drakkin_tattoo = 0xFFFFFFFF;
 		uint32		drakkin_details = 0xFFFFFFFF;
-		float		size = 0xFFFFFFFF;
+		float		size = -1.0f;
 
 		if (sv_derived_from(ST(0), "Mob")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
