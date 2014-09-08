@@ -7012,7 +7012,7 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 		//Items in cursor container
 		itemsinabag = false;
 		int16 slot_id = 0;
-		for (slot_id=330; slot_id<=339; slot_id++) {
+		for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
 			const ItemInst* inst = m_inv[slot_id];
 			if (inst){
 				itemsinabag = true;

@@ -774,7 +774,7 @@ void Client::BulkSendItems()
 	RemoveDuplicateLore(false);
 	MoveSlotNotAllowed(false);
 
-	for (slot_id=1; slot_id<=29; slot_id++) {
+	for (slot_id=EmuConstants::EQUIPMENT_BEGIN; slot_id<=EmuConstants::GENERAL_END; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
@@ -799,7 +799,7 @@ void Client::BulkSendItems()
 
 
 		// Bank items
-	for (slot_id=2030; slot_id<=2109; slot_id++) {
+	for (slot_id=EmuConstants::BANK_BAGS_BEGIN; slot_id<=EmuConstants::BANK_BAGS_END; slot_id++) {
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
