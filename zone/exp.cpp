@@ -184,20 +184,29 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	//this ammount of exp (once these loops complete)
 	uint16 check_level = GetLevel()+1;
 	//see if we gained any levels
-	while (set_exp >= GetEXPForLevel(check_level)) {
+	bool level_increase = true;
+	int8 level_count = 0;
+
+	while (set_exp >= GetEXPForLevel(check_level)) 
+	{
 		check_level++;
-		if (check_level > 127) {	//hard level cap
+		if (check_level > 127)
+		{	//hard level cap
 			check_level = 127;
 			break;
 		}
+		level_count++;
 	}
 	//see if we lost any levels
-	while (set_exp < GetEXPForLevel(check_level-1)) {
+	while (set_exp < GetEXPForLevel(check_level-1))
+	{
 		check_level--;
-		if (check_level < 2) {	//hard level minimum
+		if (check_level < 2)
+		{	//hard level minimum
 			check_level = 2;
 			break;
 		}
+		level_increase = false;
 	}
 	check_level--;
 
@@ -274,19 +283,25 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		}
 	}
 
-	if ((GetLevel() != check_level) && !(check_level >= maxlevel)) {
+	if ((GetLevel() != check_level) && !(check_level >= maxlevel))
+	{
 		char val1[20] = { 0 };
-		if (GetLevel() == check_level - 1){
-			Message_StringID(MT_Experience, GAIN_LEVEL, ConvertArray(check_level, val1));
-			/* Message(15, "You have gained a level! Welcome to level %i!", check_level); */
+		if (level_increase)
+		{
+			if (level_count == 1)
+			{
+				Message_StringID(CC_Yellow, GAIN_LEVEL, ConvertArray(check_level, val1));
+				/* Message(15, "You have gained a level! Welcome to level %i!", check_level); */
+			}
+			else
+				Message(CC_Yellow, "Welcome to level %i!", check_level);
 		}
-		if (GetLevel() == check_level){
-			Message_StringID(MT_Experience, LOSE_LEVEL, ConvertArray(check_level, val1));
+		else 
+		{
+			Message_StringID(CC_Yellow, LOSE_LEVEL, ConvertArray(check_level, val1));
 			/* Message(15, "You lost a level! You are now level %i!", check_level); */
 		}
-
 		SetLevel(check_level);
-
 	}
 
 	//If were at max level then stop gaining experience if we make it to the cap
