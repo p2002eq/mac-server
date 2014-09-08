@@ -275,13 +275,13 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	}
 
 	if ((GetLevel() != check_level) && !(check_level >= maxlevel)) {
-		char val1[20]={0};
-		if (GetLevel() == check_level-1){
-			Message_StringID(CC_Yellow, GAIN_LEVEL,ConvertArray(check_level,val1));
+		char val1[20] = { 0 };
+		if (GetLevel() == check_level - 1){
+			Message_StringID(MT_Experience, GAIN_LEVEL, ConvertArray(check_level, val1));
 			/* Message(15, "You have gained a level! Welcome to level %i!", check_level); */
 		}
-		else {
-			Message_StringID(CC_Yellow, LOSE_LEVEL, ConvertArray(check_level, val1));
+		if (GetLevel() == check_level){
+			Message_StringID(MT_Experience, LOSE_LEVEL, ConvertArray(check_level, val1));
 			/* Message(15, "You lost a level! You are now level %i!", check_level); */
 		}
 
