@@ -832,7 +832,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	uint8 handychance = 0;
 	for (itr = merlist.begin(); itr != merlist.end() && i < numItemSlots; ++itr) {
 		MerchantList ml = *itr;
-		//if (merch->CastToNPC()->GetMerchantProbability() > ml.probability)
+		//if (merch->CastToNPC()->GetMerchantProbability() > ml.probability) -- This causes the merchantlist to not display
 			//continue;
 			
 		if(GetLevel() < ml.level_required)

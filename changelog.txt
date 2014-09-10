@@ -5,7 +5,6 @@ demonstar55: Incrase Mob kick/bash timer by 3
 	see: http://www.eqemulator.org/forums/showthread.php?t=38734
 demonstar55: Fix slow effect on NPC special attack reuse timers
 	see: http://www.eqemulator.org/forums/showthread.php?t=38734
-demonstar55: Slow fixes to bots!
 demonstar55: Revamped how NPC attack rate is set
 	SQL: 2014_09_09_attack_delay.sql
 demonstar55: Added attackdelay to #npcedit
@@ -13,9 +12,6 @@ demonstar55: Added attackdelay to #npcedit
 == 09/08/2014 ==
 demonstar55: Fix slow calc
 	see: http://www.eqemulator.org/forums/showthread.php?t=38734
-
-== 09/07/2014 ==
-Akkadius: Fixed ROF Augment item dupe with not checking for available slots properly and adding items to the virtual instance
 
 == 09/06/2014 ==
 Uleat: Tweaked 'Smart' trading code to return main slots before sub slots in stackable and free space search processes. (If enough people ask for it, I'll add an optional rule to allow 'bag packing' - the original implementation behavior)
@@ -25,13 +21,9 @@ Uleat: Fix for cursor item loss when zoning. (Thanks to the other devs who trace
 demonstar55: Fix size getting nuked with lua's SendIllusionPacket
 
 == 09/03/2014 ==
-Secrets: Identified the routines needed to augment items in RoF. Currently, only Insert and Remove are supported. Swap and Destroy do not work due to missing functions related to the cursor.
-demonstar55: Added work around command to show numhits on your buffs (#shownumhits)
 Uleat: Fix for timer issue introduced by Zone::ShutDown() fix.
 
 == 09/02/2014 ==
-Secrets: Identified OP_GuildPromote for RoF clients.
-Secrets: Fixed promotion, demotion, transferring a leader and displaying of client ranks in the Rain of Fear client. The rain of fear client, as such, will only have 3 ranks like the other clients, but supports a theoretical 8 ranks later.
 Secrets/Akkadius: Fixed an issue involving character name lookup in the new DB code.
 demonstar55: crash fix checking DivineAura in hate_list.cpp
 Secrets: Reverted some code that got in the main branch that shouldn't have gotten there.
@@ -134,12 +126,6 @@ to invalid orientation corrections.
 Note: This patch is probably of significant enough importance that admins may wish to manually apply this to older server builds.
 The number of packets reduced per second should be approximately (num_stationary_close_clients * (num_close_clients - 1)). This will
 likely have the most effect in zones like: Nexus, Bazaar, Guilds (Halls) and RAID INSTANCES - where players don't move around a lot.
-
-== 08/15/2014 ==
-Uleat: Reactivated the Bot::Spawn() code for sending post-spawn wear change updates..temporary until I can sort out the proper usage.
-
-== 08/13/2014 ==
-Uleat (Kingly_Krab): Fix for bot chest armor graphic glitch. (fix also caused RoF #wc to work properly)
 
 == 08/02/2014 ==
 Kayen: Implemented spell_news fields
