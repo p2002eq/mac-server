@@ -1776,10 +1776,8 @@ void Mob::Kill() {
 int32 Mob::GetAttackSpeedTimer() {
 	int speed = 4000;
 	float PermaHaste;
-	if(GetHaste() > 0)
+	if(GetHaste())
 		PermaHaste = 1 / (1 + (float)GetHaste()/100);
-	else if(GetHaste() < 0)
-		PermaHaste = 1 * (1 - (float)GetHaste()/100);
 	else
 		PermaHaste = 1.0f;
 
