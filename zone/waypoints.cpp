@@ -567,7 +567,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			{
 				Map::Vertex dest(x_pos, y_pos, z_pos);
 
-				float newz = zone->zonemap->FindBestZ(dest, nullptr) + 2.0f;
+				float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
 				mlog(AI__WAYPOINTS, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,x_pos,y_pos,z_pos);
 
@@ -696,7 +696,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		{
 			Map::Vertex dest(x_pos, y_pos, z_pos);
 
-			float newz = zone->zonemap->FindBestZ(dest, nullptr); + 2.0f;
+			float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
 			mlog(AI__WAYPOINTS, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,x_pos,y_pos,z_pos);
 
@@ -821,7 +821,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 		{
 			Map::Vertex dest(x_pos, y_pos, z_pos);
 
-			float newz = zone->zonemap->FindBestZ(dest, nullptr) + 2.0f;
+			float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
 			mlog(AI__WAYPOINTS, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,x_pos,y_pos,z_pos);
 
