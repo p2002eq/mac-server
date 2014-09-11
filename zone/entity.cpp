@@ -576,7 +576,7 @@ void EntityList::AddCorpse(Corpse *corpse, uint32 in_id)
 void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 {
 	npc->SetID(GetFreeID());
-	//npc->SetMerchantProbability((uint8) MakeRandomInt(0, 99));
+	//npc->SetMerchantProbability((uint8) MakeRandomInt(0, 99)); -- This causes the merchantlist to not display
 	parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
 
 	uint16 emoteid = npc->GetEmoteID();
