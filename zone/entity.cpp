@@ -45,8 +45,8 @@
 #include "guild_mgr.h"
 #include "raids.h"
 #include "quest_parser_collection.h"
-#include "remote_call.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -2215,9 +2215,9 @@ void EntityList::Depop(bool StartSpawnTimer)
 				continue;
 
 			/* Web Interface Depop Entities */
-			std::vector<std::string> params;
+		/*	std::vector<std::string> params;
 			params.push_back(std::to_string((long)pnpc->GetID()));
-			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);
+			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);*/
 
 			pnpc->Depop(StartSpawnTimer);
 		}
@@ -2232,9 +2232,9 @@ void EntityList::DepopAll(int NPCTypeID, bool StartSpawnTimer)
 			pnpc->Depop(StartSpawnTimer); 
 
 			/* Web Interface Depop Entities */
-			std::vector<std::string> params;
+			/*std::vector<std::string> params;
 			params.push_back(std::to_string((long)pnpc->GetID()));
-			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);
+			RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Depop", params);*/
 		}
 	}
 }

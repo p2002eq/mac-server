@@ -58,8 +58,8 @@
 #include "lua_parser.h"
 #include "client_logs.h"
 #include "questmgr.h"
-#include "remote_call.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 #include <iostream>
 #include <string>
@@ -112,7 +112,7 @@ extern void MapOpcodes();
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformZone);
 	set_exception_handler();
-	register_remote_call_handlers();
+	//register_remote_call_handlers();
 
 	const char *zone_name;
 
@@ -446,9 +446,9 @@ int main(int argc, char** argv) {
 				if(quest_timers.Check())
 					quest_manager.Process();
 
-				if(RemoteCallProcessTimer.Check()) {
+			/*	if(RemoteCallProcessTimer.Check()) {
 					RemoteCallSubscriptionHandler::Instance()->Process();
-				}
+				}*/
 			}
 		}
 		DBAsyncWork* dbaw = 0;

@@ -70,8 +70,8 @@
 #include "../common/zone_numbers.h"
 #include "quest_parser_collection.h"
 #include "queryserv.h"
-#include "remote_call.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 extern QueryServ* QServ;
 extern Zone* zone;
@@ -772,7 +772,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	PlayerPositionUpdateClient_Struct* ppu = (PlayerPositionUpdateClient_Struct*)app->pBuffer;
 
 	/* Web Interface */
-	if (IsClient()) {
+/*	if (IsClient()) {
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)zone->GetZoneID()));
 		params.push_back(std::to_string((long)zone->GetInstanceID()));
@@ -783,7 +783,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		params.push_back(std::to_string((double)ppu->z_pos));
 		params.push_back(std::to_string((double)heading));
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
-	}
+	}*/
 
 	if(ppu->spawn_id != GetID()) {
 		// check if the id is for a boat the player is controlling

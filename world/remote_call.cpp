@@ -7,14 +7,14 @@
 #include "world_config.h"
 #include "clientlist.h"
 #include "zonelist.h"
-#include "web_interface.h"
-#include "remote_call.h"
+//#include "web_interface.h"
+//#include "remote_call_subscribe.h"
 #include "zoneserver.h"
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
-extern WebInterfaceConnection WILink;
-std::map<std::string, RemoteCallHandler> remote_call_methods;
+//extern WebInterfaceConnection WILink;
+//std::map<std::string, RemoteCallHandler> remote_call_methods;
 
 void RemoteCallResponse(const std::string &connection_id, const std::string &request_id, const std::map<std::string, std::string> &res, const std::string &error) {
 	uint32 sz = (uint32)(connection_id.size() + request_id.size() + error.size() + 3 + 16);
@@ -41,7 +41,7 @@ void RemoteCallResponse(const std::string &connection_id, const std::string &req
 		++iter;
 	}
 
-	WILink.SendPacket(pack);
+	//WILink.SendPacket(pack);
 	safe_delete(pack);
 }
 
