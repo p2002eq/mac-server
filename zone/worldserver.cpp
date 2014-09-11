@@ -51,8 +51,8 @@
 #include "../common/rulesys.h"
 #include "titles.h"
 #include "qglobals.h"
-#include "remote_call.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 extern EntityList entity_list;
 extern Zone* zone;
@@ -63,7 +63,7 @@ extern NetConnection net;
 extern PetitionList petition_list;
 extern uint32 numclients;
 extern volatile bool RunLoops;
-extern std::map<std::string, RemoteCallHandler> remote_call_methods;
+//extern std::map<std::string, RemoteCallHandler> remote_call_methods;
 
 WorldServer::WorldServer()
 : WorldConnection(EmuTCPConnection::packetModeZone)
@@ -1523,7 +1523,7 @@ void WorldServer::Process() {
 			}
 			break;
 		}
-		case ServerOP_WIRemoteCall: {
+	/*	case ServerOP_WIRemoteCall: {
 			char *id = nullptr;
 			char *session_id = nullptr;
 			char *method = nullptr;
@@ -1566,7 +1566,7 @@ void WorldServer::Process() {
 			}
 			
 			break;
-		}	
+		}*/
 		default: {
 			std::cout << " Unknown ZSopcode:" << (int)pack->opcode;
 			std::cout << " size:" << pack->size << std::endl;

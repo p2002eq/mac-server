@@ -34,7 +34,7 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
-#include "web_interface.h"
+//#include "web_interface.h"
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
@@ -43,7 +43,7 @@ extern LoginServerList loginserverlist;
 extern volatile bool RunLoops;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
-extern WebInterfaceConnection WILink;
+//extern WebInterfaceConnection WILink;
 void CatchSignal(int sig_num);
 
 ZoneServer::ZoneServer(EmuTCPConnection* itcpc)
@@ -1218,13 +1218,13 @@ bool ZoneServer::Process() {
 				QSLink.SendPacket(pack);
 				break;
 			}
-			case ServerOP_WIRemoteCallResponse:
+			/*case ServerOP_WIRemoteCallResponse:
 			case ServerOP_WIClientSession:
 			case ServerOP_WIRemoteCallToClient:
 			{
 				WILink.SendPacket(pack);
 				break;
-			}
+			}*/
 			case ServerOP_CZSignalClientByName:
 			case ServerOP_CZMessagePlayer:
 			case ServerOP_CZSignalClient:

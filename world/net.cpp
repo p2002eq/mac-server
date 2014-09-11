@@ -83,8 +83,8 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
-#include "web_interface.h"
-#include "remote_call.h"
+//#include "web_interface.h"
+//#include "remote_call_subscribe.h"
 
 TimeoutManager timeout_manager;
 EQStreamFactory eqsf(WorldStream,9000);
@@ -95,7 +95,7 @@ LoginServerList loginserverlist;
 EQWHTTPServer http_server;
 UCSConnection UCSLink;
 QueryServConnection QSLink;
-WebInterfaceConnection WILink;
+//WebInterfaceConnection WILink;
 LauncherList launcher_list;
 DBAsync *dbasync = nullptr;
 volatile bool RunLoops = true;
@@ -110,7 +110,7 @@ void CatchSignal(int sig_num);
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
 	set_exception_handler();
-	register_remote_call_handlers();
+//	register_remote_call_handlers();
 
 	// Load server configuration
 	_log(WORLD__INIT, "Loading server configuration..");
@@ -453,7 +453,7 @@ int main(int argc, char** argv) {
 
 		QSLink.Process();
 
-		WILink.Process();
+		//WILink.Process();
 
 		if (InterserverTimer.Check()) {
 			InterserverTimer.Start();

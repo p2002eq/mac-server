@@ -58,8 +58,8 @@
 #include "../common/rulesys.h"
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
-#include "remote_call.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -645,7 +645,7 @@ void Zone::Shutdown(bool quite)
 		LogFile->write(EQEMuLog::Normal, "Zone shutdown: going to sleep");
 	ZoneLoaded = false;
 
-	RemoteCallSubscriptionHandler::Instance()->ClearAllConnections();
+//	RemoteCallSubscriptionHandler::Instance()->ClearAllConnections();
 	zone->ResetAuth();
 	safe_delete(zone);
 	dbasync->CommitWrites();

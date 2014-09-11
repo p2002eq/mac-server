@@ -19,11 +19,11 @@
 #include "masterentity.h"
 #include "../common/spdat.h"
 #include "string_ids.h"
-#include "remote_call.h"
+//#include "remote_call_subscribe.h"
 #include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "../common/string_util.h"
-#include "remote_call_subscribe.h"
+//#include "remote_call_subscribe.h"
 
 #include <sstream>
 #include <math.h>
@@ -1192,7 +1192,7 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
 		params.push_back(std::to_string((double)y_pos));
 		params.push_back(std::to_string((double)z_pos));
 		params.push_back(std::to_string((double)heading));
-		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+		//RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
 	}
 }
 
