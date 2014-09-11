@@ -1,7 +1,7 @@
 #ifndef MAC_CONSTANTS_H_
 #define MAC_CONSTANTS_H_
 
-#include "../common/types.h"
+#include "../types.h"
 
 namespace MAC {
 	namespace maps {
