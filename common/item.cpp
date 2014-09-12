@@ -340,7 +340,7 @@ ItemInst* Inventory::PopItem(int16 slot_id)
 	if (slot_id == MainCursor) {
 		p = m_cursor.pop();
 	}
-	else if ((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END) || (slot_id == MainPowerSource)) {
+	else if ((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) {
 		p = m_worn[slot_id];
 		m_worn.erase(slot_id);
 	}
@@ -1452,7 +1452,7 @@ bool ItemInst::IsEquipable(int16 slot_id) const
 			return true;
 	}
 
-	if ((uint16)slot_id <= EmuConstants::EQUIPMENT_END+1) {
+	if ((uint16)slot_id <= EmuConstants::EQUIPMENT_END) {
 		uint32 slot_mask = (1 << slot_id);
 		if (slot_mask & m_item->Slots)
 			return true;
