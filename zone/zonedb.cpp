@@ -148,7 +148,6 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 
     //not in the DB yet:
     zone_data->gravity = 0.4;
-    allow_mercs = true;
 
     int bindable = 0;
     bindable = atoi(row[31]);
@@ -445,7 +444,7 @@ void ZoneDatabase::LoadWorldContainer(uint32 parentid, ItemInst* container)
 		return;
 	}
 
-	std::string query = StringFormat("SELECT bagidx, itemid, charges, augslot1, augslot2, augslot3, augslot4, augslot5 "
+	std::string query = StringFormat("SELECT bagidx, itemid, charges "
                                     "FROM object_contents WHERE parentid = %i", parentid);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -457,18 +456,9 @@ void ZoneDatabase::LoadWorldContainer(uint32 parentid, ItemInst* container)
         uint8 index = (uint8)atoi(row[0]);
         uint32 item_id = (uint32)atoi(row[1]);
         int8 charges = (int8)atoi(row[2]);
-        uint32 aug[EmuConstants::ITEM_COMMON_SIZE];
-        aug[0]	= (uint32)atoi(row[3]);
-        aug[1]	= (uint32)atoi(row[4]);
-        aug[2]	= (uint32)atoi(row[5]);
-        aug[3]	= (uint32)atoi(row[6]);
-        aug[4]	= (uint32)atoi(row[7]);
 
         ItemInst* inst = database.CreateItem(item_id, charges);
         if (inst && inst->GetItem()->ItemClass == ItemClassCommon) {
-            for(int i = AUG_BEGIN; i < EmuConstants::ITEM_COMMON_SIZE; i++)
-                if (aug[i])
-                    inst->PutAugment(&database, i, aug[i]);
             // Put item inside world container
             container->PutItem(index, *inst);
             safe_delete(inst);
@@ -496,21 +486,11 @@ void ZoneDatabase::SaveWorldContainer(uint32 zone_id, uint32 parent_id, const It
             continue;
 
         uint32 item_id = inst->GetItem()->ID;
-        uint32 augslot[EmuConstants::ITEM_COMMON_SIZE] = { NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM };
-
-        if (inst->IsType(ItemClassCommon)) {
-            for(int i = AUG_BEGIN; i < EmuConstants::ITEM_COMMON_SIZE; i++) {
-                ItemInst *auginst=inst->GetAugment(i);
-                augslot[i]=(auginst && auginst->GetItem()) ? auginst->GetItem()->ID : 0;
-            }
-        }
 
         std::string query = StringFormat("REPLACE INTO object_contents "
-                                        "(zoneid, parentid, bagidx, itemid, charges, "
-                                        "augslot1, augslot2, augslot3, augslot4, augslot5, droptime) "
-                                        "VALUES (%i, %i, %i, %i, %i, %i, %i, %i, %i, %i, now())",
-                                        zone_id, parent_id, index, item_id, inst->GetCharges(),
-                                        augslot[0], augslot[1], augslot[2], augslot[3], augslot[4]);
+                                        "(zoneid, parentid, bagidx, itemid, charges, droptime) "
+                                        "VALUES (%i, %i, %i, %i, %i, now())",
+                                        zone_id, parent_id, index, item_id, inst->GetCharges());
         auto results = QueryDatabase(query);
         if (!results.Success())
             LogFile->write(EQEMuLog::Error, "Error in ZoneDatabase::SaveWorldContainer: %s", results.ErrorMessage().c_str());
@@ -922,8 +902,8 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
     std::string query = StringFormat("SELECT npc_types.id, npc_types.name, npc_types.level, npc_types.race, "
                         "npc_types.class, npc_types.hp, npc_types.mana, npc_types.gender, "
                         "npc_types.texture, npc_types.helmtexture, npc_types.size, "
-                        "npc_types.loottable_id, npc_types.merchant_id, npc_types.alt_currency_id, "
-                        "npc_types.adventure_template_id, npc_types.trap_template, npc_types.attack_speed, "
+                        "npc_types.loottable_id, npc_types.merchant_id, "
+                        "npc_types.trap_template, npc_types.attack_speed, "
                         "npc_types.STR, npc_types.STA, npc_types.DEX, npc_types.AGI, npc_types._INT, "
                         "npc_types.WIS, npc_types.CHA, npc_types.MR, npc_types.CR, npc_types.DR, "
                         "npc_types.FR, npc_types.PR, npc_types.Corrup, npc_types.PhR,"
@@ -974,74 +954,73 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->size = atof(row[10]);
         tmpNPCType->loottable_id = atoi(row[11]);
 		tmpNPCType->merchanttype = atoi(row[12]);
-		tmpNPCType->alt_currency_type = atoi(row[13]);
-		tmpNPCType->adventure_template = atoi(row[14]);
-		tmpNPCType->trap_template = atoi(row[15]);
-		tmpNPCType->attack_speed = atof(row[16]);
-		tmpNPCType->STR = atoi(row[17]);
-		tmpNPCType->STA = atoi(row[18]);
-		tmpNPCType->DEX = atoi(row[19]);
-		tmpNPCType->AGI = atoi(row[20]);
-		tmpNPCType->INT = atoi(row[21]);
-		tmpNPCType->WIS = atoi(row[22]);
-		tmpNPCType->CHA = atoi(row[23]);
-		tmpNPCType->MR = atoi(row[24]);
-		tmpNPCType->CR = atoi(row[25]);
-		tmpNPCType->DR = atoi(row[26]);
-		tmpNPCType->FR = atoi(row[27]);
-		tmpNPCType->PR = atoi(row[28]);
-		tmpNPCType->Corrup = atoi(row[29]);
-		tmpNPCType->PhR = atoi(row[30]);
-		tmpNPCType->min_dmg = atoi(row[31]);
-		tmpNPCType->max_dmg = atoi(row[32]);
-		tmpNPCType->attack_count = atoi(row[33]);
-		strn0cpy(tmpNPCType->special_abilities, row[34], 512);
-		tmpNPCType->npc_spells_id = atoi(row[35]);
-		tmpNPCType->npc_spells_effects_id = atoi(row[36]);
-		tmpNPCType->d_meele_texture1 = atoi(row[37]);
-		tmpNPCType->d_meele_texture2 = atoi(row[38]);
-		strn0cpy(tmpNPCType->ammo_idfile, row[39], 30);
-		tmpNPCType->prim_melee_type = atoi(row[40]);
-		tmpNPCType->sec_melee_type = atoi(row[41]);
-		tmpNPCType->ranged_type = atoi(row[42]);
-		tmpNPCType->runspeed= atof(row[43]);
-		tmpNPCType->findable = atoi(row[44]) == 0? false : true;
-		tmpNPCType->trackable = atoi(row[45]) == 0? false : true;
-		tmpNPCType->hp_regen = atoi(row[46]);
-		tmpNPCType->mana_regen = atoi(row[47]);
+
+		tmpNPCType->trap_template = atoi(row[13]);
+		tmpNPCType->attack_speed = atof(row[14]);
+		tmpNPCType->STR = atoi(row[15]);
+		tmpNPCType->STA = atoi(row[16]);
+		tmpNPCType->DEX = atoi(row[17]);
+		tmpNPCType->AGI = atoi(row[18]);
+		tmpNPCType->INT = atoi(row[19]);
+		tmpNPCType->WIS = atoi(row[20]);
+		tmpNPCType->CHA = atoi(row[21]);
+		tmpNPCType->MR = atoi(row[22]);
+		tmpNPCType->CR = atoi(row[23]);
+		tmpNPCType->DR = atoi(row[24]);
+		tmpNPCType->FR = atoi(row[25]);
+		tmpNPCType->PR = atoi(row[26]);
+		tmpNPCType->Corrup = atoi(row[27]);
+		tmpNPCType->PhR = atoi(row[28]);
+		tmpNPCType->min_dmg = atoi(row[29]);
+		tmpNPCType->max_dmg = atoi(row[30]);
+		tmpNPCType->attack_count = atoi(row[31]);
+		strn0cpy(tmpNPCType->special_abilities, row[32], 512);
+		tmpNPCType->npc_spells_id = atoi(row[33]);
+		tmpNPCType->npc_spells_effects_id = atoi(row[34]);
+		tmpNPCType->d_meele_texture1 = atoi(row[35]);
+		tmpNPCType->d_meele_texture2 = atoi(row[36]);
+		strn0cpy(tmpNPCType->ammo_idfile, row[37], 30);
+		tmpNPCType->prim_melee_type = atoi(row[38]);
+		tmpNPCType->sec_melee_type = atoi(row[39]);
+		tmpNPCType->ranged_type = atoi(row[40]);
+		tmpNPCType->runspeed= atof(row[41]);
+		tmpNPCType->findable = atoi(row[42]) == 0? false : true;
+		tmpNPCType->trackable = atoi(row[43]) == 0? false : true;
+		tmpNPCType->hp_regen = atoi(row[44]);
+		tmpNPCType->mana_regen = atoi(row[45]);
 
 		// set defaultvalue for aggroradius
-        tmpNPCType->aggroradius = (int32)atoi(row[48]);
+        tmpNPCType->aggroradius = (int32)atoi(row[46]);
 		if (tmpNPCType->aggroradius <= 0)
 			tmpNPCType->aggroradius = 70;
 
-		tmpNPCType->assistradius = (int32)atoi(row[49]);
+		tmpNPCType->assistradius = (int32)atoi(row[47]);
 		if (tmpNPCType->assistradius <= 0)
 			tmpNPCType->assistradius = tmpNPCType->aggroradius;
 
 		if (row[50] && strlen(row[50]))
-            tmpNPCType->bodytype = (uint8)atoi(row[50]);
+            tmpNPCType->bodytype = (uint8)atoi(row[48]);
         else
             tmpNPCType->bodytype = 0;
 
-		tmpNPCType->npc_faction_id = atoi(row[51]);
+		tmpNPCType->npc_faction_id = atoi(row[49]);
 
-		tmpNPCType->luclinface = atoi(row[52]);
-		tmpNPCType->hairstyle = atoi(row[53]);
-		tmpNPCType->haircolor = atoi(row[54]);
-		tmpNPCType->eyecolor1 = atoi(row[55]);
-		tmpNPCType->eyecolor2 = atoi(row[56]);
-		tmpNPCType->beardcolor = atoi(row[57]);
-		tmpNPCType->beard = atoi(row[58]);
-		tmpNPCType->drakkin_heritage = atoi(row[59]);
-		tmpNPCType->drakkin_tattoo = atoi(row[60]);
-		tmpNPCType->drakkin_details = atoi(row[61]);
+		tmpNPCType->luclinface = atoi(row[50]);
+		tmpNPCType->hairstyle = atoi(row[51]);
+		tmpNPCType->haircolor = atoi(row[52]);
+		tmpNPCType->eyecolor1 = atoi(row[53]);
+		tmpNPCType->eyecolor2 = atoi(row[54]);
+		tmpNPCType->beardcolor = atoi(row[55]);
+		tmpNPCType->beard = atoi(row[56]);
+		tmpNPCType->drakkin_heritage = atoi(row[57]);
+		tmpNPCType->drakkin_tattoo = atoi(row[58]);
+		tmpNPCType->drakkin_details = atoi(row[59]);
 
-		uint32 armor_tint_id = atoi(row[62]);
+		uint32 armor_tint_id = atoi(row[60]);
 
-		tmpNPCType->armor_tint[0] = (atoi(row[63]) & 0xFF) << 16;
-        tmpNPCType->armor_tint[0] |= (atoi(row[64]) & 0xFF) << 8;
-		tmpNPCType->armor_tint[0] |= (atoi(row[65]) & 0xFF);
+		tmpNPCType->armor_tint[0] = (atoi(row[61]) & 0xFF) << 16;
+        tmpNPCType->armor_tint[0] |= (atoi(row[62]) & 0xFF) << 8;
+		tmpNPCType->armor_tint[0] |= (atoi(row[63]) & 0xFF);
 		tmpNPCType->armor_tint[0] |= (tmpNPCType->armor_tint[0]) ? (0xFF << 24) : 0;
 
 		if (armor_tint_id == 0)
@@ -1076,31 +1055,31 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
         } else
             armor_tint_id = 0;
 
-		tmpNPCType->see_invis = atoi(row[66]);
-		tmpNPCType->see_invis_undead = atoi(row[67]) == 0? false: true;	// Set see_invis_undead flag
+		tmpNPCType->see_invis = atoi(row[64]);
+		tmpNPCType->see_invis_undead = atoi(row[65]) == 0? false: true;	// Set see_invis_undead flag
 		if (row[68] != nullptr)
-			strn0cpy(tmpNPCType->lastname, row[68], 32);
+			strn0cpy(tmpNPCType->lastname, row[66], 32);
 
-		tmpNPCType->qglobal = atoi(row[69]) == 0? false: true;	// qglobal
-		tmpNPCType->AC = atoi(row[70]);
-		tmpNPCType->npc_aggro = atoi(row[71]) == 0? false: true;
-		tmpNPCType->spawn_limit = atoi(row[72]);
-		tmpNPCType->see_hide = atoi(row[73]) == 0? false: true;
-		tmpNPCType->see_improved_hide = atoi(row[74]) == 0? false: true;
-		tmpNPCType->ATK = atoi(row[75]);
-		tmpNPCType->accuracy_rating = atoi(row[76]);
-		tmpNPCType->avoidance_rating = atoi(row[77]);
-		tmpNPCType->slow_mitigation = atoi(row[78]);
-		tmpNPCType->maxlevel = atoi(row[79]);
-		tmpNPCType->scalerate = atoi(row[80]);
-		tmpNPCType->private_corpse = atoi(row[81]) == 1 ? true: false;
-		tmpNPCType->unique_spawn_by_name = atoi(row[82]) == 1 ? true: false;
-		tmpNPCType->underwater = atoi(row[83]) == 1 ? true: false;
-		tmpNPCType->emoteid = atoi(row[84]);
-		tmpNPCType->spellscale = atoi(row[85]);
-		tmpNPCType->healscale = atoi(row[86]);
-		tmpNPCType->no_target_hotkey = atoi(row[87]) == 1 ? true: false;
-		tmpNPCType->raid_target = atoi(row[88]) == 0 ? false: true;
+		tmpNPCType->qglobal = atoi(row[67]) == 0? false: true;	// qglobal
+		tmpNPCType->AC = atoi(row[68]);
+		tmpNPCType->npc_aggro = atoi(row[69]) == 0? false: true;
+		tmpNPCType->spawn_limit = atoi(row[70]);
+		tmpNPCType->see_hide = atoi(row[71]) == 0? false: true;
+		tmpNPCType->see_improved_hide = atoi(row[72]) == 0? false: true;
+		tmpNPCType->ATK = atoi(row[73]);
+		tmpNPCType->accuracy_rating = atoi(row[74]);
+		tmpNPCType->avoidance_rating = atoi(row[75]);
+		tmpNPCType->slow_mitigation = atoi(row[76]);
+		tmpNPCType->maxlevel = atoi(row[77]);
+		tmpNPCType->scalerate = atoi(row[78]);
+		tmpNPCType->private_corpse = atoi(row[79]) == 1 ? true: false;
+		tmpNPCType->unique_spawn_by_name = atoi(row[80]) == 1 ? true: false;
+		tmpNPCType->underwater = atoi(row[81]) == 1 ? true: false;
+		tmpNPCType->emoteid = atoi(row[82]);
+		tmpNPCType->spellscale = atoi(row[83]);
+		tmpNPCType->healscale = atoi(row[84]);
+		tmpNPCType->no_target_hotkey = atoi(row[85]) == 1 ? true: false;
+		tmpNPCType->raid_target = atoi(row[86]) == 0 ? false: true;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1117,8 +1096,6 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 	return npc;
 }
 
-	return atoi(row[0]);
-}
 
 void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges){
 
