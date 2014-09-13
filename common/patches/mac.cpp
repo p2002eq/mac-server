@@ -1611,12 +1611,9 @@ ENCODE(OP_LogServer) {
 
 	ENCODE_LENGTH_EXACT(LogServer_Struct);
 	SETUP_DIRECT_ENCODE(LogServer_Struct, structs::LogServer_Struct);
-	strcpy(eq->worldshortname, "alkabor");
-	strcpy(eq->unknown096, "pacman");
 	OUT(enable_pvp);
 	OUT(enable_FV);
 	eq->NameGen = 1;
-	eq->Gibberish = 1;
 	eq->ProfanityFilter = 0;
 	FINISH_ENCODE();
 }
