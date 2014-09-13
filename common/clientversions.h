@@ -12,9 +12,9 @@ static const uint32 BIT_AllClients = 0xFFFFFFFF;
 
 typedef enum {
 	EQClientUnknown = 0,
-	EQClientUnused,
+	//EQClientUnused, //If we are going to add an older client before mac, it will need to be added here and to eq_dictionary :(
 	EQClientMac,
-	EQClientEvolution,
+	//EQClientEvolution,
 	_EQClientCount,			// place new clients before this point (preferably, in release/attribute order)
 	
 	// Values below are not implemented, as yet...
