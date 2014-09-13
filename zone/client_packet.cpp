@@ -2067,7 +2067,7 @@ void Client::Handle_OP_MoveCoin(const EQApplicationPacket *app)
 		return;
 	}
 
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	OPMoveCoin(app);
@@ -2107,7 +2107,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 
 	if(last_used_slot == mi->to_slot)
 	{
-		if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+		if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		{
 			_log(INVENTORY__ERROR, "WARNING: To slot equals last used slot (%i) and timer was not expired.", last_used_slot);
 			return;
@@ -2254,7 +2254,7 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 		Message(13,"Ability recovery time not yet met.");
 		return;
 	}
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	int reuse = FeignDeathReuseTime;
@@ -2365,7 +2365,7 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 		return;
 	}
 
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	if(!p_timers.Expired(&database, pTimerHide, false)) {
@@ -2488,7 +2488,7 @@ void Client::Handle_OP_Save(const EQApplicationPacket *app)
 
 void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 {
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	if (app->size != sizeof(Who_All_Struct)) {
@@ -5020,7 +5020,7 @@ void Client::Handle_OP_GMEmoteZone(const EQApplicationPacket *app)
 
 void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) {
 
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled()  && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	if(app->size != sizeof(Inspect_Struct)) {
@@ -6555,6 +6555,16 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 		}
 	}
 
+	//Get exact Mac client version
+	MacClientVersion = 0;
+	if(GetClientVersion() == EQClientMac)
+	{
+		MacClientVersion = database.GetMacClientVersion(LSAccountID());
+		if(GetMacClientVersion() != 0 && GetMacClientVersion() != BIT_MacPC)
+		{
+			ClientVersionBit = MacClientVersion;
+		}
+	}
 	// This should be a part of the PlayerProfile BLOB, but we don't want to modify that
 	// The player inspect message is retrieved from the db on load, then saved as new updates come in..no mods to Client::Save()
 
@@ -6948,12 +6958,12 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 			if(haveskill > 0)
 			{
 				pps->skills[s] = 254;
-				//If we never get the skill, value is 255. If we qualify for it AND do not need to train it it's 0, if we get it but don't yet qualify or it needs to be trained it's 254.
+				//If we never get the skill, value is 255. If we qualify for it AND do not need to train it it's 0, 
+				//if we get it but don't yet qualify or it needs to be trained it's 254.
 				uint16 t_level = SkillTrainLevel(currentskill, GetClass());
 				if(t_level <= GetLevel())
 				{
-					//Meditate does not need to be trained.
-					if(t_level == 1)	// || currentskill == SkillMeditate)
+					if(t_level == 1)
 						pps->skills[s] = 0;
 				}
 			}
@@ -7282,10 +7292,7 @@ void Client::CompleteConnect() {
 		zone->weatherSend();
 
 	TotalKarma = database.GetKarma(AccountID());
-	if(GetClientVersion() > EQClientMac)
-	{
-		SendDisciplineTimers();
-	}
+	SendDisciplineTimers();
 
 	parse->EventPlayer(EVENT_ENTER_ZONE, this, "", 0);
 
@@ -7309,6 +7316,31 @@ void Client::CompleteConnect() {
 	//Send a message until we can figure out how to send these items to the client.
 	if(itemsinabag)
 		Message(CC_Red, "You have zoned with items in a bag on your cursor. Please put the bag in your inventory and camp or zone to avoid desyncs!");
+
+	if(GetClientVersion() == EQClientMac)
+	{
+		std::string string("Mac");
+		std::string type;
+		if(GetClientVersionBit() == BIT_MacIntel)
+			type = "Intel";
+		else if(GetClientVersionBit() == BIT_MacPPC)
+			type = "PowerPC";
+		else
+			type = "PC";
+
+		Message(CC_Yellow, "Debug: Your client version is: %s. Your client type is: %s.", string.c_str(), type.c_str());
+
+	}
+	else
+	{
+		std::string string;
+		if(GetClientVersion() == EQClientEvolution)
+			string = "Evolution";
+		else
+			string = "Unknown";
+
+		Message(CC_Yellow, "Debug: Your client version is: %s.", string);	
+	}
 
 }
 
@@ -8288,7 +8320,7 @@ void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
 		}
 	}
 
-	if(GetClientVersion() > EQClientMac || message == true)
+	if(message == true)
 	{
 		EQApplicationPacket *outapp = new EQApplicationPacket(OP_InterruptCast, sizeof(InterruptCast_Struct));
 		InterruptCast_Struct* ic = (InterruptCast_Struct*) outapp->pBuffer;
