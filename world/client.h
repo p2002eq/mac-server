@@ -83,6 +83,7 @@ private:
 
 	bool StartInTutorial;
 	uint32 ClientVersionBit;
+	uint8  MacClientVersion;
 	bool OPCharCreate(char *name, CharCreate_Struct *cc);
 
 	void SetClassStartingSkills( PlayerProfile_Struct *pp );

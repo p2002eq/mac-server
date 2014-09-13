@@ -34,6 +34,15 @@ enum ClientVersion
 	cv_old
 };
 
+enum ClientBitVersion
+{
+	cbv_unused = 1,
+	cbv_macpc = 2,
+	cbv_macintel = 4,
+	cbv_macppc = 8,
+	cbv_evolution = 16
+};
+
 enum ClientStatus
 {
 	cs_not_sent_session_ready,

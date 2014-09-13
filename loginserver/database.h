@@ -75,6 +75,11 @@ public:
 	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason) { }
 
 	/**
+	* Updates or creates the client version entry
+	*/
+	virtual void UpdateClientVersion(unsigned int account_id, unsigned int version) { }
+
+	/**
 	* Updates the ip address of the world with account id = id
 	*/
 	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address) { }

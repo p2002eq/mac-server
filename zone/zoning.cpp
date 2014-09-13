@@ -48,10 +48,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 
 	uint16 target_zone_id = 0;
 	uint16 target_instance_id = 0;
-	if(eqs->ClientVersion() != EQClientMac)
-	{
-		target_instance_id = zc->instanceID;
-	}
 	ZonePoint* zone_point = nullptr;
 	//figure out where they are going.
 	if(zc->zoneID == 0) {
@@ -88,11 +84,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 				//unable to find a zone point... is there anything else
 				//that can be a valid un-zolicited zone request?
 
-				//EQMac ChangeZone doesn't have coords.
-				if(eqs->ClientVersion() != EQClientMac)
-				{
-					CheatDetected(MQZone, zc->x, zc->y, zc->z);
-				}
 				Message(13, "Invalid unsolicited zone request.");
 				LogFile->write(EQEMuLog::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
 				SendZoneCancel(zc);
@@ -122,11 +113,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 			//then we assume this is invalid.
 			if(!zone_point || zone_point->target_zone_id != target_zone_id) {
 				LogFile->write(EQEMuLog::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
-				//EQMac ChangeZone doesn't have coords.
-				if(eqs->ClientVersion() != EQClientMac)
-				{
-					CheatDetected(MQGate, zc->x, zc->y, zc->z);
-				}
 				SendZoneCancel(zc);
 				return;
 			}
