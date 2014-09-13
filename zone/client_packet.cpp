@@ -7339,7 +7339,7 @@ void Client::CompleteConnect() {
 		else
 			string = "Unknown";
 
-		Message(CC_Yellow, "Debug: Your client version is: %s.", string);	
+		Message(CC_Yellow, "Debug: Your client version is: %s.", string.c_str());	
 	}
 
 }
