@@ -147,12 +147,10 @@ void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount) {
     for(int i = 0; i < detailCount; i++) {
         query = StringFormat("INSERT INTO `qs_player_trade_record_entries` SET `event_id` = '%i', "
                             "`from_id` = '%i', `from_slot` = '%i', `to_id` = '%i', `to_slot` = '%i', "
-                            "`item_id` = '%i', `charges` = '%i', `aug_1` = '%i', `aug_2` = '%i', "
-                            "`aug_3` = '%i', `aug_4` = '%i', `aug_5` = '%i'",
+                            "`item_id` = '%i', `charges` = '%i'",
                             lastIndex, QS->items[i].from_id, QS->items[i].from_slot,
                             QS->items[i].to_id, QS->items[i].to_slot, QS->items[i].item_id,
-                            QS->items[i].charges, QS->items[i].aug_1, QS->items[i].aug_2,
-                            QS->items[i].aug_3, QS->items[i].aug_4, QS->items[i].aug_5);
+                            QS->items[i].charges);
         results = QueryDatabase(query);
         if(!results.Success()) {
             _log(QUERYSERV__ERROR, "Failed Trade Log Record Entry Insert: %s", results.ErrorMessage().c_str());
@@ -190,12 +188,9 @@ void Database::LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 detailCount)
     for(int i = 0; i < detailCount; i++) {
         query = StringFormat("INSERT INTO `qs_player_handin_record_entries` SET `event_id` = '%i', "
                             "`action_type` = '%s', `char_slot` = '%i', `item_id` = '%i', "
-                            "`charges` = '%i', `aug_1` = '%i', `aug_2` = '%i', `aug_3` = '%i', "
-                            "`aug_4` = '%i', `aug_5` = '%i'",
+                            "`charges` = '%i'",
                             lastIndex, QS->items[i].action_type, QS->items[i].char_slot,
-                            QS->items[i].item_id, QS->items[i].charges, QS->items[i].aug_1,
-                            QS->items[i].aug_2, QS->items[i].aug_3, QS->items[i].aug_4,
-                            QS->items[i].aug_5);
+                            QS->items[i].item_id, QS->items[i].charges);
         if(!results.Success()) {
             _log(QUERYSERV__ERROR, "Failed Handin Log Record Entry Insert: %s", results.ErrorMessage().c_str());
             _log(QUERYSERV__ERROR, "%s", query.c_str());
@@ -253,11 +248,8 @@ void Database::LogPlayerDelete(QSPlayerLogDelete_Struct* QS, uint32 items) {
 
     for(int i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_player_delete_record_entries` SET `event_id` = '%i', "
-                            "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i', `aug_1` = '%i', "
-                            "`aug_2` = '%i', `aug_3` = '%i', `aug_4` = '%i', `aug_5` = '%i'",
-                            lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges,
-                            QS->items[i].aug_1, QS->items[i].aug_2, QS->items[i].aug_3, QS->items[i].aug_4,
-                            QS->items[i].aug_5);
+                            "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
+                            lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges);
         results = QueryDatabase(query);
         if(!results.Success()) {
             _log(QUERYSERV__ERROR, "Failed Delete Log Record Entry Insert: %s", results.ErrorMessage().c_str());
@@ -289,11 +281,9 @@ void Database::LogPlayerMove(QSPlayerLogMove_Struct* QS, uint32 items) {
 
     for(int i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_player_move_record_entries` SET `event_id` = '%i', "
-                            "`from_slot` = '%i', `to_slot` = '%i', `item_id` = '%i', `charges` = '%i', "
-                            "`aug_1` = '%i', `aug_2` = '%i', `aug_3` = '%i', `aug_4` = '%i', `aug_5` = '%i'",
+                            "`from_slot` = '%i', `to_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
                             lastIndex, QS->items[i].from_slot, QS->items[i].to_slot, QS->items[i].item_id,
-                            QS->items[i].charges, QS->items[i].aug_1, QS->items[i].aug_2,
-                            QS->items[i].aug_3, QS->items[i].aug_4, QS->items[i].aug_5);
+                            QS->items[i].charges);
         results = QueryDatabase(query);
         if(!results.Success()) {
             _log(QUERYSERV__ERROR, "Failed Move Log Record Entry Insert: %s", results.ErrorMessage().c_str());
@@ -330,11 +320,8 @@ void Database::LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint3
 
     for(int i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_merchant_transaction_record_entries` SET `event_id` = '%i', "
-                            "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i', `aug_1` = '%i', "
-                            "`aug_2` = '%i', `aug_3` = '%i', `aug_4` = '%i', `aug_5` = '%i'",
-                            lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges,
-                            QS->items[i].aug_1, QS->items[i].aug_2, QS->items[i].aug_3, QS->items[i].aug_4,
-                            QS->items[i].aug_5);
+                            "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
+                            lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges);
         results = QueryDatabase(query);
         if(!results.Success()) {
             _log(QUERYSERV__ERROR, "Failed Transaction Log Record Entry Insert: %s", results.ErrorMessage().c_str());
