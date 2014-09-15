@@ -1971,8 +1971,8 @@ bool ZoneDatabase::GetFactionIdsForNPC(uint32 nfl_id, std::list<struct NPCFactio
 }
 
 void ZoneDatabase::StoreCharacterLookup(uint32 char_id) {
-	std::string c_lookup = StringFormat("REPLACE INTO `character_lookup` (id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, lfp, lfg, mailkey, xtargets, firstlogon, inspectmessage)"
-		" SELECT id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, lfp, lfg, mailkey, xtargets, firstlogon, inspectmessage"
+	std::string c_lookup = StringFormat("REPLACE INTO `character_lookup` (id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, mailkey, firstlogon, inspectmessage)"
+		" SELECT id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, mailkey, firstlogon, inspectmessage"
 		" FROM `character_` "
 		" WHERE `id` = %i ", char_id);  
 	QueryDatabase(c_lookup); 
