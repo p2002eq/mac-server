@@ -97,31 +97,6 @@ Database::~Database()
 {
 }
 
-void Database::AddSpeech(const char* from, const char* to, const char* message, uint16 minstatus, uint32 guilddbid, uint8 type) {
-
-	char *escapedFrom = new char[strlen(from) * 2 + 1];
-	char *escapedTo = new char[strlen(to) * 2 + 1];
-	char *escapedMessage = new char[strlen(message) * 2 + 1];
-	DoEscapeString(escapedFrom, from, strlen(from));
-	DoEscapeString(escapedTo, to, strlen(to));
-	DoEscapeString(escapedMessage, message, strlen(message));
-
-    std::string query = StringFormat("INSERT INTO `qs_player_speech` "
-                                    "SET `from` = '%s', `to` = '%s', `message`='%s', "
-                                    "`minstatus`='%i', `guilddbid`='%i', `type`='%i'",
-                                    escapedFrom, escapedTo, escapedMessage, minstatus, guilddbid, type);
-    safe_delete_array(escapedFrom);
-	safe_delete_array(escapedTo);
-	safe_delete_array(escapedMessage);
-	auto results = QueryDatabase(query);
-	if(!results.Success()) {
-		_log(QUERYSERV__ERROR, "Failed Speech Entry Insert: %s", results.ErrorMessage().c_str());
-		_log(QUERYSERV__ERROR, "%s", query.c_str());
-	}
-
-
-}
-
 void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount) {
 
 	std::string query = StringFormat("INSERT INTO `qs_player_trade_record` SET `time` = NOW(), "
