@@ -1550,3 +1550,15 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 	}
 }
 
+void Client::SetClassLanguages(PlayerProfile_Struct *pp)
+{
+	// we only need to handle one class, but custom server might want to do more
+	switch(pp->class_) {
+	case ROGUE:
+		pp->languages[LANG_THIEVES_CANT] = 100;
+		break;
+	default:
+		break;
+	}
+}
+
