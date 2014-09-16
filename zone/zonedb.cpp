@@ -444,7 +444,7 @@ void ZoneDatabase::LoadWorldContainer(uint32 parentid, ItemInst* container)
 		return;
 	}
 
-	std::string query = StringFormat("SELECT bagidx, itemid, charges "
+	std::string query = StringFormat("SELECT bagidx, itemid, charges, augslot1, augslot2, augslot3, augslot4, augslot5 "
                                     "FROM object_contents WHERE parentid = %i", parentid);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -456,6 +456,12 @@ void ZoneDatabase::LoadWorldContainer(uint32 parentid, ItemInst* container)
         uint8 index = (uint8)atoi(row[0]);
         uint32 item_id = (uint32)atoi(row[1]);
         int8 charges = (int8)atoi(row[2]);
+        uint32 aug[EmuConstants::ITEM_COMMON_SIZE];
+        aug[0]	= (uint32)atoi(row[3]);
+        aug[1]	= (uint32)atoi(row[4]);
+        aug[2]	= (uint32)atoi(row[5]);
+        aug[3]	= (uint32)atoi(row[6]);
+        aug[4]	= (uint32)atoi(row[7]);
 
         ItemInst* inst = database.CreateItem(item_id, charges);
         if (inst && inst->GetItem()->ItemClass == ItemClassCommon) {
@@ -483,9 +489,10 @@ void ZoneDatabase::SaveWorldContainer(uint32 zone_id, uint32 parent_id, const It
 
 		ItemInst* inst = container->GetItem(index);
 		if (!inst)
-            continue;
+			continue;
 
-        uint32 item_id = inst->GetItem()->ID;
+		uint32 item_id = inst->GetItem()->ID;
+		
 
         std::string query = StringFormat("REPLACE INTO object_contents "
                                         "(zoneid, parentid, bagidx, itemid, charges, droptime) "
@@ -954,7 +961,6 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->size = atof(row[10]);
         tmpNPCType->loottable_id = atoi(row[11]);
 		tmpNPCType->merchanttype = atoi(row[12]);
-
 		tmpNPCType->trap_template = atoi(row[13]);
 		tmpNPCType->attack_speed = atof(row[14]);
 		tmpNPCType->STR = atoi(row[15]);
@@ -998,7 +1004,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		if (tmpNPCType->assistradius <= 0)
 			tmpNPCType->assistradius = tmpNPCType->aggroradius;
 
-		if (row[50] && strlen(row[50]))
+		if (row[48] && strlen(row[48]))
             tmpNPCType->bodytype = (uint8)atoi(row[48]);
         else
             tmpNPCType->bodytype = 0;
@@ -1057,7 +1063,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 
 		tmpNPCType->see_invis = atoi(row[64]);
 		tmpNPCType->see_invis_undead = atoi(row[65]) == 0? false: true;	// Set see_invis_undead flag
-		if (row[68] != nullptr)
+		if (row[66] != nullptr)
 			strn0cpy(tmpNPCType->lastname, row[66], 32);
 
 		tmpNPCType->qglobal = atoi(row[67]) == 0? false: true;	// qglobal
@@ -1096,7 +1102,6 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 
 	return npc;
 }
-
 
 void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges){
 
