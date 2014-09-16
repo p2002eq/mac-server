@@ -69,13 +69,6 @@ void WorldServer::Process()
 			case ServerOP_KeepAlive: {
 				break;
 			}
-			case ServerOP_Speech: {
-				Server_Speech_Struct *SSS = (Server_Speech_Struct*)pack->pBuffer; 
-				std::string tmp1 = SSS->from;
-				std::string tmp2 = SSS->to; 
-				database.AddSpeech(tmp1.c_str(), tmp2.c_str(), SSS->message, SSS->minstatus, SSS->guilddbid, SSS->type);
-				break;
-			}
 			case ServerOP_QSPlayerLogTrades: {
 				QSPlayerLogTrade_Struct *QS = (QSPlayerLogTrade_Struct*)pack->pBuffer;
 				database.LogPlayerTrade(QS, QS->_detail_count);
