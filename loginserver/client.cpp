@@ -246,7 +246,6 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 				return;
 			}
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
-			server.db->UpdateClientVersion(d_account_id, cbv_macintel);
 			server.db->UpdateLSAccountData(d_account_id, string(inet_ntoa(in)));
 			GenerateKey();
 			account_id = d_account_id;
@@ -350,7 +349,6 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 			return;
 		}
 		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
-		server.db->UpdateClientVersion(d_account_id, cbv_macpc);
 		server.db->UpdateLSAccountData(d_account_id, string(inet_ntoa(in)));
 		GenerateKey();
 		account_id = d_account_id;

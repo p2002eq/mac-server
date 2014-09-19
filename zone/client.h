@@ -802,7 +802,6 @@ public:
 
 	inline const EQClientVersion GetClientVersion() const { return ClientVersion; }
 	inline const uint32 GetClientVersionBit() const { return ClientVersionBit; }
-	inline const uint32 GetMacClientVersion() const { return MacClientVersion; }
 
 	int GetAggroCount();
 	void IncrementAggroCount();
@@ -1135,7 +1134,6 @@ private:
 
 	EQClientVersion ClientVersion;
 	uint32	ClientVersionBit;
-	uint8	MacClientVersion;
 
 	int XPRate;
 

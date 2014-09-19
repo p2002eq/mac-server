@@ -2424,25 +2424,3 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 	}
 	return true;
 }
-
-uint8 Database::GetMacClientVersion(uint32 accountid) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	uint8 ret = 0;
-	if(RunQuery(query, MakeAnyLenString(&query, "SELECT version_ FROM client_version where account_id = %i", accountid), errbuf, &result)) {
-		safe_delete_array(query);
-		while((row = mysql_fetch_row(result)) != nullptr)
-		{
-			ret = atoi(row[0]);
-		} 
-		mysql_free_result(result);
-	} else {
-		safe_delete_array(query);
-		LogFile->write(EQEMuLog::Error, "Error in GetMacClientVersion query '%s' %s", query, errbuf);
-	}
-	return ret;
-}
-

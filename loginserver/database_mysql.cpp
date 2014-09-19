@@ -251,26 +251,8 @@ void DatabaseMySQL::UpdateAccessLog(unsigned int account_id, std::string account
 	}
 }
 
-void DatabaseMySQL::UpdateClientVersion(unsigned int account_id, unsigned int version)
+void DatabaseMySQL::UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
-	if(!db)
-	{
-		return;
-	}
-
-	//stringstream dquery(stringstream::in | stringstream::out);
-	//dquery << "DELETE FROM client_version WHERE account_id = " << account_id << "";
-
-	stringstream query(stringstream::in | stringstream::out);
-	query << "REPLACE INTO client_version SET account_id = " << account_id << ", version_ = " << version << "";
-
-	if(mysql_query(db, query.str().c_str()) != 0)
-	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
-	}
-}
-
-void DatabaseMySQL::UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP){
 	bool activate = 0;
 	if (!db)
 	{

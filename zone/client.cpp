@@ -665,7 +665,7 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 
 void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_skill, const char* orig_message, const char* targetname)
 {
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
 		return;
 
 	char message[4096];
@@ -3095,7 +3095,6 @@ void Client::KeyRingLoad()
 
 void Client::KeyRingAdd(uint32 item_id)
 {
-
 	if(GetClientVersion() == EQClientMac)
 		return;
 
@@ -3120,6 +3119,16 @@ void Client::KeyRingAdd(uint32 item_id)
 
 bool Client::KeyRingCheck(uint32 item_id)
 {
+	if(GetClientVersion() == EQClientMac)
+		return false;
+
+	for(std::list<uint32>::iterator iter = keyring.begin();
+		iter != keyring.end();
+		++iter)
+	{
+		if(*iter == item_id)
+			return true;
+	}
 	return false;
 }
 

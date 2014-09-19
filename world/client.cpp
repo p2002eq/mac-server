@@ -259,26 +259,25 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		//Get exact Mac client version
-		MacClientVersion = 0;
-		if(ClientVersionBit & BIT_Mac)
-		{
-			MacClientVersion = database.GetMacClientVersion(cle->LSAccountID());
-			if(MacClientVersion != 0 && MacClientVersion != BIT_MacPC)
-			{
-				ClientVersionBit = MacClientVersion;
-			}
-		}
-
-		if (!pZoning && ClientVersionBit != 0)
-			SendGuildList();
-			SendLogServer();
+		if(ClientVersionBit == 1)
+		{		
 			SendApproveWorld();
 			SendEnterWorld(cle->name());
-		if (!pZoning) {
 			SendExpansionInfo();
 			SendCharInfo();
-			database.LoginIP(cle->AccountID(), long2ip(GetIP()).c_str());
+		}
+		else
+		{
+			if (!pZoning && ClientVersionBit != 0)
+				SendGuildList();
+				SendLogServer();
+				SendApproveWorld();
+				SendEnterWorld(cle->name());
+			if (!pZoning) {
+				SendExpansionInfo();
+				SendCharInfo();
+				database.LoginIP(cle->AccountID(), long2ip(GetIP()).c_str());
+			}
 		}
 
 	}
@@ -1003,10 +1002,14 @@ void Client::SendGuildList() {
 	outapp = new EQApplicationPacket(OP_GuildsList);
 
 	//ask the guild manager to build us a nice guild list packet
-
-	OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
-	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
-	//safe_delete_array(guildstruct);
+	if(eqs->ClientVersion() == EQClientMac)
+	{
+		 OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
+		 outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
+		 //safe_delete_array(guildstruct);
+	}
+	else
+		outapp->pBuffer = guild_mgr.MakeGuildList("", outapp->size);
 
 	if(outapp->pBuffer == nullptr) {
 		clog(GUILDS__ERROR, "Unable to make guild list!");
