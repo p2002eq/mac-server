@@ -120,7 +120,6 @@ public:
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inventory* inv, ExtendedProfile_Struct *ext);
 	bool	DeleteCharacter(char* name);
 	uint8	CopyCharacter(const char* oldname, const char* newname, uint32 acctid);
-	uint8   GetMacClientVersion(uint32 accountid);
 
 	/*
 	* General Information Getting Queries

@@ -85,11 +85,6 @@ public:
 	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
 
 	/**
-	* Updates or creates the client version entry
-	*/
-	virtual void UpdateClientVersion(unsigned int account_id, unsigned int version);
-
-	/**
 	* Updates or creates the login server account with info from world server
 	*/
 	virtual void UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);

@@ -473,7 +473,7 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 	if(client_update && IsValidSlot(slot_id)) {
 		EQApplicationPacket* outapp;
 		if(inst) {
-			if(!isDeleted){
+			if((!inst->IsStackable() && !isDeleted) || (GetClientVersion() == EQClientMac && !isDeleted)){
 				// Non stackable item with charges = Item with clicky spell effect ? Delete a charge.
 				outapp = new EQApplicationPacket(OP_DeleteCharge, sizeof(MoveItem_Struct));
 				MoveItem_Struct* delitem = (MoveItem_Struct*)outapp->pBuffer;
@@ -1002,16 +1002,8 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			move_in->number_in_stack = dst_inst->GetCharges();
 			if(!SwapItem(move_in)) { 
 				mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
-				if(GetClientVersionBit() == BIT_MacIntel)
-				{
-					//Intel EQMac sends 2 SwapItem packets when moving things to the cursor. 
-					//Handle this here, and figure out a better way in the future. 
-					return 2;
-				}
-				else
-				{
-					return 0;
-				}
+				//Intel EQMac sends 2 SwapItem packets when moving things to the cursor. Handle this here, and figure out a better way in the future. 
+				return 2;
 			}
 			else
 				recursive_si = true;

@@ -3363,7 +3363,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		if(spell_id == SPELL_UNKNOWN) {
 			damage = ReduceDamage(damage);
 			mlog(COMBAT__HITS, "Melee Damage reduced to %d", damage);
-			ReduceAllDamage(damage);
+			damage = ReduceAllDamage(damage);
 			TryTriggerThreshHold(damage, SE_TriggerMeleeThreshold, attacker);
 		} else {
 			int32 origdmg = damage;
@@ -3376,7 +3376,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				//Kayen: Probably need to add a filter for this - Not sure if this msg is correct but there should be a message for spell negate/runes.
 				Message(263, "%s tries to cast on YOU, but YOUR magical skin absorbs the spell.",attacker->GetCleanName());
 			}
-			ReduceAllDamage(damage);
+			damage = ReduceAllDamage(damage);
 			TryTriggerThreshHold(damage, SE_TriggerSpellThreshold, attacker);
 		}
 
