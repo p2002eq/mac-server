@@ -869,7 +869,7 @@ void Client::AI_Process()
 							Attack(GetTarget(), MainPrimary);
 							if(GetTarget()) {
 								bool triple_attack_success = false;
-								if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER || GetClass() == BERSERKER)
+								if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER)
 									&& GetLevel() >= 60) || GetSpecialAbility(SPECATK_TRIPLE))
 									&& CheckDoubleAttack(true))
 								{
@@ -909,7 +909,7 @@ void Client::AI_Process()
 										}
 									}
 
-									if (GetClass() == WARRIOR || GetClass() == BERSERKER)
+									if (GetClass() == WARRIOR)
 									{
 										if(!dead && !berserk && this->GetHPRatio() < 30)
 										{

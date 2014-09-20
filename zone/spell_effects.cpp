@@ -6080,7 +6080,7 @@ bool Mob::PassCastRestriction(bool UseCastRestriction,  int16 value, bool IsDama
 			case 304:	
 				if (IsClient() && 
 					((GetClass() == WARRIOR) || (GetClass() == BARD)  || (GetClass() == SHADOWKNIGHT)  || (GetClass() == PALADIN)  || (GetClass() == CLERIC)
-					 || (GetClass() == RANGER) || (GetClass() == SHAMAN) || (GetClass() == ROGUE)  || (GetClass() == BERSERKER)))
+					 || (GetClass() == RANGER) || (GetClass() == SHAMAN) || (GetClass() == ROGUE)))
 					return true;
 				break;
 

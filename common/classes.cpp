@@ -185,17 +185,6 @@ const char* GetEQClassName(uint8 class_, uint8 level) {
 				return "Primalist";
 			else
 				return "Beastlord";
-		case BERSERKER:
-			if (level >= 65)
-				return "Fury";
-			else if (level >= 60)
-				return "Rager";
-			else if (level >= 55)
-				return "Vehement";
-			else if (level >= 51)
-				return "Brawler";
-			else
-				return "Berserker";
 		case BANKER:
 			if (level >= 65)
 				return "Elder Banker";
@@ -237,8 +226,6 @@ const char* GetEQClassName(uint8 class_, uint8 level) {
 			return "Enchanter Guildmaster";
 		case BEASTLORDGM:
 			return "Beastlord Guildmaster";
-		case BERSERKERGM:
-			return "Berserker Guildmaster";
 		case MERCHANT:
 			return "Merchant";
 		case CORPSE_CLASS:
@@ -280,17 +267,15 @@ uint32 GetArrayEQClass(uint8 eqclass) {
 			return ENCHANTER;
 		case BEASTLORD:
 			return BEASTLORD;
-		case BERSERKER:
-			return BERSERKER;
 		default:
 			return 0;
 	}
 }
 
 uint8 GetEQArrayEQClass(uint8 eqclass) {
-	if (eqclass >= WARRIOR && eqclass <= BERSERKER)
+	if (eqclass >= WARRIOR && eqclass <= BEASTLORD)
 		return eqclass - WARRIOR;
-	if (eqclass >= WARRIORGM && eqclass <= BERSERKERGM)
+	if (eqclass >= WARRIORGM && eqclass <= BEASTLORDGM)
 		return eqclass - WARRIORGM;
 	return WARRIOR;
 }

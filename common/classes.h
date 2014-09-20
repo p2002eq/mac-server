@@ -35,8 +35,7 @@
 #define MAGICIAN		13
 #define ENCHANTER		14
 #define BEASTLORD		15
-#define BERSERKER		16
-#define PLAYER_CLASS_COUNT	16 // used for array defines, must be the count of playable classes
+#define PLAYER_CLASS_COUNT	15 // used for array defines, must be the count of playable classes
 #define WARRIORGM 20
 #define CLERICGM 21
 #define PALADINGM 22
@@ -52,7 +51,6 @@
 #define MAGICIANGM 32
 #define ENCHANTERGM 33
 #define BEASTLORDGM 34
-#define BERSERKERGM 35
 #define BANKER 40
 #define MERCHANT 41
 #define DISCORD_MERCHANT 59
