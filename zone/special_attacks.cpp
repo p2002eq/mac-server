@@ -32,7 +32,7 @@ int Mob::GetKickDamage() {
 	int multiple=(GetLevel()*100/5);
 	multiple += 100;
 	int32 dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 9000) * multiple) + 600;	//Set a base of 6 damage, 1 seemed too low at the sub level 30 level.
-	if(GetClass() == WARRIOR || GetClass() == WARRIORGM ||GetClass() == BERSERKER || GetClass() == BERSERKERGM) {
+	if(GetClass() == WARRIOR || GetClass() == WARRIORGM) {
 		dmg*=12/10;//small increase for warriors
 	}
 	dmg /= 100;
@@ -309,7 +309,6 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	}
 
 	switch(GetClass()){
-		case BERSERKER:
 		case WARRIOR:
 		case RANGER:
 		case BEASTLORD:
@@ -1510,33 +1509,6 @@ void NPC::DoClassAttacks(Mob *target) {
 			}
 			break;
 		}
-		case BERSERKER: case BERSERKERGM:{
-			int AtkRounds = 3;
-			int32 max_dmg = 26 + ((GetLevel()-6) * 2);
-			int32 min_dmg = 0;
-			DoAnim(Animation::Slashing2H);
-
-			if (GetLevel() < 51)
-				min_dmg = 1;
-			else
-				min_dmg = GetLevel()*8/10;
-
-			if (min_dmg > max_dmg)
-				max_dmg = min_dmg;
-
-			reuse = FrenzyReuseTime * 1000;
-
-			while(AtkRounds > 0) { 
-				if (GetTarget() && (AtkRounds == 1 || MakeRandomInt(0,100) < 75)){
-					DoSpecialAttackDamage(GetTarget(), SkillFrenzy, max_dmg, min_dmg, -1 , reuse, true);
-				}
-				AtkRounds--;
-			}
-
-
-			did_attack = true;
-			break;
-		}
 		case RANGER: case RANGERGM:
 		case BEASTLORD: case BEASTLORDGM: {
 			//kick
@@ -1632,9 +1604,6 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		case RANGER:
 		case BEASTLORD:
 			skill_to_use = SkillKick;
-			break;
-		case BERSERKER:
-			skill_to_use = SkillFrenzy;
 			break;
 		case SHADOWKNIGHT:
 		case PALADIN:
@@ -2077,11 +2046,6 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 	if(weapon_damage > 0){ 
 		if (focus) //From FcBaseEffects
 			weapon_damage += weapon_damage*focus/100;
-
-		if(GetClass() == BERSERKER){
-			int bonus = 3 + GetLevel()/10;
-			weapon_damage = weapon_damage * (100+bonus) / 100;
-		}
 
 		int32 min_hit = 1;
 		int32 max_hit = (2 * weapon_damage*GetDamageTable(skillinuse)) / 100;

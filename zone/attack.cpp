@@ -595,7 +595,7 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 			else if(GetClass() == DRUID || GetClass() == BEASTLORD || GetClass() == MONK)
 				softcap = RuleI(Combat, LeatherACSoftcap);
 			else if(GetClass() == SHAMAN || GetClass() == ROGUE ||
-					GetClass() == BERSERKER || GetClass() == RANGER)
+					GetClass() == RANGER)
 				softcap = RuleI(Combat, ChainACSoftcap);
 			else
 				softcap = RuleI(Combat, PlateACSoftcap);
@@ -614,7 +614,7 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 						(GetClass() == MONK && weight <= monkweight))
 					softcap_armor = softcap_armor * RuleR(Combat, KnightACSoftcapReturn);
 				else if (GetClass() == CLERIC || GetClass() == BARD ||
-						GetClass() == BERSERKER || GetClass() == ROGUE ||
+						GetClass() == ROGUE ||
 						GetClass() == SHAMAN || GetClass() == MONK)
 					softcap_armor = softcap_armor * RuleR(Combat, LowPlateChainACSoftcapReturn);
 				else if (GetClass() == RANGER || GetClass() == BEASTLORD)
@@ -638,7 +638,7 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 						GetClass() == MAGICIAN)
 					softcap_armor *= RuleR(Combat, DruNecWizEncMagACSoftcapReturn);
 				else if (GetClass() == ROGUE || GetClass() == SHAMAN ||
-						GetClass() == BEASTLORD || GetClass() == BERSERKER)
+						GetClass() == BEASTLORD)
 					softcap_armor *= RuleR(Combat, RogShmBstBerACSoftcapReturn);
 				else
 					softcap_armor *= RuleR(Combat, MiscACSoftcapReturn);
@@ -1165,13 +1165,6 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 	//if weapon damage > 0 then we know we can hit the target with this weapon
 	//otherwise we cannot and we set the damage to -5 later on
 	if(weapon_damage > 0){
-
-		//Berserker Berserk damage bonus
-		if(IsBerserk() && GetClass() == BERSERKER){
-			int bonus = 3 + GetLevel()/10;		//unverified
-			weapon_damage = weapon_damage * (100+bonus) / 100;
-			mlog(COMBAT__DAMAGE, "Berserker damage bonus increases DMG to %d", weapon_damage);
-		}
 
 		//try a finishing blow.. if successful end the attack
 		if(TryFinishingBlow(other, skillinuse))
@@ -4028,7 +4021,7 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 		if (spellbonuses.BerserkSPA || itembonuses.BerserkSPA || aabonuses.BerserkSPA)
 				IsBerskerSPA = true;
 
-		if (((GetClass() == WARRIOR || GetClass() == BERSERKER) && GetLevel() >= 12)  || IsBerskerSPA) {
+		if (((GetClass() == WARRIOR) && GetLevel() >= 12)  || IsBerskerSPA) {
 			if (IsBerserk() || IsBerskerSPA)
 				critChance += RuleI(Combat, BerserkBaseCritChance);
 			else

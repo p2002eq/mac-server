@@ -878,7 +878,6 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 		make_npc->max_hp = make_npc->max_hp * 135 / 100;
 		break;
 	case WARRIOR:
-	case BERSERKER:
 		strcpy(make_npc->special_abilities, "7,1");
 		make_npc->max_dmg = make_npc->max_dmg * 150 /100;
 		make_npc->cur_hp = make_npc->cur_hp * 175 / 100;
