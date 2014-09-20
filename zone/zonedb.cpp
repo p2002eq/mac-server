@@ -1206,6 +1206,7 @@ void ZoneDatabase::RefreshGroupFromDB(Client *client){
 	gu->action = groupActUpdate;
 
 	strcpy(gu->yourname, client->GetName());
+	GetGroupLeadershipInfo(group->GetID(), gu->leadersname, nullptr, nullptr, nullptr, nullptr, &gu->leader_aas);
 
 	int index = 0;
 
