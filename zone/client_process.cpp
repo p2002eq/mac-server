@@ -299,8 +299,8 @@ bool Client::Process() {
 						}
 					}
 
-					//triple attack: rangers, monks, warriors, berserkers over level 60
-					if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER || GetClass() == BERSERKER)
+					//triple attack: rangers, monks, warriors over level 60
+					if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER)
 						&& GetLevel() >= 60) || GetSpecialAbility(SPECATK_TRIPLE))
 						&& CheckDoubleAttack(true))
 					{
@@ -347,7 +347,7 @@ bool Client::Process() {
 			}
 		}
 
-		if (GetClass() == WARRIOR || GetClass() == BERSERKER) {
+		if (GetClass() == WARRIOR) {
 			if (!dead && !IsBerserk() && GetHPRatio() < RuleI(Combat, BerserkerFrenzyStart)) {
 				entity_list.MessageClose_StringID(this, false, 200, 0, BERSERK_START, GetName());
 				berserk = true;
@@ -1464,7 +1464,7 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 
 		Mob* pTrainer = entity_list.GetMob(gmtrain->npcid);
 
-		if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM || pTrainer->GetClass() > BERSERKERGM)
+		if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM)
 			return;
 
 		//you can only use your own trainer, client enforces this, but why trust it
@@ -1507,7 +1507,7 @@ void Client::OPGMEndTraining(const EQApplicationPacket *app)
 {
 	GMTrainEnd_Struct *p = (GMTrainEnd_Struct *)app->pBuffer;
 	Mob* pTrainer = entity_list.GetMob(p->npcid);
-	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM || pTrainer->GetClass() > BERSERKERGM)
+	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM)
 		return;
 
 	//you can only use your own trainer, client enforces this, but why trust it
@@ -1536,7 +1536,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 	GMSkillChange_Struct* gmskill = (GMSkillChange_Struct*) app->pBuffer;
 
 	Mob* pTrainer = entity_list.GetMob(gmskill->npcid);
-	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM || pTrainer->GetClass() > BERSERKERGM)
+	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM)
 		return;
 
 	//you can only use your own trainer, client enforces this, but why trust it

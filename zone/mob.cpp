@@ -697,11 +697,9 @@ uint8 Mob::GetArchetype() const {
 	case WARRIOR:
 	case MONK:
 	case ROGUE:
-	case BERSERKER:
 	case WARRIORGM:
 	case MONKGM:
 	case ROGUEGM:
-	case BERSERKERGM:
 		return ARCHETYPE_MELEE;
 		break;
 	default:
@@ -1865,8 +1863,6 @@ bool Mob::IsWarriorClass(void) const
 	case RANGERGM:
 	case BEASTLORD:
 	case BEASTLORDGM:
-	case BERSERKER:
-	case BERSERKERGM:
 	case BARD:
 	case BARDGM:
 		{

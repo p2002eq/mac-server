@@ -4892,8 +4892,6 @@ const char* Client::GetClassPlural(Client* client) {
 			return "Enchanters"; break;
 		case BEASTLORD:
 			return "Beastlords"; break;
-		case BERSERKER:
-			return "Berserkers"; break;
 		default:
 			return "Classes"; break;
 	}

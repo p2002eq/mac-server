@@ -293,7 +293,6 @@ uint16 Mob::GetClassLevelFactor(){
 				multiplier = 157;
 			break;
 		}
-		case BERSERKER:
 		case PALADIN:
 		case SHADOWKNIGHT:{
 			if (mlevel < 35)
@@ -397,7 +396,6 @@ uint32 Client::GetClassHPFactor() {
 			factor = 240;
 			break;
 		case BEASTLORD:
-		case BERSERKER:
 		case MONK:
 		case ROGUE:
 		case SHAMAN:
