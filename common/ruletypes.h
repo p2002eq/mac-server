@@ -90,7 +90,7 @@ RULE_BOOL ( Character, UseRaceClassExpBonuses, true)	// Setting this to true wil
 RULE_BOOL ( Character, UseNewStatsWindow, false)		// New stats window shows everything
 RULE_BOOL ( Character, ItemCastsUseFocus, false) // If true, this allows item clickies to use focuses that have limited max levels on them
 RULE_INT ( Character, MinStatusForNoDropExemptions, 80) // This allows status x and higher to trade no drop items.
-RULE_INT ( Character, SkillCapMaxLevel, 75 )	// Sets the Max Level used for Skill Caps (from skill_caps table). -1 makes it use MaxLevel rule value. It is set to 75 because PEQ only has skillcaps up to that level, and grabbing the players' skill past 75 will return 0, breaking all skills past that level. This helps servers with obsurd level caps (75+ level cap) function without any modifications.
+RULE_INT ( Character, SkillCapMaxLevel, 65 )	// Sets the Max Level used for Skill Caps (from skill_caps table). -1 makes it use MaxLevel rule value. It is set to 75 because PEQ only has skillcaps up to that level, and grabbing the players' skill past 75 will return 0, breaking all skills past that level. This helps servers with obsurd level caps (75+ level cap) function without any modifications.
 RULE_INT ( Character, StatCap, 0 )
 RULE_BOOL ( Character, CheckCursorEmptyWhenLooting, true ) // If true, a player cannot loot a corpse (player or NPC) with an item on their cursor
 RULE_BOOL ( Character, MaintainIntoxicationAcrossZones, true ) // If true, alcohol effects are maintained across zoning and logging out/in.
