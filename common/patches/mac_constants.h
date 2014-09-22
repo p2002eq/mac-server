@@ -136,7 +136,7 @@ namespace MAC {
 		static const int16 TRADE_BEGIN = 3000;
 		static const int16 TRADE_END = 3007;
 		static const int16 TRADE_NPC_END = 3003;
-		static const int16 TRADE_BAGS_BEGIN = 3100;
+		static const int16 TRADE_BAGS_BEGIN = 3030;
 		static const int16 TRADE_BAGS_END_OFFSET = 79;
 		static const int16 TRADE_BAGS_END = TRADE_BAGS_BEGIN + TRADE_BAGS_END_OFFSET;
 

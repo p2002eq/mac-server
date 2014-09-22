@@ -165,7 +165,6 @@ SET(zone_headers
 	lua_spell.h
 	map.h
 	masterentity.h
-	maxskill.h
 	message.h
 	mob.h
 	net.h
