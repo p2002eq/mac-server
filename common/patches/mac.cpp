@@ -961,7 +961,7 @@ ENCODE(OP_ItemPacket) {
 
 		outapp->SetOpcode(OP_Unknown);
 		
-		if(old_item_pkt->PacketType == ItemPacketSummonItem || int_struct->slot_id == 30)
+		if(old_item_pkt->PacketType == ItemPacketSummonItem || int_struct->slot_id == MainCursor)
 			outapp->SetOpcode(OP_SummonedItem);
 		else if(old_item_pkt->PacketType == ItemPacketViewLink)
 			outapp->SetOpcode(OP_ItemLinkResponse);
