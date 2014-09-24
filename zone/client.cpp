@@ -1883,6 +1883,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 	{
 		// the higher your current skill level, the harder it is
 		int16 Chance = 10 + chancemodi + ((252 - skillval) / 20);
+
 		Chance = (Chance * RuleI(Character, SkillUpModifier) / 100);
 
 		Chance = mod_increase_skill_chance(Chance, against_who);
