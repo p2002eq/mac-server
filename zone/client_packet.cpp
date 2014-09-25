@@ -6681,8 +6681,6 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 	switch (race)
 	{
 		case OGRE:
-			size = 9;
-			break;
 		case TROLL:
 			size = 8;
 			break;
