@@ -7151,8 +7151,6 @@ void Client::CompleteConnect() {
 					}
 					switch(spell.base[x1]){
 						case OGRE:
-							SendAppearancePacket(AT_Size, 9);
-							break;
 						case TROLL:
 							SendAppearancePacket(AT_Size, 8);
 							break;
