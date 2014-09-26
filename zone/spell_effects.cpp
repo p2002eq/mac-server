@@ -1417,10 +1417,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						spell.base2[i],
 						spell.max[i]
 					);
-					if(spell.base[i] == OGRE){
-						SendAppearancePacket(AT_Size, 9);
-					}
-					else if(spell.base[i] == TROLL){
+					if (spell.base[i] == TROLL || spell.base[i] == OGRE){
 						SendAppearancePacket(AT_Size, 8);
 					}
 					else if(spell.base[i] == VAHSHIR || spell.base[i] == BARBARIAN){
@@ -3745,10 +3742,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_Illusion:
 			{
 				SendIllusionPacket(0, GetBaseGender());
-				if(GetRace() == OGRE){
-					SendAppearancePacket(AT_Size, 9);
-				}
-				else if(GetRace() == TROLL){
+				if (GetRace() == TROLL || GetRace() == OGRE){
 					SendAppearancePacket(AT_Size, 8);
 				}
 				else if(GetRace() == VAHSHIR || GetRace() == FROGLOK || GetRace() == BARBARIAN){
