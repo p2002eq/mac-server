@@ -41,7 +41,6 @@
 #include "../common/spdat.h"
 #include "../common/features.h"
 #include "string_ids.h"
-#include "../common/dbasync.h"
 #include "guild_mgr.h"
 #include "raids.h"
 #include "quest_parser_collection.h"
@@ -60,7 +59,6 @@ extern WorldServer worldserver;
 extern NetConnection net;
 extern uint32 numclients;
 extern PetitionList petition_list;
-extern DBAsync *dbasync;
 
 extern char errorname[32];
 extern uint16 adverrornum;
@@ -68,12 +66,11 @@ extern uint16 adverrornum;
 Entity::Entity()
 {
 	id = 0;
-	pDBAsyncWorkID = 0;
 }
 
 Entity::~Entity()
 {
-	dbasync->CancelWork(pDBAsyncWorkID);
+	
 }
 
 Client *Entity::CastToClient()
@@ -453,17 +450,28 @@ void EntityList::MobProcess()
 #endif
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
-		if (!it->second) {
+		uint16 id = it->first;
+		Mob *mob = it->second;
+		
+		size_t sz = mob_list.size();
+		bool p_val = mob->Process();
+		size_t a_sz = mob_list.size();
+		
+		if(a_sz > sz) {
+			//increased size can potentially screw with iterators so reset it to current value
+			//if buckets are re-orderered we may skip a process here and there but since 
+			//process happens so often it shouldn't matter much
+			it = mob_list.find(id);
 			++it;
-			continue;
+		} else {
+			++it;
 		}
-		if (!it->second->Process()) {
-			Mob *mob = it->second;
-			uint16 tempid = it->first;
-			++it; // we don't erase here because the destructor will
-			if (mob->IsNPC()) {
-				entity_list.RemoveNPC(mob->CastToNPC()->GetID());
-			} else {
+
+		if(!p_val) {
+			if(mob->IsNPC()) {
+				entity_list.RemoveNPC(id);
+			}
+			else {
 #ifdef _WINDOWS
 				struct in_addr in;
 				in.s_addr = mob->CastToClient()->GetIP();
@@ -471,20 +479,19 @@ void EntityList::MobProcess()
 #endif
 				zone->StartShutdownTimer();
 				Group *g = GetGroupByMob(mob);
-				if (g) {
+				if(g) {
 					LogFile->write(EQEMuLog::Error, "About to delete a client still in a group.");
 					g->DelMember(mob);
 				}
 				Raid *r = entity_list.GetRaidByClient(mob->CastToClient());
-				if (r) {
+				if(r) {
 					LogFile->write(EQEMuLog::Error, "About to delete a client still in a raid.");
 					r->MemberZoned(mob->CastToClient());
 				}
-				entity_list.RemoveClient(mob->GetID());
+				entity_list.RemoveClient(id);
 			}
-			entity_list.RemoveMob(tempid);
-		} else {
-			++it;
+
+			entity_list.RemoveMob(id);
 		}
 	}
 }

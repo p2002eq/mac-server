@@ -1,19 +1,19 @@
 /*	EQEMu: Everquest Server Emulator
-	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
+Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; version 2 of the License.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 of the License.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY except by those people which sell it, which
-	are required to give you total support for your newly bought product;
-	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-	A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY except by those people which sell it, which
+are required to give you total support for your newly bought product;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program; if not, write to the Free Software
-	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 
@@ -27,17 +27,17 @@
 #define	COMMAND_CHAR	'#'
 #define CMDALIASES	5
 
-typedef void (*CmdFuncPtr)(Client *,const Seperator *);
+typedef void(*CmdFuncPtr)(Client *, const Seperator *);
 
 // this is a command list item
 /*struct cl_struct
 {
-	char *command[CMDALIASES];			// the command(s)
-	char *desc;					// description of command
-	CmdFuncPtr function;				// the function to call
-	int access;					// the required 'status' level
+char *command[CMDALIASES];			// the command(s)
+char *desc;					// description of command
+CmdFuncPtr function;				// the function to call
+int access;					// the required 'status' level
 
-	struct cl_struct *next;			// linked list
+struct cl_struct *next;			// linked list
 };
 
 extern struct cl_struct *commandlist;		// the head of the list
@@ -50,7 +50,7 @@ typedef struct {
 	CmdFuncPtr function;	//null means perl function
 } CommandRecord;
 
-extern int (*command_dispatch)(Client *,char const*);
+extern int(*command_dispatch)(Client *, char const*);
 extern int commandcount;			// number of commands loaded
 
 // the command system:
@@ -62,14 +62,12 @@ int command_realdispatch(Client *c, char const *message);
 void command_logcommand(Client *c, const char *message);
 
 //commands
-void command_resetaa(Client* c,const Seperator *sep);
-void command_resetboat(Client* c,const Seperator *sep);
-void command_bind(Client* c,const Seperator *sep);
+void command_resetaa(Client* c, const Seperator *sep);
+void command_bind(Client* c, const Seperator *sep);
 void command_sendop(Client *c, const Seperator *sep);
 void command_optest(Client *c, const Seperator *sep);
 void command_help(Client *c, const Seperator *sep);
 void command_version(Client *c, const Seperator *sep);
-void command_dbversion(Client *c, const Seperator *sep);
 void command_setfaction(Client *c, const Seperator *sep);
 void command_serversidename(Client *c, const Seperator *sep);
 void command_testspawnkill(Client *c, const Seperator *sep);
@@ -125,7 +123,6 @@ void command_worldshutdown(Client *c, const Seperator *sep);
 void command_sendzonespawns(Client *c, const Seperator *sep);
 void command_zsave(Client *c, const Seperator *sep);
 void command_dbspawn2(Client *c, const Seperator *sep);
-void command_copychar(Client *c, const Seperator *sep);
 void command_shutdown(Client *c, const Seperator *sep);
 void command_delacct(Client *c, const Seperator *sep);
 void command_setpass(Client *c, const Seperator *sep);
@@ -151,7 +148,6 @@ void command_texture(Client *c, const Seperator *sep);
 void command_npctypespawn(Client *c, const Seperator *sep);
 void command_heal(Client *c, const Seperator *sep);
 void command_appearance(Client *c, const Seperator *sep);
-void command_charbackup(Client *c, const Seperator *sep);
 void command_nukeitem(Client *c, const Seperator *sep);
 void command_peekinv(Client *c, const Seperator *sep);
 void command_findnpctype(Client *c, const Seperator *sep);
@@ -185,7 +181,6 @@ void command_myskills(Client *c, const Seperator *sep);
 void command_depop(Client *c, const Seperator *sep);
 void command_depopzone(Client *c, const Seperator *sep);
 void command_repop(Client *c, const Seperator *sep);
-void command_rewind(Client *c, const Seperator *sep);
 void command_spawnstatus(Client *c, const Seperator *sep);
 void command_nukebuffs(Client *c, const Seperator *sep);
 void command_zuwcoords(Client *c, const Seperator *sep);
@@ -216,7 +211,6 @@ void command_guild(Client *c, const Seperator *sep);
 bool helper_guild_edit(Client *c, uint32 dbid, uint32 eqid, uint8 rank, const char* what, const char* value);
 void command_zonestatus(Client *c, const Seperator *sep);
 void command_manaburn(Client *c, const Seperator *sep);
-void command_viewmessage(Client *c, const Seperator *sep);
 void command_doanim(Client *c, const Seperator *sep);
 void command_randomfeatures(Client *c, const Seperator *sep);
 void command_face(Client *c, const Seperator *sep);
@@ -305,9 +299,6 @@ void command_reloadallrules(Client *c, const Seperator *sep);
 void command_reloadworldrules(Client *c, const Seperator *sep);
 void command_reloadlevelmods(Client *c, const Seperator *sep);
 void command_camerashake(Client *c, const Seperator *sep);
-void command_disarmtrap(Client *c, const Seperator *sep);
-void command_sensetrap(Client *c, const Seperator *sep);
-void command_picklock(Client *c, const Seperator *sep);
 void command_qtest(Client *c, const Seperator *sep);
 void command_mysql(Client *c, const Seperator *sep);
 void command_zopp(Client *c, const Seperator *sep);
@@ -316,10 +307,9 @@ void command_enablerecipe(Client *c, const Seperator *sep);
 void command_disablerecipe(Client *c, const Seperator *sep);
 void command_showspellslist(Client *c, const Seperator *sep);
 void command_npctype_cache(Client *c, const Seperator *sep);
-void command_starve(Client *c, const Seperator *sep);
 void command_merchantopenshop(Client *c, const Seperator *sep);
 void command_merchantcloseshop(Client *c, const Seperator *sep);
-void command_ppdump(Client *c, const Seperator *sep);
+void command_shownumhits(Client *c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);
@@ -328,6 +318,11 @@ void command_profilereset(Client *c, const Seperator *sep);
 
 #ifdef PACKET_PROFILER
 void command_packetprofile(Client *c, const Seperator *sep);
+#endif
+
+#ifdef BOTS
+#include "bot.h"
+void command_bot(Client*c, const Seperator *sep);
 #endif
 
 #endif

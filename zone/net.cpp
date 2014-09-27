@@ -97,8 +97,6 @@ extern Zone* zone;
 EQStreamFactory eqsf(ZoneStream);
 npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
-DBAsyncFinishedQueue MTdbafq;
-DBAsync *dbasync = nullptr;
 QueryServ *QServ = 0; 
 QuestParserCollection *parse = 0;
 
@@ -168,8 +166,6 @@ int main(int argc, char** argv) {
 		_log(ZONE__INIT_ERR, "Cannot continue without a database connection.");
 		return 1;
 	}
-	dbasync = new DBAsync(&database);
-	dbasync->AddFQ(&MTdbafq);
 	guild_mgr.SetDatabase(&database);
 
 
@@ -451,10 +447,6 @@ int main(int argc, char** argv) {
 				}*/
 			}
 		}
-		DBAsyncWork* dbaw = 0;
-		while ((dbaw = MTdbafq.Pop())) {
-			DispatchFinishedDBAsync(dbaw);
-		}
 		if (InterserverTimer.Check()) {
 			InterserverTimer.Start();
 			database.ping();
@@ -514,8 +506,6 @@ int main(int argc, char** argv) {
 	//Fix for Linux world server problem.
 	eqsf.Close();
 	worldserver.Disconnect();
-	dbasync->CommitWrites();
-	dbasync->StopThread();
 	command_deinit();
 	safe_delete(parse);
 	CheckEQEMuErrorAndPause();

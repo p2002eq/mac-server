@@ -48,6 +48,8 @@ public:
 	void SetLaunchedName(const char *n) { m_launchedName = n; }
 	void SetLauncherName(const char *n) { m_launcherName = n; }
 
+	void RequestTellQueue(const char *who);
+
 private:
 	virtual void OnConnected();
 

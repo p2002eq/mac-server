@@ -157,18 +157,24 @@ void WorldServer::Process() {
 			break;
 		}
 		case ServerOP_ChannelMessage: {
-			if (!ZoneLoaded) break;
+			if (!ZoneLoaded)
+				break;
 			ServerChannelMessage_Struct* scm = (ServerChannelMessage_Struct*) pack->pBuffer;
 			if (scm->deliverto[0] == 0) {
 				entity_list.ChannelMessageFromWorld(scm->from, scm->to, scm->chan_num, scm->guilddbid, scm->language, scm->message);
-			}
-			else {
-				Client* client;
-				client = entity_list.GetClientByName(scm->deliverto);
-				if (client != 0) {
+			} else {
+				Client* client = entity_list.GetClientByName(scm->deliverto);
+				if (client) {
 					if (client->Connected()) {
-						client->ChannelMessageSend(scm->from, scm->to, scm->chan_num, scm->language, scm->message);
-						if (!scm->noreply && scm->chan_num!=2) { //dont echo on group chat
+						if (scm->queued == 1) // tell was queued
+							client->Tell_StringID(QUEUED_TELL, scm->to, scm->message);
+						else if (scm->queued == 2) // tell queue was full
+							client->Tell_StringID(QUEUE_TELL_FULL, scm->to, scm->message);
+						else if (scm->queued == 3) // person was offline
+							client->Message_StringID(MT_TellEcho, TOLD_NOT_ONLINE, scm->to);
+						else // normal stuff
+							client->ChannelMessageSend(scm->from, scm->to, scm->chan_num, scm->language, scm->message);
+						if (!scm->noreply && scm->chan_num != 2) { //dont echo on group chat
 							// if it's a tell, echo back so it shows up
 							scm->noreply = true;
 							scm->chan_num = 14;
@@ -249,7 +255,7 @@ void WorldServer::Process() {
 
 					entity->CastToMob()->SetZone(ztz->requested_zone_id, ztz->requested_instance_id);
 
-					if(ztz->ignorerestrictions == 3)
+					if(ztz->ignorerestrictions == 3) 
 						entity->CastToClient()->GoToSafeCoords(ztz->requested_zone_id, ztz->requested_instance_id);
 				}
 				outapp->priority = 6;
@@ -1488,6 +1494,24 @@ void WorldServer::Process() {
 
 			break;
 		}
+		case ServerOP_CZSetEntityVariableByNPCTypeID:
+		{
+			CZSetEntVarByNPCTypeID_Struct* CZM = (CZSetEntVarByNPCTypeID_Struct*)pack->pBuffer;
+			NPC* n = entity_list.GetNPCByNPCTypeID(CZM->npctype_id);
+			if (n != 0) {
+				n->SetEntityVariable(CZM->id, CZM->m_var);
+			}
+			break;
+		}
+		case ServerOP_CZSignalNPC:
+		{
+			CZNPCSignal_Struct* CZCN = (CZNPCSignal_Struct*)pack->pBuffer;
+			NPC* n = entity_list.GetNPCByNPCTypeID(CZCN->npctype_id); 
+			if (n != 0) {
+				n->SignalNPC(CZCN->data);
+			}
+			break;
+		}
 		case ServerOP_CZSignalClient:
 		{
 			CZClientSignal_Struct* CZCS = (CZClientSignal_Struct*) pack->pBuffer;
@@ -1611,6 +1635,7 @@ bool WorldServer::SendChannelMessage(Client* from, const char* to, uint8 chan_nu
 	scm->chan_num = chan_num;
 	scm->guilddbid = guilddbid;
 	scm->language = language;
+	scm->queued = 0;
 	strcpy(scm->message, buffer);
 
 	pack->Deflate();
@@ -1737,3 +1762,19 @@ uint32 WorldServer::NextGroupID() {
 	printf("Handing out new group id %d\n", cur_groupid);
 	return(cur_groupid++);
 }
+
+void WorldServer::RequestTellQueue(const char *who)
+{
+	if (!who)
+		return;
+
+	ServerPacket* pack = new ServerPacket(ServerOP_RequestTellQueue, sizeof(ServerRequestTellQueue_Struct));
+	ServerRequestTellQueue_Struct* rtq = (ServerRequestTellQueue_Struct*) pack->pBuffer;
+
+	strn0cpy(rtq->name, who, sizeof(rtq->name));
+
+	SendPacket(pack);
+	safe_delete(pack);
+	return;
+}
+
