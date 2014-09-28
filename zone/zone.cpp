@@ -443,7 +443,7 @@ void Zone::LoadTempMerchantData(){
 void Zone::LoadNewMerchantData(uint32 merchantid){
 
 	std::list<MerchantList> merlist;
-	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, alt_currency_cost, "
+	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, "
                                     "classes_required FROM merchantlist WHERE merchantid=%d", merchantid);
     auto results = database.QueryDatabase(query);
     if (!results.Success()) {
@@ -474,9 +474,7 @@ void Zone::GetMerchantDataForZoneLoad(){
 		"ml.item,																	   "
 		"ml.faction_required,														   "
 		"ml.level_required,															   "
-		"ml.alt_currency_cost,														   "
 		"ml.classes_required,														   "
-		"ml.probability																   "
 		"FROM																		   "
 		"merchantlist AS ml,														   "
 		"npc_types AS nt,															   "

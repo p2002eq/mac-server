@@ -49,6 +49,7 @@
 #include "../common/guilds.h"
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
+#include "../common/data_verification.h"
 #include "petitions.h"
 #include "npc_ai.h"
 #include "../common/skills.h"
