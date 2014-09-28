@@ -449,17 +449,46 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"pvp_type,"
 		"autosplit_enabled,"
 		"zone_change_count,"
+		"drakkin_heritage,"
+		"drakkin_tattoo,"
+		"drakkin_details,"
 		"toxicity,"
 		"hunger_level,"
 		"thirst_level,"
 		"ability_up,"
 		"zone_id,"
+		"zone_instance,"
+		"leadership_exp_on,"
+		"ldon_points_guk,"
+		"ldon_points_mir,"
+		"ldon_points_mmc,"
+		"ldon_points_ruj,"
+		"ldon_points_tak,"
+		"ldon_points_available,"
+		"tribute_time_remaining,"
 		"show_helm,"
+		"career_tribute_points,"
+		"tribute_points,"
+		"tribute_active,"
 		"endurance,"
+		"group_leadership_exp,"
+		"raid_leadership_exp,"
+		"group_leadership_points,"
+		"raid_leadership_points,"
 		"air_remaining,"
+		"pvp_kills,"
+		"pvp_deaths,"
+		"pvp_current_points,"
+		"pvp_career_points,"
+		"pvp_best_kill_streak,"
+		"pvp_worst_death_streak,"
+		"pvp_current_kill_streak,"
 		"aa_points_spent,"
 		"aa_exp,"
 		"aa_points,"
+		"group_auto_consent,"
+		"raid_auto_consent,"
+		"guild_auto_consent,"
 		"RestTimer) "
 		"VALUES ("
 		"%u,"  // id					
@@ -511,17 +540,46 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // pvp_type				
 		"%u,"  // autosplit_enabled		
 		"%u,"  // zone_change_count		
+		"%u,"  // drakkin_heritage		
+		"%u,"  // drakkin_tattoo		
+		"%u,"  // drakkin_details		
 		"%i,"  // toxicity				
 		"%i,"  // hunger_level			
 		"%i,"  // thirst_level			
 		"%u,"  // ability_up			
 		"%u,"  // zone_id				
+		"%u,"  // zone_instance			
+		"%u,"  // leadership_exp_on		
+		"%u,"  // ldon_points_guk		
+		"%u,"  // ldon_points_mir		
+		"%u,"  // ldon_points_mmc		
+		"%u,"  // ldon_points_ruj		
+		"%u,"  // ldon_points_tak		
+		"%u,"  // ldon_points_available	
+		"%u,"  // tribute_time_remaining
 		"%u,"  // show_helm				
+		"%u,"  // career_tribute_points	
+		"%u,"  // tribute_points		
+		"%u,"  // tribute_active		
 		"%u,"  // endurance				
+		"%u,"  // group_leadership_exp	
+		"%u,"  // raid_leadership_exp	
+		"%u,"  // group_leadership_point
+		"%u,"  // raid_leadership_points
 		"%u,"  // air_remaining			
+		"%u,"  // pvp_kills				
+		"%u,"  // pvp_deaths			
+		"%u,"  // pvp_current_points	
+		"%u,"  // pvp_career_points		
+		"%u,"  // pvp_best_kill_streak	
+		"%u,"  // pvp_worst_death_streak
+		"%u,"  // pvp_current_kill_strea
 		"%u,"  // aa_points_spent		
 		"%u,"  // aa_exp				
 		"%u,"  // aa_points				
+		"%u,"  // group_auto_consent	
+		"%u,"  // raid_auto_consent		
+		"%u,"  // guild_auto_consent	
 		"%u"  // RestTimer				
 		")",
 		character_id,					  // " id,                        "
@@ -573,28 +631,57 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
+		pp->drakkin_heritage,			  // " drakkin_heritage,          "
+		pp->drakkin_tattoo,				  // " drakkin_tattoo,            "
+		pp->drakkin_details,			  // " drakkin_details,           "
 		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
+		pp->zoneInstance,				  // " zone_instance,             "
+		pp->leadAAActive,				  // " leadership_exp_on,         "
+		pp->ldon_points_guk,			  // " ldon_points_guk,           "
+		pp->ldon_points_mir,			  // " ldon_points_mir,           "
+		pp->ldon_points_mmc,			  // " ldon_points_mmc,           "
+		pp->ldon_points_ruj,			  // " ldon_points_ruj,           "
+		pp->ldon_points_tak,			  // " ldon_points_tak,           "
+		pp->ldon_points_available,		  // " ldon_points_available,     "
+		pp->tribute_time_remaining,		  // " tribute_time_remaining,    "
 		pp->showhelm,					  // " show_helm,                 "
+		pp->career_tribute_points,		  // " career_tribute_points,     "
+		pp->tribute_points,				  // " tribute_points,            "
+		pp->tribute_active,				  // " tribute_active,            "
 		pp->endurance,					  // " endurance,                 "
+		pp->group_leadership_exp,		  // " group_leadership_exp,      "
+		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
+		pp->group_leadership_points,	  // " group_leadership_points,   "
+		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
+		pp->PVPKills,					  // " pvp_kills,                 "
+		pp->PVPDeaths,					  // " pvp_deaths,                "
+		pp->PVPCurrentPoints,			  // " pvp_current_points,        "
+		pp->PVPCareerPoints,			  // " pvp_career_points,         "
+		pp->PVPBestKillStreak,			  // " pvp_best_kill_streak,      "
+		pp->PVPWorstDeathStreak,		  // " pvp_worst_death_streak,    "
+		pp->PVPCurrentKillStreak,		  // " pvp_current_kill_streak,   "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
+		pp->groupAutoconsent,			  // " group_auto_consent,        "
+		pp->raidAutoconsent,			  // " raid_auto_consent,         "
+		pp->guildAutoconsent,			  // " guild_auto_consent,        "
 		pp->RestTimer					  // " RestTimer)                 "
-	);
+		);
 	auto results = QueryDatabase(query);
-	ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Character Data", query); 
+	ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Character Data", query);
 	/* Save Bind Points */
 	query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 		" VALUES (%u, %u, %u, %f, %f, %f, %f, %i), "
 		"(%u, %u, %u, %f, %f, %f, %f, %i)",
 		character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading, 0,
 		character_id, pp->binds[4].zoneId, 0, pp->binds[4].x, pp->binds[4].y, pp->binds[4].z, pp->binds[4].heading, 1
-	); results = QueryDatabase(query); ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Bind Point", query);
+		); results = QueryDatabase(query); ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Bind Point", query);
 
 	/* Save Skills */
 	int firstquery = 0;
