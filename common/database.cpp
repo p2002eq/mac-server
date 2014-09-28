@@ -841,23 +841,23 @@ bool Database::CheckDatabaseConversions() {
 	std::string rquery = StringFormat("SHOW TABLES LIKE 'character_'");
 	auto results = QueryDatabase(rquery);
 	if (results.RowCount() == 1){
-		runconvert = 1; 
+		runconvert = 1;
 		printf("\n\n::: Legacy Character Data Binary Blob Storage Detected... \n");
 		printf("----------------------------------------------------------\n\n");
-		printf(" Database currently has character data being stored via \n"); 
+		printf(" Database currently has character data being stored via \n");
 		printf("  the legacy character storage method and will proceed with converting...\n\n");
 		printf(" It is recommended that you backup your database \n");
 		printf("  before continuing the automatic conversion process...\n\n");
 		printf("----------------------------------------------------------\n\n");
 		std::cout << "Press ENTER to continue....." << std::endl << std::endl;
-		std::cin.ignore(1);  
+		std::cin.ignore(1);
 	}
 
 	// runconvert = 0;
 	// printppdebug = 1;
 
 	if (runconvert == 1){
-		printf("Running character binary blob to database conversion... \n", number_of_characters); 
+		printf("Running character binary blob to database conversion... \n", number_of_characters);
 		/* Get the number of characters */
 		rquery = StringFormat("SELECT COUNT(`id`) FROM `character_`");
 		results = QueryDatabase(rquery);
@@ -880,6 +880,7 @@ bool Database::CheckDatabaseConversions() {
 				"`title` varchar(32) NOT NULL DEFAULT '',							"
 				"`suffix` varchar(32) NOT NULL DEFAULT '',							"
 				"`zone_id` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
+				"`zone_instance` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`y` float NOT NULL DEFAULT '0',									"
 				"`x` float NOT NULL DEFAULT '0',									"
 				"`z` float NOT NULL DEFAULT '0',									"
@@ -902,6 +903,9 @@ bool Database::CheckDatabaseConversions() {
 				"`beard_color` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_1` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_2` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`drakkin_heritage` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
+				"`drakkin_tattoo` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`drakkin_details` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_time_seconds` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
 				"`ability_number` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,			"
 				"`ability_time_minutes` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
@@ -910,6 +914,10 @@ bool Database::CheckDatabaseConversions() {
 				"`aa_points_spent` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`aa_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`aa_points` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
+				"`group_leadership_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`raid_leadership_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
+				"`group_leadership_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`raid_leadership_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`points` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`cur_hp` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`mana` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
@@ -927,10 +935,31 @@ bool Database::CheckDatabaseConversions() {
 				"`hunger_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`thirst_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_up` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
+				"`ldon_points_guk` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`ldon_points_mir` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`ldon_points_mmc` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`ldon_points_ruj` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`ldon_points_tak` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`ldon_points_available` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`tribute_time_remaining` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`career_tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`tribute_active` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`pvp_status` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
+				"`pvp_kills` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
+				"`pvp_deaths` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
+				"`pvp_current_points` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
+				"`pvp_career_points` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
+				"`pvp_best_kill_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`pvp_worst_death_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`pvp_current_kill_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`pvp2` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`pvp_type` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
 				"`show_helm` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
+				"`group_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`raid_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`guild_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
+				"`leadership_exp_on` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`RestTimer` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
 				"`air_remaining` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`autosplit_enabled` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
@@ -946,7 +975,7 @@ bool Database::CheckDatabaseConversions() {
 				"UNIQUE KEY `name` (`name`),										"
 				"KEY `account_id` (`account_id`)									"
 				") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;		"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -971,10 +1000,14 @@ bool Database::CheckDatabaseConversions() {
 				" 	`gold_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,                 "
 				" 	`silver_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
 				" 	`copper_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
+				" 	`radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,            "
+				" 	`career_radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,     "
+				" 	`ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
+				" 	`career_ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,        "
 				" 	PRIMARY KEY (`id`),                                                "
 				"   KEY `id` (`id`)                                                    "
 				" ) ENGINE=InnoDB DEFAULT CHARSET=latin1;             "
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -993,7 +1026,7 @@ bool Database::CheckDatabaseConversions() {
 				" PRIMARY KEY(`id`,`slot`),												"
 				" KEY `id` (`id`)														"
 				" ) ENGINE = InnoDB DEFAULT CHARSET = latin1;		"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1015,8 +1048,8 @@ bool Database::CheckDatabaseConversions() {
 				"`heading` float NOT NULL DEFAULT '0',						   "
 				"PRIMARY KEY(`id`, `is_home`),								   "
 				"KEY `id` (`id`)											   "
-				") ENGINE = InnoDB DEFAULT CHARSET = latin1;" 
-			);
+				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1034,7 +1067,7 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`, `lang_id`),								   "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1044,7 +1077,7 @@ bool Database::CheckDatabaseConversions() {
 		results = QueryDatabase(rquery);
 		if (results.RowCount() == 0){
 			printf("Table: `character_skills` doesn't exist... creating...");
-			rquery = StringFormat( 
+			rquery = StringFormat(
 				"CREATE TABLE `character_skills` (							   "
 				"`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,				   "
 				"`skill_id` smallint(11) UNSIGNED NOT NULL DEFAULT '0',		   "
@@ -1052,7 +1085,7 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`, `skill_id`),								   "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			); 
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1070,11 +1103,11 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`, `slot_id`),								   "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
-		} 
+		}
 		/* Check for table `character_memmed_spells` */
 		rquery = StringFormat("SHOW TABLES LIKE 'character_memmed_spells'");
 		results = QueryDatabase(rquery);
@@ -1088,10 +1121,10 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`, `slot_id`),								   "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
-			printf(" done...\n"); 
+			printf(" done...\n");
 		}
 		/* Check for table `character_disciplines` */
 		rquery = StringFormat("SHOW TABLES LIKE 'character_disciplines'");
@@ -1105,8 +1138,8 @@ bool Database::CheckDatabaseConversions() {
 				" `disc_id` smallint(11) UNSIGNED NOT NULL DEFAULT '0',			  "
 				" PRIMARY KEY(`id`, `slot_id`),									  "
 				" KEY `id` (`id`)												  "
-				" ) ENGINE = InnoDB DEFAULT CHARSET = latin1;  " 
-			);
+				" ) ENGINE = InnoDB DEFAULT CHARSET = latin1;  "
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1116,7 +1149,7 @@ bool Database::CheckDatabaseConversions() {
 		results = QueryDatabase(rquery);
 		if (results.RowCount() == 0){
 			printf("Table: `character_material` doesn't exist... creating...");
-			rquery = StringFormat( 
+			rquery = StringFormat(
 				"CREATE TABLE `character_material` ( "
 				"`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,"
 				"`slot` tinyint(11) UNSIGNED NOT NULL DEFAULT '0',"
@@ -1128,11 +1161,11 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`, `slot`),"
 				"KEY `id` (`id`)"
 				") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
-		} 
+		}
 		/* Check for table `character_tribute` */
 		rquery = StringFormat("SHOW TABLES LIKE 'character_tribute'");
 		results = QueryDatabase(rquery);
@@ -1145,7 +1178,7 @@ bool Database::CheckDatabaseConversions() {
 				"`tribute` int(11) UNSIGNED NOT NULL DEFAULT '0',			   "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1166,7 +1199,7 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`,`bandolier_id`, `bandolier_slot`),			"
 				"KEY `id` (`id`)												"
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;	"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1185,7 +1218,7 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`,`potion_id`),								  "
 				"KEY `id` (`id`)												  "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1220,7 +1253,7 @@ bool Database::CheckDatabaseConversions() {
 				"PRIMARY KEY(`id`,`slot`), "
 				"KEY `id` (`id`)												  "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1; "
-			);
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Table create", rquery);
 			printf(" done...\n");
@@ -1243,7 +1276,7 @@ bool Database::CheckDatabaseConversions() {
 	std::string inspectmessage;
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
-		char_iter_count++; 
+		char_iter_count++;
 		squery = StringFormat("SELECT `id`, `profile`, `name`, `level`, `account_id`, `firstlogon`, `lfg`, `lfp`, `mailkey`, `xtargets`, `inspectmessage`, `extprofile` FROM `character_` WHERE `id` = %i", atoi(row[0]));
 		auto results2 = QueryDatabase(squery);
 		auto row2 = results2.begin();
@@ -1296,8 +1329,9 @@ bool Database::CheckDatabaseConversions() {
 			/* Run Currency Convert */
 			std::string rquery = StringFormat("REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 				"platinum_bank, gold_bank, silver_bank, copper_bank,"
-				"platinum_cursor, gold_cursor, silver_cursor, copper_cursor)"
-				"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+				"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
+				"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
+				"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 				character_id,
 				pp->platinum,
 				pp->gold,
@@ -1310,8 +1344,12 @@ bool Database::CheckDatabaseConversions() {
 				pp->platinum_cursor,
 				pp->gold_cursor,
 				pp->silver_cursor,
-				pp->copper_cursor
-			);
+				pp->copper_cursor,
+				pp->currentRadCrystals,
+				pp->careerRadCrystals,
+				pp->currentEbonCrystals,
+				pp->careerEbonCrystals
+				);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Character Currency Convert", rquery);
 
@@ -1369,23 +1407,52 @@ bool Database::CheckDatabaseConversions() {
 				"pvp_type,"
 				"autosplit_enabled,"
 				"zone_change_count,"
+				"drakkin_heritage,"
+				"drakkin_tattoo,"
+				"drakkin_details,"
 				"toxicity,"
 				"hunger_level,"
 				"thirst_level,"
 				"ability_up,"
 				"zone_id,"
+				"zone_instance,"
+				"leadership_exp_on,"
+				"ldon_points_guk,"
+				"ldon_points_mir,"
+				"ldon_points_mmc,"
+				"ldon_points_ruj,"
+				"ldon_points_tak,"
+				"ldon_points_available,"
+				"tribute_time_remaining,"
 				"show_helm,"
+				"career_tribute_points,"
+				"tribute_points,"
+				"tribute_active,"
 				"endurance,"
+				"group_leadership_exp,"
+				"raid_leadership_exp,"
+				"group_leadership_points,"
+				"raid_leadership_points,"
 				"air_remaining,"
+				"pvp_kills,"
+				"pvp_deaths,"
+				"pvp_current_points,"
+				"pvp_career_points,"
+				"pvp_best_kill_streak,"
+				"pvp_worst_death_streak,"
+				"pvp_current_kill_streak,"
 				"aa_points_spent,"
 				"aa_exp,"
 				"aa_points,"
+				"group_auto_consent,"
+				"raid_auto_consent,"
+				"guild_auto_consent,"
 				"RestTimer,"
 				"firstlogon,"
 				"lfg,"
 				"lfp,"
 				"mailkey,"
-				"xtargets," 
+				"xtargets,"
 				"e_aa_effects,"
 				"e_percent_to_aa,"
 				"e_expended_aa_spent"
@@ -1440,17 +1507,46 @@ bool Database::CheckDatabaseConversions() {
 				"%u,"		// pvp_type					  
 				"%u,"		// autosplit_enabled				
 				"%u,"		// zone_change_count				
+				"%u,"		// drakkin_heritage			  
+				"%u,"		// drakkin_tattoo			  
+				"%u,"		// drakkin_details			  
 				"%i,"		// toxicity	 				  
 				"%u,"		// hunger_level				  
 				"%u,"		// thirst_level				  
 				"%u,"		// ability_up				  
 				"%u,"		// zone_id					  
+				"%u,"		// zone_instance					
+				"%u,"		// leadership_exp_on				
+				"%u,"		// ldon_points_guk			  
+				"%u,"		// ldon_points_mir			  
+				"%u,"		// ldon_points_mmc			  
+				"%u,"		// ldon_points_ruj			  
+				"%u,"		// ldon_points_tak			  
+				"%u,"		// ldon_points_available			
+				"%u,"		// tribute_time_remaining	  
 				"%u,"		// show_helm						
+				"%u,"		// career_tribute_points			
+				"%u,"		// tribute_points			  
+				"%u,"		// tribute_active			  
 				"%u,"		// endurance						
+				"%u,"		// group_leadership_exp		  
+				"%u,"		// raid_leadership_exp		  
+				"%u,"		// group_leadership_points	  
+				"%u,"		// raid_leadership_points	  
 				"%u,"		// air_remaining					
+				"%u,"		// pvp_kills						
+				"%u,"		// pvp_deaths				  
+				"%u,"		// pvp_current_points		  
+				"%u,"		// pvp_career_points				
+				"%u,"		// pvp_best_kill_streak		  
+				"%u,"		// pvp_worst_death_streak	  
+				"%u,"		// pvp_current_kill_streak	  
 				"%u,"		// aa_points_spent			  
 				"%u,"		// aa_exp					  
 				"%u,"		// aa_points						
+				"%u,"		// group_auto_consent		  
+				"%u,"		// raid_auto_consent				
+				"%u,"		// guild_auto_consent		  
 				"%u," 		// RestTimer
 				"%u,"		// First Logon - References online status for EVENT_CONNECT/EVENT_DISCONNECt
 				"%u,"		// Looking for Group
@@ -1510,6 +1606,9 @@ bool Database::CheckDatabaseConversions() {
 				pp->pvptype,
 				pp->autosplit,
 				pp->zone_change_count,
+				pp->drakkin_heritage,
+				pp->drakkin_tattoo,
+				pp->drakkin_details,
 				pp->toxicity,
 				pp->hunger_level,
 				pp->thirst_level,
@@ -1525,7 +1624,14 @@ bool Database::CheckDatabaseConversions() {
 				pp->ldon_points_available,
 				pp->tribute_time_remaining,
 				pp->showhelm,
+				pp->career_tribute_points,
+				pp->tribute_points,
+				pp->tribute_active,
 				pp->endurance,
+				pp->group_leadership_exp,
+				pp->raid_leadership_exp,
+				pp->group_leadership_points,
+				pp->raid_leadership_points,
 				pp->air_remaining,
 				pp->PVPKills,
 				pp->PVPDeaths,
@@ -1549,15 +1655,15 @@ bool Database::CheckDatabaseConversions() {
 				e_pp->aa_effects,
 				e_pp->perAA,
 				e_pp->expended_aa
-			);
+				);
 			results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Character Data Convert", rquery);
-			
+
 
 			/*
-				We set a first entry variable because we need the first initial piece of the query to be declared
-				This is to speed up the INSERTS and trim down the amount of individual sends during the process.
-				The speed difference is dramatic
+			We set a first entry variable because we need the first initial piece of the query to be declared
+			This is to speed up the INSERTS and trim down the amount of individual sends during the process.
+			The speed difference is dramatic
 			*/
 			/* Run AA Convert */
 			int first_entry = 0; rquery = "";
@@ -1567,27 +1673,28 @@ bool Database::CheckDatabaseConversions() {
 						rquery = StringFormat("REPLACE INTO `character_alternate_abilities` (id, slot, aa_id, aa_value)"
 							" VALUES (%u, %u, %u, %u)", character_id, i, pp->aa_array[i].AA, pp->aa_array[i].value);
 						first_entry = 1;
-					} else {
+					}
+					else {
 						rquery = rquery + StringFormat(", (%u, %u, %u, %u)", character_id, i, pp->aa_array[i].AA, pp->aa_array[i].value);
 					}
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "AA Convert", rquery); } 
-			
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "AA Convert", rquery); }
+
 			/* Run Bind Home Convert */
-			if(pp->binds[4].zoneId < 999 && !_ISNAN_(pp->binds[4].x) && !_ISNAN_(pp->binds[4].y) && !_ISNAN_(pp->binds[4].z) && !_ISNAN_(pp->binds[4].heading)) {
+			if (pp->binds[4].zoneId < 999 && !_ISNAN_(pp->binds[4].x) && !_ISNAN_(pp->binds[4].y) && !_ISNAN_(pp->binds[4].z) && !_ISNAN_(pp->binds[4].heading)) {
 				rquery = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 					" VALUES (%u, %u, %u, %f, %f, %f, %f, 1)",
 					character_id, pp->binds[4].zoneId, 0, pp->binds[4].x, pp->binds[4].y, pp->binds[4].z, pp->binds[4].heading);
-				if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Bind Home Convert", rquery); }  
+				if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Bind Home Convert", rquery); }
 			}
 
 			/* Run Bind Convert */
-			if(pp->binds[0].zoneId < 999 && !_ISNAN_(pp->binds[0].x) && !_ISNAN_(pp->binds[0].y) && !_ISNAN_(pp->binds[0].z) && !_ISNAN_(pp->binds[0].heading)) {
+			if (pp->binds[0].zoneId < 999 && !_ISNAN_(pp->binds[0].x) && !_ISNAN_(pp->binds[0].y) && !_ISNAN_(pp->binds[0].z) && !_ISNAN_(pp->binds[0].heading)) {
 				rquery = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 					" VALUES (%u, %u, %u, %f, %f, %f, %f, 0)",
 					character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading);
-				if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Bind Convert", rquery); }  
+				if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Bind Convert", rquery); }
 			}
 			/* Run Language Convert */
 			first_entry = 0; rquery = "";
@@ -1600,7 +1707,7 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u)", character_id, i, pp->languages[i]);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Language Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Language Convert", rquery); }
 			/* Run Skill Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < MAX_PP_SKILL; i++){
@@ -1612,7 +1719,7 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u)", character_id, i, pp->skills[i]);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Skills Convert Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Skills Convert Convert", rquery); }
 			/* Run Spell Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < MAX_PP_REF_SPELLBOOK; i++){
@@ -1625,7 +1732,7 @@ bool Database::CheckDatabaseConversions() {
 				}
 			}
 			// std::cout << rquery << "\n";
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Spell Convert", rquery);  }  
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Spell Convert", rquery); }
 			/* Run Max Memmed Spell Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < MAX_PP_REF_MEMSPELL; i++){
@@ -1637,11 +1744,11 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u)", character_id, i, pp->mem_spells[i]);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Memmed Spells Convert", rquery);  }  
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Memmed Spells Convert", rquery); }
 			/* Run Discipline Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < MAX_PP_DISCIPLINES; i++){
-				if(pp->disciplines.values[i] > 0 && pp->disciplines.values[i] < 60000){
+				if (pp->disciplines.values[i] > 0 && pp->disciplines.values[i] < 60000){
 					if (first_entry != 1){
 						rquery = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, i, pp->disciplines.values[i]);
 						first_entry = 1;
@@ -1649,7 +1756,7 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u)", character_id, i, pp->disciplines.values[i]);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Discipline Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Discipline Convert", rquery); }
 			/* Run Material Color Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < _MaterialCount; i++){
@@ -1661,7 +1768,7 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u, %u, %u, %u, %u)", character_id, i, pp->item_tint[i].rgb.blue, pp->item_tint[i].rgb.green, pp->item_tint[i].rgb.red, pp->item_tint[i].rgb.use_tint, pp->item_tint[i].color);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Material Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Material Convert", rquery); }
 			/* Run Tribute Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < EmuConstants::TRIBUTE_SIZE; i++){
@@ -1673,11 +1780,11 @@ bool Database::CheckDatabaseConversions() {
 					rquery = rquery + StringFormat(", (%u, %u, %u)", character_id, pp->tributes[i].tier, pp->tributes[i].tribute);
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Tribute Convert", rquery);  }
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Tribute Convert", rquery); }
 			/* Run Bandolier Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < EmuConstants::BANDOLIERS_COUNT; i++){
-				if(strlen(pp->bandoliers[i].name) < 32) {
+				if (strlen(pp->bandoliers[i].name) < 32) {
 					for (int si = 0; si < EmuConstants::BANDOLIER_SIZE; si++){
 						if (pp->bandoliers[i].items[si].item_id > 0){
 							if (first_entry != 1) {
@@ -1689,7 +1796,7 @@ bool Database::CheckDatabaseConversions() {
 					}
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Bandolier Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Bandolier Convert", rquery); }
 			/* Run Potion Belt Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < EmuConstants::POTION_BELT_SIZE; i++){
@@ -1702,25 +1809,25 @@ bool Database::CheckDatabaseConversions() {
 
 				}
 			}
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Potion Belt Convert", rquery);  } 
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Potion Belt Convert", rquery); }
 			/* Run Leadership AA Convert */
 			first_entry = 0; rquery = "";
 			for (i = 0; i < MAX_LEADERSHIP_AA_ARRAY; i++){
-				if(pp->leader_abilities.ranks[i] > 0 && pp->leader_abilities.ranks[i] < 6){
+				if (pp->leader_abilities.ranks[i] > 0 && pp->leader_abilities.ranks[i] < 6){
 					if (first_entry != 1){
 						rquery = StringFormat("REPLACE INTO `character_leadership_abilities` (id, slot, rank) VALUES (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
 						first_entry = 1;
 					}
 					rquery = rquery + StringFormat(", (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
 				}
-			} 
-			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Leadership AA Convert", rquery);  }
+			}
+			if (rquery != ""){ results = QueryDatabase(rquery); ThrowDBError(results.ErrorMessage(), "Character Leadership AA Convert", rquery); }
 		}
 	}
 	if (runconvert == 1){
 		std::string rquery = StringFormat("RENAME TABLE `character_` TO `character_old`"); QueryDatabase(rquery);
-		printf("\n\nRenaming `character_` table to `character_old`, this is a LARGE table so when you don't need it anymore, I would suggest deleting it yourself...\n"); 
-		printf("\n\nCharacter blob conversion complete, continuing world bootup...\n"); 
+		printf("\n\nRenaming `character_` table to `character_old`, this is a LARGE table so when you don't need it anymore, I would suggest deleting it yourself...\n");
+		printf("\n\nCharacter blob conversion complete, continuing world bootup...\n");
 	}
 
 	return true;
