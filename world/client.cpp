@@ -1129,6 +1129,9 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
 	pp.haircolor		= cc->haircolor;
 	pp.beard			= cc->beard;
 	pp.beardcolor		= cc->beardcolor;
+	pp.drakkin_heritage		= cc->drakkin_heritage;
+	pp.drakkin_tattoo		= cc->drakkin_tattoo;
+	pp.drakkin_details		= cc->drakkin_details;
 	pp.birthday		= bday;
 	pp.lastlogin	= bday;
 	pp.level			= 1;

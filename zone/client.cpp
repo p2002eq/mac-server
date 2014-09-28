@@ -113,6 +113,9 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// Luclin Hair Style
 	0,	// Luclin Face
 	0,	// Luclin Beard
+	0,	// Drakkin Heritage
+	0,	// Drakkin Tattoo
+	0,	// Drakkin Details
 	0,	// Armor Tint
 	0xff,	// AA Title
 	0,	// see_invis
@@ -493,6 +496,8 @@ bool Client::Save(uint8 iCommitNow) {
 	database.SavePetInfo(this);
 
 	p_timers.Store(&database);
+
+	database.SaveCharacterTribute(this->CharacterID(), &m_pp);
 
 	if(m_pp.hunger_level < 0) {
 		m_pp.hunger_level = 0;
@@ -4219,6 +4224,9 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	made_npc->hairstyle = GetHairStyle();
 	made_npc->luclinface = GetLuclinFace();
 	made_npc->beard = GetBeard();
+	made_npc->drakkin_heritage = GetDrakkinHeritage();
+	made_npc->drakkin_tattoo = GetDrakkinTattoo();
+	made_npc->drakkin_details = GetDrakkinDetails();
 	made_npc->d_meele_texture1 = GetEquipmentMaterial(MaterialPrimary);
 	made_npc->d_meele_texture2 = GetEquipmentMaterial(MaterialSecondary);
 	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)	{
@@ -4322,6 +4330,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 		case 128: race_Name = "Iksar";		break;
 		case 130: race_Name = "Vah Shir";	break;
 		case 330: race_Name = "Froglok";	break;
+		case 522: race_Name = "Drakkin";	break;
 		default: break;
 	}
 	/*##########################################################

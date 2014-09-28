@@ -308,6 +308,9 @@ public:
 	inline uint8		GetBaseEyeColor()	const { return m_pp.eyecolor1; }
 	inline uint8		GetBaseHairStyle()	const { return m_pp.hairstyle; }
 	inline uint8		GetBaseBeard()		const { return m_pp.beard; }
+	inline uint8		GetBaseHeritage()	const { return m_pp.drakkin_heritage; }
+	inline uint8		GetBaseTattoo()		const { return m_pp.drakkin_tattoo; }
+	inline uint8		GetBaseDetails()	const { return m_pp.drakkin_details; }
 	inline const float	GetBindX(uint32 index = 0)	const { return m_pp.binds[index].x; }
 	inline const float	GetBindY(uint32 index = 0)			const { return m_pp.binds[index].y; }
 	inline const float	GetBindZ(uint32 index = 0)			const { return m_pp.binds[index].z; }

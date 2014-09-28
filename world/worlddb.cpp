@@ -66,7 +66,10 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		"hair_style,                "  // 13
 		"beard,                     "  // 14
 		"face,                      "  // 15
-		"zone_id		            "  // 16
+		"drakkin_heritage,          "  // 16
+		"drakkin_tattoo,            "  // 17
+		"drakkin_details,           "  // 18
+		"zone_id		            "  // 19
 		"FROM                       "  
 		"character_data             "  
 		"WHERE `account_id` = %i ORDER BY `name` LIMIT 10   ", account_id);
@@ -83,7 +86,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		cs->race[char_num] = atoi(row[3]);
 		cs->gender[char_num] = atoi(row[2]);
 		cs->deity[char_num] = atoi(row[6]);
-		cs->zone[char_num] = atoi(row[16]);
+		cs->zone[char_num] = atoi(row[19]);
 		cs->face[char_num] = atoi(row[15]);
 		cs->haircolor[char_num] = atoi(row[9]);
 		cs->beardcolor[char_num] = atoi(row[10]);
@@ -91,6 +94,9 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		cs->eyecolor1[char_num] = atoi(row[11]);
 		cs->hairstyle[char_num] = atoi(row[13]);
 		cs->beard[char_num] = atoi(row[14]);
+		cs->drakkin_heritage[char_num] = atoi(row[16]);
+		cs->drakkin_tattoo[char_num] = atoi(row[17]);
+		cs->drakkin_details[char_num] = atoi(row[18]);
 
 		if (RuleB(World, EnableTutorialButton) && (lvl <= RuleI(World, MaxLevelForTutorial)))
 			cs->tutorial[char_num] = 1;
