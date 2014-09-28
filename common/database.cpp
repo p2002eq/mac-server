@@ -449,9 +449,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"pvp_type,"
 		"autosplit_enabled,"
 		"zone_change_count,"
-		"drakkin_heritage,"
-		"drakkin_tattoo,"
-		"drakkin_details,"
 		"toxicity,"
 		"hunger_level,"
 		"thirst_level,"
@@ -540,9 +537,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // pvp_type				
 		"%u,"  // autosplit_enabled		
 		"%u,"  // zone_change_count		
-		"%u,"  // drakkin_heritage		
-		"%u,"  // drakkin_tattoo		
-		"%u,"  // drakkin_details		
 		"%i,"  // toxicity				
 		"%i,"  // hunger_level			
 		"%i,"  // thirst_level			
@@ -631,9 +625,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
-		pp->drakkin_heritage,			  // " drakkin_heritage,          "
-		pp->drakkin_tattoo,				  // " drakkin_tattoo,            "
-		pp->drakkin_details,			  // " drakkin_details,           "
 		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
@@ -990,9 +981,6 @@ bool Database::CheckDatabaseConversions() {
 				"`beard_color` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_1` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_2` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`drakkin_heritage` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
-				"`drakkin_tattoo` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`drakkin_details` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_time_seconds` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
 				"`ability_number` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,			"
 				"`ability_time_minutes` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
@@ -1494,9 +1482,6 @@ bool Database::CheckDatabaseConversions() {
 				"pvp_type,"
 				"autosplit_enabled,"
 				"zone_change_count,"
-				"drakkin_heritage,"
-				"drakkin_tattoo,"
-				"drakkin_details,"
 				"toxicity,"
 				"hunger_level,"
 				"thirst_level,"
@@ -1594,9 +1579,6 @@ bool Database::CheckDatabaseConversions() {
 				"%u,"		// pvp_type					  
 				"%u,"		// autosplit_enabled				
 				"%u,"		// zone_change_count				
-				"%u,"		// drakkin_heritage			  
-				"%u,"		// drakkin_tattoo			  
-				"%u,"		// drakkin_details			  
 				"%i,"		// toxicity	 				  
 				"%u,"		// hunger_level				  
 				"%u,"		// thirst_level				  
@@ -1693,9 +1675,6 @@ bool Database::CheckDatabaseConversions() {
 				pp->pvptype,
 				pp->autosplit,
 				pp->zone_change_count,
-				pp->drakkin_heritage,
-				pp->drakkin_tattoo,
-				pp->drakkin_details,
 				pp->toxicity,
 				pp->hunger_level,
 				pp->thirst_level,

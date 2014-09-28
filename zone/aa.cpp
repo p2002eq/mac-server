@@ -1308,6 +1308,7 @@ bool ZoneDatabase::LoadAAEffects2() {
 
 	return true;
 }
+
 uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char *query = 0;
@@ -1328,6 +1329,7 @@ uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", skill_id);
 	return skill_id;
 }
+
 void Client::ResetAA(){
 	RefundAA(); 
 	uint32 i;
@@ -1342,18 +1344,9 @@ void Client::ResetAA(){
 	for(itr=aa_points.begin();itr!=aa_points.end();++itr)
 		aa_points[itr->first] = 0;
 
-		for(int i = 0; i < _maxLeaderAA; ++i)
-		m_pp.leader_abilities.ranks[i] = 0;
-
-	m_pp.group_leadership_points = 0;
-	m_pp.raid_leadership_points = 0;
-	m_pp.group_leadership_exp = 0;
-	m_pp.raid_leadership_exp = 0;
-
 	database.DeleteCharacterAAs(this->CharacterID());
 	SaveAA(); 
 	SendAATable();
-	database.DeleteCharacterLeadershipAAs(this->CharacterID());
 	Kick();
 }
 

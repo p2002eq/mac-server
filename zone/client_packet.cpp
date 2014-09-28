@@ -1053,14 +1053,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (firstlogon){ firstlogon = atoi(row[0]); }
 	}
 
-	if (RuleB(Character, SharedBankPlat))
-		m_pp.platinum_shared = database.GetSharedPlatinum(this->AccountID());
-
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
-	database.LoadCharacterBandolier(cid, &m_pp); /* Load Character Bandolier */
 	database.LoadCharacterBindPoint(cid, &m_pp); /* Load Character Bind */
 	database.LoadCharacterMaterialColor(cid, &m_pp); /* Load Character Material */
-	database.LoadCharacterPotions(cid, &m_pp); /* Load Character Potion Belt */
 	database.LoadCharacterCurrency(cid, &m_pp); /* Load Character Currency into PP */
 	database.LoadCharacterData(cid, &m_pp, &m_epp); /* Load Character Data from DB into PP as well as E_PP */
 	database.LoadCharacterSkills(cid, &m_pp); /* Load Character Skills */
@@ -1068,8 +1063,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterMemmedSpells(cid, &m_pp);  /* Load Character Memorized Spells */
 	database.LoadCharacterDisciplines(cid, &m_pp); /* Load Character Disciplines */
 	database.LoadCharacterLanguages(cid, &m_pp); /* Load Character Languages */
-	database.LoadCharacterLeadershipAA(cid, &m_pp); /* Load Character Leadership AA's */
-	database.LoadCharacterTribute(cid, &m_pp); /* Load CharacterTribute */
 
 	/* Set item material tint */
 	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)
@@ -1084,7 +1077,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	conn_state = PlayerProfileLoaded;
 
 	m_pp.zone_id = zone->GetZoneID();
-	m_pp.zoneInstance = zone->GetInstanceID();
+	m_pp.zoneInstance = 0;
 
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
@@ -1126,9 +1119,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	hairstyle = m_pp.hairstyle;
 	luclinface = m_pp.face;
 	beard = m_pp.beard;
-	drakkin_heritage = m_pp.drakkin_heritage;
-	drakkin_tattoo = m_pp.drakkin_tattoo;
-	drakkin_details = m_pp.drakkin_details;
 
 	/* If GM not set in DB, and does not meet min status to be GM, reset */
 	if (m_pp.gm && admin < minStatusToBeGM)
@@ -1143,7 +1133,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	switch (race)
 	{
 	case OGRE:
-		size = 9; break;
 	case TROLL:
 		size = 8; break;
 	case VAHSHIR: case BARBARIAN:
@@ -1163,10 +1152,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0;
 	}
-
-	/* Set Swimming Skill 100 by default if under 100 */
-	if (GetSkill(SkillSwimming) < 100)
-		SetSkill(SkillSwimming, 100);
 
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
@@ -1309,10 +1294,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	Mob::SetMana(m_pp.mana);
 	SetEndurance(m_pp.endurance);
 
-	/* Get Expansions from variables table and ship via PP */
-	char val[20] = { 0 };
-	if (database.GetVariable("Expansions", val, 20)){ m_pp.expansions = atoi(val); }
-	else{ m_pp.expansions = 0x3FF; }
+	m_pp.expansions = database.GetExpansion(AccountID());
 
 	p_timers.SetCharID(CharacterID());
 	if (!p_timers.Load(&database)) {
@@ -1349,9 +1331,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.pvp = 1;
 	/* Time entitled on Account: Move to account */
 	m_pp.timeentitledonaccount = database.GetTotalTimeEntitledOnAccount(AccountID()) / 1440;
-	/* Reset rest timer if the durations have been lowered in the database */
-	if ((m_pp.RestTimer > RuleI(Character, RestRegenTimeToActivate)) && (m_pp.RestTimer > RuleI(Character, RestRegenRaidTimeToActivate)))
-		m_pp.RestTimer = 0;
 
 	/* This checksum should disappear once dynamic structs are in... each struct strategy will do it */
 	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
@@ -1363,9 +1342,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	memcpy(outapp->pBuffer, &m_pp, outapp->size);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
-
-	if (m_pp.RestTimer)
-		rest_timer.Start(m_pp.RestTimer * 1000);
 
 	database.LoadPetInfo(this);
 	/*
@@ -1395,7 +1371,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
-	sze->player.spawn.z += 6;	//arbitrary lift, seems to help spawning under zone.
+	//sze->player.spawn.z += 6;	//arbitrary lift, seems to help spawning under zone.
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
@@ -1427,6 +1403,17 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			const ItemInst *inst = *it;
 			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
+
+		//Items in cursor container
+		itemsinabag = false;
+		int16 slot_id = 0;
+		for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
+			const ItemInst* inst = m_inv[slot_id];
+			if (inst){
+				itemsinabag = true;
+				_log(EQMAC__LOG, "Sending cursor bag item %s in slot: %i to %s", inst->GetItem()->Name, slot_id, GetName());
+			}
+		}
 	}
 
 	/*
@@ -1434,14 +1421,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	This shouldent be moved, this seems to be what the client
 	uses to advance to the next state (sending ReqNewZone)
 	*/
-	outapp = new EQApplicationPacket(OP_Weather, 12);
-	Weather_Struct *ws = (Weather_Struct *)outapp->pBuffer;
-	ws->val1 = 0x000000FF;
-	if (zone->zone_weather == 1){ ws->type = 0x31; } // Rain
-	if (zone->zone_weather == 2) {
-		outapp->pBuffer[8] = 0x01;
-		ws->type = 0x02;
-	}
+	outapp = new EQApplicationPacket(OP_Weather, 8);
+	outapp->pBuffer[0] = 0;
+	outapp->pBuffer[4] = 0;
+
 	outapp->priority = 6;
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -3259,9 +3242,6 @@ void Client::Handle_OP_FaceChange(const EQApplicationPacket *app)
 	m_pp.hairstyle = fc->hairstyle;
 	m_pp.face = fc->face;
 	m_pp.beard = fc->beard;
-	m_pp.drakkin_heritage = fc->drakkin_heritage;
-	m_pp.drakkin_tattoo = fc->drakkin_tattoo;
-	m_pp.drakkin_details = fc->drakkin_details;
 	Save();
 
 	return;

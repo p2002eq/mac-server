@@ -400,21 +400,6 @@ int Lua_Mob::GetBeard() {
 	return self->GetBeard();
 }
 
-int Lua_Mob::GetDrakkinHeritage() {
-	Lua_Safe_Call_Int();
-	return self->GetDrakkinHeritage();
-}
-
-int Lua_Mob::GetDrakkinTattoo() {
-	Lua_Safe_Call_Int();
-	return self->GetDrakkinTattoo();
-}
-
-int Lua_Mob::GetDrakkinDetails() {
-	Lua_Safe_Call_Int();
-	return self->GetDrakkinDetails();
-}
-
 int Lua_Mob::GetClass() {
 	Lua_Safe_Call_Int();
 	return self->GetClass();
@@ -1442,9 +1427,6 @@ void Lua_Mob::SendIllusionPacket(luabind::adl::object illusion) {
 	int luclinface = 255;
 	int beard = 255;
 	int aa_title = 255;
-	uint32 drakkin_heritage = 4294967295;
-	uint32 drakkin_tattoo = 4294967295;
-	uint32 drakkin_details = 4294967295;
 	float size = -1.0f;
 
 	auto cur = illusion["race"];
@@ -1543,30 +1525,6 @@ void Lua_Mob::SendIllusionPacket(luabind::adl::object illusion) {
 		}
 	}
 
-	cur = illusion["drakkin_heritage"];
-	if(luabind::type(cur) != LUA_TNIL) {
-		try {
-			drakkin_heritage = luabind::object_cast<int>(cur);
-		} catch(luabind::cast_failed) {
-		}
-	}
-
-	cur = illusion["drakkin_tattoo"];
-	if(luabind::type(cur) != LUA_TNIL) {
-		try {
-			drakkin_tattoo = luabind::object_cast<int>(cur);
-		} catch(luabind::cast_failed) {
-		}
-	}
-
-	cur = illusion["drakkin_details"];
-	if(luabind::type(cur) != LUA_TNIL) {
-		try {
-			drakkin_details = luabind::object_cast<int>(cur);
-		} catch(luabind::cast_failed) {
-		}
-	}
-
 	cur = illusion["size"];
 	if(luabind::type(cur) != LUA_TNIL) {
 		try {
@@ -1576,7 +1534,7 @@ void Lua_Mob::SendIllusionPacket(luabind::adl::object illusion) {
 	}
 
 	self->SendIllusionPacket(race, gender, texture, helmtexture, haircolor, beardcolor, eyecolor1, eyecolor2, hairstyle, luclinface,
-		beard, aa_title, drakkin_heritage, drakkin_tattoo, drakkin_details, size);
+		beard, aa_title, size);
 }
 
 void Lua_Mob::SendSpellEffect(uint32 effect_id, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020) {
@@ -1870,9 +1828,6 @@ luabind::scope lua_register_mob() {
 		.def("GetHairStyle", &Lua_Mob::GetHairStyle)
 		.def("GetLuclinFace", &Lua_Mob::GetLuclinFace)
 		.def("GetBeard", &Lua_Mob::GetBeard)
-		.def("GetDrakkinHeritage", &Lua_Mob::GetDrakkinHeritage)
-		.def("GetDrakkinTattoo", &Lua_Mob::GetDrakkinTattoo)
-		.def("GetDrakkinDetails", &Lua_Mob::GetDrakkinDetails)
 		.def("GetClass", &Lua_Mob::GetClass)
 		.def("GetLevel", &Lua_Mob::GetLevel)
 		.def("GetCleanName", &Lua_Mob::GetCleanName)
