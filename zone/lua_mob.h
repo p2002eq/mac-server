@@ -92,6 +92,9 @@ public:
 	int GetHairStyle();
 	int GetLuclinFace();
 	int GetBeard();
+	int GetDrakkinHeritage();
+	int GetDrakkinTattoo();
+	int GetDrakkinDetails();
 	int GetClass();
 	int GetLevel();
 	const char *GetCleanName();

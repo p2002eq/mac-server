@@ -82,6 +82,9 @@ struct NPCType
 	uint8	hairstyle;
 	uint8	luclinface;			//
 	uint8	beard;				//
+	uint32	drakkin_heritage;
+	uint32	drakkin_tattoo;
+	uint32	drakkin_details;
 	uint32	armor_tint[_MaterialCount];
 	uint32	min_dmg;
 	uint32	max_dmg;
@@ -174,6 +177,9 @@ struct DBPlayerCorpse_Struct {
 	uint8 hairstyle;
 	uint8 face;
 	uint8 beard;
+	uint32 drakkin_heritage;
+	uint32 drakkin_tattoo;
+	uint32 drakkin_details;
 	player_lootitem::ServerLootItem_Struct	items[0];
 };
 

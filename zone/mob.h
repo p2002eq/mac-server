@@ -96,6 +96,9 @@ public:
 		uint8		in_hairstyle,
 		uint8		in_luclinface,
 		uint8		in_beard,
+		uint32		in_drakkin_heritage,
+		uint32		in_drakkin_tattoo,
+		uint32		in_drakkin_details,
 		uint32		in_armor_tint[_MaterialCount],
 		uint8		in_aa_title,
 		uint8		in_see_invis, // see through invis
@@ -315,6 +318,9 @@ public:
 	inline uint8 GetHairStyle() const { return hairstyle; }
 	inline uint8 GetLuclinFace() const { return luclinface; }
 	inline uint8 GetBeard() const { return beard; }
+	inline uint8 GetDrakkinHeritage() const { return drakkin_heritage; }
+	inline uint8 GetDrakkinTattoo() const { return drakkin_tattoo; }
+	inline uint8 GetDrakkinDetails() const { return drakkin_details; }
 	inline uint32 GetArmorTint(uint8 i) const { return armor_tint[(i < _MaterialCount) ? i : 0]; }
 	inline uint8 GetClass() const { return class_; }
 	inline uint8 GetLevel() const { return level; }
@@ -548,7 +554,9 @@ public:
 	uint8 IsFocusEffect(uint16 spellid, int effect_index, bool AA=false,uint32 aa_effect=0);
 	void SendIllusionPacket(uint16 in_race, uint8 in_gender = 0xFF, uint8 in_texture = 0xFF, uint8 in_helmtexture = 0xFF, 
 		uint8 in_haircolor = 0xFF, uint8 in_beardcolor = 0xFF, uint8 in_eyecolor1 = 0xFF, uint8 in_eyecolor2 = 0xFF, 
-		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF, float in_size = -1.0f);
+		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF, 
+		uint32 in_drakkin_heritage = 0xFFFFFFFF, uint32 in_drakkin_tattoo = 0xFFFFFFFF, 
+		uint32 in_drakkin_details = 0xFFFFFFFF, float in_size = -1.0f);
 	virtual void Stun(int duration);
 	virtual void UnStun();
 	inline void Silence(bool newval) { silenced = newval; }
@@ -1081,6 +1089,9 @@ protected:
 	uint8 hairstyle;
 	uint8 luclinface; //
 	uint8 beard;
+	uint32 drakkin_heritage;
+	uint32 drakkin_tattoo;
+	uint32 drakkin_details;
 	uint32 armor_tint[_MaterialCount];
 
 	uint8 aa_title;

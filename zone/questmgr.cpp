@@ -1857,6 +1857,9 @@ void QuestManager::playerfeature(char *feature, int setting)
 	uint8 HairStyle = initiator->GetHairStyle();
 	uint8 LuclinFace = initiator->GetLuclinFace();
 	uint8 Beard = initiator->GetBeard();
+	uint32 DrakkinHeritage = initiator->GetDrakkinHeritage();
+	uint32 DrakkinTattoo = initiator->GetDrakkinTattoo();
+	uint32 DrakkinDetails = initiator->GetDrakkinDetails();
 	float Size = initiator->GetSize();
 
 	if (!strcasecmp(feature,"race"))
@@ -1881,13 +1884,20 @@ void QuestManager::playerfeature(char *feature, int setting)
 		LuclinFace = setting;
 	else if (!strcasecmp(feature,"beard"))
 		Beard = setting;
+	else if (!strcasecmp(feature,"heritage"))
+		DrakkinHeritage = setting;
+	else if (!strcasecmp(feature,"tattoo"))
+		DrakkinTattoo = setting;
+	else if (!strcasecmp(feature,"details"))
+		DrakkinDetails = setting;
 	else if (!strcasecmp(feature,"size"))
 		Size = (float)setting / 10;	//dividing by 10 to allow 1 decimal place for adjusting size
 	else
 		return;
 
 	initiator->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
-										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,Size);
+										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
+										DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
 }
 
 void QuestManager::npcfeature(char *feature, int setting)
@@ -1904,6 +1914,9 @@ void QuestManager::npcfeature(char *feature, int setting)
 	uint8 HairStyle = owner->GetHairStyle();
 	uint8 LuclinFace = owner->GetLuclinFace();
 	uint8 Beard = owner->GetBeard();
+	uint32 DrakkinHeritage = owner->GetDrakkinHeritage();
+	uint32 DrakkinTattoo = owner->GetDrakkinTattoo();
+	uint32 DrakkinDetails = owner->GetDrakkinDetails();
 	float Size = owner->GetSize();
 
 	if (!strcasecmp(feature,"race"))
@@ -1928,13 +1941,20 @@ void QuestManager::npcfeature(char *feature, int setting)
 		LuclinFace = setting;
 	else if (!strcasecmp(feature,"beard"))
 		Beard = setting;
+	else if (!strcasecmp(feature,"heritage"))
+		DrakkinHeritage = setting;
+	else if (!strcasecmp(feature,"tattoo"))
+		DrakkinTattoo = setting;
+	else if (!strcasecmp(feature,"details"))
+		DrakkinDetails = setting;
 	else if (!strcasecmp(feature,"size"))
 		Size = (float)setting / 10;	//dividing by 10 to allow 1 decimal place for adjusting size
 	else
 		return;
 
 	owner->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
-										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF, Size);
+										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
+										DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
 }
 
 void QuestManager::clearspawntimers() {

@@ -1976,6 +1976,84 @@ XS(XS_Mob_GetBeard)
 	XSRETURN(1);
 }
 
+XS(XS_Mob_GetDrakkinHeritage); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Mob_GetDrakkinHeritage)
+{
+	dXSARGS;
+	if (items != 1)
+		Perl_croak(aTHX_ "Usage: Mob::GetDrakkinHeritage(THIS)");
+	{
+		Mob *		THIS;
+		uint8		RETVAL;
+		dXSTARG;
+
+		if (sv_derived_from(ST(0), "Mob")) {
+			IV tmp = SvIV((SV*)SvRV(ST(0)));
+			THIS = INT2PTR(Mob *,tmp);
+		}
+		else
+			Perl_croak(aTHX_ "THIS is not of type Mob");
+		if(THIS == nullptr)
+			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+		RETVAL = THIS->GetDrakkinHeritage();
+		XSprePUSH; PUSHu((UV)RETVAL);
+	}
+	XSRETURN(1);
+}
+
+XS(XS_Mob_GetDrakkinTattoo); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Mob_GetDrakkinTattoo)
+{
+	dXSARGS;
+	if (items != 1)
+		Perl_croak(aTHX_ "Usage: Mob::GetDrakkinTattoo(THIS)");
+	{
+		Mob *		THIS;
+		uint8		RETVAL;
+		dXSTARG;
+
+		if (sv_derived_from(ST(0), "Mob")) {
+			IV tmp = SvIV((SV*)SvRV(ST(0)));
+			THIS = INT2PTR(Mob *,tmp);
+		}
+		else
+			Perl_croak(aTHX_ "THIS is not of type Mob");
+		if(THIS == nullptr)
+			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+		RETVAL = THIS->GetDrakkinTattoo();
+		XSprePUSH; PUSHu((UV)RETVAL);
+	}
+	XSRETURN(1);
+}
+
+XS(XS_Mob_GetDrakkinDetails); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Mob_GetDrakkinDetails)
+{
+	dXSARGS;
+	if (items != 1)
+		Perl_croak(aTHX_ "Usage: Mob::GetDrakkinDetails(THIS)");
+	{
+		Mob *		THIS;
+		uint8		RETVAL;
+		dXSTARG;
+
+		if (sv_derived_from(ST(0), "Mob")) {
+			IV tmp = SvIV((SV*)SvRV(ST(0)));
+			THIS = INT2PTR(Mob *,tmp);
+		}
+		else
+			Perl_croak(aTHX_ "THIS is not of type Mob");
+		if(THIS == nullptr)
+			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+		RETVAL = THIS->GetDrakkinDetails();
+		XSprePUSH; PUSHu((UV)RETVAL);
+	}
+	XSRETURN(1);
+}
+
 XS(XS_Mob_GetClass); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Mob_GetClass)
 {
@@ -6959,7 +7037,7 @@ XS(XS_Mob_SendIllusion)
 {
 	dXSARGS;
 	if (items < 2 || items > 14)
-		Perl_croak(aTHX_ "Usage: Mob::SendIllusion(THIS,race,gender,texture,helmtexture,face,hairstyle,haircolor,beard,beardcolor,size)");
+		Perl_croak(aTHX_ "Usage: Mob::SendIllusion(THIS,race,gender,texture,helmtexture,face,hairstyle,haircolor,beard,beardcolor,drakkin_heritage,drakkin_tattoo,drakkin_details,size)");
 	{
 		Mob *		THIS;
 		uint16		race = (uint16)SvIV(ST(1));
@@ -6971,6 +7049,9 @@ XS(XS_Mob_SendIllusion)
 		uint8		haircolor = 0xFF;
 		uint8		beard = 0xFF;
 		uint8		beardcolor = 0xFF;
+		uint32		drakkin_heritage = 0xFFFFFFFF;
+		uint32		drakkin_tattoo = 0xFFFFFFFF;
+		uint32		drakkin_details = 0xFFFFFFFF;
 		float		size = -1.0f;
 
 		if (sv_derived_from(ST(0), "Mob")) {
@@ -6990,10 +7071,13 @@ XS(XS_Mob_SendIllusion)
 		if(items > 7) {haircolor = (uint8)SvIV(ST(7));}
 		if(items > 8) {beard = (uint8)SvIV(ST(8));}
 		if(items > 9) {beardcolor = (uint8)SvIV(ST(9));}
-		if(items > 13) {size = (float)SvNV(ST(10));}
+		if(items > 10) {drakkin_heritage = (uint32)SvIV(ST(10));}
+		if(items > 11) {drakkin_tattoo = (uint32)SvIV(ST(11));}
+		if(items > 12) {drakkin_details = (uint32)SvIV(ST(12));}
+		if(items > 13) {size = (float)SvNV(ST(13));}
 
 		THIS->SendIllusionPacket(race,gender,texture,helmtexture,haircolor,beardcolor,0xFF,0xFF,
-			hairstyle,face,beard,0xFF,size);
+			hairstyle,face,beard,0xFF,drakkin_heritage,drakkin_tattoo,drakkin_details,size);
 	}
 	XSRETURN_EMPTY;
 }
@@ -7952,6 +8036,9 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "GetHairStyle"), XS_Mob_GetHairStyle, file, "$");
 		newXSproto(strcpy(buf, "GetLuclinFace"), XS_Mob_GetLuclinFace, file, "$");
 		newXSproto(strcpy(buf, "GetBeard"), XS_Mob_GetBeard, file, "$");
+		newXSproto(strcpy(buf, "GetDrakkinHeritage"), XS_Mob_GetDrakkinHeritage, file, "$");
+		newXSproto(strcpy(buf, "GetDrakkinTattoo"), XS_Mob_GetDrakkinTattoo, file, "$");
+		newXSproto(strcpy(buf, "GetDrakkinDetails"), XS_Mob_GetDrakkinDetails, file, "$");
 		newXSproto(strcpy(buf, "GetClass"), XS_Mob_GetClass, file, "$");
 		newXSproto(strcpy(buf, "GetLevel"), XS_Mob_GetLevel, file, "$");
 		newXSproto(strcpy(buf, "GetCleanName"), XS_Mob_GetCleanName, file, "$");
