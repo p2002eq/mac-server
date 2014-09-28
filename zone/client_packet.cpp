@@ -1415,6 +1415,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	this is not quite where live sends inventory, they do it after tribute
 	*/
 	if (loaditems) { /* Dont load if a length error occurs */
+		BulkSendItems();
 		BulkSendInventoryItems();
 		/* Send stuff on the cursor which isnt sent in bulk */
 		iter_queue it;
