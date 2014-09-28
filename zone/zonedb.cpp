@@ -5,6 +5,7 @@
 #include "../common/extprofile.h"
 #include "../common/guilds.h"
 #include "../common/rulesys.h"
+#include "../common/rdtsc.h"
 #include "zone.h"
 #include "client.h"
 #include "groups.h"
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <ctime>
 
 extern Zone* zone;
 
@@ -283,43 +285,42 @@ bool ZoneDatabase::logevents(const char* accountname,uint32 accountid,uint8 stat
 	return true;
 }
 
-
 void ZoneDatabase::UpdateBug(BugStruct* bug) {
 
 	uint32 len = strlen(bug->bug);
 	char* bugtext = nullptr;
-	if(len > 0)
+	if (len > 0)
 	{
-		bugtext = new char[2*len+1];
-		memset(bugtext, 0, 2*len+1);
+		bugtext = new char[2 * len + 1];
+		memset(bugtext, 0, 2 * len + 1);
 		DoEscapeString(bugtext, bug->bug, len);
 	}
 
 	len = strlen(bug->ui);
 	char* uitext = nullptr;
-	if(len > 0)
+	if (len > 0)
 	{
-		uitext = new char[2*len+1];
-		memset(uitext, 0, 2*len+1);
+		uitext = new char[2 * len + 1];
+		memset(uitext, 0, 2 * len + 1);
 		DoEscapeString(uitext, bug->ui, len);
 	}
 
 	len = strlen(bug->target_name);
 	char* targettext = nullptr;
-	if(len > 0)
+	if (len > 0)
 	{
-		targettext = new char[2*len+1];
-		memset(targettext, 0, 2*len+1);
+		targettext = new char[2 * len + 1];
+		memset(targettext, 0, 2 * len + 1);
 		DoEscapeString(targettext, bug->target_name, len);
 	}
 
 	//x and y are intentionally swapped because eq is inversexy coords
 	std::string query = StringFormat("INSERT INTO bugs (zone, name, ui, x, y, z, type, flag, target, bug, date) "
 		"VALUES('%s', '%s', '%s', '%.2f', '%.2f', '%.2f', '%s', %d, '%s', '%s', CURDATE())",
-		zone->GetShortName(), bug->name, uitext == nullptr ? "": uitext,
-		bug->x, bug->y, bug->z, bug->chartype, bug->type, targettext == nullptr? "Unknown Target": targettext,
-		bugtext==nullptr?"":bugtext);
-    safe_delete_array(bugtext);
+		zone->GetShortName(), bug->name, uitext == nullptr ? "" : uitext,
+		bug->x, bug->y, bug->z, bug->chartype, bug->type, targettext == nullptr ? "Unknown Target" : targettext,
+		bugtext == nullptr ? "" : bugtext);
+	safe_delete_array(bugtext);
 	safe_delete_array(uitext);
 	safe_delete_array(targettext);
 	auto results = QueryDatabase(query);
@@ -327,40 +328,6 @@ void ZoneDatabase::UpdateBug(BugStruct* bug) {
 		std::cerr << "Error in UpdateBug '" << query << "' " << results.ErrorMessage() << std::endl;
 
 }
-
-bool ZoneDatabase::GetAccountInfoForLogin_result(MYSQL_RES* result, int16* admin, char* account_name, uint32* lsaccountid, uint8* gmspeed, bool* revoked,bool* gmhideme, uint32* account_creation) {
-	MYSQL_ROW row;
-	if (mysql_num_rows(result) == 1) {
-		row = mysql_fetch_row(result);
-		if (admin)
-			*admin = atoi(row[0]);
-		if (account_name)
-			strcpy(account_name, row[1]);
-		if (lsaccountid) {
-
-			if (row[2])
-				*lsaccountid = atoi(row[2]);
-			else
-				*lsaccountid = 0;
-
-
-		}
-		if (gmspeed)
-			*gmspeed = atoi(row[3]);
-		if (revoked)
-			*revoked = atoi(row[4]);
-		if(gmhideme)
-			*gmhideme = atoi(row[5]);
-		if(account_creation)
-			*account_creation = atoul(row[6]);
-
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
 
 bool ZoneDatabase::SetSpecialAttkFlag(uint8 id, const char* flag) {
 
@@ -560,8 +527,7 @@ TraderCharges_Struct* ZoneDatabase::LoadTraderItemWithCharges(uint32 char_id)
 	return loadti;
 }
 
-ItemInst* ZoneDatabase::LoadSingleTraderItem(uint32 CharID, int SerialNumber) {
-
+ItemInst* ZoneDatabase::LoadSingleTraderItem(uint32 CharID, int SerialNumber) { 
 	std::string query = StringFormat("SELECT * FROM trader WHERE char_id = %i AND serialnumber = %i "
                                     "ORDER BY slot_id LIMIT 80", CharID, SerialNumber);
     auto results = QueryDatabase(query);
@@ -618,8 +584,7 @@ void ZoneDatabase::SaveTraderItem(uint32 CharID, uint32 ItemID, uint32 SerialNum
 
 }
 
-void ZoneDatabase::UpdateTraderItemCharges(int CharID, uint32 SerialNumber, int32 Charges) {
-
+void ZoneDatabase::UpdateTraderItemCharges(int CharID, uint32 SerialNumber, int32 Charges) { 
 	_log(TRADING__CLIENT, "ZoneDatabase::UpdateTraderItemCharges(%i, %i, %i)", CharID, SerialNumber, Charges);
 
 	std::string query = StringFormat("UPDATE trader SET charges = %i WHERE char_id = %i AND serialnumber = %i",
@@ -713,8 +678,7 @@ void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
 
 }
 
-void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char* ItemName, uint32 Quantity, uint32 Price) {
-
+void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char* ItemName, uint32 Quantity, uint32 Price) { 
 	std::string query = StringFormat("REPLACE INTO buyer VALUES(%i, %i, %i, \"%s\", %i, %i)",
                                     CharID, BuySlot, ItemID, ItemName, Quantity, Price);
     auto results = QueryDatabase(query);
@@ -723,8 +687,7 @@ void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, cons
 
 }
 
-void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
-
+void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) { 
 	std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i AND buyslot = %i", CharID, BuySlot);
     auto results = QueryDatabase(query);
 	if (!results.Success())
@@ -732,8 +695,7 @@ void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
 
 }
 
-void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity) {
-
+void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity) { 
 	if(Quantity <= 0) {
 		RemoveBuyLine(CharID, BuySlot);
 		return;
@@ -746,129 +708,678 @@ void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity)
 
 }
 
-bool ZoneDatabase::GetCharacterInfoForLogin(const char* name, uint32* character_id,
-char* current_zone, PlayerProfile_Struct* pp, Inventory* inv, ExtendedProfile_Struct *ext,
-uint32* pplen, uint32* guilddbid, uint8* guildrank,
-uint8 *class_, uint8 *level, uint8 *firstlogon) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	uint32 querylen;
-	MYSQL_RES *result;
-
-	bool ret = false;
-
-	//DO NOT FORGET TO EDIT Client::Handle_Connect_OP_ZoneEntry if you change this.
-
-	if (character_id && *character_id) {
-		// searching by ID should be a lil bit faster
-		querylen = MakeAnyLenString(&query, "SELECT id,profile,zonename,x,y,z,guild_id,rank,extprofile,class,level,instanceid,firstlogon FROM character_ LEFT JOIN guild_members ON id=char_id WHERE id=%i", *character_id);
-	}
-	else {
-		querylen = MakeAnyLenString(&query, "SELECT id,profile,zonename,x,y,z,guild_id,rank,extprofile,class,level,instanceid,firstlogon FROM character_ LEFT JOIN guild_members ON id=char_id WHERE name='%s'", name);
-	}
-
-	if (RunQuery(query, querylen, errbuf, &result)) {
-		ret = GetCharacterInfoForLogin_result(result, character_id, current_zone, pp, inv, ext, pplen, guilddbid, guildrank, class_, level, firstlogon);
-		mysql_free_result(result);
-	}
-	else {
-		LogFile->write(EQEMuLog::Error, "GetCharacterInfoForLogin query '%s' %s", query, errbuf);
-	}
-
-	safe_delete_array(query);
-	return ret;
-}
-
 #define StructDist(in, f1, f2) (uint32(&in->f2)-uint32(&in->f1))
 
-// Process results of GetCharacterInfoForLogin()
-// Query this processes: SELECT id,profile,zonename,x,y,z,guild,guildrank,extprofile,class,level FROM character_ WHERE id=%i
-bool ZoneDatabase::GetCharacterInfoForLogin_result(MYSQL_RES* result,
-	uint32* character_id, char* current_zone, PlayerProfile_Struct* pp, Inventory* inv,
-	ExtendedProfile_Struct *ext, uint32* pplen, uint32* guilddbid, uint8* guildrank,
-	uint8 *class_, uint8 *level, uint8* firstlogon) {
-
-	MYSQL_ROW row;
-	unsigned long* lengths;
-
-	if (mysql_num_rows(result) == 1) {
-		row = mysql_fetch_row(result);
-		lengths = mysql_fetch_lengths(result);
-		if (pp && pplen) {
-			if (lengths[1] == sizeof(PlayerProfile_Struct)) {
-				memcpy(pp, row[1], sizeof(PlayerProfile_Struct));
-			} else {
-				LogFile->write(EQEMuLog::Error, "Player profile length mismatch in GetCharacterInfo Expected: %i, Got: %i",
-					sizeof(PlayerProfile_Struct), lengths[1]);
-				return false;
-			}
-
-			*pplen = lengths[1];
-			pp->zone_id = GetZoneID(row[2]);
-			pp->zoneInstance = atoi(row[13]);
-
-			pp->x = atof(row[3]);
-			pp->y = atof(row[4]);
-			pp->z = atof(row[5]);
-
-			pp->lastlogin = time(nullptr);
-
-			if (pp->x == -1 && pp->y == -1 && pp->z == -1)
-				GetSafePoints(pp->zone_id, database.GetInstanceVersion(pp->zoneInstance), &pp->x, &pp->y, &pp->z);
-		}
-
-		uint32 char_id = atoi(row[0]);
-		if (RuleB(Character, SharedBankPlat))
-			pp->platinum_shared = database.GetSharedPlatinum(GetAccountIDByChar(char_id));
-		if (character_id)
-			*character_id = char_id;
-		if (current_zone)
-			strcpy(current_zone, row[2]);
-
-		if (guilddbid) {
-			if(row[6] != nullptr)
-				*guilddbid = atoi(row[6]);
-			else
-				*guilddbid = GUILD_NONE;
-		}
-		if (guildrank) {
-			if(row[7] != nullptr)
-				*guildrank = atoi(row[7]);
-			else
-				*guildrank = GUILD_RANK_NONE;
-		}
-
-		if(ext) {
-			//SetExtendedProfile handles any conversion
-			SetExtendedProfile(ext, row[8], lengths[8]);
-		}
-
-		if(class_)
-			*class_ = atoi(row[9]);
-
-		if(level)
-			*level = atoi(row[10]);
-
-		if(firstlogon)
-		{
-			*firstlogon = atoi(row[11]);
-		}
-
-		// Fix use_tint, previously it was set to 1 for a dyed slot, client wants it set to 0xFF
-		for(int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)
-			if(pp->item_tint[i].rgb.use_tint == 1)
-				pp->item_tint[i].rgb.use_tint = 0xFF;
-
-		// Retrieve character inventory
-		return GetInventory(char_id, inv);
+bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
+	std::string query = StringFormat(
+		"SELECT                     "
+		"`name`,                    "
+		"last_name,                 "
+		"gender,                    "
+		"race,                      "
+		"class,                     "
+		"`level`,                   "
+		"deity,                     "
+		"birthday,                  "
+		"last_login,                "
+		"time_played,               "
+		"pvp_status,                "
+		"level2,                    "
+		"anon,                      "
+		"gm,                        "
+		"intoxication,              "
+		"hair_color,                "
+		"beard_color,               "
+		"eye_color_1,               "
+		"eye_color_2,               "
+		"hair_style,                "
+		"beard,                     "
+		"ability_time_seconds,      "
+		"ability_number,            "
+		"ability_time_minutes,      "
+		"ability_time_hours,        "
+		"title,                     "
+		"suffix,                    "
+		"exp,                       "
+		"points,                    "
+		"mana,                      "
+		"cur_hp,                    "
+		"str,                       "
+		"sta,                       "
+		"cha,                       "
+		"dex,                       "
+		"`int`,                     "
+		"agi,                       "
+		"wis,                       "
+		"face,                      "
+		"y,                         "
+		"x,                         "
+		"z,                         "
+		"heading,                   "
+		"pvp2,                      "
+		"pvp_type,                  "
+		"autosplit_enabled,         "
+		"zone_change_count,         "
+		"toxicity,                  "
+		"hunger_level,              "
+		"thirst_level,              "
+		"ability_up,                "
+		"zone_id,                   "
+		"show_helm,                 "
+		"endurance,                 "
+		"air_remaining,             "
+		"aa_points_spent,           "
+		"aa_exp,                    "
+		"aa_points,                 "
+		"RestTimer,                 "
+		"`e_aa_effects`,			"
+		"`e_percent_to_aa`,			"
+		"`e_expended_aa_spent`		"
+		"FROM                       "
+		"character_data             "
+		"WHERE `id` = %i         ", character_id);
+	auto results = database.QueryDatabase(query); int r = 0;
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		strcpy(pp->name, row[r]); r++;											 // "`name`,                    "
+		strcpy(pp->last_name, row[r]); r++;										 // "last_name,                 "
+		pp->gender = atoi(row[r]); r++;											 // "gender,                    "
+		pp->race = atoi(row[r]); r++;											 // "race,                      "
+		pp->class_ = atoi(row[r]); r++;											 // "class,                     "
+		pp->level = atoi(row[r]); r++;											 // "`level`,                   "
+		pp->deity = atoi(row[r]); r++;											 // "deity,                     "
+		pp->birthday = atoi(row[r]); r++;										 // "birthday,                  "
+		pp->lastlogin = atoi(row[r]); r++;										 // "last_login,                "
+		pp->timePlayedMin = atoi(row[r]); r++;									 // "time_played,               "
+		pp->pvp = atoi(row[r]); r++;											 // "pvp_status,                "
+		pp->level2 = atoi(row[r]); r++;											 // "level2,                    "
+		pp->anon = atoi(row[r]); r++;											 // "anon,                      "
+		pp->gm = atoi(row[r]); r++;												 // "gm,                        "
+		pp->intoxication = atoi(row[r]); r++;									 // "intoxication,              "
+		pp->haircolor = atoi(row[r]); r++;										 // "hair_color,                "
+		pp->beardcolor = atoi(row[r]); r++;										 // "beard_color,               "
+		pp->eyecolor1 = atoi(row[r]); r++;										 // "eye_color_1,               "
+		pp->eyecolor2 = atoi(row[r]); r++;										 // "eye_color_2,               "
+		pp->hairstyle = atoi(row[r]); r++;										 // "hair_style,                "
+		pp->beard = atoi(row[r]); r++;											 // "beard,                     "
+		pp->ability_time_seconds = atoi(row[r]); r++;							 // "ability_time_seconds,      "
+		pp->ability_number = atoi(row[r]); r++;									 // "ability_number,            "
+		pp->ability_time_minutes = atoi(row[r]); r++;							 // "ability_time_minutes,      "
+		pp->ability_time_hours = atoi(row[r]); r++;								 // "ability_time_hours,        "
+		strcpy(pp->title, row[r]); r++;											 // "title,                     "
+		strcpy(pp->suffix, row[r]); r++;										 // "suffix,                    "
+		pp->exp = atoi(row[r]); r++;											 // "exp,                       "
+		pp->points = atoi(row[r]); r++;											 // "points,                    "
+		pp->mana = atoi(row[r]); r++;											 // "mana,                      "
+		pp->cur_hp = atoi(row[r]); r++;											 // "cur_hp,                    "
+		pp->STR = atoi(row[r]); r++;											 // "str,                       "
+		pp->STA = atoi(row[r]); r++;											 // "sta,                       "
+		pp->CHA = atoi(row[r]); r++;											 // "cha,                       "
+		pp->DEX = atoi(row[r]); r++;											 // "dex,                       "
+		pp->INT = atoi(row[r]); r++;											 // "`int`,                     "
+		pp->AGI = atoi(row[r]); r++;											 // "agi,                       "
+		pp->WIS = atoi(row[r]); r++;											 // "wis,                       "
+		pp->face = atoi(row[r]); r++;											 // "face,                      "
+		pp->y = atof(row[r]); r++;												 // "y,                         "
+		pp->x = atof(row[r]); r++;												 // "x,                         "
+		pp->z = atof(row[r]); r++;												 // "z,                         "
+		pp->heading = atof(row[r]); r++;										 // "heading,                   "
+		pp->pvp2 = atoi(row[r]); r++;											 // "pvp2,                      "
+		pp->pvptype = atoi(row[r]); r++;										 // "pvp_type,                  "
+		pp->autosplit = atoi(row[r]); r++;										 // "autosplit_enabled,         "
+		pp->zone_change_count = atoi(row[r]); r++;								 // "zone_change_count,         "
+		pp->toxicity = atoi(row[r]); r++;										 // "toxicity,                  "
+		pp->hunger_level = atoi(row[r]); r++;									 // "hunger_level,              "
+		pp->thirst_level = atoi(row[r]); r++;									 // "thirst_level,              "
+		pp->ability_up = atoi(row[r]); r++;										 // "ability_up,                "
+		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
+		pp->showhelm = atoi(row[r]); r++;										 // "show_helm,                 "
+		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
+		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
+		pp->aapoints_spent = atoi(row[r]); r++;									 // "aa_points_spent,           "
+		pp->expAA = atoi(row[r]); r++;											 // "aa_exp,                    "
+		pp->aapoints = atoi(row[r]); r++;										 // "aa_points,                 "
+		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
+		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
+		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
+		m_epp->expended_aa = atoi(row[r]); r++;									 // "`e_expended_aa_spent`		"
 	}
+	return true;
+}
 
-	return false;
+bool ZoneDatabase::LoadCharacterFactionValues(uint32 character_id, faction_map & val_list) {
+	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `faction_values` WHERE `char_id` = %i", character_id);
+	auto results = database.QueryDatabase(query);
+	for (auto row = results.begin(); row != results.end(); ++row) { val_list[atoi(row[0])] = atoi(row[1]); }
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterMemmedSpells(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat(
+		"SELECT							"
+		"slot_id,						"
+		"`spell_id`						"
+		"FROM							"
+		"`character_memmed_spells`		"
+		"WHERE `id` = %u ORDER BY `slot_id`", character_id);
+	auto results = database.QueryDatabase(query); 
+	int i = 0;
+	/* Initialize Spells */
+	for (i = 0; i < MAX_PP_MEMSPELL; i++){
+		pp->mem_spells[i] = 0xFFFFFFFF;
+	}
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		i = atoi(row[0]); 
+		if (i < MAX_PP_MEMSPELL){ 
+			pp->mem_spells[i] = atoi(row[1]); 
+		}
+	}
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterSpellBook(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat(
+		"SELECT					"
+		"slot_id,				"
+		"`spell_id`				"
+		"FROM					"
+		"`character_spells`		"
+		"WHERE `id` = %u ORDER BY `slot_id`", character_id);
+	auto results = database.QueryDatabase(query); 
+	int i = 0;
+	/* Initialize Spells */
+	for (i = 0; i < MAX_PP_SPELLBOOK; i++){
+		pp->spell_book[i] = 0xFFFFFFFF; 
+	}
+	for (auto row = results.begin(); row != results.end(); ++row) { 
+		i = atoi(row[0]);
+		if (i < MAX_PP_SPELLBOOK){
+			pp->spell_book[i] = atoi(row[1]); 
+		} 
+	} 
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Struct* pp){ 
+	std::string query = StringFormat(
+		"SELECT					"
+		"lang_id,				"
+		"`value`				"
+		"FROM					"
+		"`character_languages`	"
+		"WHERE `id` = %u ORDER BY `lang_id`", character_id);   
+	auto results = database.QueryDatabase(query); int i = 0; 
+	/* Initialize Languages */
+	for (i = 0; i < MAX_PP_LANGUAGE; i++){ 
+		pp->languages[i] = 0;
+	}
+	for (auto row = results.begin(); row != results.end(); ++row) { 
+		i = atoi(row[0]); 
+		if (i < MAX_PP_LANGUAGE){
+			pp->languages[i] = atoi(row[1]);
+		}
+	}
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat(
+		"SELECT				  "
+		"disc_id			  "
+		"FROM				  "
+		"`character_disciplines`"
+		"WHERE `id` = %u ORDER BY `slot_id`", character_id);
+	auto results = database.QueryDatabase(query); 
+	int i = 0;
+	/* Initialize Disciplines */
+	memset(pp->disciplines.values, 0, (sizeof(pp->disciplines.values[0]) * MAX_PP_DISCIPLINES));
+	for (auto row = results.begin(); row != results.end(); ++row) { 
+		if (i < MAX_PP_DISCIPLINES){ 
+			pp->disciplines.values[i] = atoi(row[0]);
+		}
+		i++; 
+	}   
+	return true; 
+}
+
+bool ZoneDatabase::LoadCharacterSkills(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat(
+		"SELECT				"
+		"skill_id,			"
+		"`value`			"
+		"FROM				"
+		"`character_skills` "
+		"WHERE `id` = %u ORDER BY `skill_id`", character_id);
+	auto results = database.QueryDatabase(query); int i = 0; 
+	/* Initialize Skill */
+	for (i = 0; i < MAX_PP_SKILL; i++){ 
+		pp->skills[i] = 0;
+	}
+	for (auto row = results.begin(); row != results.end(); ++row) { 
+		i = atoi(row[0]); 
+		if (i < MAX_PP_SKILL){
+			pp->skills[i] = atoi(row[1]);
+		}
+	}
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat(
+		"SELECT                  "
+		"platinum,               "
+		"gold,                   "
+		"silver,                 "
+		"copper,                 "
+		"platinum_bank,          "
+		"gold_bank,              "
+		"silver_bank,            "
+		"copper_bank,            "
+		"platinum_cursor,        "
+		"gold_cursor,            "
+		"silver_cursor,          "
+		"copper_cursor,          "
+		"FROM                    "
+		"character_currency      " 
+		"WHERE `id` = %i         ", character_id);
+	auto results = database.QueryDatabase(query);
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		pp->platinum = atoi(row[0]);
+		pp->gold = atoi(row[1]);
+		pp->silver = atoi(row[2]);
+		pp->copper = atoi(row[3]);
+		pp->platinum_bank = atoi(row[4]);
+		pp->gold_bank = atoi(row[5]);
+		pp->silver_bank = atoi(row[6]);
+		pp->copper_bank = atoi(row[7]);
+		pp->platinum_cursor = atoi(row[8]);
+		pp->gold_cursor = atoi(row[9]);
+		pp->silver_cursor = atoi(row[10]);
+		pp->copper_cursor = atoi(row[11]);
+	}
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterMaterialColor(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat("SELECT slot, blue, green, red, use_tint, color FROM `character_material` WHERE `id` = %u LIMIT 9", character_id);
+	auto results = database.QueryDatabase(query); int i = 0; int r = 0;
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		r = 0;
+		i = atoi(row[r]); /* Slot */ r++;
+		pp->item_tint[i].rgb.blue = atoi(row[r]); r++;
+		pp->item_tint[i].rgb.green = atoi(row[r]); r++;
+		pp->item_tint[i].rgb.red = atoi(row[r]); r++;
+		pp->item_tint[i].rgb.use_tint = atoi(row[r]);
+	}
+	return true;
+}
+
+bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct* pp){
+	std::string query = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading`, `is_home` FROM `character_bind` WHERE `id` = %u LIMIT 2", character_id);
+	auto results = database.QueryDatabase(query); int i = 0;
+	for (auto row = results.begin(); row != results.end(); ++row) { 
+		i = 0;
+		/* Is home bind */
+		if (atoi(row[6]) == 1){ 
+			pp->binds[4].zoneId = atoi(row[i]); i++;
+			i++; /* Instance ID can go here eventually */
+			pp->binds[4].x = atoi(row[i]); i++;
+			pp->binds[4].y = atoi(row[i]); i++;
+			pp->binds[4].z = atoi(row[i]); i++;
+			pp->binds[4].heading = atoi(row[i]); i++;
+		}
+		/* Is regular bind point */
+		else{
+			pp->binds[0].zoneId = atoi(row[i]); i++;
+			i++; /* Instance ID can go here eventually */
+			pp->binds[0].x = atoi(row[i]); i++;
+			pp->binds[0].y = atoi(row[i]); i++;
+			pp->binds[0].z = atoi(row[i]); i++; 
+			pp->binds[0].heading = atoi(row[i]); i++;
+		}
+	}
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value){
+	std::string query = StringFormat("REPLACE INTO `character_languages` (id, lang_id, value) VALUES (%u, %u, %u)", character_id, lang_id, value); QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, uint32 zone_id, uint32 instance_id, float x, float y, float z, float heading, uint8 is_home){
+	if (zone_id <= 0){ return false; }
+	/* Save Home Bind Point */
+	std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
+		" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)", character_id, zone_id, instance_id, x, y, z, heading, is_home);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u x: %f y: %f z: %f heading: %f ishome: %u", character_id, zone_id, instance_id, x, y, z, heading, is_home);
+	auto results = QueryDatabase(query); if (!results.RowsAffected()){ std::cout << "ERROR Bind Home Save: " << results.ErrorMessage() << "\n\n" << query << "\n" << std::endl; }
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterBindPoint", query);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterMaterialColor(uint32 character_id, uint32 slot_id, uint32 color){
+	uint8 red = (color & 0x00FF0000) >> 16; 
+	uint8 green = (color & 0x0000FF00) >> 8;
+	uint8 blue = (color & 0x000000FF); 
+
+	std::string query = StringFormat("REPLACE INTO `character_material` (id, slot, red, green, blue, color, use_tint) VALUES (%u, %u, %u, %u, %u, %u, 255)", character_id, slot_id, red, green, blue, color); auto results = QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterMaterialColor for character ID: %i, slot_id: %u color: %u done", character_id, slot_id, color);
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterMaterialColor", query);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value){
+	std::string query = StringFormat("REPLACE INTO `character_skills` (id, skill_id, value) VALUES (%u, %u, %u)", character_id, skill_id, value); auto results = QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterSkill", query);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id){
+	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id); 
+	auto results = QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterDisc", query);
+	return true; 
+}
+
+bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
+	clock_t t = std::clock(); /* Function timer start */
+	std::string query = StringFormat(
+		"REPLACE INTO `character_data` ("
+		" id,                        "
+		" account_id,                "
+		" `name`,                    "
+		" last_name,                 "
+		" gender,                    "
+		" race,                      "
+		" class,                     "
+		" `level`,                   "
+		" deity,                     "
+		" birthday,                  "
+		" last_login,                "
+		" time_played,               "
+		" pvp_status,                "
+		" level2,                    "
+		" anon,                      "
+		" gm,                        "
+		" intoxication,              "
+		" hair_color,                "
+		" beard_color,               "
+		" eye_color_1,               "
+		" eye_color_2,               "
+		" hair_style,                "
+		" beard,                     "
+		" ability_time_seconds,      "
+		" ability_number,            "
+		" ability_time_minutes,      "
+		" ability_time_hours,        "
+		" title,                     "
+		" suffix,                    "
+		" exp,                       "
+		" points,                    "
+		" mana,                      "
+		" cur_hp,                    "
+		" str,                       "
+		" sta,                       "
+		" cha,                       "
+		" dex,                       "
+		" `int`,                     "
+		" agi,                       "
+		" wis,                       "
+		" face,                      "
+		" y,                         "
+		" x,                         "
+		" z,                         "
+		" heading,                   "
+		" pvp2,                      "
+		" pvp_type,                  "
+		" autosplit_enabled,         "
+		" zone_change_count,         "
+		" toxicity,                  "
+		" hunger_level,              "
+		" thirst_level,              "
+		" ability_up,                "
+		" zone_id,                   "
+		" show_helm,                 "
+		" endurance,                 "
+		" air_remaining,             "
+		" aa_points_spent,           "
+		" aa_exp,                    "
+		" aa_points,                 "
+		" RestTimer,				 "
+		" e_aa_effects,				 "
+		" e_percent_to_aa,			 "
+		" e_expended_aa_spent		 "
+		")							 "
+		"VALUES ("
+		"%u,"  // id																" id,                        "
+		"%u,"  // account_id														" account_id,                "
+		"'%s',"  // `name`					  pp->name,								" `name`,                    "
+		"'%s',"  // last_name					pp->last_name,						" last_name,                 "
+		"%u,"  // gender					  pp->gender,							" gender,                    "
+		"%u,"  // race						  pp->race,								" race,                      "
+		"%u,"  // class						  pp->class_,							" class,                     "
+		"%u,"  // `level`					  pp->level,							" `level`,                   "
+		"%u,"  // deity						  pp->deity,							" deity,                     "
+		"%u,"  // birthday					  pp->birthday,							" birthday,                  "
+		"%u,"  // last_login				  pp->lastlogin,						" last_login,                "
+		"%u,"  // time_played				  pp->timePlayedMin,					" time_played,               "
+		"%u,"  // pvp_status				  pp->pvp,								" pvp_status,                "
+		"%u,"  // level2					  pp->level2,							" level2,                    "
+		"%u,"  // anon						  pp->anon,								" anon,                      "
+		"%u,"  // gm						  pp->gm,								" gm,                        "
+		"%u,"  // intoxication				  pp->intoxication,						" intoxication,              "
+		"%u,"  // hair_color				  pp->haircolor,						" hair_color,                "
+		"%u,"  // beard_color				  pp->beardcolor,						" beard_color,               "
+		"%u,"  // eye_color_1				  pp->eyecolor1,						" eye_color_1,               "
+		"%u,"  // eye_color_2				  pp->eyecolor2,						" eye_color_2,               "
+		"%u,"  // hair_style				  pp->hairstyle,						" hair_style,                "
+		"%u,"  // beard						  pp->beard,							" beard,                     "
+		"%u,"  // ability_time_seconds		  pp->ability_time_seconds,				" ability_time_seconds,      "
+		"%u,"  // ability_number			  pp->ability_number,					" ability_number,            "
+		"%u,"  // ability_time_minutes		  pp->ability_time_minutes,				" ability_time_minutes,      "
+		"%u,"  // ability_time_hours		  pp->ability_time_hours,				" ability_time_hours,        "
+		"'%s',"  // title						  pp->title,						" title,                     "   "
+		"'%s',"  // suffix					  pp->suffix,							" suffix,                    "
+		"%u,"  // exp						  pp->exp,								" exp,                       "
+		"%u,"  // points					  pp->points,							" points,                    "
+		"%u,"  // mana						  pp->mana,								" mana,                      "
+		"%u,"  // cur_hp					  pp->cur_hp,							" cur_hp,                    "
+		"%u,"  // str						  pp->STR,								" str,                       "
+		"%u,"  // sta						  pp->STA,								" sta,                       "
+		"%u,"  // cha						  pp->CHA,								" cha,                       "
+		"%u,"  // dex						  pp->DEX,								" dex,                       "
+		"%u,"  // `int`						  pp->INT,								" `int`,                     "
+		"%u,"  // agi						  pp->AGI,								" agi,                       "
+		"%u,"  // wis						  pp->WIS,								" wis,                       "
+		"%u,"  // face						  pp->face,								" face,                      "
+		"%f,"  // y							  pp->y,								" y,                         "
+		"%f,"  // x							  pp->x,								" x,                         "
+		"%f,"  // z							  pp->z,								" z,                         "
+		"%f,"  // heading					  pp->heading,							" heading,                   "
+		"%u,"  // pvp2						  pp->pvp2,								" pvp2,                      "
+		"%u,"  // pvp_type					  pp->pvptype,							" pvp_type,                  "
+		"%u,"  // autosplit_enabled			  pp->autosplit,						" autosplit_enabled,         "
+		"%u,"  // zone_change_count			  pp->zone_change_count,				" zone_change_count,         "
+		"%i,"  // toxicity					  pp->toxicity,							" toxicity,                  "
+		"%i,"  // hunger_level				  pp->hunger_level,						" hunger_level,              "
+		"%i,"  // thirst_level				  pp->thirst_level,						" thirst_level,              "
+		"%u,"  // ability_up				  pp->ability_up,						" ability_up,                "
+		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
+		"%u,"  // show_helm					  pp->showhelm,							" show_helm,                 "
+		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
+		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
+		"%u,"  // aa_points_spent			  pp->aapoints_spent,					" aa_points_spent,           "
+		"%u,"  // aa_exp					  pp->expAA,							" aa_exp,                    "
+		"%u,"  // aa_points					  pp->aapoints,							" aa_points,                 "
+		"%u,"  // RestTimer					  pp->RestTimer,						" RestTimer)                 "
+		"%u,"  // e_aa_effects
+		"%u,"  // e_percent_to_aa
+		"%u"   // e_expended_aa_spent
+		")", 
+		character_id,					  // " id,                        "
+		account_id,						  // " account_id,                "
+		EscapeString(pp->name).c_str(),						  // " `name`,                    "
+		EscapeString(pp->last_name).c_str(),					  // " last_name,                 "
+		pp->gender,						  // " gender,                    "
+		pp->race,						  // " race,                      "
+		pp->class_,						  // " class,                     "
+		pp->level,						  // " `level`,                   "
+		pp->deity,						  // " deity,                     "
+		pp->birthday,					  // " birthday,                  "
+		pp->lastlogin,					  // " last_login,                "
+		pp->timePlayedMin,				  // " time_played,               "
+		pp->pvp,						  // " pvp_status,                "
+		pp->level2,						  // " level2,                    "
+		pp->anon,						  // " anon,                      "
+		pp->gm,							  // " gm,                        "
+		pp->intoxication,				  // " intoxication,              "
+		pp->haircolor,					  // " hair_color,                "
+		pp->beardcolor,					  // " beard_color,               "
+		pp->eyecolor1,					  // " eye_color_1,               "
+		pp->eyecolor2,					  // " eye_color_2,               "
+		pp->hairstyle,					  // " hair_style,                "
+		pp->beard,						  // " beard,                     "
+		pp->ability_time_seconds,		  // " ability_time_seconds,      "
+		pp->ability_number,				  // " ability_number,            "
+		pp->ability_time_minutes,		  // " ability_time_minutes,      "
+		pp->ability_time_hours,			  // " ability_time_hours,        "
+		EscapeString(pp->title).c_str(),						  // " title,                     "
+		EscapeString(pp->suffix).c_str(),						  // " suffix,                    "
+		pp->exp,						  // " exp,                       "
+		pp->points,						  // " points,                    "
+		pp->mana,						  // " mana,                      "
+		pp->cur_hp,						  // " cur_hp,                    "
+		pp->STR,						  // " str,                       "
+		pp->STA,						  // " sta,                       "
+		pp->CHA,						  // " cha,                       "
+		pp->DEX,						  // " dex,                       "
+		pp->INT,						  // " `int`,                     "
+		pp->AGI,						  // " agi,                       "
+		pp->WIS,						  // " wis,                       "
+		pp->face,						  // " face,                      "
+		pp->y,							  // " y,                         "
+		pp->x,							  // " x,                         "
+		pp->z,							  // " z,                         "
+		pp->heading,					  // " heading,                   "
+		pp->pvp2,						  // " pvp2,                      "
+		pp->pvptype,					  // " pvp_type,                  "
+		pp->autosplit,					  // " autosplit_enabled,         "
+		pp->zone_change_count,			  // " zone_change_count,         "
+		pp->toxicity,					  // " toxicity,                  "
+		pp->hunger_level,				  // " hunger_level,              "
+		pp->thirst_level,				  // " thirst_level,              "
+		pp->ability_up,					  // " ability_up,                "
+		pp->zone_id,					  // " zone_id,                   "
+		pp->showhelm,					  // " show_helm,                 "
+		pp->endurance,					  // " endurance,                 "
+		pp->air_remaining,				  // " air_remaining,             "
+		pp->aapoints_spent,				  // " aa_points_spent,           "
+		pp->expAA,						  // " aa_exp,                    "
+		pp->aapoints,					  // " aa_points,                 "
+		pp->RestTimer,					  // " RestTimer)                 "
+		m_epp->aa_effects,
+		m_epp->perAA,
+		m_epp->expended_aa
+	);
+	auto results = database.QueryDatabase(query);
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase:SaveCharacterData", query);
+	LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp){
+	if (pp->copper < 0) { pp->copper = 0; }
+	if (pp->silver < 0) { pp->silver = 0; }
+	if (pp->gold < 0) { pp->gold = 0; }
+	if (pp->platinum < 0) { pp->platinum = 0; }
+	if (pp->copper_bank < 0) { pp->copper_bank = 0; }
+	if (pp->silver_bank < 0) { pp->silver_bank = 0; }
+	if (pp->gold_bank < 0) { pp->gold_bank = 0; }
+	if (pp->platinum_bank < 0) { pp->platinum_bank = 0; }
+	if (pp->platinum_cursor < 0) { pp->platinum_cursor = 0; }
+	if (pp->gold_cursor < 0) { pp->gold_cursor = 0; }
+	if (pp->silver_cursor < 0) { pp->silver_cursor = 0; }
+	if (pp->copper_cursor < 0) { pp->copper_cursor = 0; }
+	std::string query = StringFormat(
+		"REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
+		"platinum_bank, gold_bank, silver_bank, copper_bank,"
+		"platinum_cursor, gold_cursor, silver_cursor, copper_cursor)"
+		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+		character_id,
+		pp->platinum,
+		pp->gold,
+		pp->silver,
+		pp->copper,
+		pp->platinum_bank,
+		pp->gold_bank,
+		pp->silver_bank,
+		pp->copper_bank,
+		pp->platinum_cursor,
+		pp->gold_cursor,
+		pp->silver_cursor,
+		pp->copper_cursor);
+	auto results = database.QueryDatabase(query); 
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterCurrency", query);
+	LogFile->write(EQEMuLog::Debug, "Saving Currency for character ID: %i, done", character_id); 
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterAA(uint32 character_id, uint32 aa_id, uint32 current_level){
+	std::string rquery = StringFormat("REPLACE INTO `character_alternate_abilities` (id, aa_id, aa_value)"
+		" VALUES (%u, %u, %u)",
+		character_id, aa_id, current_level);
+	auto results = QueryDatabase(rquery);
+	ThrowDBError(results.ErrorMessage(), "ZoneDatabase::SaveCharacterAA", rquery);
+	LogFile->write(EQEMuLog::Debug, "Saving AA for character ID: %u, aa_id: %u current_level: %u", character_id, aa_id, current_level);
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
+	std::string query = StringFormat("REPLACE INTO `character_memmed_spells` (id, slot_id, spell_id) VALUES (%u, %u, %u)", character_id, slot_id, spell_id); 
+	QueryDatabase(query); 
+	return true;
+}
+
+bool ZoneDatabase::SaveCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
+	std::string query = StringFormat("REPLACE INTO `character_spells` (id, slot_id, spell_id) VALUES (%u, %u, %u)", character_id, slot_id, spell_id); 
+	QueryDatabase(query); 
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
+	std::string query = StringFormat("DELETE FROM `character_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id); 
+	QueryDatabase(query); 
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
+	std::string query = StringFormat("DELETE FROM `character_disciplines` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id); 
+	QueryDatabase(query); 
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterAAs(uint32 character_id){
+	std::string query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", character_id); 
+	QueryDatabase(query); 
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterDye(uint32 character_id){
+	std::string query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", character_id);
+	QueryDatabase(query);  
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){ 
+	std::string query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id); 
+	QueryDatabase(query); 
+	return true;
 }
 
 bool ZoneDatabase::NoRentExpired(const char* name){
-	std::string query = StringFormat("SELECT (UNIX_TIMESTAMP(NOW())-timelaston) "
-                                    "FROM character_ WHERE name = '%s'", name);
+	std::string query = StringFormat("SELECT (UNIX_TIMESTAMP(NOW()) - last_login) FROM `character_data` WHERE name = '%s'", name);  
 	auto results = QueryDatabase(query);
 	if (!results.Success())
         return false;
@@ -915,8 +1426,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.aggroradius, npc_types.assistradius, npc_types.bodytype, npc_types.npc_faction_id, "
                         "npc_types.face, npc_types.luclin_hairstyle, npc_types.luclin_haircolor, "
                         "npc_types.luclin_eyecolor, npc_types.luclin_eyecolor2, npc_types.luclin_beardcolor,"
-                        "npc_types.luclin_beard, npc_types.drakkin_heritage, npc_types.drakkin_tattoo, "
-                        "npc_types.drakkin_details, npc_types.armortint_id, "
+                        "npc_types.luclin_beard, npc_types.armortint_id, "
                         "npc_types.armortint_red, npc_types.armortint_green, npc_types.armortint_blue, "
                         "npc_types.see_invis, npc_types.see_invis_undead, npc_types.lastname, "
                         "npc_types.qglobal, npc_types.AC, npc_types.npc_aggro, npc_types.spawn_limit, "
@@ -1011,15 +1521,12 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->eyecolor2 = atoi(row[54]);
 		tmpNPCType->beardcolor = atoi(row[55]);
 		tmpNPCType->beard = atoi(row[56]);
-		tmpNPCType->drakkin_heritage = atoi(row[57]);
-		tmpNPCType->drakkin_tattoo = atoi(row[58]);
-		tmpNPCType->drakkin_details = atoi(row[59]);
 
-		uint32 armor_tint_id = atoi(row[60]);
+		uint32 armor_tint_id = atoi(row[57]);
 
-		tmpNPCType->armor_tint[0] = (atoi(row[61]) & 0xFF) << 16;
-        tmpNPCType->armor_tint[0] |= (atoi(row[62]) & 0xFF) << 8;
-		tmpNPCType->armor_tint[0] |= (atoi(row[63]) & 0xFF);
+		tmpNPCType->armor_tint[0] = (atoi(row[58]) & 0xFF) << 16;
+        tmpNPCType->armor_tint[0] |= (atoi(row[59]) & 0xFF) << 8;
+		tmpNPCType->armor_tint[0] |= (atoi(row[60]) & 0xFF);
 		tmpNPCType->armor_tint[0] |= (tmpNPCType->armor_tint[0]) ? (0xFF << 24) : 0;
 
 		if (armor_tint_id == 0)
@@ -1054,32 +1561,32 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
         } else
             armor_tint_id = 0;
 
-		tmpNPCType->see_invis = atoi(row[64]);
-		tmpNPCType->see_invis_undead = atoi(row[65]) == 0? false: true;	// Set see_invis_undead flag
-		if (row[66] != nullptr)
-			strn0cpy(tmpNPCType->lastname, row[66], 32);
+		tmpNPCType->see_invis = atoi(row[61]);
+		tmpNPCType->see_invis_undead = atoi(row[62]) == 0? false: true;	// Set see_invis_undead flag
+		if (row[63] != nullptr)
+			strn0cpy(tmpNPCType->lastname, row[63], 32);
 
-		tmpNPCType->qglobal = atoi(row[67]) == 0? false: true;	// qglobal
-		tmpNPCType->AC = atoi(row[68]);
-		tmpNPCType->npc_aggro = atoi(row[69]) == 0? false: true;
-		tmpNPCType->spawn_limit = atoi(row[70]);
-		tmpNPCType->see_hide = atoi(row[71]) == 0? false: true;
-		tmpNPCType->see_improved_hide = atoi(row[72]) == 0? false: true;
-		tmpNPCType->ATK = atoi(row[73]);
-		tmpNPCType->accuracy_rating = atoi(row[74]);
-		tmpNPCType->avoidance_rating = atoi(row[75]);
-		tmpNPCType->slow_mitigation = atoi(row[76]);
-		tmpNPCType->maxlevel = atoi(row[77]);
-		tmpNPCType->scalerate = atoi(row[78]);
-		tmpNPCType->private_corpse = atoi(row[79]) == 1 ? true: false;
-		tmpNPCType->unique_spawn_by_name = atoi(row[80]) == 1 ? true: false;
-		tmpNPCType->underwater = atoi(row[81]) == 1 ? true: false;
-		tmpNPCType->emoteid = atoi(row[82]);
-		tmpNPCType->spellscale = atoi(row[83]);
-		tmpNPCType->healscale = atoi(row[84]);
-		tmpNPCType->no_target_hotkey = atoi(row[85]) == 1 ? true: false;
-		tmpNPCType->raid_target = atoi(row[86]) == 0 ? false: true;
-		tmpNPCType->attack_delay = atoi(row[87]);
+		tmpNPCType->qglobal = atoi(row[64]) == 0? false: true;	// qglobal
+		tmpNPCType->AC = atoi(row[65]);
+		tmpNPCType->npc_aggro = atoi(row[66]) == 0? false: true;
+		tmpNPCType->spawn_limit = atoi(row[67]);
+		tmpNPCType->see_hide = atoi(row[68]) == 0? false: true;
+		tmpNPCType->see_improved_hide = atoi(row[69]) == 0? false: true;
+		tmpNPCType->ATK = atoi(row[70]);
+		tmpNPCType->accuracy_rating = atoi(row[71]);
+		tmpNPCType->avoidance_rating = atoi(row[72]);
+		tmpNPCType->slow_mitigation = atoi(row[73]);
+		tmpNPCType->maxlevel = atoi(row[74]);
+		tmpNPCType->scalerate = atoi(row[75]);
+		tmpNPCType->private_corpse = atoi(row[76]) == 1 ? true: false;
+		tmpNPCType->unique_spawn_by_name = atoi(row[77]) == 1 ? true: false;
+		tmpNPCType->underwater = atoi(row[78]) == 1 ? true: false;
+		tmpNPCType->emoteid = atoi(row[79]);
+		tmpNPCType->spellscale = atoi(row[80]);
+		tmpNPCType->healscale = atoi(row[81]);
+		tmpNPCType->no_target_hotkey = atoi(row[82]) == 1 ? true: false;
+		tmpNPCType->raid_target = atoi(row[83]) == 0 ? false: true;
+		tmpNPCType->attack_delay = atoi(row[84]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1794,31 +2301,6 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 	return true;
 }
 
-bool ZoneDatabase::LoadFactionValues(uint32 char_id, faction_map & val_list) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT faction_id,current_value FROM faction_values WHERE char_id = %i",char_id), errbuf, &result)) {
-		safe_delete_array(query);
-		bool ret = LoadFactionValues_result(result, val_list);
-		mysql_free_result(result);
-		return ret;
-	}
-	else {
-		std::cerr << "Error in LoadFactionValues query '" << query << "' " << errbuf << std::endl;
-		safe_delete_array(query);
-	}
-	return false;
-}
-
-bool ZoneDatabase::LoadFactionValues_result(MYSQL_RES* result, faction_map & val_list) {
-	MYSQL_ROW row;
-	while((row = mysql_fetch_row(result))) {
-		val_list[atoi(row[0])] = atoi(row[1]);
-	}
-	return true;
-}
-
 //o--------------------------------------------------------------
 //| Name: GetFactionName; rembrant, Dec. 16
 //o--------------------------------------------------------------
@@ -1986,12 +2468,4 @@ bool ZoneDatabase::GetFactionIdsForNPC(uint32 nfl_id, std::list<struct NPCFactio
 		}
 	}
 	return true;
-}
-
-void ZoneDatabase::StoreCharacterLookup(uint32 char_id) {
-	std::string c_lookup = StringFormat("REPLACE INTO `character_lookup` (id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, mailkey, firstlogon, inspectmessage)"
-		" SELECT id, account_id, `name`, timelaston, x, y, z, zonename, zoneid, instanceid, pktime, groupid, class, `level`, mailkey, firstlogon, inspectmessage"
-		" FROM `character_` "
-		" WHERE `id` = %i ", char_id);  
-	QueryDatabase(c_lookup); 
 }

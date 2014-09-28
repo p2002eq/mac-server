@@ -96,9 +96,6 @@ public:
 		uint8		in_hairstyle,
 		uint8		in_luclinface,
 		uint8		in_beard,
-		uint32		in_drakkin_heritage,
-		uint32		in_drakkin_tattoo,
-		uint32		in_drakkin_details,
 		uint32		in_armor_tint[_MaterialCount],
 		uint8		in_aa_title,
 		uint8		in_see_invis, // see through invis
@@ -205,7 +202,7 @@ public:
 	void SendSpellBarEnable(uint16 spellid);
 	void ZeroCastingVars();
 	virtual void SpellProcess();
-	virtual bool CastSpell(uint16 spell_id, uint16 target_id, uint16 slot = 10, int32 casttime = -1,
+	virtual bool CastSpell(uint16 spell_id, uint16 target_id, uint16 slot = USE_ITEM_SPELL_SLOT, int32 casttime = -1,
 		int32 mana_cost = -1, uint32* oSpellWillFinish = 0, uint32 item_slot = 0xFFFFFFFF,
 		uint32 timer = 0xFFFFFFFF, uint32 timer_duration = 0, uint32 type = 0, int16 *resist_adjust = nullptr);
 	virtual bool DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot = 10, int32 casttime = -1,
@@ -318,9 +315,6 @@ public:
 	inline uint8 GetHairStyle() const { return hairstyle; }
 	inline uint8 GetLuclinFace() const { return luclinface; }
 	inline uint8 GetBeard() const { return beard; }
-	inline uint8 GetDrakkinHeritage() const { return drakkin_heritage; }
-	inline uint8 GetDrakkinTattoo() const { return drakkin_tattoo; }
-	inline uint8 GetDrakkinDetails() const { return drakkin_details; }
 	inline uint32 GetArmorTint(uint8 i) const { return armor_tint[(i < _MaterialCount) ? i : 0]; }
 	inline uint8 GetClass() const { return class_; }
 	inline uint8 GetLevel() const { return level; }
@@ -519,7 +513,7 @@ public:
 
 
 	//More stuff to sort:
-	virtual bool IsRaidTarget() { return false; };
+	virtual bool IsRaidTarget() const { return false; };
 	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false, int16 spellid = 0);
 	bool IsTargeted() const { return (targeted > 0); }
 	inline void IsTargeted(int in_tar) { targeted += in_tar; if(targeted < 0) targeted = 0;}
@@ -554,9 +548,7 @@ public:
 	uint8 IsFocusEffect(uint16 spellid, int effect_index, bool AA=false,uint32 aa_effect=0);
 	void SendIllusionPacket(uint16 in_race, uint8 in_gender = 0xFF, uint8 in_texture = 0xFF, uint8 in_helmtexture = 0xFF, 
 		uint8 in_haircolor = 0xFF, uint8 in_beardcolor = 0xFF, uint8 in_eyecolor1 = 0xFF, uint8 in_eyecolor2 = 0xFF, 
-		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF, 
-		uint32 in_drakkin_heritage = 0xFFFFFFFF, uint32 in_drakkin_tattoo = 0xFFFFFFFF, 
-		uint32 in_drakkin_details = 0xFFFFFFFF, float in_size = -1.0f);
+		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF, float in_size = -1.0f);
 	virtual void Stun(int duration);
 	virtual void UnStun();
 	inline void Silence(bool newval) { silenced = newval; }
@@ -572,8 +564,7 @@ public:
 	void DoBuffWearOffEffect(uint32 index);
 	void TryTriggerOnCast(uint32 spell_id, bool aa_trigger);
 	void TriggerOnCast(uint32 focus_spell, uint32 spell_id, bool aa_trigger);
-	void TrySpellTrigger(Mob *target, uint32 spell_id);
-	void TryApplyEffect(Mob *target, uint32 spell_id);
+	bool TrySpellTrigger(Mob *target, uint32 spell_id, int effect);
 	void TryTriggerOnValueAmount(bool IsHP = false, bool IsMana = false, bool IsEndur = false, bool IsPet = false);
 	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
 	void TrySympatheticProc(Mob *target, uint32 spell_id);
@@ -1090,9 +1081,6 @@ protected:
 	uint8 hairstyle;
 	uint8 luclinface; //
 	uint8 beard;
-	uint32 drakkin_heritage;
-	uint32 drakkin_tattoo;
-	uint32 drakkin_details;
 	uint32 armor_tint[_MaterialCount];
 
 	uint8 aa_title;

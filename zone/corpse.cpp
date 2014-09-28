@@ -126,9 +126,6 @@ Corpse* Corpse::LoadFromDBData(uint32 in_dbid, uint32 in_charid, char* in_charna
 		pc->hairstyle = dbpcs->hairstyle;
 		pc->luclinface = dbpcs->face;
 		pc->beard = dbpcs->beard;
-		pc->drakkin_heritage = dbpcs->drakkin_heritage;
-		pc->drakkin_tattoo = dbpcs->drakkin_tattoo;
-		pc->drakkin_details = dbpcs->drakkin_details;
 		pc->Rezzed(rezzed);
 		pc->become_npc = false;
 		return pc;
@@ -173,9 +170,6 @@ Corpse* Corpse::LoadFromDBData(uint32 in_dbid, uint32 in_charid, char* in_charna
 		pc->hairstyle = dbpc->hairstyle;
 		pc->luclinface = dbpc->face;
 		pc->beard = dbpc->beard;
-		pc->drakkin_heritage = 0;
-		pc->drakkin_tattoo = 0;
-		pc->drakkin_details = 0;
 		pc->Rezzed(rezzed);
 		pc->become_npc = false;
 		return pc;
@@ -191,7 +185,7 @@ in_npc->GetDeity(), in_npc->GetLevel(), in_npc->GetNPCTypeID(), in_npc->GetSize(
 in_npc->GetHeading(), in_npc->GetX(), in_npc->GetY(), in_npc->GetZ(), 0,
 in_npc->GetTexture(), in_npc->GetHelmTexture(),
 0, 0, 0, 0, 0, 0, 0, 0, 0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 corpse_decay_timer(in_decaytime),
 corpse_res_timer(0),
 corpse_delay_timer(RuleI(NPC, CorpseUnlockTimer)),
@@ -283,9 +277,6 @@ client->GetPP().eyecolor2,
 client->GetPP().hairstyle,
 client->GetPP().face,
 client->GetPP().beard,
-client->GetPP().drakkin_heritage,
-client->GetPP().drakkin_tattoo,
-client->GetPP().drakkin_details,
 0,
 0xff,	// aa title
 0,
@@ -453,7 +444,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 Corpse::Corpse(uint32 in_dbid, uint32 in_charid, char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", "", 0, 0, in_gender, in_race, in_class, BT_Humanoid, in_deity, in_level, 0, in_size, 0, in_heading, in_x, in_y, in_z, 0, in_texture, in_helmtexture,
 	0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff,
+	0, 0, 0, 0, 0, 0, 0, 0, 0xff,
 	0, 0, 0, 0, 0, 0, 0, 0, 0),
 	corpse_decay_timer(RuleI(Character, CorpseDecayTimeMS)),
 	corpse_res_timer(RuleI(Character, CorpseResTimeMS)),
@@ -566,9 +557,6 @@ bool Corpse::Save() {
 	dbpc->hairstyle = hairstyle;
 	dbpc->face = luclinface;
 	dbpc->beard = beard;
-	dbpc->drakkin_heritage = drakkin_heritage;
-	dbpc->drakkin_tattoo = drakkin_tattoo;
-	dbpc->drakkin_details = drakkin_details;
 
 	uint32 x = 0;
 	ItemList::iterator cur, end;
@@ -947,8 +935,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			}
 
 			RemoveCash();
-			Save();
-			client->Save();
+			Save(); 
 		}
 
 		outapp->priority = 6;

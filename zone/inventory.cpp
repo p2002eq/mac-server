@@ -169,14 +169,7 @@ bool Client::CheckLoreConflict(const Item_Struct* item) {
 }
 
 bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, bool attuned, uint16 to_slot) {
-	/* Set a timestamp in an entity variable for plugin check_handin.pl in return_items
-		This will stopgap players from items being returned if global_npc.pl has a catch all return_items
-	*/
-	struct timeval read_time;
-	char buffer[50];
-	gettimeofday(&read_time, 0);
-	sprintf(buffer, "%li.%li \n", read_time.tv_sec, read_time.tv_usec);
-	this->SetEntityVariable("Recieved_Item", buffer);
+	this->EVENT_ITEM_ScriptStopReturn();
 
 	// TODO: update calling methods and script apis to handle a failure return
 
@@ -1447,7 +1440,9 @@ void Client::DyeArmor(DyeStruct* dye){
 				uint8 slot2=SlotConvert(i);
 				ItemInst* inst = this->m_inv.GetItem(slot2);
 				if(inst){
-					inst->SetColor((dye->dye[i].rgb.red*65536)+(dye->dye[i].rgb.green*256)+(dye->dye[i].rgb.blue));
+					uint32 armor_color = (dye->dye[i].rgb.red * 65536) + (dye->dye[i].rgb.green * 256) + (dye->dye[i].rgb.blue);
+					inst->SetColor(armor_color); 
+					database.SaveCharacterMaterialColor(this->CharacterID(), i, armor_color);
 					database.SaveInventory(CharacterID(),inst,slot2);
 					if(dye->dye[i].rgb.use_tint)
 						m_pp.item_tint[i].rgb.use_tint = 0xFF;
@@ -1468,7 +1463,7 @@ void Client::DyeArmor(DyeStruct* dye){
 	EQApplicationPacket* outapp=new EQApplicationPacket(OP_Dye,0);
 	QueuePacket(outapp);
 	safe_delete(outapp);
-	Save();
+	
 }
 
 bool Client::DecreaseByID(uint32 type, uint8 amt) {

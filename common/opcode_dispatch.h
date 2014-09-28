@@ -67,8 +67,6 @@ structures for an opcode, mainly used by opcode finder
 //IN_C(OP_SetDataRate, float);
 IN_C(OP_ZoneEntry, ClientZoneEntry_Struct);
 IN_C(OP_SetServerFilter, SetServerFilter_Struct);
-IN_Cz(OP_SendTributes);
-IN_Cz(OP_SendGuildTributes);
 IN_Cz(OP_SendAAStats);
 IN_Cz(OP_ReqClientSpawn);
 IN_Cz(OP_ReqNewZone);

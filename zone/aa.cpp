@@ -18,6 +18,8 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 
 // Test 1
 
+#include <iostream>
+
 #include "../common/debug.h"
 #include "aa.h"
 #include "mob.h"
@@ -301,7 +303,7 @@ void Client::ActivateAA(aaID activate){
 					return;
 				}
 			} else {
-				if(!CastSpell(caa->spell_id, target_id, 10, -1, -1, 0, -1, AATimerID + pTimerAAStart, timer_base, 1)) {
+				if (!CastSpell(caa->spell_id, target_id, USE_ITEM_SPELL_SLOT, -1, -1, 0, -1, AATimerID + pTimerAAStart, timer_base, 1)) {
 					//Reset on failed cast
 					SendAATimer(activate, 0, 0xFFFFFF);
 					Message_StringID(CC_Yellow,ABILITY_FAILED);
@@ -316,7 +318,6 @@ void Client::ActivateAA(aaID activate){
 				return;
 		}
 	}
-
 }
 
 void Client::HandleAAAction(aaID activate) {
@@ -527,7 +528,7 @@ void Client::HandleAAAction(aaID activate) {
 	//cast the spell, if we have one
 	if(IsValidSpell(spell_id)) {
 		int aatid = GetAATimerID(activate);
-		if(!CastSpell(spell_id, target_id , 10, -1, -1, 0, -1, pTimerAAStart + aatid , CalcAAReuseTimer(caa), 1)) {
+		if (!CastSpell(spell_id, target_id, USE_ITEM_SPELL_SLOT, -1, -1, 0, -1, pTimerAAStart + aatid, CalcAAReuseTimer(caa), 1)) {
 			SendAATimer(activate, 0, 0xFFFFFF);
 			Message_StringID(CC_Yellow,ABILITY_FAILED);
 			p_timers.Clear(&database, pTimerAAStart + aatid);
@@ -1036,8 +1037,7 @@ void Client::BuyAA(AA_Action* action)
 	uint32 real_cost;
 	std::map<uint32, AALevelCost_Struct>::iterator RequiredLevel = AARequiredLevelAndCost.find(action->ability);
 
-	if(RequiredLevel != AARequiredLevelAndCost.end())
-	{
+	if(RequiredLevel != AARequiredLevelAndCost.end()) {
 		real_cost = RequiredLevel->second.Cost;
 	}
 	else
@@ -1050,12 +1050,18 @@ void Client::BuyAA(AA_Action* action)
 
 		m_pp.aapoints -= real_cost;
 
-		Save();
+		/* Do Player Profile rank calculations and set player profile */
+		SaveAA();
+		/* Save to Database to avoid having to write the whole AA array to the profile, only write changes*/
+		// database.SaveCharacterAA(this->CharacterID(), aa2->id, (cur_level + 1)); 
+
 
 		SendAATable();
 
-		//we are building these messages ourself instead of using the stringID to work around patch discrepencies
-		//these are AA_GAIN_ABILITY	(410) & AA_IMPROVE (411), respectively, in both Titanium & SoF. not sure about 6.2
+		/*
+			We are building these messages ourself instead of using the stringID to work around patch discrepencies
+				these are AA_GAIN_ABILITY	(410) & AA_IMPROVE (411), respectively, in both Titanium & SoF. not sure about 6.2
+		*/
 
 		/* Initial purchase of an AA ability */
 		if (cur_level < 1){
@@ -1077,8 +1083,6 @@ void Client::BuyAA(AA_Action* action)
 				QServ->PlayerLogEvent(Player_Log_AA_Purchases, this->CharacterID(), event_desc);
 			}
 		}
-
-
 
 		SendAAStats();
 
@@ -1304,6 +1308,7 @@ bool ZoneDatabase::LoadAAEffects2() {
 
 	return true;
 }
+
 uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char *query = 0;
@@ -1324,23 +1329,25 @@ uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", skill_id);
 	return skill_id;
 }
+
 void Client::ResetAA(){
+	RefundAA(); 
 	uint32 i;
 	for(i=0;i<MAX_PP_AA_ARRAY;i++){
 		aa[i]->AA = 0;
 		aa[i]->value = 0;
+		m_pp.aa_array[MAX_PP_AA_ARRAY].AA = 0;
+		m_pp.aa_array[MAX_PP_AA_ARRAY].value = 0; 
 	}
+
 	std::map<uint32,uint8>::iterator itr;
 	for(itr=aa_points.begin();itr!=aa_points.end();++itr)
 		aa_points[itr->first] = 0;
 
-		for(int i = 0; i < _maxLeaderAA; ++i)
-		m_pp.leader_abilities.ranks[i] = 0;
-
-	m_pp.group_leadership_points = 0;
-	m_pp.raid_leadership_points = 0;
-	m_pp.group_leadership_exp = 0;
-	m_pp.raid_leadership_exp = 0;
+	database.DeleteCharacterAAs(this->CharacterID());
+	SaveAA(); 
+	SendAATable();
+	Kick();
 }
 
 void Client::InspectBuffs(Client* Inspector, int Rank)

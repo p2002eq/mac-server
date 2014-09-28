@@ -1,5 +1,5 @@
 /*	EQEMu: Everquest Server Emulator
-	Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
+	Copyright (C) 2001-2014 EQEMu Development Team (http://eqemulator.net)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -15,13 +15,34 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
-#include "misc_functions.h"
-#include "guilds.h"
-#include "database.h"
-#include "eq_packet_structs.h"
+#ifndef COMMON_DATA_VERIFICATION_H
+#define COMMON_DATA_VERIFICATION_H
 
+#include <algorithm>
 
-#ifndef WIN32
-#include <netinet/in.h>	//for htonl
+namespace EQEmu
+{
+
+template <typename T>
+T Clamp(const T& value, const T& lower, const T& upper) {
+	return std::max(lower, std::min(value, upper));
+}
+
+template <typename T>
+T ClampLower(const T& value, const T& lower) {
+	return std::max(lower, value);
+}
+
+template <typename T>
+T ClampUpper(const T& value, const T& upper) {
+	return std::min(value, upper);
+}
+
+template <typename T>
+bool ValueWithin(const T& value, const T& lower, const T& upper) {
+	return value >= lower && value <= upper;
+}
+
+}
+
 #endif

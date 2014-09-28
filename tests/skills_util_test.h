@@ -1,5 +1,5 @@
 /*	EQEMu: Everquest Server Emulator
-	Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
+	Copyright (C) 2001-2014 EQEMu Development Team (http://eqemulator.net)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -15,13 +15,34 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
-#include "misc_functions.h"
-#include "guilds.h"
-#include "database.h"
-#include "eq_packet_structs.h"
 
+#ifndef __EQEMU_TESTS_SKILLS_UTILS_H
+#define __EQEMU_TESTS_SKILLS_UTILS_H
 
-#ifndef WIN32
-#include <netinet/in.h>	//for htonl
+#include "cppunit/cpptest.h"
+#include "../common/skills.h"
+
+class SkillsUtilsTest: public Test::Suite {
+	typedef void(SkillsUtilsTest::*TestFunction)(void);
+public:
+	SkillsUtilsTest() {
+		TEST_ADD(SkillsUtilsTest::IsTradeskill);
+		TEST_ADD(SkillsUtilsTest::IsSpecializedSkill);
+	}
+
+	~SkillsUtilsTest() {
+	}
+
+	private:
+	void IsTradeskill() {
+		TEST_ASSERT(EQEmu::IsTradeskill(SkillPottery));
+		TEST_ASSERT(!EQEmu::IsTradeskill(SkillParry));
+	}
+
+	void IsSpecializedSkill() {
+		TEST_ASSERT(EQEmu::IsSpecializedSkill(SkillSpecializeConjuration));
+		TEST_ASSERT(!EQEmu::IsSpecializedSkill(SkillConjuration))
+	}
+};
+
 #endif

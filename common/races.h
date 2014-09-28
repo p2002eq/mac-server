@@ -70,7 +70,6 @@
 #define iksar_1			4096
 #define vahshir_1		8192
 #define rall_1			16384 //froglok?
-#define drakkin_1		32768
 
 const char* GetRaceName(uint16 race);
 

@@ -71,9 +71,6 @@ Mob::Mob(const char* in_name,
 		uint8		in_hairstyle,
 		uint8		in_luclinface,
 		uint8		in_beard,
-		uint32		in_drakkin_heritage,
-		uint32		in_drakkin_tattoo,
-		uint32		in_drakkin_details,
 		uint32		in_armor_tint[_MaterialCount],
 
 		uint8		in_aa_title,
@@ -174,9 +171,6 @@ Mob::Mob(const char* in_name,
 	hairstyle	= in_hairstyle;
 	luclinface	= in_luclinface;
 	beard		= in_beard;
-	drakkin_heritage	= in_drakkin_heritage;
-	drakkin_tattoo		= in_drakkin_tattoo;
-	drakkin_details		= in_drakkin_details;
 	attack_speed = 0;
 	attack_delay = 0;
 	slow_mitigation = 0;
@@ -871,9 +865,6 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.face = luclinface;
 	ns->spawn.beard = beard;
 	ns->spawn.StandState = GetAppearanceValue(_appearance);
-	ns->spawn.drakkin_heritage = drakkin_heritage;
-	ns->spawn.drakkin_tattoo = drakkin_tattoo;
-	ns->spawn.drakkin_details = drakkin_details;
 	ns->spawn.equip_chest2 = texture;
 
 //	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
@@ -1342,7 +1333,7 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 		SendPosition();
 }
 
-void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, uint8 in_helmtexture, uint8 in_haircolor, uint8 in_beardcolor, uint8 in_eyecolor1, uint8 in_eyecolor2, uint8 in_hairstyle, uint8 in_luclinface, uint8 in_beard, uint8 in_aa_title, uint32 in_drakkin_heritage, uint32 in_drakkin_tattoo, uint32 in_drakkin_details, float in_size) {
+void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, uint8 in_helmtexture, uint8 in_haircolor, uint8 in_beardcolor, uint8 in_eyecolor1, uint8 in_eyecolor2, uint8 in_hairstyle, uint8 in_luclinface, uint8 in_beard, uint8 in_aa_title, float in_size) {
 
 	uint16 BaseRace = GetBaseRace();
 
@@ -1424,21 +1415,6 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 
 	this->aa_title = 0xFF;
 
-	if (in_drakkin_heritage == 0xFFFFFFFF)
-		this->drakkin_heritage = GetDrakkinHeritage();
-	else
-		this->drakkin_heritage = in_drakkin_heritage;
-
-	if (in_drakkin_tattoo == 0xFFFFFFFF)
-		this->drakkin_tattoo = GetDrakkinTattoo();
-	else
-		this->drakkin_tattoo = in_drakkin_tattoo;
-
-	if (in_drakkin_details == 0xFFFFFFFF)
-		this->drakkin_details = GetDrakkinDetails();
-	else
-		this->drakkin_details = in_drakkin_details;
-
 	if (in_size <= 0.0f)
 		this->size = GetSize();
 	else
@@ -1458,9 +1434,6 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->luclinface = CastToClient()->GetBaseFace();
 		this->beard	= CastToClient()->GetBaseBeard();
 		this->aa_title = 0xFF;
-		this->drakkin_heritage = CastToClient()->GetBaseHeritage();
-		this->drakkin_tattoo = CastToClient()->GetBaseTattoo();
-		this->drakkin_details = CastToClient()->GetBaseDetails();
 		switch(race){
 			case OGRE:
 				this->size = 9;
@@ -1508,15 +1481,12 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 	is->hairstyle = this->hairstyle;
 	is->face = this->luclinface;
 	//is->aa_title = this->aa_title;
-	is->drakkin_heritage = this->drakkin_heritage;
-	is->drakkin_tattoo = this->drakkin_tattoo;
-	is->drakkin_details = this->drakkin_details;
 	is->size = this->size;
 
 	entity_list.QueueClients(this, outapp);
 	safe_delete(outapp);
-	mlog(CLIENT__SPELLS, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, DrakkinHeritage = %i, DrakkinTattoo = %i, DrakkinDetails = %i, Size = %f",
-		this->race, this->gender, this->texture, this->helmtexture, this->haircolor, this->beardcolor, this->eyecolor1, this->eyecolor2, this->hairstyle, this->luclinface, this->drakkin_heritage, this->drakkin_tattoo, this->drakkin_details, this->size);
+	mlog(CLIENT__SPELLS, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
+		this->race, this->gender, this->texture, this->helmtexture, this->haircolor, this->beardcolor, this->eyecolor1, this->eyecolor2, this->hairstyle, this->luclinface, this->size);
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
@@ -1763,6 +1733,7 @@ void Mob::SetZone(uint32 zone_id, uint32 instance_id)
 	{
 		CastToClient()->GetPP().zone_id = zone_id;
 		CastToClient()->GetPP().zoneInstance = instance_id;
+		CastToClient()->Save();
 	}
 	Save();
 }
@@ -2881,12 +2852,11 @@ void Mob::TriggerOnCast(uint32 focus_spell, uint32 spell_id, bool aa_trigger)
 	}
 }
 
-void Mob::TrySpellTrigger(Mob *target, uint32 spell_id)
+bool Mob::TrySpellTrigger(Mob *target, uint32 spell_id, int effect)
 {
-	if(target == nullptr || !IsValidSpell(spell_id))
-	{
-		return;
-	}
+	if(!target || !IsValidSpell(spell_id))
+		return false;
+	
 	int spell_trig = 0;
 	// Count all the percentage chances to trigger for all effects
 	for(int i = 0; i < EFFECT_COUNT; i++)
@@ -2905,8 +2875,10 @@ void Mob::TrySpellTrigger(Mob *target, uint32 spell_id)
 				if(MakeRandomInt(0, trig_chance) <= spells[spell_id].base[i])
 				{
 					// If we trigger an effect then its over.
-					SpellFinished(spells[spell_id].base2[i], target, 10, 0, -1, spells[spell_id].ResistDiff);
-					break;
+					if (IsValidSpell(spells[spell_id].base2[i])){
+						SpellFinished(spells[spell_id].base2[i], target, 10, 0, -1, spells[spell_id].ResistDiff);
+						return true;
+					}
 				}
 				else
 				{
@@ -2920,37 +2892,15 @@ void Mob::TrySpellTrigger(Mob *target, uint32 spell_id)
 	// if the chances don't add to 100, then each effect gets a chance to fire, chance for no trigger as well.
 	else
 	{
-		for(int i = 0; i < EFFECT_COUNT; i++)
+		if(MakeRandomInt(0, 100) <= spells[spell_id].base[effect])
 		{
-			if (spells[spell_id].effectid[i] == SE_SpellTrigger)
-			{
-				if(MakeRandomInt(0, 100) <= spells[spell_id].base[i])
-				{
-					SpellFinished(spells[spell_id].base2[i], target, 10, 0, -1, spells[spell_id].ResistDiff);
-				}
+			if (IsValidSpell(spells[spell_id].base2[effect])){
+				SpellFinished(spells[spell_id].base2[effect], target, 10, 0, -1, spells[spell_id].ResistDiff);
+				return true; //Only trigger once of these per spell effect.
 			}
 		}
 	}
-}
-
-void Mob::TryApplyEffect(Mob *target, uint32 spell_id)
-{
-	if(target == nullptr || !IsValidSpell(spell_id))
-	{
-		return;
-	}
-
-	for(int i = 0; i < EFFECT_COUNT; i++)
-	{
-		if (spells[spell_id].effectid[i] == SE_ApplyEffect)
-		{
-			if(MakeRandomInt(0, 100) <= spells[spell_id].base[i])
-			{
-				if(target)
-					SpellFinished(spells[spell_id].base2[i], target, 10, 0, -1, spells[spell_id].ResistDiff);
-			}
-		}
-	}
+	return false;
 }
 
 void Mob::TryTriggerOnValueAmount(bool IsHP, bool IsMana, bool IsEndur, bool IsPet)

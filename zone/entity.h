@@ -28,7 +28,6 @@
 
 #include "zonedb.h"
 #include "zonedump.h"
-#include "zonedbasync.h"
 #include "qglobals.h"
 
 class EQApplicationPacket;
@@ -47,7 +46,7 @@ class Trap;
 class Entity;
 class EntityList;
 
-extern EntityList entity_list;
+extern EntityList entity_list; 
 
 class Entity
 {
@@ -91,7 +90,6 @@ public:
 	inline const uint16& GetID() const { return id; }
 
 	virtual const char* GetName() { return ""; }
-	virtual void DBAWComplete(uint8 workpt_b1, DBAsyncWork* dbaw) { pDBAsyncWorkID = 0; }
 	bool CheckCoordLosNoZLeaps(float cur_x, float cur_y, float cur_z, float trg_x, float trg_y, float trg_z, float perwalk=1);
 
 protected:
