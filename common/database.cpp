@@ -454,38 +454,12 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"thirst_level,"
 		"ability_up,"
 		"zone_id,"
-		"zone_instance,"
-		"leadership_exp_on,"
-		"ldon_points_guk,"
-		"ldon_points_mir,"
-		"ldon_points_mmc,"
-		"ldon_points_ruj,"
-		"ldon_points_tak,"
-		"ldon_points_available,"
-		"tribute_time_remaining,"
 		"show_helm,"
-		"career_tribute_points,"
-		"tribute_points,"
-		"tribute_active,"
 		"endurance,"
-		"group_leadership_exp,"
-		"raid_leadership_exp,"
-		"group_leadership_points,"
-		"raid_leadership_points,"
 		"air_remaining,"
-		"pvp_kills,"
-		"pvp_deaths,"
-		"pvp_current_points,"
-		"pvp_career_points,"
-		"pvp_best_kill_streak,"
-		"pvp_worst_death_streak,"
-		"pvp_current_kill_streak,"
 		"aa_points_spent,"
 		"aa_exp,"
 		"aa_points,"
-		"group_auto_consent,"
-		"raid_auto_consent,"
-		"guild_auto_consent,"
 		"RestTimer) "
 		"VALUES ("
 		"%u,"  // id					
@@ -542,38 +516,12 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%i,"  // thirst_level			
 		"%u,"  // ability_up			
 		"%u,"  // zone_id				
-		"%u,"  // zone_instance			
-		"%u,"  // leadership_exp_on		
-		"%u,"  // ldon_points_guk		
-		"%u,"  // ldon_points_mir		
-		"%u,"  // ldon_points_mmc		
-		"%u,"  // ldon_points_ruj		
-		"%u,"  // ldon_points_tak		
-		"%u,"  // ldon_points_available	
-		"%u,"  // tribute_time_remaining
 		"%u,"  // show_helm				
-		"%u,"  // career_tribute_points	
-		"%u,"  // tribute_points		
-		"%u,"  // tribute_active		
 		"%u,"  // endurance				
-		"%u,"  // group_leadership_exp	
-		"%u,"  // raid_leadership_exp	
-		"%u,"  // group_leadership_point
-		"%u,"  // raid_leadership_points
 		"%u,"  // air_remaining			
-		"%u,"  // pvp_kills				
-		"%u,"  // pvp_deaths			
-		"%u,"  // pvp_current_points	
-		"%u,"  // pvp_career_points		
-		"%u,"  // pvp_best_kill_streak	
-		"%u,"  // pvp_worst_death_streak
-		"%u,"  // pvp_current_kill_strea
 		"%u,"  // aa_points_spent		
 		"%u,"  // aa_exp				
 		"%u,"  // aa_points				
-		"%u,"  // group_auto_consent	
-		"%u,"  // raid_auto_consent		
-		"%u,"  // guild_auto_consent	
 		"%u"  // RestTimer				
 		")",
 		character_id,					  // " id,                        "
@@ -630,38 +578,12 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->thirst_level,				  // " thirst_level,              "
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
-		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->ldon_points_guk,			  // " ldon_points_guk,           "
-		pp->ldon_points_mir,			  // " ldon_points_mir,           "
-		pp->ldon_points_mmc,			  // " ldon_points_mmc,           "
-		pp->ldon_points_ruj,			  // " ldon_points_ruj,           "
-		pp->ldon_points_tak,			  // " ldon_points_tak,           "
-		pp->ldon_points_available,		  // " ldon_points_available,     "
-		pp->tribute_time_remaining,		  // " tribute_time_remaining,    "
 		pp->showhelm,					  // " show_helm,                 "
-		pp->career_tribute_points,		  // " career_tribute_points,     "
-		pp->tribute_points,				  // " tribute_points,            "
-		pp->tribute_active,				  // " tribute_active,            "
 		pp->endurance,					  // " endurance,                 "
-		pp->group_leadership_exp,		  // " group_leadership_exp,      "
-		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
-		pp->group_leadership_points,	  // " group_leadership_points,   "
-		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
-		pp->PVPKills,					  // " pvp_kills,                 "
-		pp->PVPDeaths,					  // " pvp_deaths,                "
-		pp->PVPCurrentPoints,			  // " pvp_current_points,        "
-		pp->PVPCareerPoints,			  // " pvp_career_points,         "
-		pp->PVPBestKillStreak,			  // " pvp_best_kill_streak,      "
-		pp->PVPWorstDeathStreak,		  // " pvp_worst_death_streak,    "
-		pp->PVPCurrentKillStreak,		  // " pvp_current_kill_streak,   "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
-		pp->groupAutoconsent,			  // " group_auto_consent,        "
-		pp->raidAutoconsent,			  // " raid_auto_consent,         "
-		pp->guildAutoconsent,			  // " guild_auto_consent,        "
 		pp->RestTimer					  // " RestTimer)                 "
 	);
 	auto results = QueryDatabase(query);
@@ -958,7 +880,6 @@ bool Database::CheckDatabaseConversions() {
 				"`title` varchar(32) NOT NULL DEFAULT '',							"
 				"`suffix` varchar(32) NOT NULL DEFAULT '',							"
 				"`zone_id` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
-				"`zone_instance` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`y` float NOT NULL DEFAULT '0',									"
 				"`x` float NOT NULL DEFAULT '0',									"
 				"`z` float NOT NULL DEFAULT '0',									"
@@ -989,10 +910,6 @@ bool Database::CheckDatabaseConversions() {
 				"`aa_points_spent` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`aa_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`aa_points` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`group_leadership_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`raid_leadership_exp` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
-				"`group_leadership_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`raid_leadership_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`points` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`cur_hp` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`mana` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
@@ -1010,31 +927,10 @@ bool Database::CheckDatabaseConversions() {
 				"`hunger_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`thirst_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_up` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`ldon_points_guk` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_mir` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_mmc` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_ruj` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_tak` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_available` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`tribute_time_remaining` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`career_tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`tribute_active` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`pvp_status` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`pvp_kills` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`pvp_deaths` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`pvp_current_points` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
-				"`pvp_career_points` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
-				"`pvp_best_kill_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`pvp_worst_death_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`pvp_current_kill_streak` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`pvp2` int(11) UNSIGNED NOT NULL DEFAULT 0,						"
 				"`pvp_type` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
 				"`show_helm` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`group_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`raid_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`guild_auto_consent` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
-				"`leadership_exp_on` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`RestTimer` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
 				"`air_remaining` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`autosplit_enabled` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
@@ -1075,10 +971,6 @@ bool Database::CheckDatabaseConversions() {
 				" 	`gold_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,                 "
 				" 	`silver_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
 				" 	`copper_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
-				" 	`radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,            "
-				" 	`career_radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,     "
-				" 	`ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
-				" 	`career_ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,        "
 				" 	PRIMARY KEY (`id`),                                                "
 				"   KEY `id` (`id`)                                                    "
 				" ) ENGINE=InnoDB DEFAULT CHARSET=latin1;             "
@@ -1404,9 +1296,8 @@ bool Database::CheckDatabaseConversions() {
 			/* Run Currency Convert */
 			std::string rquery = StringFormat("REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 				"platinum_bank, gold_bank, silver_bank, copper_bank,"
-				"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
-				"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
-				"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+				"platinum_cursor, gold_cursor, silver_cursor, copper_cursor)"
+				"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 				character_id,
 				pp->platinum,
 				pp->gold,
@@ -1419,11 +1310,7 @@ bool Database::CheckDatabaseConversions() {
 				pp->platinum_cursor,
 				pp->gold_cursor,
 				pp->silver_cursor,
-				pp->copper_cursor,
-				pp->currentRadCrystals,
-				pp->careerRadCrystals,
-				pp->currentEbonCrystals,
-				pp->careerEbonCrystals
+				pp->copper_cursor
 			);
 			auto results = QueryDatabase(rquery);
 			ThrowDBError(results.ErrorMessage(), "Character Currency Convert", rquery);
@@ -1487,38 +1374,12 @@ bool Database::CheckDatabaseConversions() {
 				"thirst_level,"
 				"ability_up,"
 				"zone_id,"
-				"zone_instance,"
-				"leadership_exp_on,"
-				"ldon_points_guk,"
-				"ldon_points_mir,"
-				"ldon_points_mmc,"
-				"ldon_points_ruj,"
-				"ldon_points_tak,"
-				"ldon_points_available,"
-				"tribute_time_remaining,"
 				"show_helm,"
-				"career_tribute_points,"
-				"tribute_points,"
-				"tribute_active,"
 				"endurance,"
-				"group_leadership_exp,"
-				"raid_leadership_exp,"
-				"group_leadership_points,"
-				"raid_leadership_points,"
 				"air_remaining,"
-				"pvp_kills,"
-				"pvp_deaths,"
-				"pvp_current_points,"
-				"pvp_career_points,"
-				"pvp_best_kill_streak,"
-				"pvp_worst_death_streak,"
-				"pvp_current_kill_streak,"
 				"aa_points_spent,"
 				"aa_exp,"
 				"aa_points,"
-				"group_auto_consent,"
-				"raid_auto_consent,"
-				"guild_auto_consent,"
 				"RestTimer,"
 				"firstlogon,"
 				"lfg,"
@@ -1584,38 +1445,12 @@ bool Database::CheckDatabaseConversions() {
 				"%u,"		// thirst_level				  
 				"%u,"		// ability_up				  
 				"%u,"		// zone_id					  
-				"%u,"		// zone_instance					
-				"%u,"		// leadership_exp_on				
-				"%u,"		// ldon_points_guk			  
-				"%u,"		// ldon_points_mir			  
-				"%u,"		// ldon_points_mmc			  
-				"%u,"		// ldon_points_ruj			  
-				"%u,"		// ldon_points_tak			  
-				"%u,"		// ldon_points_available			
-				"%u,"		// tribute_time_remaining	  
 				"%u,"		// show_helm						
-				"%u,"		// career_tribute_points			
-				"%u,"		// tribute_points			  
-				"%u,"		// tribute_active			  
 				"%u,"		// endurance						
-				"%u,"		// group_leadership_exp		  
-				"%u,"		// raid_leadership_exp		  
-				"%u,"		// group_leadership_points	  
-				"%u,"		// raid_leadership_points	  
 				"%u,"		// air_remaining					
-				"%u,"		// pvp_kills						
-				"%u,"		// pvp_deaths				  
-				"%u,"		// pvp_current_points		  
-				"%u,"		// pvp_career_points				
-				"%u,"		// pvp_best_kill_streak		  
-				"%u,"		// pvp_worst_death_streak	  
-				"%u,"		// pvp_current_kill_streak	  
 				"%u,"		// aa_points_spent			  
 				"%u,"		// aa_exp					  
 				"%u,"		// aa_points						
-				"%u,"		// group_auto_consent		  
-				"%u,"		// raid_auto_consent				
-				"%u,"		// guild_auto_consent		  
 				"%u," 		// RestTimer
 				"%u,"		// First Logon - References online status for EVENT_CONNECT/EVENT_DISCONNECt
 				"%u,"		// Looking for Group
@@ -1690,14 +1525,7 @@ bool Database::CheckDatabaseConversions() {
 				pp->ldon_points_available,
 				pp->tribute_time_remaining,
 				pp->showhelm,
-				pp->career_tribute_points,
-				pp->tribute_points,
-				pp->tribute_active,
 				pp->endurance,
-				pp->group_leadership_exp,
-				pp->raid_leadership_exp,
-				pp->group_leadership_points,
-				pp->raid_leadership_points,
 				pp->air_remaining,
 				pp->PVPKills,
 				pp->PVPDeaths,
