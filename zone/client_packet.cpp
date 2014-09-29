@@ -1360,7 +1360,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	in hopes that it adds more consistency...
 	Remake pet
 	*/
-	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
+/*	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
 		MakePoweredPet(m_petinfo.SpellID, spells[m_petinfo.SpellID].teleport_zone, m_petinfo.petpower, m_petinfo.Name, m_petinfo.size);
 		if (GetPet() && GetPet()->IsNPC()) {
 			NPC *pet = GetPet()->CastToNPC();
@@ -1371,7 +1371,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 		m_petinfo.SpellID = 0;
 	}
-
+*/
 	database.LoadPetInfo(this);
 
 	/* Moved here so it's after where we load the pet data. */
