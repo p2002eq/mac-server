@@ -104,6 +104,8 @@ void Client::CalcBonuses()
 	CalcMaxMana();
 	CalcMaxEndurance();
 
+	SetAttackTimer();
+
 	rooted = FindType(SE_Root);
 
 	XPRate = 100 + spellbonuses.XPRateMod;
@@ -159,8 +161,6 @@ void Client::CalcItemBonuses(StatBonuses* newbon) {
 
 	if(newbon->EnduranceRegen > CalcEnduranceRegenCap())
 		newbon->EnduranceRegen = CalcEnduranceRegenCap();
-
-	SetAttackTimer();
 }
 
 void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon, bool isAug, bool isTribute) {
@@ -1523,6 +1523,11 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_AttackSpeed4:
 			{
+				// These don't generate the IMMUNE_ATKSPEED message and the icon shows up
+				// but have no effect on the mobs attack speed
+				if (GetSpecialAbility(UNSLOWABLE))
+					break;
+
 				if (effect_value < 0) //A few spells use negative values(Descriptions all indicate it should be a slow)
 					effect_value = effect_value * -1;
 

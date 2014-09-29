@@ -1355,7 +1355,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FastQueuePacket(&outapp);
 
 
-	database.LoadPetInfo(this);
 	/*
 	This was moved before the spawn packets are sent
 	in hopes that it adds more consistency...
@@ -1372,6 +1371,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 		m_petinfo.SpellID = 0;
 	}
+
+	database.LoadPetInfo(this);
+
 	/* Moved here so it's after where we load the pet data. */
 	if (!GetAA(aaPersistentMinion))
 		memset(&m_suspendedminion, 0, sizeof(PetInfo));

@@ -1184,10 +1184,6 @@ XS(XS_Client_MovePC)
 		else {
 			if (THIS->IsNPC())
 				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process a type NPC reference");
-		#ifdef BOTS
-			else if (THIS->IsBot())
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process a type Bot reference");
-		#endif	 
 			else
 				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
 
@@ -1228,10 +1224,6 @@ XS(XS_Client_MovePCInstance)
 		else {
 			if (THIS->IsNPC())
 				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
-		#ifdef BOTS
-			else if (THIS->IsBot())
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process a type Bot reference");
-		#endif
 			else
 				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
 
