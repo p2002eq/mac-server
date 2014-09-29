@@ -1265,21 +1265,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if (spells[spell_id].base[i] == 1)
 					BuffFadeByEffect(SE_Blind);
-				if(IsNPC() && !CombatRange(caster))
-				{
-					if(RuleB(Combat, EnableFearPathing)){
-						blind = true;
-						CalculateNewFearpoint();
-						if(curfp)
-						{
-							break;
-						}
-					}
-					else
-					{
-						Stun(buffs[buffslot].ticsremaining * 6000 - (6000 - tic_timer.GetRemainingTime()));
-					}
-				}
+				else
+					is_blind = true;
 				break;
 			}
 
@@ -3922,10 +3909,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SE_Blind:
-			{
-				blind = false;
+				is_blind = false;
 				break;
-			}
 
 			case SE_Fear:
 			{

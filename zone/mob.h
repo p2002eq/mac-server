@@ -1181,6 +1181,7 @@ protected:
 	float fear_walkto_y;
 	float fear_walkto_z;
 	bool curfp;
+	bool is_blind;
 
 	// Pathing
 	//
