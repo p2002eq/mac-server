@@ -1261,12 +1261,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Blind: %+i", effect_value);
 #endif
-				//Clients handle most of this for us for players.
-
-				if (spells[spell_id].base[i] == 1)
+				// this should catch the cures
+				if (BeneficialSpell(spell_id) && spells[spell_id].buffduration == 0)
 					BuffFadeByEffect(SE_Blind);
-				else
-					is_blind = true;
+				else if (!IsClient())
+					CalculateNewFearpoint();
 				break;
 			}
 
@@ -3909,7 +3908,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SE_Blind:
-				is_blind = false;
+				if (curfp && !FindType(SE_Fear))
+					curfp = false;
 				break;
 
 			case SE_Fear:
