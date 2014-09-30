@@ -1040,13 +1040,13 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	/* Load Character Data */
-	query = StringFormat("SELECT `lfp`, `lfg`, `xtargets`, `firstlogon`, `guild_id`, `rank` FROM `character_data` LEFT JOIN `guild_members` ON `id` = `char_id` WHERE `id` = %i", cid);
+	query = StringFormat("SELECT `firstlogon`, `guild_id`, `rank` FROM `character_data` LEFT JOIN `guild_members` ON `id` = `char_id` WHERE `id` = %i", cid);
 	results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		m_pp.lastlogin = time(nullptr);
-		if (row[4] && atoi(row[4]) > 0){
-			guild_id = atoi(row[4]);
-			if (row[5] != nullptr){ guildrank = atoi(row[5]); }
+		if (row[1] && atoi(row[1]) > 0){
+			guild_id = atoi(row[1]);
+			if (row[2] != nullptr){ guildrank = atoi(row[2]); }
 			else{ guildrank = GUILD_RANK_NONE; }
 		}
 
@@ -1105,9 +1105,21 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	// if (m_pp.z < (ground_z - 500))
 	// 	m_pp.z = ground_z;
 
-	/* Set Mob variables for spawn */
-	class_ = m_pp.class_;
-	level = m_pp.level;
+	//these now come from the database, and it is the authority.
+	if (class_ > 0)
+		m_pp.class_ = class_;
+	else
+		class_ = m_pp.class_;
+	if (level > 0) {
+		if (m_pp.level != level) {
+			//they changed their level in the database... not ideal, but oh well..
+			m_pp.exp = GetEXPForLevel(level);
+			m_pp.level = level;
+		}
+	}
+	else {
+		level = m_pp.level;
+	}
 	x_pos = m_pp.x;
 	y_pos = m_pp.y;
 	z_pos = m_pp.z;
@@ -1360,7 +1372,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	in hopes that it adds more consistency...
 	Remake pet
 	*/
-	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
+/*	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
 		MakePoweredPet(m_petinfo.SpellID, spells[m_petinfo.SpellID].teleport_zone, m_petinfo.petpower, m_petinfo.Name, m_petinfo.size);
 		if (GetPet() && GetPet()->IsNPC()) {
 			NPC *pet = GetPet()->CastToNPC();
@@ -1371,7 +1383,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 		m_petinfo.SpellID = 0;
 	}
-
+*/
 	database.LoadPetInfo(this);
 
 	/* Moved here so it's after where we load the pet data. */
