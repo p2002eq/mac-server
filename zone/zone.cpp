@@ -474,7 +474,7 @@ void Zone::GetMerchantDataForZoneLoad(){
 		"ml.item,																	   "
 		"ml.faction_required,														   "
 		"ml.level_required,															   "
-		"ml.classes_required,														   "
+		"ml.classes_required													   "
 		"FROM																		   "
 		"merchantlist AS ml,														   "
 		"npc_types AS nt,															   "
