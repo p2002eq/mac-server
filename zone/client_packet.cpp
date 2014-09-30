@@ -1105,21 +1105,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	// if (m_pp.z < (ground_z - 500))
 	// 	m_pp.z = ground_z;
 
-	//these now come from the database, and it is the authority.
-	if (class_ > 0)
-		m_pp.class_ = class_;
-	else
-		class_ = m_pp.class_;
-	if (level > 0) {
-		if (m_pp.level != level) {
-			//they changed their level in the database... not ideal, but oh well..
-			m_pp.exp = GetEXPForLevel(level);
-			m_pp.level = level;
-		}
-	}
-	else {
-		level = m_pp.level;
-	}
+	/* Set Mob variables for spawn */
+	class_ = m_pp.class_;
+	level = m_pp.level;
 	x_pos = m_pp.x;
 	y_pos = m_pp.y;
 	z_pos = m_pp.z;
