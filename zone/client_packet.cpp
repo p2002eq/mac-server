@@ -1128,6 +1128,42 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	drakkin_tattoo = m_pp.drakkin_tattoo;
 	drakkin_details = m_pp.drakkin_details;
 
+	//if we zone in with invalid Z, fix it.
+	if (zone->zonemap != nullptr) {
+
+		Map::Vertex me;
+		me.x = GetX();
+		me.y = GetY();
+		me.z = GetZ() + (GetSize() == 0.0 ? 6 : GetSize());
+
+		Map::Vertex hit;
+
+		if (zone->zonemap->FindBestZ(me, &hit) == BEST_Z_INVALID)
+		{
+#if EQDEBUG >= 5
+			LogFile->write(EQEMuLog::Debug, "Player %s started below the zone trying to fix! (%.3f, %.3f, %.3f)", GetName(), me.x, me.y, me.z);
+#endif
+			me.z += 200;	//arbitrary #
+			if (zone->zonemap->FindBestZ(me, &hit) != BEST_Z_INVALID)
+			{
+				//+10 so they dont stick in the ground
+				SendTo(me.x, me.y, hit.z + 10);
+				m_pp.z = hit.z + 10;
+			}
+			else
+			{
+				//one more, desperate try
+				me.z += 2000;
+				if (zone->zonemap->FindBestZ(me, &hit) != BEST_Z_INVALID)
+				{
+					//+10 so they dont stick in the ground
+					SendTo(me.x, me.y, hit.z + 10);
+					m_pp.z = hit.z + 10;
+				}
+			}
+		}
+	}
+
 	/* If GM not set in DB, and does not meet min status to be GM, reset */
 	if (m_pp.gm && admin < minStatusToBeGM)
 		m_pp.gm = 0;
@@ -1237,9 +1273,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 	}
 
-	/* Load Character Key Ring */
-	KeyRingLoad();
-
 	/* Send Group Members via PP */
 	uint32 groupid = database.GetGroupID(GetName());
 	Group* group = nullptr;
@@ -1339,13 +1372,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.pvp = 1;
 	/* Time entitled on Account: Move to account */
 	m_pp.timeentitledonaccount = database.GetTotalTimeEntitledOnAccount(AccountID()) / 1440;
-	/* Reset rest timer if the durations have been lowered in the database */
-	if ((m_pp.RestTimer > RuleI(Character, RestRegenTimeToActivate)) && (m_pp.RestTimer > RuleI(Character, RestRegenRaidTimeToActivate)))
-		m_pp.RestTimer = 0;
 
 	/* This checksum should disappear once dynamic structs are in... each struct strategy will do it */
 	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
-
 	outapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(PlayerProfile_Struct));
 
 	/* The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA */
@@ -1354,24 +1383,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
-
-	/*
-	This was moved before the spawn packets are sent
-	in hopes that it adds more consistency...
-	Remake pet
-	*/
-/*	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
-		MakePoweredPet(m_petinfo.SpellID, spells[m_petinfo.SpellID].teleport_zone, m_petinfo.petpower, m_petinfo.Name, m_petinfo.size);
-		if (GetPet() && GetPet()->IsNPC()) {
-			NPC *pet = GetPet()->CastToNPC();
-			pet->SetPetState(m_petinfo.Buffs, m_petinfo.Items);
-			pet->CalcBonuses();
-			pet->SetHP(m_petinfo.HP);
-			pet->SetMana(m_petinfo.Mana);
-		}
-		m_petinfo.SpellID = 0;
-	}
-*/
 	database.LoadPetInfo(this);
 
 	/* Moved here so it's after where we load the pet data. */
@@ -1386,6 +1397,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
 	//sze->player.spawn.z += 6;	//arbitrary lift, seems to help spawning under zone.
+	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 

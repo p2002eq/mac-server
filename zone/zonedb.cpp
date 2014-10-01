@@ -708,8 +708,6 @@ void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity)
 
 }
 
-#define StructDist(in, f1, f2) (uint32(&in->f2)-uint32(&in->f1))
-
 bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	std::string query = StringFormat(
 		"SELECT                     "
