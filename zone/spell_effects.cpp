@@ -188,6 +188,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 	if (!IsPowerDistModSpell(spell_id))
 		SetSpellPowerDistanceMod(0);
+		
+	bool SE_SpellTrigger_HasCast = false;	
 
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
@@ -1259,25 +1261,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Blind: %+i", effect_value);
 #endif
-				//Clients handle most of this for us for players.
-
-				if (spells[spell_id].base[i] == 1)
+				// this should catch the cures
+				if (BeneficialSpell(spell_id) && spells[spell_id].buffduration == 0)
 					BuffFadeByEffect(SE_Blind);
-				if(IsNPC() && !CombatRange(caster))
-				{
-					if(RuleB(Combat, EnableFearPathing)){
-						blind = true;
-						CalculateNewFearpoint();
-						if(curfp)
-						{
-							break;
-						}
-					}
-					else
-					{
-						Stun(buffs[buffslot].ticsremaining * 6000 - (6000 - tic_timer.GetRemainingTime()));
-					}
-				}
+				else if (!IsClient())
+					CalculateNewFearpoint();
 				break;
 			}
 
@@ -2660,6 +2648,25 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Message(10, "The power of your next illusion spell will flow to your grouped target in your place.");
 				break;
 			}
+			
+			case SE_ApplyEffect: {
+
+				if (caster && IsValidSpell(spells[spell_id].base2[i])){
+					
+					if(MakeRandomInt(0, 100) <= spells[spell_id].base[i])
+						caster->SpellFinished(spells[spell_id].base2[i], this, 10, 0, -1, spells[spell_id].ResistDiff);
+				}
+				break;
+			}
+			
+			case SE_SpellTrigger: {
+
+				if (!SE_SpellTrigger_HasCast) {
+					if (caster && caster->TrySpellTrigger(this, spell_id, i))
+						SE_SpellTrigger_HasCast = true;
+				}
+				break;
+			}
 
 			// Handled Elsewhere
 			case SE_ImmuneFleeing:
@@ -2771,8 +2778,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_HealRate:
 			case SE_SkillDamageTaken:
 			case SE_FcSpellVulnerability:
-			case SE_SpellTrigger:
-			case SE_ApplyEffect:
 			case SE_FcTwincast:
 			case SE_DelayDeath:
 			case SE_CastOnFadeEffect:
@@ -3903,10 +3908,9 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SE_Blind:
-			{
-				blind = false;
+				if (curfp && !FindType(SE_Fear))
+					curfp = false;
 				break;
-			}
 
 			case SE_Fear:
 			{
@@ -5409,28 +5413,29 @@ void Mob::CheckNumHitsRemaining(uint8 type, uint32 buff_slot, uint16 spell_id)
 }
 
 //for some stupid reason SK procs return theirs one base off...
-uint16 Mob::GetProcID(uint16 spell_id, uint8 effect_index) {
+uint16 Mob::GetProcID(uint16 spell_id, uint8 effect_index)
+{
+	if (!RuleB(Spells, SHDProcIDOffByOne)) // UF+ spell files
+		return spells[spell_id].base[effect_index];
+
+	// We should actually just be checking if the mob is SHD, but to not force
+	// custom servers to create new spells, we will still do this
 	bool sk = false;
 	bool other = false;
-	for(int x = 0; x < 16; x++)
-	{
-		if(x == 4){
-			if(spells[spell_id].classes[4] < 255)
+	for (int x = 0; x < 16; x++) {
+		if (x == 4) {
+			if (spells[spell_id].classes[4] < 255)
 				sk = true;
-		}
-		else{
-			if(spells[spell_id].classes[x] < 255)
+		} else {
+			if (spells[spell_id].classes[x] < 255)
 				other = true;
 		}
 	}
 
-	if(sk && !other)
-	{
-		return(spells[spell_id].base[effect_index] + 1);
-	}
-	else{
-		return(spells[spell_id].base[effect_index]);
-	}
+	if (sk && !other)
+		return spells[spell_id].base[effect_index] + 1;
+	else
+		return spells[spell_id].base[effect_index];
 }
 
 bool Mob::TryDivineSave()
@@ -6186,8 +6191,12 @@ void Mob::ResourceTap(int32 damage, uint16 spellid){
 			if (spells[spellid].max[i] && (damage > spells[spellid].max[i]))
 				damage = spells[spellid].max[i];
 
-			if (spells[spellid].base2[i] == 0)  //HP Tap
-				SetHP((GetHP()+ damage));
+			if (spells[spellid].base2[i] == 0){ //HP Tap
+				if (damage > 0)
+					HealDamage(damage);
+				else
+					Damage(this, -damage,0, SkillEvocation,false);
+			}
 
 			if (spells[spellid].base2[i] == 1)  //Mana Tap
 				SetMana(GetMana() + damage);

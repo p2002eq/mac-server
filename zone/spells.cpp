@@ -3473,107 +3473,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		spell_effectiveness = 100;
 	}
 
-		// Recourse means there is a spell linked to that spell in that the recourse spell will
-		// be automatically casted on the casters group or the caster only depending on Targettype
-		// this is for things like dark empathy, shadow vortex
-		int recourse_spell=0;
-		recourse_spell = spells[spell_id].RecourseLink;
-		if(recourse_spell)
-		{
-			if(spells[recourse_spell].targettype == ST_Group || spells[recourse_spell].targettype == ST_GroupTeleport)
-			{
-				if(IsGrouped())
-				{
-					Group *g = entity_list.GetGroupByMob(this);
-					if(g)
-						g->CastGroupSpell(this, recourse_spell);
-					else{
-						SpellOnTarget(recourse_spell, this);
-#ifdef GROUP_BUFF_PETS
-						if (GetPet())
-							SpellOnTarget(recourse_spell, GetPet());
-#endif
-					}
-				}
-				else if(IsRaidGrouped() && IsClient())
-				{
-					Raid *r = entity_list.GetRaidByClient(CastToClient());
-					uint32 gid = 0xFFFFFFFF;
-					if(r)
-						gid = r->GetGroup(GetName());
-					else
-						gid = 13;	// Forces ungrouped spell casting
-
-					if(gid < 12)
-					{
-						r->CastGroupSpell(this, recourse_spell, gid);
-					}
-					else{
-						SpellOnTarget(recourse_spell, this);
-#ifdef GROUP_BUFF_PETS
-						if (GetPet())
-							SpellOnTarget(recourse_spell, GetPet());
-#endif
-					}
-				}
-				else if(HasOwner())
-				{
-					if(GetOwner()->IsGrouped())
-					{
-						Group *g = entity_list.GetGroupByMob(GetOwner());
-						if(g)
-							g->CastGroupSpell(this, recourse_spell);
-						else{
-							SpellOnTarget(recourse_spell, GetOwner());
-							SpellOnTarget(recourse_spell, this);
-						}
-					}
-					else if(GetOwner()->IsRaidGrouped() && GetOwner()->IsClient())
-					{
-						Raid *r = entity_list.GetRaidByClient(GetOwner()->CastToClient());
-						uint32 gid = 0xFFFFFFFF;
-						if(r)
-							gid = r->GetGroup(GetOwner()->GetName());
-						else
-							gid = 13;	// Forces ungrouped spell casting
-
-						if(gid < 12)
-						{
-							r->CastGroupSpell(this, recourse_spell, gid);
-						}
-						else
-						{
-							SpellOnTarget(recourse_spell, GetOwner());
-							SpellOnTarget(recourse_spell, this);
-						}
-					}
-					else
-					{
-						SpellOnTarget(recourse_spell, GetOwner());
-						SpellOnTarget(recourse_spell, this);
-					}
-				}
-				else
-				{
-					SpellOnTarget(recourse_spell, this);
-#ifdef GROUP_BUFF_PETS
-					if (GetPet())
-						SpellOnTarget(recourse_spell, GetPet());
-#endif
-				}
-
-			}
-			else
-			{
-				SpellOnTarget(recourse_spell, this);
-			}
-		}
-
 	if(spelltar->spellbonuses.SpellDamageShield && IsDetrimentalSpell(spell_id))
 		spelltar->DamageShield(this, true);
-
-	TrySpellTrigger(spelltar, spell_id);
-	TryApplyEffect(spelltar, spell_id);
 
 	if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id)) {
 		int32 aggro_amount = CheckAggroAmount(spell_id, isproc);
@@ -3613,7 +3514,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		return false;
 	}
 
-
+	if (IsValidSpell(spells[spell_id].RecourseLink))
+		SpellFinished(spells[spell_id].RecourseLink, this, 10, 0, -1, spells[spells[spell_id].RecourseLink].ResistDiff);
+		
 	if (IsDetrimentalSpell(spell_id)) {
 
 		CheckNumHitsRemaining(NUMHIT_OutgoingSpells);
@@ -4696,6 +4599,8 @@ void Client::MemSpell(uint16 spell_id, int slot, bool update_client)
 	m_pp.mem_spells[slot] = spell_id;
 	mlog(CLIENT__SPELLS, "Spell %d memorized into slot %d", spell_id, slot);
 
+	database.SaveCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);
+
 	if(update_client)
 	{
 		MemorizeSpell(slot, spell_id, memSpellMemorize);
@@ -4710,6 +4615,8 @@ void Client::UnmemSpell(int slot, bool update_client)
 	mlog(CLIENT__SPELLS, "Spell %d forgotten from slot %d", m_pp.mem_spells[slot], slot);
 	m_pp.mem_spells[slot] = 0xFFFFFFFF;
 
+	database.DeleteCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);
+	
 	if(update_client)
 	{
 		MemorizeSpell(slot, m_pp.mem_spells[slot], memSpellForget);
@@ -4737,6 +4644,7 @@ void Client::ScribeSpell(uint16 spell_id, int slot, bool update_client)
 	}
 
 	m_pp.spell_book[slot] = spell_id;
+	database.SaveCharacterSpell(this->CharacterID(), spell_id, slot);
 	mlog(CLIENT__SPELLS, "Spell %d scribed into spell book slot %d", spell_id, slot);
 
 	if(update_client)
@@ -4752,7 +4660,8 @@ void Client::UnscribeSpell(int slot, bool update_client)
 
 	mlog(CLIENT__SPELLS, "Spell %d erased from spell book slot %d", m_pp.spell_book[slot], slot);
 	m_pp.spell_book[slot] = 0xFFFFFFFF;
-
+	
+	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[slot], slot); 
 	if(update_client)
 	{
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_DeleteSpell, sizeof(DeleteSpell_Struct));
@@ -4780,8 +4689,9 @@ void Client::UntrainDisc(int slot, bool update_client)
 	if(slot >= MAX_PP_DISCIPLINES || slot < 0)
 		return;
 
-	mlog(CLIENT__SPELLS, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
+	mlog(CLIENT__SPELLS, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot); 
 	m_pp.disciplines.values[slot] = 0;
+	database.DeleteCharacterDisc(this->CharacterID(), slot);
 
 	if(update_client)
 	{

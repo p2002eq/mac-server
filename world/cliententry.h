@@ -120,6 +120,7 @@ private:
 	uint8	pLFGToLevel;
 	bool	pLFGMatchFilter;
 	char	pLFGComments[64];
+
 };
 
 #endif /*CLIENTENTRY_H_*/

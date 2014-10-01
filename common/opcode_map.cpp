@@ -192,17 +192,6 @@ void load_opcode_names()
 	opcode_map[0x007c]="LiveOP_InstillDoubt";
 	opcode_map[0x00ac]="LiveOP_SafeFallSuccess";
 	opcode_map[0x02fb]="LiveOP_DisciplineUpdate";
-	opcode_map[0x02f2]="LiveOP_TributeUpdate";
-	opcode_map[0x02f3]="LiveOP_TributeItem";
-	opcode_map[0x02f4]="LiveOP_TributePointUpdate";
-	opcode_map[0x02f5]="LiveOP_SendTributes";
-	opcode_map[0x02f6]="LiveOP_TributeInfo";
-	opcode_map[0x02f7]="LiveOP_SelectTribute";
-	opcode_map[0x02f8]="LiveOP_TributeTimer";
-	opcode_map[0x02f9]="LiveOP_StartTribute";
-	opcode_map[0x02fa]="LiveOP_TributeNPC";
-	opcode_map[0x02fe]="LiveOP_TributeMoney";
-	opcode_map[0x0364]="LiveOP_TributeToggle";
 	opcode_map[0x0198]="LiveOP_SetDataRate";
 	opcode_map[0x023b]="LiveOP_ZoneEntry";
 	opcode_map[0x006b]="LiveOP_PlayerProfile";

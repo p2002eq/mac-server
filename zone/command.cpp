@@ -169,7 +169,6 @@ int command_init(void){
 		command_add("close_shop", nullptr, 100, command_merchantcloseshop) ||
 		command_add("connectworld",nullptr,0,command_connectworldserver) ||
 		command_add("connectworldserver","- Make zone attempt to connect to worldserver",200,command_connectworldserver) ||
-		command_add("copychar","[character name] [new character] [new account id] - Create a copy of a character",100,command_copychar) ||
 		command_add("corpse","- Manipulate corpses, use with no arguments for help",50,command_corpse) ||
 		command_add("crashtest","- Crash the zoneserver",200,command_crashtest) ||
 		command_add("cvs","- Summary of client versions currently online.", 200, command_cvs) ||
@@ -337,7 +336,6 @@ int command_init(void){
 		command_add("raidloot","LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.",0,command_raidloot) ||
 		command_add("randomfeatures","- Temporarily randomizes the Facial Features of your target",80,command_randomfeatures) ||
 		command_add("refreshgroup","- Refreshes Group.", 0, command_refreshgroup) ||
-		command_add("refundaa", "- Refunds your target's AA points, will disconnect them in the process as well.", 100, command_refundaa) ||
 		command_add("reloadallrules","Executes a reload of all rules.",80, command_reloadallrules) ||
 		command_add("reloademote","Reloads NPC Emotes",80,command_reloademote) ||
 		command_add("reloadlevelmods",nullptr,255,command_reloadlevelmods) ||
@@ -351,7 +349,7 @@ int command_init(void){
 		command_add("reloadzps",nullptr,0,command_reloadzps) ||
 		command_add("repop","[delay] - Repop the zone with optional delay",100,command_repop) ||
 		command_add("rewind",nullptr,0,command_rewind) ||
-		command_add("resetaa","- Resets a Player's AA in their profile.",200,command_resetaa) ||
+		command_add("resetaa", "- Resets a Player's AA in their profile and refunds spent AA's to unspent, disconnects player.", 200, command_resetaa) ||
 		command_add("resetboat","- Sets player's boat to 0 in their profile.",100,command_resetboat) ||
 		command_add("revoke","[charname] [1/0] - Makes charname unable to talk on OOC",200,command_revoke) ||
 		command_add("rf",nullptr,80,command_randomfeatures) ||
@@ -2117,27 +2115,6 @@ void command_dbspawn2(Client *c, const Seperator *sep){
 	}
 	else {
 		c->Message(0, "Usage: #dbspawn2 spawngroup respawn variance [condition_id] [condition_min]");
-	}
-}
-
-void command_copychar(Client *c, const Seperator *sep){
-	if(sep->arg[1][0]==0 || sep->arg[2][0] == 0 || sep->arg[3][0] == 0)
-		c->Message(0, "Usage: #copychar [character name] [new character] [new account id]");
-	//CheckUsedName.... TRUE=No Char, FALSE=Char/Error
-	//If there is no source...
-	else if (database.CheckUsedName((char*)sep->arg[1])) {
-		c->Message(0, "Source character not found!");
-	}
-	else {
-		//If there is a name is not used....
-		if (database.CheckUsedName((char*) sep->arg[2])) {
-			if (!database.CopyCharacter((char*) sep->arg[1], (char*) sep->arg[2], atoi(sep->arg[3])))
-				c->Message(0, "Character copy operation failed!");
-			else
-				c->Message(0, "Character copy complete.");
-		}
-		else
-			c->Message(0, "Target character already exists!");
 	}
 }
 
@@ -4296,13 +4273,15 @@ void command_spawnfix(Client *c, const Seperator *sep){
 	}
 }
 
-void command_loc(Client *c, const Seperator *sep){
+void command_loc(Client *c, const Seperator *sep)
+{
 	Mob *t=c->GetTarget()?c->GetTarget():c->CastToMob();
 
 	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f; heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
 }
 
-void command_goto(Client *c, const Seperator *sep){
+void command_goto(Client *c, const Seperator *sep)
+{
 	// goto function
 	if (sep->arg[1][0] == '\0' && c->GetTarget())
 		c->MovePC(zone->GetZoneID(), zone->GetInstanceID(), c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ(), c->GetTarget()->GetHeading());
@@ -5836,120 +5815,145 @@ void command_stun(Client *c, const Seperator *sep){
 		c->Message(0, "Usage: #stun [duration]");
 }
 
-void command_ban(Client *c, const Seperator *sep){
+void command_ban(Client *c, const Seperator *sep)
+{
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 
-	if(sep->arg[1][0] == 0)
+	if (sep->arg[1][0] == 0 || sep->arg[2][0] == 0)
 	{
-		c->Message(0, "Usage: #ban [charname]");
+		c->Message(0, "Usage: #ban <charname> <message>");
 	}
 	else
 	{
-		database.RunQuery(query, MakeAnyLenString(&query, "SELECT account_id from character_ where name = '%s'", sep->arg[1]), errbuf, &result);
-		if(query)
-		{
-			safe_delete_array(query);
+		auto account_id = database.GetAccountIDByChar(sep->arg[1]);
+
+		std::string message;
+		int i = 2;
+		while (1) {
+			if (sep->arg[i][0] == 0) {
+				break;
+			}
+
+			if (message.length() > 0) {
+				message.push_back(' ');
+			}
+
+			message += sep->arg[i];
+			++i;
 		}
 
-		if(mysql_num_rows(result))
-		{
-			row = mysql_fetch_row(result);
-			database.RunQuery(query, MakeAnyLenString(&query, "UPDATE account set status = -2 where id = %i", atoi(row[0])), errbuf, 0);
-			c->Message(13,"Account number %i with the character %s has been banned.", atoi(row[0]), sep->arg[1]);
+		if (message.length() == 0) {
+			c->Message(0, "Usage: #ban <charname> <message>");
+			return;
+		}
 
-			ServerPacket* pack = new ServerPacket(ServerOP_FlagUpdate, 6);
-			*((uint32*) pack->pBuffer) = atoi(row[0]);
-			*((int16*) &pack->pBuffer[4]) = -2;
-			worldserver.SendPacket(pack);
-			safe_delete(pack);
+		if (account_id > 0)
+		{
+			database.RunQuery(query, MakeAnyLenString(&query, "UPDATE account set status = -2, ban_reason = '%s' where id = %i", EscapeString(message).c_str(), account_id), errbuf, 0);
+			c->Message(13, "Account number %i with the character %s has been banned with message: \"%s\"", account_id, sep->arg[1], message.c_str());
+
+			ServerPacket pack(ServerOP_FlagUpdate, 6);
+			*((uint32*)&pack.pBuffer[0]) = account_id;
+			*((int16*)&pack.pBuffer[4]) = -2;
+			worldserver.SendPacket(&pack);
 
 			Client *client = nullptr;
 			client = entity_list.GetClientByName(sep->arg[1]);
-			if(client)
+			if (client)
 			{
 				client->WorldKick();
 			}
 			else
 			{
-				ServerPacket* pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
-				ServerKickPlayer_Struct* skp = (ServerKickPlayer_Struct*) pack->pBuffer;
+				ServerPacket pack(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
+				ServerKickPlayer_Struct* skp = (ServerKickPlayer_Struct*)pack.pBuffer;
 				strcpy(skp->adminname, c->GetName());
 				strcpy(skp->name, sep->arg[1]);
 				skp->adminrank = c->Admin();
-				worldserver.SendPacket(pack);
-				safe_delete(pack);
+				worldserver.SendPacket(&pack);
 			}
-
-			mysql_free_result(result);
 		}
 		else
 		{
-			c->Message(13,"Character does not exist.");
+			c->Message(13, "Character does not exist.");
 		}
-		if(query)
-		{
-			safe_delete_array(query);
-		}
+
+		safe_delete_array(query);
 	}
 }
 
-void command_suspend(Client *c, const Seperator *sep){
+void command_suspend(Client *c, const Seperator *sep)
+{
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char *query = nullptr;
 
-	if((sep->arg[1][0] == 0) || (sep->arg[2][0] == 0))
-		c->Message(0, "Usage: #suspend <charname> <days> (Specify 0 days to lift the suspension immediately)");
+	if ((sep->arg[1][0] == 0) || (sep->arg[2][0] == 0))
+		c->Message(0, "Usage: #suspend <charname> <days>(Specify 0 days to lift the suspension immediately) <message>");
 	else
 	{
 		int Duration = atoi(sep->arg[2]);
 
-		if(Duration < 0)
+		if (Duration < 0)
 			Duration = 0;
 
-		char *EscName = new char[strlen(sep->arg[1]) * 2 + 1];
+		std::string message;
+		if (Duration > 0) {
+			int i = 3;
+			while (1) {
+				if (sep->arg[i][0] == 0) {
+					break;
+				}
 
-		database.DoEscapeString(EscName, sep->arg[1], strlen(sep->arg[1]));
+				if (message.length() > 0) {
+					message.push_back(' ');
+				}
+
+				message += sep->arg[i];
+				++i;
+			}
+
+			if (message.length() == 0) {
+				c->Message(0, "Usage: #suspend <charname> <days>(Specify 0 days to lift the suspension immediately) <message>");
+				return;
+			}
+		}
 
 		int AccountID;
 
-		if((AccountID = database.GetAccountIDByChar(EscName)) > 0)
+		if ((AccountID = database.GetAccountIDByChar(sep->arg[1])) > 0)
 		{
-			database.RunQuery(query, MakeAnyLenString(&query, "UPDATE `account` SET `suspendeduntil` = DATE_ADD(NOW(), INTERVAL %i DAY)"
-									" WHERE `id` = %i", Duration, AccountID), errbuf, 0);
+			database.RunQuery(query, MakeAnyLenString(&query, "UPDATE `account` SET `suspendeduntil` = DATE_ADD(NOW(), INTERVAL %i DAY), "
+				"suspend_reason = '%s' WHERE `id` = %i", Duration, EscapeString(message).c_str(), AccountID), errbuf, 0);
 
-			if(Duration)
-				c->Message(13,"Account number %i with the character %s has been temporarily suspended for %i day(s).", AccountID, sep->arg[1],
-					Duration);
+			if (Duration)
+				c->Message(13, "Account number %i with the character %s has been temporarily suspended for %i day(s) with the message: \"%s\"", AccountID, sep->arg[1],
+				Duration, message.c_str());
 			else
-				c->Message(13,"Account number %i with the character %s is no longer suspended.", AccountID, sep->arg[1]);
+				c->Message(13, "Account number %i with the character %s is no longer suspended.", AccountID, sep->arg[1]);
 
 			safe_delete_array(query);
 
 			Client *BannedClient = entity_list.GetClientByName(sep->arg[1]);
 
-			if(BannedClient)
+			if (BannedClient)
 				BannedClient->WorldKick();
 			else
 			{
-				ServerPacket* pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
-				ServerKickPlayer_Struct* sks = (ServerKickPlayer_Struct*) pack->pBuffer;
+				ServerPacket pack(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
+				ServerKickPlayer_Struct* sks = (ServerKickPlayer_Struct*)pack.pBuffer;
 
 				strn0cpy(sks->adminname, c->GetName(), sizeof(sks->adminname));
 				strn0cpy(sks->name, sep->arg[1], sizeof(sks->name));
 				sks->adminrank = c->Admin();
 
-				worldserver.SendPacket(pack);
-
-				safe_delete(pack);
+				worldserver.SendPacket(&pack);
 			}
 
-		} else
-			c->Message(13,"Character does not exist.");
-
-		safe_delete_array(EscName);
+		}
+		else {
+			c->Message(13, "Character does not exist.");
+		}
 	}
 }
 
@@ -7284,7 +7288,7 @@ void Client::Undye(){
 		SendWearChange(cur_slot);
 	}
 
-	Save(0);
+	database.DeleteCharacterDye(this->CharacterID());
 }
 
 void command_undye(Client *c, const Seperator *sep){
@@ -8036,25 +8040,6 @@ void command_altactivate(Client *c, const Seperator *sep){
 	else
 	{
 		c->ActivateAA((aaID) atoi(sep->arg[1]));
-	}
-}
-
-void command_refundaa(Client *c, const Seperator *sep){
-	Client* refundee = nullptr;
-	if(c) {
-		if(c->GetTarget()){
-			if(c->GetTarget()->IsClient())
-				refundee = c->GetTarget()->CastToClient();
-			else
-				c->Message(0, "Your target must be a client.");
-		}
-		else{
-			c->Message(0, "You must have a target selected.");
-		}
-
-		if(refundee) {
-			refundee->RefundAA();
-		}
 	}
 }
 

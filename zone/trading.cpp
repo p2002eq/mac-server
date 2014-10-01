@@ -133,7 +133,7 @@ void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
 			client->Kick();
 			return;
 		}
-		
+
 		SendItemData(inst, trade_slot_id);
 
 		_log(TRADING__HOLDER, "%s added item '%s' to trade slot %i", owner->GetName(), inst->GetItem()->Name, trade_slot_id);
@@ -453,13 +453,13 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 			mlog(TRADING__CLIENT, "Finishing trade with client %s", other->GetName());
 
 			this->AddMoneyToPP(other->trade->cp, other->trade->sp, other->trade->gp, other->trade->pp, true);
-			
+
 			// step 0: pre-processing
 			// QS code
 			if (RuleB(QueryServ, PlayerLogTrades) && event_entry && event_details) {
 				qs_audit = (QSPlayerLogTrade_Struct*)event_entry;
 				qs_log = true;
-				
+
 				if (finalizer) {
 					qs_audit->char2_id = this->character_id;
 
@@ -503,7 +503,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 									detail->charges = 1;
 
 									event_details->push_back(detail);
-									
+
 									if (finalizer)
 										qs_audit->char2_count += detail->charges;
 									else
@@ -858,7 +858,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 							if (baginst) {
 								const Item_Struct* bagitem = baginst->GetItem();
 								if (bagitem && (GetGM() || (bagitem->NoDrop != 0 && baginst->IsInstNoDrop() == false))) {
-									tradingWith->CastToNPC()->AddLootDrop(bagitem, &tradingWith->CastToNPC()->itemlist, 
+									tradingWith->CastToNPC()->AddLootDrop(bagitem, &tradingWith->CastToNPC()->itemlist,
 										baginst->GetCharges(), 1, 127, true, true);
 								}
 								else if (RuleB(NPC, ReturnNonQuestNoDropItems)) {
@@ -867,8 +867,8 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 							}
 						}
 					}
-	
-					tradingWith->CastToNPC()->AddLootDrop(item, &tradingWith->CastToNPC()->itemlist, 
+
+					tradingWith->CastToNPC()->AddLootDrop(item, &tradingWith->CastToNPC()->itemlist,
 						inst->GetCharges(), 1, 127, true, true);
 				}
 				// Return NO DROP and Attuned items being handed into a non-quest NPC if the rule is true
@@ -892,12 +892,12 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 		parse->AddVar(temp1, temp2);
 		snprintf(temp1, 100, "platinum.%d", tradingWith->GetNPCTypeID());
 		snprintf(temp2, 100, "%u", trade->pp);
-		parse->AddVar(temp1, temp2);
+		parse->AddVar(temp1, temp2); 
 
 		if(tradingWith->GetAppearance() != eaDead) {
 			tradingWith->FaceTarget(this);
 		}
-		
+
 		ItemInst *insts[4] = { 0 };
 		for(int i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_NPC_END; ++i) {
 			insts[i - EmuConstants::TRADE_BEGIN] = m_inv.PopItem(i);
@@ -1481,18 +1481,16 @@ void Client::TradeRequestFailed(const EQApplicationPacket* app) {
 }
 
 
-static void BazaarAuditTrail(const char *Seller, const char *Buyer, const char *ItemName, int Quantity, int TotalCost, int TranType) {
+static void BazaarAuditTrail(const char *seller, const char *buyer, const char *itemName, int quantity, int totalCost, int tranType) {
 
-	const char *AuditQuery="INSERT INTO `trader_audit` (`time`, `seller`, `buyer`, `itemname`, `quantity`, `totalcost`, `trantype`) "
-				"VALUES (NOW(), '%s', '%s', '%s', %i, %i, %i)";
+	std::string query = StringFormat("INSERT INTO `trader_audit` "
+                                    "(`time`, `seller`, `buyer`, `itemname`, `quantity`, `totalcost`, `trantype`) "
+                                    "VALUES (NOW(), '%s', '%s', '%s', %i, %i, %i)",
+                                    seller, buyer, itemName, quantity, totalCost, tranType);
+    auto results = database.QueryDatabase(query);
+	if(!results.Success())
+		_log(TRADING__CLIENT, "Audit write error: %s : %s", query.c_str(), results.ErrorMessage().c_str());
 
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-
-	if(!database.RunQuery(query, MakeAnyLenString(&query, AuditQuery, Seller, Buyer, ItemName, Quantity, TotalCost, TranType), errbuf))
-		_log(TRADING__CLIENT, "Audit write error: %s : %s", query, errbuf);
-
-	safe_delete_array(query);
 }
 
 

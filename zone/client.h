@@ -37,6 +37,7 @@ class Client;
 #include "../common/item_struct.h"
 #include "../common/clientversions.h"
 
+#include "common.h"
 #include "zonedb.h"
 #include "errno.h"
 #include "mob.h"
@@ -98,11 +99,6 @@ enum {	//scribing argument to MemorizeSpell
 	memSpellForget = 2,
 	memSpellSpellbar = 3
 };
-
-#define USE_ITEM_SPELL_SLOT 10
-#define POTION_BELT_SPELL_SLOT 11
-#define DISCIPLINE_SPELL_SLOT 10
-#define ABILITY_SPELL_SLOT 9
 
 //Modes for the zoning state of the client.
 typedef enum {
@@ -193,8 +189,6 @@ public:
 	bool	KeyRingCheck(uint32 item_id);
 	void	KeyRingList();
 	virtual bool IsClient() const { return true; }
-	virtual void DBAWComplete(uint8 workpt_b1, DBAsyncWork* dbaw);
-	bool	FinishConnState2(DBAsyncWork* dbaw);
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
 	void	SendTraderPacket(Client* trader, uint32 Unknown72 = 51);
@@ -257,6 +251,10 @@ public:
 			bool	Save(uint8 iCommitNow); // 0 = delayed, 1=async now, 2=sync now
 			void	SaveBackup();
 
+	/* New PP Save Functions */
+	bool SaveCurrency(){ return database.SaveCharacterCurrency(this->CharacterID(), &m_pp); }
+	bool SaveAA();
+	
 	inline bool ClientDataLoaded() const { return client_data_loaded; }
 	inline bool	Connected()		const { return (client_state == CLIENT_CONNECTED); }
 	inline bool	InZone()		const { return (client_state == CLIENT_CONNECTED || client_state == CLIENT_LINKDEAD); }
@@ -566,14 +564,14 @@ public:
 
 	void	OnDisconnect(bool hard_disconnect);
 
-	uint16	GetSkillPoints() {return m_pp.points;}
-	void	SetSkillPoints(int inp) {m_pp.points = inp;}
+	uint16	GetSkillPoints() { return m_pp.points;}
+	void	SetSkillPoints(int inp) { m_pp.points = inp;}
 
 	void	IncreaseSkill(int skill_id, int value = 1) { if (skill_id <= HIGHEST_SKILL) { m_pp.skills[skill_id] += value; } }
 	void	IncreaseLanguageSkill(int skill_id, int value = 1);
-	virtual uint16 GetSkill(SkillUseTypes skill_id) const { if (skill_id <= HIGHEST_SKILL) { return((itembonuses.skillmod[skill_id] > 0)? m_pp.skills[skill_id]*(100 + itembonuses.skillmod[skill_id])/100 : m_pp.skills[skill_id]); } return 0; }
+	virtual uint16 GetSkill(SkillUseTypes skill_id) const { if (skill_id <= HIGHEST_SKILL) { return((itembonuses.skillmod[skill_id] > 0) ? m_pp.skills[skill_id] * (100 + itembonuses.skillmod[skill_id]) / 100 : m_pp.skills[skill_id]); } return 0; }
 	uint32	GetRawSkill(SkillUseTypes skill_id) const { if (skill_id <= HIGHEST_SKILL) { return(m_pp.skills[skill_id]); } return 0; }
-	bool	HasSkill(SkillUseTypes skill_id) const;
+	bool	HasSkill(SkillUseTypes skill_id) const;	
 	bool	CanHaveSkill(SkillUseTypes skill_id) const;
 	void	SetSkill(SkillUseTypes skill_num, uint16 value);
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
@@ -679,6 +677,7 @@ public:
 	int16 acmod();
 
 	// Item methods
+	void EVENT_ITEM_ScriptStopReturn();
 	uint32	NukeItem(uint32 itemnum, uint8 where_to_check =
 		(invWhereWorn | invWherePersonal | invWhereBank | invWhereTrading | invWhereCursor));
 	void	SetTint(int16 slot_id, uint32 color);
