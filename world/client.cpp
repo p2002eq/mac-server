@@ -1340,7 +1340,7 @@ void Client::SetClassStartingSkills(PlayerProfile_Struct *pp)
 					i == SkillAlcoholTolerance || i == SkillBindWound)
 				continue;
 
-			pp->skills[i] = database.GetSkillCap(pp->class_, (SkillUseTypes)i, 1);
+			pp->skills[i] = 0;
 		}
 	}
 }
