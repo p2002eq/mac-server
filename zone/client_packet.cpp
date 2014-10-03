@@ -2383,16 +2383,16 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 
 	/* Web Interface */
-/*	if (IsClient()) {
+	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
 		std::vector<std::string> params;
-		params.push_back(std::to_string((long)zone->GetZoneID()));
-		params.push_back(std::to_string((long)zone->GetInstanceID()));
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
 		params.push_back(std::to_string((double)ppu->x_pos));
 		params.push_back(std::to_string((double)ppu->y_pos));
 		params.push_back(std::to_string((double)ppu->z_pos));
 		params.push_back(std::to_string((double)heading));
+		params.push_back(std::to_string((double)GetClass()));
+		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
 	}*/
 
@@ -2665,7 +2665,76 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 		std::cout << "Wrong size on OP_CombatAbility. Got: " << app->size << ", Expected: " << sizeof(CombatAbility_Struct) << std::endl;
 		return;
 	}
-	OPCombatAbility(app);
+
+	/* Web Interface: Combat State */
+	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+		bool wi_aa = false;
+		if (app->pBuffer[0] == 0){ wi_aa = false; }
+		else if (app->pBuffer[0] == 1){ wi_aa = true; }
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)GetID()));
+		params.push_back(std::to_string((bool)wi_aa));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+	}
+
+	if (app->pBuffer[0] == 0)
+	{
+		auto_attack = false;
+
+		if (IsAIControlled())
+			return;
+		attack_timer.Disable();
+		ranged_timer.Disable();
+		attack_dw_timer.Disable();
+
+		aa_los_me.x = 0;
+		aa_los_me.y = 0;
+		aa_los_me.z = 0;
+		aa_los_me_heading = 0;
+		aa_los_them.x = 0;
+		aa_los_them.y = 0;
+		aa_los_them.z = 0;
+		aa_los_them_mob = nullptr;
+	}
+	else if (app->pBuffer[0] == 1)
+	{
+		auto_attack = true;
+		auto_fire = false;
+		if (IsAIControlled())
+			return;
+		SetAttackTimer();
+
+		if(GetTarget())
+		{
+			aa_los_them_mob = GetTarget();
+			aa_los_me.x = GetX();
+			aa_los_me.y = GetY();
+			aa_los_me.z = GetZ();
+			aa_los_me_heading = GetHeading();
+			aa_los_them.x = aa_los_them_mob->GetX();
+			aa_los_them.y = aa_los_them_mob->GetY();
+			aa_los_them.z = aa_los_them_mob->GetZ();
+			los_status = CheckLosFN(aa_los_them_mob);
+			los_status_facing = IsFacingMob(aa_los_them_mob);
+		}
+		else
+		{
+			aa_los_me.x = GetX();
+			aa_los_me.y = GetY();
+			aa_los_me.z = GetZ();
+			aa_los_me_heading = GetHeading();
+			aa_los_them.x = 0;
+			aa_los_them.y = 0;
+			aa_los_them.z = 0;
+			aa_los_them_mob = nullptr;
+			los_status = false;
+			los_status_facing = false;
+		}
+	}
+}
+
+void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
+{
 	return;
 }
 

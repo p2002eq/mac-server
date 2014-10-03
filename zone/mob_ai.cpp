@@ -33,6 +33,8 @@
 #include "../common/features.h"
 #include "quest_parser_collection.h"
 #include "water_map.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 extern EntityList entity_list;
 
@@ -1891,6 +1893,15 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 					if(emoteid != 0)
 						CastToNPC()->DoNPCEmote(ENTERCOMBAT,emoteid);
 					CastToNPC()->SetCombatEvent(true);
+
+					/* Web Interface: Combat State NPC */
+					if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+						bool wi_aa = true;
+						std::vector<std::string> params;
+						params.push_back(std::to_string((long)GetID()));
+						params.push_back(std::to_string((bool)wi_aa));
+						RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+					}
 				}
 			}
 		}
@@ -1922,11 +1933,20 @@ void Mob::AI_Event_NoLongerEngaged() {
 		{
 			if(entity_list.GetNPCByID(this->GetID()))
 			{
-			uint16 emoteid = CastToNPC()->GetEmoteID();
-			parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
-			if(emoteid != 0)
-				CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
-			CastToNPC()->SetCombatEvent(false);
+				uint16 emoteid = CastToNPC()->GetEmoteID();
+				parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
+				if(emoteid != 0)
+					CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
+				CastToNPC()->SetCombatEvent(false);
+
+				/* Web Interface: Combat State NPC */
+				if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+					bool wi_aa = false;
+					std::vector<std::string> params;
+					params.push_back(std::to_string((long)GetID()));
+					params.push_back(std::to_string((bool)wi_aa));
+					RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+				}
 			}
 		}
 	}

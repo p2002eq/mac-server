@@ -41,6 +41,7 @@ Child of the Mob class.
 #include "worldserver.h"
 #include "../common/rulesys.h"
 #include "quest_parser_collection.h"
+#include "remote_call_subscribe.h"
 
 extern EntityList entity_list;
 extern Zone* zone;
@@ -667,6 +668,14 @@ void Corpse::Bury() {
 }
 
 void Corpse::DepopNPCCorpse() {
+	/* Web Interface: Corpse Depop */
+	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Entity.Events")) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)EntityEvents::Entity_Corpse_Bury));
+		params.push_back(std::to_string((long)GetID()));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("Entity.Events", params);
+	}
+
 	if (IsNPCCorpse())
 		player_corpse_depop = true;
 }
