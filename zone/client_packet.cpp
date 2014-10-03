@@ -1991,15 +1991,16 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
-		if (castspell->inventoryslot == 0xFFFFFFFF) {
+		if (castspell->inventoryslot == INVALID_INDEX) {
 			if (!UseDiscipline(castspell->spell_id, castspell->target_id)) {
 				LogFile->write(EQEMuLog::Debug, "Unknown ability being used by %s, spell being cast is: %i\n", GetName(), castspell->spell_id);
 				InterruptSpell(castspell->spell_id);
 			}
 			return;
 		}
-		else if ((castspell->inventoryslot <= EmuConstants::GENERAL_END) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
+		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
 		{
+			// packet field types will be reviewed as packet transistions occur -U
 			const ItemInst* inst = m_inv[castspell->inventoryslot]; //slot values are int16, need to check packet on this field
 			//bool cancast = true;
 			if (inst && inst->IsType(ItemClassCommon))
@@ -5693,7 +5694,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Client *i = entity_list.GetClientByName(ri->player_name);
 		if (i){
 			if (IsRaidGrouped()){
-				i->Message_StringID(CC_Default, 5060); //group failed, must invite members not in raid...
+				i->Message_StringID(CC_Default, ALREADY_IN_RAID, GetName()); //group failed, must invite members not in raid...
 				return;
 			}
 			Raid *r = entity_list.GetRaidByClient(i);
