@@ -1382,11 +1382,11 @@ struct BulkItemPacket_Struct
 
 struct Consume_Struct
 {
-/*0000*/ uint32 slot;
-/*0004*/ uint32 auto_consumed; // 0xffffffff when auto eating e7030000 when right click
-/*0008*/ uint8 c_unknown1[4];
-/*0012*/ uint8 type; // 0x01=Food 0x02=Water
-/*0013*/ uint8 unknown13[3];
+/*0000*/ uint32	slot;
+/*0004*/ uint32	auto_consumed; // 0xffffffff when auto eating e7030000 when right click
+/*0008*/ uint8	c_unknown1[4];
+/*0012*/ uint8	type; // 0x01=Food 0x02=Water
+/*0013*/ uint8	unknown13[3];
 };
 
 struct MoveItem_Struct
@@ -1394,16 +1394,18 @@ struct MoveItem_Struct
 /*0000*/ uint32 from_slot;
 /*0004*/ uint32 to_slot;
 /*0008*/ uint32 number_in_stack;
+/*0012*/
 };
 
 // both MoveItem_Struct/DeleteItem_Struct server structures will be changing to a structure-based slot format..this will
 // be used for handling SoF/SoD/etc... time stamps sent using the MoveItem_Struct format. (nothing will be done with this
-// info at the moment..but, it forwards it on to the server for handling/future use)
+// info at the moment..but, it is forwarded on to the server for handling/future use)
 struct ClientTimeStamp_Struct
 {
-/*0000*/ uint32 from_slot;
-/*0004*/ uint32 to_slot;
-/*0008*/ uint32 number_in_stack;
+/*0000*/ uint32	from_slot;
+/*0004*/ uint32	to_slot;
+/*0008*/ uint32	number_in_stack;
+/*0012*/
 };
 
 //
@@ -2954,7 +2956,7 @@ struct Split_Struct
 */
 struct NewCombine_Struct {
 /*00*/	int16	container_slot;
-/*02*/	char	unknown02[2];
+/*02*/	int16	guildtribute_slot;
 /*04*/
 };
 
@@ -3353,6 +3355,13 @@ struct ItemVerifyReply_Struct {
 /*000*/	int32	slot;		// Slot being Right Clicked
 /*004*/	uint32	spell;		// Spell ID to cast if different than item effect
 /*008*/	uint32	target;		// Target Entity ID
+/*012*/
+};
+
+struct ItemRecastDelay_Struct {
+/*000*/	uint32	recast_delay;	// in seconds
+/*004*/	uint32	recast_type;
+/*008*/	uint32	unknown008;
 /*012*/
 };
 

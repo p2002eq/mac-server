@@ -815,6 +815,19 @@ bool EQLimits::AllowsEmptyBagInBag(uint32 version) {
 	//return local[ValidateMobVersion(version)];
 }
 
+bool EQLimits::AllowsClickCastFromBag(uint32 version) {
+	static const bool local[_EmuClientCount] = {
+/*Unknown*/		false,
+/*Mac*/			MAC::limits::ALLOWS_CLICK_CAST_FROM_BAG,
+/*Evolution*/	false,
+
+/*NPC*/			false,
+/*Pet*/			false
+	};
+
+	return local[ValidateMobVersion(version)];
+}
+
 // items
 uint16 EQLimits::ItemCommonSize(uint32 version) {
 	static const uint16 local[_EmuClientCount] = {

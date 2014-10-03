@@ -1241,38 +1241,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			aa_points[id] = aa[a]->value;
 	}
 
-	if (SPDAT_RECORDS > 0) {
-		for (uint32 z = 0; z<MAX_PP_MEMSPELL; z++) {
-			if (m_pp.mem_spells[z] >= (uint32)SPDAT_RECORDS)
-				UnmemSpell(z, false);
-		}
-
-		database.LoadBuffs(this);
-		uint32 max_slots = GetMaxBuffSlots();
-		for (int i = 0; i < max_slots; i++) {
-			if (buffs[i].spellid != SPELL_UNKNOWN) {
-				m_pp.buffs[i].spellid = buffs[i].spellid;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 2;
-				m_pp.buffs[i].player_id = 0x2211;
-				m_pp.buffs[i].level = buffs[i].casterlevel;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = buffs[i].ticsremaining;
-				m_pp.buffs[i].counters = buffs[i].counters;
-			}
-			else {
-				m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 0;
-				m_pp.buffs[i].player_id = 0;
-				m_pp.buffs[i].level = 0;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = 0;
-				m_pp.buffs[i].counters = 0;
-			}
-		}
-	}
-
 	/* Send Group Members via PP */
 	uint32 groupid = database.GetGroupID(GetName());
 	Group* group = nullptr;
@@ -1327,6 +1295,17 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 	}
 
+	if (SPDAT_RECORDS > 0)
+	{
+		database.LoadBuffs(this);
+		for (uint32 z = 0; z<MAX_PP_MEMSPELL; z++)
+		{
+			if (m_pp.mem_spells[z] >= (uint32)SPDAT_RECORDS)
+				UnmemSpell(z, false);
+		}
+
+	}
+
 	CalcBonuses();
 	if (m_pp.cur_hp <= 0)
 		m_pp.cur_hp = GetMaxHP();
@@ -1334,6 +1313,55 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	SetHP(m_pp.cur_hp);
 	Mob::SetMana(m_pp.mana);
 	SetEndurance(m_pp.endurance);
+
+	uint32 max_slots = GetMaxBuffSlots();
+	for (int i = 0; i < max_slots; i++) 
+	{
+		if (buffs[i].spellid != SPELL_UNKNOWN) {
+			if (!RuleB(Character, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
+			{
+				m_pp.buffs[i].spellid = buffs[i].spellid;
+				m_pp.buffs[i].bard_modifier = 10;
+				m_pp.buffs[i].slotid = 2;
+				m_pp.buffs[i].player_id = 0x2211;
+				m_pp.buffs[i].level = buffs[i].casterlevel;
+				m_pp.buffs[i].effect = 0;
+				m_pp.buffs[i].duration = buffs[i].ticsremaining;
+				m_pp.buffs[i].counters = buffs[i].counters;
+			}
+			else
+			{
+				m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
+				m_pp.buffs[i].bard_modifier = 10;
+				m_pp.buffs[i].slotid = 0;
+				m_pp.buffs[i].player_id = 0;
+				m_pp.buffs[i].level = 0;
+				m_pp.buffs[i].effect = 0;
+				m_pp.buffs[i].duration = 0;
+				m_pp.buffs[i].counters = 0;
+				_log(EQMAC__LOG, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
+				BuffFadeAll();
+			}
+		}
+		else 
+		{
+			m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
+			m_pp.buffs[i].bard_modifier = 10;
+			m_pp.buffs[i].slotid = 0;
+			m_pp.buffs[i].player_id = 0;
+			m_pp.buffs[i].level = 0;
+			m_pp.buffs[i].effect = 0;
+			m_pp.buffs[i].duration = 0;
+			m_pp.buffs[i].counters = 0;
+		}
+	}
+
+	if (m_pp.z <= zone->newzone_data.underworld) 
+	{
+		m_pp.x = zone->newzone_data.safe_x;
+		m_pp.y = zone->newzone_data.safe_y;
+		m_pp.z = zone->newzone_data.safe_z;
+	}
 
 	m_pp.expansions = database.GetExpansion(AccountID());
 
@@ -1991,15 +2019,16 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
-		if (castspell->inventoryslot == 0xFFFFFFFF) {
+		if (castspell->inventoryslot == INVALID_INDEX) {
 			if (!UseDiscipline(castspell->spell_id, castspell->target_id)) {
 				LogFile->write(EQEMuLog::Debug, "Unknown ability being used by %s, spell being cast is: %i\n", GetName(), castspell->spell_id);
 				InterruptSpell(castspell->spell_id);
 			}
 			return;
 		}
-		else if ((castspell->inventoryslot <= EmuConstants::GENERAL_END) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
+		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
 		{
+			// packet field types will be reviewed as packet transistions occur -U
 			const ItemInst* inst = m_inv[castspell->inventoryslot]; //slot values are int16, need to check packet on this field
 			//bool cancast = true;
 			if (inst && inst->IsType(ItemClassCommon))
@@ -5693,7 +5722,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Client *i = entity_list.GetClientByName(ri->player_name);
 		if (i){
 			if (IsRaidGrouped()){
-				i->Message_StringID(CC_Default, 5060); //group failed, must invite members not in raid...
+				i->Message_StringID(CC_Default, ALREADY_IN_RAID, GetName()); //group failed, must invite members not in raid...
 				return;
 			}
 			Raid *r = entity_list.GetRaidByClient(i);
@@ -7467,6 +7496,12 @@ void Client::Handle_OP_SwapSpell(const EQApplicationPacket *app)
 	swapspelltemp = m_pp.spell_book[swapspell->from_slot];
 	m_pp.spell_book[swapspell->from_slot] = m_pp.spell_book[swapspell->to_slot];
 	m_pp.spell_book[swapspell->to_slot] = swapspelltemp;
+
+	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
+	database.DeleteCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
+
+	database.SaveCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
+	database.SaveCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
 
 	QueuePacket(app);
 	return;
