@@ -1615,6 +1615,7 @@ ENCODE(OP_LogServer) {
 	strcpy(eq->unknown096, "pacman");
 	OUT(enable_pvp);
 	OUT(enable_FV);
+	OUT(auto_identify);
 	eq->NameGen = 1;
 	eq->Gibberish = 1;
 	eq->ProfanityFilter = 0;

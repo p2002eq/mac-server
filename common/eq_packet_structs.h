@@ -2516,7 +2516,7 @@ struct LogServer_Struct {
 /*009*/	uint8	unknown009;
 /*010*/	uint8	unknown010;
 /*011*/	uint8	unknown011;
-/*012*/	uint32	unknown012;	// htonl(1) on live
+/*012*/	uint32	auto_identify;	// htonl(1) on live
 /*016*/	uint32	unknown016;	// htonl(1) on live
 /*020*/	uint8	unknown020[12];
 /*032*/	char	worldshortname[32];
