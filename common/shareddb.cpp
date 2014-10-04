@@ -837,7 +837,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 			item.QuestItemFlag = (atoi(row[ItemField::questitemflag])==0) ? false : true;
 			item.SVCorruption = (int32)atoi(row[ItemField::svcorruption]);
 			item.Purity = (uint32)atoul(row[ItemField::purity]);
-			item.BackstabDmg = (uint32)atoul(row[ItemField::backstabdmg]);
+			item.BackstabDmg = (uint32)atoul(row[ItemField::damage]);
 			item.DSMitigation = (uint32)atoul(row[ItemField::dsmitigation]);
 			item.HeroicStr = (int32)atoi(row[ItemField::heroic_str]);
 			item.HeroicInt = (int32)atoi(row[ItemField::heroic_int]);
