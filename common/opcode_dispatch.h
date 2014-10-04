@@ -237,6 +237,7 @@ OUTz(OP_LootComplete);		//follows OP_LootItem
 //OUTz(OP_TradeSkillCombine);
 
 OUTv(OP_ItemPacket, ItemPacket_Struct);
+OUTv(OP_ItemRecastDelay, ItemRecastDelay_Struct);
 OUTv(OP_FormattedMessage, FormattedMessage_Struct);
 OUTv(OP_InterruptCast, InterruptCast_Struct);
 OUTv(OP_ItemLinkResponse, ItemPacket_Struct);
