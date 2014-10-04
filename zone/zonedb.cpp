@@ -2383,7 +2383,7 @@ void ZoneDatabase::SavePetInfo(Client *client)
 		query.clear();
 
 		// pet inventory!
-		for (int index = EmuConstants::EQUIPMENT_BEGIN; index <= EmuConstants::EQUIPMENT_END; index++) {
+		for (int index = EmuConstants::EQUIPMENT_BEGIN; index < EmuConstants::EQUIPMENT_END; index++) {
 			if (!petinfo->Items[index])
 				continue;
 
