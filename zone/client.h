@@ -941,6 +941,7 @@ private:
 	void	OPGMTrainSkill(const EQApplicationPacket *app);
 	void	OPGMSummon(const EQApplicationPacket *app);
 	void	OPCombatAbility(const EQApplicationPacket *app);
+	bool    HasRacialAbility(const CombatAbility_Struct* ca_atk);
 
 	void	HandleTraderPriceUpdate(const EQApplicationPacket *app);
 
