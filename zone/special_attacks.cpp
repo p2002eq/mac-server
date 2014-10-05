@@ -51,8 +51,11 @@ int Mob::GetBashDamage() {
 	multiple += 100;
 
 	//this is complete shite
-	int32 dmg=((((GetSkill(SkillBash) + GetSTR())*100 + GetLevel()*100/2) / 10000) * multiple) + 600;	//Set a base of 6 damage, 1 seemed too low at the sub level 30 level.
-	dmg /= 100;
+	int32 dmg = 1;
+	if (GetSkill(SkillBash) > 0){
+		dmg = ((((GetSkill(SkillBash) + GetSTR()) * 100 + GetLevel() * 100 / 2) / 10000) * multiple) + 600;	//Set a base of 6 damage, 1 seemed too low at the sub level 30 level.
+		dmg /= 100;
+	}
 
 	int32 mindmg = 1;
 	ApplySpecialAttackMod(SkillBash, dmg, mindmg);
@@ -171,6 +174,23 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 		DoRiposte(who);
 }
 
+bool Client::HasRacialAbility(const CombatAbility_Struct* ca_atk)
+{
+	if (ca_atk->m_atk == 100 && ca_atk->m_skill == SkillBash){// SLAM - Bash without a shield equipped
+
+		switch (GetRace())
+		{
+		case OGRE:
+		case TROLL:
+		case BARBARIAN:
+			return  true;
+		default:
+			break;
+		}
+
+	}
+	return false;
+}
 
 void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	if(!GetTarget())
@@ -181,8 +201,8 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 
 	CombatAbility_Struct* ca_atk = (CombatAbility_Struct*) app->pBuffer;
 
-	/* Check to see if actually have skill */
-	if (!MaxSkill(static_cast<SkillUseTypes>(ca_atk->m_skill)))
+	/* Check to see if actually have skill or innate racial ability (like Ogres have Slam) */
+	if (MaxSkill(static_cast<SkillUseTypes>(ca_atk->m_skill)) <= 0 && !HasRacialAbility(ca_atk))
 		return;
 
 	if(GetTarget()->GetID() != ca_atk->m_target)
