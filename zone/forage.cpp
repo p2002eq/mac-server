@@ -407,6 +407,8 @@ void Client::ForageItem(bool guarantee) {
 		13044, // Pod Of Water
 		13106 // Fishing Grubs
 	};
+	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+		return;
 
 	// these may need to be fine tuned, I am just guessing here
 	if (guarantee || MakeRandomInt(0,199) < skill_level) {
@@ -465,6 +467,7 @@ void Client::ForageItem(bool guarantee) {
 
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
+				eqmac_timer.Start(250, true);
 			}
 
 			if(inst) {
