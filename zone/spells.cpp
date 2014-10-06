@@ -523,6 +523,12 @@ bool Mob::DoCastingChecks()
 		}
 	}
 
+	if (spells[spell_id].TimeOfDay == 2 && !zone->zone_time.IsNightTime())
+	{
+		Message_StringID(CC_Red, CAST_NIGHTTIME);
+		return false;
+	}
+
 	if (spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()) {
 		Message_StringID(CC_Red, CAST_OUTDOORS);
 		return false;
