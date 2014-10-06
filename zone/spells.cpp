@@ -2113,10 +2113,10 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		}
 	}
 
-	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT)))
+	if (IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT)))
 	{
 		ItemInst *itm = CastToClient()->GetInv().GetItem(inventory_slot);
-		if(itm && itm->GetItem()->RecastDelay > 0){
+		if (itm && itm->GetItem()->RecastDelay > 0){
 			CastToClient()->GetPTimers().Start((pTimerItemStart + itm->GetItem()->RecastType), itm->GetItem()->RecastDelay);
 		}
 	}
@@ -5016,12 +5016,12 @@ void Client::SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel)
 {
 	EQApplicationPacket* outapp;
 	outapp = new EQApplicationPacket(OP_Buff, sizeof(SpellBuffFade_Struct));
-	SpellBuffFade_Struct* sbf = (SpellBuffFade_Struct*) outapp->pBuffer;
+	SpellBuffFade_Struct* sbf = (SpellBuffFade_Struct*)outapp->pBuffer;
 
 	sbf->entityid = GetID();
-	sbf->slot=2;
-	sbf->spellid=spell_id;
-	sbf->slotid=0;
+	sbf->slot = 2;
+	sbf->spellid = spell_id;
+	sbf->slotid = 0;
 	sbf->effect = inlevel > 0 ? inlevel : GetLevel();
 	sbf->level = inlevel > 0 ? inlevel : GetLevel();
 	sbf->bufffade = 0;
@@ -5096,3 +5096,19 @@ void NPC::UninitializeBuffSlots()
 	safe_delete_array(buffs);
 }
 
+void Client::SendSpellAnim(uint16 targetid, uint16 spell_id)
+{
+	if (!targetid || !IsValidSpell(spell_id))
+		return;
+
+	EQApplicationPacket app(OP_Action, sizeof(Action_Struct));
+	Action_Struct* a = (Action_Struct*)app.pBuffer;
+	a->target = targetid;
+	a->source = this->GetID();
+	a->type = 231;
+	a->spell = spell_id;
+	a->sequence = 231;
+
+	app.priority = 1;
+	entity_list.QueueCloseClients(this, &app);
+}
