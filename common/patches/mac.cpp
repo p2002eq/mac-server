@@ -20,8 +20,14 @@ namespace Mac {
 	static OpcodeManager *opcodes = nullptr;
 	static Strategy struct_strategy;
 
-	structs::Item_Struct* MacItem(const ItemInst *inst, int16 slot_id, int type = 0);
+	structs::Item_Struct* MacItem(const ItemInst *inst, int16 slot_id_in, int type = 0);
 	structs::Spawn_Struct* MacSpawns(struct Spawn_Struct*, int type);
+
+	static inline int16 ServerToMacSlot(uint32 ServerSlot);
+	static inline int16 ServerToMacCorpseSlot(uint32 ServerCorpse);
+
+	static inline uint32 MacToServerSlot(int16 MacSlot);
+	static inline uint32 MacToServerCorpseSlot(int16 MacCorpse);
 
 	void Register(EQStreamIdentifier &into)
 	{
@@ -878,7 +884,7 @@ namespace Mac {
 		SETUP_DIRECT_DECODE(CastSpell_Struct, structs::CastSpell_Struct);
 		IN(slot);
 		IN(spell_id);
-		IN(inventoryslot);
+		emu->inventoryslot = MacToServerSlot(eq->inventoryslot);
 		IN(target_id);
 		FINISH_DIRECT_DECODE();
 	}
@@ -1175,8 +1181,8 @@ namespace Mac {
 	{
 		SETUP_DIRECT_DECODE(MoveItem_Struct, structs::MoveItem_Struct);
 
-		IN(from_slot);
-		IN(to_slot);
+		emu->from_slot = MacToServerSlot(eq->from_slot);
+		emu->to_slot = MacToServerSlot(eq->to_slot);
 		IN(number_in_stack);
 
 		_log(INVENTORY__SLOTS, "EQMAC DECODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", emu->to_slot, emu->from_slot, emu->number_in_stack);
@@ -1189,7 +1195,8 @@ namespace Mac {
 		ENCODE_LENGTH_EXACT(MoveItem_Struct);
 		SETUP_DIRECT_ENCODE(MoveItem_Struct, structs::MoveItem_Struct);
 
-		OUT(from_slot);
+		eq->from_slot = ServerToMacSlot(emu->from_slot);
+		eq->to_slot = ServerToMacSlot(emu->to_slot);
 		OUT(to_slot);
 		OUT(number_in_stack);
 		_log(INVENTORY__SLOTS, "EQMAC ENCODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", eq->to_slot, eq->from_slot, eq->number_in_stack);
@@ -1242,7 +1249,7 @@ namespace Mac {
 		DECODE_LENGTH_EXACT(structs::Consume_Struct);
 		SETUP_DIRECT_DECODE(Consume_Struct, structs::Consume_Struct);
 
-		IN(slot);
+		emu->slot = MacToServerSlot(eq->slot);
 		IN(type);
 		IN(auto_consumed);
 
@@ -1251,7 +1258,7 @@ namespace Mac {
 
 	ENCODE(OP_ReadBook) 
 	{
-
+		// no apparent slot translation needed -U
 		EQApplicationPacket *in = *p;
 		*p = nullptr;
 
@@ -1351,7 +1358,7 @@ namespace Mac {
 		SETUP_DIRECT_DECODE(Merchant_Sell_Struct, structs::Merchant_Sell_Struct);
 		emu->npcid=eq->npcid;
 		IN(playerid);
-		IN(itemslot);
+		emu->itemslot = MacToServerSlot(eq->itemslot);
 		IN(quantity);
 		IN(price);
 		FINISH_DIRECT_DECODE();
@@ -1363,7 +1370,7 @@ namespace Mac {
 		SETUP_DIRECT_ENCODE(Merchant_Sell_Struct, structs::Merchant_Sell_Struct);
 		eq->npcid=emu->npcid;
 		eq->playerid=emu->playerid;
-		OUT(itemslot);
+		eq->itemslot = ServerToMacSlot(emu->itemslot);
 		OUT(quantity);
 		OUT(price);
 		FINISH_ENCODE();
@@ -1375,7 +1382,7 @@ namespace Mac {
 		SETUP_DIRECT_DECODE(Merchant_Purchase_Struct, structs::Merchant_Purchase_Struct);
 		emu->npcid=eq->npcid;
 		//IN(playerid);
-		IN(itemslot);
+		emu->itemslot = MacToServerSlot(eq->itemslot);
 		IN(quantity);
 		IN(price);
 		FINISH_DIRECT_DECODE();
@@ -1387,7 +1394,7 @@ namespace Mac {
 		SETUP_DIRECT_ENCODE(Merchant_Purchase_Struct, structs::Merchant_Purchase_Struct);
 		eq->npcid=emu->npcid;
 		//eq->playerid=emu->playerid;
-		OUT(itemslot);
+		eq->itemslot = ServerToMacSlot(emu->itemslot);
 		OUT(quantity);
 		OUT(price);
 		FINISH_ENCODE();
@@ -1399,7 +1406,7 @@ namespace Mac {
 		SETUP_DIRECT_ENCODE(Merchant_DelItem_Struct, structs::Merchant_DelItem_Struct);
 		eq->npcid=emu->npcid;
 		OUT(playerid);
-		OUT(itemslot);
+		eq->itemslot = ServerToMacSlot(emu->itemslot);
 		if(emu->type == 0)
 			eq->type=64;
 		else
@@ -1433,7 +1440,7 @@ namespace Mac {
 		SETUP_DIRECT_ENCODE(LootingItem_Struct, structs::LootingItem_Struct);
 		OUT(lootee);
 		OUT(looter);
-		OUT(slot_id);
+		eq->slot_id = ServerToMacCorpseSlot(emu->slot_id);
 		OUT(auto_loot);
 
 		FINISH_ENCODE();
@@ -1445,7 +1452,7 @@ namespace Mac {
 		SETUP_DIRECT_DECODE(LootingItem_Struct, structs::LootingItem_Struct);
 		IN(lootee);
 		IN(looter);
-		IN(slot_id);
+		emu->slot_id = MacToServerCorpseSlot(eq->slot_id);
 		IN(auto_loot);
 
 		FINISH_DIRECT_DECODE();
@@ -1551,7 +1558,7 @@ namespace Mac {
 	{
 		DECODE_LENGTH_EXACT(structs::Combine_Struct);
 		SETUP_DIRECT_DECODE(NewCombine_Struct, structs::Combine_Struct);
-		IN(container_slot);
+		emu->container_slot = MacToServerSlot(eq->container_slot);
 		FINISH_DIRECT_DECODE();
 	}
 
@@ -2331,5 +2338,34 @@ namespace Mac {
 		delete in;
 		return;
 	}
+
+	static inline int16 ServerToMacSlot(uint32 ServerSlot)
+	{
+			 //int16 MacSlot;
+			if (ServerSlot == INVALID_INDEX)
+				 return INVALID_INDEX;
+			
+			return ServerSlot; // deprecated
+	}
+
+	static inline int16 ServerToMacCorpseSlot(uint32 ServerCorpse)
+	{
+		return ServerCorpse;
+	}
+
+	static inline uint32 MacToServerSlot(int16 MacSlot)
+	{
+		//uint32 ServerSlot;
+		if (MacSlot == INVALID_INDEX)
+			 return INVALID_INDEX;
+		
+		return MacSlot; // deprecated
+	}
+
+	static inline uint32 MacToServerCorpseSlot(int16 MacCorpse)
+	{
+		return MacCorpse;
+	}
+
 } //end namespace Mac
 
