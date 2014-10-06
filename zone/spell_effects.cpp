@@ -5350,14 +5350,14 @@ void Mob::CheckNumHitsRemaining(uint8 type, uint32 buff_slot, uint16 spell_id)
 
 	//Spell specific procs [Type 7,10,11]
 	if (IsValidSpell(spell_id)){
-		
-		for(uint32 d = 0; d < buff_max; d++) {
-		
-			if((buffs[d].spellid == spell_id) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
 
-				if(--buffs[d].numhits == 0) {
+		for (uint32 d = 0; d < buff_max; d++) {
+
+			if ((buffs[d].spellid == spell_id) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
+
+				if (--buffs[d].numhits == 0) {
 					CastOnNumHitFade(buffs[d].spellid);
-					if(!TryFadeEffect(d))
+					if (!TryFadeEffect(d))
 						BuffFadeBySlot(d, true);
 				}
 			}
@@ -5367,25 +5367,25 @@ void Mob::CheckNumHitsRemaining(uint8 type, uint32 buff_slot, uint16 spell_id)
 	else if (type == 7){
 		if (buff_slot > 0){
 
-			if(--buffs[buff_slot].numhits == 0) {
+			if (--buffs[buff_slot].numhits == 0) {
 				CastOnNumHitFade(buffs[buff_slot].spellid);
-				if(!TryFadeEffect(buff_slot))
-					BuffFadeBySlot(buff_slot , true);
-				}
+				if (!TryFadeEffect(buff_slot))
+					BuffFadeBySlot(buff_slot, true);
 			}
+		}
 
 		else {
-	
-			for(int d = 0; d < buff_max; d++) {
-			
-				if(!m_spellHitsLeft[d])
+
+			for (int d = 0; d < buff_max; d++) {
+
+				if (!m_spellHitsLeft[d])
 					continue;
 
 				if ((IsValidSpell(buffs[d].spellid)) && (m_spellHitsLeft[d] == buffs[d].spellid)) {
-					if(--buffs[d].numhits == 0) {
+					if (--buffs[d].numhits == 0) {
 						CastOnNumHitFade(buffs[d].spellid);
 						m_spellHitsLeft[d] = 0;
-						if(!TryFadeEffect(d))
+						if (!TryFadeEffect(d))
 							BuffFadeBySlot(d, true);
 					}
 				}
@@ -5396,17 +5396,17 @@ void Mob::CheckNumHitsRemaining(uint8 type, uint32 buff_slot, uint16 spell_id)
 
 	else{
 
-		for(uint32 d = 0; d < buff_max; d++) {
-		
-			if((IsValidSpell(buffs[d].spellid)) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
-			
-				if(--buffs[d].numhits == 0) {
+		for (uint32 d = 0; d < buff_max; d++) {
+
+			if ((IsValidSpell(buffs[d].spellid)) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
+
+				if (--buffs[d].numhits == 0) {
 					CastOnNumHitFade(buffs[d].spellid);
-					if(!TryFadeEffect(d)){
+					if (!TryFadeEffect(d)){
 						BuffFadeBySlot(d, true);
 					}
 				}
-			
+
 			}
 		}
 	}

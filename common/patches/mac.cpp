@@ -2044,7 +2044,7 @@ namespace Mac {
 	FINISH_DIRECT_DECODE();
 	}
 
-	structs::Item_Struct* MacItem(const ItemInst *inst, int16 slot_id, int type)
+	structs::Item_Struct* MacItem(const ItemInst *inst, int16 slot_id_in, int type)
 	{
 
 		if(!inst)
@@ -2060,7 +2060,7 @@ namespace Mac {
 
   		if(type == 0)
   		{
-  			mac_pop_item->equipSlot = slot_id;
+  			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
 			mac_pop_item->Charges = inst->GetCharges();
 			mac_pop_item->Price = item->Price;
 			mac_pop_item->SellRate = item->SellRate;
