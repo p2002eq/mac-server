@@ -3161,7 +3161,10 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 
 		if(damage < 1)
 			return 0;
-
+			
+		//Regular runes absorb spell damage (except dots) - Confirmed on live.
+		if (spellbonuses.MeleeRune[0] && spellbonuses.MeleeRune[1] >= 0)
+			damage = RuneAbsorb(damage, SE_Rune);	
 
 		if (spellbonuses.AbsorbMagicAtt[0] && spellbonuses.AbsorbMagicAtt[1] >= 0)
 			damage = RuneAbsorb(damage, SE_AbsorbMagicAtt);
@@ -3992,19 +3995,22 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 	bool IsBerskerSPA = false;
 
 	//1: Try Slay Undead
-	if(defender && defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead || defender->GetBodyType() == BT_Vampire){
-
+	if (defender && (defender->GetBodyType() == BT_Undead ||
+				defender->GetBodyType() == BT_SummonedUndead || defender->GetBodyType() == BT_Vampire)) {
 		int16 SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0];
-
 		if (SlayRateBonus) {
-
-			critChance += (float(SlayRateBonus)/100.0f);
-			critChance /= 100.0f;
-
-			if(MakeRandomFloat(0, 1) < critChance){
+			float slayChance = static_cast<float>(SlayRateBonus) / 10000.0f;
+			if (MakeRandomFloat(0, 1) < slayChance) {
 				int16 SlayDmgBonus = aabonuses.SlayUndead[1] + itembonuses.SlayUndead[1] + spellbonuses.SlayUndead[1];
-				damage = (damage*SlayDmgBonus*2.25)/100;
-				entity_list.MessageClose(this, false, 200, MT_CritMelee, "%s cleanses %s target!(%d)", GetCleanName(), this->GetGender() == 0 ? "his" : this->GetGender() == 1 ? "her" : "its", damage);
+				damage = (damage * SlayDmgBonus * 2.25) / 100;
+				if (GetGender() == 1) // female
+					entity_list.FilteredMessageClose_StringID(this, false, 200,
+							MT_CritMelee, FilterMeleeCrits, FEMALE_SLAYUNDEAD,
+							GetCleanName(), itoa(damage));
+				else // males and neuter I guess
+					entity_list.FilteredMessageClose_StringID(this, false, 200,
+							MT_CritMelee, FilterMeleeCrits, MALE_SLAYUNDEAD,
+							GetCleanName(), itoa(damage));
 				return;
 			}
 		}
