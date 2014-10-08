@@ -3383,6 +3383,8 @@ void Client::Handle_OP_Forage(const EQApplicationPacket *app)
 		Message(13, "Ability recovery time not yet met.");
 		return;
 	}
+	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+		return;
 
 	if (IsSitting())
 	{
@@ -3399,6 +3401,7 @@ void Client::Handle_OP_Forage(const EQApplicationPacket *app)
 	p_timers.Start(pTimerForaging, ForagingReuseTime - 1);
 
 	ForageItem();
+	eqmac_timer.Start(250, true);
 
 	return;
 }
@@ -8125,6 +8128,8 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 			sizeof(NewCombine_Struct), app->size);
 		return;
 	}
+	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+		return;
 	/*if (m_tradeskill_object == nullptr) {
 	Message(13, "Error: Server is not aware of the tradeskill container you are attempting to use");
 	return;
@@ -8135,6 +8140,7 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 	// Delegate to tradeskill object to perform combine
 	NewCombine_Struct* in_combine = (NewCombine_Struct*)app->pBuffer;
 	Object::HandleCombine(this, in_combine, m_tradeskill_object);
+	eqmac_timer.Start(250, true);
 	return;
 }
 
