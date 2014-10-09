@@ -511,39 +511,6 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		}
 	}
 
-	if(!pZoning && (RuleB(World, EnableTutorialButton) && (ew->tutorial || StartInTutorial))) {
-		CharacterSelect_Struct* cs = new CharacterSelect_Struct;
-		memset(cs, 0, sizeof(CharacterSelect_Struct));
-		database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
-		bool tutorial_enabled = false;
-
-		for(int x = 0; x < 10; ++x)
-		{
-			if(strcasecmp(cs->name[x], char_name) == 0)
-			{
-				if(cs->tutorial[x] == 1)
-				{
-					tutorial_enabled = true;
-					break;
-				}
-			}
-		}
-		safe_delete(cs);
-
-		if(tutorial_enabled)
-		{
-			zoneID = RuleI(World, TutorialZoneID);
-			database.MoveCharacterToZone(charid, database.GetZoneName(zoneID));
-		}
-		else
-		{
-			clog(WORLD__CLIENT_ERR,"'%s' is trying to go to tutorial but are not allowed...",char_name);
-			database.SetHackerFlag(GetAccountName(), char_name, "MQTutorial: player tried to enter the tutorial without having tutorial enabled for this character.");
-			eqs->Close();
-			return true;
-		}
-	}
-
 	if (zoneID == 0 || !database.GetZoneName(zoneID)) {
 		// This is to save people in an invalid zone, once it's removed from the DB
 		database.MoveCharacterToZone(charid, "arena");
@@ -1092,8 +1059,8 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 
 	clog(WORLD__CLIENT, "Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
 	clog(WORLD__CLIENT, "Name: %s", name);
-	clog(WORLD__CLIENT, "Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d  Tutorial: %s",
-		cc->race, cc->class_, cc->gender, cc->deity, cc->start_zone, cc->tutorial ? "true" : "false");
+	clog(WORLD__CLIENT, "Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d",
+		cc->race, cc->class_, cc->gender, cc->deity, cc->start_zone);
 	clog(WORLD__CLIENT, "STR  STA  AGI  DEX  WIS  INT  CHA    Total");
 	clog(WORLD__CLIENT, "%3d  %3d  %3d  %3d  %3d  %3d  %3d     %3d",
 		cc->STR, cc->STA, cc->AGI, cc->DEX, cc->WIS, cc->INT, cc->CHA,
@@ -1191,12 +1158,6 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	pp.binds[4].y = pp.y;
 	pp.binds[4].z = pp.z;
 	pp.binds[4].heading = pp.heading;
-
-	/* Overrides if we have the tutorial flag set! */
-	if (cc->tutorial && RuleB(World, EnableTutorialButton)) {
-		pp.zone_id = RuleI(World, TutorialZoneID);
-		database.GetSafePoints(pp.zone_id, 0, &pp.x, &pp.y, &pp.z);
-	}
 
 	/* Will either be the same as home or tutorial */
 	pp.binds[0].zoneId = pp.zone_id;
