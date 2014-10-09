@@ -394,7 +394,7 @@ void Client::GoFish()
 }
 
 void Client::ForageItem(bool guarantee) {
-	//Save(); //More desync testing
+	Save(); //More desync testing
 	int skill_level = GetSkill(SkillForage);
 
 	//be wary of the string ids in switch below when changing this.
