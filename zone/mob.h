@@ -233,7 +233,8 @@ public:
 	void ResourceTap(int32 damage, uint16 spell_id);
 	void TryTriggerThreshHold(int32 damage, int effect_id, Mob* attacker);
 	bool CheckSpellCategory(uint16 spell_id, int category_id, int effect_id);
-	
+	bool CancelMagicIsAllowedOnTarget(Mob* spelltar);
+	bool CancelMagicShouldAggro(uint16 spell_id, Mob* spelltar);
 
 	//Buff
 	void BuffProcess();
