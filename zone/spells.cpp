@@ -3072,6 +3072,24 @@ int Mob::CanBuffStack(uint16 spellid, uint8 caster_level, bool iFailIfOverwrite)
 	return firstfree;
 }
 
+bool Mob::CancelMagicIsAllowedOnTarget(Mob* spelltar){
+
+	if (IsClient() && spelltar->IsClient()){
+		return this->CastToClient()->IsTargetInMyGroup(spelltar->CastToClient());
+	}
+	return true;
+}
+
+bool Mob::CancelMagicShouldAggro(uint16 spell_id, Mob* spelltar){
+
+	if (IsEffectInSpell(spell_id, SE_CancelMagic) &&
+		IsClient() && spelltar->IsPet() && !IsAttackAllowed(spelltar->GetOwner(), true, spell_id)){
+		return false;
+	}
+
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // spell effect related functions
 //
@@ -3099,11 +3117,20 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		return false;
 	}
 
-	if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
-	{
-		if(!IsClient() || !CastToClient()->GetGM()) {
+	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
+		if (!CancelMagicIsAllowedOnTarget(spelltar))
+		{
 			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 			return false;
+		}
+	}
+	else{
+		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
+		{
+			if(!IsClient() || !CastToClient()->GetGM()) {
+				Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+				return false;
+			}
 		}
 	}
 
@@ -3327,6 +3354,14 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				}
 			}
 		}
+		else if (IsEffectInSpell(spell_id, SE_CancelMagic)){
+			if (!CancelMagicIsAllowedOnTarget(spelltar))
+			{
+				spelltar->Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetCleanName());
+				safe_delete(action_packet);
+				return false;
+			}
+		}
 		else if	( !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id)) // Detrimental spells - PVP check
 		{
 			mlog(SPELLS__CASTING_ERR, "Detrimental spell %d can't take hold %s -> %s", spell_id, GetName(), spelltar->GetName());
@@ -3482,7 +3517,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	if(spelltar->spellbonuses.SpellDamageShield && IsDetrimentalSpell(spell_id))
 		spelltar->DamageShield(this, true);
 
-	if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id)) {
+	else if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id) &&
+		     CancelMagicShouldAggro(spell_id, spelltar)) {
 		int32 aggro_amount = CheckAggroAmount(spell_id, isproc);
 		mlog(SPELLS__CASTING, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
 		if(aggro_amount > 0)

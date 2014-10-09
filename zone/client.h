@@ -903,6 +903,7 @@ public:
 	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }
 
 	void ShowNumHits(); // work around function for numhits not showing on buffs
+	bool IsTargetInMyGroup(Client* target);
 
 protected:
 	friend class Mob;
