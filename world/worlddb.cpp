@@ -98,14 +98,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		cs->drakkin_tattoo[char_num] = atoi(row[17]);
 		cs->drakkin_details[char_num] = atoi(row[18]);
 
-		if (RuleB(World, EnableTutorialButton) && (lvl <= RuleI(World, MaxLevelForTutorial)))
-			cs->tutorial[char_num] = 1;
-
-		if (RuleB(World, EnableReturnHomeButton)) {
-			int now = time(nullptr);
-			if ((now - atoi(row[8])) >= RuleI(World, MinOfflineTimeToReturnHome))
-				cs->gohome[char_num] = 1;
-		}
 
 		/* Set Bind Point Data for any character that may possibly be missing it for any reason */
 		cquery = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading`, `is_home` FROM `character_bind`  WHERE `id` = %i LIMIT 2", character_id); 
@@ -274,14 +266,10 @@ bool WorldDatabase::GetStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct*
 	{
 		printf("No start_zones entry in database, using defaults\n");
 
-		if(in_cc->start_zone == RuleI(World, TutorialZoneID))
-			in_pp->zone_id = in_cc->start_zone;
-		else {
-			in_pp->x = in_pp->binds[0].x = -51;
-			in_pp->y = in_pp->binds[0].y = -20;
-			in_pp->z = in_pp->binds[0].z = 0.79;
-			in_pp->zone_id = in_pp->binds[0].zoneId = 77; // Arena
-		}
+		in_pp->x = in_pp->binds[0].x = -51;
+		in_pp->y = in_pp->binds[0].y = -20;
+		in_pp->z = in_pp->binds[0].z = 0.79;
+		in_pp->zone_id = in_pp->binds[0].zoneId = 77; // Arena
 
 	}
 

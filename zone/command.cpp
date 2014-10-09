@@ -402,7 +402,7 @@ int command_init(void){
 		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified", 80, command_summon) ||
 		command_add("summonburriedplayercorpse", "- Summons the target's oldest burried corpse, if any exist.", 100, command_summonburriedplayercorpse) ||
 		command_add("summonitem", "[itemid] [charges] - Summon an item onto your cursor. Charges are optional.", 200, command_summonitem) ||
-		command_add("suspend", "[name][days] - Suspend by character name and for specificed number of days", 150, command_suspend) ||
+		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days", 150, command_suspend) ||
 		command_add("synctod", "- Send a time of day update to every client in zone", 90, command_synctod) ||
 
 		command_add("tattoo", "- Change the tattoo of your target (Drakkin Only)", 80, command_tattoo) ||
