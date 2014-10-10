@@ -1307,11 +1307,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	CalcBonuses();
+
 	if (m_pp.cur_hp <= 0)
 		m_pp.cur_hp = GetMaxHP();
 
 	SetHP(m_pp.cur_hp);
-	Mob::SetMana(m_pp.mana);
+	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
 
 	uint32 max_slots = GetMaxBuffSlots();

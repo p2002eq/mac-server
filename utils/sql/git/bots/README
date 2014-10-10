@@ -1,3 +1,0 @@
-Use this new load_bots.sql to source bot information into your database.
-
-This file now contains all of the script information so that it may be run from inside of HeidiSQL.
