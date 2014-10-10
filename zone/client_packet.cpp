@@ -2493,15 +2493,12 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = y_pos;
 
 	// Outgoing client packet
-	float tmpheading = ppu->heading;
-
-	if (!FCMP(ppu->y_pos, y_pos) || !FCMP(ppu->x_pos, x_pos) || !FCMP(tmpheading, heading) || ppu->animation != animation)
+	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->animation != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
 	{
 		x_pos = ppu->x_pos;
 		y_pos = ppu->y_pos;
 		z_pos = ppu->z_pos;
 		animation = ppu->animation;
-		heading = tmpheading;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
 		PlayerPositionUpdateServer_Struct* ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
