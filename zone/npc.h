@@ -360,8 +360,6 @@ public:
 
 	uint32	GetSpawnKillCount();
 	int	GetScore();
-	void	SetMerchantProbability(uint8 amt) { probability = amt; }
-	uint8	GetMerchantProbability() { return probability; }
 	void	mod_prespawn(Spawn2 *sp);
 	int	mod_npc_damage(int damage, SkillUseTypes skillinuse, int hand, const Item_Struct* weapon, Mob* other);
 	void	mod_npc_killed_merit(Mob* c);
@@ -467,7 +465,6 @@ protected:
 	QGlobalCache *qGlobals;
 
 	bool raid_target;
-	uint8	probability;
 
 private:
 	uint32	loottable_id;
