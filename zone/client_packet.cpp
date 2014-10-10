@@ -1053,12 +1053,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (firstlogon){ firstlogon = atoi(row[0]); }
 	}
 
-
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
-	database.LoadCharacterBandolier(cid, &m_pp); /* Load Character Bandolier */
 	database.LoadCharacterBindPoint(cid, &m_pp); /* Load Character Bind */
 	database.LoadCharacterMaterialColor(cid, &m_pp); /* Load Character Material */
-	database.LoadCharacterPotions(cid, &m_pp); /* Load Character Potion Belt */
 	database.LoadCharacterCurrency(cid, &m_pp); /* Load Character Currency into PP */
 	database.LoadCharacterData(cid, &m_pp, &m_epp); /* Load Character Data from DB into PP as well as E_PP */
 	database.LoadCharacterSkills(cid, &m_pp); /* Load Character Skills */
@@ -1066,8 +1063,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterMemmedSpells(cid, &m_pp);  /* Load Character Memorized Spells */
 	database.LoadCharacterDisciplines(cid, &m_pp); /* Load Character Disciplines */
 	database.LoadCharacterLanguages(cid, &m_pp); /* Load Character Languages */
-	database.LoadCharacterLeadershipAA(cid, &m_pp); /* Load Character Leadership AA's */
-	database.LoadCharacterTribute(cid, &m_pp); /* Load CharacterTribute */
 
 	/* Set item material tint */
 	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)
@@ -1124,45 +1119,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	hairstyle = m_pp.hairstyle;
 	luclinface = m_pp.face;
 	beard = m_pp.beard;
-	drakkin_heritage = m_pp.drakkin_heritage;
-	drakkin_tattoo = m_pp.drakkin_tattoo;
-	drakkin_details = m_pp.drakkin_details;
-
-	//if we zone in with invalid Z, fix it.
-	if (zone->zonemap != nullptr) {
-
-		Map::Vertex me;
-		me.x = GetX();
-		me.y = GetY();
-		me.z = GetZ() + (GetSize() == 0.0 ? 6 : GetSize());
-
-		Map::Vertex hit;
-
-		if (zone->zonemap->FindBestZ(me, &hit) == BEST_Z_INVALID)
-		{
-#if EQDEBUG >= 5
-			LogFile->write(EQEMuLog::Debug, "Player %s started below the zone trying to fix! (%.3f, %.3f, %.3f)", GetName(), me.x, me.y, me.z);
-#endif
-			me.z += 200;	//arbitrary #
-			if (zone->zonemap->FindBestZ(me, &hit) != BEST_Z_INVALID)
-			{
-				//+10 so they dont stick in the ground
-				SendTo(me.x, me.y, hit.z + 10);
-				m_pp.z = hit.z + 10;
-			}
-			else
-			{
-				//one more, desperate try
-				me.z += 2000;
-				if (zone->zonemap->FindBestZ(me, &hit) != BEST_Z_INVALID)
-				{
-					//+10 so they dont stick in the ground
-					SendTo(me.x, me.y, hit.z + 10);
-					m_pp.z = hit.z + 10;
-				}
-			}
-		}
-	}
 
 	/* If GM not set in DB, and does not meet min status to be GM, reset */
 	if (m_pp.gm && admin < minStatusToBeGM)
@@ -1425,7 +1381,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
-	//sze->player.spawn.z += 6;	//arbitrary lift, seems to help spawning under zone.
+	sze->player.spawn.z += 4;	//arbitrary lift, seems to help spawning under zone.
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
@@ -2541,11 +2497,11 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if (!FCMP(ppu->y_pos, y_pos) || !FCMP(ppu->x_pos, x_pos) || !FCMP(tmpheading, heading) || ppu->animation != animation)
 	{
-		x_pos			= ppu->x_pos;
-		y_pos			= ppu->y_pos;
-		z_pos			= ppu->z_pos;
-		animation		= ppu->animation;
-		heading			= tmpheading;
+		x_pos = ppu->x_pos;
+		y_pos = ppu->y_pos;
+		z_pos = ppu->z_pos;
+		animation = ppu->animation;
+		heading = tmpheading;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
 		PlayerPositionUpdateServer_Struct* ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
