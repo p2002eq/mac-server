@@ -317,6 +317,7 @@ namespace Mac {
 		OUT(aapoints);
 		OUT(expAA);
 		OUT(perAA);
+		OUT(air_remaining);
 		if(emu->expansions > 15)
 			eq->expansions = 15;
 		else
