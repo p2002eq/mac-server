@@ -1152,26 +1152,22 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		pp.x = pp.y = pp.z = -1;
 	}
 
-	/* Set Home Binds */
-	pp.binds[4].zoneId = pp.zone_id;
-	pp.binds[4].x = pp.x;
-	pp.binds[4].y = pp.y;
-	pp.binds[4].z = pp.z;
-	pp.binds[4].heading = pp.heading;
+	if (!pp.binds[0].zoneId)
+	{
+		pp.binds[0].zoneId = pp.zone_id;
+		pp.binds[0].x = pp.x;
+		pp.binds[0].y = pp.y;
+		pp.binds[0].z = pp.z;
+		pp.binds[0].heading = pp.heading;
+	}
 
-	/* Will either be the same as home or tutorial */
-	pp.binds[0].zoneId = pp.zone_id;
-	pp.binds[0].x = pp.x;
-	pp.binds[0].y = pp.y;
-	pp.binds[0].z = pp.z;
-	pp.binds[0].heading = pp.heading;
+	// set starting city location to the initial bind point
+	pp.binds[4] = pp.binds[0];
 
-	clog(WORLD__CLIENT,"Current location: %s (%d)  %0.2f, %0.2f, %0.2f, %0.2f",
-		database.GetZoneName(pp.zone_id), pp.zone_id, pp.x, pp.y, pp.z, pp.heading);
-	clog(WORLD__CLIENT,"Bind location: %s (%d) %0.2f, %0.2f, %0.2f",
-		database.GetZoneName(pp.binds[0].zoneId), pp.binds[0].zoneId,  pp.binds[0].x, pp.binds[0].y, pp.binds[0].z);
-	clog(WORLD__CLIENT,"Home location: %s (%d) %0.2f, %0.2f, %0.2f",
-		database.GetZoneName(pp.binds[4].zoneId), pp.binds[4].zoneId,  pp.binds[4].x, pp.binds[4].y, pp.binds[4].z);
+	clog(WORLD__CLIENT, "Current location: %s  %0.2f, %0.2f, %0.2f, %0.2f",
+		database.GetZoneName(pp.zone_id), pp.x, pp.y, pp.z, pp.heading);
+	clog(WORLD__CLIENT, "Bind location: %s  %0.2f, %0.2f, %0.2f",
+		database.GetZoneName(pp.binds[0].zoneId), pp.binds[0].x, pp.binds[0].y, pp.binds[0].z);
 
 	/* Starting Items inventory */
 	database.SetStartingItems(&pp, &inv, pp.race, pp.class_, pp.deity, pp.zone_id, pp.name, GetAdmin());

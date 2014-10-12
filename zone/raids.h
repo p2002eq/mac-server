@@ -38,7 +38,7 @@ enum {	//raid packet types:
 	raidMembers = 6,	//len 395+, details + members list
 	raidNoAssignLeadership	= 7,
 	raidCreate = 8,		//len 72
-	raidUnknown				= 9,
+	raidUnknown				= 9, // unused?
 	raidNoRaid = 10,		//parameter=0
 	raidChangeLootType		= 11,
 	raidStringID			= 12,
@@ -160,6 +160,7 @@ public:
 	//also learns raid structure based on db.
 	void	SetRaidDetails();
 	void	GetRaidDetails();
+	void	SaveRaidMOTD();
 	bool	LearnMembers();
 	void	VerifyRaid();
 	void	MemberZoned(Client *c);

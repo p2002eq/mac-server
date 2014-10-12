@@ -287,7 +287,7 @@ Client::Client(EQStreamInterface* ieqs)
 
 	last_used_slot = -1;
 //	walkspeed = 0.46;
-	
+
 	EngagedRaidTarget = false;
 	SavedRaidRestTimer = 0;
 }
@@ -417,7 +417,7 @@ bool Client::SaveAA(){
 		}
 		if (points > 0) {
 			SendAA_Struct* curAA = zone->FindAA(aa[a]->AA - aa[a]->value + 1);
-			if (curAA) { 
+			if (curAA) {
 				for (int rank = 0; rank<points; rank++) {
 					std::map<uint32, AALevelCost_Struct>::iterator RequiredLevel = AARequiredLevelAndCost.find(aa[a]->AA - aa[a]->value + 1 + rank);
 					if (RequiredLevel != AARequiredLevelAndCost.end()) {
@@ -445,7 +445,7 @@ bool Client::SaveAA(){
 }
 
 bool Client::Save(uint8 iCommitNow) {
-	if(!ClientDataLoaded()) 
+	if(!ClientDataLoaded())
 		return false;
 
 	/* Wrote current basics to PP for saves */
@@ -459,7 +459,7 @@ bool Client::Save(uint8 iCommitNow) {
 	if (GetHP() <= 0) {
 		m_pp.cur_hp = GetMaxHP();
 	}
-	else { 
+	else {
 		m_pp.cur_hp = GetHP();
 	}
 
@@ -912,7 +912,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 						Message(13, "Command '%s' not recognized.", message);
 					}
 				} else {
-					if(!RuleB(Chat, SuppressCommandErrors)) 
+					if(!RuleB(Chat, SuppressCommandErrors))
 						Message(13, "Command '%s' not recognized.", message);
 				}
 			}
@@ -1127,14 +1127,14 @@ void Client::SetMaxHP() {
 
 void Client::SetSkill(SkillUseTypes skillid, uint16 value) {
 	if (skillid > HIGHEST_SKILL)
-		return;  
-	m_pp.skills[skillid] = value; // We need to be able to #setskill 254 and 255 to reset skills 
+		return;
+	m_pp.skills[skillid] = value; // We need to be able to #setskill 254 and 255 to reset skills
 
 	database.SaveCharacterSkill(this->CharacterID(), skillid, value);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SkillUpdate, sizeof(SkillUpdate_Struct));
 	SkillUpdate_Struct* skill = (SkillUpdate_Struct*)outapp->pBuffer;
-	skill->skillId=skillid; 
+	skill->skillId=skillid;
 	skill->value=value;
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -1155,7 +1155,7 @@ void Client::IncreaseLanguageSkill(int skill_id, int value) {
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SkillUpdate, sizeof(SkillUpdate_Struct));
 	SkillUpdate_Struct* skill = (SkillUpdate_Struct*)outapp->pBuffer;
 	skill->skillId = 100 + skill_id;
-	skill->value = m_pp.languages[skill_id]; 
+	skill->value = m_pp.languages[skill_id];
 	QueuePacket(outapp);
 	safe_delete(outapp);
 
@@ -1679,7 +1679,7 @@ void Client::AddMoneyToPP(uint64 copper, bool updateclient){
 	/* Add Amount of Platinum */
 	tmp2 = tmp/1000;
 	int32 new_val = m_pp.platinum + tmp2;
-	if(new_val < 0) { m_pp.platinum = 0; } 
+	if(new_val < 0) { m_pp.platinum = 0; }
 	else { m_pp.platinum = m_pp.platinum + tmp2; }
 	tmp-=tmp2*1000;
 	if(updateclient)
@@ -1688,7 +1688,7 @@ void Client::AddMoneyToPP(uint64 copper, bool updateclient){
 	/* Add Amount of Gold */
 	tmp2 = tmp/100;
 	new_val = m_pp.gold + tmp2;
-	if(new_val < 0) { m_pp.gold = 0; } 
+	if(new_val < 0) { m_pp.gold = 0; }
 	else { m_pp.gold = m_pp.gold + tmp2; }
 
 	tmp-=tmp2*100;
@@ -3105,40 +3105,27 @@ void Client::KeyRingList()
 
 bool Client::IsDiscovered(uint32 itemid) {
 
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
+	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        std::cerr << "Error in IsDiscovered query '" << query << "' " << results.ErrorMessage() << std::endl;
+        return false;
+    }
 
-	if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid), errbuf, &result))
-	{
-		row = mysql_fetch_row(result);
-		if (atoi(row[0]))
-		{
-			mysql_free_result(result);
-			safe_delete_array(query);
-			return true;
-		}
-	}
-	else
-	{
-		std::cerr << "Error in IsDiscovered query '" << query << "' " << errbuf << std::endl;
-	}
-	mysql_free_result(result);
-	safe_delete_array(query);
-	return false;
+	auto row = results.begin();
+    if (!atoi(row[0]))
+        return false;
+
+	return true;
 }
 
 void Client::DiscoverItem(uint32 itemid) {
 
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES *result;
-	if (database.RunQuery(query,MakeAnyLenString(&query, "INSERT INTO discovered_items SET item_id=%lu, char_name='%s', discovered_date=UNIX_TIMESTAMP(), account_status=%i", itemid, GetName(), Admin()), errbuf, &result))
-	{
-		mysql_free_result(result);
-	}
-	safe_delete_array(query);
+	std::string query = StringFormat("INSERT INTO discovered_items "
+                                    "SET item_id = %lu, char_name = '%s', "
+                                    "discovered_date = UNIX_TIMESTAMP(), account_status = %i",
+                                    itemid, GetName(), Admin());
+	auto results = database.QueryDatabase(query);
 
 	parse->EventPlayer(EVENT_DISCOVER_ITEM, this, "", itemid);
 }
@@ -3284,7 +3271,7 @@ void Client::IncrementAggroCount() {
 
 	if(!RuleI(Character, RestRegenPercent))
 		return;
-	
+
 	// If we already had aggro before this method was called, the combat indicator should already be up for SoF clients,
 	// so we don't need to send it again.
 	//
@@ -3323,9 +3310,9 @@ void Client::DecrementAggroCount() {
 			time_until_rest = RuleI(Character, RestRegenTimeToActivate) * 1000;
 		}
 	}
-	
+
 	rest_timer.Start(time_until_rest);
-	
+
 }
 
 void Client::SendDisciplineTimers()
@@ -5201,41 +5188,31 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalval
 
 void Client::LoadAccountFlags()
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
 
 	accountflags.clear();
-	MakeAnyLenString(&query, "SELECT p_flag, p_value FROM account_flags WHERE p_accid = '%d'", account_id);
-	if(database.RunQuery(query, strlen(query), errbuf, &result))
-	{
-		while(row = mysql_fetch_row(result))
-		{
-			std::string fname(row[0]);
-			std::string fval(row[1]);
-			accountflags[fname] = fval;
-		}
-		mysql_free_result(result);
-	}
-	else
-	{
-		std::cerr << "Error in LoadAccountFlags query '" << query << "' " << errbuf << std::endl;
-	}
-	safe_delete_array(query);
+	std::string query = StringFormat("SELECT p_flag, p_value "
+                                    "FROM account_flags WHERE p_accid = '%d'",
+                                    account_id);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        std::cerr << "Error in LoadAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
+        return;
+    }
+
+    for (auto row = results.begin(); row != results.end(); ++row)
+        accountflags[row[0]] = row[1];
 }
 
-void Client::SetAccountFlag(std::string flag, std::string val)
-{
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
+void Client::SetAccountFlag(std::string flag, std::string val) {
 
-	MakeAnyLenString(&query, "REPLACE INTO account_flags (p_accid, p_flag, p_value) VALUES( '%d', '%s', '%s')", account_id, flag.c_str(), val.c_str());
-	if(!database.RunQuery(query, strlen(query), errbuf))
-	{
-		std::cerr << "Error in SetAccountFlags query '" << query << "' " << errbuf << std::endl;
+    std::string query = StringFormat("REPLACE INTO account_flags (p_accid, p_flag, p_value) "
+                                    "VALUES( '%d', '%s', '%s')",
+                                    account_id, flag.c_str(), val.c_str());
+    auto results = database.QueryDatabase(query);
+	if(!results.Success()) {
+		std::cerr << "Error in SetAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
+		return;
 	}
-	safe_delete_array(query);
 
 	accountflags[flag] = val;
 }
@@ -5324,7 +5301,7 @@ void Client::TryItemTimer(int slot)
 		}
 		++it_iter;
 	}
-	
+
 	if(slot > EmuConstants::EQUIPMENT_END) {
 		return;
 	}
@@ -5343,7 +5320,7 @@ void Client::RefundAA() {
 				for(int j = 0; j < cur; j++) {
 					m_pp.aapoints += curaa->cost + (curaa->cost_inc * j);
 					refunded = true;
-				} 
+				}
 			}
 			else
 			{
@@ -5536,14 +5513,14 @@ void Client::SetBoatID(uint32 boatid)
 
 void Client::SetBoatName(const char* boatname)
 {
-	strncpy(m_pp.boat,boatname,16);
+	strncpy(m_pp.boat, boatname, 16);
 }
 
 void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold, uint32 platinum, uint32 itemid, uint32 exp, bool faction) {
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Sound, sizeof(QuestReward_Struct));
 	memset(outapp->pBuffer, 0, sizeof(outapp->pBuffer));
-	QuestReward_Struct* qr = (QuestReward_Struct*) outapp->pBuffer;
+	QuestReward_Struct* qr = (QuestReward_Struct*)outapp->pBuffer;
 
 	qr->mob_id = target->GetID();		// Entity ID for the from mob name
 	qr->target_id = GetID();			// The Client ID (this)
@@ -5554,15 +5531,15 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 	qr->item_id = itemid;
 	qr->exp_reward = exp;
 
-	if(copper > 0 || silver > 0 || gold > 0 || platinum > 0)
+	if (copper > 0 || silver > 0 || gold > 0 || platinum > 0)
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
-	if(itemid > 0)
-		SummonItem(itemid,1,0,0,0,0,0,false,MainQuest);
+	if (itemid > 0)
+		SummonItem(itemid, 1, 0, 0, 0, 0, 0, false, MainQuest);
 
-	if(faction)
+	if (faction)
 	{
-		if(target->IsNPC())
+		if (target->IsNPC())
 		{
 			int32 nfl_id = target->CastToNPC()->GetNPCFactionID();
 			SetFactionLevel(CharacterID(), nfl_id, GetBaseClass(), GetBaseRace(), GetDeity(), true);
@@ -5571,7 +5548,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		}
 	}
 
-	if(exp > 0)
+	if (exp > 0)
 		AddEXP(exp);
 
 	QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
@@ -5581,8 +5558,9 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 void Client::RewindCommand()
 {
 	if ((rewind_timer.GetRemainingTime() > 1 && rewind_timer.Enabled())) {
-		Message(0,"You must wait before using #rewind again.");
-	} else {
+		Message(0, "You must wait before using #rewind again.");
+	}
+	else {
 		MovePC(zone->GetZoneID(), zone->GetInstanceID(), rewind_x, rewind_y, rewind_z, 0, 2, Rewind);
 		rewind_timer.Start(30000, true);
 	}
@@ -5590,16 +5568,16 @@ void Client::RewindCommand()
 
 void Client::DumpPlayerProfile()
 {
-	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct)-4);
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PlayerProfile,sizeof(PlayerProfile_Struct));
-	memcpy(outapp->pBuffer,&m_pp,sizeof(PlayerProfile_Struct)-4);
+	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(PlayerProfile_Struct));
+	memcpy(outapp->pBuffer, &m_pp, sizeof(PlayerProfile_Struct) - 4);
 
 	char* packet_dump = "PP.txt";
 	FileDumpPacketHex(packet_dump, outapp);
 	safe_delete(outapp);
 
-	EQApplicationPacket* noutapp = new EQApplicationPacket(OP_PlayerProfile,sizeof(ExtendedProfile_Struct));
-	memcpy(noutapp->pBuffer,&m_epp,sizeof(ExtendedProfile_Struct));
+	EQApplicationPacket* noutapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(ExtendedProfile_Struct));
+	memcpy(noutapp->pBuffer, &m_epp, sizeof(ExtendedProfile_Struct));
 
 	FileDumpPacketHex(packet_dump, noutapp);
 	safe_delete(noutapp);
