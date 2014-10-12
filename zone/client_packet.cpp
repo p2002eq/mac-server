@@ -27,7 +27,6 @@
 #include <string.h>
 #include <zlib.h>
 
-
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
 	#define strncasecmp	_strnicmp
@@ -80,7 +79,6 @@ extern volatile bool ZoneLoaded;
 extern WorldServer worldserver;
 extern PetitionList petition_list;
 extern EntityList entity_list;
-
 typedef void (Client::*ClientPacketProc)(const EQApplicationPacket *app);
 
 //Use a map for connecting opcodes since it dosent get used a lot and is sparse
@@ -1362,9 +1360,47 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
 	outapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(PlayerProfile_Struct));
 
-	/* The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA */
+	PlayerProfile_Struct* pps = (PlayerProfile_Struct*) new uchar[sizeof(PlayerProfile_Struct) - 4];
+	memcpy(pps, &m_pp, sizeof(PlayerProfile_Struct) - 4);
+
+	pps->perAA = m_epp.perAA;
+	int r = 0;
+	for (r = 0; r < MAX_PP_AA_ARRAY; r++)
+	{
+		if (pps->aa_array[r].AA > 0)
+		{
+			pps->aa_array[r].AA = zone->EmuToEQMacAA(pps->aa_array[r].AA);
+			pps->aa_array[r].value = pps->aa_array[r].value * 16;
+		}
+	}
+	int s = 0;
+	for (r = 0; s < HIGHEST_SKILL; s++)
+	{
+		SkillUseTypes currentskill = (SkillUseTypes)s;
+		if (pps->skills[s] > 0)
+			continue;
+		else
+		{
+			int haveskill = GetMaxSkillAfterSpecializationRules(currentskill, MaxSkill(currentskill, GetClass(), RuleI(Character, MaxLevel)));
+			if (haveskill > 0)
+			{
+				pps->skills[s] = 254;
+				//If we never get the skill, value is 255. If we qualify for it AND do not need to train it it's 0, if we get it but don't yet qualify or it needs to be trained it's 254.
+				uint16 t_level = SkillTrainLevel(currentskill, GetClass());
+				if (t_level <= GetLevel())
+				{
+					//Meditate does not need to be trained.
+					if (t_level == 1)	// || currentskill == SkillMeditate)
+						pps->skills[s] = 0;
+				}
+			}
+			else
+				pps->skills[s] = 255;
+		}
+	}
+	// The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA
 	m_pp.entityid = GetID();
-	memcpy(outapp->pBuffer, &m_pp, outapp->size);
+	memcpy(outapp->pBuffer, pps, outapp->size);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
@@ -5630,8 +5666,8 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 
 void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(RaidGeneral_Struct)) {
-		LogFile->write(EQEMuLog::Error, "Wrong size: OP_RaidCommand, size=%i, expected %i", app->size, sizeof(RaidGeneral_Struct));
+	if (app->size < sizeof(RaidGeneral_Struct)) {
+		LogFile->write(EQEMuLog::Error, "Wrong size: OP_RaidCommand, size=%i, expected at least %i", app->size, sizeof(RaidGeneral_Struct));
 		DumpPacket(app);
 		return;
 	}
