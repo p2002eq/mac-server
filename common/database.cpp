@@ -943,7 +943,7 @@ bool Database::CheckDatabaseConversions() {
 	// printppdebug = 1;
 
 	if (runconvert == 1){
-		printf("Running character binary blob to database conversion... \n", number_of_characters); 
+		printf("Running character binary blob to database conversion... \n"); 
 		/* Get the number of characters */
 		rquery = StringFormat("SELECT COUNT(`id`) FROM `character_`");
 		results = QueryDatabase(rquery);
@@ -1915,6 +1915,175 @@ bool Database::CheckDatabaseConversions() {
 		printf("\n\nCharacter blob conversion complete, continuing world bootup...\n"); 
 	}
 
+
+#ifdef BOTS
+
+	int runbotsconvert = 0;
+
+	/* Check For Legacy Bot References */
+	rquery = StringFormat("SHOW CREATE VIEW `vwbotcharactermobs`");
+	results = QueryDatabase(rquery);
+	if (results.RowCount() == 1){
+		auto row = results.begin();
+		std::string table_check = row[1];
+
+		if (table_check.find("character_data") == -1){
+			runbotsconvert = 1;
+			printf("\n\n::: Legacy Bot Views and Function Detected... \n");
+			printf("----------------------------------------------------------\n\n");
+			printf(" Database currently has bot view/function linkage to obselete \n");
+			printf("  table references and will now be converted...\n\n");
+			printf(" It is recommended that you backup your database \n");
+			printf("  before continuing the automatic conversion process...\n\n");
+			printf("----------------------------------------------------------\n\n");
+			std::cout << "Press ENTER to continue....." << std::endl << std::endl;
+			std::cin.ignore(1);
+		}
+	}
+	else{
+		ThrowDBError(results.ErrorMessage(), "Bot View Discovery", rquery);
+	}
+
+	if (runbotsconvert == 1){
+		printf("Running bot views/function database conversion... \n");
+
+		/* Update view `vwbotcharactermobs` */
+		rquery = StringFormat("DROP VIEW `vwbotcharactermobs`;");
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Drop View `vwbotcharactermobs`", rquery);
+
+		rquery = StringFormat(
+			"CREATE VIEW `vwbotcharactermobs` AS\n"
+			"SELECT _utf8'C' AS mobtype,\n" // Natedog: '_utf8'
+			"c.`id`,\n"
+			"c.`name`,\n"
+			"c.`class`,\n"
+			"c.`level`,\n"
+			"c.`last_login`,\n"
+			"c.`zone_id`\n"
+			"FROM `character_data` AS c\n"
+			"UNION ALL\n"
+			"SELECT _utf8'B' AS mobtype,\n" // Natedog: '_utf8'
+			"b.`BotID` AS id,\n"
+			"b.`Name` AS name,\n"
+			"b.`Class` AS class,\n"
+			"b.`BotLevel` AS level,\n"
+			"0 AS timelaston,\n"
+			"0 AS zoneid\n"
+			"FROM bots AS b;"
+			);
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Create View `vwbotcharactermobs`", rquery);
+
+
+		/* Update function `GetMobType` */
+		rquery = StringFormat("DROP FUNCTION IF EXISTS `GetMobType`;");
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Drop Function `GetMobType`", rquery);
+
+		rquery = StringFormat(
+			"CREATE FUNCTION `GetMobType` (mobname VARCHAR(64)) RETURNS CHAR(1)\n"
+			"BEGIN\n"
+			"	DECLARE Result CHAR(1);\n"
+			"\n"
+			"	SET Result = NULL;\n"
+			"\n"
+			"	IF (SELECT COUNT(*) FROM `character_data` WHERE `name` = mobname) > 0 THEN\n"
+			"		SET Result = 'C';\n"
+			"	ELSEIF (SELECT COUNT(*) FROM `bots` WHERE `Name` = mobname) > 0 THEN\n"
+			"		SET Result = 'B';\n"
+			"	END IF;\n "
+			"\n"
+			"	RETURN Result;\n"
+			"END"
+			);
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Create Function `GetMobType`", rquery);
+
+
+		/* Update view `vwgroups` */
+		rquery = StringFormat("DROP VIEW IF EXISTS `vwgroups`;");
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Drop View `vwgroups`", rquery);
+
+		rquery = StringFormat(
+			"CREATE VIEW `vwgroups` AS\n"
+			"SELECT g.`groupid` AS groupid,\n"
+			"GetMobType(g.`name`) AS mobtype,\n"
+			"g.`name` AS name,\n"
+			"g.`charid` AS mobid,\n"
+			"IFNULL(c.`level`, b.`BotLevel`) AS level\n"
+			"FROM `group_id` AS g\n"
+			"LEFT JOIN `character_data` AS c ON g.`name` = c.`name`\n"
+			"LEFT JOIN `bots` AS b ON g.`name` = b.`Name`;"
+			);
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Create View `vwgroups`", rquery);
+
+
+		/* Update view `vwbotgroups` */
+		rquery = StringFormat("DROP VIEW IF EXISTS `vwbotgroups`;");
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Drop View `vwbotgroups`", rquery);
+
+		rquery = StringFormat(
+			"CREATE VIEW `vwbotgroups` AS\n"
+			"SELECT g.`BotGroupId`,\n"
+			"g.`BotGroupName`,\n"
+			"g.`BotGroupLeaderBotId`,\n"
+			"b.`Name` AS BotGroupLeaderName,\n"
+			"b.`BotOwnerCharacterId`,\n"
+			"c.`name` AS BotOwnerCharacterName\n"
+			"FROM `botgroup` AS g\n"
+			"JOIN `bots` AS b ON g.`BotGroupLeaderBotId` = b.`BotID`\n"
+			"JOIN `character_data` AS c ON b.`BotOwnerCharacterID` = c.`id`\n"
+			"ORDER BY b.`BotOwnerCharacterId`, g.`BotGroupName`;"
+			);
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Create View `vwbotgroups`", rquery);
+
+
+		/* Update view `vwguildmembers` */
+		rquery = StringFormat("DROP VIEW IF EXISTS `vwguildmembers`;");
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Drop View `vwguildmembers`", rquery);
+
+		rquery = StringFormat(
+			"CREATE VIEW `vwguildmembers` AS\n"
+			"SELECT 'C' AS mobtype,\n"
+			"cm.`char_id`,\n"
+			"cm.`guild_id`,\n"
+			"cm.`rank`,\n"
+			"cm.`tribute_enable`,\n"
+			"cm.`total_tribute`,\n"
+			"cm.`last_tribute`,\n"
+			"cm.`banker`,\n"
+			"cm.`public_note`,\n"
+			"cm.`alt`\n"
+			"FROM `guild_members` AS cm\n"
+			"UNION ALL\n"
+			"SELECT 'B' AS mobtype,\n"
+			"bm.`char_id`,\n"
+			"bm.`guild_id`,\n"
+			"bm.`rank`,\n"
+			"bm.`tribute_enable`,\n"
+			"bm.`total_tribute`,\n"
+			"bm.`last_tribute`,\n"
+			"bm.`banker`,\n"
+			"bm.`public_note`,\n"
+			"bm.`alt`\n"
+			"FROM `botguildmembers` AS bm;"
+			);
+		results = QueryDatabase(rquery);
+		ThrowDBError(results.ErrorMessage(), "Create View `vwguildmembers`", rquery);
+	}
+
+	if (runbotsconvert == 1){
+		printf("\n\nBot views/function conversion complete, continuing world bootup...\n");
+	}
+
+#endif
+
 	return true;
 }
 
@@ -2762,32 +2931,45 @@ uint32 Database::GetGroupID(const char* name){
 }
 
 /* Is this really getting used properly... A half implementation ? Akkadius */
-char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf){ 
-	leaderbuf = "";
+char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf) {
+	strcpy(leaderbuf, "");
+	uint32 group_id = 0;
+
 	std::string query = StringFormat("SELECT `groupid` FROM `group_id` WHERE `name = '%s'", name);
 	auto results = QueryDatabase(query);
-	auto row = results.begin(); uint32 group_id = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		if (row[0]){ group_id = atoi(row[0]); }
-	}
 
-	if (group_id > 0){
-		query = StringFormat("SELECT `leadername` FROM `group_leader` WHERE `gid` = '%u' AND `groupid` = %u LIMIT 1", group_id);
-		results = QueryDatabase(query);
-		for (auto row = results.begin(); row != results.end(); ++row) {
-			if (row[0]){ strcpy(leaderbuf, row[0]); }
-		}
-	}
+	for (auto row = results.begin(); row != results.end(); ++row)
+		if (row[0])
+			group_id = atoi(row[0]);
+
+	if (group_id == 0)
+		return leaderbuf;
+
+	query = StringFormat("SELECT `leadername` FROM `group_leader` WHERE `gid` = '%u' AND `groupid` = %u LIMIT 1", group_id);
+	results = QueryDatabase(query);
+
+	for (auto row = results.begin(); row != results.end(); ++row)
+		if (row[0])
+			strcpy(leaderbuf, row[0]);
 
 	return leaderbuf;
 }
 
 void Database::SetGroupLeaderName(uint32 gid, const char* name) { 
-	std::string query = StringFormat("REPLACE INTO `group_leaders` SET `gid` = %lu, `leadername` = '%s'",(unsigned long)gid,name);
-	auto results = QueryDatabase(query);
+	std::string query = StringFormat("UPDATE group_leaders SET leadername = '%s' WHERE gid = %u", EscapeString(name).c_str(), gid);
+	auto result = QueryDatabase(query);
 
-	if (!results.Success())
-		std::cout << "Unable to set group leader: " << results.ErrorMessage() << std::endl;
+	if(result.RowsAffected() != 0) {
+		return;
+	}
+
+	query = StringFormat("INSERT INTO group_leaders(gid, leadername, marknpc, leadershipaa, maintank, assist, puller) VALUES(%u, '%s', '', '', '', '', '')",
+						 gid, EscapeString(name).c_str());
+	result = QueryDatabase(query);
+
+	if(!result.Success()) {
+		LogFile->write(EQEMuLog::Debug, "Error in Database::SetGroupLeaderName: %s", result.ErrorMessage().c_str());
+	}
 }
 
 char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 
@@ -2992,6 +3174,142 @@ const char* Database::GetRaidLeaderName(uint32 rid)
 	strcpy(name, row[0]);
 
 	return name;
+}
+
+// maintank, assist, puller, marknpc currently unused
+void Database::GetGroupLeadershipInfo(uint32 gid, uint32 rid, char *maintank,
+		char *assist, char *puller, char *marknpc, GroupLeadershipAA_Struct *GLAA)
+{
+	std::string query = StringFormat(
+			"SELECT maintank, assist, puller, marknpc, leadershipaa FROM raid_leaders WHERE gid = %lu AND rid = %lu",
+			(unsigned long)gid, (unsigned long)rid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0) {
+		if (maintank)
+			maintank[0] = '\0';
+
+		if (assist)
+			assist[0] = '\0';
+
+		if (puller)
+			puller[0] = '\0';
+
+		if (marknpc)
+			marknpc[0] = '\0';
+
+		return;
+	}
+
+	auto row = results.begin();
+
+	if (maintank)
+		strcpy(maintank, row[0]);
+
+	if (assist)
+		strcpy(assist, row[1]);
+
+	if (puller)
+		strcpy(puller, row[2]);
+
+	if (marknpc)
+		strcpy(marknpc, row[3]);
+
+	if (GLAA && results.LengthOfColumn(4) == sizeof(GroupLeadershipAA_Struct))
+		memcpy(GLAA, row[4], sizeof(GroupLeadershipAA_Struct));
+
+	return;
+}
+
+// maintank, assist, puller, marknpc currently unused
+void Database::GetRaidLeadershipInfo(uint32 rid, char *maintank,
+		char *assist, char *puller, char *marknpc, RaidLeadershipAA_Struct *RLAA)
+{
+	std::string query = StringFormat(
+			"SELECT maintank, assist, puller, marknpc, leadershipaa FROM raid_leaders WHERE gid = %lu AND rid = %lu",
+			(unsigned long)0xFFFFFFFF, (unsigned long)rid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0) {
+		if (maintank)
+			maintank[0] = '\0';
+
+		if (assist)
+			assist[0] = '\0';
+
+		if (puller)
+			puller[0] = '\0';
+
+		if (marknpc)
+			marknpc[0] = '\0';
+
+		return;
+	}
+
+	auto row = results.begin();
+
+	if (maintank)
+		strcpy(maintank, row[0]);
+
+	if (assist)
+		strcpy(assist, row[1]);
+
+	if (puller)
+		strcpy(puller, row[2]);
+
+	if (marknpc)
+		strcpy(marknpc, row[3]);
+
+	if (RLAA && results.LengthOfColumn(4) == sizeof(RaidLeadershipAA_Struct))
+		memcpy(RLAA, row[4], sizeof(RaidLeadershipAA_Struct));
+
+	return;
+}
+
+void Database::SetRaidGroupLeaderInfo(uint32 gid, uint32 rid)
+{
+	std::string query = StringFormat("UPDATE raid_leaders SET leadershipaa = '', WHERE gid = %lu AND rid = %lu",
+			(unsigned long)gid, (unsigned long)rid);
+	auto results = QueryDatabase(query);
+
+	if (results.RowsAffected() != 0)
+		return;
+
+	query = StringFormat("INSERT INTO raid_leaders(gid, rid, marknpc, leadershipaa, maintank, assist, puller) VALUES(%lu, %lu, '', '', '', '', '')",
+			(unsigned long)gid, (unsigned long)rid);
+	results = QueryDatabase(query);
+
+	if (!results.Success())
+		std::cout << "Unable to set raid/group leader: " << results.ErrorMessage() << std::endl;
+
+	return;
+}
+
+// Clearing all raid leaders
+void Database::ClearAllRaidLeaders(void)
+{
+	std::string query("DELETE from raid_leaders");
+	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+		std::cout << "Unable to clear raid leaders: " << results.ErrorMessage() << std::endl;
+
+	return;
+}
+
+void Database::ClearRaidLeader(uint32 gid, uint32 rid)
+{
+	if (rid == 0) {
+		ClearAllRaidLeaders();
+		return;
+	}
+
+	std::string query = StringFormat("DELETE from raid_leaders where gid = %lu and rid = %lu",
+			(unsigned long)gid, (unsigned long)rid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+		std::cout << "Unable to clear raid leader: " << results.ErrorMessage() << std::endl;
 }
 
 bool Database::VerifyInstanceAlive(uint16 instance_id, uint32 char_id)
@@ -3530,8 +3848,7 @@ void Database::UpdateAdventureStatsEntry(uint32 char_id, uint8 theme, bool win)
 	QueryDatabase(query);
 }
 
-bool Database::GetAdventureStats(uint32 char_id, uint32 &guk_w, uint32 &mir_w, uint32 &mmc_w, uint32 &ruj_w,
-								uint32 &tak_w, uint32 &guk_l, uint32 &mir_l, uint32 &mmc_l, uint32 &ruj_l, uint32 &tak_l)
+bool Database::GetAdventureStats(uint32 char_id, AdventureStats_Struct *as)
 {
 
 	std::string query = StringFormat("SELECT `guk_wins`, `mir_wins`, `mmc_wins`, `ruj_wins`, `tak_wins`, `guk_losses`, "
@@ -3546,16 +3863,18 @@ bool Database::GetAdventureStats(uint32 char_id, uint32 &guk_w, uint32 &mir_w, u
 
 	auto row = results.begin();
 
-	guk_w = atoi(row[0]);
-	mir_w = atoi(row[1]);
-	mmc_w = atoi(row[2]);
-	ruj_w = atoi(row[3]);
-	tak_w = atoi(row[4]);
-	guk_l = atoi(row[5]);
-	mir_l = atoi(row[6]);
-	mmc_l = atoi(row[7]);
-	ruj_l = atoi(row[8]);
-	tak_l = atoi(row[9]);
+	as->success.guk = atoi(row[0]);
+	as->success.mir = atoi(row[1]);
+	as->success.mmc = atoi(row[2]);
+	as->success.ruj = atoi(row[3]);
+	as->success.tak = atoi(row[4]);
+	as->failure.guk = atoi(row[5]);
+	as->failure.mir = atoi(row[6]);
+	as->failure.mmc = atoi(row[7]);
+	as->failure.ruj = atoi(row[8]);
+	as->failure.tak = atoi(row[9]);
+	as->failure.total = as->failure.guk + as->failure.mir + as->failure.mmc + as->failure.ruj + as->failure.tak;
+	as->success.total = as->success.guk + as->success.mir + as->success.mmc + as->success.ruj + as->success.tak;
 
 	return true;
 }

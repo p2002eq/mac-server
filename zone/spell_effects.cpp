@@ -1267,10 +1267,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Blind: %+i", effect_value);
 #endif
-				if (spells[spell_id].base[i] == 1)
+				// this should catch the cures
+				if (BeneficialSpell(spell_id) && spells[spell_id].buffduration == 0)
 					BuffFadeByEffect(SE_Blind);
-				// handled by client
-				// TODO: blind flag?
+				else if (!IsClient())
+					CalculateNewFearpoint();
 				break;
 			}
 
@@ -2737,7 +2738,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if (caster && IsValidSpell(spells[spell_id].base2[i])){
 					
 					if(MakeRandomInt(0, 100) <= spells[spell_id].base[i])
-						caster->SpellFinished(spells[spell_id].base2[i], this, 10, 0, -1, spells[spell_id].ResistDiff);
+						caster->SpellFinished(spells[spell_id].base2[i], this, 10, 0, -1, spells[spells[spell_id].base2[i]].ResistDiff);
 				}
 				break;
 			}
@@ -3204,55 +3205,55 @@ snare has both of them negative, yet their range should work the same:
 		case 124:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += caster_level - 50;
+				result += updownsign * (caster_level - 50);
 			break;
 
 		case 125:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 2 * (caster_level - 50);
+				result += updownsign * 2 * (caster_level - 50);
 			break;
 
 		case 126:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 3 * (caster_level - 50);
+				result += updownsign * 3 * (caster_level - 50);
 			break;
 
 		case 127:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 4 * (caster_level - 50);
+				result += updownsign * 4 * (caster_level - 50);
 			break;
 
 		case 128:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 5 * (caster_level - 50);
+				result += updownsign * 5 * (caster_level - 50);
 			break;
 
 		case 129:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 10 * (caster_level - 50);
+				result += updownsign * 10 * (caster_level - 50);
 			break;
 
 		case 130:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 15 * (caster_level - 50);
+				result += updownsign * 15 * (caster_level - 50);
 			break;
 
 		case 131:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 20 * (caster_level - 50);
+				result += updownsign * 20 * (caster_level - 50);
 			break;
 
 		case 132:	// check sign
 			result = ubase;
 			if (caster_level > 50)
-				result += 25 * (caster_level - 50);
+				result += updownsign * 25 * (caster_level - 50);
 			break;
 
 		case 137:	// used in berserker AA desperation
@@ -3394,7 +3395,10 @@ void Mob::BuffProcess()
 			{
 				if(buffs[buffs_i].UpdateClient == true)
 				{
-					CastToClient()->SendBuffDurationPacket(buffs[buffs_i].spellid, buffs[buffs_i].ticsremaining, buffs[buffs_i].casterlevel);
+					CastToClient()->SendBuffDurationPacket(buffs[buffs_i]);
+					// Hack to get UF to play nicer, RoF seems fine without it
+					if (CastToClient()->GetClientVersion() == EQClientUnderfoot && buffs[buffs_i].numhits > 0)
+						CastToClient()->SendBuffNumHitPacket(buffs[buffs_i], buffs_i);
 					buffs[buffs_i].UpdateClient = false;
 				}
 			}
@@ -3994,6 +3998,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 				rooted = false;
 				break;
 			}
+
+			case SE_Blind:
+				if (curfp && !FindType(SE_Fear))
+					curfp = false;
+				break;
 
 			case SE_Fear:
 			{
@@ -5553,64 +5562,56 @@ void Mob::CheckNumHitsRemaining(uint8 type, uint32 buff_slot, uint16 spell_id)
 	uint32 buff_max = GetMaxTotalSlots();
 
 	//Spell specific procs [Type 7,10,11]
-	if (IsValidSpell(spell_id)){
-		
-		for(uint32 d = 0; d < buff_max; d++) {
-		
-			if((buffs[d].spellid == spell_id) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
-
-				if(--buffs[d].numhits == 0) {
+	if (IsValidSpell(spell_id)) {
+		for (uint32 d = 0; d < buff_max; d++) {
+			if (buffs[d].spellid == spell_id && buffs[d].numhits > 0 &&
+					spells[buffs[d].spellid].numhitstype == type) {
+				if (--buffs[d].numhits == 0) {
 					CastOnNumHitFade(buffs[d].spellid);
-					if(!TryFadeEffect(d))
+					if (!TryFadeEffect(d))
 						BuffFadeBySlot(d, true);
+				} else if (IsClient()) { // still have numhits and client, update
+					CastToClient()->SendBuffNumHitPacket(buffs[d], d);
 				}
 			}
 		}
-	}
-
-	else if (type == 7){
-		if (buff_slot > 0){
-
-			if(--buffs[buff_slot].numhits == 0) {
+	} else if (type == 7) {
+		if (buff_slot > 0) {
+			if (--buffs[buff_slot].numhits == 0) {
 				CastOnNumHitFade(buffs[buff_slot].spellid);
-				if(!TryFadeEffect(buff_slot))
+				if (!TryFadeEffect(buff_slot))
 					BuffFadeBySlot(buff_slot , true);
-				}
+			} else if (IsClient()) { // still have numhits and client, update
+				CastToClient()->SendBuffNumHitPacket(buffs[buff_slot], buff_slot);
 			}
-
-		else {
-	
-			for(int d = 0; d < buff_max; d++) {
-			
-				if(!m_spellHitsLeft[d])
+		} else {
+			for (int d = 0; d < buff_max; d++) {
+				if (!m_spellHitsLeft[d])
 					continue;
 
-				if ((IsValidSpell(buffs[d].spellid)) && (m_spellHitsLeft[d] == buffs[d].spellid)) {
-					if(--buffs[d].numhits == 0) {
+				if (IsValidSpell(buffs[d].spellid) && m_spellHitsLeft[d] == buffs[d].spellid) {
+					if (--buffs[d].numhits == 0) {
 						CastOnNumHitFade(buffs[d].spellid);
 						m_spellHitsLeft[d] = 0;
-						if(!TryFadeEffect(d))
+						if (!TryFadeEffect(d))
 							BuffFadeBySlot(d, true);
+					} else if (IsClient()) { // still have numhits and client, update
+						CastToClient()->SendBuffNumHitPacket(buffs[d], d);
 					}
 				}
 			}
 		}
-	}
-
-
-	else{
-
-		for(uint32 d = 0; d < buff_max; d++) {
-		
-			if((IsValidSpell(buffs[d].spellid)) && (buffs[d].numhits > 0) && (spells[buffs[d].spellid].numhitstype == type)){
-			
-				if(--buffs[d].numhits == 0) {
+	} else {
+		for (uint32 d = 0; d < buff_max; d++) {
+			if (IsValidSpell(buffs[d].spellid) && buffs[d].numhits > 0 &&
+					spells[buffs[d].spellid].numhitstype == type) {
+				if (--buffs[d].numhits == 0) {
 					CastOnNumHitFade(buffs[d].spellid);
-					if(!TryFadeEffect(d)){
+					if (!TryFadeEffect(d))
 						BuffFadeBySlot(d, true);
-					}
+				} else if (IsClient()) { // still have numhits and client, update
+					CastToClient()->SendBuffNumHitPacket(buffs[d], d);
 				}
-			
 			}
 		}
 	}

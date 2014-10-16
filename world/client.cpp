@@ -1337,39 +1337,40 @@ void Client::SendApproveWorld()
 	safe_delete(outapp);
 }
 
-bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
+bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
+{
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
 	time_t bday = time(nullptr);
 	char startzone[50]={0};
 	uint32 i;
-	struct in_addr	in;
-	
+	struct in_addr in;
+
 	int stats_sum = cc->STR + cc->STA + cc->AGI + cc->DEX + cc->WIS + cc->INT + cc->CHA;
 
 	in.s_addr = GetIP();
 
-	clog(WORLD__CLIENT,"Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
-	clog(WORLD__CLIENT,"Name: %s", name);
-	clog(WORLD__CLIENT,"Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d",
-		cc->race, cc->class_, cc->gender, cc->deity, cc->start_zone);
-	clog(WORLD__CLIENT,"STR  STA  AGI  DEX  WIS  INT  CHA    Total");
-	clog(WORLD__CLIENT,"%3d  %3d  %3d  %3d  %3d  %3d  %3d     %3d",
+	clog(WORLD__CLIENT, "Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
+	clog(WORLD__CLIENT, "Name: %s", name);
+	clog(WORLD__CLIENT, "Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d  Tutorial: %s",
+		cc->race, cc->class_, cc->gender, cc->deity, cc->start_zone, cc->tutorial ? "true" : "false");
+	clog(WORLD__CLIENT, "STR  STA  AGI  DEX  WIS  INT  CHA    Total");
+	clog(WORLD__CLIENT, "%3d  %3d  %3d  %3d  %3d  %3d  %3d     %3d",
 		cc->STR, cc->STA, cc->AGI, cc->DEX, cc->WIS, cc->INT, cc->CHA,
 		stats_sum);
-	clog(WORLD__CLIENT,"Face: %d  Eye colors: %d %d", cc->face, cc->eyecolor1, cc->eyecolor2);
-	clog(WORLD__CLIENT,"Hairstyle: %d  Haircolor: %d", cc->hairstyle, cc->haircolor);
-	clog(WORLD__CLIENT,"Beard: %d  Beardcolor: %d", cc->beard, cc->beardcolor);
+	clog(WORLD__CLIENT, "Face: %d  Eye colors: %d %d", cc->face, cc->eyecolor1, cc->eyecolor2);
+	clog(WORLD__CLIENT, "Hairstyle: %d  Haircolor: %d", cc->hairstyle, cc->haircolor);
+	clog(WORLD__CLIENT, "Beard: %d  Beardcolor: %d", cc->beard, cc->beardcolor);
 
 	/* Validate the char creation struct */
-	if(ClientVersionBit & BIT_SoFAndLater) {
-		if(!CheckCharCreateInfoSoF(cc)) {
+	if (ClientVersionBit & BIT_SoFAndLater) {
+		if (!CheckCharCreateInfoSoF(cc)) {
 			clog(WORLD__CLIENT_ERR,"CheckCharCreateInfo did not validate the request (bad race/class/stats)");
 			return false;
 		}
 	} else {
-		if(!CheckCharCreateInfoTitanium(cc)) {
+		if (!CheckCharCreateInfoTitanium(cc)) {
 			clog(WORLD__CLIENT_ERR,"CheckCharCreateInfo did not validate the request (bad race/class/stats)");
 			return false;
 		}
@@ -1405,18 +1406,16 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
 	pp.lastlogin	= bday;
 	pp.level			= 1;
 	pp.points			= 5;
-	pp.cur_hp			= 1000; // 1k hp during dev only 
+	pp.cur_hp			= 1000; // 1k hp during dev only
 	pp.hunger_level = 6000;
 	pp.thirst_level = 6000;
 
-	/* Racial Languages */
-	SetRacialLanguages( &pp );
-	SetRaceStartingSkills( &pp );
-	SetClassStartingSkills( &pp ); 
+	/* Set Racial and Class specific language and skills */
+	SetRacialLanguages(&pp);
+	SetRaceStartingSkills(&pp);
+	SetClassStartingSkills(&pp);
 	SetClassLanguages(&pp);
 	pp.skills[SkillSenseHeading] = 200;
-	// Some one fucking fix this to use a field name. -Doodman
-	//pp.unknown3596[28] = 15; // @bp: This is to enable disc usage
 //	strcpy(pp.servername, WorldConfig::get()->ShortName.c_str());
 
 
@@ -1429,68 +1428,70 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
 	for(i = 0; i < BUFF_COUNT; i++)
 		pp.buffs[i].spellid = 0xFFFF;
 
-	/*
-		Was memset(pp.unknown3704, 0xffffffff, 8);
-		but I dont think thats what you really wanted to do...
-		memset is byte based
-	*/
-
 	/* If server is PVP by default, make all character set to it. */
 	pp.pvp = database.GetServerType() == 1 ? 1 : 0;
 
 	/* If it is an SoF Client and the SoF Start Zone rule is set, send new chars there */
-	if((ClientVersionBit & BIT_SoFAndLater) && (RuleI(World, SoFStartZoneID) > 0)) {
-		clog(WORLD__CLIENT,"Found 'SoFStartZoneID' rule setting: %i", (RuleI(World, SoFStartZoneID)));
-		pp.zone_id = (RuleI(World, SoFStartZoneID));
-		if(pp.zone_id)
+	if (ClientVersionBit & BIT_SoFAndLater && RuleI(World, SoFStartZoneID) > 0) {
+		clog(WORLD__CLIENT,"Found 'SoFStartZoneID' rule setting: %i", RuleI(World, SoFStartZoneID));
+		pp.zone_id = RuleI(World, SoFStartZoneID);
+		if (pp.zone_id)
 			database.GetSafePoints(pp.zone_id, 0, &pp.x, &pp.y, &pp.z);
 		else
-			clog(WORLD__CLIENT_ERR,"Error getting zone id for Zone ID %i", (RuleI(World, SoFStartZoneID)));
-	}
-	else {
+			clog(WORLD__CLIENT_ERR,"Error getting zone id for Zone ID %i", RuleI(World, SoFStartZoneID));
+	} else {
 		/* if there's a startzone variable put them in there */
-		if(database.GetVariable("startzone", startzone, 50)) {
+		if (database.GetVariable("startzone", startzone, 50)) {
 			clog(WORLD__CLIENT,"Found 'startzone' variable setting: %s", startzone);
 			pp.zone_id = database.GetZoneID(startzone);
-			if(pp.zone_id)
+			if (pp.zone_id)
 				database.GetSafePoints(pp.zone_id, 0, &pp.x, &pp.y, &pp.z);
 			else
 				clog(WORLD__CLIENT_ERR,"Error getting zone id for '%s'", startzone);
-		}
-		else{	/* otherwise use normal starting zone logic */
+		} else {	/* otherwise use normal starting zone logic */
 			bool ValidStartZone = false;
-
-			if(ClientVersionBit & BIT_TitaniumAndEarlier)
+			if (ClientVersionBit & BIT_TitaniumAndEarlier)
 				ValidStartZone = database.GetStartZone(&pp, cc);
 			else
 				ValidStartZone = database.GetStartZoneSoF(&pp, cc);
 
-			if(!ValidStartZone)
+			if (!ValidStartZone)
 				return false;
 		}
 	}
 
-	if(!pp.zone_id) {
+	/* just in case  */
+	if (!pp.zone_id) {
 		pp.zone_id = 1;		// qeynos
 		pp.x = pp.y = pp.z = -1;
 	}
 
-	if(!pp.binds[0].zoneId) {
-		pp.binds[0].zoneId = pp.zone_id;
-		pp.binds[0].x = pp.x;
-		pp.binds[0].y = pp.y;
-		pp.binds[0].z = pp.z;
-		pp.binds[0].heading = pp.heading;
+	/* Set Home Binds */
+	pp.binds[4].zoneId = pp.zone_id;
+	pp.binds[4].x = pp.x;
+	pp.binds[4].y = pp.y;
+	pp.binds[4].z = pp.z;
+	pp.binds[4].heading = pp.heading;
+
+	/* Overrides if we have the tutorial flag set! */
+	if (cc->tutorial && RuleB(World, EnableTutorialButton)) {
+		pp.zone_id = RuleI(World, TutorialZoneID);
+		database.GetSafePoints(pp.zone_id, 0, &pp.x, &pp.y, &pp.z);
 	}
 
-	/* Set Starting city */
-	pp.binds[4] = pp.binds[0];
+	/* Will either be the same as home or tutorial */
+	pp.binds[0].zoneId = pp.zone_id;
+	pp.binds[0].x = pp.x;
+	pp.binds[0].y = pp.y;
+	pp.binds[0].z = pp.z;
+	pp.binds[0].heading = pp.heading;
 
-
-	clog(WORLD__CLIENT,"Current location: %s  %0.2f, %0.2f, %0.2f, %0.2f",
-		database.GetZoneName(pp.zone_id), pp.x, pp.y, pp.z, pp.heading);
-	clog(WORLD__CLIENT,"Bind location: %s  %0.2f, %0.2f, %0.2f",
-		database.GetZoneName(pp.binds[0].zoneId), pp.binds[0].x, pp.binds[0].y, pp.binds[0].z);
+	clog(WORLD__CLIENT,"Current location: %s (%d)  %0.2f, %0.2f, %0.2f, %0.2f",
+		database.GetZoneName(pp.zone_id), pp.zone_id, pp.x, pp.y, pp.z, pp.heading);
+	clog(WORLD__CLIENT,"Bind location: %s (%d) %0.2f, %0.2f, %0.2f",
+		database.GetZoneName(pp.binds[0].zoneId), pp.binds[0].zoneId,  pp.binds[0].x, pp.binds[0].y, pp.binds[0].z);
+	clog(WORLD__CLIENT,"Home location: %s (%d) %0.2f, %0.2f, %0.2f",
+		database.GetZoneName(pp.binds[4].zoneId), pp.binds[4].zoneId,  pp.binds[4].x, pp.binds[4].y, pp.binds[4].z);
 
 	/* Starting Items inventory */
 	database.SetStartingItems(&pp, &inv, pp.race, pp.class_, pp.deity, pp.zone_id, pp.name, GetAdmin());
@@ -1501,40 +1502,33 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
 		clog(WORLD__CLIENT_ERR,"Character creation failed: %s", pp.name);
 		return false;
 	}
-	else {
-		clog(WORLD__CLIENT,"Character creation successful: %s", pp.name);
-		return true;
-	}
+	clog(WORLD__CLIENT,"Character creation successful: %s", pp.name);
+	return true;
 }
 
 // returns true if the request is ok, false if there's an error
-bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
-	if(!cc) return false;
+bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
+{
+	if (!cc)
+		return false;
 
 	_log(WORLD__CLIENT, "Validating char creation info...");
 
 	RaceClassCombos class_combo;
 	bool found = false;
 	int combos = character_create_race_class_combos.size();
-	for(int i = 0; i < combos; ++i) {
-		if(character_create_race_class_combos[i].Class == cc->class_ &&
-			character_create_race_class_combos[i].Race == cc->race &&
-			character_create_race_class_combos[i].Deity == cc->deity) {
-				if(RuleB(World, EnableTutorialButton) &&
-					(RuleI(World, TutorialZoneID) == cc->start_zone ||
-					(character_create_race_class_combos[i].Zone == cc->start_zone))) {
-					class_combo = character_create_race_class_combos[i];
-					found = true;
-					break;
-				} else if(character_create_race_class_combos[i].Zone == cc->start_zone) {
-					class_combo = character_create_race_class_combos[i];
-					found = true;
-					break;
-				}
+	for (int i = 0; i < combos; ++i) {
+		if (character_create_race_class_combos[i].Class == cc->class_ &&
+				character_create_race_class_combos[i].Race == cc->race &&
+				character_create_race_class_combos[i].Deity == cc->deity &&
+				character_create_race_class_combos[i].Zone == cc->start_zone) {
+			class_combo = character_create_race_class_combos[i];
+			found = true;
+			break;
 		}
 	}
 
-	if(!found) {
+	if (!found) {
 		_log(WORLD__CLIENT_ERR, "Could not find class/race/deity/start_zone combination");
 		return false;
 	}
@@ -1543,15 +1537,15 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
 	uint32 allocs = character_create_allocations.size();
 	RaceClassAllocation allocation = {0};
 	found = false;
-	for(int i = 0; i < combos; ++i) {
-		if(character_create_allocations[i].Index == class_combo.AllocationIndex) {
+	for (int i = 0; i < allocs; ++i) {
+		if (character_create_allocations[i].Index == class_combo.AllocationIndex) {
 			allocation = character_create_allocations[i];
 			found = true;
 			break;
 		}
 	}
 
-	if(!found) {
+	if (!found) {
 		_log(WORLD__CLIENT_ERR, "Could not find starting stats for selected character combo, cannot verify stats");
 		return false;
 	}
@@ -1564,37 +1558,37 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
 		allocation.DefaultPointAllocation[5] +
 		allocation.DefaultPointAllocation[6];
 
-	if(cc->STR > allocation.BaseStats[0] + max_stats || cc->STR < allocation.BaseStats[0]) {
+	if (cc->STR > allocation.BaseStats[0] + max_stats || cc->STR < allocation.BaseStats[0]) {
 		_log(WORLD__CLIENT_ERR, "Strength out of range");
 		return false;
 	}
 
-	if(cc->DEX > allocation.BaseStats[1] + max_stats || cc->DEX < allocation.BaseStats[1]) {
+	if (cc->DEX > allocation.BaseStats[1] + max_stats || cc->DEX < allocation.BaseStats[1]) {
 		_log(WORLD__CLIENT_ERR, "Dexterity out of range");
 		return false;
 	}
 
-	if(cc->AGI > allocation.BaseStats[2] + max_stats || cc->AGI < allocation.BaseStats[2]) {
+	if (cc->AGI > allocation.BaseStats[2] + max_stats || cc->AGI < allocation.BaseStats[2]) {
 		_log(WORLD__CLIENT_ERR, "Agility out of range");
 		return false;
 	}
 
-	if(cc->STA > allocation.BaseStats[3] + max_stats || cc->STA < allocation.BaseStats[3]) {
+	if (cc->STA > allocation.BaseStats[3] + max_stats || cc->STA < allocation.BaseStats[3]) {
 		_log(WORLD__CLIENT_ERR, "Stamina out of range");
 		return false;
 	}
 
-	if(cc->INT > allocation.BaseStats[4] + max_stats || cc->INT < allocation.BaseStats[4]) {
+	if (cc->INT > allocation.BaseStats[4] + max_stats || cc->INT < allocation.BaseStats[4]) {
 		_log(WORLD__CLIENT_ERR, "Intelligence out of range");
 		return false;
 	}
 
-	if(cc->WIS > allocation.BaseStats[5] + max_stats || cc->WIS < allocation.BaseStats[5]) {
+	if (cc->WIS > allocation.BaseStats[5] + max_stats || cc->WIS < allocation.BaseStats[5]) {
 		_log(WORLD__CLIENT_ERR, "Wisdom out of range");
 		return false;
 	}
 
-	if(cc->CHA > allocation.BaseStats[6] + max_stats || cc->CHA < allocation.BaseStats[6]) {
+	if (cc->CHA > allocation.BaseStats[6] + max_stats || cc->CHA < allocation.BaseStats[6]) {
 		_log(WORLD__CLIENT_ERR, "Charisma out of range");
 		return false;
 	}
@@ -1607,7 +1601,7 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
 	current_stats += cc->INT - allocation.BaseStats[4];
 	current_stats += cc->WIS - allocation.BaseStats[5];
 	current_stats += cc->CHA - allocation.BaseStats[6];
-	if(current_stats > max_stats) {
+	if (current_stats > max_stats) {
 		_log(WORLD__CLIENT_ERR, "Current Stats > Maximum Stats");
 		return false;
 	}
@@ -1686,7 +1680,8 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 	{ /*Berserker*/       false, true,     false,  false,  false,  false,  false,  true,  true,  true,  false,   false, false, true,   false,  false}
 	};//Initial table by kathgar, editted by Wiz for accuracy, solar too
 
-	if(!cc) return false;
+	if (!cc)
+		return false;
 
 	_log(WORLD__CLIENT,"Validating char creation info...");
 
@@ -1700,19 +1695,16 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 
 	// if out of range looking it up in the table would crash stuff
 	// so we return from these
-	if(classtemp >= PLAYER_CLASS_COUNT)
-	{
+	if (classtemp >= PLAYER_CLASS_COUNT) {
 		_log(WORLD__CLIENT_ERR,"  class is out of range");
 		return false;
 	}
-	if(racetemp >= _TABLE_RACES)
-	{
+	if (racetemp >= _TABLE_RACES) {
 		_log(WORLD__CLIENT_ERR,"  race is out of range");
 		return false;
 	}
 
-	if(!ClassRaceLookupTable[classtemp][racetemp]) //Lookup table better than a bunch of ifs?
-	{
+	if (!ClassRaceLookupTable[classtemp][racetemp]) { //Lookup table better than a bunch of ifs?
 		_log(WORLD__CLIENT_ERR,"  invalid race/class combination");
 		// we return from this one, since if it's an invalid combination our table
 		// doesn't have meaningful values for the stats
@@ -1740,44 +1732,36 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 	// NOTE: these could just be else if, but i want to see all the stats
 	// that are messed up not just the first hit
 
-	if(bTOTAL + stat_points != cTOTAL)
-	{
+	if (bTOTAL + stat_points != cTOTAL) {
 		_log(WORLD__CLIENT_ERR,"  stat points total doesn't match expected value: expecting %d got %d", bTOTAL + stat_points, cTOTAL);
 		Charerrors++;
 	}
 
-	if(cc->STR > bSTR + stat_points || cc->STR < bSTR)
-	{
+	if (cc->STR > bSTR + stat_points || cc->STR < bSTR) {
 		_log(WORLD__CLIENT_ERR,"  stat STR is out of range");
 		Charerrors++;
 	}
-	if(cc->STA > bSTA + stat_points || cc->STA < bSTA)
-	{
+	if (cc->STA > bSTA + stat_points || cc->STA < bSTA) {
 		_log(WORLD__CLIENT_ERR,"  stat STA is out of range");
 		Charerrors++;
 	}
-	if(cc->AGI > bAGI + stat_points || cc->AGI < bAGI)
-	{
+	if (cc->AGI > bAGI + stat_points || cc->AGI < bAGI) {
 		_log(WORLD__CLIENT_ERR,"  stat AGI is out of range");
 		Charerrors++;
 	}
-	if(cc->DEX > bDEX + stat_points || cc->DEX < bDEX)
-	{
+	if (cc->DEX > bDEX + stat_points || cc->DEX < bDEX) {
 		_log(WORLD__CLIENT_ERR,"  stat DEX is out of range");
 		Charerrors++;
 	}
-	if(cc->WIS > bWIS + stat_points || cc->WIS < bWIS)
-	{
+	if (cc->WIS > bWIS + stat_points || cc->WIS < bWIS) {
 		_log(WORLD__CLIENT_ERR,"  stat WIS is out of range");
 		Charerrors++;
 	}
-	if(cc->INT > bINT + stat_points || cc->INT < bINT)
-	{
+	if (cc->INT > bINT + stat_points || cc->INT < bINT) {
 		_log(WORLD__CLIENT_ERR,"  stat INT is out of range");
 		Charerrors++;
 	}
-	if(cc->CHA > bCHA + stat_points || cc->CHA < bCHA)
-	{
+	if (cc->CHA > bCHA + stat_points || cc->CHA < bCHA) {
 		_log(WORLD__CLIENT_ERR,"  stat CHA is out of range");
 		Charerrors++;
 	}

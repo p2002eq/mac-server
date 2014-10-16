@@ -984,7 +984,7 @@ namespace SoD
 
 		OUT(lootee);
 		OUT(looter);
-		eq->slot_id = emu->slot_id + 1;
+		eq->slot_id = ServerToSoDCorpseSlot(emu->slot_id);
 		OUT(auto_loot);
 
 		FINISH_ENCODE();
@@ -1655,6 +1655,29 @@ namespace SoD
 			add_member->flags[2] = in_add_member->flags[2];
 			add_member->flags[3] = in_add_member->flags[3];
 			add_member->flags[4] = in_add_member->flags[4];
+			dest->FastQueuePacket(&outapp);
+		}
+		else if (raid_gen->action == 35)
+		{
+			RaidMOTD_Struct *inmotd = (RaidMOTD_Struct *)__emu_buffer;
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_RaidUpdate, sizeof(structs::RaidMOTD_Struct) + strlen(inmotd->motd) + 1);
+			structs::RaidMOTD_Struct *outmotd = (structs::RaidMOTD_Struct *)outapp->pBuffer;
+
+			outmotd->general.action = inmotd->general.action;
+			strn0cpy(outmotd->general.player_name, inmotd->general.player_name, 64);
+			strn0cpy(outmotd->motd, inmotd->motd, strlen(inmotd->motd) + 1);
+			dest->FastQueuePacket(&outapp);
+		}
+		else if (raid_gen->action == 14)
+		{
+			RaidLeadershipUpdate_Struct *inlaa = (RaidLeadershipUpdate_Struct *)__emu_buffer;
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_RaidUpdate, sizeof(structs::RaidLeadershipUpdate_Struct));
+			structs::RaidLeadershipUpdate_Struct *outlaa = (structs::RaidLeadershipUpdate_Struct *)outapp->pBuffer;
+
+			outlaa->action = inlaa->action;
+			strn0cpy(outlaa->player_name, inlaa->player_name, 64);
+			strn0cpy(outlaa->leader_name, inlaa->leader_name, 64);
+			memcpy(&outlaa->raid, &inlaa->raid, sizeof(RaidLeadershipAA_Struct));
 			dest->FastQueuePacket(&outapp);
 		}
 		else
@@ -2705,12 +2728,7 @@ namespace SoD
 		IN(hairstyle);
 		IN(gender);
 		IN(race);
-
-		if (RuleB(World, EnableTutorialButton) && eq->tutorial)
-			emu->start_zone = RuleI(World, TutorialZoneID);
-		else
-			emu->start_zone = eq->start_zone;
-
+		IN(start_zone);
 		IN(haircolor);
 		IN(deity);
 		IN(STR);
@@ -2723,6 +2741,7 @@ namespace SoD
 		IN(face);
 		IN(eyecolor1);
 		IN(eyecolor2);
+		IN(tutorial);
 		IN(drakkin_heritage);
 		IN(drakkin_tattoo);
 		IN(drakkin_details);
@@ -2956,7 +2975,7 @@ namespace SoD
 
 		IN(lootee);
 		IN(looter);
-		emu->slot_id = eq->slot_id - 1;
+		emu->slot_id = SoDToServerCorpseSlot(eq->slot_id);
 		IN(auto_loot);
 
 		FINISH_DIRECT_DECODE();
@@ -2978,15 +2997,40 @@ namespace SoD
 
 	DECODE(OP_RaidInvite)
 	{
-		DECODE_LENGTH_EXACT(structs::RaidGeneral_Struct);
-		SETUP_DIRECT_DECODE(RaidGeneral_Struct, structs::RaidGeneral_Struct);
+		DECODE_LENGTH_ATLEAST(structs::RaidGeneral_Struct);
 
-		strn0cpy(emu->leader_name, eq->leader_name, 64);
-		strn0cpy(emu->player_name, eq->player_name, 64);
-		IN(action);
-		IN(parameter);
-
-		FINISH_DIRECT_DECODE();
+		// This is a switch on the RaidGeneral action
+		switch (*(uint32 *)__packet->pBuffer) {
+			case 35: { // raidMOTD
+				// we don't have a nice macro for this
+				structs::RaidMOTD_Struct *__eq_buffer = (structs::RaidMOTD_Struct *)__packet->pBuffer;
+				__eq_buffer->motd[1023] = '\0';
+				size_t motd_size = strlen(__eq_buffer->motd) + 1;
+				__packet->size = sizeof(RaidMOTD_Struct) + motd_size;
+				__packet->pBuffer = new unsigned char[__packet->size];
+				RaidMOTD_Struct *emu = (RaidMOTD_Struct *)__packet->pBuffer;
+				structs::RaidMOTD_Struct *eq = (structs::RaidMOTD_Struct *)__eq_buffer;
+				strn0cpy(emu->general.player_name, eq->general.player_name, 64);
+				strn0cpy(emu->motd, eq->motd, motd_size);
+				IN(general.action);
+				IN(general.parameter);
+				FINISH_DIRECT_DECODE();
+				break;
+			}
+			case 36: { // raidPlayerNote unhandled
+				break;
+			}
+			default: {
+				DECODE_LENGTH_EXACT(structs::RaidGeneral_Struct);
+				SETUP_DIRECT_DECODE(RaidGeneral_Struct, structs::RaidGeneral_Struct);
+				strn0cpy(emu->leader_name, eq->leader_name, 64);
+				strn0cpy(emu->player_name, eq->player_name, 64);
+				IN(action);
+				IN(parameter);
+				FINISH_DIRECT_DECODE();
+				break;
+			}
+		}
 	}
 
 	DECODE(OP_ReadBook)
@@ -3074,6 +3118,7 @@ namespace SoD
 		SETUP_DIRECT_DECODE(NewCombine_Struct, structs::NewCombine_Struct);
 
 		emu->container_slot = SoDToServerSlot(eq->container_slot);
+		IN(guildtribute_slot);
 
 		FINISH_DIRECT_DECODE();
 	}
@@ -3598,6 +3643,7 @@ namespace SoD
 	static inline uint32 ServerToSoDCorpseSlot(uint32 ServerCorpse)
 	{
 		//uint32 SoDCorpse;
+		return (ServerCorpse + 1);
 	}
 
 	static inline uint32 SoDToServerSlot(uint32 SoDSlot)
@@ -3622,6 +3668,7 @@ namespace SoD
 	static inline uint32 SoDToServerCorpseSlot(uint32 SoDCorpse)
 	{
 		//uint32 ServerCorpse;
+		return (SoDCorpse - 1);
 	}
 }
 // end namespace SoD

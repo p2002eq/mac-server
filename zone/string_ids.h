@@ -163,6 +163,8 @@
 #define CANNOT_WAKE					555		//%1 tells you, 'I am unable to wake %2, master.'
 #define GUILD_NAME_IN_USE			711		//You cannot create a guild with that name, that guild already exists on this server.
 #define GM_GAINXP					1002	//[GM] You have gained %1 AXP and %2 EXP (%3).
+#define MALE_SLAYUNDEAD				1007	//%1's holy blade cleanses his target!(%2)
+#define FEMALE_SLAYUNDEAD			1008	//%1's holy blade cleanses her target!(%2)
 #define FINISHING_BLOW				1009	//%1 scores a Finishing Blow!!
 #define ASSASSINATES				1016	//%1 ASSASSINATES their victim!!
 #define CRIPPLING_BLOW				1021	//%1 lands a Crippling Blow!(%2)
@@ -275,6 +277,7 @@
 #define TOLD_NOT_ONLINE				5046	//%1 is not online at this time.
 #define PETITION_NO_DELETE			5053	//You do not have a petition in the queue.
 #define PETITION_DELETED			5054	//Your petition was successfully deleted.
+#define ALREADY_IN_RAID				5060	//%1 is already in a raid.
 #define GAIN_RAIDEXP				5085	//You gained raid experience!
 #define DUNGEON_SEALED				5141	//The gateway to the dungeon is sealed off to you.  Perhaps you would be able to enter if you needed to adventure there.
 #define ADVENTURE_COMPLETE			5147	//You received %1 points for successfully completing the adventure.

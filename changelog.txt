@@ -1,5 +1,73 @@
 EQEMu Changelog (Started on Sept 24, 2003 15:50)
 -------------------------------------------------------
+== 10/15/2014 ==
+Uleat: Cleaned up load/drop bots sqls, added '../utils/sql/git/bots/deprecated' and '../deprecated/load_bots_old.sql' (use this file on pre-player blob conversion databases.)
+Notes: I modifed the behavior of both load and drop bots to fail on the first operation if their modifications have been performed already.
+       'load_bots.sql' will explicitly add bot schema, while 'drop_bots.sql' will explicitly drop it. I also added a few lines to change
+	   a few altered tables back to their original state - as of the date in the file.
+
+== 10/13/2014 ==
+demonstar55: Partially implement leadership and raids
+	Currently working: client side only effects and stat bonuses.
+	Not working: Mark NPC, and other stuff that need extra server side support
+	Currently only UF tested (Tit and 62 may just work, others need packet work)
+
+== 10/12/2014 ==
+Akkadius: Fix for LDON Character Stat load
+
+== 10/11/2014 ==
+demonstar55: Implement Raid MOTD for UF
+	Don't forget 2014_10_11_RaidMOTD.sql!
+
+== 10/09/2014 ==
+Uleat: Added 'BOTS' conversion code to supplement the database 'PlayerProfile' blob conversion that Akkadius recently implemented.
+Note: This automatic conversion uses the view `vwbotcharactermobs` as an update vector. If you need/would like for the converter to run on
+previously and/or manually changed code, or just have a need for it to re-run, change the following in the database view and save:
+	"c.`last_login`,"				to	"c.`timelaston`,"
+	"c.`zone_id`"					to	"c.`zoneid`"
+	"FROM `character_data` AS c"	to	"FROM `character_old` AS c"
+** This will only work if you haven't deleted your `character_old` table **
+
+== 10/07/2014 ==
+demonstar55: Identified tutorial flag in all charcreate packets, reworked logic to correctly set homes binds
+
+== 10/05/2014 ==
+Uleat: Added Server<->Corpse slot translators needed for re-enumeration (inactive until phased in)
+
+== 10/03/2014 ==
+Uleat: Fixed Ti(6.2) OP_AugmentInfo translation that I broke (does not currently need and I mis-read a process)
+Uleat: Moved client patch OP_LootItem slot translation to external handlers
+
+== 10/02/2014 ==
+Kayen: Exported to PERL $client->SendSpellAnim(targetid, spellid)
+This function sends the spell graphic of a spell without actually having to cast the spell.
+
+== 10/02/2014 ==
+Uleat: First round of Ti/6.2 translators added - needed for re-enumeration
+
+== 10/01/2014 ==
+Kayen: Exported to PERL $client->SendColoredText(color, msg)
+demonstar55: Exported SendColoredText to lua
+
+== 09/30/2014 ==
+Uleat: Implemented click-casting from bag slots for clients that natively support it (RoF)
+
+== 09/28/2014 ==
+demonstar55: Add support for post June 18, 2014 Hundred Hands Effect spells (they changed the formula and stuff)
+set Spells:Jun182014HundredHandsRevamp to true if you're using a spell file from June 18, 2014+
+
+== 09/27/2014 ==
+Kayen: Implemented perl function $mob->GetSpellStat(spell_id, identifier, slot);
+Note: identifier is the stat field in spells_new, slot is used for certain effects like effectid, base,base2, max ect.
+Example $mob->GetSpellStat(121, "range"); //Returns spell range
+Example $mob->GetSpellStat(121, "effectid", 1); //Returns the the value of effectid1
+This will allow you to pull almost all the data for any spell in quest files.
+demonstar55: Move the client's SetAttackTimer to the end of Client::CalcBonuses to keep the haste in sync
+demonstar55: Correct haste/slow "stacking" rules
+demonstar55: Correct SE_AttackSpeed4 to respect unslowable
+demonstar55: Make the haste be between 1-225 like the client (<100 = slow, >100 = haste) to ...
+demonstar55: Correct Hundred Hands effect and use formula provided by devs
+
 == 09/24/2014 ==
 Uleat: Re-ordered server opcodes and handlers to give them some predictability of location (I need this for the inventory re-enumeration.)
 demonstar55: Added helper function bool EQEmu::IsTradeskill(uint32 skill)
