@@ -940,7 +940,7 @@ bool Database::CheckDatabaseConversions() {
 	// printppdebug = 1;
 
 	if (runconvert == 1){
-		printf("Running character binary blob to database conversion... \n", number_of_characters); 
+		printf("Running character binary blob to database conversion... \n"); 
 		/* Get the number of characters */
 		rquery = StringFormat("SELECT COUNT(`id`) FROM `character_`");
 		results = QueryDatabase(rquery);
@@ -2739,22 +2739,26 @@ uint32 Database::GetGroupID(const char* name){
 }
 
 /* Is this really getting used properly... A half implementation ? Akkadius */
-char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf){ 
-	leaderbuf = "";
+char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf) {
+	strcpy(leaderbuf, "");
+	uint32 group_id = 0;
+
 	std::string query = StringFormat("SELECT `groupid` FROM `group_id` WHERE `name = '%s'", name);
 	auto results = QueryDatabase(query);
-	auto row = results.begin(); uint32 group_id = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		if (row[0]){ group_id = atoi(row[0]); }
-	}
 
-	if (group_id > 0){
-		query = StringFormat("SELECT `leadername` FROM `group_leader` WHERE `gid` = '%u' AND `groupid` = %u LIMIT 1", group_id);
-		results = QueryDatabase(query);
-		for (auto row = results.begin(); row != results.end(); ++row) {
-			if (row[0]){ strcpy(leaderbuf, row[0]); }
-		}
-	}
+	for (auto row = results.begin(); row != results.end(); ++row)
+		if (row[0])
+			group_id = atoi(row[0]);
+
+	if (group_id == 0)
+		return leaderbuf;
+
+	query = StringFormat("SELECT `leadername` FROM `group_leader` WHERE `gid` = '%u' AND `groupid` = %u LIMIT 1", group_id);
+	results = QueryDatabase(query);
+
+	for (auto row = results.begin(); row != results.end(); ++row)
+		if (row[0])
+			strcpy(leaderbuf, row[0]);
 
 	return leaderbuf;
 }
