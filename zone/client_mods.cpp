@@ -1828,7 +1828,7 @@ uint16 Mob::GetInstrumentMod(uint16 spell_id) const
 
 void Client::CalcMaxEndurance()
 {
-	max_end = CalcBaseEndurance() + spellbonuses.Endurance + itembonuses.Endurance;
+	max_end = CalcBaseEndurance() + spellbonuses.Endurance + itembonuses.Endurance + aabonuses.Endurance;
 
 	if (max_end < 0) {
 		max_end = 0;

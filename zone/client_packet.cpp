@@ -8210,14 +8210,9 @@ void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 	}
 	Who_All_Struct* whoall = (Who_All_Struct*)app->pBuffer;
 
-	if (whoall->type == 0) // SoF only, for regular /who
-		entity_list.ZoneWho(this, whoall);
-	else
-	{
-		WhoAll(whoall);
-		Message(0, "Whoall request recieved. If you do not see who displayed, please inform the server admins of the time this occured and relog as you are bugged");
-		eqmac_timer.Start(250, true);
-	}
+	WhoAll(whoall);
+	eqmac_timer.Start(250, true);
+
 	return;
 }
 
