@@ -1042,6 +1042,10 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app)
 	if (!loot_cooldown_timer.Check())
 	{
 		SendEndLootErrorPacket(client);
+		//unlock corpse for others
+		if (this->BeingLootedBy = client->GetID()) {
+			BeingLootedBy = 0xFFFFFFFF;
+		}
 		return;
 	}
 
@@ -1050,6 +1054,10 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app)
 	{
 		client->Message(13, "You may not loot an item while you have an item on your cursor.");
 		SendEndLootErrorPacket(client);
+		//unlock corpse for others
+		if (this->BeingLootedBy = client->GetID()) {
+			BeingLootedBy = 0xFFFFFFFF;
+		}
 		return;
 	}
 
