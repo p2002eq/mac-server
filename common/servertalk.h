@@ -5,7 +5,7 @@
 #include "../common/packet_functions.h"
 #include "../common/eq_packet_structs.h"
 
-#define SERVER_TIMEOUT	45000	// how often keepalive gets sent
+#define SERVER_TIMEOUT	60000	// how often keepalive gets sent
 #define INTERSERVER_TIMER					10000
 #define LoginServer_StatusUpdateInterval	15000
 #define LoginServer_AuthStale				60000
