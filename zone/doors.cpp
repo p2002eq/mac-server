@@ -256,7 +256,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 				if(lockpicks->GetItem()->ItemType == ItemTypeLockPick)
 				{
 					float modskill=sender->GetSkill(SkillPickLock);
-					sender->CheckIncreaseSkill(SkillPickLock, nullptr, 1);
+					
 
 #if EQDEBUG>=5
 					LogFile->write(EQEMuLog::Debug, "Client has lockpicks: skill=%f", modskill);
@@ -266,6 +266,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 					{
 						if(!IsDoorOpen())
 						{
+							sender->CheckIncreaseSkill(SkillPickLock, nullptr, 1);
 							md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
 						}
 						else
