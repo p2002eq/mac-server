@@ -758,7 +758,7 @@ uchar* EQOldPacket::ReturnPacket(uint16 *dwLength)
 {
 	*dwLength = 0;
 	/************ ALLOCATE MEMORY ************/
-	uint32 length = 18 + dwExtraSize + 4;
+	uint32 length = 39 + dwExtraSize + 4;
 	uchar *pPacket = new uchar[length];
 	uint16 *temp    = (uint16*)pPacket;
 			    
