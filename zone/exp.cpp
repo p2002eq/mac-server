@@ -288,6 +288,12 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 			}
 			else
 				Message(CC_Yellow, "Welcome to level %i!", check_level);
+
+			if (check_level == RuleI(Character, DeathItemLossLevel))
+				Message_StringID(CC_Yellow, CORPSE_ITEM_LOST);
+
+			if (check_level == RuleI(Character, DeathExpLossLevel))
+				Message_StringID(CC_Yellow, CORPSE_EXP_LOST);
 		}
 		else 
 		{
