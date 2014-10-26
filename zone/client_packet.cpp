@@ -4722,10 +4722,10 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 	if (random < hidechance) {
 		if (GetAA(aaShroudofStealth)){
 			improved_hidden = true;
-			hidden = true;
 		}
-		else
-			hidden = true;
+		hidden = true;
+		FadePetCharmBuff();
+		DepopPet();
 	}
 	else
 	{
