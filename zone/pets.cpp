@@ -524,6 +524,28 @@ void Mob::SetPet(Mob* newpet) {
 	}
 }
 
+void Mob::DepopPet(){
+	if (HasPet())
+	{
+		Mob* mypet = GetPet();
+		SetPet(nullptr);
+		if (!mypet->IsCharmed())
+			mypet->CastToNPC()->Depop();
+	}
+}
+
+void Mob::FadePetCharmBuff()
+{
+	if ((this->GetPetType() == petCharmed))
+	{
+		Mob* formerpet = this->GetPet();
+
+		if (formerpet) {
+			formerpet->BuffFadeByEffect(SE_Charm);
+		}
+	}
+}
+
 void Mob::SetPetID(uint16 NewPetID) {
 	if (NewPetID == GetID() && NewPetID != 0)
 		return;
