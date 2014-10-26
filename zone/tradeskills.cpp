@@ -401,58 +401,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 	uint16 user_skill = GetSkill(spec->tradeskill);
 	float chance = 0.0;
-	float skillup_modifier = RuleR(Skill, TradeskillSkillUpModifier);
-	int16 thirdstat = 0;
-	int16 stat_modifier = 15;
-	uint16 success_modifier = 0;
-
-	// Rework based on the info on eqtraders.com
-	// http://mboards.eqtraders.com/eq/showthread.php?t=22246
-	// 09/10/2006 v0.1 (eq4me)
-	// 09/11/2006 v0.2 (eq4me)
-	// Todo:
-	// Implementing AAs
-	// Success modifiers based on recipes
-	// Skillup modifiers based on the rarity of the ingredients
-
-	// Some tradeskills are more eqal then others. ;-)
-	// If you want to customize the stage1 success rate do it here.
-	// Remember: skillup_modifier is (float). Lower is better
-	switch(spec->tradeskill) {
-	case SkillFletching:
-	case SkillAlchemy:
-	case SkillJewelryMaking:
-	case SkillPottery:
-		skillup_modifier += 3;
-		break;
-	case SkillBaking:
-	case SkillBrewing:
-		skillup_modifier += 2;
-		break;
-	case SkillResearch:
-		skillup_modifier += 0.01;
-		break;
-	default:
-		skillup_modifier += 1;
-		break;
-	}
-
-	// Some tradeskills take the higher of one additional stat beside INT and WIS
-	// to determine the skillup rate. Additionally these tradeskills do not have an
-	// -15 modifier on their statbonus.
-	if (spec->tradeskill == SkillFletching || spec->tradeskill == SkillMakePoison) {
-		thirdstat = GetDEX();
-		stat_modifier = 0;
-	} else if (spec->tradeskill == SkillBlacksmithing) {
-		thirdstat = GetSTR();
-		stat_modifier = 0;
-	}
-
-	int16 higher_from_int_wis = (GetINT() > GetWIS()) ? GetINT() : GetWIS();
-	int16 bonusstat = (higher_from_int_wis > thirdstat) ? higher_from_int_wis : thirdstat;
-
 	std::vector< std::pair<uint32,uint8> >::iterator itr;
-
 
 	//calculate the base success chance
 	// For trivials over 68 the chance is (skill - 0.75*trivial) +51.5
@@ -489,7 +438,6 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	}
 
 	_log(TRADESKILLS__TRACE, "...Current skill: %d , Trivial: %d , Success chance: %f percent", user_skill , spec->trivial , chance);
-	_log(TRADESKILLS__TRACE, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat , GetINT() , GetWIS() , GetDEX() , GetSTR());
 
 	float res = MakeRandomFloat(0, 99);
 	int aa_chance = 0;
@@ -626,10 +574,8 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	chance = mod_tradeskill_chance(chance, spec);
 
 	if (((spec->tradeskill==75) || GetGM() || (chance > res)) || MakeRandomInt(0, 99) < aa_chance){
-		success_modifier = 1;
-
 		if(over_trivial < 0)
-			CheckIncreaseTradeskill(bonusstat, stat_modifier, skillup_modifier, success_modifier, spec->tradeskill);
+			CheckIncreaseTradeskill(1, spec->tradeskill);
 
 		Message_StringID(4, TRADESKILL_SUCCEED, spec->name.c_str());
 
@@ -649,10 +595,8 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	}
 	/* Tradeskill Fail */
 	else {
-		success_modifier = 2; // Halves the chance
-
 		if(over_trivial < 0)
-			CheckIncreaseTradeskill(bonusstat, stat_modifier, skillup_modifier, success_modifier, spec->tradeskill);
+			CheckIncreaseTradeskill(2, spec->tradeskill);
 
 		Message_StringID(MT_Emote,TRADESKILL_FAILED);
 
@@ -696,32 +640,82 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	return(false);
 }
 
-void Client::CheckIncreaseTradeskill(int16 bonusstat, int16 stat_modifier, float skillup_modifier, uint16 success_modifier, SkillUseTypes tradeskill)
+void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes tradeskill)
 {
+	float skillup_modifier = RuleR(Skill, TradeskillSkillUpModifier);
+	// Rework based on the info on eqtraders.com
+	// http://mboards.eqtraders.com/eq/showthread.php?t=22246
+	// 09/10/2006 v0.1 (eq4me)
+	// 09/11/2006 v0.2 (eq4me)
+	// Todo:
+	// Implementing AAs
+	// Success modifiers based on recipes
+	// Skillup modifiers based on the rarity of the ingredients
+	// Some tradeskills are more eqal then others. ;-)
+	// If you want to customize the stage1 success rate do it here.
+	// Remember: skillup_modifier is (float). Lower is better
+	switch (tradeskill) {
+	case SkillFletching:
+	case SkillAlchemy:
+	case SkillJewelryMaking:
+	case SkillPottery:
+		skillup_modifier += 3;
+		break;
+	case SkillBaking:
+	case SkillBrewing:
+		skillup_modifier += 2;
+		break;
+	case SkillResearch:
+		skillup_modifier += 0.01;
+		break;
+	default:
+		skillup_modifier += 1;
+		break;
+	}
+
+	// Some tradeskills take the higher of one additional stat beside INT and WIS
+	// to determine the skillup rate. Additionally these tradeskills do not have an
+	// -15 modifier on their statbonus.
+	int16 thirdstat = 0;
+	int16 twoStatPenalty = 0;
+	if (tradeskill == SkillFletching || tradeskill == SkillMakePoison) {
+		thirdstat = GetDEX();
+	}
+	else if (tradeskill == SkillBlacksmithing) {
+		thirdstat = GetSTR();
+	}
+	else{
+		twoStatPenalty = 15;
+	}
+
+	int16 higher_from_int_wis = (GetINT() > GetWIS()) ? GetINT() : GetWIS();
+	int16 bonusstat = (higher_from_int_wis > thirdstat) ? higher_from_int_wis : thirdstat;
+
+	bonusstat -= twoStatPenalty;
+
+	_log(TRADESKILLS__TRACE, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat, GetINT(), GetWIS(), GetDEX(), GetSTR());
+
 	uint16 current_raw_skill = GetRawSkill(tradeskill);
 
-	if(!CanIncreaseTradeskill(tradeskill))
-		return;	//not allowed to go higher.
+	if (!CanIncreaseTradeskill(tradeskill))
+		return;   //not allowed to go higher.
 
 	float chance_stage2 = 0;
 
 	//A successfull combine doubles the stage1 chance for an skillup
 	//Some tradeskill are harder than others. See above for more.
-	float chance_stage1 = (bonusstat - stat_modifier) / (skillup_modifier * success_modifier);
+	float chance_stage1 = bonusstat / (skillup_modifier * success_modifier);
 
 	//In stage2 the only thing that matters is your current unmodified skill.
 	//If you want to customize here you probbably need to implement your own
 	//formula instead of tweaking the below one.
 	if (chance_stage1 > MakeRandomFloat(0, 99)) {
-		if (current_raw_skill < 15) {
-			//Always succeed
-			chance_stage2 = 100;
-		} else if (current_raw_skill < 175) {
-			//From skill 16 to 174 your chance of success falls linearly from 92% to 13%.
+		if (current_raw_skill < 190) {
 			chance_stage2 = (200 - current_raw_skill) / 2;
-		} else {
-			//At skill 175, your chance of success falls linearly from 12.5% to 2.5% at skill 300.
-			chance_stage2 = 12.5 - (.08 * (current_raw_skill - 175));
+		}
+		else {
+			//At skill 190, your chance of success falls linearly to 5%.
+			chance_stage2 = 5;
 		}
 	}
 
@@ -731,11 +725,11 @@ void Client::CheckIncreaseTradeskill(int16 bonusstat, int16 stat_modifier, float
 		//Only if stage1 and stage2 succeeded you get a skillup.
 		SetSkill(tradeskill, current_raw_skill + 1);
 
-		if(title_manager.IsNewTradeSkillTitleAvailable(tradeskill, current_raw_skill + 1))
+		if (title_manager.IsNewTradeSkillTitleAvailable(tradeskill, current_raw_skill + 1))
 			NotifyNewTitlesAvailable();
 	}
 
-	_log(TRADESKILLS__TRACE, "...skillup_modifier: %f , success_modifier: %d , stat modifier: %d", skillup_modifier , success_modifier , stat_modifier);
+	_log(TRADESKILLS__TRACE, "...skillup_modifier: %f , success_modifier: %d , twoStatPenalty: %d", skillup_modifier, success_modifier, twoStatPenalty);
 	_log(TRADESKILLS__TRACE, "...Stage1 chance was: %f percent", chance_stage1);
 	_log(TRADESKILLS__TRACE, "...Stage2 chance was: %f percent. 0 percent means stage1 failed", chance_stage2);
 }
