@@ -2157,9 +2157,9 @@ void command_setlsinfo(Client *c, const Seperator *sep){
 		ServerPacket* pack = new ServerPacket(ServerOP_LSAccountUpdate, sizeof(ServerLSAccountUpdate_Struct));
 		ServerLSAccountUpdate_Struct* s = (ServerLSAccountUpdate_Struct *)pack->pBuffer;
 		s->useraccountid = c->LSAccountID();
-		strn0cpy(s->useraccount, c->AccountName(), 30);
+		strn0cpy(s->useraccount, c->AccountName(), 16);
 		strn0cpy(s->useremail, sep->arg[1], 100);
-		strn0cpy(s->userpassword, sep->arg[2], 50);
+		strn0cpy(s->userpassword, sep->arg[2], 16);
 		worldserver.SendPacket(pack);
 		c->Message(0, "Login Server update packet sent.");
 	}

@@ -74,8 +74,8 @@ LoginServer::LoginServer(const char* iAddress, uint16 iPort, const char* Account
 {
 	strn0cpy(LoginServerAddress,iAddress,256);
 	LoginServerPort = iPort;
-	strn0cpy(LoginAccount,Account,15);
-	strn0cpy(LoginPassword,Password,15);
+	strn0cpy(LoginAccount,Account,16);
+	strn0cpy(LoginPassword,Password,16);
 	LoginServerType = Type;
 	CanAccountUpdate = false;
 	tcpc = new EmuTCPConnection(true);
