@@ -3,8 +3,6 @@ REM: ****Read this first!!!****
 REM: This file requires your real IP in the place of "YourIP" when you are connecting
 REM: To the EQEmu Loginserver.
 
-REM: When you are using minilogin, Replace all IP Addresses to say 127.0.0.1
-
 REM: If you still get errors try using localhost instead of 127.0.0.1
 
 REM:--------------Start-----------------------

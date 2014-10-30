@@ -172,7 +172,6 @@ public:
 	/*
 	* Account Related
 	*/
-	uint32	GetMiniLoginAccount(char* ip);
 	void	GetAccountFromID(uint32 id, char* oAccountName, int16* oStatus);
 	uint32	CheckLogin(const char* name, const char* password, int16* oStatus = 0);
 	int16	CheckStatus(uint32 account_id);

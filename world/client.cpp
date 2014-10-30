@@ -196,13 +196,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	tmpip.s_addr = ip;
 #endif
 	uint32 id=0;
-	bool minilogin = loginserverlist.MiniLogin();
-	if(minilogin){
-		struct in_addr miniip;
-		miniip.s_addr = ip;
-		id = database.GetMiniLoginAccount(inet_ntoa(miniip));
-	}
-	else if(strncasecmp(name, "LS#", 3) == 0)
+	if (strncasecmp(name, "LS#", 3) == 0)
 		id=atoi(&name[3]);
 	else
 		id=atoi(name);
@@ -213,32 +207,14 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		clog(WORLD__CLIENT_ERR,"Error: Login server login while not connected to login server.");
 		return false;
 	}
-	if(minilogin)
-	client_list.CLEAdd(id, name, password, 0, ip, true);
 
-	if ((minilogin && (cle = client_list.CheckAuth(id,password,ip))) || (cle = client_list.CheckAuth(id, password)))
+	if (cle = client_list.CheckAuth(id, password))
 #endif
 	{
-		if (cle->AccountID() == 0 || (!minilogin && cle->LSID()==0)) {
-			clog(WORLD__CLIENT_ERR,"ID is 0. Is this server connected to minilogin?");
-			if(!minilogin)
-				clog(WORLD__CLIENT_ERR,"If so you forget the minilogin variable...");
-			else
-				clog(WORLD__CLIENT_ERR,"Could not find a minilogin account, verify ip address logging into minilogin is the same that is in your account table.");
-			return false;
-		}
-
 		cle->SetOnline();
 
 		clog(WORLD__CLIENT,"Logged in. Mode=%s",pZoning ? "(Zoning)" : "(CharSel)");
-
-		if(minilogin){
-			WorldConfig::DisableStats();
-			clog(WORLD__CLIENT,"MiniLogin Account #%d",cle->AccountID());
-		}
-		else {
-			clog(WORLD__CLIENT,"LS Account #%d",cle->LSID());
-		}
+		clog(WORLD__CLIENT,"LS Account #%d",cle->LSID());
 
 		const WorldConfig *Config=WorldConfig::get();
 
@@ -311,27 +287,35 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	outapp->pBuffer = new uchar[1];
 	outapp->size = 1;
 
+	clog(WORLD__CLIENT, "common/client.cpp line 316 pass");
 	bool valid = false;
-	if(!database.CheckNameFilter(char_name)) { 
+	if (!database.CheckNameFilter(char_name)) {
+		clog(WORLD__CLIENT, "Invalid name");
 		valid = false; 
 	}
 	/* Name must begin with an upper-case letter. */
-	else if (islower(char_name[0])) { 
+	else if (islower(char_name[0])) {
+		clog(WORLD__CLIENT, "Must begin with uppercase");
 		valid = false; 
 	} 
-	else if (database.ReserveName(GetAccountID(), char_name)) { 
+	else if (database.ReserveName(GetAccountID(), char_name)) {
+		clog(WORLD__CLIENT, "common/client.cpp line 327 pass");
 		valid = true; 	
 	}
-	else { 
+	else {
+		clog(WORLD__CLIENT, "common/client.cpp line 332 pass");
 		valid = false; 
 	}
 
+	clog(WORLD__CLIENT, "common/client.cpp line 336 pass");
 	outapp->pBuffer[0] = valid? 1 : 0;
 	QueuePacket(outapp);
 	safe_delete(outapp);
+	clog(WORLD__CLIENT, "common/client.cpp line 340 pass");
 
 	if (!valid)
 		memset(char_name, 0, sizeof(char_name));
+	clog(WORLD__CLIENT, "common/client.cpp line 344 pass");
 
 	return true;
 }
