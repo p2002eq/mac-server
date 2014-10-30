@@ -44,11 +44,9 @@ public:
 	void SendAccountUpdate(ServerPacket* pack);
 	bool ConnectReady() { return tcpc->ConnectReady(); }
 	bool Connected() { return tcpc->Connected(); }
-	bool MiniLogin() { return minilogin; }
 	bool CanUpdate() { return CanAccountUpdate; }
 
 private:
-	bool minilogin;
 	EmuTCPConnection* tcpc;
 	char	LoginServerAddress[256];
 	uint32	LoginServerIP;

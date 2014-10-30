@@ -35,14 +35,10 @@ public:
 	bool	SendAccountUpdate(ServerPacket *pack);
 	bool	Connected();
 	bool	AllConnected();
-	bool	MiniLogin();
 	bool	CanUpdate();
 
 protected:
 	LinkedList<LoginServer*> list;
 };
-
-
-
 
 #endif /*LOGINSERVERLIST_H_*/

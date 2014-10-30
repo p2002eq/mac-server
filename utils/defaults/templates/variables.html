@@ -37,16 +37,16 @@ if (defined($gets->{"update.x"})) {
 	$q="select * from variables order by varname";
 	my $res=$EQDB->query($q);
 	if ($res) {
-		print "<table id=\"var_tab\" border=\"1\" cellspacing=\"2\" cellpadding=\"3\" class=\"zonelist\"><tr>\n";
-		printf "\t\t<th scope=\"col\" width=\"150\">Variable</th>\n";
-		printf "\t\t<th scope=\"col\" width=\"250\">Description</th>\n";
-		printf "\t\t<th scope=\"col\" width=\"260\">Value</th>\n";
+		print "<table id=\"var_tab\" width=\"100%\" border=\"1\" cellspacing=\"2\" cellpadding=\"3\" class=\"zonelist\"><tr>\n";
+		printf "\t\t<th scope=\"col\" width=\"120\">Variable</th>\n";
+		printf "\t\t<th scope=\"col\" width=\"700\">Description</th>\n";
+		printf "\t\t<th scope=\"col\">Value</th>\n";
 		printf "\t</tr>\n";
 
 		while(my $row=$res->fetch_row_hash) {
 			printf "\t\t<tr><td>%s<input id=\"var%d\" type=\"hidden\" name=\"variable%d\" value=\"%s\"></td>\n",$row->{varname},$i,$i,$row->{varname};
 			printf "\t\t<td>%s<input type=\"hidden\" name=\"info%d\" value=\"%s\"></td>\n",$row->{information},$i,$row->{information};
-			printf "\t\t<td><textarea cols=\"30\" rows=\"2\" name=\"value%d\">%s</textarea>&nbsp;<img src=\"delete.gif\" alt=\"delete\" onClick=\"del_row(%d)\"></td>\n",$i,$row->{value},$i;
+			printf "\t\t<td><textarea cols=\"100\" rows=\"1\" name=\"value%d\">%s</textarea>&nbsp;<img src=\"delete.gif\" alt=\"delete\" onClick=\"del_row(%d)\"></td>\n",$i,$row->{value},$i;
 			print "\t</tr>\n";
 			++$i;
 		}

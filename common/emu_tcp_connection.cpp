@@ -56,16 +56,13 @@ EmuTCPConnection::EmuTCPConnection(uint32 ID, EmuTCPServer* iServer, SOCKET in_s
 	id = 0;
 	Server = nullptr;
 	pOldFormat = iOldFormat;
-	#ifdef MINILOGIN
+	if (pOldFormat){
 		TCPMode = modePacket;
-		PacketMode = packetModeLogin;
-	#else
-		if (pOldFormat)
-			TCPMode = modePacket;
-		else
-			TCPMode = modeConsole;
+	}
+	else{
+		TCPMode = modeConsole;
 		PacketMode = packetModeZone;
-	#endif
+	}
 	RelayLink = 0;
 	RelayServer = false;
 	RelayCount = 0;
@@ -401,57 +398,53 @@ bool EmuTCPConnection::ConnectIP(uint32 irIP, uint16 irPort, char* errbuf) {
 		return(false);
 
 	MSendQueue.lock();
-	#ifdef MINILOGIN
+	if (pOldFormat) {
 		TCPMode = modePacket;
-	#else
-		if (pOldFormat) {
-			TCPMode = modePacket;
+	}
+	else if (TCPMode == modePacket || TCPMode == modeTransition) {
+		TCPMode = modeTransition;
+		if(PacketMode == packetModeLauncher) {
+			safe_delete_array(sendbuf);
+			sendbuf_size = 24;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODELAUNCHER**\r", sendbuf_size);
+		} else if(PacketMode == packetModeLogin) {
+			safe_delete_array(sendbuf);
+			sendbuf_size = 16;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODE**\r", sendbuf_size);
+		} else if(PacketMode == packetModeUCS) {
+			safe_delete_array(sendbuf);
+			sendbuf_size = 19;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODEUCS**\r", sendbuf_size);
 		}
-		else if (TCPMode == modePacket || TCPMode == modeTransition) {
-			TCPMode = modeTransition;
-			if(PacketMode == packetModeLauncher) {
-				safe_delete_array(sendbuf);
-				sendbuf_size = 24;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODELAUNCHER**\r", sendbuf_size);
-			} else if(PacketMode == packetModeLogin) {
-				safe_delete_array(sendbuf);
-				sendbuf_size = 16;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODE**\r", sendbuf_size);
-			} else if(PacketMode == packetModeUCS) {
-				safe_delete_array(sendbuf);
-				sendbuf_size = 19;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODEUCS**\r", sendbuf_size);
-			}
-			else if(PacketMode == packetModeQueryServ) {
-				safe_delete_array(sendbuf);
-				sendbuf_size = 18;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODEQS**\r", sendbuf_size);
-			} 
-			else if (PacketMode == packetModeWebInterface) {
-				safe_delete_array(sendbuf);
-				sendbuf_size = 18;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODEWI**\r", sendbuf_size);
-			}
-			else {
-				//default: packetModeZone
-				safe_delete_array(sendbuf);
-				sendbuf_size = 20;
-				sendbuf_used = sendbuf_size;
-				sendbuf = new uchar[sendbuf_size];
-				memcpy(sendbuf, "\0**PACKETMODEZONE**\r", sendbuf_size);
-			}
+		else if(PacketMode == packetModeQueryServ) {
+			safe_delete_array(sendbuf);
+			sendbuf_size = 18;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODEQS**\r", sendbuf_size);
+		} 
+		else if (PacketMode == packetModeWebInterface) {
+			safe_delete_array(sendbuf);
+			sendbuf_size = 18;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODEWI**\r", sendbuf_size);
 		}
-	#endif
+		else {
+			//default: packetModeZone
+			safe_delete_array(sendbuf);
+			sendbuf_size = 20;
+			sendbuf_used = sendbuf_size;
+			sendbuf = new uchar[sendbuf_size];
+			memcpy(sendbuf, "\0**PACKETMODEZONE**\r", sendbuf_size);
+		}
+	}
 	MSendQueue.unlock();
 
 	return(true);
