@@ -1437,7 +1437,7 @@ void Mob::AI_Process() {
 	else
 	{
 		if(AIfeignremember_timer->Check()) {
-			// EverHood - 6/14/06
+			// 6/14/06
 			// Improved Feign Death Memory
 			// check to see if any of our previous feigned targets have gotten up.
 			std::set<uint32>::iterator RememberedCharID;
@@ -1880,7 +1880,7 @@ void Mob::AI_Event_NoLongerEngaged() {
 		pLastFightingDelayMoving += minLastFightingDelayMoving;
 	else
 		pLastFightingDelayMoving += MakeRandomInt(minLastFightingDelayMoving, maxLastFightingDelayMoving);
-	// EverHood - So mobs don't keep running as a ghost until AIwalking_timer fires
+	// So mobs don't keep running as a ghost until AIwalking_timer fires
 	// if they were moving prior to losing all hate
 	if(IsMoving()){
 		SetRunAnimSpeed(0);
@@ -1906,7 +1906,7 @@ void Mob::AI_Event_NoLongerEngaged() {
 }
 
 //this gets called from InterruptSpell() for failure or SpellFinished() for success
-void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint8 slot) {
+void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 	if (slot == 1) {
 		uint32 recovery_time = 0;
 		if (iCastSucceeded) {

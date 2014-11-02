@@ -2605,7 +2605,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	con->playerid = GetID();
 	con->targetid = conin->targetid;
 	if (tmob->IsNPC())
-		con->faction = GetFactionLevel(character_id, tmob->GetNPCTypeID(), race, class_, deity, (tmob->IsNPC()) ? tmob->CastToNPC()->GetPrimaryFaction() : 0, tmob); // rembrant, Dec. 20, 2001; TODO: Send the players proper deity
+		con->faction = GetFactionLevel(character_id, tmob->GetNPCTypeID(), race, class_, deity, (tmob->IsNPC()) ? tmob->CastToNPC()->GetPrimaryFaction() : 0, tmob); // Dec. 20, 2001; TODO: Send the players proper deity
 	else
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
@@ -3188,7 +3188,7 @@ void Client::Handle_OP_EndLootRequest(const EQApplicationPacket *app)
 		return;
 	}
 
-	SetLooting(false);
+	SetLooting(0);
 
 	Entity* entity = entity_list.GetID(*((uint16*)app->pBuffer));
 	if (entity == 0) {
@@ -4951,8 +4951,6 @@ void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
 		return;
 	}
 
-	SetLooting(true);
-
 	Entity* ent = entity_list.GetID(*((uint32*)app->pBuffer));
 	if (ent == 0) {
 		//	Message(13, "Error: OP_LootRequest: Corpse not found (ent = 0)");
@@ -4961,6 +4959,7 @@ void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
 	}
 	if (ent->IsCorpse())
 	{
+		SetLooting(ent->GetID()); //store the entity we are looting
 		Corpse *ent_corpse = ent->CastToCorpse();
 		if (DistNoRootNoZ(ent_corpse->GetX(), ent_corpse->GetY()) > 625)
 		{
@@ -5105,6 +5104,7 @@ void Client::Handle_OP_MoveCoin(const EQApplicationPacket *app)
 	return;
 }
 
+
 void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 {
 
@@ -5173,8 +5173,14 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		}
 	}
 
-	if (mi_hack) { Message(15, "Caution: Illegal use of inaccessable bag slots! %i %i", mi->to_slot, mi->from_slot); }
-
+	if (!SwapItem(mi) && IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
+		SwapItemResync(mi);
+		
+		bool error = false;
+		InterrogateInventory(this, false, true, false, error, false);
+		if (error)
+			InterrogateInventory(this, true, false, true, error);
+	}
 
 	if (IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
 		int si = SwapItem(mi);

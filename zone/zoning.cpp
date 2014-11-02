@@ -541,9 +541,32 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			break;
 	}
 
-	if(ReadyToZone) {
+	if (ReadyToZone)
+	{
+		//if client is looting, we need to send an end loot
+		if (IsLooting())
+		{
+			Entity* entity = entity_list.GetID(entity_id_being_looted);
+			if (entity == 0)
+			{
+				Message(13, "Error: OP_EndLootRequest: Corpse not found (ent = 0)");
+				Corpse::SendLootReqErrorPacket(this);
+			}
+			else if (!entity->IsCorpse())
+			{
+				Message(13, "Error: OP_EndLootRequest: Corpse not found (!entity->IsCorpse())");
+				Corpse::SendLootReqErrorPacket(this);
+			}
+			else
+			{
+				Corpse::SendEndLootErrorPacket(this);
+				entity->CastToCorpse()->EndLoot(this, nullptr);
+			}
+			SetLooting(0);
+		}
+
 		zone_mode = zm;
-		if(zm == ZoneToBindPoint) {
+		if (zm == ZoneToBindPoint) {
 			//TODO: Find a better packet that works with EQMac on death.
 			_log(EQMAC__LOG, "Zoning packet about to be sent (ZTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMGoto, sizeof(GMGoto_Struct));
