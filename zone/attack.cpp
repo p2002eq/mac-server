@@ -450,19 +450,16 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 		&& (other->InFrontMob(this, other->GetX(), other->GetY()) || bShieldBlockFromRear)) {
 
 		float bonusShieldBlock = 0.0f;
-		bonusShieldBlock = aabonuses.ShieldBlock + spellbonuses.ShieldBlock + itembonuses.ShieldBlock;
+		bonusShieldBlock = static_cast<float>(aabonuses.ShieldBlock + spellbonuses.ShieldBlock + itembonuses.ShieldBlock);
 		RollTable[1] += bonusShieldBlock;
 	}
 
-	if(damage > 0 && (aabonuses.TwoHandBluntBlock || spellbonuses.TwoHandBluntBlock || itembonuses.TwoHandBluntBlock)
+	if(IsClient() && damage > 0 && (aabonuses.TwoHandBluntBlock || spellbonuses.TwoHandBluntBlock || itembonuses.TwoHandBluntBlock)
 		&& (other->InFrontMob(this, other->GetX(), other->GetY()) || bShieldBlockFromRear)) {
-		bool equiped2 = CastToClient()->m_inv.GetItem(MainPrimary);
-		if(equiped2) {
-			uint8 TwoHandBlunt = CastToClient()->m_inv.GetItem(MainPrimary)->GetItem()->ItemType;
+		if(CastToClient()->m_inv.GetItem(MainPrimary)) {
 			float bonusStaffBlock = 0.0f;
-			if(TwoHandBlunt == ItemType2HBlunt) {
-
-				bonusStaffBlock = aabonuses.TwoHandBluntBlock + spellbonuses.TwoHandBluntBlock + itembonuses.TwoHandBluntBlock;
+			if (CastToClient()->m_inv.GetItem(MainPrimary)->GetItem()->ItemType == ItemType2HBlunt){
+				bonusStaffBlock = static_cast<float>(aabonuses.TwoHandBluntBlock + spellbonuses.TwoHandBluntBlock + itembonuses.TwoHandBluntBlock);
 				RollTable[1] += bonusStaffBlock;
 			}
 		}
@@ -1235,15 +1232,18 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 		mlog(COMBAT__DAMAGE, "Damage calculated to %d (min %d, max %d, str %d, skill %d, DMG %d, lv %d)",
 			damage, min_hit, max_hit, GetSTR(), GetSkill(skillinuse), weapon_damage, mylevel);
 
+		int hit_chance_bonus = 0;
+
 		if(opts) {
 			damage *= opts->damage_percent;
 			damage += opts->damage_flat;
 			hate *= opts->hate_percent;
 			hate += opts->hate_flat;
+			hit_chance_bonus += opts->hit_chance;
 		}
 
 		//check to see if we hit..
-		if(!other->CheckHitChance(this, skillinuse, Hand)) {
+		if(!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus)) {
 			mlog(COMBAT__ATTACKS, "Attack missed. Damage set to 0.");
 			damage = 0;
 		} else {	//we hit, try to avoid it
@@ -1352,7 +1352,7 @@ void Client::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes att
 	}
 
 	// cut all PVP spell damage to 2/3 -solar
-	// EverHood - Blasting ourselfs is considered PvP
+	// Blasting ourselfs is considered PvP
 	//Don't do PvP mitigation if the caster is damaging himself
 	if(other && other->IsClient() && (other != this) && damage > 0) {
 		int PvPMitigation = 100;
@@ -1829,14 +1829,18 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 			other->AddToHateList(this, hate);
 
 		} else {
+
+			int hit_chance_bonus = 0;
+
 			if(opts) {
 				damage *= opts->damage_percent;
 				damage += opts->damage_flat;
 				hate *= opts->hate_percent;
 				hate += opts->hate_flat;
+				hit_chance_bonus += opts->hit_chance;
 			}
 
-			if(!other->CheckHitChance(this, skillinuse, Hand)) {
+			if(!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus)) {
 				damage = 0;	//miss
 			} else {	//hit, check for damage avoidance
 				other->AvoidDamage(this, damage);
@@ -3609,7 +3613,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		safe_delete(outapp);
 	} else {
 		//else, it is a buff tic...
-		// Everhood - So we can see our dot dmg like live shows it.
+		// So we can see our dot dmg like live shows it.
 		if(spell_id != SPELL_UNKNOWN && damage > 0 && attacker && attacker != this && attacker->IsClient()) {
 			//might filter on (attack_skill>200 && attack_skill<250), but I dont think we need it
 			attacker->FilteredMessage_StringID(attacker, MT_DoTDamage, FilterDOT,
@@ -4498,7 +4502,7 @@ int32 Mob::RuneAbsorb(int32 damage, uint16 type)
 	if (type == SE_Rune){
 		for(uint32 slot = 0; slot < buff_max; slot++) {
 			if(slot == spellbonuses.MeleeRune[1] && spellbonuses.MeleeRune[0] && buffs[slot].melee_rune && IsValidSpell(buffs[slot].spellid)){
-				uint32 melee_rune_left = buffs[slot].melee_rune;
+				int melee_rune_left = buffs[slot].melee_rune;
 				
 				if(melee_rune_left > damage)
 				{
@@ -4523,7 +4527,7 @@ int32 Mob::RuneAbsorb(int32 damage, uint16 type)
 	else{
 		for(uint32 slot = 0; slot < buff_max; slot++) {
 			if(slot == spellbonuses.AbsorbMagicAtt[1] && spellbonuses.AbsorbMagicAtt[0] && buffs[slot].magic_rune && IsValidSpell(buffs[slot].spellid)){
-				uint32 magic_rune_left = buffs[slot].magic_rune;
+				int magic_rune_left = buffs[slot].magic_rune;
 				if(magic_rune_left > damage)
 				{
 					magic_rune_left -= damage;

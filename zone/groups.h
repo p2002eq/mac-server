@@ -85,9 +85,9 @@ public:
 	uint16	GetAvgLevel();
 	bool	LearnMembers();
 	void	VerifyGroup();
-	void	BalanceHP(int32 penalty, int32 range = 0, Mob* caster = nullptr, int32 limit = 0);
-	void	BalanceMana(int32 penalty, int32 range = 0, Mob* caster = nullptr, int32 limit = 0);
-	void	HealGroup(uint32 heal_amt, Mob* caster, int32 range = 0);
+	void	BalanceHP(int32 penalty, float range = 0, Mob* caster = nullptr, int32 limit = 0);
+	void	BalanceMana(int32 penalty, float range = 0, Mob* caster = nullptr, int32 limit = 0);
+	void	HealGroup(uint32 heal_amt, Mob* caster, float range = 0);
 	int8	GetNumberNeedingHealedInGroup(int8 hpr, bool includePets);
 	void	ChangeLeader(Mob* newleader);
 	const char *GetClientNameByIndex(uint8 index);

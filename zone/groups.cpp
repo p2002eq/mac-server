@@ -867,7 +867,7 @@ void Client::LeaveGroup() {
 	isgrouped = false;
 }
 
-void Group::HealGroup(uint32 heal_amt, Mob* caster, int32 range)
+void Group::HealGroup(uint32 heal_amt, Mob* caster, float range)
 {
 	if (!caster)
 		return;
@@ -905,7 +905,7 @@ void Group::HealGroup(uint32 heal_amt, Mob* caster, int32 range)
 }
 
 
-void Group::BalanceHP(int32 penalty, int32 range, Mob* caster, int32 limit)
+void Group::BalanceHP(int32 penalty, float range, Mob* caster, int32 limit)
 {
 	if (!caster)
 		return;
@@ -955,7 +955,7 @@ void Group::BalanceHP(int32 penalty, int32 range, Mob* caster, int32 limit)
 	}
 }
 
-void Group::BalanceMana(int32 penalty, int32 range, Mob* caster, int32 limit)
+void Group::BalanceMana(int32 penalty, float range, Mob* caster, int32 limit)
 {
 	if (!caster)
 		return;
