@@ -2060,22 +2060,6 @@ bool Database::SetVariable(const char* varname_in, const char* varvalue_in) {
 	return true;
 }
 
-uint32 Database::GetMiniLoginAccount(char* ip){
-
-	std::string query = StringFormat("SELECT id FROM account WHERE minilogin_ip='%s'", ip);
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-	{
-		std::cerr << "Error in GetMiniLoginAccount query '" << query << "' " << results.ErrorMessage() << std::endl;
-		return 0;
-	}
-
-	auto row = results.begin();
-
-	return atoi(row[0]);
-}
-
 // Get zone starting points from DB
 bool Database::GetSafePoints(const char* short_name, uint32 version, float* safe_x, float* safe_y, float* safe_z, int16* minstatus, uint8* minlevel, char *flag_needed) {
 	
@@ -2271,7 +2255,7 @@ bool Database::CheckNameFilter(const char* name, bool surname)
 	if(surname)
 	{
 		// the minimum 4 is enforced by the client too
-		if(!name || strlen(name) < 3)
+		if(!name || strlen(name) < 4)
 		{
 			return false;
 		}

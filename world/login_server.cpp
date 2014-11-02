@@ -74,8 +74,8 @@ LoginServer::LoginServer(const char* iAddress, uint16 iPort, const char* Account
 {
 	strn0cpy(LoginServerAddress,iAddress,256);
 	LoginServerPort = iPort;
-	strn0cpy(LoginAccount,Account,31);
-	strn0cpy(LoginPassword,Password,31);
+	strn0cpy(LoginAccount,Account,16);
+	strn0cpy(LoginPassword,Password,16);
 	LoginServerType = Type;
 	CanAccountUpdate = false;
 	tcpc = new EmuTCPConnection(true);
@@ -215,17 +215,6 @@ bool LoginServer::InitLoginServer() {
 
 bool LoginServer::Connect() {
 	char tmp[25];
-	if(database.GetVariable("loginType",tmp,sizeof(tmp)) && strcasecmp(tmp,"MinILogin") == 0){
-		minilogin = true;
-		_log(WORLD__LS, "Setting World to MiniLogin Server type");
-	}
-	else
-		minilogin = false;
-
-	if (minilogin && WorldConfig::get()->WorldAddress.length()==0) {
-		_log(WORLD__LS_ERR, "**** For minilogin to work, you need to set the <address> element in the <world> section.");
-		return false;
-	}
 
 	char errbuf[TCPConnection_ErrorBufferSize];
 	if ((LoginServerIP = ResolveIP(LoginServerAddress, errbuf)) == 0) {
@@ -240,10 +229,7 @@ bool LoginServer::Connect() {
 
 	if (tcpc->ConnectIP(LoginServerIP, LoginServerPort, errbuf)) {
 		_log(WORLD__LS, "Connected to Loginserver: %s:%d",LoginServerAddress,LoginServerPort);
-		if (minilogin || LoginServerType == 1)
-			SendInfo();
-		else
-			SendNewInfo();
+		SendNewInfo();
 		SendStatus();
 		zoneserver_list.SendLSZones();
 		return true;

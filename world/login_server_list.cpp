@@ -169,18 +169,6 @@ bool LoginServerList::AllConnected() {
 	return true;
 }
 
-bool LoginServerList::MiniLogin() {
-	LinkedListIterator<LoginServer*> iterator(list);
-
-	iterator.Reset();
-	while(iterator.MoreElements()){
-		if(iterator.GetData()->MiniLogin())
-			return true;
-		iterator.Advance();
-	}
-	return false;
-}
-
 bool LoginServerList::CanUpdate() {
 	LinkedListIterator<LoginServer*> iterator(list);
 
