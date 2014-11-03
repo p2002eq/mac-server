@@ -421,8 +421,8 @@ public:
 	void SetDeltas(float delta_x, float delta_y, float delta_z, float delta_h);
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
 	void SendPosUpdate(uint8 iSendToSelf = 0);
-	void MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct* spu);
-	void MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu);
+	void MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct* spu);
+	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SendPosition();
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(Map::Vertex NewPosition) { x_pos = NewPosition.x; y_pos = NewPosition.y;
@@ -798,7 +798,7 @@ public:
 	void SetGrouped(bool v);
 	inline bool IsRaidGrouped() const { return israidgrouped; }
 	void SetRaidGrouped(bool v);
-	inline bool IsLooting() const { return entity_id_being_looted; }
+	inline uint16 IsLooting() const { return entity_id_being_looted; }
 	void SetLooting(uint16 val) { entity_id_being_looted = val; }
 
 	bool CheckWillAggro(Mob *mob);

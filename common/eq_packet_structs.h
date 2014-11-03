@@ -1229,58 +1229,23 @@ struct Death_Struct
 **  This is modified to support multiple client versions in encodes.
 **
 */
-struct PlayerPositionUpdateServer_Struct
-{
-/*0000*/ uint16		spawn_id;
-/*0002*/ float		delta_heading;	// change in heading
-		 float		x_pos;			// x coord
-		 uint32		padding0002;		// ***Placeholder
-/*0006*/ float		y_pos;			// y coord
-		 int32		animation;		// animation
-		 int32		padding0006;		// ***Placeholder
-/*0010*/ float		z_pos;			// z coord
-		 float		delta_y;			// change in y
-/*0014*/ float		delta_x;			// change in x
-		 int32		heading;			// heading
-		 int32		padding0014;		// ***Placeholder
-/*0018*/ float		delta_z;			// change in z
-		 int32		padding0018;		// ***Placeholder
-/*0022*/
-};
 
-/*
-** Player position update
-**	Struct sent from client->server to update
-**	player position on server
-**
-*/
-struct PlayerPositionUpdateClient_Struct
-{
-/*0000*/ uint16	spawn_id;
-/*0022*/ uint16	sequence;	//increments one each packet
-/*0004*/ float	y_pos;				// y coord
-/*0008*/ float	delta_z;			// Change in z
-/*0016*/ float	delta_x;			// Change in x
-/*0012*/ float	delta_y;			// Change in y
-/*0020*/ int32	animation:10,		// animation
-				delta_heading:10,	// change in heading
-				padding0020:12;		// ***Placeholder (mostly 1)
-/*0024*/ float	x_pos;				// x coord
-/*0028*/ float	z_pos;				// z coord
-/*0034*/ uint16	heading:12,			// Directional heading
-				padding0004:4;		// ***Placeholder
-/*0032*/ uint8	unknown0006[2];		// ***Placeholder
-/*0036*/
-};
-
-struct SpawnPositionUpdate_Struct
-{
-/*0000*/ uint16		spawn_id;
-/*0002*/ uint64		y_pos:19, z_pos:19, x_pos:19, padding002:7;
-/*0010*/ unsigned	heading:12;
-/*0012*/ signed		padding010:4;
-};
-
+  struct SpawnPositionUpdate_Struct
+  {
+	  /*0000*/ uint16	spawn_id;               // Id of spawn to update
+	  /*0002*/ uint8	anim_type; // ??
+	  /*0003*/ uint8	heading;                // Heading
+	  /*0004*/ int8		delta_heading;          // Heading Change
+	  /*0005*/ int16	x_pos;                  // New X position of spawn
+	  /*0007*/ int16	y_pos;                  // New Y position of spawn
+	  /*0009*/ int16	z_pos;                  // New Z position of spawn
+	  /*0011*/ uint32	delta_y : 10,             // Y Velocity
+						spacer1 : 1,              // ***Placeholder
+						delta_z : 10,             // Z Velocity
+						spacer2 : 1,              // ***Placeholder
+						delta_x : 10;             // Z Velocity
+	  /*015*/
+  };
 /*
 ** Spawn HP Update
 ** Length: 10 Bytes

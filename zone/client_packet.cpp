@@ -2269,13 +2269,13 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 
 	//currently accepting two sizes, one has an extra byte on the end
-	if (app->size != sizeof(PlayerPositionUpdateClient_Struct)
-	&& app->size != (sizeof(PlayerPositionUpdateClient_Struct)+1)
+	if (app->size != sizeof(SpawnPositionUpdate_Struct)
+	&& app->size != (sizeof(SpawnPositionUpdate_Struct)+1)
 	) {
-		LogFile->write(EQEMuLog::Error, "OP size error: OP_ClientUpdate expected:%i got:%i", sizeof(PlayerPositionUpdateClient_Struct), app->size);
+		LogFile->write(EQEMuLog::Error, "OP size error: OP_ClientUpdate expected:%i got:%i", sizeof(SpawnPositionUpdate_Struct), app->size);
 		return;
 	}
-	PlayerPositionUpdateClient_Struct* ppu = (PlayerPositionUpdateClient_Struct*)app->pBuffer;
+	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 
 	/* Web Interface */
 /*	if (IsClient()) {
@@ -2303,8 +2303,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			// set the boat's position deltas
 			boat->SetDeltas(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 			// send an update to everyone nearby except the client controlling the boat
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-			PlayerPositionUpdateServer_Struct* ppus = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
+			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+			SpawnPositionUpdate_Struct* ppus = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
 			boat->MakeSpawnUpdate(ppus);
 			entity_list.QueueCloseClients(boat,outapp,true,300,this,false);
 			safe_delete(outapp);
@@ -2528,15 +2528,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = y_pos;
 
 	// Outgoing client packet
-	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->animation != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
+	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->anim_type != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
 	{
 		x_pos = ppu->x_pos;
 		y_pos = ppu->y_pos;
 		z_pos = ppu->z_pos;
-		animation = ppu->animation;
+		animation = ppu->anim_type;
 
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-		PlayerPositionUpdateServer_Struct* ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+		SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
 		MakeSpawnUpdate(ppu);
 		if (gmhideme)
 			entity_list.QueueClientsStatus(this,outapp,true,Admin(),250);
@@ -7495,11 +7495,13 @@ void Client::Handle_OP_SwapSpell(const EQApplicationPacket *app)
 	m_pp.spell_book[swapspell->from_slot] = m_pp.spell_book[swapspell->to_slot];
 	m_pp.spell_book[swapspell->to_slot] = swapspelltemp;
 
-	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
-	database.DeleteCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
-
-	database.SaveCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
-	database.SaveCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
+	/* Save Spell Swaps */ 
+	if (!database.SaveCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot)){
+		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot); 
+	}
+	if (!database.SaveCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot)){
+		database.DeleteCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
+	}
 
 	QueuePacket(app);
 	return;

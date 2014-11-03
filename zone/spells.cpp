@@ -2344,8 +2344,8 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 						CastToClient()->SetKnockBackExemption(true);
 
 						action->buff_unknown = 0;
-						EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-						PlayerPositionUpdateServer_Struct* spu = (PlayerPositionUpdateServer_Struct*)outapp_push->pBuffer;
+						EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+						SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
 
 						double look_heading = caster->CalculateHeadingToTarget(GetX(), GetY());
 						look_heading /= 256;
@@ -2365,11 +2365,9 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 						spu->delta_y	= NewFloatToEQ13(new_y);
 						spu->delta_z	= NewFloatToEQ13(spells[spell_id].pushup);
 						spu->heading	= GetHeading();
-						spu->padding0002	=0;
-						spu->padding0006	=7;
-						spu->padding0014	=0x7f;
-						spu->padding0018	=0x5df27;
-						spu->animation = 0;
+						spu->spacer1	=0;
+						spu->spacer2	=0;
+						spu->anim_type = 0;
 						spu->delta_heading = NewFloatToEQ13(0);
 
 						outapp_push->priority = 6;
@@ -3590,8 +3588,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				spelltar->CastToClient()->SetKnockBackExemption(true);
 
 				action->buff_unknown = 0;
-				EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-				PlayerPositionUpdateServer_Struct* spu = (PlayerPositionUpdateServer_Struct*)outapp_push->pBuffer;
+				EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+				SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
 
 				double look_heading = CalculateHeadingToTarget(spelltar->GetX(), spelltar->GetY());
 				look_heading /= 256;
@@ -3611,11 +3609,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				spu->delta_y	= NewFloatToEQ13(new_y);
 				spu->delta_z	= NewFloatToEQ13(spells[spell_id].pushup);
 				spu->heading	= spelltar->GetHeading();
-				spu->padding0002	=0;
-				spu->padding0006	=7;
-				spu->padding0014	=0x7f;
-				spu->padding0018	=0x5df27;
-				spu->animation = 0;
+				spu->spacer1	=0;
+				spu->spacer2	=0;
+				spu->anim_type = 0;
 				spu->delta_heading = NewFloatToEQ13(0);
 				outapp_push->priority = 6;
 				entity_list.QueueClients(this, outapp_push, true);

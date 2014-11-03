@@ -2291,14 +2291,14 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 	range = range * range;
 
 	EQApplicationPacket *outapp = 0;
-	PlayerPositionUpdateServer_Struct *ppu = 0;
+	SpawnPositionUpdate_Struct *ppu = 0;
 	Mob *mob = 0;
 
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		if (outapp == 0) {
-			outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-			ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
+			outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+			ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
 		}
 		mob = it->second;
 		if (mob && !mob->IsCorpse() && (it->second != client)

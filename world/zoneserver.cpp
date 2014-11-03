@@ -424,8 +424,10 @@ bool ZoneServer::Process() {
 				break;
 			}
 			case ServerOP_ChannelMessage: {
-				ServerChannelMessage_Struct* scm = (ServerChannelMessage_Struct*)pack->pBuffer;
-				if (scm->chan_num == 20)
+				if (pack->size < sizeof(ServerChannelMessage_Struct))
+					break;
+				ServerChannelMessage_Struct* scm = (ServerChannelMessage_Struct*) pack->pBuffer;
+				if(scm->chan_num == 20)
 				{
 					UCSLink.SendMessage(scm->from, scm->message);
 					break;

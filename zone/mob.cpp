@@ -1123,8 +1123,8 @@ void Mob::SendHPUpdate()
 // this one just warps the mob to the current location
 void Mob::SendPosition()
 {
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-	PlayerPositionUpdateServer_Struct* spu = (PlayerPositionUpdateServer_Struct*)app->pBuffer;
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdate_Struct));
+	SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 	MakeSpawnUpdateNoDelta(spu);
 	move_tic_count = 0;
 	entity_list.QueueClients(this, app, true);
@@ -1133,8 +1133,8 @@ void Mob::SendPosition()
 
 // this one is for mobs on the move, with deltas - this makes them walk
 void Mob::SendPosUpdate(uint8 iSendToSelf) {
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-	PlayerPositionUpdateServer_Struct* spu = (PlayerPositionUpdateServer_Struct*)app->pBuffer;
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdate_Struct));
+	SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 	MakeSpawnUpdate(spu);
 
 	if (iSendToSelf == 2) {
@@ -1158,8 +1158,8 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 }
 
 // this is for SendPosition()
-void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
-	memset(spu,0xff,sizeof(PlayerPositionUpdateServer_Struct));
+void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
+	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
 	spu->spawn_id	= GetID();
 	spu->x_pos		= x_pos;
@@ -1169,12 +1169,10 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
 	spu->heading	= heading;
-	spu->animation	= 0;
+	spu->anim_type	= 0;
 	spu->delta_heading = 0;
-	spu->padding0002	=0;
-	spu->padding0006	=7;
-	spu->padding0014	=0x7f;
-	spu->padding0018	=0x5df27;
+	spu->spacer1	=0;
+	spu->spacer2	=0;
 
 	if(IsNPC()) {
 		std::vector<std::string> params;
@@ -1191,7 +1189,7 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu){
 }
 
 // this is for SendPosUpdate()
-void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
+void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->spawn_id	= GetID();
 	spu->x_pos		= x_pos;
 	spu->y_pos		= y_pos;
@@ -1200,14 +1198,12 @@ void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
 	spu->delta_y	= delta_y;
 	spu->delta_z	= delta_z;
 	spu->heading	= heading;
-	spu->padding0002	=0;
-	spu->padding0006	=7;
-	spu->padding0014	=0x7f;
-	spu->padding0018	=0x5df27;
+	spu->spacer1	=0;
+	spu->spacer2	=0;
 	if(this->IsClient())
-		spu->animation = animation;
+		spu->anim_type = animation;
 	else
-		spu->animation	= pRunAnimSpeed;
+		spu->anim_type	= pRunAnimSpeed;
 	spu->delta_heading =static_cast<float>(delta_heading);
 }
 
@@ -3781,8 +3777,8 @@ void Mob::DoKnockback(Mob *caster, uint32 pushback, uint32 pushup)
 	{
 		CastToClient()->SetKnockBackExemption(true);
 
-		EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-		PlayerPositionUpdateServer_Struct* spu = (PlayerPositionUpdateServer_Struct*)outapp_push->pBuffer;
+		EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+		SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
 
 		double look_heading = caster->CalculateHeadingToTarget(GetX(), GetY());
 		look_heading /= 256;
@@ -3802,11 +3798,9 @@ void Mob::DoKnockback(Mob *caster, uint32 pushback, uint32 pushup)
 		spu->delta_y	= static_cast<float>(new_y);
 		spu->delta_z	= static_cast<float>(pushup);
 		spu->heading	= GetHeading();
-		spu->padding0002	=0;
-		spu->padding0006	=7;
-		spu->padding0014	=0x7f;
-		spu->padding0018	=0x5df27;
-		spu->animation = 0;
+		spu->spacer1	=0;
+		spu->spacer2	=0;
+		spu->anim_type = 0;
 		spu->delta_heading = NewFloatToEQ13(0);
 		outapp_push->priority = 6;
 		entity_list.QueueClients(this, outapp_push, true);
