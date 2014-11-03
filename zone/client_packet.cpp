@@ -5173,14 +5173,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		}
 	}
 
-	if (!SwapItem(mi) && IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
-		SwapItemResync(mi);
-		
-		bool error = false;
-		InterrogateInventory(this, false, true, false, error, false);
-		if (error)
-			InterrogateInventory(this, true, false, true, error);
-	}
+	if (mi_hack) { Message(15, "Caution: Illegal use of inaccessable bag slots!"); }
 
 	if (IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
 		int si = SwapItem(mi);
@@ -5188,6 +5181,12 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		{
 			_log(INVENTORY__ERROR, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", SwapItem(mi), IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
 			SwapItemResync(mi);
+
+			bool error = false;
+			InterrogateInventory(this, false, true, false, error, false);
+			if (error)
+				InterrogateInventory(this, true, false, true, error);
+
 		}
 		else if (si == 2)
 		{
