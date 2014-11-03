@@ -2013,13 +2013,7 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 	for (int16 index = MAIN_BEGIN; index < EmuConstants::MAP_POSSESSIONS_SIZE; ++index)
 		if (m_inv[index])
 			instmap[index] = m_inv[index];
-	for (int16 index = EmuConstants::TRIBUTE_BEGIN; index <= EmuConstants::TRIBUTE_END; ++index)
-		if (m_inv[index])
-			instmap[index] = m_inv[index];
 	for (int16 index = EmuConstants::BANK_BEGIN; index <= EmuConstants::BANK_END; ++index)
-		if (m_inv[index])
-			instmap[index] = m_inv[index];
-	for (int16 index = EmuConstants::SHARED_BANK_BEGIN; index <= EmuConstants::SHARED_BANK_END; ++index)
 		if (m_inv[index])
 			instmap[index] = m_inv[index];
 	for (int16 index = EmuConstants::TRADE_BEGIN; index <= EmuConstants::TRADE_END; ++index)
@@ -2132,9 +2126,8 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 {
 	// very basic error checking - can be elaborated upon if more in-depth testing is needed...
 
-	if (
+	if ((head == MainCursor) ||
 		(head >= EmuConstants::EQUIPMENT_BEGIN && head <= EmuConstants::EQUIPMENT_END) ||
-		(head >= EmuConstants::TRIBUTE_BEGIN && head <= EmuConstants::TRIBUTE_END) ||
 		(head >= EmuConstants::WORLD_BEGIN && head <= EmuConstants::WORLD_END) ||
 		(head >= 8000 && head <= 8101) ||
 		(head == MainPowerSource)) {
@@ -2158,9 +2151,7 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 	}
 	else if (
 		(head >= EmuConstants::GENERAL_BEGIN && head <= EmuConstants::GENERAL_END) ||
-		(head == MainCursor) ||
 		(head >= EmuConstants::BANK_BEGIN && head <= EmuConstants::BANK_END) ||
-		(head >= EmuConstants::SHARED_BANK_BEGIN && head <= EmuConstants::SHARED_BANK_END) ||
 		(head >= EmuConstants::TRADE_BEGIN && head <= EmuConstants::TRADE_END)) {
 		switch (depth)
 		{
@@ -2176,8 +2167,6 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 			if (parent->IsType(ItemClassBook))
 				return true;
 			if (parent->IsType(ItemClassCommon)) {
-				if (!(inst->GetItem()->AugType > 0))
-					return true;
 				if (index >= EmuConstants::ITEM_COMMON_SIZE)
 					return true;
 			}
@@ -2190,8 +2179,6 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 			if (parent->IsType(ItemClassBook))
 				return true;
 			if (parent->IsType(ItemClassCommon)) {
-				if (!(inst->GetItem()->AugType > 0))
-					return true;
 				if (index >= EmuConstants::ITEM_COMMON_SIZE)
 					return true;
 			}
