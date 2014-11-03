@@ -81,7 +81,7 @@ IN_Cr(OP_ClientUpdate);
 IN_C(OP_ClientError, ClientError_Struct);
 IN_Cr(OP_TGB);
 
-IN(OP_ClientUpdate, PlayerPositionUpdateClient_Struct);
+IN(OP_ClientUpdate, SpawnPositionUpdate_Struct);
 IN(OP_AutoAttack, uint32);
 IN(OP_AutoAttack2, uint32);
 INv(OP_Consent, Consent_Struct);
@@ -309,7 +309,7 @@ OUTv(OP_ReadBook, BookText_Struct);
 OUT(OP_AAAction, UseAA_Struct);
 OUT(OP_Buff, SpellBuffFade_Struct);
 OUT(OP_ClickObject, ClickObject_Struct);
-OUT(OP_ClientUpdate, PlayerPositionUpdateServer_Struct);
+OUT(OP_ClientUpdate, SpawnPositionUpdate_Struct);
 OUT(OP_Consider, Consider_Struct);
 OUT(OP_Damage, CombatDamage_Struct);
 OUT(OP_Death, Death_Struct);

@@ -564,14 +564,14 @@ namespace Mac {
 
 		//store away the emu struct
 		unsigned char *__emu_buffer = in->pBuffer;
-		PlayerPositionUpdateServer_Struct *emu = (PlayerPositionUpdateServer_Struct *) __emu_buffer;
+		SpawnPositionUpdate_Struct *emu = (SpawnPositionUpdate_Struct *) __emu_buffer;
 
 		EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate,sizeof(structs::SpawnPositionUpdates_Struct) + sizeof(structs::SpawnPositionUpdate_Struct));
 		structs::SpawnPositionUpdates_Struct* spu = (structs::SpawnPositionUpdates_Struct*)app->pBuffer;
 	
 		spu->num_updates = 1;
-		float anim_type = (float)emu->animation / 37.0f;
-		spu->spawn_update[0].anim_type = (uint8)emu->animation;
+		float anim_type = (float)emu->anim_type / 37.0f;
+		spu->spawn_update[0].anim_type = (uint8)emu->anim_type;
 		spu->spawn_update[0].delta_heading = (uint8)emu->delta_heading;
 		spu->spawn_update[0].delta_x = (uint32)emu->delta_x;
 		spu->spawn_update[0].delta_y = (uint32)emu->delta_y;
@@ -589,7 +589,7 @@ namespace Mac {
 
 	ENCODE(OP_ClientUpdate)
 	{
-		SETUP_DIRECT_ENCODE(PlayerPositionUpdateServer_Struct, structs::SpawnPositionUpdate_Struct);
+		SETUP_DIRECT_ENCODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
 		OUT(spawn_id);
 		if(emu->y_pos >= 0)
 			eq->x_pos = int16(emu->y_pos + 0.5);
@@ -614,14 +614,14 @@ namespace Mac {
 		eq->delta_y = 0;
 		eq->delta_z = 0;
 		eq->delta_heading = 0;
-		eq->anim_type = (uint8)emu->animation;
+		eq->anim_type = (uint8)emu->anim_type;
 		eq->heading = (uint8)emu->heading;
 		FINISH_ENCODE();
 	}
 
 	DECODE(OP_ClientUpdate)
 	{
-		SETUP_DIRECT_DECODE(PlayerPositionUpdateClient_Struct, structs::SpawnPositionUpdate_Struct);
+		SETUP_DIRECT_DECODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
 		IN(spawn_id);
 	//	IN(sequence);
 		if(eq->y_pos >= 0)
@@ -645,7 +645,7 @@ namespace Mac {
 		IN(delta_y);
 		IN(delta_z);
 		emu->delta_heading = (uint8)eq->delta_heading;
-		emu->animation = eq->anim_type;
+		IN(anim_type);
 		FINISH_DIRECT_DECODE();
 	}
 
