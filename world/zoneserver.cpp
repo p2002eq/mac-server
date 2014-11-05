@@ -669,12 +669,12 @@ bool ZoneServer::Process() {
 				if(WorldConfig::get()->UpdateStats)
 					client = client_list.FindCharacter(ztz->name);
 
-				zlog(WORLD__ZONE,"ZoneToZone request for %s current zone %d req zone %d\n",
+				zlog(WORLD__ZONE,"ZoneToZone request for %s current zone %d req zone %d",
 					ztz->name, ztz->current_zone_id, ztz->requested_zone_id);
 
 				/* This is a request from the egress zone */
 				if(GetZoneID() == ztz->current_zone_id && GetInstanceID() == ztz->current_instance_id) {
-					zlog(WORLD__ZONE,"Processing ZTZ for egress from zone for client %s\n", ztz->name);
+					zlog(WORLD__ZONE,"Processing ZTZ for egress from zone for client %s", ztz->name);
 
 					if (ztz->admin < 80 && ztz->ignorerestrictions < 2 && zoneserver_list.IsZoneLocked(ztz->requested_zone_id)) {
 						ztz->response = 0;
@@ -692,20 +692,20 @@ bool ZoneServer::Process() {
 
 					/* Zone was already running*/
 					if(ingress_server) {
-						_log(WORLD__ZONE,"Found a zone already booted for %s\n", ztz->name);
+						_log(WORLD__ZONE,"Found a zone already booted for %s", ztz->name);
 						ztz->response = 1;
 					}
 					/* Boot the Zone*/
 					else {
 						int server_id;
 						if ((server_id = zoneserver_list.TriggerBootup(ztz->requested_zone_id, ztz->requested_instance_id))){
-							_log(WORLD__ZONE,"Successfully booted a zone for %s\n", ztz->name);
+							_log(WORLD__ZONE,"Successfully booted a zone for %s", ztz->name);
 							// bootup successful, ready to rock
 							ztz->response = 1;
 							ingress_server = zoneserver_list.FindByID(server_id);
 						}
 						else {
-							_log(WORLD__ZONE_ERR,"FAILED to boot a zone for %s\n", ztz->name);
+							_log(WORLD__ZONE_ERR,"FAILED to boot a zone for %s", ztz->name);
 							// bootup failed, send back error code 0
 							ztz->response = 0;
 						}
@@ -720,7 +720,7 @@ bool ZoneServer::Process() {
 				/* Response from Ingress server, route back to egress */
 				else{
 				
-					zlog(WORLD__ZONE,"Processing ZTZ for ingress to zone for client %s\n", ztz->name);
+					zlog(WORLD__ZONE,"Processing ZTZ for ingress to zone for client %s", ztz->name);
 					ZoneServer *egress_server = nullptr;
 					if(ztz->current_instance_id > 0) {
 						egress_server = zoneserver_list.FindByInstanceID(ztz->current_instance_id);

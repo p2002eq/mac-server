@@ -81,13 +81,15 @@ struct ACK_INFO
 		// Set properties to 0
 		dwARQ = 0;
 		dbASQ_high = dbASQ_low = 0;
-		dwGSQ = 0; 
+		dwGSQ = 0;
+		dwGSQcount = 0;
 	}
 
 	int16   dwARQ;			// Comment: Current request ack
 	int16   dbASQ_high : 8;	//TODO: What is this one?
 	int16	dbASQ_low  : 8;	//TODO: What is this one?
 	int16   dwGSQ;			// Comment: Main sequence number SHORT#2
+	int16	dwGSQcount;
 
 };
 
@@ -449,6 +451,15 @@ class EQOldStream : public EQStreamInterface {
 				pack->HDR.b2_ARSP = 1;          //Set ack response field
 				pack->dwARSP = CACK.dwARQ;      //ACK current ack number.
 				CACK.dwARQ = 0;
+			}
+			else if (pack->GetRawOpcode() == 0xFFFF) {
+				pack->dwARSP = dwLastCACK;
+				pack->HDR.b2_ARSP = 1;				//Set ack response field
+				CACK.dwARQ = 0;
+				no_ack_sent_timer->Disable();
+			}
+			else {
+				pack->HDR.b2_ARSP = 0;
 			}
 		}
 		// Timer Functions

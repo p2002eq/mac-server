@@ -1655,7 +1655,7 @@ void EQOldStream::IncomingARSP(uint16 dwARSP)
 { 
 	MOutboundQueue.lock();
 	EQOldPacket* pack = 0;
-	while (!ResendQueue.empty() && dwARSP - ResendQueue.top()->dwARQ >= 0)
+	while (!ResendQueue.empty() && dwARSP - ResendQueue.top()->dwARQ >= 0 || !ResendQueue.empty() && ResendQueue.top()->dwARQ > 60000 && dwARSP < 1000)
 	{
 		pack = ResendQueue.pop();
 		packetspending--;
@@ -1797,7 +1797,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		// Is this packet a resend we have already processed?
 		if(pack->dwARQ - dwLastCACK <= 0)
 		{
-			no_ack_sent_timer->Trigger(); // Added to make sure we send a new ack respond
+		//	no_ack_sent_timer->Trigger(); // Added to make sure we send a new ack respond
 			return true;
 		}
 	}
@@ -1911,14 +1911,13 @@ void EQOldStream::MakeClosePacket()
 	pack->HDR.a2_Closing    = 1;// and this
 	pack->HDR.a1_ARQ        = 1;// and this
 //      pack->dwARQ             = 1;// and this, no that was not too good
-	pack->dwARQ             = SACK.dwARQ;// try this instead
+	pack->dwARQ             = SACK.dwARQ++;// try this instead
 
 	//AddAck(pack);
 	MySendPacketStruct *p = new MySendPacketStruct;
 
 	p->buffer = pack->ReturnPacket(&p->size);
 	SendQueue.push_back(p);  
-	SACK.dwGSQ++; 
 	safe_delete(pack);//delete pack;
 	return;
 }
@@ -2407,14 +2406,14 @@ void EQOldStream::CheckTimeout(uint32 now, uint32 timeout) {
 
 	EQStreamState orig_state = GetState();
 	if (orig_state == CLOSING && !outgoing_data) {
-		_log(NET__NET_TRACE, _L "Out of data in closing state, disconnecting." __L);
+		_log(EQMAC__LOG, _L "Out of data in closing state, disconnecting." __L);
 		Close();
 	} else if (LastPacket && (now-LastPacket) > timeout) {
 		switch(orig_state) {
 		case ESTABLISHED:
 			//we timed out during normal operation. Try to be nice about it.
 			//we will almost certainly time out again waiting for the disconnect reply, but oh well.
-			_log(NET__DEBUG, _L "Timeout expired in established state. Closing connection." __L);
+			_log(EQMAC__LOG, _L "Timeout expired in established state. Closing connection." __L);
 			Close();
 			break;
 		default:
@@ -2488,6 +2487,6 @@ void EQOldStream::Close() {
 	{
 		sent_Fin = true;
 		_SendDisconnect();
-		_log(NET__DEBUG, _L "Stream closing immediate due to Close()" __L);
+		_log(EQMAC__LOG, _L "Stream closing immediate due to Close()" __L);
 	}
 }
