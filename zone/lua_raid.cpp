@@ -62,7 +62,7 @@ void Lua_Raid::SplitMoney(uint32 copper, uint32 silver, uint32 gold, uint32 plat
 	self->SplitMoney(copper, silver, gold, platinum, splitter);
 }
 
-void Lua_Raid::BalanceHP(int penalty, uint32 group_id) {
+void Lua_Raid::BalanceHP(int penalty, int32 group_id) {
 	Lua_Safe_Call_Void();
 	self->BalanceHP(penalty, group_id);
 }
