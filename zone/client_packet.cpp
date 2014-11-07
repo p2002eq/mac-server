@@ -1416,7 +1416,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
-	sze->player.spawn.z += 4;	//arbitrary lift, seems to help spawning under zone.
+	sze->player.spawn.z += 2;	//arbitrary lift, seems to help spawning under zone.
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);

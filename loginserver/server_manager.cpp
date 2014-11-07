@@ -230,7 +230,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 			}
 		}
 		slsf->usercount = (*iter)->GetPlayersOnline();
-		data_ptr += sizeof(ServerListServerFlags_Struct);
+		data_ptr += sizeof(Update_Struct);
 		++iter;
 	}
 	ServerListEndFlags_Struct* slef = (ServerListEndFlags_Struct*)data_ptr;
