@@ -114,10 +114,10 @@ struct LoginLoginFailed_Struct {
 };
 
 struct ServerList_Struct {
-	int16	numservers;
-	int8	unknown1;
-	int8	unknown2;
-	int8	showusercount; // 0xFF = show numbers, 0x0 = show "UP"
+	uint16	numservers;
+	uint8	unknown1;
+	uint8	unknown2;
+	uint8	showusercount; // 0xFF = show numbers, 0x0 = show "UP"
 	uchar	data[0];
 };
 
