@@ -215,10 +215,6 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		switch((*iter)->GetServerListID())
 		{
 		case 1:
-			{
-				slsf->greenname = 1;
-				break;
-			}
 		case 2:
 			{
 				slsf->greenname = 1;
@@ -227,10 +223,11 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		default:
 			{
 				slsf->greenname = 0;
+				break;
 			}
 		}
 		slsf->usercount = (*iter)->GetPlayersOnline();
-		data_ptr += sizeof(Update_Struct);
+		data_ptr += sizeof(ServerListServerFlags_Struct);
 		++iter;
 	}
 	ServerListEndFlags_Struct* slef = (ServerListEndFlags_Struct*)data_ptr;
