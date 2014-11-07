@@ -118,6 +118,11 @@ bool Client::Process()
 				Handle_Play((const char*)app->pBuffer);
 				break;
 			}
+		case OP_LoginBanner:
+		{
+			Handle_Banner((const char*)app->pBuffer, app->Size());
+			break;
+		}
 		default:
 			{
 				char dump[64];
@@ -408,6 +413,30 @@ void Client::SendServerListPacket()
 		DumpPacket(outapp);
 	}
 
+	connection->QueuePacket(outapp);
+	delete outapp;
+}
+
+void Client::Handle_Banner(const char* data, unsigned int size)
+{
+	char buf[501];
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginBanner, 5);
+	outapp->pBuffer;
+	memset(buf, 0, sizeof(buf));
+
+	strcpy(buf, "Welcome to The Al'Kabor Project!");
+	outapp->size += strlen("Welcome to The Al'Kabor Project!");
+
+	if (strlen(buf) == 0)
+	{
+		delete outapp;
+	}
+	outapp->pBuffer = new uchar[outapp->size];
+	outapp->pBuffer[0] = 1;
+	outapp->pBuffer[1] = 0;
+	outapp->pBuffer[2] = 0;
+	outapp->pBuffer[3] = 0;
+	strcpy((char *)&outapp->pBuffer[4], buf);
 	connection->QueuePacket(outapp);
 	delete outapp;
 }

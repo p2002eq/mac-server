@@ -29,6 +29,11 @@ struct LoginChatMessage_Struct {
 	char ChatMessage[1];
 };
 
+struct Update_Struct {
+	uint32 flag;
+	char description[0];
+};
+
 struct LoginCrypt_struct {
 	char	username[20];
 	char	password[20];

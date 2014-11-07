@@ -105,6 +105,11 @@ public:
 	void SendServerListPacket();
 
 	/**
+	* sends a banner packet to the client
+	*/
+	void Handle_Banner(const char* data, unsigned int size);
+
+	/**
 	* Sends the input packet to the client and clears our play response states.
 	*/
 	void SendPlayResponse(EQApplicationPacket *outapp);
