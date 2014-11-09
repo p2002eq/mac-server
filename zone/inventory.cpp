@@ -252,7 +252,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		inst->SetInstNoDrop(true);
 
 	// check to see if item is usable in requested slot
-	if(to_slot != MainQuest && (((to_slot >= MainCursor + 1) && (to_slot <= MainAmmo)) || (to_slot == MainPowerSource))) {
+	if(to_slot != MainQuest && (((to_slot >= MainEar1) && (to_slot <= MainAmmo)) || (to_slot == MainPowerSource))) {
 		uint32 slottest = (to_slot == MainPowerSource) ? 22 : to_slot; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
@@ -611,10 +611,10 @@ bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cur
 bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_cursor, ServerLootItem_Struct** bag_item_data)
 {
 	// #1: Try to auto equip
-	if (try_worn && inst.IsEquipable(GetBaseRace(), GetClass()) && inst.GetItem()->ReqLevel<=level && !inst.GetItem()->Attuneable)
+	if (try_worn && inst.IsEquipable(GetBaseRace(), GetClass()) && inst.GetItem()->ReqLevel<=level)
 	{
 		// too messy as-is... <watch>
-		for (int16 i = EmuConstants::EQUIPMENT_BEGIN; i < MainPowerSource; i++) // originally (i < 22)
+		for (int16 i = EmuConstants::EQUIPMENT_BEGIN; i <= EmuConstants::EQUIPMENT_END; i++) // originally (i < 22)
 		{
 			if (i == EmuConstants::GENERAL_BEGIN) {
 				break;
@@ -1886,7 +1886,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 	//
 	if(ItemToReturn->IsStackable()) {
 
-		for (int16 i = EmuConstants::GENERAL_BEGIN; i <= MainCursor+30; i++) { // changed slot max to 30 from 29. client will stack into slot 30 (bags too) before moving.
+		for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) { 
 
 			ItemInst* InvItem = m_inv.GetItem(i);
 
@@ -1949,7 +1949,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 
 	// We have tried stacking items, now just try and find an empty slot.
 
-	for (int16 i = EmuConstants::GENERAL_BEGIN; i <= MainCursor+30; i++) { // changed slot max to 30 from 29. client will move into slot 30 (bags too) before pushing onto cursor.
+	for (int16 i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++) { 
 
 		ItemInst* InvItem = m_inv.GetItem(i);
 

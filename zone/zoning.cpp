@@ -601,7 +601,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			FastQueuePacket(&outapp);
 			safe_delete(outapp);
 		}
-		else if(zm == EvacToSafeCoords  || zm == GateToBindPoint) {
+		else if(zm == EvacToSafeCoords) {
 			_log(EQMAC__LOG, "Zoning packet about to be sent (ETSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
@@ -689,10 +689,8 @@ void Mob::Gate() {
 	GoToBind();
 }
 
-void Client::Gate() {
-
-	ZoneChange_Struct *zc = new struct ZoneChange_Struct;
-	SendZoneCancel(zc);
+void Client::Gate() 
+{
 	Mob::Gate();
 }
 
