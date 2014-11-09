@@ -1914,11 +1914,9 @@ void NPC::CalcNPCRegen() {
 	// Might want to lower this to /5 rather than 10.
 	if(hp_regen == 0)
 	{
-		if(GetLevel() <= 5)
-			hp_regen = 0;
-		else if(GetLevel() > 5 && GetLevel() <= 15)
+		if (GetLevel() <= 15)
 			hp_regen = 1;
-		else if (GetLevel() > 15 && GetLevel() <= 30)
+		else if(GetLevel() > 15 && GetLevel() <= 30)
 			hp_regen = 2;
 		else if (GetLevel() > 30 && GetLevel() <= 35)
 			hp_regen = 4;
@@ -1930,7 +1928,10 @@ void NPC::CalcNPCRegen() {
 			hp_regen = 18;
 		else
 			hp_regen = 24;
-	} else
+	}
+	else if (hp_regen < 0)
+		hp_regen = 0;
+	else
 		hp_regen = hp_regen;
 
 	return;
