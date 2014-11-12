@@ -145,11 +145,6 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 				type = Animation::Weapon2H;
 				break;
 			}
-			case Skill2HPiercing: // 2H Piercing // change to Skill2HPiercing once activated
-			{
-				type = Animation::Weapon2H;
-				break;
-			}
 			case SkillHandtoHand:
 			{
 				type = Animation::Hand2Hand;

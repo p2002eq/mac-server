@@ -458,7 +458,6 @@ void Zone::LoadNewMerchantData(uint32 merchantid) {
         ml.slot = atoul(row[1]);
         ml.faction_required = atoul(row[2]);
         ml.level_required = atoul(row[3]);
-        ml.alt_currency_cost = atoul(row[4]);
         ml.classes_required = atoul(row[5]);
 		ml.probability = atoul(row[6]);
         merlist.push_back(ml);

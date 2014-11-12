@@ -1990,10 +1990,6 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 	CastSpell_Struct* castspell = (CastSpell_Struct*)app->pBuffer;
 
-	targetring_x = castspell->x_pos;
-	targetring_y = castspell->y_pos;
-	targetring_z = castspell->z_pos;
-
 #ifdef _EQDEBUG
 	LogFile->write(EQEMuLog::Debug, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[0], castspell->cs_unknown[0]);
 	LogFile->write(EQEMuLog::Debug, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[1], castspell->cs_unknown[1]);
@@ -2028,14 +2024,10 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			return;
 		}
 
-		targetring_x = castspell->x_pos;
-		targetring_y = castspell->y_pos;
-		targetring_z = castspell->z_pos;
-
 		CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
 	}
 	/* Spell Slot or Potion Belt Slot */
-	else if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT)|| (castspell->slot == TARGET_RING_SPELL_SLOT))	// ITEM or POTION cast
+	else if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
 		if (castspell->inventoryslot == INVALID_INDEX) {
@@ -2045,7 +2037,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			}
 			return;
 		}
-		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT) || (castspell->slot == TARGET_RING_SPELL_SLOT))	// sanity check
+		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
 		{
 			// packet field types will be reviewed as packet transistions occur -U
 			const ItemInst* inst = m_inv[castspell->inventoryslot]; //slot values are int16, need to check packet on this field
@@ -4839,7 +4831,6 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) {
 	OldInspectResponse_Struct* insr = (OldInspectResponse_Struct*)outapp->pBuffer;
 	Mob* tmp = entity_list.GetMob(insr->TargetID);
 	
-	int ornamentationAugtype = RuleI(Character, OrnamentationAugmentType);
 	if (tmp != 0 && tmp->IsClient())
 	{
 		tmp->CastToClient()->QueuePacket(outapp);
