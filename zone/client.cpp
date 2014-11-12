@@ -1428,15 +1428,30 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		ns->spawn.equipment[MaterialFeet]	= item->Material;
 		ns->spawn.colors[MaterialFeet].color	= GetEquipmentColor(MaterialFeet);
 	}
+	int ornamentationAugtype = RuleI(Character, OrnamentationAugmentType);
 	if ((inst = m_inv[MainPrimary]) && inst->IsType(ItemClassCommon)) {
-		item = inst->GetItem();
-		if (strlen(item->IDFile) > 2)
-			ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
+		if (inst->GetOrnamentationAug(ornamentationAugtype)) {
+			item = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+			if (strlen(item->IDFile) > 2)
+				ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
+		}
+		else {
+			item = inst->GetItem();
+			if (strlen(item->IDFile) > 2)
+				ns->spawn.equipment[MaterialPrimary] = atoi(&item->IDFile[2]);
+		}
 	}
 	if ((inst = m_inv[MainSecondary]) && inst->IsType(ItemClassCommon)) {
-		item = inst->GetItem();
-		if (strlen(item->IDFile) > 2)
-			ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
+		if (inst->GetOrnamentationAug(ornamentationAugtype)) {
+			item = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+			if (strlen(item->IDFile) > 2)
+				ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
+		}
+		else {
+			item = inst->GetItem();
+			if (strlen(item->IDFile) > 2)
+				ns->spawn.equipment[MaterialSecondary] = atoi(&item->IDFile[2]);
+		}
 	}
 
 	//these two may be related to ns->spawn.texture
@@ -2295,6 +2310,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 
 void Client::SetMaterial(int16 in_slot, uint32 item_id) {
 	const Item_Struct* item = database.GetItem(item_id);
+	int ornamentationAugtype = RuleI(Character, OrnamentationAugmentType);
 	if (item && (item->ItemClass==ItemClassCommon)) {
 		if (in_slot==MainHead)
 			m_pp.item_material[MaterialHead]		= item->Material;
@@ -2312,10 +2328,26 @@ void Client::SetMaterial(int16 in_slot, uint32 item_id) {
 			m_pp.item_material[MaterialLegs]		= item->Material;
 		else if (in_slot==MainFeet)
 			m_pp.item_material[MaterialFeet]		= item->Material;
-		else if (in_slot==MainPrimary)
-			m_pp.item_material[MaterialPrimary]		= atoi(item->IDFile+2);
-		else if (in_slot==MainSecondary)
-			m_pp.item_material[MaterialSecondary]	= atoi(item->IDFile+2);
+		else if (in_slot == MainPrimary) {
+			const ItemInst* inst = m_inv[MainPrimary];
+			if (inst && inst->GetOrnamentationAug(ornamentationAugtype)) {
+				item = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+				m_pp.item_material[MaterialPrimary] = atoi(item->IDFile + 2);
+			}
+			else {
+				m_pp.item_material[MaterialPrimary] = atoi(item->IDFile + 2);
+			}
+		}
+		else if (in_slot == MainSecondary) {
+			const ItemInst* inst = m_inv[MainSecondary];
+			if (inst && inst->GetOrnamentationAug(ornamentationAugtype)) {
+				item = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+				m_pp.item_material[MaterialSecondary] = atoi(item->IDFile + 2);
+			}
+			else {
+				m_pp.item_material[MaterialSecondary] = atoi(item->IDFile + 2);
+			}
+		}
 	}
 }
 
@@ -3930,15 +3962,22 @@ void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
 
 		const Item_Struct* item = nullptr;
 		const ItemInst* inst = nullptr;
-
+		int ornamentationAugtype = RuleI(Character, OrnamentationAugmentType);
 		for(int16 L = 0; L <= 20; L++) {
 			inst = requestee->GetInv().GetItem(L);
 
 			if(inst) {
 				item = inst->GetItem();
 				if(item) {
-					strcpy(insr->itemnames[L], item->Name);
-					insr->itemicons[L] = item->Icon;
+					if (inst && inst->GetOrnamentationAug(ornamentationAugtype)) {
+						const Item_Struct *aug_weap = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+						strcpy(insr->itemnames[L], item->Name);
+						insr->itemicons[L] = aug_weap->Icon;
+					} 
+					else {
+						strcpy(insr->itemnames[L], item->Name);
+						insr->itemicons[L] = item->Icon;
+					}
 				}
 				else
 					insr->itemicons[L] = 0xFFFFFFFF;

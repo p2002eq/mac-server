@@ -365,6 +365,10 @@ Mob::Mob(const char* in_name,
 	nimbus_effect3 = 0;
 	m_targetable = true;
 
+	targetring_x = 0.0f;
+	targetring_y = 0.0f; 
+	targetring_z = 0.0f;
+
 	flymode = FlyMode3;
 	// Pathing
 	PathingLOSState = UnknownLOS;
@@ -383,6 +387,7 @@ Mob::Mob(const char* in_name,
 	for (int i = 0; i < HIGHEST_RESIST+2; i++) { Vulnerability_Mod[i] = 0; }
 
 	emoteid = 0;
+	endur_upkeep = false;
 }
 
 Mob::~Mob()
@@ -602,7 +607,7 @@ int32 Mob::CalcMaxMana() {
 
 int32 Mob::CalcMaxHP() {
 	max_hp = (base_hp + itembonuses.HP + spellbonuses.HP);
-	max_hp += max_hp * ((aabonuses.MaxHPChange + spellbonuses.MaxHPChange + itembonuses.MaxHPChange) / 10000);
+	max_hp += max_hp * ((aabonuses.MaxHPChange + spellbonuses.MaxHPChange + itembonuses.MaxHPChange) / 10000.0f);
 	return max_hp;
 }
 
@@ -2272,7 +2277,7 @@ void Mob::WearChange(uint8 material_slot, uint16 texture, uint32 color)
 int32 Mob::GetEquipmentMaterial(uint8 material_slot) const
 {
 	const Item_Struct *item;
-
+	int ornamentationAugtype = RuleI(Character, OrnamentationAugmentType);
 	item = database.GetItem(GetEquipment(material_slot));
 	if(item != 0)
 	{
@@ -2282,10 +2287,26 @@ int32 Mob::GetEquipmentMaterial(uint8 material_slot) const
 			material_slot == MaterialSecondary
 		)
 		{
-			if(strlen(item->IDFile) > 2)
-				return atoi(&item->IDFile[2]);
-			else	//may as well try this, since were going to 0 anyways
-				return item->Material;
+			if (this->IsClient()){
+				int currMatslot = MaterialPrimary == material_slot ? MainPrimary : MainSecondary;
+				const ItemInst* inst = CastToClient()->m_inv[currMatslot];
+				if (inst && inst->GetOrnamentationAug(ornamentationAugtype)) {
+					item = inst->GetOrnamentationAug(ornamentationAugtype)->GetItem();
+					return atoi(&item->IDFile[2]);
+				}
+				else {
+					if (strlen(item->IDFile) > 2)
+						return atoi(&item->IDFile[2]);
+					else	//may as well try this, since were going to 0 anyways
+						return item->Material;
+				}
+			}
+			else {
+				if (strlen(item->IDFile) > 2)
+					return atoi(&item->IDFile[2]);
+				else	//may as well try this, since were going to 0 anyways
+					return item->Material;
+			}
 		}
 		else
 		{

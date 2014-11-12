@@ -254,7 +254,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	}
 
 	//Added to prevent MQ2 exploitation of equipping normally-unequippable/clickable items with effects and clicking them for benefits.
-	if(item_slot && IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT)))
+	if(item_slot && IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT) || (slot == TARGET_RING_SPELL_SLOT)))
 	{
 		ItemInst *itm = CastToClient()->GetInv().GetItem(item_slot);
 		int bitmask = 1;
@@ -353,6 +353,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if((IsGroupSpell(spell_id) ||
 		spell.targettype == ST_Self ||
 		spell.targettype == ST_AECaster ||
+		spell.targettype == ST_Ring ||
 		spell.targettype == ST_TargetOptional) && target_id == 0)
 	{
 		mlog(SPELLS__CASTING, "Spell %d auto-targeted the caster. Group? %d, target type %d", spell_id, IsGroupSpell(spell_id), spell.targettype);
@@ -895,7 +896,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 {
 	bool IsFromItem = false;
 
-	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && slot != POTION_BELT_SPELL_SLOT && spells[spell_id].recast_time > 1000) { // 10 is item
+	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && slot != POTION_BELT_SPELL_SLOT && slot != TARGET_RING_SPELL_SLOT && spells[spell_id].recast_time > 1000) { // 10 is item
 		if(!CastToClient()->GetPTimers().Expired(&database, pTimerSpellStart + spell_id, false)) {
 			//should we issue a message or send them a spell gem packet?
 			Message_StringID(CC_Red, SPELL_RECAST);
@@ -905,7 +906,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		}
 	}
 
-	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT)))
+	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT) || (slot == TARGET_RING_SPELL_SLOT)))
 	{
 		IsFromItem = true;
 		ItemInst *itm = CastToClient()->GetInv().GetItem(inventory_slot);
@@ -1201,7 +1202,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	int16 DeleteChargeFromSlot = -1;
 
-	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT))
+	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT) || (slot == TARGET_RING_SPELL_SLOT))
 		&& inventory_slot != 0xFFFFFFFF)	// 10 is an item
 	{
 		const ItemInst* inst = CastToClient()->GetInv()[inventory_slot];
@@ -1748,6 +1749,14 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			break;
 		}
 
+		case ST_Ring:
+		{
+			CastAction = TargetRing;
+			spell_target = nullptr;
+			ae_center = nullptr;
+			break;
+		}
+
 		default:
 		{
 			mlog(SPELLS__CASTING_ERR, "I dont know Target Type: %d   Spell: (%d) %s", spells[spell_id].targettype, spell_id, spells[spell_id].name);
@@ -2068,6 +2077,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			}
 			break;
 		}
+
+		case TargetRing:
+		{
+			entity_list.AESpell(this, nullptr, spell_id, false, resist_adjust);
+			break;
+		}
 	}
 
 	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
@@ -2082,7 +2097,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 	// if this was a spell slot or an ability use up the mana for it
 	// CastSpell already reduced the cost for it if we're a client with focus
-	if(slot != USE_ITEM_SPELL_SLOT && slot != POTION_BELT_SPELL_SLOT && mana_used > 0)
+	if(slot != USE_ITEM_SPELL_SLOT && slot != POTION_BELT_SPELL_SLOT && slot != TARGET_RING_SPELL_SLOT && mana_used > 0)
 	{
 		mlog(SPELLS__CASTING, "Spell %d: consuming %d mana", spell_id, mana_used);
 		if (!DoHPToManaCovert(mana_used))

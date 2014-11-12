@@ -1624,6 +1624,84 @@ bool ItemInst::IsNoneEmptyContainer()
 	return false;
 }
 
+// Retrieve augment inside item
+ItemInst* ItemInst::GetAugment(uint8 slot) const
+{
+	if (m_item->ItemClass == ItemClassCommon)
+		return GetItem(slot);
+
+	return nullptr;
+}
+
+ItemInst* ItemInst::GetOrnamentationAug(int ornamentationAugtype) const
+{
+	for (int i = AUG_BEGIN; i < EmuConstants::ITEM_COMMON_SIZE; i++) {
+		if (GetAugment(i) && m_item->AugSlotType[i] == ornamentationAugtype) {
+			const char *item_IDFile = GetAugment(i)->GetItem()->IDFile;
+			if (strncmp(item_IDFile, "IT64", strlen(item_IDFile)) == 0 || strncmp(item_IDFile, "IT63", strlen(item_IDFile)) == 0)
+				continue;
+
+				return this->GetAugment(i);
+		}
+	}
+
+	return nullptr;
+}
+
+uint32 ItemInst::GetAugmentItemID(uint8 slot) const
+{
+	uint32 id = NO_ITEM;
+	if (m_item->ItemClass == ItemClassCommon) {
+		return GetItemID(slot);
+	}
+
+	return id;
+}
+
+// Add an augment to the item
+void ItemInst::PutAugment(uint8 slot, const ItemInst& augment)
+{
+	if (m_item->ItemClass == ItemClassCommon)
+		PutItem(slot, augment);
+}
+
+void ItemInst::PutAugment(SharedDatabase *db, uint8 slot, uint32 item_id)
+{
+	if (item_id != NO_ITEM) {
+		const ItemInst* aug = db->CreateItem(item_id);
+		if (aug)
+		{
+			PutAugment(slot, *aug);
+			safe_delete(aug);
+		}
+	}
+}
+
+// Remove augment from item and destroy it
+void ItemInst::DeleteAugment(uint8 index)
+{
+	if (m_item->ItemClass == ItemClassCommon)
+		DeleteItem(index);
+}
+
+// Remove augment from item and return it
+ItemInst* ItemInst::RemoveAugment(uint8 index)
+{
+	if (m_item->ItemClass == ItemClassCommon)
+		return PopItem(index);
+
+	return nullptr;
+}
+
+bool ItemInst::IsAugmented()
+{
+	for (int i = AUG_BEGIN; i < EmuConstants::ITEM_COMMON_SIZE; ++i)
+		if (GetAugmentItemID(i))
+			return true;
+
+	return false;
+}
+
 // Has attack/delay?
 bool ItemInst::IsWeapon() const
 {

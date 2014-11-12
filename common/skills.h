@@ -30,7 +30,7 @@
 **
 **	(ref: eqstr_us.txt [05-10-2013])
 */
-enum SkillUseTypes : uint16
+enum SkillUseTypes
 {
 /*13855*/	Skill1HBlunt = 0,
 /*13856*/	Skill1HSlashing,
@@ -108,7 +108,7 @@ enum SkillUseTypes : uint16
 /*13869*/	SkillBerserking,
 /*13902*/	SkillTaunt,
 /*05837*/	SkillFrenzy,					// This appears to be the only listed one not grouped with the others
-            Skill2HPiercing = 99,
+/*00000*/	_SkillCount,
 
 // SoF+ specific skills
 // /*03670*/	SkillRemoveTraps,

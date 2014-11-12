@@ -219,6 +219,7 @@ struct Item_Struct {
 	// Begin SoF Fields
 	int32 SVCorruption;
 	uint32 Purity;
+	uint8 EvolvingLevel;
 	uint32 BackstabDmg;
 	uint32 DSMitigation;
 	int32 HeroicStr;

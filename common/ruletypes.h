@@ -101,6 +101,7 @@ RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods,
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_BOOL (Character, StripBuffsOnLowHP, true)
 RULE_REAL (Character, BaseRunSpeed, 0.7)
+RULE_INT ( Character, OrnamentationAugmentType, 20) //Ornamentation Augment Type
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -110,7 +111,6 @@ RULE_INT ( Guild, PlayerCreationLimit, 1)		// Only allow use of the UF+ window i
 RULE_INT ( Guild, PlayerCreationRequiredStatus, 0)	// Required admin status.
 RULE_INT ( Guild, PlayerCreationRequiredLevel, 0)	// Required Level of the player attempting to create the guild.
 RULE_INT ( Guild, PlayerCreationRequiredTime, 0)	// Required Time Entitled On Account (in Minutes) to create the guild.
-
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Skills )
@@ -234,7 +234,6 @@ RULE_INT ( Pathing, CullNodesFromStart, 1)		// Checks LOS from Start point to se
 RULE_INT ( Pathing, CullNodesFromEnd, 1)		// Checks LOS from End point to second to last node for this many nodes and removes last node if there is LOS
 RULE_REAL ( Pathing, CandidateNodeRangeXY, 400)		// When searching for path start/end nodes, only nodes within this range will be considered.
 RULE_REAL ( Pathing, CandidateNodeRangeZ, 10)		// When searching for path start/end nodes, only nodes within this range will be considered.
-
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Watermap )
@@ -308,7 +307,6 @@ RULE_INT ( Spells, AI_IdleNoSpellMaxRecast, 2000) // AI spell recast time(MS) ch
 RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a beneficial spell on self or others.
 RULE_BOOL ( Spells, SHDProcIDOffByOne, true) // pre June 2009 SHD spell procs were off by 1, they stopped doing this in June 2009 (so UF+ spell files need this false)
 RULE_BOOL ( Spells, Jun182014HundredHandsRevamp, false) // this should be true for if you import a spell file newer than June 18, 2014
-
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Combat )
@@ -524,6 +522,10 @@ RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
 RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
 RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
+RULE_CATEGORY_END()
+
+RULE_CATEGORY( Client )
+RULE_BOOL( Client, UseLiveFactionMessage, false) // Allows players to see faction adjustments like Live
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

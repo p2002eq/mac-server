@@ -58,7 +58,5 @@
 #define CORPSE_CLASS 62	//only seen on Danvi's Corpse in Akheva so far..
 
 const char* GetEQClassName(uint8 class_, uint8 level = 0);
-uint32 GetArrayEQClass(uint8 eqclass);
-uint8 GetEQArrayEQClass(uint8 eqclass);
 #endif
 

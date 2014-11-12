@@ -18,6 +18,7 @@
 
 #define USE_ITEM_SPELL_SLOT 10
 #define POTION_BELT_SPELL_SLOT 11
+#define TARGET_RING_SPELL_SLOT 12
 #define DISCIPLINE_SPELL_SLOT 10
 #define ABILITY_SPELL_SLOT 9
 
@@ -553,6 +554,7 @@ typedef enum {
 	GroupSpell,		// causes effect to caster + target's group
 	CAHateList,		// causes effect to all people on caster's hate list within some range
 	DirectionalAE,
+	TargetRing,
 	CastActUnknown
 } CastAction_type;
 
