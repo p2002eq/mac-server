@@ -380,7 +380,8 @@ loot_cooldown_timer(10)
 			}
 		}
 
-		if (removed_list.size() != 0) {
+		database.TransactionBegin();
+		if(removed_list.size() != 0) {
 			std::stringstream ss("");
 			ss << "DELETE FROM inventory WHERE charid=" << client->CharacterID();
 			ss << " AND (";
@@ -412,6 +413,12 @@ loot_cooldown_timer(10)
 
 		client->CalcBonuses(); // will only affect offline profile viewing of dead characters..unneeded overhead
 		client->Save();
+
+		Rezzed(false);
+		Save();
+		database.TransactionCommit();
+
+		return;
 	} //end "not leaving naked corpses"
 
 	Rezzed(false);

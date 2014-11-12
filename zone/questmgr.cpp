@@ -91,6 +91,7 @@ QuestManager quest_manager;
 	Client *initiator = nullptr; \
 	ItemInst* questitem = nullptr; \
 	bool depop_npc = false; \
+	std::string encounter; \
 	do { \
 		if(!quests_running_.empty()) { \
 			running_quest e = quests_running_.top(); \
@@ -98,6 +99,7 @@ QuestManager quest_manager;
 			initiator = e.initiator; \
 			questitem = e.questitem; \
 			depop_npc = e.depop_npc; \
+			encounter = e.encounter; \
 		} \
 	} while(0)
 
@@ -147,12 +149,13 @@ void QuestManager::Process() {
 	}
 }
 
-void QuestManager::StartQuest(Mob *_owner, Client *_initiator, ItemInst* _questitem) {
+void QuestManager::StartQuest(Mob *_owner, Client *_initiator, ItemInst* _questitem, std::string encounter) {
 	running_quest run;
 	run.owner = _owner;
 	run.initiator = _initiator;
 	run.questitem = _questitem;
 	run.depop_npc = false;
+	run.encounter = encounter;
 	quests_running_.push(run);
 }
 
@@ -2664,4 +2667,13 @@ ItemInst *QuestManager::GetQuestItem() const {
 	}
 
 	return nullptr;
+}
+
+std::string QuestManager::GetEncounter() const {
+	if(!quests_running_.empty()) {
+		running_quest e = quests_running_.top();
+		return e.encounter;
+	}
+
+	return "";
 }

@@ -1984,12 +1984,17 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	}
 
 	/************ CHECK PACKET MANAGER STATE ************/
-	int fragsleft = (app->size >> 9) + 1;
+	int fragsleft = (app->size >> 9);
+	
+	if(fragsleft)
+	{
+		ack_req = true; // Fragmented packets must have ackreq set
+	}
 
 	if(CheckState(EQStreamState::ESTABLISHED))
 	/************ PM STATE = ACTIVE ************/
 	{
-		while(fragsleft--)
+		for (int i=0; i<=fragsleft; i++)
 		{
 			EQOldPacket *pack = new EQOldPacket();
 			MySendPacketStruct *p = new MySendPacketStruct;
@@ -2004,7 +2009,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			AddAck(pack);
 
 			//IF NON PURE ACK THEN ALWAYS INCLUDE A ACKSEQ              // Agz: Not anymore... Always include ackseq if not a fragmented packet
-			if ((app->size >> 9) == 0 || fragsleft == (app->size >> 9)) // If this will be a fragmented packet, only include ackseq in first fragment
+			if (i==0 && ack_req) // If this will be a fragmented packet, only include ackseq in first fragment
 				pack->HDR.a4_ASQ = 1;                                   // This is what the eq servers does
 
 			/************ Caculate the next ACKSEQ/acknumber ************/
@@ -2042,18 +2047,13 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			}
 
 			/************ Check if this packet should contain op ************/
-			if(app->GetRawOpcode())
-			{
-				pack->dwOpCode = app->GetRawOpcode();
-				restore_op =  app->GetRawOpcode(); // Agz: I'm reusing messagees when sending to multiple clients.
-				app->opcode = 0; //Only first fragment contains op
+			if (app->opcode && i == 0) {
+				pack->dwOpCode = app->opcode;
 			}
 			/************ End opcode check ************/
 
 			/************ SHOULD THIS PACKET BE SENT AS A FRAGMENT ************/
-			if((app->size >> 9))
-			{
-				bFragment = true;
+			if(fragsleft) {
 				pack->HDR.a3_Fragment = 1;
 			}
 			/************ END FRAGMENT CHECK ************/
@@ -2063,26 +2063,19 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 				if(pack->HDR.a3_Fragment)
 				{
 					// If this is the last packet in the fragment group
-					if(!fragsleft)
-					{
+					if(i == fragsleft) {
 						// Calculate remaining bytes for this fragment
 						pack->dwExtraSize = app->size-510-512*((app->size/512)-1);
 					}
-					else
-					{
-						if(fragsleft == (app->size >> 9))
-						{
-							pack->dwExtraSize = 510; // The first packet in a fragment group has 510 bytes for data
-
-						}
-						else
-						{
-							pack->dwExtraSize = 512; // Other packets in a fragment group has 512 bytes for data
-						}
+					else if(i == 0) {
+						pack->dwExtraSize = 510; // The first packet in a fragment group has 510 bytes for data
 					}
-					pack->fraginfo.dwCurr = (app->size >> 9) - fragsleft;
-					pack->fraginfo.dwSeq  = dwFragSeq;
-					pack->fraginfo.dwTotal= (app->size >> 9) + 1;
+					else {
+						pack->dwExtraSize = 512; // Other packets in a fragment group has 512 bytes for data
+					}
+					pack->fraginfo.dwCurr	= i;
+					pack->fraginfo.dwSeq	= dwFragSeq;
+					pack->fraginfo.dwTotal	= fragsleft + 1;
 				}
 				else
 				{
@@ -2092,7 +2085,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 				pack->pExtra = new uchar[pack->dwExtraSize];
 				memcpy((void*)pack->pExtra, (void*)app->pBuffer, pack->dwExtraSize);
 				app->pBuffer += pack->dwExtraSize; //Increase counter
-			}       
+			}   
 
 			/******************************************/
 			/*********** !PACKET GENERATED! ***********/
@@ -2142,7 +2135,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			}
 		}//end while
 
-		if(bFragment)
+		if(fragsleft)
 		{
 			dwFragSeq++;
 		}

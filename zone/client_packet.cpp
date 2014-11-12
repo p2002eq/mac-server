@@ -2008,7 +2008,26 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		return;
 	}
 
-	if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
+	/* Memorized Spell */
+	if (m_pp.mem_spells[castspell->slot] && m_pp.mem_spells[castspell->slot] == castspell->spell_id){
+
+		uint16 spell_to_cast = 0;
+		if (castspell->slot < MAX_PP_MEMSPELL) {
+			spell_to_cast = m_pp.mem_spells[castspell->slot];
+			if (spell_to_cast != castspell->spell_id) {
+				InterruptSpell(castspell->spell_id); //CHEATER!!!
+				return;
+			}
+		}
+		else if (castspell->slot >= MAX_PP_MEMSPELL) {
+			InterruptSpell();
+			return;
+		}
+
+		CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
+	}
+	/* Spell Slot or Potion Belt Slot */
+	else if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
 		if (castspell->inventoryslot == INVALID_INDEX) {
@@ -4811,7 +4830,7 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) {
 	EQApplicationPacket* outapp = app->Copy();
 	OldInspectResponse_Struct* insr = (OldInspectResponse_Struct*)outapp->pBuffer;
 	Mob* tmp = entity_list.GetMob(insr->TargetID);
-
+	
 	if (tmp != 0 && tmp->IsClient())
 	{
 		tmp->CastToClient()->QueuePacket(outapp);

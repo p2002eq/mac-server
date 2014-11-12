@@ -2312,10 +2312,10 @@ void Client::SetMaterial(int16 in_slot, uint32 item_id) {
 			m_pp.item_material[MaterialLegs]		= item->Material;
 		else if (in_slot==MainFeet)
 			m_pp.item_material[MaterialFeet]		= item->Material;
-		else if (in_slot==MainPrimary)
-			m_pp.item_material[MaterialPrimary]		= atoi(item->IDFile+2);
-		else if (in_slot==MainSecondary)
-			m_pp.item_material[MaterialSecondary]	= atoi(item->IDFile+2);
+		else if (in_slot == MainPrimary)
+			m_pp.item_material[MaterialPrimary] = atoi(item->IDFile + 2);
+		else if (in_slot == MainSecondary)
+			m_pp.item_material[MaterialSecondary] = atoi(item->IDFile + 2);
 	}
 }
 
@@ -3930,7 +3930,6 @@ void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
 
 		const Item_Struct* item = nullptr;
 		const ItemInst* inst = nullptr;
-
 		for(int16 L = 0; L <= 20; L++) {
 			inst = requestee->GetInv().GetItem(L);
 

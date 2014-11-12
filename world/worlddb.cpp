@@ -184,7 +184,9 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 				/* Weapons are handled a bit differently */
 				if ((material == MaterialPrimary) || (material == MaterialSecondary)) {
 					if (strlen(item->GetItem()->IDFile) > 2) {
-						uint32 idfile = atoi(&item->GetItem()->IDFile[2]);
+						uint32 idfile;
+						idfile = atoi(&item->GetItem()->IDFile[2]);
+
 						if (material == MaterialPrimary)
 							cs->primary[char_num] = idfile;
 						else

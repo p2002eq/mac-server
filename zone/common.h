@@ -553,6 +553,7 @@ typedef enum {
 	GroupSpell,		// causes effect to caster + target's group
 	CAHateList,		// causes effect to all people on caster's hate list within some range
 	DirectionalAE,
+	TargetRing,
 	CastActUnknown
 } CastAction_type;
 

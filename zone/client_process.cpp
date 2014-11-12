@@ -1491,7 +1491,7 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 			else if((sk == SkillHide || sk == SkillSneak) && GetRace() == HALFLING)
 				gmtrain->skills[sk] = 50; //Alkabor sends this as 0, but it doesn't show up for us.
 			else 
-				gmtrain->skills[sk] = GetMaxSkillAfterSpecializationRules(sk, MaxSkill(sk, GetClass(), RuleI(Character, MaxLevel)));
+				gmtrain->skills[sk] = GetMaxSkillAfterSpecializationRules((SkillUseTypes)sk, MaxSkill((SkillUseTypes)sk, GetClass(), RuleI(Character, MaxLevel)));
 
 		}
 		Mob* trainer = entity_list.GetMob(gmtrain->npcid);
@@ -1778,16 +1778,21 @@ void Client::DoEnduranceRegen()
 }
 
 void Client::DoEnduranceUpkeep() {
+
+	if (!HasEndurUpkeep())
+		return;
+
 	int upkeep_sum = 0;
-
-	int cost_redux = spellbonuses.EnduranceReduction + itembonuses.EnduranceReduction;
-
+	int cost_redux = spellbonuses.EnduranceReduction + itembonuses.EnduranceReduction + aabonuses.EnduranceReduction;
+	
+	bool has_effect = false;
 	uint32 buffs_i;
 	uint32 buff_count = GetMaxTotalSlots();
 	for (buffs_i = 0; buffs_i < buff_count; buffs_i++) {
 		if (buffs[buffs_i].spellid != SPELL_UNKNOWN) {
 			int upkeep = spells[buffs[buffs_i].spellid].EndurUpkeep;
 			if(upkeep > 0) {
+				has_effect = true;
 				if(cost_redux > 0) {
 					if(upkeep <= cost_redux)
 						continue;	//reduced to 0
@@ -1807,6 +1812,9 @@ void Client::DoEnduranceUpkeep() {
 		SetEndurance(GetEndurance() - upkeep_sum);
 		TryTriggerOnValueAmount(false, false, true);
 	}
+
+	if (!has_effect)
+		SetEndurUpkeep(false);
 }
 
 void Client::CalcRestState() {
