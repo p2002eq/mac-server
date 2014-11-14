@@ -279,6 +279,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	guard_z_saved = 0;
 	guard_heading_saved = 0;
 	SetEmoteID(d->emoteid);
+	SetWalkSpeed(d->walkspeed);
+
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;

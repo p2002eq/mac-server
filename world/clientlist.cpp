@@ -327,8 +327,8 @@ void ClientList::SendCLEList(const int16& admin, const char* to, WorldTCPConnect
 }
 
 
-void ClientList::CLEAdd(uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin, uint32 ip, uint8 local) {
-	ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), iLSID, iLoginName, iLoginKey, iWorldAdmin, ip, local);
+void ClientList::CLEAdd(uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin, uint32 ip, uint8 local, uint8 version) {
+	ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), iLSID, iLoginName, iLoginKey, iWorldAdmin, ip, local, version);
 
 	clientlist.Append(tmp);
 }
@@ -1238,12 +1238,11 @@ void ClientList::GetClients(const char *zone_name, std::vector<ClientListEntry *
 
 void ClientList::SendClientVersionSummary(const char *Name)
 {
-	uint32 Client62Count = 0;
-	uint32 ClientTitaniumCount = 0;
-	uint32 ClientSoFCount = 0;
-	uint32 ClientSoDCount = 0;
-	uint32 ClientUnderfootCount = 0;
-	uint32 ClientRoFCount = 0;
+	uint32 ClientUnusedCount = 0;
+	uint32 ClientPCCount = 0;
+	uint32 ClientIntelCount = 0;
+	uint32 ClientPPCCount = 0;
+	uint32 ClientEvolutionCount = 0;
 
 	LinkedListIterator<ClientListEntry*> Iterator(clientlist);
 
@@ -1259,32 +1258,34 @@ void ClientList::SendClientVersionSummary(const char *Name)
 			{
 				case 1:
 				{
-					++Client62Count;
+					++ClientUnusedCount;
 					break;
 				}
 				case 2:
 				{
-					++ClientTitaniumCount;
+					switch(CLE->GetMacClientVersion())
+					{
+						case 2:
+						{
+							++ClientPCCount;
+							break;
+						}
+						case 4:
+						{
+							++ClientIntelCount;
+							break;
+						}
+						case 8:
+						{
+							++ClientPPCCount;
+							break;
+						}
+					}
 					break;
 				}
 				case 3:
 				{
-					++ClientSoFCount;
-					break;
-				}
-				case 4:
-				{
-					++ClientSoDCount;
-					break;
-				}
-				case 5:
-				{
-					++ClientUnderfootCount;
-					break;
-				}
-				case 6:
-				{
-					++ClientRoFCount;
+					++ClientEvolutionCount;
 					break;
 				}
 				default:
@@ -1296,7 +1297,7 @@ void ClientList::SendClientVersionSummary(const char *Name)
 
 	}
 
-	zoneserver_list.SendEmoteMessage(Name, 0, 0, 13, "There are %i 6.2, %i Titanium, %i SoF, %i SoD, %i UF, %i RoF clients currently connected.",
-					Client62Count, ClientTitaniumCount, ClientSoFCount, ClientSoDCount, ClientUnderfootCount, ClientRoFCount);
+	zoneserver_list.SendEmoteMessage(Name, 0, 0, 13, "There are %i Unused, %i PC, %i Intel, %i PPC, %i Evolution clients currently connected.",
+					ClientUnusedCount, ClientPCCount, ClientIntelCount, ClientPPCCount, ClientEvolutionCount);
 }
 

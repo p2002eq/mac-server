@@ -34,6 +34,15 @@ enum ClientVersion
 	cv_old
 };
 
+enum MacClientVersion
+{
+	//Unused is 1
+	pc=2,
+	intel=4,
+	ppc=8
+	//Evolution is 16
+};
+
 enum ClientStatus
 {
 	cs_not_sent_session_ready,
@@ -158,10 +167,16 @@ public:
 	* Gets the connection for this client.
 	*/
 	EQStreamInterface *GetConnection() { return connection; }
+
+	/**
+	* Gets the client version for this client.
+	*/
+	unsigned int GetMacClientVersion() const { return macversion; }
 private:
 	EQStreamInterface *connection;
 	ClientVersion version;
 	ClientStatus status;
+	MacClientVersion macversion;
 
 	string account_name;
 	unsigned int account_id;

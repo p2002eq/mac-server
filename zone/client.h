@@ -1030,6 +1030,7 @@ private:
 	std::string	BuyerWelcomeMessage;
 	bool	AbilityTimer;
 	int Haste; //precalced value
+	uint32				versionbit;
 
 	int32				max_end;
 	int32				cur_end;

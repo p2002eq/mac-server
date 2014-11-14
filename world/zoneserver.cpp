@@ -1312,6 +1312,7 @@ void ZoneServer::IncommingClient(Client* client) {
 		s->tellsoff = client->GetCLE()->TellsOff();
 	strn0cpy(s->charname, client->GetCharName(), sizeof(s->charname));
 	strn0cpy(s->lskey, client->GetLSKey(), sizeof(s->lskey));
+	s->version = client->GetClientVersionBit();
 	SendPacket(pack);
 	delete pack;
 }

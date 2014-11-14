@@ -101,6 +101,7 @@ RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods,
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_BOOL (Character, StripBuffsOnLowHP, true)
 RULE_REAL (Character, BaseRunSpeed, 0.7)
+RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -151,7 +152,6 @@ RULE_INT ( World, ExemptAccountLimitStatus, -1 ) //Min status required to be exe
 RULE_BOOL ( World, GMAccountIPList, false) // Check ip list against GM Accounts, AntiHack GM Accounts.
 RULE_INT ( World, MinGMAntiHackStatus, 1 ) //Minimum GM status to check against AntiHack list
 RULE_INT ( World, SoFStartZoneID, -1 ) //Sets the Starting Zone for SoF Clients separate from Titanium Clients (-1 is disabled)
-RULE_INT ( World, ExpansionSettings, 15) // Sets the expansion settings for the server, This is sent on login to world and affects client expansion settings. Defaults to all expansions enabled up to PoP.
 RULE_INT ( World, PVPSettings, 0) // Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.
 RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
 RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
@@ -418,7 +418,7 @@ RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
 RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
-RULE_INT ( NPC, SpeedMultiplier, 31 ) //this is used to multiply an NPCs movement rate, yeilding map units..
+RULE_REAL ( NPC, SpeedMultiplier, 31.0 ) //this is used to multiply an NPCs movement rate, yeilding map units..
 RULE_INT ( NPC, RunAnimRatio, 37 )	//This is the multiplier of eqemu speed to get client speed
 									//tweak this if pathing mobs seem to jump forward or backwards
 									//this should prolly be dynamic based on ping time or something.. who knows
@@ -521,10 +521,6 @@ RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
 RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
 RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
-RULE_CATEGORY_END()
-
-RULE_CATEGORY( Client )
-RULE_BOOL( Client, UseLiveFactionMessage, false) // Allows players to see faction adjustments like Live
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

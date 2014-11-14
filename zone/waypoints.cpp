@@ -610,7 +610,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	tar_vz = z - nz;
 
 	//pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-	//speed *= RuleI(NPC, SpeedMultiplier);
+	//speed *= RuleR(NPC, SpeedMultiplier);
 
 	mlog(AI__WAYPOINTS, "Calculating new position2 to (%.3f, %.3f, %.3f), new vector (%.3f, %.3f, %.3f) rate %.3f, RAS %d", x, y, z, tar_vx, tar_vy, tar_vz, speed, pRunAnimSpeed);
 
@@ -734,12 +734,34 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 }
 
 bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool checkZ) {
-	if(IsNPC() || IsClient() || IsPet()) {
+
+	float newspeed = SetRunAnimation(speed);
+	return MakeNewPositionAndSendUpdate(x, y, z, newspeed, checkZ);
+}
+
+float Mob::SetRunAnimation(float speed)
+{
+	if(IsNPC() || IsClient() || IsPet()) 
+	{
+		float speedmult = RuleR(NPC, SpeedMultiplier);
+		/*if(speed >= 0.2 && speed < 0.3)
+			speedmult = speedmult+3.0f;
+		if(speed >= 0.3 && speed < 0.4)
+			speedmult = speedmult+2.0f;
+		if(speed >= 0.4 && speed < 0.5)
+			speedmult = speedmult+1.0f;
+		if(speed >= 0.6 && speed < 0.7)
+			speedmult = speedmult-1.0f;
+		if(speed >= 0.7 && speed < 0.8)
+			speedmult = speedmult-2.0f;
+		if(speed >= 0.8 && speed < 0.9)
+			speedmult = speedmult-3.0f;*/
+
 		pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-		speed *= RuleI(NPC, SpeedMultiplier);
+		speed *= speedmult;
 	}
 
-	return MakeNewPositionAndSendUpdate(x, y, z, speed, checkZ);
+	return speed;
 }
 
 bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool checkZ) {
@@ -770,8 +792,8 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 
 	if (tar_vx == 0 && tar_vy == 0)
 		return false;
-	pRunAnimSpeed = (uint8)(speed*RuleI(NPC, RunAnimRatio));
-	speed *= RuleI(NPC, SpeedMultiplier);
+	float tmpspeed = speed;
+	speed = SetRunAnimation(tmpspeed);
 
 	mlog(AI__WAYPOINTS, "Calculating new position to (%.3f, %.3f, %.3f) vector (%.3f, %.3f, %.3f) rate %.3f RAS %d", x, y, z, tar_vx, tar_vy, tar_vz, speed, pRunAnimSpeed);
 

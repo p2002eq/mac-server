@@ -286,7 +286,7 @@ Client::Client(EQStreamInterface* ieqs)
 	initial_respawn_selection = 0;
 
 	last_used_slot = -1;
-//	walkspeed = 0.46;
+	walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
 	SavedRaidRestTimer = 0;
@@ -616,7 +616,7 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 
 void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_skill, const char* orig_message, const char* targetname)
 {
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled())
+	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
 		return;
 
 	char message[4096];
@@ -719,7 +719,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: You dont have permission to speak to the guild.");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, GuildID(), language, message))
 			Message(0, "Error: World server disconnected");
-		else
+		else if(GetClientVersionBit() == BIT_MacIntel)
 			eqmac_timer.Start(250, true);
 		break;
 	}
@@ -727,14 +727,16 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid) {
 			raid->RaidGroupSay((const char*) message, this);
-			eqmac_timer.Start(250, true);
+			if(GetClientVersionBit() == BIT_MacIntel)
+				eqmac_timer.Start(250, true);
 			break;
 		}
 
 		Group* group = GetGroup();
 		if(group != nullptr) {
 			group->GroupMessage(this,language,lang_skill,(const char*) message);
-			eqmac_timer.Start(250, true);
+			if(GetClientVersionBit() == BIT_MacIntel)
+				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -742,7 +744,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid){
 			raid->RaidSay((const char*) message, this);
-			eqmac_timer.Start(250, true);
+			if(GetClientVersionBit() == BIT_MacIntel)
+				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -752,7 +755,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		eqmac_timer.Start(250, true);
+		if(GetClientVersionBit() == BIT_MacIntel)
+			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 4: { /* Auction */
@@ -783,7 +787,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 4, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else
+			else if(GetClientVersionBit() == BIT_MacIntel)
 				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideAuction)) {
@@ -793,7 +797,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, message);
-		eqmac_timer.Start(250, true);
+		if(GetClientVersionBit() == BIT_MacIntel)
+			eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -830,7 +835,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 5, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else
+			else if(GetClientVersionBit() == BIT_MacIntel)
 				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideOOC))
@@ -841,7 +846,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				sender = GetPet();
 
 			entity_list.ChannelMessage(sender, chan_num, language, message);
-			eqmac_timer.Start(250, true);
+			if(GetClientVersionBit() == BIT_MacIntel)
+				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -851,7 +857,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: Only GMs can use this channel");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else
+		else if(GetClientVersionBit() == BIT_MacIntel)
 			eqmac_timer.Start(250, true);
 		break;
 	}
@@ -901,7 +907,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if(!worldserver.SendChannelMessage(this, target_name, chan_num, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else
+			else if(GetClientVersionBit() == BIT_MacIntel)
 				eqmac_timer.Start(250, true);
 		break;
 	}
@@ -926,7 +932,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		eqmac_timer.Start(250, true);
+		if(GetClientVersionBit() == BIT_MacIntel)
+			eqmac_timer.Start(250, true);
 		parse->EventPlayer(EVENT_SAY, this, message, language);
 
 		if (sender != this)
@@ -959,7 +966,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		// UCS Relay for Underfoot and later.
 		if(!worldserver.SendChannelMessage(this, 0, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else
+		else if(GetClientVersionBit() == BIT_MacIntel)
 			eqmac_timer.Start(250, true);
 		break;
 	}
@@ -978,7 +985,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Buffer += 4;
 		snprintf(Buffer, sizeof(Emote_Struct) - 4, "%s %s", GetName(), message);
 		entity_list.QueueCloseClients(this, outapp, true, 100, 0, true, FilterSocials);
-		eqmac_timer.Start(250, true);
+		if(GetClientVersionBit() == BIT_MacIntel)
+			eqmac_timer.Start(250, true);
 		safe_delete(outapp);
 		break;
 	}
@@ -3054,40 +3062,11 @@ void Client::KeyRingLoad()
 
 void Client::KeyRingAdd(uint32 item_id)
 {
-	if(GetClientVersion() == EQClientMac)
-		return;
-
-	if(0==item_id)
-        return;
-
-	bool found = KeyRingCheck(item_id);
-	if (found)
-        return;
-
-    std::string query = StringFormat("INSERT INTO keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        std::cerr << "Error in Doors::HandleClick query '" << query << "' " << results.ErrorMessage() << std::endl;
-        return;
-    }
-
-    Message(4,"Added to keyring.");
-
-    keyring.push_back(item_id);
+	return;
 }
 
 bool Client::KeyRingCheck(uint32 item_id)
 {
-	if(GetClientVersion() == EQClientMac)
-		return false;
-
-	for(std::list<uint32>::iterator iter = keyring.begin();
-		iter != keyring.end();
-		++iter)
-	{
-		if(*iter == item_id)
-			return true;
-	}
 	return false;
 }
 

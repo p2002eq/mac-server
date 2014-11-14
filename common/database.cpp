@@ -485,7 +485,9 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"group_auto_consent,"
 		"raid_auto_consent,"
 		"guild_auto_consent,"
-		"RestTimer) "
+		"RestTimer,"
+		"boatid,"
+		"boatname) "
 		"VALUES ("
 		"%u,"  // id					
 		"%u,"  // account_id			
@@ -576,7 +578,9 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // group_auto_consent	
 		"%u,"  // raid_auto_consent		
 		"%u,"  // guild_auto_consent	
-		"%u"  // RestTimer				
+		"%u,"  // RestTimer		
+		"%u,"   // boatid		
+		"'%s'"  // boatname	
 		")",
 		character_id,					  // " id,                        "
 		account_id,						  // " account_id,                "
@@ -667,7 +671,9 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->groupAutoconsent,			  // " group_auto_consent,        "
 		pp->raidAutoconsent,			  // " raid_auto_consent,         "
 		pp->guildAutoconsent,			  // " guild_auto_consent,        "
-		pp->RestTimer					  // " RestTimer)                 "
+		pp->RestTimer,					  // " RestTimer,                 "
+		pp->boatid,						  // " boatid,					  "
+		EscapeString(pp->boat).c_str()	  // " boatname)                  "
 	);
 	auto results = QueryDatabase(query);
 	ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Character Data", query); 
@@ -1054,6 +1060,8 @@ bool Database::CheckDatabaseConversions() {
 				"`e_aa_effects` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`e_percent_to_aa` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`e_expended_aa_spent` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
+				"`boatid` int(11) UNSIGNED NOT NULL DEFAULT 0,				        "
+				"`boatname` varchar(16) NOT NULL DEFAULT '',						    "
 				"PRIMARY KEY(`id`),													"
 				"UNIQUE KEY `name` (`name`),										"
 				"KEY `account_id` (`account_id`)									"
@@ -1536,6 +1544,8 @@ bool Database::CheckDatabaseConversions() {
 				"lfp,"
 				"mailkey,"
 				"xtargets," 
+				"boatid,"
+				"`boatname`,"
 				"e_aa_effects,"
 				"e_percent_to_aa,"
 				"e_expended_aa_spent"
@@ -1636,9 +1646,11 @@ bool Database::CheckDatabaseConversions() {
 				"%u,"		// Looking for P?
 				"'%s',"		// Mailkey
 				"%u,"		// X Targets
+				"%u,"		// boatid
+				"'%s',"		// `boatname`	
 				"%u,"		// AA Effects
 				"%u,"		// Percent to AA
-				"%u"		// e_expended_aa_spent
+				"%u"		// e_expended_aa_spent	
 				")",
 				character_id,
 				account_id,
@@ -1735,6 +1747,8 @@ bool Database::CheckDatabaseConversions() {
 				lfp,
 				mailkey.c_str(),
 				xtargets,
+				pp->boatid,
+				EscapeString(pp->boat).c_str(),
 				e_pp->aa_effects,
 				e_pp->perAA,
 				e_pp->expended_aa

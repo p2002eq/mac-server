@@ -19,7 +19,7 @@ struct ServerClientList_Struct;
 
 class ClientListEntry {
 public:
-	ClientListEntry(uint32 id, uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin = 0, uint32 ip = 0, uint8 local=0);
+	ClientListEntry(uint32 id, uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin = 0, uint32 ip = 0, uint8 local=0, uint8 version=0);
 	ClientListEntry(uint32 id, uint32 iAccID, const char* iAccName, MD5& iMD5Pass, int16 iAdmin = 0);
 	ClientListEntry(uint32 id, ZoneServer* iZS, ServerClientList_Struct* scl, int8 iOnline);
 	~ClientListEntry();
@@ -79,6 +79,7 @@ public:
 	inline bool			GetLFGMatchFilter() const { return pLFGMatchFilter; }
 	inline const char*		GetLFGComments() const { return pLFGComments; }
 	inline uint8	GetClientVersion() { return pClientVersion; }
+	inline uint8	GetMacClientVersion() { return pversion; }
 
 private:
 	void	ClearVars(bool iAll = false);
@@ -94,6 +95,7 @@ private:
 	char	plskey[16];
 	int16	pworldadmin;		// Login server's suggested admin status setting
 	bool	plocal;
+	uint8	pversion;
 
 	// Account stuff
 	uint32	paccountid;
