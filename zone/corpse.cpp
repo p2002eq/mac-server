@@ -1001,7 +1001,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 					if (client && item) {
 						ItemInst* inst = database.CreateItem(item, item_data->charges);
 						if (inst) {
-							client->SendItemPacket(i + offset, inst, ItemPacketLoot); // 22 is the corpse inventory start offset for Ti(EMu) but not EQMac!
+							client->SendItemPacket(i + offset, inst, ItemPacketLoot);
 							safe_delete(inst);
 						}
 
