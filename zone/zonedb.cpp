@@ -799,6 +799,8 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"raid_auto_consent,         "
 		"guild_auto_consent,        "
 		"RestTimer,                 "
+		"boatid,					"
+		"`boatname`,				"
 		"`e_aa_effects`,			"
 		"`e_percent_to_aa`,			"
 		"`e_expended_aa_spent`		"
@@ -895,9 +897,11 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->raidAutoconsent = atoi(row[r]); r++;								 // "raid_auto_consent,         "
 		pp->guildAutoconsent = atoi(row[r]); r++;								 // "guild_auto_consent,        "
 		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
+		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
+		strcpy(pp->boat, row[r]); r++;											 // "boatname					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
-		m_epp->expended_aa = atoi(row[r]); r++;									 // "`e_expended_aa_spent`		"
+		m_epp->expended_aa = atoi(row[r]); r++;									 // "`e_expended_aa_spent`,		"
 	}
 	return true;
 }
@@ -1362,6 +1366,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" raid_auto_consent,         "
 		" guild_auto_consent,        "
 		" RestTimer,				 "
+		" boatid,					 "
+		" `boatname`,				 "
 		" e_aa_effects,				 "
 		" e_percent_to_aa,			 "
 		" e_expended_aa_spent		 "
@@ -1457,6 +1463,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // raid_auto_consent			  pp->raidAutoconsent,					" raid_auto_consent,         "
 		"%u,"  // guild_auto_consent		  pp->guildAutoconsent,					" guild_auto_consent,        "
 		"%u,"  // RestTimer					  pp->RestTimer,						" RestTimer)                 "
+		"%u,"  // boatid					  pp->boatid,							" boatid					 "
+		"'%s'," // `boatname`				  pp->boat,								" `boatname`,                "
 		"%u,"  // e_aa_effects
 		"%u,"  // e_percent_to_aa
 		"%u"   // e_expended_aa_spent
@@ -1551,6 +1559,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->raidAutoconsent,			  // " raid_auto_consent,         "
 		pp->guildAutoconsent,			  // " guild_auto_consent,        "
 		pp->RestTimer,					  // " RestTimer)                 "
+		pp->boatid,						  // "boatid,					  "
+		EscapeString(pp->boat).c_str(),	  // " boatname                   "
 		m_epp->aa_effects,
 		m_epp->perAA,
 		m_epp->expended_aa

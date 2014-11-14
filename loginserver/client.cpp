@@ -208,6 +208,7 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 	bool result = false;
 	unsigned int enable;
 	string platform = "OSX";
+	macversion = intel;
 
 	string userandpass = password + salt;
 	if(server.db->GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
@@ -314,6 +315,7 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 	string userandpass = password + salt;
 	unsigned int enable;
 	string platform = "PC";
+	macversion = pc;
 
 	if (server.db->GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
 	{

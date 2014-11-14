@@ -956,6 +956,7 @@ void Zone::AddAuth(ServerZoneIncommingClient_Struct* szic) {
 	strn0cpy(zca->lskey, szic->lskey, sizeof(zca->lskey));
 	zca->stale = false;
 	client_auth_list.Insert(zca);
+	zca->version = szic->version;
 }
 
 void Zone::RemoveAuth(const char* iCharName)
@@ -983,7 +984,7 @@ void Zone::ResetAuth()
 	}
 }
 
-bool Zone::GetAuth(uint32 iIP, const char* iCharName, uint32* oWID, uint32* oAccID, uint32* oCharID, int16* oStatus, char* oLSKey, bool* oTellsOff) {
+bool Zone::GetAuth(uint32 iIP, const char* iCharName, uint32* oWID, uint32* oAccID, uint32* oCharID, int16* oStatus, char* oLSKey, bool* oTellsOff, uint32* oVersionbit) {
 	LinkedListIterator<ZoneClientAuth_Struct*> iterator(client_auth_list);
 
 	iterator.Reset();
@@ -1001,6 +1002,8 @@ bool Zone::GetAuth(uint32 iIP, const char* iCharName, uint32* oWID, uint32* oAcc
 				if(oTellsOff)
 				*oTellsOff = zca->tellsoff;
 				zca->stale = true;
+				if(oVersionbit)
+				*oVersionbit = zca->version;
 			return true;
 		}
 		iterator.Advance();

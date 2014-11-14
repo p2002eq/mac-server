@@ -62,6 +62,7 @@ struct ZoneClientAuth_Struct {
 	char	charname[64];
 	char	lskey[30];
 	bool	stale;
+	uint32	version;
 };
 
 struct ZoneEXPModInfo {
@@ -155,7 +156,7 @@ public:
 	void	AddAuth(ServerZoneIncommingClient_Struct* szic);
 	void	RemoveAuth(const char* iCharName);
 	void	ResetAuth();
-	bool	GetAuth(uint32 iIP, const char* iCharName, uint32* oWID = 0, uint32* oAccID = 0, uint32* oCharID = 0, int16* oStatus = 0, char* oLSKey = 0, bool* oTellsOff = 0);
+	bool	GetAuth(uint32 iIP, const char* iCharName, uint32* oWID = 0, uint32* oAccID = 0, uint32* oCharID = 0, int16* oStatus = 0, char* oLSKey = 0, bool* oTellsOff = 0, uint32* oVersionbit = 0);
 	uint32	CountAuth();
 
 	void		AddAggroMob()			{ aggroedmobs++; }
