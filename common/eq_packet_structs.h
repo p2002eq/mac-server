@@ -83,8 +83,8 @@ struct EntityId_Struct
 
 struct Duel_Struct
 {
-	uint32 duel_initiator;
-	uint32 duel_target;
+	uint16 duel_initiator;
+	uint16 duel_target;
 };
 
 struct DuelResponse_Struct

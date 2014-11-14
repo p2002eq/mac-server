@@ -283,9 +283,6 @@ public:
 	inline virtual uint32 GetNimbusEffect1() const { return nimbus_effect1; }
 	inline virtual uint32 GetNimbusEffect2() const { return nimbus_effect2; }
 	inline virtual uint32 GetNimbusEffect3() const { return nimbus_effect3; }
-	inline float GetTargetRingX() const { return targetring_x; }
-	inline float GetTargetRingY() const { return targetring_y; }
-	inline float GetTargetRingZ() const { return targetring_z; }
 	inline bool HasEndurUpkeep() const { return endur_upkeep; }
 	inline void SetEndurUpkeep(bool val) { endur_upkeep = val; }
 
@@ -1232,10 +1229,6 @@ protected:
 	float tar_vy;
 	float tar_vz;
 	float test_vector;
-
-	float targetring_x;
-	float targetring_y;
-	float targetring_z;
 
 	uint32 m_spellHitsLeft[38]; // Used to track which spells will have their numhits incremented when spell finishes casting, 38 Buffslots
 	int flymode;

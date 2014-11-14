@@ -444,7 +444,7 @@ void Zone::LoadNewMerchantData(uint32 merchantid) {
 
 	std::list<MerchantList> merlist;
 	std::string query = StringFormat("SELECT item, slot, faction_required, level_required, "
-                                     "classes_required, probability FROM merchantlist WHERE merchantid=%d ORDER BY slot", merchantid);
+                                     "classes_required FROM merchantlist WHERE merchantid=%d ORDER BY slot", merchantid);
     auto results = database.QueryDatabase(query);
     if (!results.Success()) {
         LogFile->write(EQEMuLog::Error, "Error in LoadNewMerchantData query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
@@ -458,9 +458,8 @@ void Zone::LoadNewMerchantData(uint32 merchantid) {
         ml.slot = atoul(row[1]);
         ml.faction_required = atoul(row[2]);
         ml.level_required = atoul(row[3]);
-        ml.classes_required = atoul(row[5]);
-		ml.probability = atoul(row[6]);
-        merlist.push_back(ml);
+        ml.classes_required = atoul(row[4]);
+       merlist.push_back(ml);
     }
 
     merchanttable[merchantid] = merlist;
