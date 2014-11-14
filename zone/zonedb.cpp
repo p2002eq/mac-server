@@ -1736,7 +1736,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.Avoidance, npc_types.slow_mitigation, npc_types.maxlevel, npc_types.scalerate, "
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
-                        "npc_types.raid_target, npc_types.attack_delay FROM npc_types WHERE id = %d", id);
+                        "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1895,6 +1895,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->no_target_hotkey = atoi(row[85]) == 1 ? true: false;
 		tmpNPCType->raid_target = atoi(row[86]) == 0 ? false: true;
 		tmpNPCType->attack_delay = atoi(row[87]);
+		tmpNPCType->walkspeed= atof(row[88]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

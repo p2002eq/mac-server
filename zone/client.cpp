@@ -286,7 +286,7 @@ Client::Client(EQStreamInterface* ieqs)
 	initial_respawn_selection = 0;
 
 	last_used_slot = -1;
-//	walkspeed = 0.46;
+	walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
 	SavedRaidRestTimer = 0;

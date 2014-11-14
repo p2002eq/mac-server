@@ -42,6 +42,7 @@ struct NPCType
 
 	float	size;
 	float	runspeed;
+	float	walkspeed;
 	uint8	gender;
 	uint16	race;
 	uint8	class_;

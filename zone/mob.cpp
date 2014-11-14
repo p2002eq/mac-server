@@ -512,14 +512,19 @@ bool Mob::IsInvisible(Mob* other) const
 	return(false);
 }
 
-float Mob::_GetMovementSpeed(int mod) const
+float Mob::_GetMovementSpeed(int mod, bool iswalking) const
 {
 	// List of movement speed modifiers, including AAs & spells:
 	// http://everquest.allakhazam.com/db/item.html?item=1721;page=1;howmany=50#m10822246245352
 	if (IsRooted())
 		return 0.0f;
 
-	float speed_mod = runspeed;
+	float speed_mod = 0.0f;
+	
+	if(iswalking)
+		speed_mod = walkspeed;
+	else
+		speed_mod = runspeed;
 
 	// These two cases ignore the cap, be wise in the DB for horses.
 	if (IsClient()) {
@@ -850,7 +855,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.max_hp	= 100;		//this field needs a better name
 	ns->spawn.race		= race;
 	ns->spawn.runspeed	= runspeed;
-	ns->spawn.walkspeed	= runspeed * 0.5f;
+	ns->spawn.walkspeed	= walkspeed;
 	ns->spawn.class_	= class_;
 	ns->spawn.gender	= gender;
 	ns->spawn.level		= level;

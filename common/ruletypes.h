@@ -101,6 +101,7 @@ RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods,
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_BOOL (Character, StripBuffsOnLowHP, true)
 RULE_REAL (Character, BaseRunSpeed, 0.7)
+RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -417,7 +418,7 @@ RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
 RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
-RULE_INT ( NPC, SpeedMultiplier, 31 ) //this is used to multiply an NPCs movement rate, yeilding map units..
+RULE_REAL ( NPC, SpeedMultiplier, 31.0 ) //this is used to multiply an NPCs movement rate, yeilding map units..
 RULE_INT ( NPC, RunAnimRatio, 37 )	//This is the multiplier of eqemu speed to get client speed
 									//tweak this if pathing mobs seem to jump forward or backwards
 									//this should prolly be dynamic based on ping time or something.. who knows
