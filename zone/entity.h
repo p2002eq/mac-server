@@ -88,7 +88,6 @@ public:
 	const Beacon	*CastToBeacon() const;
 
 	inline const uint16& GetID() const { return id; }
-	inline const time_t& GetSpawnTimeStamp() const { return spawn_timestamp; }
 
 	virtual const char* GetName() { return ""; }
 	bool CheckCoordLosNoZLeaps(float cur_x, float cur_y, float cur_z, float trg_x, float trg_y, float trg_z, float perwalk=1);
@@ -99,7 +98,6 @@ protected:
 	uint32 pDBAsyncWorkID;
 private:
 	uint16 id;
-	time_t spawn_timestamp;
 };
 
 class EntityList
