@@ -1133,7 +1133,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 						}
 					}
 
-					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1 && c->GetInv().HasItem(focuscomponent, 1, invWhereWorn|invWherePersonal) == -1 && !petfocuscomponent) // item not found
+					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1 && 
+						(petfocuscomponent || c->GetInv().HasItem(focuscomponent, 1, invWhereWorn | invWherePersonal) == -1)) // item not found
 					{
 						if (!missingreags)
 						{
