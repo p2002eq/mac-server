@@ -7767,15 +7767,15 @@ void Client::Handle_OP_TGB(const EQApplicationPacket *app)
 void Client::Handle_OP_Track(const EQApplicationPacket *app)
 {
 	if (GetClass() != RANGER && GetClass() != DRUID && GetClass() != BARD)
+	{
+		Kick(); //The client handles tracking for us, simply returning is not enough if they are cheating.
 		return;
+	}
 
 	if (GetSkill(SkillTracking) == 0)
 		SetSkill(SkillTracking, 1);
 	else
 		CheckIncreaseSkill(SkillTracking, nullptr, 15);
-
-	if (!entity_list.MakeTrackPacket(this))
-		LogFile->write(EQEMuLog::Error, "Unable to generate OP_Track packet requested by client.");
 
 	return;
 }

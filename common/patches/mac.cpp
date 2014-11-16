@@ -2267,6 +2267,7 @@ namespace Mac {
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;
 		eq->invis = emu->invis;
+		//eq->sneaking = 0;
 		eq->cur_hp = emu->curHp;
 		eq->x_pos = (int16)emu->x;
 		eq->y_pos = (int16)emu->y;
