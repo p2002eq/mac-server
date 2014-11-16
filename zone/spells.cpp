@@ -2779,6 +2779,10 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 				mlog(SPELLS__STACKING, "Blocking spell because a buff to movement speed cannot replace a debuff to movement speed.");
 				return (-1);
 			}
+			else{
+				mlog(SPELLS__STACKING, "Stacking code decided that because of the movement speed debuff effect of %s it should overwrite %s.", sp2.name, sp1.name);
+				return(1);
+			}
 		}
 
 		/*
