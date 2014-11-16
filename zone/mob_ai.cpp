@@ -1428,7 +1428,9 @@ void Mob::AI_Process() {
 						SendPosition();
 						SetMoving(false);
 						moved=false;
-
+					}
+					else{
+						FaceTarget(target);
 					}
 				}
 			}
