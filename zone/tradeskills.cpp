@@ -655,21 +655,25 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 	// If you want to customize the stage1 success rate do it here.
 	// Remember: skillup_modifier is (float). Lower is better
 	switch (tradeskill) {
-	case SkillFletching:
-	case SkillAlchemy:
-	case SkillJewelryMaking:
 	case SkillPottery:
-		skillup_modifier += 3;
+		skillup_modifier = 4;
 		break;
+	case SkillTailoring:
+	case SkillBlacksmithing:
+		skillup_modifier = 3;
+		break;
+	case SkillFletching:
+	case SkillJewelryMaking:
 	case SkillBaking:
 	case SkillBrewing:
-		skillup_modifier += 2;
-		break;
+	case SkillTinkering:
+	case SkillAlchemy:
 	case SkillResearch:
-		skillup_modifier += 0.01;
+	case SkillMakePoison:
+		skillup_modifier = 2;
 		break;
 	default:
-		skillup_modifier += 1;
+		skillup_modifier = 2;
 		break;
 	}
 
