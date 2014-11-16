@@ -656,11 +656,11 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 	// Remember: skillup_modifier is (float). Lower is better
 	switch (tradeskill) {
 	case SkillPottery:
-		skillup_modifier = 4;
+		skillup_modifier += 4;
 		break;
 	case SkillTailoring:
 	case SkillBlacksmithing:
-		skillup_modifier = 3;
+		skillup_modifier += 3;
 		break;
 	case SkillFletching:
 	case SkillJewelryMaking:
@@ -670,10 +670,10 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 	case SkillAlchemy:
 	case SkillResearch:
 	case SkillMakePoison:
-		skillup_modifier = 2;
+		skillup_modifier += 2;
 		break;
 	default:
-		skillup_modifier = 2;
+		skillup_modifier += 1;
 		break;
 	}
 
