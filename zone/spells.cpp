@@ -2768,10 +2768,17 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 		sp1 = detrimental & sp2 = beneficial
 		Then this effect should be ignored for stacking purposes.
 		*/
-		if(sp_det_mismatch)
+		if (sp_det_mismatch)
 		{
-			mlog(SPELLS__STACKING, "The effects are the same but the spell types are not, passing the effect");
-			continue;
+			if (effect1 != SE_MovementSpeed){	
+				mlog(SPELLS__STACKING, "The effects are the same but the spell types are not, passing the effect");
+				continue;
+			}
+			else if (!sp2_detrimental && sp1_detrimental)
+			{
+				mlog(SPELLS__STACKING, "Blocking spell because a buff to movement speed cannot replace a debuff to movement speed.");
+				return (-1);
+			}
 		}
 
 		/*
