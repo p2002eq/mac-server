@@ -4192,6 +4192,9 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 		return;
 	}
 
+	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
+		return;
+
 	GroupGeneric_Struct* gf = (GroupGeneric_Struct*)app->pBuffer;
 	Mob* inviter = entity_list.GetClientByName(gf->name1);
 
@@ -4312,6 +4315,9 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 		worldserver.SendPacket(pack);
 		safe_delete(pack);
 	}
+
+	if(GetClientVersionBit() == BIT_MacIntel)
+		eqmac_timer.Start(250, true);
 }
 
 void Client::Handle_OP_GroupInvite(const EQApplicationPacket *app)
@@ -4327,6 +4333,9 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 			sizeof(GroupInvite_Struct), app->size);
 		return;
 	}
+
+	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
+		return;
 
 	GroupInvite_Struct* gis = (GroupInvite_Struct*)app->pBuffer;
 
@@ -4368,6 +4377,9 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 		worldserver.SendPacket(pack);
 		safe_delete(pack);
 	}
+	if(GetClientVersionBit() == BIT_MacIntel)
+		eqmac_timer.Start(250, true);
+
 	return;
 }
 

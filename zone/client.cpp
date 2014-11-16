@@ -5570,7 +5570,11 @@ float Client::GetQuiverHaste()
 
 bool Client::IsTargetInMyGroup(Client* target)
 {
-	if (this->IsRaidGrouped() && target->IsRaidGrouped())
+	if (this == target)
+	{
+		return true;
+	}
+	else if (this->IsRaidGrouped() && target->IsRaidGrouped())
 	{
 		return this->GetRaid() == target->GetRaid();
 	}

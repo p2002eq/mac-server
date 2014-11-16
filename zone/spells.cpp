@@ -1133,7 +1133,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 						}
 					}
 
-					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1 && c->GetInv().HasItem(focuscomponent, 1, invWhereWorn|invWherePersonal) == -1 && !petfocuscomponent) // item not found
+					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1 && 
+						(petfocuscomponent || c->GetInv().HasItem(focuscomponent, 1, invWhereWorn | invWherePersonal) == -1)) // item not found
 					{
 						if (!missingreags)
 						{
@@ -2768,10 +2769,21 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 		sp1 = detrimental & sp2 = beneficial
 		Then this effect should be ignored for stacking purposes.
 		*/
-		if(sp_det_mismatch)
+		if (sp_det_mismatch)
 		{
-			mlog(SPELLS__STACKING, "The effects are the same but the spell types are not, passing the effect");
-			continue;
+			if (effect1 != SE_MovementSpeed){	
+				mlog(SPELLS__STACKING, "The effects are the same but the spell types are not, passing the effect");
+				continue;
+			}
+			else if (!sp2_detrimental && sp1_detrimental)
+			{
+				mlog(SPELLS__STACKING, "Blocking spell because a buff to movement speed cannot replace a debuff to movement speed.");
+				return (-1);
+			}
+			else{
+				mlog(SPELLS__STACKING, "Stacking code decided that because of the movement speed debuff effect of %s it should overwrite %s.", sp2.name, sp1.name);
+				return(1);
+			}
 		}
 
 		/*
