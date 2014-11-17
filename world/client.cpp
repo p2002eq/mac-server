@@ -1038,6 +1038,9 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 
 	in.s_addr = GetIP();
 
+	if(cc->face == 0 && cc->oldface > 0)
+		cc->face = cc->oldface;
+
 	clog(WORLD__CLIENT, "Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
 	clog(WORLD__CLIENT, "Name: %s", name);
 	clog(WORLD__CLIENT, "Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d",

@@ -254,6 +254,7 @@ namespace Mac {
 		OUT(AGI);
 		OUT(WIS);
 		OUT(face);
+		eq->oldface = emu->face;
 		OUT_array(spell_book, 256);
 		OUT_array(mem_spells, 8);
 		OUT(platinum);
@@ -373,6 +374,7 @@ namespace Mac {
 		IN(face);
 		IN(eyecolor1);
 		IN(eyecolor2);
+		IN(oldface);
 		FINISH_DIRECT_DECODE();
 	}
 
