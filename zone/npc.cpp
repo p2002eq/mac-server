@@ -279,6 +279,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	guard_z_saved = 0;
 	guard_heading_saved = 0;
 	SetEmoteID(d->emoteid);
+	SetWalkSpeed(d->walkspeed);
+
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;
@@ -1534,7 +1536,6 @@ void Mob::NPCSpecialAttacks(const char* parse, int permtag, bool reset, bool rem
 				break;
 			case 'o':
 				SetSpecialAbility(DESTRUCTIBLE_OBJECT, remove ? 0 : 1);
-				SetDestructibleObject(remove ? true : false);
 				break;
 			case 'Z':
 				SetSpecialAbility(NO_HARM_FROM_CLIENT, remove ? 0 : 1);
@@ -1700,7 +1701,6 @@ bool Mob::HasNPCSpecialAtk(const char* parse) {
 				if(!GetSpecialAbility(DESTRUCTIBLE_OBJECT))
 				{
 					HasAllAttacks = false;
-					SetDestructibleObject(false);
 				}
 				break;
 			case 'Z':

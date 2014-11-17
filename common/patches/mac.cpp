@@ -254,6 +254,7 @@ namespace Mac {
 		OUT(AGI);
 		OUT(WIS);
 		OUT(face);
+		eq->oldface = emu->face;
 		OUT_array(spell_book, 256);
 		OUT_array(mem_spells, 8);
 		OUT(platinum);
@@ -373,6 +374,7 @@ namespace Mac {
 		IN(face);
 		IN(eyecolor1);
 		IN(eyecolor2);
+		IN(oldface);
 		FINISH_DIRECT_DECODE();
 	}
 
@@ -1012,7 +1014,7 @@ namespace Mac {
 
 			outapp->SetOpcode(OP_Unknown);
 		
-			if(old_item_pkt->PacketType == ItemPacketSummonItem || int_struct->slot_id == 30)
+			if(old_item_pkt->PacketType == ItemPacketSummonItem)
 				outapp->SetOpcode(OP_SummonedItem);
 			else if(old_item_pkt->PacketType == ItemPacketViewLink)
 				outapp->SetOpcode(OP_ItemLinkResponse);
@@ -1024,6 +1026,8 @@ namespace Mac {
 				outapp->SetOpcode(OP_ContainerPacket);
 			else if(item->GetItem()->ItemClass == 2)
 				outapp->SetOpcode(OP_BookPacket);
+			else if(int_struct->slot_id == 0)
+				outapp->SetOpcode(OP_SummonedItem);
 			else
 				outapp->SetOpcode(OP_ItemPacket);
 
@@ -2265,6 +2269,7 @@ namespace Mac {
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;
 		eq->invis = emu->invis;
+		//eq->sneaking = 0;
 		eq->cur_hp = emu->curHp;
 		eq->x_pos = (int16)emu->x;
 		eq->y_pos = (int16)emu->y;

@@ -413,7 +413,8 @@ public:
 	virtual void SetMoving(bool move) { moving = move; delta_x = 0; delta_y = 0; delta_z = 0; delta_heading = 0; }
 	virtual void GoToBind(uint8 bindnum = 0) { }
 	virtual void Gate();
-	float GetWalkspeed() const { return(_GetMovementSpeed(-47)); }
+	float GetWalkspeed() const { return(_GetMovementSpeed(0, true)); }
+	void  SetWalkSpeed(float speed) { walkspeed = speed; }
 	float GetRunspeed() const { return(_GetMovementSpeed(0)); }
 	float GetBaseRunspeed() const { return runspeed; }
 	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); }
@@ -640,8 +641,7 @@ public:
 	inline EmuAppearance GetAppearance() const { return _appearance; }
 	inline const uint8 GetRunAnimSpeed() const { return pRunAnimSpeed; }
 	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; pLastChange = Timer::GetCurrentTime(); } }
-	bool IsDestructibleObject() { return destructibleobject; }
-	void SetDestructibleObject(bool in) { destructibleobject = in; }
+	float SetRunAnimation(float speed);
 
 	Mob* GetPet();
 	void SetPet(Mob* newpet);
@@ -905,7 +905,7 @@ protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
 	static uint16 GetProcID(uint16 spell_id, uint8 effect_index);
-	float _GetMovementSpeed(int mod) const;
+	float _GetMovementSpeed(int mod, bool iswalking = false) const;
 	virtual bool MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, bool checkZ);
 
 	virtual bool AI_EngagedCastCheck() { return(false); }
@@ -993,6 +993,7 @@ protected:
 	float base_size;
 	float size;
 	float runspeed;
+	float walkspeed;
 	uint32 pLastChange;
 	bool held;
 	bool nocast;
@@ -1236,7 +1237,6 @@ protected:
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
-	bool destructibleobject;
 
 	Timer eqmac_timer;
 

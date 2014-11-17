@@ -299,6 +299,7 @@ struct ServerZoneIncommingClient_Struct {
 	bool	tellsoff;
 	char	charname[64];
 	char	lskey[30];
+	uint32	version;
 };
 
 struct ServerChangeWID_Struct {
@@ -509,6 +510,7 @@ struct ServerLSClientAuth {
 	int16	worldadmin;		// login's suggested worldadmin level setting for this user, up to the world if they want to obey it
 	uint32	ip;
 	uint8	local;			// 1 if the client is from the local network
+	uint8	version;		// Client version if Mac
 };
 
 struct ServerSystemwideMessage {

@@ -68,6 +68,7 @@ public:
 	inline ClientListEntry* GetCLE()		{ return cle; }
 	inline void			SetCLE(ClientListEntry* iCLE)			{ cle = iCLE; }
 	inline uint16		GetExpansion()		{ return expansion; }
+	inline uint32		GetClientVersionBit() { return ClientVersionBit; }
 
 private:
 

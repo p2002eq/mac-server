@@ -309,7 +309,6 @@ Mob::Mob(const char* in_name,
 		shielder[m].shielder_bonus = 0;
 	}
 
-	destructibleobject = false;
 	wandertype=0;
 	pausetype=0;
 	cur_wp = 0;
@@ -508,14 +507,19 @@ bool Mob::IsInvisible(Mob* other) const
 	return(false);
 }
 
-float Mob::_GetMovementSpeed(int mod) const
+float Mob::_GetMovementSpeed(int mod, bool iswalking) const
 {
 	// List of movement speed modifiers, including AAs & spells:
 	// http://everquest.allakhazam.com/db/item.html?item=1721;page=1;howmany=50#m10822246245352
 	if (IsRooted())
 		return 0.0f;
 
-	float speed_mod = runspeed;
+	float speed_mod = 0.0f;
+	
+	if(iswalking)
+		speed_mod = walkspeed;
+	else
+		speed_mod = runspeed;
 
 	// These two cases ignore the cap, be wise in the DB for horses.
 	if (IsClient()) {
@@ -846,7 +850,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.max_hp	= 100;		//this field needs a better name
 	ns->spawn.race		= race;
 	ns->spawn.runspeed	= runspeed;
-	ns->spawn.walkspeed	= runspeed * 0.5f;
+	ns->spawn.walkspeed	= walkspeed;
 	ns->spawn.class_	= class_;
 	ns->spawn.gender	= gender;
 	ns->spawn.level		= level;
@@ -856,7 +860,11 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.light		= light;
 	ns->spawn.showhelm = 1;
 
-	ns->spawn.invis		= (invisible || hidden) ? 1 : 0;	// TODO: load this before spawning players
+	if(IsNPC())
+		ns->spawn.invis		= (invisible || hidden || !trackable) ? 1 : 0;
+	else
+		ns->spawn.invis		= (invisible || hidden) ? 1 : 0;	// TODO: load this before spawning players
+
 	ns->spawn.NPC		= IsClient() ? 0 : 1;
 	ns->spawn.petOwnerId	= ownerid;
 
@@ -916,58 +924,6 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	}
 
 	memset(ns->spawn.set_to_0xFF, 0xFF, sizeof(ns->spawn.set_to_0xFF));
-	if(IsNPC() && IsDestructibleObject())
-	{
-		ns->spawn.DestructibleObject = true;
-
-		// Changing the first string made it vanish, so it has some significance.
-		if(lastname)
-			sprintf(ns->spawn.DestructibleModel, "%s", lastname);
-		// Changing the second string made no visible difference
-		sprintf(ns->spawn.DestructibleName2, "%s", ns->spawn.name);
-		// Putting a string in the final one that was previously empty had no visible effect.
-		sprintf(ns->spawn.DestructibleString, "");
-
-		// Sets damage appearance level of the object.
-		ns->spawn.DestructibleAppearance = luclinface; // Was 0x00000000
-		//ns->spawn.DestructibleAppearance = static_cast<EmuAppearance>(_appearance);
-		// #appearance 44 1 makes it jump but no visible damage
-		// #appearance 44 2 makes it look completely broken but still visible
-		// #appearnace 44 3 makes it jump but not visible difference to 3
-		// #appearance 44 4 makes it disappear altogether
-		// #appearance 44 5 makes the client crash.
-
-		ns->spawn.DestructibleUnk1 = 0x00000224;	// Was 0x000001f5;
-		// These next 4 are mostly always sequential
-		// Originally they were 633, 634, 635, 636
-		// Changing them all to 633 - no visible effect.
-		// Changing them all to 636 - no visible effect.
-		// Reversing the order of these four numbers and then using #appearance gain had no visible change.
-		// Setting these four ids to zero had no visible effect when the catapult spawned, nor when #appearance was used.
-		ns->spawn.DestructibleID1 = 1968;
-		ns->spawn.DestructibleID2 = 1969;
-		ns->spawn.DestructibleID3 = 1970;
-		ns->spawn.DestructibleID4 = 1971;
-		// Next one was originally 0x1ce45008, changing it to 0x00000000 made no visible difference
-		ns->spawn.DestructibleUnk2 = 0x13f79d00;
-		// Next one was originally 0x1a68fe30, changing it to 0x00000000 made no visible difference
-		ns->spawn.DestructibleUnk3 = 0x00000000;
-		// Next one was already 0x00000000
-		ns->spawn.DestructibleUnk4 = 0x13f79d58;
-		// Next one was originally 0x005a69ec, changing it to 0x00000000 made no visible difference.
-		ns->spawn.DestructibleUnk5 = 0x13c55b00;
-		// Next one was originally 0x1a68fe30, changing it to 0x00000000 made no visible difference.
-		ns->spawn.DestructibleUnk6 = 0x00128860;
-		// Next one was originally 0x0059de6d, changing it to 0x00000000 made no visible difference.
-		ns->spawn.DestructibleUnk7 = 0x005a8f66;
-		// Next one was originally 0x00000201, changing it to 0x00000000 made no visible difference.
-		// For the Minohten tents, 0x00000000 had them up in the air, while 0x201 put them on the ground.
-		// Changing it it 0x00000001 makes the tent sink into the ground.
-		ns->spawn.DestructibleUnk8 = 0x01;			// Needs to be 1 for tents?
-		ns->spawn.DestructibleUnk9 = 0x00000002;	// Needs to be 2 for tents?
-
-		ns->spawn.flymode = 0;
-	}
 }
 
 void Mob::CreateDespawnPacket(EQApplicationPacket* app, bool Decay)
@@ -1064,48 +1020,6 @@ void Mob::SendHPUpdate()
 	if(GetPet() && GetPet()->IsClient())
 	{
 		GetPet()->CastToClient()->QueuePacket(&hp_app, false);
-	}
-
-	// Update the damage state of destructible objects
-	if(IsNPC() && IsDestructibleObject())
-	{
-		if (GetHPRatio() > 74)
-		{
-			if (GetAppearance() != eaStanding)
-			{
-					SendAppearancePacket(AT_DamageState, eaStanding);
-					_appearance = eaStanding;
-			}
-		}
-		else if (GetHPRatio() > 49)
-		{
-			if (GetAppearance() != eaSitting)
-			{
-				SendAppearancePacket(AT_DamageState, eaSitting);
-				_appearance = eaSitting;
-			}
-		}
-		else if (GetHPRatio() > 24)
-		{
-			if (GetAppearance() != eaCrouching)
-			{
-				SendAppearancePacket(AT_DamageState, eaCrouching);
-				_appearance = eaCrouching;
-			}
-		}
-		else if (GetHPRatio() > 0)
-		{
-			if (GetAppearance() != eaDead)
-			{
-				SendAppearancePacket(AT_DamageState, eaDead);
-				_appearance = eaDead;
-			}
-		}
-		else if (GetAppearance() != eaLooting)
-		{
-			SendAppearancePacket(AT_DamageState, eaLooting);
-			_appearance = eaLooting;
-		}
 	}
 
 	// send to self - we need the actual hps here
@@ -1241,6 +1155,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackSpeedTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
+			client->Message(0, "  Trackable: %i", n->IsTrackable());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
@@ -4707,11 +4622,6 @@ void Mob::ProcessSpecialAbilities(const std::string &str) {
 				}
 				break;
 			case DESTRUCTIBLE_OBJECT:
-				if(value == 0) {
-					SetDestructibleObject(false);
-				} else {
-					SetDestructibleObject(true);
-				}
 				break;
 			default:
 				break;

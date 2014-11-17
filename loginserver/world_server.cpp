@@ -145,7 +145,7 @@ bool WorldServer::Process()
 				{
 						if(utwr->response > 0)
 						{
-							SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID());
+							SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
 						}
 
 						switch(utwr->response)
@@ -532,7 +532,7 @@ void WorldServer::Handle_LSStatus(ServerLSStatus_Struct *s)
 	status = s->status;
 }
 
-void WorldServer::SendClientAuth(unsigned int ip, string account, string key, unsigned int account_id)
+void WorldServer::SendClientAuth(unsigned int ip, string account, string key, unsigned int account_id, uint8 version)
 {
 	ServerPacket *outapp = new ServerPacket(ServerOP_LSClientAuth, sizeof(ServerLSClientAuth));
 	ServerLSClientAuth* slsca = (ServerLSClientAuth*)outapp->pBuffer;
@@ -543,6 +543,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 	slsca->lsadmin = 0;
 	slsca->worldadmin = 0;
 	slsca->ip = ip;
+	slsca->version = version;
 
 	in_addr in;
 	in.s_addr = ip;connection->GetrIP();

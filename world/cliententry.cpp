@@ -31,7 +31,7 @@ extern LoginServerList loginserverlist;
 extern ClientList		client_list;
 extern volatile bool RunLoops;
 
-ClientListEntry::ClientListEntry(uint32 in_id, uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin, uint32 ip, uint8 local)
+ClientListEntry::ClientListEntry(uint32 in_id, uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin, uint32 ip, uint8 local, uint8 version)
 : id(in_id)
 {
 	ClearVars(true);
@@ -44,6 +44,7 @@ ClientListEntry::ClientListEntry(uint32 in_id, uint32 iLSID, const char* iLoginN
 	strn0cpy(plskey, iLoginKey, sizeof(plskey));
 	pworldadmin = iWorldAdmin;
 	plocal=(local==1);
+	pversion = version;
 
 	pinstance = 0;
 }

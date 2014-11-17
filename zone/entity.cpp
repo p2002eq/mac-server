@@ -66,7 +66,6 @@ extern uint16 adverrornum;
 Entity::Entity()
 {
 	id = 0;
-	spawn_timestamp = time(nullptr);
 }
 
 Entity::~Entity()
@@ -2748,67 +2747,6 @@ void EntityList::SignalMobsByNPCID(uint32 snpc, int signal_id)
 			pit->SignalNPC(signal_id);
 		++it;
 	}
-}
-
-bool tracking_compare(const std::pair<Mob *, float> &a, const std::pair<Mob *, float> &b)
-{
-	return a.first->GetSpawnTimeStamp() > b.first->GetSpawnTimeStamp();
-}
-
-bool EntityList::MakeTrackPacket(Client *client)
-{
-	std::list<std::pair<Mob *, float> > tracking_list;
-	uint32 distance = 0;
-	float MobDistance;
-
-	int base = RuleI(Skills, TrackingMultiplier) * client->GetSkill(SkillTracking);
-
-	if (client->GetClass() == DRUID)
-		distance = (client->GetSkill(SkillTracking) * RuleI(Skills, TrackingDruidMultiplier) + base);
-	else if (client->GetClass() == RANGER)
-		distance = (client->GetSkill(SkillTracking) * RuleI(Skills, TrackingRangerMultiplier) + base);
-	else if (client->GetClass() == BARD)
-		distance = (client->GetSkill(SkillTracking) * RuleI(Skills, TrackingBardMultiplier) + base);
-
-	if (distance <= 0)
-		return false;
-
-	Group *g = client->GetGroup();
-
-	for (auto it = mob_list.cbegin(); it != mob_list.cend(); ++it) {
-		if (!it->second || it->second == client || !it->second->IsTrackable())
-			continue;
-
-		MobDistance = it->second->DistNoZ(*client);
-		if (MobDistance > distance)
-			continue;
-
-		tracking_list.push_back(std::make_pair(it->second, MobDistance));
-	}
-
-	tracking_list.sort(tracking_compare);
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Track, sizeof(Track_Struct) * tracking_list.size());
-	Tracking_Struct *outtrack = (Tracking_Struct *)outapp->pBuffer;
-	outapp->priority = 6;
-
-	int index = 0;
-	for (auto it = tracking_list.cbegin(); it != tracking_list.cend(); ++it, ++index) {
-		Mob *cur_entity = it->first;
-		outtrack->Entrys[index].entityid = cur_entity->GetID();
-		outtrack->Entrys[index].distance = it->second;
-		outtrack->Entrys[index].level = cur_entity->GetLevel();
-		outtrack->Entrys[index].NPC = !cur_entity->IsClient();
-		if (g && cur_entity->IsClient() && g->IsGroupMember(cur_entity->CastToMob()))
-			outtrack->Entrys[index].GroupMember = 1;
-		else
-			outtrack->Entrys[index].GroupMember = 0;
-		strn0cpy(outtrack->Entrys[index].name, cur_entity->GetName(), sizeof(outtrack->Entrys[index].name));
-	}
-
-	client->QueuePacket(outapp);
-	safe_delete(outapp);
-
-	return true;
 }
 
 void EntityList::MessageGroup(Mob *sender, bool skipclose, uint32 type, const char *message, ...)

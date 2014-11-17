@@ -113,11 +113,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 			//then we assume this is invalid.
 			if(!zone_point || zone_point->target_zone_id != target_zone_id) {
 				LogFile->write(EQEMuLog::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
-				//EQMac ChangeZone doesn't have coords.
-				if(eqs->ClientVersion() != EQClientMac)
-				{
-					CheatDetected(MQGate, zc->x, zc->y, zc->z);
-				}
 				SendZoneCancel(zc);
 				return;
 			}

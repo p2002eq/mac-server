@@ -625,7 +625,8 @@ struct CharCreate_Struct
 /*0052*/	uint32	WIS;
 /*0056*/	uint32	INT;
 /*0060*/	uint32	CHA;
-/*0064*/	uint32	face;		// Could be unknown0076
+/*0064*/	uint16	oldface;		// Could be unknown0076
+/*006*/		uint16  face;
 /*0068*/	uint32	eyecolor1;	//its possiable we could have these switched
 /*0073*/	uint32	eyecolor2;	//since setting one sets the other we really can't check
 /*0076*/	uint32	drakkin_heritage;	// added for SoF

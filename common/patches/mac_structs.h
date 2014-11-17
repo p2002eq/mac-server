@@ -2490,7 +2490,7 @@ struct PlayerProfile_Struct
 	/*0172*/	uint16	INT;				// Player Intelligence
 	/*0174*/	uint16	AGI;				// Player Agility
 	/*0176*/	uint16	WIS;				// Player Wisdom
-	/*0178*/	uint8	luclinface;               //
+	/*0178*/	uint8	oldface;               //
 	/*0179*/    int8    EquipType[9];       // i think its the visible parts of the body armor
 	/*0188*/    int32   EquipColor[9];      //
 	/*0224*/	uint16	inventory[30];		// Player Inventory Item Numbers
@@ -2650,7 +2650,7 @@ struct CharCreate_Struct
 	/*0168*/	uint16	INT;				// Player Intelligence
 	/*0170*/	uint16	AGI;				// Player Agility
 	/*0172*/	uint16	WIS;				// Player Wisdom
-	/*0174*/	uint8	luclinface;               //
+	/*0174*/	uint8	oldface;               //
 	/*0175*/    int8    EquipType[9];       // i think its the visible parts of the body armor
 	/*0184*/    int32   EquipColor[9];      //
 	/*0220*/	uint16	inventory[30];		// Player Inventory Item Numbers

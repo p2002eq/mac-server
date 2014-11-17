@@ -466,7 +466,7 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 	if(client_update && IsValidSlot(slot_id)) {
 		EQApplicationPacket* outapp;
 		if(inst) {
-			if((!inst->IsStackable() && !isDeleted) || (GetClientVersion() == EQClientMac && !isDeleted)){
+			if(!isDeleted){
 				// Non stackable item with charges = Item with clicky spell effect ? Delete a charge.
 				outapp = new EQApplicationPacket(OP_DeleteCharge, sizeof(MoveItem_Struct));
 				MoveItem_Struct* delitem = (MoveItem_Struct*)outapp->pBuffer;
@@ -993,10 +993,17 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			move_in->from_slot = dst_slot_check;
 			move_in->to_slot = src_slot_check;
 			move_in->number_in_stack = dst_inst->GetCharges();
-			if(!SwapItem(move_in)) { 
-				mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
-				//Intel EQMac sends 2 SwapItem packets when moving things to the cursor. Handle this here, and figure out a better way in the future. 
-				return 2;
+			if(!SwapItem(move_in))
+			{
+					if(GetClientVersionBit() == BIT_MacIntel) 
+					{ 
+						mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
+						return 2;
+					}
+					else
+					{
+						return 0;
+					}
 			}
 			else
 				recursive_si = true;
@@ -1171,10 +1178,14 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		else if(!src_inst)
 		{
-			//I also believe this is being caused by EQMac double packets. I cannot get this to happen on PC client at all, but happens on Intel client all the time.
-			_log(INVENTORY__ERROR, "src_inst has become invalid somewhere.");
-			Message(CC_Yellow, "Caution: You may have de-synced. Stop what you're doing, and log out now to avoid item loss.");
-			//return 2;
+			if(GetClientVersionBit() == BIT_MacIntel)
+			{
+				//I also believe this is being caused by EQMac double packets. I cannot get this to happen on PC client at all, but happens on Intel client all the time.
+				_log(INVENTORY__ERROR, "src_inst has become invalid somewhere.");
+				Message(CC_Yellow, "Caution: You may have de-synced. Stop what you're doing, and log out now to avoid item loss.");
+			}
+			else
+				return 0;
 		}
 		else {
 			// Nothing in destination slot: split stack into two

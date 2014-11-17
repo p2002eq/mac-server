@@ -155,7 +155,7 @@ bool LoginServer::Process() {
 					client_list.EnforceSessionLimit(slsca->lsaccount_id);
 				}
 
-				client_list.CLEAdd(slsca->lsaccount_id, slsca->name, slsca->key, slsca->worldadmin, slsca->ip, slsca->local);
+				client_list.CLEAdd(slsca->lsaccount_id, slsca->name, slsca->key, slsca->worldadmin, slsca->ip, slsca->local, slsca->version);
 				break;
 			}
 			case ServerOP_LSFatalError: {

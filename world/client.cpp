@@ -70,6 +70,7 @@ Client::Client(EQStreamInterface* ieqs)
 	connect(1000),
 	eqs(ieqs)
 {
+
 	// Live does not send datarate as of 3/11/2005
 	//eqs->SetDataRate(7);
 	ip = eqs->GetRemoteIP();
@@ -86,8 +87,6 @@ Client::Client(EQStreamInterface* ieqs)
 	StartInTutorial = false;
 	ClientVersionBit = 0;
 	numclients++;
-
-	ClientVersionBit = 1 << (eqs->ClientVersion() - 1);
 }
 
 Client::~Client() {
@@ -212,7 +211,20 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 #endif
 	{
 		cle->SetOnline();
+		
+		if(eqs->ClientVersion() == EQClientMac)
+		{
+			ClientVersionBit = cle->GetMacClientVersion();
+		}
+		else
+		{
+			if(eqs->ClientVersion() == EQClientUnused)
+				ClientVersionBit = 1;
+			else
+				ClientVersionBit = 16;
+		}
 
+		clog(WORLD__CLIENT,"ClientVersionBit is: %i", ClientVersionBit);
 		clog(WORLD__CLIENT,"Logged in. Mode=%s",pZoning ? "(Zoning)" : "(CharSel)");
 		clog(WORLD__CLIENT,"LS Account #%d",cle->LSID());
 
@@ -233,25 +245,15 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		if(ClientVersionBit == 1)
-		{		
+		if (!pZoning && ClientVersionBit != 0)
+			SendGuildList();
+			SendLogServer();
 			SendApproveWorld();
 			SendEnterWorld(cle->name());
+		if (!pZoning) {
 			SendExpansionInfo();
 			SendCharInfo();
-		}
-		else
-		{
-			if (!pZoning && ClientVersionBit != 0)
-				SendGuildList();
-				SendLogServer();
-				SendApproveWorld();
-				SendEnterWorld(cle->name());
-			if (!pZoning) {
-				SendExpansionInfo();
-				SendCharInfo();
-				database.LoginIP(cle->AccountID(), long2ip(GetIP()).c_str());
-			}
+			database.LoginIP(cle->AccountID(), long2ip(GetIP()).c_str());
 		}
 
 	}
@@ -943,14 +945,9 @@ void Client::SendGuildList() {
 	outapp = new EQApplicationPacket(OP_GuildsList);
 
 	//ask the guild manager to build us a nice guild list packet
-	if(eqs->ClientVersion() == EQClientMac)
-	{
-		 OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
-		 outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
-		 //safe_delete_array(guildstruct);
-	}
-	else
-		outapp->pBuffer = guild_mgr.MakeGuildList("", outapp->size);
+	OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
+	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
+	//safe_delete_array(guildstruct);
 
 	if(outapp->pBuffer == nullptr) {
 		clog(GUILDS__ERROR, "Unable to make guild list!");
@@ -1040,6 +1037,9 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	int stats_sum = cc->STR + cc->STA + cc->AGI + cc->DEX + cc->WIS + cc->INT + cc->CHA;
 
 	in.s_addr = GetIP();
+
+	if(cc->face == 0 && cc->oldface > 0)
+		cc->face = cc->oldface;
 
 	clog(WORLD__CLIENT, "Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
 	clog(WORLD__CLIENT, "Name: %s", name);
