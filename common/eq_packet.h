@@ -176,6 +176,7 @@ public:
 		this->dwExtraSize      = 0;
 		this->pExtra           = 0;
 		this->resend_count	   = 0;
+		this->dwLoopedOnce     = 0;
 	}
 
 
@@ -190,6 +191,7 @@ public:
 	uint16				dwExtraSize;		//Size of additional info.
 	uchar				*pExtra;			//Additional information
 	uint8				resend_count;		// Quagmire: Moving resend count to a packet by packet basis
+	uint16				dwLoopedOnce;		//Checks counter of times packet has looped. Basically a bool but kept multiples for debugging purposes
 
 	// Quagmire: Made the CRC stuff static and public. Makes things easier elsewhere.
 	static uint32 GenerateCRC(uint32 b, uint32 bufsize, uchar *buf);

@@ -309,7 +309,7 @@ int Embperl::dosub(const char * subname, const std::vector<std::string> * args, 
 	{
 		std::string errmsg = "Perl runtime error: ";
 		errmsg += SvPVX(ERRSV);
-		throw errmsg.c_str();
+		//throw errmsg.c_str();
 	}
 
 	return ret_value;
