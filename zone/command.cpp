@@ -1155,13 +1155,6 @@ void command_gm(Client *c, const Seperator *sep){
 }
 
 void command_summon(Client *c, const Seperator *sep){
-	// there's no need for this, as /summon already takes care of it
-	// this command is here for reference but it is not added to the
-	// list above
-
-	//To whoever wrote the above: And what about /kill, /zone, /zoneserver, etc?
-	//There is a reason for the # commands: so that admins can specifically enable certain
-	//commands for their users. Some might want users to #summon but not to /kill. Cant do that if they are a GM
 	Mob *t;
 
 	if (sep->arg[1][0] != 0)		// arg specified
@@ -1222,11 +1215,13 @@ void command_summon(Client *c, const Seperator *sep){
 	}
 	else if (t->IsClient())
 	{
-		/*if(c->Admin() < 150)
+		//If #hideme is on, prevent being summoned by a lower GM.
+		if(t->CastToClient()->GetAnon() == 1 && t->CastToClient()->Admin() > c->Admin())
 		{
-		c->Message(0, "You may not summon a player.");
-		return;
-		}*/
+			c->Message(CC_Red, "You cannot summon a GM with a higher status than you.");
+			return;
+		}
+
 		c->Message(0, "Summoning player %s to %1.1f, %1.1f, %1.1f", t->GetName(), c->GetX(), c->GetY(), c->GetZ());
 		t->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), c->GetX(), c->GetY(), c->GetZ(), c->GetHeading(), 2, GMSummon);
 	}
