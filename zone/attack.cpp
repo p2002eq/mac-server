@@ -3598,18 +3598,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		}
 
 		safe_delete(outapp);
-	} else {
-		//else, it is a buff tic...
-		// So we can see our dot dmg like live shows it.
-		if(spell_id != SPELL_UNKNOWN && damage > 0 && attacker && attacker != this && attacker->IsClient()) {
-			//might filter on (attack_skill>200 && attack_skill<250), but I dont think we need it
-			attacker->FilteredMessage_StringID(attacker, MT_DoTDamage, FilterDOT,
-					YOUR_HIT_DOT, GetCleanName(), itoa(damage), spells[spell_id].name);
-			// older clients don't have the below String ID, but it will be filtered
-			entity_list.FilteredMessageClose_StringID(attacker, true, 200,
-					MT_DoTDamage, FilterDOT, OTHER_HIT_DOT, GetCleanName(),
-					itoa(damage), attacker->GetCleanName(), spells[spell_id].name);
-		}
 	} //end packet sending
 
 }
