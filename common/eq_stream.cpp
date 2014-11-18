@@ -1905,7 +1905,6 @@ void EQOldStream::MakeClosePacket()
 	if(pack->dwSEQ == 0xFFFF)
 	{
 		SACK.dwGSQ = 1;
-		pack->dwSEQ = 1;
 		ReshuffleResendQueue();
 	}	  
 	pack->HDR.a6_Closing    = 1;// Agz: Lets try to uncomment this line again
@@ -1972,7 +1971,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		if(pack->dwSEQ == 0xFFFF)
 		{
 			SACK.dwGSQ = 1;
-			pack->dwSEQ = 1;
 			MOutboundQueue.lock();
 			ReshuffleResendQueue();
 			MOutboundQueue.unlock();
@@ -2121,7 +2119,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			pack->dwSEQ = SACK.dwGSQ++;
 			if(pack->dwSEQ == 0xFFFF)
 			{
-				pack->dwSEQ = 1;
 				SACK.dwGSQ = 1;
 				MOutboundQueue.lock();
 				ReshuffleResendQueue();
@@ -2172,7 +2169,6 @@ void EQOldStream::CheckTimers(void)
 			if(pack->dwSEQ == 0xFFFF)
 			{
 				SACK.dwGSQ = 1;
-				pack->dwSEQ = 1;
 				shuffleQueueAfter = true;
 			}
 			p->buffer = pack->ReturnPacket(&p->size);
