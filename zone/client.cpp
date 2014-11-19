@@ -5371,60 +5371,66 @@ void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 
 void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume)
 {
-   if(!item) { return; }
+	/* item->CastTime is the time in real world minutes the food/drink will last. If it is 
+	auto-consumed, that number is doubled.
 
-    float cons_mod = 0.0f;
+	EQ stomach is 6000 units.
 
-    switch(GetAA(aaInnateMetabolism)){
-        case 1:
-            cons_mod = .10;
-            break;
-        case 2:
-            cons_mod = .25;
-            break;
-        case 3:
-            cons_mod = .50;
-            break;
-        default:
-            cons_mod = 0;
-            break;
-    }
+	Without mods, players will consume food/drink at a rate of about 50% (3000 units) of the "stomach" 
+	per hour, or about 0.83% (50 units) per minute. Once the player's "stomach" reaches 50% food/drink 
+	is auto-consumed by the client and we end up here. Server side, in Client::DoStaminaUpdate() we 
+	subtract 35 units of food/water every 40 seconds by default.
 
-   int value = RuleI(Character,ConsumptionValue);
-   if(type == ItemTypeFood)
-   {
-	   float percent = (float)item->CastTime/100.0f;
-       float hchange = (cons_mod+percent) * value;
-      // hchange = mod_food_value(item, hchange);
+	Ogre, Troll, and Vah Shir consume more food then everybody else. Having a horse also consumes more 
+	food. More water is consumed in desert zones. The AA Innate Metabolism decreases consumption. 
+	(All handled in Client::DoStaminaUpdate().)
 
-       if(hchange < 0) { return; }
+	EQ stomach is 6000 units, which means for auto-consume we want to multiply CastTime by 100. 
 
-       m_pp.hunger_level += (int)(hchange + 0.5);
-       DeleteItemInInventory(slot, 1, false);
+	Example: Bread Cakes has a CastTime of 30, which equates to 60 minutes auto-consumed or HALF
+	of the total stomach (since the stomach will go from 6000 to 0 in 2 hours.) 30*100 is 3000,
+	or half of 6000. Anything higher than CastTime 60 will overfill the stomach. We want to keep
+	track of the correct value in the pp (so those foods will have their full value), but before 
+	we send the packet it needs to be adjusted to 6000 max.
+	
+	There are rumors that some items like plains pebble or bale of hay will reduce food consumption,
+	but I found no hard evidence of that so I left them out. */
+	
+	if(!item) { return; }
 
-       if(!auto_consume) //no message if the client consumed for us
-           entity_list.MessageClose_StringID(this, true, 50, 0, EATING_MESSAGE, GetName(), item->Name);
+	int value = RuleI(Character,ConsumptionValue);
+	if(type == ItemTypeFood)
+	{
+		int32 food = item->CastTime*100;
+
+		if(!auto_consume)
+			food = food/2;
+
+		m_pp.hunger_level += food;
+		DeleteItemInInventory(slot, 1, false);
+
+		if(!auto_consume) //no message if the client consumed for us
+			entity_list.MessageClose_StringID(this, true, 50, 0, EATING_MESSAGE, GetName(), item->Name);
 
 #if EQDEBUG >= 5
-       LogFile->write(EQEMuLog::Debug, "Eating from slot:%i", (int)slot);
+		LogFile->write(EQEMuLog::Debug, "Eating from slot:%i", (int)slot);
 #endif
-   }
-   else
-   {
-       float percent = (float)item->CastTime/100.0f;
-       float tchange = (cons_mod+percent) * value;
-     //  tchange = mod_drink_value(item, tchange);
+	}
+	else
+	{
+		int32 drink = item->CastTime*100;
 
-       if(tchange < 0) { return; }
+		if(!auto_consume)
+			drink = drink/2;
 
-        m_pp.thirst_level += (int)(tchange + 0.5);
-        DeleteItemInInventory(slot, 1, false);
+		m_pp.thirst_level += drink;
+		DeleteItemInInventory(slot, 1, false);
 
         if(!auto_consume) //no message if the client consumed for us
-            entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), item->Name);
+			entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), item->Name);
 
 #if EQDEBUG >= 5
-        LogFile->write(EQEMuLog::Debug, "Drinking from slot:%i", (int)slot);
+		LogFile->write(EQEMuLog::Debug, "Drinking from slot:%i", (int)slot);
 #endif
    }
 }

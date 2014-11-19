@@ -85,11 +85,11 @@ struct ACK_INFO
 		dwGSQcount = 0;
 	}
 
-	int16   dwARQ;			// Comment: Current request ack
-	int16   dbASQ_high : 8;	//TODO: What is this one?
-	int16	dbASQ_low  : 8;	//TODO: What is this one?
-	int16   dwGSQ;			// Comment: Main sequence number SHORT#2
-	int16	dwGSQcount;
+	uint16   dwARQ;			// Comment: Current request ack
+	uint16   dbASQ_high : 8;	//TODO: What is this one?
+	uint16	dbASQ_low  : 8;	//TODO: What is this one?
+	uint16   dwGSQ;			// Comment: Main sequence number SHORT#2
+	uint16	dwGSQcount;
 
 };
 
@@ -505,7 +505,7 @@ class EQOldStream : public EQStreamInterface {
 
 		ACK_INFO    SACK; //Server -> client info.
 		ACK_INFO    CACK; //Client -> server info.
-		int16       dwLastCACK;
+		uint16       dwLastCACK;
 
 
 		Timer* no_ack_received_timer;
@@ -567,6 +567,7 @@ class EQOldStream : public EQStreamInterface {
 		void _SendDisconnect();
 		void SetTimeOut(bool time) { bTimeout = time; }
 		bool GetTimeOut() { return bTimeout; }
+		void ReshuffleResendQueue();
 		
 };
 

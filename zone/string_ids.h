@@ -319,7 +319,6 @@
 #define SPELL_OPPOSITE_EFFECT		9032	//Your spell may have had the opposite effect of what you desired.
 #define HAS_BEEN_AWAKENED			9037	//%1 has been awakened by %2.
 #define YOU_HEAL					9068	//You have healed %1 for %2 points of damage.
-#define YOUR_HIT_DOT				9072	//%1 has taken %2 damage from your %3.
 #define HIT_NON_MELEE				9073	//%1 hit %2 for %3 points of non-melee damage.
 #define SHAKE_OFF_STUN				9077
 #define STRIKETHROUGH_STRING		9078	//You strike through your opponent's defenses!
@@ -395,7 +394,6 @@
 #define TOGGLE_ON					13172	//Asking server to turn ON your incoming tells.
 #define TOGGLE_OFF					13173	//Asking server to turn OFF all incoming tells for you.
 #define DUEL_INPROGRESS				13251	//You have already accepted a duel with someone else cowardly dog.
-#define OTHER_HIT_DOT				13327	//%1 has taken %2 damage from %3 by %4.
 #define GENERIC_MISS				15041	//%1 missed %2
 
 #endif

@@ -2792,7 +2792,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			EQApplicationPacket *outapp;
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
+			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 
 			QueuePacket(outapp);
@@ -2808,7 +2808,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+			sta->water = value;
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2833,10 +2833,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		LogFile->write(EQEMuLog::Error, "OP_Consume: unknown type, type:%i", (int)pcs->type);
 		return;
 	}
-	if (m_pp.hunger_level > value)
-		m_pp.hunger_level = value;
-	if (m_pp.thirst_level > value)
-		m_pp.thirst_level = value;
+
 	EQApplicationPacket *outapp;
 	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
@@ -7767,15 +7764,15 @@ void Client::Handle_OP_TGB(const EQApplicationPacket *app)
 void Client::Handle_OP_Track(const EQApplicationPacket *app)
 {
 	if (GetClass() != RANGER && GetClass() != DRUID && GetClass() != BARD)
+	{
+		Kick(); //The client handles tracking for us, simply returning is not enough if they are cheating.
 		return;
+	}
 
 	if (GetSkill(SkillTracking) == 0)
 		SetSkill(SkillTracking, 1);
 	else
 		CheckIncreaseSkill(SkillTracking, nullptr, 15);
-
-	if (!entity_list.MakeTrackPacket(this))
-		LogFile->write(EQEMuLog::Error, "Unable to generate OP_Track packet requested by client.");
 
 	return;
 }

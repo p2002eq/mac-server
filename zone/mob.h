@@ -642,8 +642,6 @@ public:
 	inline const uint8 GetRunAnimSpeed() const { return pRunAnimSpeed; }
 	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; pLastChange = Timer::GetCurrentTime(); } }
 	float SetRunAnimation(float speed);
-	bool IsDestructibleObject() { return destructibleobject; }
-	void SetDestructibleObject(bool in) { destructibleobject = in; }
 
 	Mob* GetPet();
 	void SetPet(Mob* newpet);
@@ -1239,7 +1237,6 @@ protected:
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
-	bool destructibleobject;
 
 	Timer eqmac_timer;
 

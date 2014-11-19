@@ -449,8 +449,13 @@ void WorldServer::Process() {
 			if (client != 0) {
 				if (strcasecmp(szp->adminname, szp->name) == 0)
 					client->Message(0, "Zoning to: %s", szp->zone);
+				//If #hideme is on, prevent being summoned by a lower GM.
 				else if (client->GetAnon() == 1 && client->Admin() > szp->adminrank)
+				{
+					client->Message(CC_Red, "%s's attempt to summon you was prevented due to lack of status.", szp->adminname);
+					SendEmoteMessage(szp->adminname, 0, CC_Red, "You cannot summon a GM with a higher status than you.", szp->name);
 					break;
+				}
 				else {
 					SendEmoteMessage(szp->adminname, 0, 0, "Summoning %s to %s %1.1f, %1.1f, %1.1f", szp->name, szp->zone, szp->x_pos, szp->y_pos, szp->z_pos);
 				}

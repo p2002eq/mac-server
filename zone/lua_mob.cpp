@@ -1755,11 +1755,6 @@ void Lua_Mob::SetAppearance(int app, bool ignore_self) {
 	self->SetAppearance(static_cast<EmuAppearance>(app), ignore_self);
 }
 
-void Lua_Mob::SetDestructibleObject(bool set) {
-	Lua_Safe_Call_Void();
-	self->SetDestructibleObject(set);
-}
-
 bool Lua_Mob::IsImmuneToSpell(int spell_id, Lua_Mob caster) {
 	Lua_Safe_Call_Bool();
 	return self->IsImmuneToSpell(spell_id, caster);
@@ -2103,7 +2098,6 @@ luabind::scope lua_register_mob() {
 		.def("ProcessSpecialAbilities", (void(Lua_Mob::*)(std::string))&Lua_Mob::ProcessSpecialAbilities)
 		.def("SetAppearance", (void(Lua_Mob::*)(int))&Lua_Mob::SetAppearance)
 		.def("SetAppearance", (void(Lua_Mob::*)(int,bool))&Lua_Mob::SetAppearance)
-		.def("SetDestructibleObject", (void(Lua_Mob::*)(bool))&Lua_Mob::SetDestructibleObject)
 		.def("IsImmuneToSpell", (bool(Lua_Mob::*)(int,Lua_Mob))&Lua_Mob::IsImmuneToSpell)
 		.def("BuffFadeBySpellID", (void(Lua_Mob::*)(int))&Lua_Mob::BuffFadeBySpellID)
 		.def("BuffFadeByEffect", (void(Lua_Mob::*)(int))&Lua_Mob::BuffFadeByEffect)

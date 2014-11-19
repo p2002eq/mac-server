@@ -1655,7 +1655,7 @@ void EQOldStream::IncomingARSP(uint16 dwARSP)
 { 
 	MOutboundQueue.lock();
 	EQOldPacket* pack = 0;
-	while (!ResendQueue.empty() && dwARSP - ResendQueue.top()->dwARQ >= 0 || !ResendQueue.empty() && ResendQueue.top()->dwARQ > 60000 && dwARSP < 1000)
+	while (!ResendQueue.empty() && dwARSP - ResendQueue.top()->dwARQ >= 0 || !ResendQueue.empty() && ResendQueue.top()->dwLoopedOnce && ResendQueue.top()->dwARQ > dwARSP)
 	{
 		pack = ResendQueue.pop();
 		packetspending--;
@@ -1905,7 +1905,7 @@ void EQOldStream::MakeClosePacket()
 	if(pack->dwSEQ == 0xFFFF)
 	{
 		SACK.dwGSQ = 1;
-		pack->dwSEQ = 1;
+		ReshuffleResendQueue();
 	}	  
 	pack->HDR.a6_Closing    = 1;// Agz: Lets try to uncomment this line again
 	pack->HDR.a2_Closing    = 1;// and this
@@ -1938,7 +1938,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	int16 restore_op = 0x0000;
 
 	/************ PM STATE = NOT ACTIVE ************/
-	if(CheckState(CLOSING) || !app || sent_Fin)
+	if(CheckState(CLOSING) || !app || sent_Fin || app && app->GetRawOpcode() == 0)
 	{
 		return;
 	}
@@ -1971,7 +1971,9 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		if(pack->dwSEQ == 0xFFFF)
 		{
 			SACK.dwGSQ = 1;
-			pack->dwSEQ = 1;
+			MOutboundQueue.lock();
+			ReshuffleResendQueue();
+			MOutboundQueue.unlock();
 		}
 		p->buffer = pack->ReturnPacket(&p->size);
 		MOutboundQueue.lock();
@@ -2117,8 +2119,10 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			pack->dwSEQ = SACK.dwGSQ++;
 			if(pack->dwSEQ == 0xFFFF)
 			{
-			pack->dwSEQ = 1;
-			SACK.dwGSQ = 1;
+				SACK.dwGSQ = 1;
+				MOutboundQueue.lock();
+				ReshuffleResendQueue();
+				MOutboundQueue.unlock();
 			}
 			p->buffer = pack->ReturnPacket(&p->size);
 			MOutboundQueue.lock();
@@ -2149,7 +2153,7 @@ void EQOldStream::CheckTimers(void)
 {
 	//This is to avoid recursive locking.
 	bool setClosing = false;
-
+	bool shuffleQueueAfter = false;
 	/************ Should packets be resent? ************/
 	if (no_ack_received_timer->Check())
 	{
@@ -2165,19 +2169,18 @@ void EQOldStream::CheckTimers(void)
 			if(pack->dwSEQ == 0xFFFF)
 			{
 				SACK.dwGSQ = 1;
-				pack->dwSEQ = 1;
+				shuffleQueueAfter = true;
 			}
 			p->buffer = pack->ReturnPacket(&p->size);
 			SendQueue.push_back(p);
 		}
 		while(pack = q.pop())
 		{
+			if(++pack->resend_count > 15) {
+				_log(EQMAC__LOG, _L "Sending packet too many times seq %i: op %i" __L, pack->dwSEQ, pack->GetRawOpcode());
+			}
 			ResendQueue.push(pack);
 			packetspending++;
-			if(++pack->resend_count > 15) {
-				setClosing = true;
-				break;
-			}
 		}
 		no_ack_received_timer->Start(1000);
 		MOutboundQueue.unlock();
@@ -2193,11 +2196,19 @@ void EQOldStream::CheckTimers(void)
 	{
 		_SendDisconnect();
 	}
+
+	if(shuffleQueueAfter)
+	{
+		MOutboundQueue.lock();
+		ReshuffleResendQueue();
+		MOutboundQueue.unlock();
+	}
+
 }
 
 void EQOldStream::QueuePacket(const EQApplicationPacket *p, bool ack_req)
 {
-	ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
+//	ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
 
 	if(p == nullptr)
 		return;
@@ -2229,7 +2240,7 @@ void EQOldStream::FastQueuePacket(EQApplicationPacket **p, bool ack_req)
 
 	uint16 opcode = (*OpMgr)->EmuToEQ(pack->emu_opcode);
 
-	ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
+//	ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
 
 	if(p == nullptr)
 		return;
@@ -2237,7 +2248,7 @@ void EQOldStream::FastQueuePacket(EQApplicationPacket **p, bool ack_req)
 	EQProtocolPacket* pack2 = new EQProtocolPacket(opcode, pack->pBuffer, pack->size);
 
 	if(pack->emu_opcode != OP_MobUpdate && pack->emu_opcode != OP_MobHealth && pack->emu_opcode != OP_HPUpdate)
-		_log(NET__DEBUG, "Sending old opcode 0x%x", opcode);
+		_log(NET__DEBUG, _L "Sending old opcode 0x%x" __L, opcode);
 	MakeEQPacket(pack2, ack_req);
 	delete pack;
 	delete pack2;
@@ -2481,5 +2492,23 @@ void EQOldStream::Close() {
 		sent_Fin = true;
 		_SendDisconnect();
 		_log(EQMAC__LOG, _L "Stream closing immediate due to Close()" __L);
+	}
+}
+
+void EQOldStream::ReshuffleResendQueue()
+{
+	/* DO NOT CALL THIS WITHOUT A MUTEX PROTECTING RESENDQUEUE!!! */
+	MyQueue<EQOldPacket> q;
+	EQOldPacket* pack = NULL;
+	while(pack = ResendQueue.pop())
+	{
+		if(pack->dwARQ > SACK.dwARQ)
+			pack->dwLoopedOnce = 1;
+
+		q.push(pack);
+	}
+	while(pack = q.pop())
+	{
+		ResendQueue.push(pack);
 	}
 }
