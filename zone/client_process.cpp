@@ -1691,6 +1691,16 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 		}
 		if(st)
 		{
+			if(st->IsClient())
+			{
+				//If #hideme is on, prevent being summoned by a lower GM.
+				if(st->CastToClient()->GetAnon() == 1 && st->CastToClient()->Admin() > this->Admin())
+				{
+					Message(CC_Red, "You cannot summon a GM with a higher status than you.");
+					return;
+				}
+			}
+
 			Message(0, "Local: Summoning %s to %f, %f, %f", gms->charname, gms->x, gms->y, gms->z);
 			if (st->IsClient() && (st->CastToClient()->GetAnon() != 1 || this->Admin() >= st->CastToClient()->Admin()))
 				st->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), (float)gms->x, (float)gms->y, (float)gms->z, this->GetHeading(), true);
