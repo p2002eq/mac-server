@@ -1058,7 +1058,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 			Client *c = this->CastToClient();
 			int component, component_count, inv_slot_id, focuscomponent;
 			bool missingreags = false;
-			static const int petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6361, 6361, 6362, 6363 };
+			static const int petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6360, 6361, 6362, 6363 };
 			for(int t_count = 0; t_count < 4; t_count++) {
 				component = spells[spell_id].components[t_count];
 				component_count = spells[spell_id].component_counts[t_count];
