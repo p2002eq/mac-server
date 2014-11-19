@@ -386,7 +386,7 @@ struct ClientTarget_Struct
 struct Spawn_Struct
 {
 	/*0000*/	uint32  random_dontuse;
-	/*0004*/	uint8	unknown0004;
+	/*0004*/	uint8	accel;
 	/*0005*/	uint8	heading;			// Current Heading
 	/*0006*/	uint8	deltaHeading;		// Delta Heading
 	/*0007*/	int16	y_pos;				// Y Position
@@ -397,7 +397,7 @@ struct Spawn_Struct
 						deltaZ:10,			// Velocity Z
 						spacer2:1,			// ***Placeholder
 						deltaX:10;			// Velocity X
-	/*0017*/	uint8	unknown0051;
+	/*0017*/	uint8	void1;
 	/*0018*/	uint16	petOwnerId;		// Id of pet owner (0 if not a pet)
 	/*0020*/	uint8	animation;
 	/*0021*/    uint8	haircolor; 

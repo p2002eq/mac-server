@@ -2284,7 +2284,10 @@ namespace Mac {
 		eq->petOwnerId = emu->petOwnerId;
 		eq->guildrank = emu->guildrank;
 		if(emu->NPC == 1)
+		{
 			eq->guildrank = 0;
+			eq->LD=1;
+		}
 		eq->texture = emu->equip_chest2;
 		for(int k = 0; k < 9; k++) 
 		{

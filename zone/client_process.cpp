@@ -1762,12 +1762,41 @@ void Client::DoStaminaUpdate() {
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 
 	int value = RuleI(Character,ConsumptionValue);
-	if(zone->GetZoneID() != 151) {
-		int loss = RuleI(Character, FoodLossPerUpdate);
+	if(zone->GetZoneID() != 151 && !GetGM()) {
+		float loss = RuleI(Character, FoodLossPerUpdate);
+
+		float cons_mod = 0.0f;
+		switch(GetAA(aaInnateMetabolism)){
+			case 1:
+				cons_mod = .10;
+				break;
+			case 2:
+				cons_mod = .25;
+				break;
+			case 3:
+				cons_mod = .50;
+				break;
+			default:
+				cons_mod = 0;
+				break;
+		}
+		float raceloss = 0.0f;
+		float horseloss = 0.0f;
+		float waterloss = 0.0f;
+		if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == VAHSHIR)
+			raceloss += loss*0.50;
+		if(GetHorseId() != 0)
+			horseloss += loss*2.0;
+		if(GetZoneID() == 34 || GetZoneID() == 35 || GetZoneID() == 36 || GetZoneID() == 78 || GetZoneID() == 175) 
+		   waterloss = loss*2.0;
+
+		loss += raceloss+horseloss;
+		loss -= loss*cons_mod;
+
 		if (m_pp.hunger_level > 0)
-			m_pp.hunger_level-=loss;
+			m_pp.hunger_level-=(int)loss;
 		if (m_pp.thirst_level > 0)
-			m_pp.thirst_level-=loss;
+			m_pp.thirst_level-=(int)loss+(int)waterloss;
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 	}
