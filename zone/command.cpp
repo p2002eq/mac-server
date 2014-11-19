@@ -723,21 +723,15 @@ void command_sendop(Client *c, const Seperator *sep){
 }
 
 void command_optest(Client *c, const Seperator *sep){
-	if (sep->IsNumber(1))
+
+	if(c)
 	{
-		switch (atoi(sep->arg[1]))
+		for (int i = 0; i < 45000; i++)
 		{
-		case 3:
-		{
-			c->SendMarqueeMessage(15, 250, 0, 500, 5000, "Some msg");
-			break;
-		}
-		default:
-		{
-			break;
-		}
+			c->Message(15, "Test command");
 		}
 	}
+
 }
 
 void command_help(Client *c, const Seperator *sep){

@@ -2176,21 +2176,11 @@ void EQOldStream::CheckTimers(void)
 		}
 		while(pack = q.pop())
 		{
-
-			if(pack->GetRawOpcode() == 0)
-			{
-				//sanity check
-				safe_delete(pack);
-				continue;
+			if(++pack->resend_count > 15) {
+				_log(EQMAC__LOG, _L "Sending packet too many times seq %i: op %i" __L, pack->dwSEQ, pack->GetRawOpcode());
 			}
-
 			ResendQueue.push(pack);
 			packetspending++;
-			if(++pack->resend_count > 15) {
-				_log(EQMAC__LOG, _L "Closing resent packet too many times %i" __L, pack->GetRawOpcode());
-				setClosing = true;
-				break;
-			}
 		}
 		no_ack_received_timer->Start(1000);
 		MOutboundQueue.unlock();
