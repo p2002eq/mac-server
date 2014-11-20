@@ -144,7 +144,7 @@ public:
 
 public:
 	void  DecodePacket(uint16 length, uchar *pPacket);
-	uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon);
+	uint32 ReturnPacket(uchar** data, EQOldStream* netcon);
 
 	void AddAdditional(int size, uchar *pAdd) 
 	{   
