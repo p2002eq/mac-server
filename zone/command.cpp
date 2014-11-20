@@ -726,7 +726,8 @@ void command_optest(Client *c, const Seperator *sep){
 
 	if(c)
 	{
-		for (int i = 0; i < 45000; i++)
+		int arg = atoi(sep->arg[1]);
+		for (int i = 0; i < arg; i++)
 		{
 			c->Message(15, "Test command");
 		}

@@ -282,7 +282,6 @@ timeval sleep_time;
 							//oldcurstream->AddBytesRecv(length);
 							oldcurstream->ParceEQPacket(length, buffer);
 							oldcurstream->SetLastPacketTime(Timer::GetCurrentTime());
-							oldcurstream->CheckTimers();
 							oldcurstream->ReleaseFromUse();
 						}
 					}
@@ -333,7 +332,6 @@ void EQStreamFactory::CheckTimeout()
 	std::map<std::string,EQOldStream *>::iterator oldstream_itr;
 	for(oldstream_itr=OldStreams.begin();oldstream_itr!=OldStreams.end();) {
 		EQOldStream *s = oldstream_itr->second;
-
 		s->CheckTimeout(now, stream_timeout);
 
 		EQStreamState state = s->GetState();
@@ -415,7 +413,9 @@ Timer DecayTimer(20);
 			if(oldstream_itr->second == nullptr) {
 				fprintf(stderr, "ERROR: nullptr Stream encountered in EQStreamFactory::WriterLoop for: %s", oldstream_itr->first.c_str());
 				continue;
-			}
+			}		
+			
+			oldstream_itr->second->CheckTimers();
 
 			if (oldstream_itr->second->HasOutgoingData()) {
 				havework=true; 
@@ -440,7 +440,6 @@ Timer DecayTimer(20);
 		oldcur = old_wants_write.begin();
 		oldend = old_wants_write.end();
 			for(; oldcur != oldend; oldcur++) {
-				(*oldcur)->CheckTimers();
 				(*oldcur)->SendPacketQueue();
 				(*oldcur)->ReleaseFromUse();
 				(*oldcur)->SetWriting(false);

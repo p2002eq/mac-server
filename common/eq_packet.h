@@ -143,7 +143,7 @@ public:
 
 public:
 	void  DecodePacket(uint16 length, uchar *pPacket);
-	uchar* ReturnPacket(uint16 *dwLength);
+	uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon);
 
 	void AddAdditional(int size, uchar *pAdd) 
 	{   
@@ -177,6 +177,8 @@ public:
 		this->pExtra           = 0;
 		this->resend_count	   = 0;
 		this->dwLoopedOnce     = 0;
+		this->SentCount		   = 0;
+		this->LastSent		   = 0;
 	}
 
 
@@ -192,6 +194,8 @@ public:
 	uchar				*pExtra;			//Additional information
 	uint8				resend_count;		// Quagmire: Moving resend count to a packet by packet basis
 	uint16				dwLoopedOnce;		//Checks counter of times packet has looped. Basically a bool but kept multiples for debugging purposes
+	uint16				SentCount;		//Checks counter of times packet has looped. Basically a bool but kept multiples for debugging purposes
+	uint32				LastSent; //Last time this packet was sent.
 
 	// Quagmire: Made the CRC stuff static and public. Makes things easier elsewhere.
 	static uint32 GenerateCRC(uint32 b, uint32 bufsize, uchar *buf);
