@@ -2792,7 +2792,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			EQApplicationPacket *outapp;
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
+			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 
 			QueuePacket(outapp);
@@ -2808,7 +2808,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+			sta->water = value;
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2833,10 +2833,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		LogFile->write(EQEMuLog::Error, "OP_Consume: unknown type, type:%i", (int)pcs->type);
 		return;
 	}
-	if (m_pp.hunger_level > value)
-		m_pp.hunger_level = value;
-	if (m_pp.thirst_level > value)
-		m_pp.thirst_level = value;
+
 	EQApplicationPacket *outapp;
 	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
@@ -6929,8 +6926,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
 
 	//make sure we are not completely full...
-	if (freeslotid == MainCursor) {
-		if (m_inv.GetItem(MainCursor) != nullptr) {
+	if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
+		if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 			Message(13, "You do not have room for any more items.");
 			DropInst(inst);
 			QueuePacket(outapp);

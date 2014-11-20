@@ -247,13 +247,9 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		return false;
 	}
 
-	// attune item
-	if(attuned && inst->GetItem()->Attuneable)
-		inst->SetInstNoDrop(true);
-
 	// check to see if item is usable in requested slot
-	if(to_slot != MainQuest && (((to_slot >= MainEar1) && (to_slot <= MainAmmo)) || (to_slot == MainPowerSource))) {
-		uint32 slottest = (to_slot == MainPowerSource) ? 22 : to_slot; // can't change '22' just yet...
+	if(to_slot != MainQuest && ((to_slot >= MainEar1) && (to_slot <= MainAmmo))) {
+		uint32 slottest = 22; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
 			Message(0, "This item is not equipable at slot %u - moving to cursor.", to_slot);
