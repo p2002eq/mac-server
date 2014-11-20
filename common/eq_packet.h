@@ -59,6 +59,7 @@ struct FRAGMENT_INFO
 };
 
 class EQStream;
+class EQOldStream;
 class EQStreamPair;
 
 class EQPacket : public BasePacket {
