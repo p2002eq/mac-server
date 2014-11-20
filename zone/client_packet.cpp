@@ -6926,8 +6926,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
 
 	//make sure we are not completely full...
-	if (freeslotid == MainCursor) {
-		if (m_inv.GetItem(MainCursor) != nullptr) {
+	if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
+		if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 			Message(13, "You do not have room for any more items.");
 			DropInst(inst);
 			QueuePacket(outapp);

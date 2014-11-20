@@ -1503,12 +1503,12 @@ namespace Mac {
 		int g;
 		for(g=0; g<10; g++)
 		{
-			if(eq->itemsinbag[g] > 0)
+			/*if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
 				_log(EQMAC__LOG, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
-			else
+			else*/
 				eq->itemsinbag[g] = 0xFFFF;
 		}
 		eq->unknown208 = 0xFFFFFFFF;
@@ -2067,14 +2067,20 @@ namespace Mac {
   		{
   			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
 			mac_pop_item->Charges = inst->GetCharges();
-			mac_pop_item->Price = item->Price;
+			if(item->NoDrop == 0)
+				mac_pop_item->Price = 0; 
+			else
+				mac_pop_item->Price = item->Price;
 			mac_pop_item->SellRate = item->SellRate;
   		}
   		else
   		{ 
   			mac_pop_item->Charges = 1;
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			if(item->NoDrop == 0)
+				mac_pop_item->Price = 0; 
+			else
+				mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
 			mac_pop_item->SellRate = 1;
 		}
   
