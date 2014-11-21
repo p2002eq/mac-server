@@ -857,7 +857,7 @@ struct PlayerProfile_Struct
 /*2460*/	uint32				points;				// Unspent Practice points
 /*2464*/	uint32				mana;				// current mana
 /*2468*/	uint32				cur_hp;				// current hp
-/*2472*/	uint32				unknown2508;		// 0x05
+/*2472*/	uint32				famished;
 /*2476*/	uint32				STR;				// Strength
 /*2480*/	uint32				STA;				// Stamina
 /*2484*/	uint32				CHA;				// Charisma
@@ -1087,19 +1087,11 @@ struct WearChange_Struct{
 /*027*/
 };
 
-/*
-** Type: Bind Wound Structure
-** Length: 8 Bytes
-*/
-//Fixed for 7-14-04 patch
-struct BindWound_Struct
-{
-/*002*/	uint16	to;			// TargetID
-/*004*/	uint16	unknown2;		// ***Placeholder
-/*006*/	uint16	type;
-/*008*/	uint16	unknown6;
+struct BindWound_Struct {
+/*000*/    uint16  to; // entity id
+/*002*/    uint8   type; // 0 or 1 complete, 2 Unknown, 3 ACK, 4 Died, 5 Left, 6 they moved, 7 you moved
+/*003*/    uint8   void_;
 };
-
 
 /*
 ** Type: Zone Change Request (before hand)

@@ -2152,7 +2152,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 			if (bslot == INVALID_INDEX) {
 				bind_out->type = 3;
 				QueuePacket(outapp);
-				bind_out->type = 7;	//this is the wrong message, dont know the right one.
+				bind_out->type = 0;	//this is the wrong message, dont know the right one.
 				QueuePacket(outapp);
 				return(true);
 			}
@@ -2164,7 +2164,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 
 			// Send client unlock
 			bind_out->type = 3;
-			//QueuePacket(outapp);
+			QueuePacket(outapp);
 			bind_out->type = 0;
 			// Client Unlocked
 			if(!bindmob) {
@@ -2186,10 +2186,10 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					bind_out->to = 0;
 				}
 				else if (bindmob->IsAIControlled() && bindmob != this ){
-					// Tell IPC to stand still?
+					bindmob->CastToClient()->Message_StringID(CC_User_Skills, STAY_STILL); // Tell IPC to stand still?
 				}
 				else {
-				   // Binding self
+					Message_StringID(CC_User_Skills, STAY_STILL); // Binding self
 				}
 			}
 		} else {
@@ -2267,9 +2267,9 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					else {
 						//I dont have the real, live
 						if(bindmob->IsClient() && bindmob != this)
-							bindmob->CastToClient()->Message(15, "You cannot have your wounds bound above %d%% hitpoints.", max_percent);
+							bindmob->CastToClient()->Message(CC_Yellow, "You cannot have your wounds bound above %d%% hitpoints.", max_percent);
 						else
-							Message(15, "You cannot bind wounds above %d%% hitpoints.", max_percent);
+							Message(CC_Yellow, "You cannot bind wounds above %d%% hitpoints.", max_percent);
 					}
 					Stand();
 				}
