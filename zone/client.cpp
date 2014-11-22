@@ -285,7 +285,6 @@ Client::Client(EQStreamInterface* ieqs)
 
 	initial_respawn_selection = 0;
 
-	last_used_slot = -1;
 	walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
@@ -616,9 +615,6 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 
 void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_skill, const char* orig_message, const char* targetname)
 {
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	char message[4096];
 	strn0cpy(message, orig_message, sizeof(message));
 
@@ -719,24 +715,18 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: You dont have permission to speak to the guild.");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, GuildID(), language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 2: { /* Group Chat */
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid) {
 			raid->RaidGroupSay((const char*) message, this);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 			break;
 		}
 
 		Group* group = GetGroup();
 		if(group != nullptr) {
 			group->GroupMessage(this,language,lang_skill,(const char*) message);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -744,8 +734,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid){
 			raid->RaidSay((const char*) message, this);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -755,8 +743,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 4: { /* Auction */
@@ -787,8 +773,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 4, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideAuction)) {
 			Mob *sender = this;
@@ -797,8 +781,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -835,8 +817,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 5, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideOOC))
 		{
@@ -846,8 +826,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				sender = GetPet();
 
 			entity_list.ChannelMessage(sender, chan_num, language, message);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -857,8 +835,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: Only GMs can use this channel");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 7: { /* Tell */
@@ -907,8 +883,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if(!worldserver.SendChannelMessage(this, target_name, chan_num, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		break;
 	}
 	case 8: { /* Say */
@@ -932,8 +906,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		parse->EventPlayer(EVENT_SAY, this, message, language);
 
 		if (sender != this)
@@ -966,8 +938,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		// UCS Relay for Underfoot and later.
 		if(!worldserver.SendChannelMessage(this, 0, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 22:
@@ -985,8 +955,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Buffer += 4;
 		snprintf(Buffer, sizeof(Emote_Struct) - 4, "%s %s", GetName(), message);
 		entity_list.QueueCloseClients(this, outapp, true, 100, 0, true, FilterSocials);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		safe_delete(outapp);
 		break;
 	}

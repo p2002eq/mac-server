@@ -48,7 +48,7 @@ RULE_INT ( Character, RedModifier, 150 )
 RULE_INT ( Character, AutosaveIntervalS, 240 )	//0=disabled
 RULE_INT ( Character, HPRegenMultiplier, 100)
 RULE_INT ( Character, ManaRegenMultiplier, 100)
-RULE_INT ( Character, EnduranceRegenMultiplier, 50)
+RULE_INT ( Character, EnduranceRegenMultiplier, 100)
 RULE_INT ( Character, ConsumptionMultiplier, 100) //item's hunger restored = this value * item's food level, 100 = normal, 50 = people eat 2x as fast, 200 = people eat 2x as slow
 RULE_INT ( Character, ConsumptionValue, 6000) //How "full" each consumption of food or drink will make the player. EQEmu default is 6000.
 RULE_BOOL( Character, HealOnLevel, false)

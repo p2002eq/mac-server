@@ -100,9 +100,7 @@ Mob::Mob(const char* in_name,
 		bardsong_timer(6000),
 		gravity_timer(1000),
 		viral_timer(0),
-		flee_timer(FLEE_CHECK_TIMER),
-		eqmac_timer(250) //Hack timer to prevent Intel's duplicate packets from being processed. This should be handled at the netcode level, methinks.
-
+		flee_timer(FLEE_CHECK_TIMER)
 {
 	targeted = 0;
 	tar_ndx=0;
@@ -865,7 +863,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	else
 		ns->spawn.invis		= (invisible || hidden) ? 1 : 0;	// TODO: load this before spawning players
 
-	ns->spawn.NPC		= IsClient() ? 0 : 1;
+	ns->spawn.NPC		= IsNPC() ? 1 : 0;
 	ns->spawn.petOwnerId	= ownerid;
 
 	ns->spawn.haircolor = haircolor;
