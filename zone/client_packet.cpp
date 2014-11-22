@@ -645,6 +645,8 @@ void Client::CompleteConnect()
 		guild_mgr.RequestOnlineGuildMembers(this->CharacterID(), this->GuildID());
 	}
 
+	SendStaminaUpdate();
+
 	//Send a message until we can figure out how to send these items to the client.
 	if (itemsinabag)
 		Message(CC_Red, "You have zoned with items in a bag on your cursor. Please put the bag in your inventory and camp or zone to avoid desyncs!");
@@ -2794,6 +2796,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+			sta->fatigue=GetFatiguePercent();
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2809,6 +2812,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 			sta->water = value;
+			sta->fatigue=GetFatiguePercent();
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2839,6 +2843,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	QueuePacket(outapp);
 	safe_delete(outapp);

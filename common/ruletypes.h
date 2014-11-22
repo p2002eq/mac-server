@@ -48,7 +48,7 @@ RULE_INT ( Character, RedModifier, 150 )
 RULE_INT ( Character, AutosaveIntervalS, 240 )	//0=disabled
 RULE_INT ( Character, HPRegenMultiplier, 100)
 RULE_INT ( Character, ManaRegenMultiplier, 100)
-RULE_INT ( Character, EnduranceRegenMultiplier, 100)
+RULE_INT ( Character, EnduranceRegenMultiplier, 50)
 RULE_INT ( Character, ConsumptionMultiplier, 100) //item's hunger restored = this value * item's food level, 100 = normal, 50 = people eat 2x as fast, 200 = people eat 2x as slow
 RULE_INT ( Character, ConsumptionValue, 6000) //How "full" each consumption of food or drink will make the player. EQEmu default is 6000.
 RULE_BOOL( Character, HealOnLevel, false)
@@ -96,7 +96,7 @@ RULE_BOOL ( Character, CheckCursorEmptyWhenLooting, true ) // If true, a player 
 RULE_BOOL ( Character, MaintainIntoxicationAcrossZones, true ) // If true, alcohol effects are maintained across zoning and logging out/in.
 RULE_BOOL ( Character, EnableDiscoveredItems, false ) // If enabled, it enables EVENT_DISCOVER_ITEM and also saves character names and timestamps for the first time an item is discovered.
 RULE_BOOL ( Character, KeepLevelOverMax, false) // Don't delevel a character that has somehow gone over the level cap
-RULE_INT ( Character, FoodLossPerUpdate, 35) // How much food/water you lose per stamina update
+RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
 RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods, 36 commonly referred to as "3.6" as well.
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_BOOL (Character, StripBuffsOnLowHP, true)

@@ -487,7 +487,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"guild_auto_consent,"
 		"RestTimer,"
 		"boatid,"
-		"boatname) "
+		"boatname,"
+		"famished) "
 		"VALUES ("
 		"%u,"  // id					
 		"%u,"  // account_id			
@@ -580,7 +581,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // guild_auto_consent	
 		"%u,"  // RestTimer		
 		"%u,"   // boatid		
-		"'%s'"  // boatname	
+		"'%s',"  // boatname	
+		"%u"
 		")",
 		character_id,					  // " id,                        "
 		account_id,						  // " account_id,                "
@@ -673,7 +675,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->guildAutoconsent,			  // " guild_auto_consent,        "
 		pp->RestTimer,					  // " RestTimer,                 "
 		pp->boatid,						  // " boatid,					  "
-		EscapeString(pp->boat).c_str()	  // " boatname)                  "
+		EscapeString(pp->boat).c_str(),	  // " boatname                   "
+		pp->famished					  // " famished)				  "
 	);
 	auto results = QueryDatabase(query);
 	ThrowDBError(results.ErrorMessage(), "Database::SaveCharacterCreate Character Data", query); 
@@ -1546,6 +1549,7 @@ bool Database::CheckDatabaseConversions() {
 				"xtargets," 
 				"boatid,"
 				"`boatname`,"
+				"famished,"
 				"e_aa_effects,"
 				"e_percent_to_aa,"
 				"e_expended_aa_spent"
@@ -1648,6 +1652,7 @@ bool Database::CheckDatabaseConversions() {
 				"%u,"		// X Targets
 				"%u,"		// boatid
 				"'%s',"		// `boatname`	
+				"%u,"		// famished
 				"%u,"		// AA Effects
 				"%u,"		// Percent to AA
 				"%u"		// e_expended_aa_spent	
@@ -1749,6 +1754,7 @@ bool Database::CheckDatabaseConversions() {
 				xtargets,
 				pp->boatid,
 				EscapeString(pp->boat).c_str(),
+				pp->famished,
 				e_pp->aa_effects,
 				e_pp->perAA,
 				e_pp->expended_aa

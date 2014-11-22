@@ -1354,6 +1354,18 @@ void Client::SendManaUpdate()
 	safe_delete(mana_app);
 }
 
+void Client::SendStaminaUpdate()
+{
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
+	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
+	int value = RuleI(Character,ConsumptionValue);
+	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
+	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
+	QueuePacket(outapp);
+	safe_delete(outapp);
+}
+
 void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 {
 	Mob::FillSpawnStruct(ns, ForWho);
@@ -2910,7 +2922,7 @@ void Client::SetEndurance(int32 newEnd)
 	}
 
 	cur_end = newEnd;
-	SendManaUpdatePacket();
+	SendStaminaUpdate();
 }
 
 void Client::SacrificeConfirm(Client *caster) {
@@ -5331,6 +5343,7 @@ void Client::SetHunger(int32 in_hunger)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = in_hunger;
 	sta->water = m_pp.thirst_level > value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.hunger_level = in_hunger;
 
@@ -5347,6 +5360,7 @@ void Client::SetThirst(int32 in_thirst)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = in_thirst;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.thirst_level = in_thirst;
 
@@ -5361,6 +5375,7 @@ void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = in_hunger;
 	sta->water = in_thirst;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.hunger_level = in_hunger;
 	m_pp.thirst_level = in_thirst;
@@ -5371,19 +5386,17 @@ void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 
 void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume)
 {
-	/* item->CastTime is the time in real world minutes the food/drink will last. If it is 
+	/* item->CastTime is the time in real world minutes the food/drink will last when clicked. If it is 
 	auto-consumed, that number is doubled.
 
 	EQ stomach is 6000 units.
 
-	Without mods, players will consume food/drink at a rate of about 50% (3000 units) of the "stomach" 
-	per hour, or about 0.83% (50 units) per minute. Once the player's "stomach" reaches 50% food/drink 
-	is auto-consumed by the client and we end up here. Server side, in Client::DoStaminaUpdate() we 
-	subtract 35 units of food/water every 40 seconds by default.
+	Baseline characters (Humans, no mods) consume food/drink at a rate of about 50% (3000 units) of the 
+	"stomach" per hour, or about 0.83% (50 units) per minute. Once the player's "stomach" reaches 50% 
+	food/drink is auto-consumed by the client and we end up here. Server side, in Client::DoStaminaUpdate()
+	we subtract 75 units of food/water every time the race specific timer hits.
 
-	Ogre, Troll, and Vah Shir consume more food then everybody else. Having a horse also consumes more 
-	food. More water is consumed in desert zones. The AA Innate Metabolism decreases consumption. 
-	(All handled in Client::DoStaminaUpdate().)
+	All penalities and mods including race, horses, deserts, and AAs are handled in Client::DoStaminaUpdate().
 
 	EQ stomach is 6000 units, which means for auto-consume we want to multiply CastTime by 100. 
 
@@ -5464,6 +5477,7 @@ void Client::Starve()
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level;
 	sta->water = m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	QueuePacket(outapp);
 	safe_delete(outapp);

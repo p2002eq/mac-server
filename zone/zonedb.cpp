@@ -801,6 +801,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"RestTimer,                 "
 		"boatid,					"
 		"`boatname`,				"
+		"famished,					"
 		"`e_aa_effects`,			"
 		"`e_percent_to_aa`,			"
 		"`e_expended_aa_spent`		"
@@ -899,6 +900,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
 		strcpy(pp->boat, row[r]); r++;											 // "boatname					"
+		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
 		m_epp->expended_aa = atoi(row[r]); r++;									 // "`e_expended_aa_spent`,		"
@@ -1368,6 +1370,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" RestTimer,				 "
 		" boatid,					 "
 		" `boatname`,				 "
+		" famished,					 "
 		" e_aa_effects,				 "
 		" e_percent_to_aa,			 "
 		" e_expended_aa_spent		 "
@@ -1465,6 +1468,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // RestTimer					  pp->RestTimer,						" RestTimer)                 "
 		"%u,"  // boatid					  pp->boatid,							" boatid					 "
 		"'%s'," // `boatname`				  pp->boat,								" `boatname`,                "
+		"%u,"	//famished					  pp->famished							" famished					 "
 		"%u,"  // e_aa_effects
 		"%u,"  // e_percent_to_aa
 		"%u"   // e_expended_aa_spent
@@ -1561,6 +1565,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->RestTimer,					  // " RestTimer)                 "
 		pp->boatid,						  // "boatid,					  "
 		EscapeString(pp->boat).c_str(),	  // " boatname                   "
+		pp->famished,					  // " famished					  "
 		m_epp->aa_effects,
 		m_epp->perAA,
 		m_epp->expended_aa

@@ -462,6 +462,7 @@ public:
 	int32	CalcEnduranceRegenCap();
 	int32	CalcHPRegenCap();
 	inline uint8 GetEndurancePercent() { return (uint8)((float)cur_end / (float)max_end * 100.0f); }
+	inline uint8 GetFatiguePercent() { return (100 - GetEndurancePercent()); }
 	void SetEndurance(int32 newEnd);	//This sets the current endurance to the new value
 	void DoEnduranceRegen();	//This Regenerates endurance
 	void DoEnduranceUpkeep();	//does the endurance upkeep
@@ -541,6 +542,7 @@ public:
 
 	void	SendManaUpdatePacket();
 	void	SendManaUpdate();
+	void	SendStaminaUpdate();
 	uint8	GetFace()		const { return m_pp.face; }
 	void	WhoAll(Who_All_Struct* whom);
 	void	FriendsWho(char *FriendsString);

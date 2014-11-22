@@ -1284,8 +1284,9 @@ struct MobHealth
 ** OpCode: 5721
 */
 struct Stamina_Struct {
-/*00*/ uint32 food;		// (low more hungry 127-0)
-/*02*/ uint32 water;	// (low more thirsty 127-0)
+/*00*/ uint16 food;		// (low more hungry 127-0)
+/*02*/ uint16 water;	// (low more thirsty 127-0)
+/*04*/ uint16 fatigue;  // (low more 0-100)
 };
 
 /*
