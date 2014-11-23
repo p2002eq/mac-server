@@ -1974,7 +1974,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			pack->dwARQ = SACK.dwARQ++;
 			SACK.dwGSQcount = 0;
 		}
-		pack->dwOpCode = 0xFFFF;
+		//pack->dwOpCode = 0xFFFF;
 		no_ack_sent_timer->Disable();
 		keep_alive_timer->Start();
 

@@ -255,6 +255,18 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 					act_power = petItem.power;
 					scale_pet = true;
 				}
+				
+				if(focusType == FocusPetType::NECRO ||focusType == FocusPetType::EARTH || focusType == FocusPetType::AIR
+					|| focusType == FocusPetType::FIRE || focusType == FocusPetType::WATER)
+				{
+					if(act_power > 10)
+						act_power = 10;
+				}
+				else
+				{
+					if(act_power > 25)
+						act_power = 25;
+				}
 			}
 		}
 	}
@@ -287,6 +299,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				npc_type->max_dmg = (int16) (npc_type->max_dmg * (1 + (scale_power / 2)));
 				npc_type->size	  = (npc_type->size * (1 + scale_power));
 			}
+			Message(CC_Yellow, "Debug: You have cast a powered pet. Pet level is: %i size is: %0.1f power is: %i. If your pet is Godzilla, please report this message to cavedude or another devel.", npc_type->level, npc_type->size, act_power);
 			record.petpower = act_power;
 		}
 	}

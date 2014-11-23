@@ -285,7 +285,6 @@ Client::Client(EQStreamInterface* ieqs)
 
 	initial_respawn_selection = 0;
 
-	last_used_slot = -1;
 	walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
@@ -616,9 +615,6 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 
 void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_skill, const char* orig_message, const char* targetname)
 {
-	if(eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	char message[4096];
 	strn0cpy(message, orig_message, sizeof(message));
 
@@ -719,24 +715,18 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: You dont have permission to speak to the guild.");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, GuildID(), language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 2: { /* Group Chat */
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid) {
 			raid->RaidGroupSay((const char*) message, this);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 			break;
 		}
 
 		Group* group = GetGroup();
 		if(group != nullptr) {
 			group->GroupMessage(this,language,lang_skill,(const char*) message);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -744,8 +734,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Raid* raid = entity_list.GetRaidByClient(this);
 		if(raid){
 			raid->RaidSay((const char*) message, this);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -755,8 +743,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 4: { /* Auction */
@@ -787,8 +773,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 4, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideAuction)) {
 			Mob *sender = this;
@@ -797,8 +781,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -835,8 +817,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if (!worldserver.SendChannelMessage(this, 0, 5, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		else if(!RuleB(Chat, ServerWideOOC))
 		{
@@ -846,8 +826,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				sender = GetPet();
 
 			entity_list.ChannelMessage(sender, chan_num, language, message);
-			if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		}
 		break;
 	}
@@ -857,8 +835,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			Message(0, "Error: Only GMs can use this channel");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 7: { /* Tell */
@@ -907,8 +883,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 			if(!worldserver.SendChannelMessage(this, target_name, chan_num, 0, language, message))
 				Message(0, "Error: World server disconnected");
-			else if(GetClientVersionBit() == BIT_MacIntel)
-				eqmac_timer.Start(250, true);
 		break;
 	}
 	case 8: { /* Say */
@@ -932,8 +906,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			sender = GetPet();
 
 		entity_list.ChannelMessage(sender, chan_num, language, lang_skill, message);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		parse->EventPlayer(EVENT_SAY, this, message, language);
 
 		if (sender != this)
@@ -966,8 +938,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		// UCS Relay for Underfoot and later.
 		if(!worldserver.SendChannelMessage(this, 0, chan_num, 0, language, message))
 			Message(0, "Error: World server disconnected");
-		else if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		break;
 	}
 	case 22:
@@ -985,8 +955,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		Buffer += 4;
 		snprintf(Buffer, sizeof(Emote_Struct) - 4, "%s %s", GetName(), message);
 		entity_list.QueueCloseClients(this, outapp, true, 100, 0, true, FilterSocials);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 		safe_delete(outapp);
 		break;
 	}
@@ -1352,6 +1320,18 @@ void Client::SendManaUpdate()
 	mus->spawn_id = GetID();
 	QueuePacket(mana_app);
 	safe_delete(mana_app);
+}
+
+void Client::SendStaminaUpdate()
+{
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
+	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
+	int value = RuleI(Character,ConsumptionValue);
+	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
+	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
+	QueuePacket(outapp);
+	safe_delete(outapp);
 }
 
 void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
@@ -2152,7 +2132,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 			if (bslot == INVALID_INDEX) {
 				bind_out->type = 3;
 				QueuePacket(outapp);
-				bind_out->type = 7;	//this is the wrong message, dont know the right one.
+				bind_out->type = 0;	//this is the wrong message, dont know the right one.
 				QueuePacket(outapp);
 				return(true);
 			}
@@ -2164,7 +2144,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 
 			// Send client unlock
 			bind_out->type = 3;
-			//QueuePacket(outapp);
+			QueuePacket(outapp);
 			bind_out->type = 0;
 			// Client Unlocked
 			if(!bindmob) {
@@ -2186,10 +2166,10 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					bind_out->to = 0;
 				}
 				else if (bindmob->IsAIControlled() && bindmob != this ){
-					// Tell IPC to stand still?
+					bindmob->CastToClient()->Message_StringID(CC_User_Skills, STAY_STILL); // Tell IPC to stand still?
 				}
 				else {
-				   // Binding self
+					Message_StringID(CC_User_Skills, STAY_STILL); // Binding self
 				}
 			}
 		} else {
@@ -2267,9 +2247,9 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					else {
 						//I dont have the real, live
 						if(bindmob->IsClient() && bindmob != this)
-							bindmob->CastToClient()->Message(15, "You cannot have your wounds bound above %d%% hitpoints.", max_percent);
+							bindmob->CastToClient()->Message(CC_Yellow, "You cannot have your wounds bound above %d%% hitpoints.", max_percent);
 						else
-							Message(15, "You cannot bind wounds above %d%% hitpoints.", max_percent);
+							Message(CC_Yellow, "You cannot bind wounds above %d%% hitpoints.", max_percent);
 					}
 					Stand();
 				}
@@ -2910,7 +2890,7 @@ void Client::SetEndurance(int32 newEnd)
 	}
 
 	cur_end = newEnd;
-	SendManaUpdatePacket();
+	SendStaminaUpdate();
 }
 
 void Client::SacrificeConfirm(Client *caster) {
@@ -5331,6 +5311,7 @@ void Client::SetHunger(int32 in_hunger)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = in_hunger;
 	sta->water = m_pp.thirst_level > value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.hunger_level = in_hunger;
 
@@ -5347,6 +5328,7 @@ void Client::SetThirst(int32 in_thirst)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = in_thirst;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.thirst_level = in_thirst;
 
@@ -5361,6 +5343,7 @@ void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = in_hunger;
 	sta->water = in_thirst;
+	sta->fatigue=GetFatiguePercent();
 
 	m_pp.hunger_level = in_hunger;
 	m_pp.thirst_level = in_thirst;
@@ -5371,19 +5354,17 @@ void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 
 void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume)
 {
-	/* item->CastTime is the time in real world minutes the food/drink will last. If it is 
+	/* item->CastTime is the time in real world minutes the food/drink will last when clicked. If it is 
 	auto-consumed, that number is doubled.
 
 	EQ stomach is 6000 units.
 
-	Without mods, players will consume food/drink at a rate of about 50% (3000 units) of the "stomach" 
-	per hour, or about 0.83% (50 units) per minute. Once the player's "stomach" reaches 50% food/drink 
-	is auto-consumed by the client and we end up here. Server side, in Client::DoStaminaUpdate() we 
-	subtract 35 units of food/water every 40 seconds by default.
+	Baseline characters (Humans, no mods) consume food/drink at a rate of about 50% (3000 units) of the 
+	"stomach" per hour, or about 0.83% (50 units) per minute. Once the player's "stomach" reaches 50% 
+	food/drink is auto-consumed by the client and we end up here. Server side, in Client::DoStaminaUpdate()
+	we subtract 75 units of food/water every time the race specific timer hits.
 
-	Ogre, Troll, and Vah Shir consume more food then everybody else. Having a horse also consumes more 
-	food. More water is consumed in desert zones. The AA Innate Metabolism decreases consumption. 
-	(All handled in Client::DoStaminaUpdate().)
+	All penalities and mods including race, horses, deserts, and AAs are handled in Client::DoStaminaUpdate().
 
 	EQ stomach is 6000 units, which means for auto-consume we want to multiply CastTime by 100. 
 
@@ -5464,6 +5445,7 @@ void Client::Starve()
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level;
 	sta->water = m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	QueuePacket(outapp);
 	safe_delete(outapp);

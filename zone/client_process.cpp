@@ -1741,12 +1741,15 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 }
 
 void Client::DoHPRegen() {
+	if(m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500))
+		return;
+
 	SetHP(GetHP() + CalcHPRegen() + RestRegenHP);
 	SendHPUpdate();
 }
 
 void Client::DoManaRegen() {
-	if (GetMana() >= max_mana)
+	if (GetMana() >= max_mana || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
 		return;
 
 	SetMana(GetMana() + CalcManaRegen() + RestRegenMana);
@@ -1755,16 +1758,47 @@ void Client::DoManaRegen() {
 
 
 void Client::DoStaminaUpdate() {
+
 	if(!stamina_timer.Check())
 		return;
+
+	//Change timers based on race. The shorter the timer, the more food is consumed.
+	if(stamina_timer.GetDuration() == 40000)
+	{
+		stamina_timer.Disable();
+		if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == VAHSHIR || GetRace() == HALFLING)
+		{
+			stamina_timer.Start(45000);
+		}
+		else if(GetRace() == HUMAN || GetRace() == ERUDITE || GetRace() == HALF_ELF || GetRace() == IKSAR 
+				|| GetRace() == HIGH_ELF || GetRace() == BARBARIAN)
+		{
+			stamina_timer.Start(90000);
+		}
+		//DWF, DEF, ELF, and GNM
+		else
+		{
+			stamina_timer.Start(100000);
+		}
+	}
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 
+	//This is our stomach size. It probably shouldn't be changed from 6000. 
 	int value = RuleI(Character,ConsumptionValue);
 	if(zone->GetZoneID() != 151 && !GetGM()) {
-		float loss = RuleI(Character, FoodLossPerUpdate);
+		//Change this rule to raise or lower rate of food consumption.
+		float loss = RuleR(Character, FoodLossPerUpdate);
 
+		//Horse and desert penalities. Todo: Add desert fields to DB.
+		float waterloss = 0.0f;
+		if(GetHorseId() != 0)
+			loss += loss*2.0; 
+		if(GetZoneID() == 34 || GetZoneID() == 35 || GetZoneID() == 36 || GetZoneID() == 78 || GetZoneID() == 175) 
+			waterloss = loss*2.0;
+
+		//AA bonus.
 		float cons_mod = 0.0f;
 		switch(GetAA(aaInnateMetabolism)){
 			case 1:
@@ -1780,37 +1814,60 @@ void Client::DoStaminaUpdate() {
 				cons_mod = 0;
 				break;
 		}
-		float raceloss = 0.0f;
-		float horseloss = 0.0f;
-		float waterloss = 0.0f;
-		if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == VAHSHIR)
-			raceloss += loss*0.50;
-		if(GetHorseId() != 0)
-			horseloss += loss*2.0;
-		if(GetZoneID() == 34 || GetZoneID() == 35 || GetZoneID() == 36 || GetZoneID() == 78 || GetZoneID() == 175) 
-		   waterloss = loss*2.0;
-
-		loss += raceloss+horseloss;
 		loss -= loss*cons_mod;
 
 		if (m_pp.hunger_level > 0)
 			m_pp.hunger_level-=(int)loss;
 		if (m_pp.thirst_level > 0)
 			m_pp.thirst_level-=(int)loss+(int)waterloss;
+
+		if(m_pp.hunger_level < 1 || m_pp.thirst_level < 1)
+			m_pp.famished++; //We're famished.
+		else if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000 && m_pp.famished > 0)
+			m_pp.famished--; //We were famished but are recovering. 
+
+		if(m_pp.famished >= 120)
+		{
+			if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000)
+				m_pp.famished = 60; //We are above the client's auto-consume threshold. Reduce us back down to stage 2.
+
+			else if(m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)
+			{
+				if(GetEndurance() > 0)
+				{
+					//We are famished and are slowly losing endurance. (HP, mana, and end regen have all stopped in their respective methods.)
+					//Rate of End loss is 10 minutes regardless of race. Adjust SetEndurance() to compensate for different timers.
+					float endper = 0.0f;
+					if(stamina_timer.GetDuration() == 45000)
+						endper = 0.07f;
+					else if(stamina_timer.GetDuration() == 90000)
+						endper = 0.14f;
+					else
+						endper = 0.20f;
+					SetEndurance(GetEndurance() - GetMaxEndurance() * endper);
+				}
+			}
+		}
+
+		//Message(0, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent());
+
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+		sta->fatigue=GetFatiguePercent();
+
 	}
 	else {
-		// No auto food/drink consumption in the Bazaar
+		// No auto food/drink consumption in the Bazaar or for GMs
 		sta->food = value;
 		sta->water = value;
+		sta->fatigue=GetFatiguePercent();
 	}
 	FastQueuePacket(&outapp);
 }
 
 void Client::DoEnduranceRegen()
 {
-	if(GetEndurance() >= GetMaxEndurance())
+	if(GetEndurance() >= GetMaxEndurance() || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
 		return;
 
 	SetEndurance(GetEndurance() + CalcEnduranceRegen() + RestRegenEndurance);

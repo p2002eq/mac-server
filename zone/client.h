@@ -462,6 +462,7 @@ public:
 	int32	CalcEnduranceRegenCap();
 	int32	CalcHPRegenCap();
 	inline uint8 GetEndurancePercent() { return (uint8)((float)cur_end / (float)max_end * 100.0f); }
+	inline uint8 GetFatiguePercent() { return (100 - GetEndurancePercent()); }
 	void SetEndurance(int32 newEnd);	//This sets the current endurance to the new value
 	void DoEnduranceRegen();	//This Regenerates endurance
 	void DoEnduranceUpkeep();	//does the endurance upkeep
@@ -541,6 +542,7 @@ public:
 
 	void	SendManaUpdatePacket();
 	void	SendManaUpdate();
+	void	SendStaminaUpdate();
 	uint8	GetFace()		const { return m_pp.face; }
 	void	WhoAll(Who_All_Struct* whom);
 	void	FriendsWho(char *FriendsString);
@@ -688,7 +690,7 @@ public:
 	bool	PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client_update = false);
 	bool	PushItemOnCursor(const ItemInst& inst, bool client_update = false);
 	void	DeleteItemInInventory(int16 slot_id, int8 quantity = 0, bool client_update = false, bool update_db = true);
-	int		SwapItem(MoveItem_Struct* move_in);
+	bool	SwapItem(MoveItem_Struct* move_in);
 	void	SwapItemResync(MoveItem_Struct* move_slots);
 	void	QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call = false);
 	void	PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootItem_Struct** bag_item_data = 0);
@@ -1182,8 +1184,6 @@ private:
 	std::map<std::string,std::string> accountflags;
 
 	uint8 initial_respawn_selection;
-
-	int16 last_used_slot;
 
 	bool interrogateinv_flag; // used to minimize log spamming by players
 

@@ -27,6 +27,8 @@
 #define GAIN_XP						138		//You gain experience!!
 #define GAIN_GROUPXP				139		//You gain party experience!!
 #define BOW_DOUBLE_DAMAGE			143		//Your bow shot did double dmg.
+#define NO_BANDAGES					146		//You can't bandage without bandages, go buy some.
+#define STAY_STILL					147		//You are being bandaged. Stay relatively still.
 #define FORAGE_COMBAT				148		//You can't try to forage while attacking.
 #define FORAGE_STANDING				149		//You must be standing to forage.
 #define FORAGE_GRUBS				150		//You have scrounged up some fishing grubs.
