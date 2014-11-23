@@ -1864,9 +1864,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			uint32 sizep = 0;
 			buf = fragment_group->AssembleData(&sizep);
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
-			MOutboundQueue.lock();
 			OutQueue.push(app);
-			MOutboundQueue.unlock();
 			return true;
 		}
 		else
@@ -1880,9 +1878,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		EQRawApplicationPacket *app = new EQRawApplicationPacket(pack->dwOpCode ,pack->pExtra, pack->dwExtraSize);   
 		if(app->GetRawOpcode() != 62272 && (app->GetRawOpcode() != 0 || app->Size() > 2)) //ClientUpdate
 			_log(NET__DEBUG, "Received old opcode - 0x%x size: %i", app->GetRawOpcode(), app->Size());
-		MOutboundQueue.lock();
 		OutQueue.push(app);
-		MOutboundQueue.unlock();
 		return true;
 	}
 	/************ END FRAGMENT CHECK ************/
@@ -2249,7 +2245,7 @@ void EQOldStream::SendPacketQueue(bool Block)
 		pack = (*packit);
 		if(pack->SentCount == 0 && Timer::GetCurrentTime() >= (pack->LastSent+500))
 		{
-
+			std::cout << ""; //This is really stupid... but helps packets from being discarded in high traffic scenarios
 			if (!CheckClosed() && pack->dwARQ == arsp_response + 10) //This code checks if 10 packets have been sent since last ARSP ("we got this packet yo") response from client, and if so, tags those ten packets that haven't been verifiably recieved for a resend.
 			{
 				std::deque<EQOldPacket*>::iterator it;
@@ -2376,7 +2372,6 @@ EQStream::MatchState EQOldStream::CheckSignature(const EQStream::Signature *sig)
 	EQStream::MatchState res = EQStream::MatchState::MatchNotReady;
 
 	MInboundQueue.lock();
-	MOutboundQueue.lock();
 	if (!OutQueue.empty()) {
 		//this is already getting hackish...
 		p = OutQueue.top();
@@ -2407,7 +2402,6 @@ EQStream::MatchState EQOldStream::CheckSignature(const EQStream::Signature *sig)
 		}
 	}
 	MInboundQueue.unlock();
-	MOutboundQueue.unlock();
 
 	return(res);
 }
