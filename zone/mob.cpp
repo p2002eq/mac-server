@@ -580,6 +580,8 @@ float Mob::_GetMovementSpeed(int mod, bool iswalking) const
 	if (speed_mod <= 0.0f)
 		speed_mod = IsClient() ? 0.0001f : 0.0f;
 
+//	if(IsClient())
+//		_log(EQMAC__LOG, "Runspeed is: %0.2f", speed_mod);
 	return speed_mod;
 }
 

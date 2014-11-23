@@ -1064,11 +1064,23 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 				component_count = spells[spell_id].component_counts[t_count];
 				focuscomponent = spells[spell_id].NoexpendReagent[t_count];
 
+				//If the current focuscomponent is pet focus, we want to ignore it. The check for pet focus is handled in pets.
+				if(focuscomponent > 0)
+				{
+					for(int i=0; i < sizeof(petfocusItems); i++) {
+						if(focuscomponent == petfocusItems[i]) {
+							focuscomponent = -1;
+							break;
+						}
+					}
+				}
+
 				if (component == -1 && focuscomponent == -1)
 					continue;
 
 				// bard components are requirements for a certain instrument type, not a specific item
-				if(bard_song_mode) {
+				if(bard_song_mode) 
+				{
 					bool HasInstrument = true;
 					int InstComponent = spells[spell_id].NoexpendReagent[0];
 
@@ -1125,16 +1137,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 				// handle the components for traditional casters
 				else {
-					bool petfocuscomponent = false;
-					for(int i=0; i < sizeof(petfocusItems); i++) {
-						if(focuscomponent == petfocusItems[i]) {
-							petfocuscomponent = true;
-							break;
-						}
-					}
-
-					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1 && 
-						(petfocuscomponent || c->GetInv().HasItem(focuscomponent, 1, invWhereWorn | invWherePersonal) == -1)) // item not found
+					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1
+						&& c->GetInv().HasItem(focuscomponent, 1, invWhereWorn | invWherePersonal) == -1 )
 					{
 						if (!missingreags)
 						{
