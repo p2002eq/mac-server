@@ -1762,6 +1762,8 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ CHECK FOR ACK/SEQ RESET ************/ 
 	if(pack->HDR.a5_SEQStart)
 	{
+		if (dwLastCACK == pack->dwARQ - 1)
+			return true;
 		//      cout << "resetting SACK.dwGSQ1" << endl;
 		//      SACK.dwGSQ      = 0;            //Main sequence number SHORT#2
 		dwLastCACK      = pack->dwARQ-1;//0;
@@ -1954,21 +1956,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	if(app->GetRawOpcode() == 0xFFFF)
 	{
 		EQOldPacket *pack = new EQOldPacket();
-
-		if(!SACK.dwGSQ) {
-			SACK.dwGSQ++;
-			if (SACK.dwGSQ == 0xFFFF)
-				SACK.dwGSQ = 1;
-//			pack->HDR.a5_SEQStart	= 1;			// Agz: hmmm, yes commenting this makes the client connect to zone
-													//      server work and the world server doent seem to care either way
-			SACK.dwARQ				= rand()%0x3FFF;//Current request ack
-			SACK.dbASQ_high			= 1;			//Current sequence number
-			SACK.dbASQ_low			= 0;			//Current sequence number
-
-			#if EQN_DEBUG_ACK >= 1
-				cout << "New random SACK.dwARQ" << endl;
-			#endif
-		}
 		if (ack_req) {
 			pack->HDR.a1_ARQ = 1;
 			pack->dwARQ = SACK.dwARQ++;
@@ -1997,10 +1984,9 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		for (int i=0; i<=fragsleft; i++)
 		{
 			EQOldPacket *pack = new EQOldPacket();
-			if(!SACK.dwGSQ) {
+			if(!SACK.dwGSQ && SACK.dwStarted != 1) {
 				SACK.dwGSQ++;
-				if (SACK.dwGSQ == 0xFFFF)
-					SACK.dwGSQ = 1;
+				SACK.dwStarted = 1;
 				pack->HDR.a5_SEQStart   = 1;
 				SACK.dwARQ              = rand()%0x3FFF;//Current request ack
 				SACK.dbASQ_high         = 1;            //Current sequence number
@@ -2029,7 +2015,8 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 				//If not pure ack and opcode != 0x20XX then
 				if (ack_req) { // If the caller of this function wants us to put an ack request on this packet
 					pack->HDR.a1_ARQ = 1;
-					pack->dwARQ      = SACK.dwARQ++;
+					pack->dwARQ = SACK.dwARQ++;
+					SACK.dwGSQcount = 0;
 				}
 
 				if(pack->HDR.a1_ARQ && pack->HDR.a4_ASQ) {

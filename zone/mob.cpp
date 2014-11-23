@@ -1042,7 +1042,7 @@ void Mob::SendPosition()
 	SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 	MakeSpawnUpdateNoDelta(spu);
 	move_tic_count = 0;
-	entity_list.QueueClients(this, app, true);
+	entity_list.QueueClients(this, app, true, false);
 	safe_delete(app);
 }
 

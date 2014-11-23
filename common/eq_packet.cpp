@@ -623,7 +623,7 @@ void EQOldPacket::DecodePacket(uint16 length, uchar *pPacket)
 
 	dwSEQ = ntohs(*intptr++);
 	size+=2;
-			    
+			 
 
 	/************ CHECK ACK FIELDS ************/
 	//Common ACK Response
@@ -756,12 +756,12 @@ void EQOldPacket::DecodePacket(uint16 length, uchar *pPacket)
 }
 
 uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
-	*data = new uchar[dwExtraSize + 39 + 4];
+	*data = new uchar[dwExtraSize + 39];
 	uchar* buf = *data;
 	uint32 o = 4;
 	this->dwSEQ = netcon->SACK.dwGSQ;
 	*((uint16*)&buf[2]) = ntohs(netcon->SACK.dwGSQ++);
-	if (netcon->SACK.dwGSQ == 0xFFFF)
+	if (!netcon->SACK.dwGSQ)
 		netcon->SACK.dwGSQ = 1;
 	netcon->SACK.dwGSQcount++;
 
