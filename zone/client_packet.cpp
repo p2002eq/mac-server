@@ -645,6 +645,8 @@ void Client::CompleteConnect()
 		guild_mgr.RequestOnlineGuildMembers(this->CharacterID(), this->GuildID());
 	}
 
+	SendStaminaUpdate();
+
 	//Send a message until we can figure out how to send these items to the client.
 	if (itemsinabag)
 		Message(CC_Red, "You have zoned with items in a bag on your cursor. Please put the bag in your inventory and camp or zone to avoid desyncs!");
@@ -2794,6 +2796,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+			sta->fatigue=GetFatiguePercent();
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2809,6 +2812,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 			sta->water = value;
+			sta->fatigue=GetFatiguePercent();
 
 			QueuePacket(outapp);
 			safe_delete(outapp);
@@ -2839,6 +2843,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
+	sta->fatigue=GetFatiguePercent();
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -3360,8 +3365,6 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 		Message(13, "Ability recovery time not yet met.");
 		return;
 	}
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
 
 	int reuse = FeignDeathReuseTime;
 	switch (GetAA(aaRapidFeign))
@@ -3397,8 +3400,6 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	}
 	else {
 		SetFeigned(true);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 	}
 
 	CheckIncreaseSkill(SkillFeignDeath, nullptr, 5);
@@ -3431,8 +3432,6 @@ void Client::Handle_OP_Forage(const EQApplicationPacket *app)
 		Message(13, "Ability recovery time not yet met.");
 		return;
 	}
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
 
 	if (IsSitting())
 	{
@@ -3449,8 +3448,6 @@ void Client::Handle_OP_Forage(const EQApplicationPacket *app)
 	p_timers.Start(pTimerForaging, ForagingReuseTime - 1);
 
 	ForageItem();
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
 
 	return;
 }
@@ -4189,9 +4186,6 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 		return;
 	}
 
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	GroupGeneric_Struct* gf = (GroupGeneric_Struct*)app->pBuffer;
 	Mob* inviter = entity_list.GetClientByName(gf->name1);
 
@@ -4312,9 +4306,6 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 		worldserver.SendPacket(pack);
 		safe_delete(pack);
 	}
-
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
 }
 
 void Client::Handle_OP_GroupInvite(const EQApplicationPacket *app)
@@ -4330,9 +4321,6 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 			sizeof(GroupInvite_Struct), app->size);
 		return;
 	}
-
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
 
 	GroupInvite_Struct* gis = (GroupInvite_Struct*)app->pBuffer;
 
@@ -4374,8 +4362,6 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 		worldserver.SendPacket(pack);
 		safe_delete(pack);
 	}
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
 
 	return;
 }
@@ -4777,9 +4763,6 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 		return;
 	}
 
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	if (!p_timers.Expired(&database, pTimerHide, false)) {
 		Message(13, "Ability recovery time not yet met.");
 		return;
@@ -4836,8 +4819,6 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 	entity_list.QueueClients(this, outapp);
 	safe_delete(outapp);
 
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
 	return;
 }
 
@@ -4895,9 +4876,6 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) {
 
 void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) {
 
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	if (app->size != sizeof(Inspect_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_InspectRequest, size=%i, expected %i", app->size, sizeof(Inspect_Struct));
 		return;
@@ -4908,8 +4886,6 @@ void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) {
 
 	if (tmp != 0 && tmp->IsClient()) {
 		tmp->CastToClient()->QueuePacket(app);
-		if(GetClientVersionBit() == BIT_MacIntel)
-			eqmac_timer.Start(250, true);
 	} // Send request to target
 
 	return;
@@ -5170,12 +5146,8 @@ void Client::Handle_OP_MoveCoin(const EQApplicationPacket *app)
 		return;
 	}
 
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	OPMoveCoin(app);
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
+
 	return;
 }
 
@@ -5195,15 +5167,6 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 
 	MoveItem_Struct* mi = (MoveItem_Struct*)app->pBuffer;
 	_log(INVENTORY__SLOTS, "Moveitem from_slot: %i, to_slot: %i, number_in_stack: %i", mi->from_slot, mi->to_slot, mi->number_in_stack);
-
-	if (last_used_slot == mi->to_slot && GetClientVersionBit() == BIT_MacIntel)
-	{
-		if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		{
-			_log(INVENTORY__ERROR, "WARNING: To slot equals last used slot (%i) and timer was not expired.", last_used_slot);
-			return;
-		}
-	}
 
 	if (spellend_timer.Enabled() && casting_spell_id && !IsBardSong(casting_spell_id))
 	{
@@ -5251,8 +5214,8 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	if (mi_hack) { Message(15, "Caution: Illegal use of inaccessable bag slots!"); }
 
 	if (IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
-		int si = SwapItem(mi);
-		if (si == 0)
+		bool si = SwapItem(mi);
+		if (!si)
 		{
 			_log(INVENTORY__ERROR, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", SwapItem(mi), IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
 			SwapItemResync(mi);
@@ -5261,19 +5224,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 			InterrogateInventory(this, false, true, false, error, false);
 			if (error)
 				InterrogateInventory(this, true, false, true, error);
-
 		}
-		else if (si == 2 && GetClientVersionBit() == BIT_MacIntel)
-		{
-			_log(INVENTORY__ERROR, "Handling EQMac SwapItem double packet by ignoring.");
-			return;
-		}
-	}
-
-	if(GetClientVersionBit() == BIT_MacIntel)
-	{
-		last_used_slot = mi->to_slot;
-		eqmac_timer.Start(130, true);
 	}
 
 	return;
@@ -8203,8 +8154,6 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 			sizeof(NewCombine_Struct), app->size);
 		return;
 	}
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
 	/*if (m_tradeskill_object == nullptr) {
 	Message(13, "Error: Server is not aware of the tradeskill container you are attempting to use");
 	return;
@@ -8215,8 +8164,7 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 	// Delegate to tradeskill object to perform combine
 	NewCombine_Struct* in_combine = (NewCombine_Struct*)app->pBuffer;
 	Object::HandleCombine(this, in_combine, m_tradeskill_object);
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
+
 	return;
 }
 
@@ -8287,9 +8235,6 @@ void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 
 void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 {
-	if (eqmac_timer.GetRemainingTime() > 1 && eqmac_timer.Enabled() && GetClientVersionBit() == BIT_MacIntel)
-		return;
-
 	if (app->size != sizeof(Who_All_Struct)) {
 		std::cout << "Wrong size on OP_WhoAll. Got: " << app->size << ", Expected: " << sizeof(Who_All_Struct) << std::endl;
 		return;
@@ -8297,8 +8242,6 @@ void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 	Who_All_Struct* whoall = (Who_All_Struct*)app->pBuffer;
 
 	WhoAll(whoall);
-	if(GetClientVersionBit() == BIT_MacIntel)
-		eqmac_timer.Start(250, true);
 
 	return;
 }

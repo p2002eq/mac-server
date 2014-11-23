@@ -1238,8 +1238,6 @@ protected:
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
 
-	Timer eqmac_timer;
-
 private:
 	void _StopSong(); //this is not what you think it is
 	Mob* target;

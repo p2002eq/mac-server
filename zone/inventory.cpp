@@ -855,8 +855,7 @@ bool Client::IsBankSlot(uint32 slot)
 
 // Moves items around both internally and in the database
 // In the future, this can be optimized by pushing all changes through one database REPLACE call
-int Client::SwapItem(MoveItem_Struct* move_in) {
-	//Save();//test to see if this does anything with inventory related desync
+bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 	uint32 src_slot_check = move_in->from_slot;
 	uint32 dst_slot_check = move_in->to_slot;
@@ -867,7 +866,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		if(src_slot_check < 2147483647)
 			Message(13, "Warning: Invalid slot move from slot %u to slot %u with %u charges!", src_slot_check, dst_slot_check, stack_count_check);
 		_log(INVENTORY__ERROR, "Invalid slot move from slot %u to slot %u with %u charges!", src_slot_check, dst_slot_check, stack_count_check);
-		return 0;
+		return false;
 	}
 
 	if(!IsValidSlot(dst_slot_check)) {
@@ -875,14 +874,14 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		if(src_slot_check < 2147483647)
 			Message(13, "Warning: Invalid slot move from slot %u to slot %u with %u charges!", src_slot_check, dst_slot_check, stack_count_check);
 		_log(INVENTORY__ERROR, "Invalid slot move from slot %u to slot %u with %u charges!", src_slot_check, dst_slot_check, stack_count_check);
-		return 0;
+		return false;
 	}
 
 	// This could be expounded upon at some point to let the server know that
 	// the client has moved a buffered cursor item onto the active cursor -U
 	if (move_in->from_slot == move_in->to_slot) { // Item summon, no further proccessing needed
 		if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in); } // QS Audit
-		return 1;
+		return true;
 	}
 
 	if (move_in->to_slot == (uint32)INVALID_INDEX) {
@@ -896,13 +895,13 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			}
 
 			DeleteItemInInventory(move_in->from_slot);
-			return 1; // Item destroyed by client
+			return true; // Item destroyed by client
 		}
 		else {
 			mlog(INVENTORY__SLOTS, "Deleted item from slot %d as a result of an inventory container tradeskill combine.", move_in->from_slot);
 			if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in); } // QS Audit
 			DeleteItemInInventory(move_in->from_slot);
-			return 1; // Item deletetion
+			return true; // Item deletetion
 		}
 	}
 	if(auto_attack && (move_in->from_slot == MainPrimary || move_in->from_slot == MainSecondary || move_in->from_slot == MainRange))
@@ -930,7 +929,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			safe_delete_array(hacked_string);
 			Kick();	// Kicking player to avoid item loss do to client and server inventories not being sync'd
 			_log(INVENTORY__ERROR, "Banker error");
-			return 0;
+			return false;
 		}
 	}
 
@@ -947,7 +946,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		{
 			//Damn Intel client sending SwapItem multiple times :I
 			_log(INVENTORY__ERROR, "Insufficent number in stack. Ignore this if on EQMac.");
-			return 0;
+			return false;
 		}
 	}
 	if (dst_inst) {
@@ -991,15 +990,9 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			move_in->number_in_stack = dst_inst->GetCharges();
 			if(!SwapItem(move_in))
 			{
-					if(GetClientVersionBit() == BIT_MacIntel) 
-					{ 
-						mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
-						return 2;
-					}
-					else
-					{
-						return 0;
-					}
+
+				mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
+				return false;
 			}
 			else
 				recursive_si = true;
@@ -1007,7 +1000,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		if(!recursive_si)
 		{
 			_log(INVENTORY__ERROR, "From slot is invalid and Recursive SwapItem call failed. (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id); 
-			return 0;
+			return false;
 		}
 	}
 
@@ -1019,7 +1012,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		DeleteItemInInventory(src_slot_id);
 		WorldKick();
 		_log(INVENTORY__ERROR, "No drop hack.");
-		return 0;
+		return false;
 	}
 
 	// Step 3: Check for interaction with World Container (tradeskills)
@@ -1096,7 +1089,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 
 			if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in, true); } // QS Audit
 
-			return 1;
+			return true;
 		}
 	}
 
@@ -1105,7 +1098,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		if (src_slot_id != MainCursor) {
 			Kick();
 			_log(INVENTORY__ERROR, "Trading item no on cursor.");
-			return 0;
+			return false;
 		}
 		if (with) {
 			mlog(INVENTORY__SLOTS, "Trade item move from slot %d to slot %d (trade with %s)", src_slot_id, dst_slot_id, with->GetName());
@@ -1113,7 +1106,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 			if (!m_inv[MainCursor]) {
 				Message(13, "Error: Cursor item not located on server!");
 				_log(INVENTORY__ERROR, "Error: Cursor item not located on server!");
-				return 0;
+				return false;
 			}
 
 			// Add cursor item to trade bucket
@@ -1122,14 +1115,14 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 
 			trade->AddEntity(dst_slot_id, move_in->number_in_stack);
 
-			return 1;
+			return true;
 		} else {
 			if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in); } // QS Audit
 
 			SummonItem(src_inst->GetID(), src_inst->GetCharges());
 			DeleteItemInInventory(MainCursor);
 
-			return 1;
+			return true;
 		}
 	}
 
@@ -1138,13 +1131,13 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		// Determine if charged items can stack
 		if(src_inst && !src_inst->IsStackable()) {
 			_log(INVENTORY__ERROR, "Move from %d to %d with stack size %d. %s is not a stackable item. (charname: %s)", src_slot_id, dst_slot_id, move_in->number_in_stack, src_inst->GetItem()->Name, GetName());
-			return 0;
+			return false;
 		}
 
 		if (src_inst && dst_inst) {
 			if(src_inst->GetID() != dst_inst->GetID()) {
 				_log(INVENTORY__ERROR, "Move from %d to %d with stack size %d. Incompatible item types: %d != %d", src_slot_id, dst_slot_id, move_in->number_in_stack, src_inst->GetID(), dst_inst->GetID());
-				return 0;
+				return false;
 			}
 			if(dst_inst->GetCharges() < dst_inst->GetItem()->StackSize) {
 				//we have a chance of stacking.
@@ -1168,20 +1161,13 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 				}
 			} else {
 				_log(INVENTORY__ERROR, "Move from %d to %d with stack size %d. Exceeds dest maximum stack size: %d/%d", src_slot_id, dst_slot_id, move_in->number_in_stack, (src_inst->GetCharges()+dst_inst->GetCharges()), dst_inst->GetItem()->StackSize);
-				return 0;
+				return false;
 			}
 		
 		}
 		else if(!src_inst)
 		{
-			if(GetClientVersionBit() == BIT_MacIntel)
-			{
-				//I also believe this is being caused by EQMac double packets. I cannot get this to happen on PC client at all, but happens on Intel client all the time.
-				_log(INVENTORY__ERROR, "src_inst has become invalid somewhere.");
-				Message(CC_Yellow, "Caution: You may have de-synced. Stop what you're doing, and log out now to avoid item loss.");
-			}
-			else
-				return 0;
+			return false;
 		}
 		else {
 			// Nothing in destination slot: split stack into two
@@ -1189,7 +1175,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 				// Move entire stack
 				if(!m_inv.SwapItem(src_slot_id, dst_slot_id)) { 
 					mlog(INVENTORY__ERROR, "Could not move entire stack from %d to %d with stack size %d. Dest empty.", src_slot_id, dst_slot_id, move_in->number_in_stack);
-					return 0; 
+					return false; 
 				}
 				mlog(INVENTORY__SLOTS, "Move entire stack from %d to %d with stack size %d. Dest empty.", src_slot_id, dst_slot_id, move_in->number_in_stack);
 			}
@@ -1213,7 +1199,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		if(!m_inv.SwapItem(src_slot_id, dst_slot_id)) {
 			mlog(INVENTORY__ERROR, "Destination slot is not valid for item %s from slot %d to slot %d", src_inst->GetItem()->Name, src_slot_id, dst_slot_id);
-			return 0;
+			return false;
 		}
 		mlog(INVENTORY__SLOTS, "Moving entire item from slot %d to slot %d", src_slot_id, dst_slot_id);
 
@@ -1260,7 +1246,7 @@ int Client::SwapItem(MoveItem_Struct* move_in) {
 
 	// Step 8: Re-calc stats
 	CalcBonuses();
-	return 1;
+	return true;
 }
 
 void Client::SwapItemResync(MoveItem_Struct* move_slots) {

@@ -253,7 +253,6 @@ bool Client::CanFish() {
 
 void Client::GoFish()
 {
-	Save(); //More desync testing
 	//TODO: generate a message if we're already fishing
 	/*if (!fishing_timer.Check()) {	//this isn't the right check, may need to add something to the Client class like 'bool is_fishing'
 		Message_StringID(CC_Default, ALREADY_FISHING);	//You are already fishing!
@@ -394,7 +393,6 @@ void Client::GoFish()
 }
 
 void Client::ForageItem(bool guarantee) {
-	Save(); //More desync testing
 	int skill_level = GetSkill(SkillForage);
 
 	//be wary of the string ids in switch below when changing this.
