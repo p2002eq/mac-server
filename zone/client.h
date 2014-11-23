@@ -785,7 +785,7 @@ public:
 
 	//This is used to later set the buff duration of the spell, in slot to duration.
 	//Doesn't appear to work directly after the client recieves an action packet.
-	void SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel);
+	void SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, int slotid);
 
 	void	ProcessInspectRequest(Client* requestee, Client* requester);
 	bool	ClientFinishedLoading() { return (conn_state == ClientConnectFinished); }
@@ -900,7 +900,6 @@ public:
 	void Starve();
 	void QuestReward(Mob* target, uint32 copper = 0, uint32 silver = 0, uint32 gold = 0, uint32 platinum = 0, uint32 itemid = 0, uint32 exp = 0, bool faction = false);
 	void RewindCommand();
-	void DumpPlayerProfile();
 
 	void SetEngagedRaidTarget(bool value) { EngagedRaidTarget = value; }
 	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }

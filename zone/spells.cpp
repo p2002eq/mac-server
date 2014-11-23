@@ -5064,17 +5064,17 @@ void Mob::_StopSong()
 //Thus I use this in the buff process to update the correct duration once after casting
 //this allows AAs and focus effects that increase buff duration to work correctly, but could probably
 //be used for other things as well
-void Client::SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel)
+void Client::SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, int slot_id)
 {
 	EQApplicationPacket* outapp;
 	outapp = new EQApplicationPacket(OP_Buff, sizeof(SpellBuffFade_Struct));
 	SpellBuffFade_Struct* sbf = (SpellBuffFade_Struct*)outapp->pBuffer;
 
 	sbf->entityid = GetID();
-	sbf->slot = 2;
+	sbf->slot = 2; //Buffs are always 2.
 	sbf->spellid = spell_id;
-	sbf->slotid = 0;
-	sbf->effect = inlevel > 0 ? inlevel : GetLevel();
+	sbf->slotid = slot_id;
+	sbf->effect = 1; //This has to be 1, or else weird things happen with the client side effects.
 	sbf->level = inlevel > 0 ? inlevel : GetLevel();
 	sbf->bufffade = 0;
 	sbf->duration = duration;
@@ -5097,7 +5097,7 @@ void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration)
 			buffs[i].ticsremaining = newDuration;
 			if(IsClient())
 			{
-				CastToClient()->SendBuffDurationPacket(buffs[i].spellid, buffs[i].ticsremaining, buffs[i].casterlevel);
+				CastToClient()->SendBuffDurationPacket(buffs[i].spellid, buffs[i].ticsremaining, buffs[i].casterlevel, i);
 			}
 		}
 	}
