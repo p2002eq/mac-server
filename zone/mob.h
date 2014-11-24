@@ -235,9 +235,6 @@ public:
 	bool CheckSpellCategory(uint16 spell_id, int category_id, int effect_id);
 	bool CancelMagicIsAllowedOnTarget(Mob* spelltar);
 	bool CancelMagicShouldAggro(uint16 spell_id, Mob* spelltar);
-	bool HasSongInstrument(uint16 spell_id);
-	bool HasSpellReagent(uint16 spell_id);
-	bool HasReagent(uint16 spell_id, int component, int component_count, bool missingreags);
 
 	//Buff
 	void BuffProcess();
