@@ -25,6 +25,7 @@
 #include "crc16.h"
 #include "crc32.h"
 #include "platform.h"
+#include "eq_stream.h"
 #ifndef STATIC_OPCODE
 #include "opcodemgr.h"
 #endif
@@ -622,7 +623,7 @@ void EQOldPacket::DecodePacket(uint16 length, uchar *pPacket)
 
 	dwSEQ = ntohs(*intptr++);
 	size+=2;
-			    
+			 
 
 	/************ CHECK ACK FIELDS ************/
 	//Common ACK Response
@@ -754,96 +755,66 @@ void EQOldPacket::DecodePacket(uint16 length, uchar *pPacket)
 /************ END PROCESSING ************/
 }
 
-uchar* EQOldPacket::ReturnPacket(uint16 *dwLength)
-{
-	*dwLength = 0;
-	/************ ALLOCATE MEMORY ************/
-	uint32 length = 18 + dwExtraSize + 4;
-	uchar *pPacket = new uchar[length];
-	uint16 *temp    = (uint16*)pPacket;
-			    
+uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
+	*data = new uchar[dwExtraSize + 39];
+	uchar* buf = *data;
+	uint32 o = 4;
+	this->dwSEQ = netcon->SACK.dwGSQ;
+	*((uint16*)&buf[2]) = ntohs(netcon->SACK.dwGSQ++);
+	if (!netcon->SACK.dwGSQ)
+		netcon->SACK.dwGSQ = 1;
+	netcon->SACK.dwGSQcount++;
 
-	/************ SET INFO BYTES ************/
-	temp[0] = *((uint16*)&HDR);
-	temp[1] = ntohs(dwSEQ);
-
-	temp      += 2;
-	*dwLength += 4;
-	/************ END SET INFO ************/
-
-	/************ PUT ACK FIELDS ************/
-	if(HDR.b2_ARSP)
-	{
-		temp[0] = ntohs(dwARSP);
-		temp++;
-		*dwLength+=2;
+	if (netcon->CACK.dwARQ) {
+		dwARSP = netcon->CACK.dwARQ;
+		HDR.b2_ARSP = 1;				//Set ack response field
+		*((uint16*)&buf[o]) = ntohs(netcon->CACK.dwARQ);
+		o += 2;
+		netcon->CACK.dwARQ = 0;
+		netcon->no_ack_sent_timer->Disable();
 	}
-			    
-	if(HDR.a1_ARQ)
-	{
-		temp[0] = ntohs(dwARQ);
-		temp++;
-		*dwLength+=2;
+	else if (dwOpCode == 0xFFFF) {
+		dwARSP = netcon->dwLastCACK;
+		HDR.b2_ARSP = 1;				//Set ack response field
+		*((uint16*)&buf[o]) = ntohs(netcon->dwLastCACK);
+		o += 2;
+		netcon->CACK.dwARQ = 0;
+		netcon->no_ack_sent_timer->Disable();
 	}
-	/************ END PUT ACK FIELDS ************/
-
-
-	/************ GET FRAGMENT INFORMATION ************/
-	if(HDR.a3_Fragment)
-	{
-		temp[0] = ntohs(fraginfo.dwSeq);
-		temp[1] = ntohs(fraginfo.dwCurr);
-		temp[2] = ntohs(fraginfo.dwTotal);
-
-		*dwLength   += 6;
-		temp        += 3;
+	else {
+		HDR.b2_ARSP = 0;
 	}
-	/************ END FRAGMENT INFO ************/
 
-	/************ PUT ACKSEQ FIELD ************/
-	if(HDR.a4_ASQ && HDR.a1_ARQ)
-	{
-		((char*)temp)[0] = dbASQ_high;
-		((char*)temp)[1] = dbASQ_low;
-
-		*dwLength   += 2;
-		temp++;
+	if (HDR.a1_ARQ) {
+		netcon->SACK.dwGSQcount = 0;
+		*((uint16*)&buf[o]) = ntohs(dwARQ);
+		o += 2;
 	}
-	else
-	{
-		if(HDR.a4_ASQ)
-		{
-			((char*)temp++)[0] = dbASQ_high;
-			(*dwLength)++;
-		}
+	if(HDR.a3_Fragment) {
+        *((uint16*)&buf[o]) = ntohs(fraginfo.dwSeq);
+		o += 2;
+        *((uint16*)&buf[o]) = ntohs(fraginfo.dwCurr);
+		o += 2;
+        *((uint16*)&buf[o]) = ntohs(fraginfo.dwTotal);
+		o += 2;
 	}
-	/************ END PUT ACKSEQ FIELD ************/
-
-	/************ CHECK FOR PURE ACK == NO OPCODE ************/
-	if(dwOpCode)
-	{
-		temp[0] = ntohs(dwOpCode);
-		temp++;
-
-	//	_log(NET__DEBUG, "Messing with old opcode 0x%x", dwOpCode);
-
-		*dwLength+=2;
+    if(HDR.a4_ASQ && HDR.a1_ARQ) {
+		*&buf[o++] = dbASQ_high;
+		*&buf[o++] = dbASQ_low;
 	}
-	if(pExtra)
-	{
-		memcpy((void*) temp, (void*)pExtra, dwExtraSize);
-		*dwLength += dwExtraSize;
+	else if(HDR.a4_ASQ) {
+		*&buf[o++] = dbASQ_high;
 	}
-	/************ END CHECK FOR PURE ACK == NO OPCODE ************/
-
-			    
-	/************ CALCULATE CHECKSUM ************/
-			    
-	uchar* temp2 = ((uchar*)pPacket)+*dwLength;
-	((uint32*)temp2)[0] = htonl(CRC32::Generate((uchar*)pPacket, *dwLength));;
-	*dwLength+=4;
-
-	/************ END CALCULATE CHECKSUM ************/
-
-	return(pPacket);
+	if (dwOpCode) {
+        *((uint16*)&buf[o]) = ntohs(dwOpCode);
+		o += 2;
+	}
+	if(pExtra) {
+		memcpy(&buf[o], pExtra, dwExtraSize);
+		o += dwExtraSize;
+	}
+	memcpy(buf, &HDR, 2);
+	*((uint32*)&buf[o]) = htonl(CRC32::Generate(buf, o));
+	o += 4;
+	return o;
 }

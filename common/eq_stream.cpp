@@ -1557,6 +1557,7 @@ EQOldStream::EQOldStream(sockaddr_in in, int fd_sock)
 	listening_socket = fd_sock;
 			    
 	no_ack_received_timer = new Timer(500);
+	datarate_timer = new Timer(100, true);
 	no_ack_sent_timer = new Timer(500);
 	bTimeout = false;
 	bTimeoutTrigger = false;
@@ -1581,7 +1582,8 @@ EQOldStream::EQOldStream(sockaddr_in in, int fd_sock)
 
 	no_ack_received_timer->Disable();
 	no_ack_sent_timer->Disable();
-
+	dataflow = 0;
+	SetDataRate(25);
 	debug_level = 0;
 	LOG_PACKETS = false;
 	isWriting = false;
@@ -1603,10 +1605,14 @@ EQOldStream::EQOldStream()
 	dwFragSeq  = 0;
 	listening_socket = 0;		    
 	no_ack_received_timer = new Timer(500);
+	datarate_timer = new Timer(100, true);
 	no_ack_sent_timer = new Timer(500);
 	bTimeout = false;
 	bTimeoutTrigger = false;
 	sent_Fin = false;
+	dataflow = 0;
+	SetDataRate(25);
+	arsp_response = 0;
 	/* 
 		on a normal server there is always data getting sent 
 		so the packetloss indicator in eq stays at 0%
@@ -1646,6 +1652,7 @@ EQOldStream::~EQOldStream()
 	safe_delete(no_ack_received_timer);//delete no_ack_received_timer;
 	safe_delete(no_ack_sent_timer);//delete no_ack_sent_timer;
 	safe_delete(keep_alive_timer);//delete keep_alive_timer;
+	safe_delete(datarate_timer);
 	_log(NET__DEBUG, "Killing outbound and inbound packet queue");
 	RemoveData();
 	SetState(CLOSED);
@@ -1655,16 +1662,24 @@ void EQOldStream::IncomingARSP(uint16 dwARSP)
 { 
 	MOutboundQueue.lock();
 	EQOldPacket* pack = 0;
-	while (!ResendQueue.empty() && dwARSP - ResendQueue.top()->dwARQ >= 0 || !ResendQueue.empty() && ResendQueue.top()->dwLoopedOnce && ResendQueue.top()->dwARQ > dwARSP)
+
+	arsp_response = dwARSP;
+
+	std::deque<EQOldPacket*>::iterator it;
+	for(it = SendQueue.begin(); it != SendQueue.end();)
 	{
-		pack = ResendQueue.pop();
-		packetspending--;
-		safe_delete(pack);
+		if (dwARSP >= (*it)->dwARQ || (*it)->dwARQ > 60000 && dwARSP < 10000)
+		{
+			safe_delete(*it);
+			it = SendQueue.erase(it);
+		}
+		else
+		{
+			(*it)->SentCount = 0;
+			it++;
+		}
 	}
-	if (ResendQueue.empty())
-	{
-		no_ack_received_timer->Disable();
-	}
+
 	MOutboundQueue.unlock();
 }
 
@@ -1725,18 +1740,14 @@ void EQOldStream::RemoveData()
 			safe_delete(p);
 		}
 	// Send all the packets we "made"
-		for(int i = 0; i < buffered_packets.size(); i++) {
-			safe_delete(buffered_packets[i]);
-		}
-
-	MySendPacketStruct* pack = 0;
-	while (!SendQueue.empty()) {
-		SendQueue.erase(SendQueue.begin());
+	for(int i = 0; i < buffered_packets.size(); i++) {
+		safe_delete(buffered_packets[i]);
 	}
-	EQOldPacket* pp = ResendQueue.pop();
-	while (ResendQueue.pop()) {
-	
-		safe_delete(p);
+	EQOldPacket* pack = 0;
+	while (!SendQueue.empty()) {
+		pack = SendQueue.front();
+		safe_delete(pack);
+		SendQueue.pop_front();
 	}
 	MInboundQueue.unlock();
 	MOutboundQueue.unlock();
@@ -1751,6 +1762,8 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ CHECK FOR ACK/SEQ RESET ************/ 
 	if(pack->HDR.a5_SEQStart)
 	{
+		if (dwLastCACK == pack->dwARQ - 1)
+			return true;
 		//      cout << "resetting SACK.dwGSQ1" << endl;
 		//      SACK.dwGSQ      = 0;            //Main sequence number SHORT#2
 		dwLastCACK      = pack->dwARQ-1;//0;
@@ -1778,6 +1791,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			// Debug check, if we want to buffer a packet we got from the buffer something is wrong...
 			if (from_buffer)
 			{
+				return true;
 				//cerr << "ERROR: Rebuffering a packet in EQPacketManager::ProcessPacket" << endl;
 			}
 			std::vector<EQOldPacket*>::iterator iterator;
@@ -1818,11 +1832,11 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ END CHECK THREAD TERMINATION ************/
 
 	/************ Get ack sequence number ************/
-	if(pack->HDR.a4_ASQ)
+	if(pack->HDR.a4_ASQ) {
 		CACK.dbASQ_high = pack->dbASQ_high;
-
-	if(pack->HDR.a1_ARQ)
-		CACK.dbASQ_low = pack->dbASQ_low;
+		if(pack->HDR.a1_ARQ)
+			CACK.dbASQ_low = pack->dbASQ_low;
+	}
 	/************ End get ack seq num ************/
 
 	/************ START FRAGMENT CHECK ************/
@@ -1850,9 +1864,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			uint32 sizep = 0;
 			buf = fragment_group->AssembleData(&sizep);
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
-			MOutboundQueue.lock();
 			OutQueue.push(app);
-			MOutboundQueue.unlock();
 			return true;
 		}
 		else
@@ -1866,9 +1878,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		EQRawApplicationPacket *app = new EQRawApplicationPacket(pack->dwOpCode ,pack->pExtra, pack->dwExtraSize);   
 		if(app->GetRawOpcode() != 62272 && (app->GetRawOpcode() != 0 || app->Size() > 2)) //ClientUpdate
 			_log(NET__DEBUG, "Received old opcode - 0x%x size: %i", app->GetRawOpcode(), app->Size());
-		MOutboundQueue.lock();
 		OutQueue.push(app);
-		MOutboundQueue.unlock();
 		return true;
 	}
 	/************ END FRAGMENT CHECK ************/
@@ -1900,25 +1910,12 @@ void EQOldStream::CheckBufferedPackets()
 void EQOldStream::MakeClosePacket()
 {
 	EQOldPacket *pack = new EQOldPacket();
-
-	pack->dwSEQ = SACK.dwGSQ++; // Agz: Added this commented rest    
-	if(pack->dwSEQ == 0xFFFF)
-	{
-		SACK.dwGSQ = 1;
-		ReshuffleResendQueue();
-	}	  
 	pack->HDR.a6_Closing    = 1;// Agz: Lets try to uncomment this line again
 	pack->HDR.a2_Closing    = 1;// and this
 	pack->HDR.a1_ARQ        = 1;// and this
 //      pack->dwARQ             = 1;// and this, no that was not too good
 	pack->dwARQ             = SACK.dwARQ++;// try this instead
-
-	//AddAck(pack);
-	MySendPacketStruct *p = new MySendPacketStruct;
-
-	p->buffer = pack->ReturnPacket(&p->size);
-	SendQueue.push_back(p);  
-	safe_delete(pack);//delete pack;
+	SendQueue.push_back(pack);
 	return;
 }
 
@@ -1955,33 +1952,16 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	if(app->GetRawOpcode() == 0xFFFF)
 	{
 		EQOldPacket *pack = new EQOldPacket();
-
-		if(!SACK.dwGSQ)
-		{
-//          pack->HDR.a5_SEQStart   = 1; // Agz: hmmm, yes commenting this makes the client connect to zone
-											//      server work and the world server doent seem to care either way
-			SACK.dwARQ              = rand()%0x3FFF;//Current request ack
-			SACK.dbASQ_high         = 1;            //Current sequence number
-			SACK.dbASQ_low          = 0;            //Current sequence number
+		if (ack_req) {
+			pack->HDR.a1_ARQ = 1;
+			pack->dwARQ = SACK.dwARQ++;
+			SACK.dwGSQcount = 0;
 		}
-		MySendPacketStruct *p = new MySendPacketStruct;
-		pack->HDR.b2_ARSP    = 1;
-		pack->dwARSP         = dwLastCACK;//CACK.dwARQ;
-		pack->dwSEQ = SACK.dwGSQ++;
-		if(pack->dwSEQ == 0xFFFF)
-		{
-			SACK.dwGSQ = 1;
-			MOutboundQueue.lock();
-			ReshuffleResendQueue();
-			MOutboundQueue.unlock();
-		}
-		p->buffer = pack->ReturnPacket(&p->size);
-		MOutboundQueue.lock();
-		SendQueue.push_back(p);  
-		MOutboundQueue.unlock();
-
+		//pack->dwOpCode = 0xFFFF;
 		no_ack_sent_timer->Disable();
-		safe_delete(pack);//delete pack;
+		keep_alive_timer->Start();
+
+		SendQueue.push_back(pack);
 		return;
 	}
 
@@ -1993,23 +1973,24 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		ack_req = true; // Fragmented packets must have ackreq set
 	}
 
+	MOutboundQueue.lock();
 	if(CheckState(EQStreamState::ESTABLISHED))
 	/************ PM STATE = ACTIVE ************/
 	{
 		for (int i=0; i<=fragsleft; i++)
 		{
 			EQOldPacket *pack = new EQOldPacket();
-			MySendPacketStruct *p = new MySendPacketStruct;
-			if(!SACK.dwGSQ)
-			{
+			if(!SACK.dwGSQ && SACK.dwStarted != 1) {
+				SACK.dwGSQ++;
+				SACK.dwStarted = 1;
 				pack->HDR.a5_SEQStart   = 1;
 				SACK.dwARQ              = rand()%0x3FFF;//Current request ack
 				SACK.dbASQ_high         = 1;            //Current sequence number
-				SACK.dbASQ_low          = 0;            //Current sequence number   
+				SACK.dbASQ_low          = 0;            //Current sequence number
+				#if EQN_DEBUG_ACK >= 1
+					cout << "New random SACK.dwARQ: 0x" << hex << setw(4) << setfill('0') << SACK.dwARQ << dec << endl;
+				#endif
 			}
-
-			AddAck(pack);
-
 			//IF NON PURE ACK THEN ALWAYS INCLUDE A ACKSEQ              // Agz: Not anymore... Always include ackseq if not a fragmented packet
 			if (i==0 && ack_req) // If this will be a fragmented packet, only include ackseq in first fragment
 				pack->HDR.a4_ASQ = 1;                                   // This is what the eq servers does
@@ -2028,29 +2009,26 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 			else
 			{
 				//If not pure ack and opcode != 0x20XX then
-				if (ack_req) // If the caller of this function wants us to put an ack request on this packet
-				{
+				if (ack_req) { // If the caller of this function wants us to put an ack request on this packet
 					pack->HDR.a1_ARQ = 1;
-					pack->dwARQ      = SACK.dwARQ;
+					pack->dwARQ = SACK.dwARQ++;
+					SACK.dwGSQcount = 0;
 				}
 
-				if(pack->HDR.a1_ARQ && pack->HDR.a4_ASQ)
-				{
+				if(pack->HDR.a1_ARQ && pack->HDR.a4_ASQ) {
 					pack->dbASQ_low  = SACK.dbASQ_low;
 					pack->dbASQ_high = SACK.dbASQ_high;
 				}
-				else
-				{
-					if(pack->HDR.a4_ASQ)
-					{
-						pack->dbASQ_high = SACK.dbASQ_high;
-					}
+				else if(pack->HDR.a4_ASQ) {
+					pack->dbASQ_high = SACK.dbASQ_high;
 				}
+				if(pack->HDR.a4_ASQ)
+					SACK.dbASQ_low++;
 			}
 
 			/************ Check if this packet should contain op ************/
-			if (app->opcode && i == 0) {
-				pack->dwOpCode = app->opcode;
+			if (app->GetRawOpcode() && i == 0) {
+				pack->dwOpCode = app->GetRawOpcode();
 			}
 			/************ End opcode check ************/
 
@@ -2087,56 +2065,10 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 				pack->pExtra = new uchar[pack->dwExtraSize];
 				memcpy((void*)pack->pExtra, (void*)app->pBuffer, pack->dwExtraSize);
 				app->pBuffer += pack->dwExtraSize; //Increase counter
-			}   
-
-			/******************************************/
-			/*********** !PACKET GENERATED! ***********/
-			/******************************************/
-			            
-			/************ Update timers ************/
-			if(pack->HDR.a1_ARQ)
-			{
-				if (debug_level >= 5)
-				{
-				//	cout << "OutgoingARQ pack->dwARQ:" << (unsigned short)pack->dwARQ << " SACK.dwARQ:" << (unsigned short)SACK.dwARQ << endl;
-				}
-				OutgoingARQ(pack->dwARQ);
-				MOutboundQueue.lock();
-				ResendQueue.push(pack);
-				MOutboundQueue.unlock();
-				packetspending++;
-				SACK.dwARQ++;
-			}
-			    
-			if(pack->HDR.b2_ARSP)
-			{
-				OutgoingARSP();
-			}
-
-			keep_alive_timer->Start();
+			} 
 			/************ End update timers ************/
-			                    
-			pack->dwSEQ = SACK.dwGSQ++;
-			if(pack->dwSEQ == 0xFFFF)
-			{
-				SACK.dwGSQ = 1;
-				MOutboundQueue.lock();
-				ReshuffleResendQueue();
-				MOutboundQueue.unlock();
-			}
-			p->buffer = pack->ReturnPacket(&p->size);
-			MOutboundQueue.lock();
-			SendQueue.push_back(p);
-			MOutboundQueue.unlock();
-			    
-			if(pack->HDR.a4_ASQ)
-				SACK.dbASQ_low++;
-						
-			if (!pack->HDR.a1_ARQ) 
-			{
-				// Quag: need to delete it since didnt get on the resend queue
-				safe_delete(pack);//delete pack;
-			}
+
+			SendQueue.push_back(pack);
 		}//end while
 
 		if(fragsleft)
@@ -2147,6 +2079,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		app->opcode = restore_op;
 			        
 	} //end if
+	MOutboundQueue.unlock();
 }
 
 void EQOldStream::CheckTimers(void)
@@ -2155,55 +2088,23 @@ void EQOldStream::CheckTimers(void)
 	bool setClosing = false;
 	bool shuffleQueueAfter = false;
 	/************ Should packets be resent? ************/
-	if (no_ack_received_timer->Check())
+
+	if (datarate_timer->Check(0))
 	{
-		MOutboundQueue.lock();
-		EQOldPacket* pack;
-		MyQueue<EQOldPacket> q;
-		while(pack = ResendQueue.pop())
-		{
-			packetspending--;
-			q.push(pack);
-			MySendPacketStruct *p = new MySendPacketStruct;
-			pack->dwSEQ = SACK.dwGSQ++;
-			if(pack->dwSEQ == 0xFFFF)
-			{
-				SACK.dwGSQ = 1;
-				shuffleQueueAfter = true;
-			}
-			p->buffer = pack->ReturnPacket(&p->size);
-			SendQueue.push_back(p);
-		}
-		while(pack = q.pop())
-		{
-			if(++pack->resend_count > 15) {
-				_log(EQMAC__LOG, _L "Sending packet too many times seq %i: op %i" __L, pack->dwSEQ, pack->GetRawOpcode());
-			}
-			ResendQueue.push(pack);
-			packetspending++;
-		}
-		no_ack_received_timer->Start(1000);
-		MOutboundQueue.unlock();
+		datarate_timer->Start();
+		dataflow -= datarate_tic;
+		if (dataflow < 0)
+			dataflow = 0;
 	}
+
+	MOutboundQueue.lock();
 	/************ Should a pure ack be sent? ************/
-	if (no_ack_sent_timer->Check() || keep_alive_timer->Check())
+	if (!CheckClosed() && no_ack_sent_timer->Check(0) || keep_alive_timer->Check(0))
 	{
 		EQProtocolPacket app(0xFFFF, nullptr, 0);
-		MakeEQPacket(&app);
+		MakeEQPacket(&app, SACK.dwGSQcount > 45);
 	}
-
-	if(setClosing)
-	{
-		_SendDisconnect();
-	}
-
-	if(shuffleQueueAfter)
-	{
-		MOutboundQueue.lock();
-		ReshuffleResendQueue();
-		MOutboundQueue.unlock();
-	}
-
+	MOutboundQueue.unlock();
 }
 
 void EQOldStream::QueuePacket(const EQApplicationPacket *p, bool ack_req)
@@ -2292,7 +2193,6 @@ EQRawApplicationPacket *p=nullptr;
 	while (p = OutQueue.pop()) {
 		safe_delete(p);
 	}
-// Send all the packets we "made"
 	for(int i = 0; i < buffered_packets.size(); i++) {
 		safe_delete(buffered_packets[i]);
 	}
@@ -2304,18 +2204,15 @@ EQRawApplicationPacket *p=nullptr;
 
 void EQOldStream::OutboundQueueClear()
 {
-	MySendPacketStruct *p=nullptr;
+	EQOldPacket *p=nullptr;
 
 	_log(NET__APP_TRACE, _L "Clearing outbound & resend queue" __L);
 
 	MOutboundQueue.lock();
 	while (!SendQueue.empty()) {
 		p = SendQueue.front();
+		safe_delete(p);
 		SendQueue.pop_front();
-	}
-	EQOldPacket* pp = 0;
-	while (pp = ResendQueue.pop()) {
-		safe_delete(pp);
 	}
 
 	MOutboundQueue.unlock();
@@ -2323,14 +2220,6 @@ void EQOldStream::OutboundQueueClear()
 
 void EQOldStream::PacketQueueClear()
 {
-	EQOldPacket* p = nullptr;
-	_log(NET__APP_TRACE, _L "Clearing resend queue" __L);
-
-	MOutboundQueue.lock();
-	while (EQOldPacket* p = ResendQueue.pop()) {
-		safe_delete(p);
-	}
-	MOutboundQueue.unlock();
 }
 
 void EQOldStream::ReceiveData(uchar* buf, int len)
@@ -2339,20 +2228,65 @@ void EQOldStream::ReceiveData(uchar* buf, int len)
 }
 
 void EQOldStream::SendPacketQueue(bool Block)
-{
+{	
+	MOutboundQueue.lock();
 	// Get first send packet on queue and send it!
-	MySendPacketStruct* p = 0;    
+	EQOldPacket* pack = 0;    
+	std::deque<EQOldPacket*>::iterator packit = SendQueue.begin();
 	sockaddr_in to;	
+	uint32 size;
+	uchar* data;
 	memset((char *) &to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 	to.sin_port = remote_port;
 	to.sin_addr.s_addr = remote_ip;
-	MOutboundQueue.lock();
-	while (!SendQueue.empty()) {
-		p = SendQueue.front();
-		_log(NET__DEBUG, "Sending a packet normally");
-		sendto(listening_socket, (char *) p->buffer, p->size, 0, (sockaddr*)&to, sizeof(to));
-		SendQueue.erase(SendQueue.begin());
+	int sentpacket = 0;
+	while (packit != SendQueue.end() && !DataQueueFull()) {
+		pack = (*packit);
+		if(pack->SentCount == 0 && Timer::GetCurrentTime() >= (pack->LastSent+500))
+		{
+			std::cout << ""; //This is really stupid... but helps packets from being discarded in high traffic scenarios
+			if (!CheckClosed() && pack->dwARQ == arsp_response + 10) //This code checks if 10 packets have been sent since last ARSP ("we got this packet yo") response from client, and if so, tags those ten packets that haven't been verifiably recieved for a resend.
+			{
+				std::deque<EQOldPacket*>::iterator it;
+				for(it = SendQueue.begin(); it != SendQueue.end();it++)
+				{
+					EQOldPacket* pack2 = (*it);
+					if (pack2->dwARQ == pack->dwARQ)
+						break;
+					pack2->SentCount = 0;
+				}
+			}
+			else
+			{
+				pack->SentCount = 1;
+			}
+
+			if (pack->HDR.a2_Closing && pack->HDR.a6_Closing) //Closing bits. Terminates the connection properly.
+			{
+				size = pack->ReturnPacket(&data, this);
+				sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
+				dataflow += size;
+				safe_delete(data);
+				safe_delete(pack);
+				packit = SendQueue.erase(packit);
+				continue;
+			}
+			else //Send a packet!
+			{
+				size = pack->ReturnPacket(&data, this);
+				sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
+				safe_delete(data);
+				dataflow += size;
+				pack->LastSent = Timer::GetCurrentTime();
+				if (!pack->HDR.a1_ARQ) { //Wtf is this for?
+					safe_delete(pack);
+					packit = SendQueue.erase(packit);
+					continue;
+				}
+			}
+		}
+		packit++;
 	}
 	// ************ Processing finished ************ //
 	MOutboundQueue.unlock();
@@ -2362,32 +2296,24 @@ void EQOldStream::FinalizePacketQueue()
 {
 	MOutboundQueue.lock();
 	SetState(CLOSING);
-	ResendQueue.clear();
 	// Send out our existing queue
-	MySendPacketStruct* p = 0;    
+	EQOldPacket* p = 0;    
 	sockaddr_in to;	
 	memset((char *) &to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 	to.sin_port = remote_port;
 	to.sin_addr.s_addr = remote_ip;
 
-	while (!SendQueue.empty()) {
-		p = SendQueue.front();
-		_log(NET__DEBUG, "Sending last packets normally");
-		sendto(listening_socket, (char *) p->buffer, p->size, 0, (sockaddr*)&to, sizeof(to));
-		SendQueue.erase(SendQueue.begin());
-	}
-
-
-	SendQueue.clear();
+	uint32 size;
+	uchar* data;
 	// Set state to closing, and send off the finalized packet.
 	MakeClosePacket();
 	while (!SendQueue.empty()) {
 		p = SendQueue.front();
-		_log(NET__DEBUG, "Sending FIN");
-		sendto(listening_socket, (char *) p->buffer, p->size, 0, (sockaddr*)&to, sizeof(to));
+		size = p->ReturnPacket(&data, this);
+		sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
+		safe_delete(data);
 		SendQueue.erase(SendQueue.begin());
-		sent_Fin = true;
 	}
 	// ************ Connection finished ************ //
 	SetState(CLOSED);
@@ -2399,7 +2325,7 @@ bool EQOldStream::HasOutgoingData()
 	bool flag;
 
 	MOutboundQueue.lock();
-	flag=!(SendQueue.empty() && ResendQueue.empty());
+	flag=!(SendQueue.empty());
 	MOutboundQueue.unlock();
 	return flag;
 }
@@ -2446,7 +2372,6 @@ EQStream::MatchState EQOldStream::CheckSignature(const EQStream::Signature *sig)
 	EQStream::MatchState res = EQStream::MatchState::MatchNotReady;
 
 	MInboundQueue.lock();
-	MOutboundQueue.lock();
 	if (!OutQueue.empty()) {
 		//this is already getting hackish...
 		p = OutQueue.top();
@@ -2477,7 +2402,6 @@ EQStream::MatchState EQOldStream::CheckSignature(const EQStream::Signature *sig)
 		}
 	}
 	MInboundQueue.unlock();
-	MOutboundQueue.unlock();
 
 	return(res);
 }
@@ -2492,23 +2416,5 @@ void EQOldStream::Close() {
 		sent_Fin = true;
 		_SendDisconnect();
 		_log(EQMAC__LOG, _L "Stream closing immediate due to Close()" __L);
-	}
-}
-
-void EQOldStream::ReshuffleResendQueue()
-{
-	/* DO NOT CALL THIS WITHOUT A MUTEX PROTECTING RESENDQUEUE!!! */
-	MyQueue<EQOldPacket> q;
-	EQOldPacket* pack = NULL;
-	while(pack = ResendQueue.pop())
-	{
-		if(pack->dwARQ > SACK.dwARQ)
-			pack->dwLoopedOnce = 1;
-
-		q.push(pack);
-	}
-	while(pack = q.pop())
-	{
-		ResendQueue.push(pack);
 	}
 }

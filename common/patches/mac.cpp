@@ -1209,26 +1209,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	ENCODE(OP_Stamina)
-	{
-		ENCODE_LENGTH_EXACT(Stamina_Struct);
-		SETUP_DIRECT_ENCODE(Stamina_Struct, structs::Stamina_Struct);
-
-		int value = RuleI(Character,ConsumptionValue);
-
-		float tpercent = (float)emu->water/(float)value;
-		float tlevel =  127.0f*tpercent;
-		eq->water = (int8)(tlevel + 0.5);
-
-		float hpercent = (float)emu->food/(float)value;
-		float hlevel =  127.0f*hpercent;
-		eq->food = (int8)(hlevel + 0.5);
-
-		OUT(food);
-		OUT(water);
-		FINISH_ENCODE();
-	}
-
 	ENCODE(OP_HPUpdate)
 	{
 		ENCODE_LENGTH_EXACT(SpawnHPUpdate_Struct);
@@ -1503,12 +1483,12 @@ namespace Mac {
 		int g;
 		for(g=0; g<10; g++)
 		{
-			if(eq->itemsinbag[g] > 0)
+			/*if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
 				_log(EQMAC__LOG, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
-			else
+			else*/
 				eq->itemsinbag[g] = 0xFFFF;
 		}
 		eq->unknown208 = 0xFFFFFFFF;
@@ -2067,14 +2047,20 @@ namespace Mac {
   		{
   			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
 			mac_pop_item->Charges = inst->GetCharges();
-			mac_pop_item->Price = item->Price;
+			if(item->NoDrop == 0)
+				mac_pop_item->Price = 0; 
+			else
+				mac_pop_item->Price = item->Price;
 			mac_pop_item->SellRate = item->SellRate;
   		}
   		else
   		{ 
   			mac_pop_item->Charges = 1;
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			if(item->NoDrop == 0)
+				mac_pop_item->Price = 0; 
+			else
+				mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
 			mac_pop_item->SellRate = 1;
 		}
   

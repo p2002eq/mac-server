@@ -83,6 +83,7 @@ struct ACK_INFO
 		dbASQ_high = dbASQ_low = 0;
 		dwGSQ = 0;
 		dwGSQcount = 0;
+		dwStarted = 0;
 	}
 
 	uint16   dwARQ;			// Comment: Current request ack
@@ -90,6 +91,7 @@ struct ACK_INFO
 	uint16	dbASQ_low  : 8;	//TODO: What is this one?
 	uint16   dwGSQ;			// Comment: Main sequence number SHORT#2
 	uint16	dwGSQcount;
+	uint16	dwStarted;
 
 };
 
@@ -452,15 +454,6 @@ class EQOldStream : public EQStreamInterface {
 				pack->dwARSP = CACK.dwARQ;      //ACK current ack number.
 				CACK.dwARQ = 0;
 			}
-			else if (pack->GetRawOpcode() == 0xFFFF) {
-				pack->dwARSP = dwLastCACK;
-				pack->HDR.b2_ARSP = 1;				//Set ack response field
-				CACK.dwARQ = 0;
-				no_ack_sent_timer->Disable();
-			}
-			else {
-				pack->HDR.b2_ARSP = 0;
-			}
 		}
 		// Timer Functions
 				
@@ -491,7 +484,7 @@ class EQOldStream : public EQStreamInterface {
 		void OutboundQueueClear();
 		void PacketQueueClear();
 
-		std::deque<MySendPacketStruct*>			  SendQueue;	//Store packets thats on the send que
+		std::deque<EQOldPacket*>			  SendQueue;	//Store packets thats on the send que
 		MyQueue<EQRawApplicationPacket>           OutQueue;	//parced packets ready to go out of this class
 
 
@@ -500,18 +493,7 @@ class EQOldStream : public EQStreamInterface {
 		void CheckBufferedPackets();
 
 		FragmentGroupList fragment_group_list;
-		MyQueue<EQOldPacket> ResendQueue; //Resend queue
 		std::vector<EQOldPacket *> buffered_packets; // Buffer of incoming packets
-
-		ACK_INFO    SACK; //Server -> client info.
-		ACK_INFO    CACK; //Client -> server info.
-		uint16       dwLastCACK;
-
-
-		Timer* no_ack_received_timer;
-		Timer* no_ack_sent_timer;
-		Timer* keep_alive_timer;
-
 
 		EQStreamState    pm_state;  //manager state 
 		uint16  dwFragSeq;   //current fragseq
@@ -523,6 +505,7 @@ class EQOldStream : public EQStreamInterface {
 		int16	packetspending;
 		OpcodeManager **OpMgr;
 		int listening_socket;
+		uint16 arsp_response;
 
 		Mutex MRate;
 		int32 RateThreshold;
@@ -531,6 +514,10 @@ class EQOldStream : public EQStreamInterface {
 		uint32 LastPacket;
 		Mutex MVarlock;
 		bool sent_Fin;
+		
+		int32	datarate_sec;	// bytes/1000ms
+		int32	datarate_tic;	// bytes/100ms
+		int32	dataflow;
 
 	public:
 		//interface used by application (EQStreamInterface)
@@ -567,8 +554,20 @@ class EQOldStream : public EQStreamInterface {
 		void _SendDisconnect();
 		void SetTimeOut(bool time) { bTimeout = time; }
 		bool GetTimeOut() { return bTimeout; }
-		void ReshuffleResendQueue();
-		
+		void			SetDataRate(float in_datarate)	{ datarate_sec = (int32) (in_datarate * 1024); datarate_tic = datarate_sec / 10; dataflow = 0; } // conversion from kb/sec to byte/100ms, byte/1000ms
+		float			GetDataRate()					{ return (float)datarate_sec / 1024; } // conversion back to kb/second
+		inline bool		DataQueueFull()					{ return (dataflow > datarate_sec); }
+		inline int32	GetDataFlow()					{ return dataflow; }
+		ACK_INFO    SACK; //Server -> client info.
+		ACK_INFO    CACK; //Client -> server info.
+		uint16       dwLastCACK;
+
+		Timer* no_ack_received_timer;
+		Timer* no_ack_sent_timer;
+		Timer* keep_alive_timer;
+		Timer*	datarate_timer;
+
+
 };
 
 #endif
