@@ -4714,6 +4714,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " hMR: %i  hPR: %i  hFR: %i  hCR: %i  hDR: %i hCorruption: %i", GetHeroicMR(), GetHeroicPR(), GetHeroicFR(), GetHeroicCR(), GetHeroicDR(), GetHeroicCorrup());
 	client->Message(0, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
 	client->Message(0, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
+	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f", GetRunspeed(), GetWalkspeed());
 	if(GetClass() == BARD)
 		client->Message(0, " Singing: %i  Brass: %i  String: %i Percussion: %i Wind: %i", GetSingMod(), GetBrassMod(), GetStringMod(), GetPercMod(), GetWindMod());
 
@@ -5509,23 +5510,6 @@ void Client::RewindCommand()
 		MovePC(zone->GetZoneID(), zone->GetInstanceID(), rewind_x, rewind_y, rewind_z, 0, 2, Rewind);
 		rewind_timer.Start(30000, true);
 	}
-}
-
-void Client::DumpPlayerProfile()
-{
-	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(PlayerProfile_Struct));
-	memcpy(outapp->pBuffer, &m_pp, sizeof(PlayerProfile_Struct) - 4);
-
-	char* packet_dump = "PP.txt";
-	FileDumpPacketHex(packet_dump, outapp);
-	safe_delete(outapp);
-
-	EQApplicationPacket* noutapp = new EQApplicationPacket(OP_PlayerProfile, sizeof(ExtendedProfile_Struct));
-	memcpy(noutapp->pBuffer, &m_epp, sizeof(ExtendedProfile_Struct));
-
-	FileDumpPacketHex(packet_dump, noutapp);
-	safe_delete(noutapp);
 }
 
 void Client::ShowNumHits()
