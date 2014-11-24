@@ -17,54 +17,54 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 /*
-	General outline of spell casting process
+General outline of spell casting process
 
-	1.
-	a)	Client clicks a spell bar gem, ability, or item. client_process.cpp
-	gets the op and calls CastSpell() with all the relevant info including
-	cast time.
+1.
+a)	Client clicks a spell bar gem, ability, or item. client_process.cpp
+gets the op and calls CastSpell() with all the relevant info including
+cast time.
 
-	b) NPC does CastSpell() from AI
+b) NPC does CastSpell() from AI
 
-	2.
-	a)	CastSpell() determines there is a cast time and sets some state keeping
-	flags to be used to check the progress of casting and finish it later.
+2.
+a)	CastSpell() determines there is a cast time and sets some state keeping
+flags to be used to check the progress of casting and finish it later.
 
-	b)	CastSpell() sees there's no cast time, and calls CastedSpellFinished()
-	Go to step 4.
+b)	CastSpell() sees there's no cast time, and calls CastedSpellFinished()
+Go to step 4.
 
-	3.
-	SpellProcess() notices that the spell casting timer which was set by
-	CastSpell() is expired, and calls CastedSpellFinished()
+3.
+SpellProcess() notices that the spell casting timer which was set by
+CastSpell() is expired, and calls CastedSpellFinished()
 
-	4.
-	CastedSpellFinished() checks some timed spell specific things, like
-	wether to interrupt or not, due to movement or melee. If successful
-	SpellFinished() is called.
+4.
+CastedSpellFinished() checks some timed spell specific things, like
+wether to interrupt or not, due to movement or melee. If successful
+SpellFinished() is called.
 
-	5.
-	SpellFinished() checks some things like LoS, reagents, target and
-	figures out what's going to get hit by this spell based on its type.
+5.
+SpellFinished() checks some things like LoS, reagents, target and
+figures out what's going to get hit by this spell based on its type.
 
-	6.
-	a)	Single target spell, SpellOnTarget() is called.
+6.
+a)	Single target spell, SpellOnTarget() is called.
 
-	b)	AE spell, Entity::AESpell() is called.
+b)	AE spell, Entity::AESpell() is called.
 
-	c)	Group spell, Group::CastGroupSpell()/SpellOnTarget() is called as
-	needed.
+c)	Group spell, Group::CastGroupSpell()/SpellOnTarget() is called as
+needed.
 
-	7.
-	SpellOnTarget() may or may not call SpellEffect() to cause effects to
-	the target
+7.
+SpellOnTarget() may or may not call SpellEffect() to cause effects to
+the target
 
-	8.
-	If this was timed, CastedSpellFinished() will restore the client's
-	spell bar gems.
+8.
+If this was timed, CastedSpellFinished() will restore the client's
+spell bar gems.
 
-	Most user code should call CastSpell(), with a 0 casting time if needed,
-	and not SpellFinished().
-	*/
+Most user code should call CastSpell(), with a 0 casting time if needed,
+and not SpellFinished().
+*/
 
 #include "../common/debug.h"
 #include "../common/spdat.h"
@@ -504,12 +504,12 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 }
 
 /*
- * Some failures should be caught before the spell finishes casting
- * This is especially helpful to clients when they cast really long things
- * If this passes it sets casting_spell_checks to true which is checked in
- * SpellProcess(), if a situation ever arises where a spell is delayed by these
- * it's probably doing something wrong.
- */
+* Some failures should be caught before the spell finishes casting
+* This is especially helpful to clients when they cast really long things
+* If this passes it sets casting_spell_checks to true which is checked in
+* SpellProcess(), if a situation ever arises where a spell is delayed by these
+* it's probably doing something wrong.
+*/
 
 bool Mob::DoCastingChecks()
 {
@@ -1064,21 +1064,144 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		else {
 			if (reg_focus > 0)
 				mlog(SPELLS__CASTING, "Spell %d: Reagent focus item failed to prevent reagent consumption (%d chance)", spell_id, reg_focus);
+			Client *c = this->CastToClient();
+			int component, component_count, inv_slot_id, focuscomponent;
+			bool missingreags = false;
+			static const int petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6360, 6361, 6362, 6363 };
+			for (int t_count = 0; t_count < 4; t_count++) {
+				component = spells[spell_id].components[t_count];
+				component_count = spells[spell_id].component_counts[t_count];
+				focuscomponent = spells[spell_id].NoexpendReagent[t_count];
 
-			if (bard_song_mode)
+				if (component == -1 && focuscomponent == -1)
+					continue;
+
+				// bard components are requirements for a certain instrument type, not a specific item
+				if (bard_song_mode) {
+					bool HasInstrument = true;
+					int InstComponent = spells[spell_id].NoexpendReagent[0];
+
+					switch (InstComponent) {
+					case -1:
+						continue;		// no instrument required, go to next component
+
+						// percussion songs (13000 = hand drum)
+					case 13000:
+						if (itembonuses.percussionMod == 0) {			// check for the appropriate instrument type
+							HasInstrument = false;
+							c->Message_StringID(CC_Red, SONG_NEEDS_DRUM);	// send an error message if missing
+						}
+						break;
+
+						// wind songs (13001 = wooden flute)
+					case 13001:
+						if (itembonuses.windMod == 0) {
+							HasInstrument = false;
+							c->Message_StringID(CC_Red, SONG_NEEDS_WIND);
+						}
+						break;
+
+						// string songs (13011 = lute)
+					case 13011:
+						if (itembonuses.stringedMod == 0) {
+							HasInstrument = false;
+							c->Message_StringID(CC_Red, SONG_NEEDS_STRINGS);
+						}
+						break;
+
+						// brass songs (13012 = horn)
+					case 13012:
+						if (itembonuses.brassMod == 0) {
+							HasInstrument = false;
+							c->Message_StringID(CC_Red, SONG_NEEDS_BRASS);
+						}
+						break;
+
+					default:	// some non-instrument component. Let it go, but record it in the log
+						mlog(SPELLS__CASTING_ERR, "Something odd happened: Song %d required component %s", spell_id, component);
+					}
+
+					if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
+						mlog(SPELLS__CASTING_ERR, "Song %d: Canceled. Missing required instrument %s", spell_id, component);
+						if (c->GetGM())
+							c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
+						else {
+							InterruptSpell();
+							return;
+						}
+					}
+				}	// end bard component section
+
+				// handle the components for traditional casters
+				else {
+					bool petfocuscomponent = false;
+					for (int i = 0; i < sizeof(petfocusItems); i++) {
+						if (focuscomponent == petfocusItems[i]) {
+							petfocuscomponent = true;
+							break;
+						}
+					}
+
+					if (c->GetInv().HasItem(component, component_count, invWhereWorn | invWherePersonal) == -1 &&
+						(petfocuscomponent || c->GetInv().HasItem(focuscomponent, 1, invWhereWorn | invWherePersonal) == -1)) // item not found
+					{
+						if (!missingreags)
+						{
+							c->Message_StringID(CC_Red, MISSING_SPELL_COMP);
+							missingreags = true;
+						}
+
+						const Item_Struct *item;
+						if (component != -1)
+							item = database.GetItem(component);
+						else if (focuscomponent != -1)
+							item = database.GetItem(focuscomponent);
+
+						if (item) {
+							c->Message_StringID(CC_Red, MISSING_SPELL_COMP_ITEM, item->Name);
+							mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
+						}
+						else {
+							char TempItemName[64];
+							strcpy((char*)&TempItemName, "UNKNOWN");
+							mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, TempItemName, component);
+						}
+					}
+				} // end bard/not bard ifs
+			} // end reagent loop
+
+			if (missingreags) {
+				if (c->GetGM())
+					c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing required components.");
+				else {
+					InterruptSpell();
+					return;
+				}
+			}
+			else if (!bard_song_mode)
 			{
-				if (!HasSongInstrument(spell_id)){
-					InterruptSpell();
-					return;
+				for (int t_count = 0; t_count < 4; t_count++) {
+					component = spells[spell_id].components[t_count];
+					if (component == -1)
+						continue;
+					component_count = spells[spell_id].component_counts[t_count];
+					mlog(SPELLS__CASTING_ERR, "Spell %d: Consuming %d of spell component item id %d", spell_id, component, component_count);
+					// Components found, Deleting
+					// now we go looking for and deleting the items one by one
+					for (int s = 0; s < component_count; s++)
+					{
+						inv_slot_id = c->GetInv().HasItem(component, 1, invWhereWorn | invWherePersonal);
+						if (inv_slot_id != -1)
+						{
+							c->DeleteItemInInventory(inv_slot_id, 1, true);
+						}
+						else
+						{	// some kind of error in the code if this happens
+							c->Message(CC_Red, "ERROR: reagent item disappeared while processing?");
+						}
+					}
 				}
-			}
-			else{
-				if (!HasSpellReagent(spell_id)){
-					InterruptSpell();
-					return;
-				}
-			}
-
+			} // end missingreags/consumption
 		} // end `focus did not help us`
 	} // end IsClient() for reagents
 
@@ -1198,195 +1321,34 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 }
 
-bool Mob::HasSongInstrument(uint16 spell_id){
-	bool HasInstrument = true;
-	Client *c = this->CastToClient();
-	int InstComponent = spells[spell_id].NoexpendReagent[0];
-
-	switch (InstComponent) {
-	case -1:
-		return true;		// no instrument required
-
-		// percussion songs (13000 = hand drum)
-	case 13000:
-		if (itembonuses.percussionMod == 0) {			// check for the appropriate instrument type
-			HasInstrument = false;
-			c->Message_StringID(CC_Red, SONG_NEEDS_DRUM);	// send an error message if missing
-		}
-		break;
-
-		// wind songs (13001 = wooden flute)
-	case 13001:
-		if (itembonuses.windMod == 0) {
-			HasInstrument = false;
-			c->Message_StringID(CC_Red, SONG_NEEDS_WIND);
-		}
-		break;
-
-		// string songs (13011 = lute)
-	case 13011:
-		if (itembonuses.stringedMod == 0) {
-			HasInstrument = false;
-			c->Message_StringID(CC_Red, SONG_NEEDS_STRINGS);
-		}
-		break;
-
-		// brass songs (13012 = horn)
-	case 13012:
-		if (itembonuses.brassMod == 0) {
-			HasInstrument = false;
-			c->Message_StringID(CC_Red, SONG_NEEDS_BRASS);
-		}
-		break;
-
-	default:	// some non-instrument component. Let it go, but record it in the log
-		mlog(SPELLS__CASTING_ERR, "Something odd happened: Song %d required instrument %s", spell_id, InstComponent);
-	}
-
-	if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
-		mlog(SPELLS__CASTING_ERR, "Song %d: Canceled. Missing required instrument %s", spell_id, InstComponent);
-		if (c->GetGM())
-			c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
-		else {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool Mob::HasSpellReagent(uint16 spell_id)
-{
-	static const int petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6360, 6361, 6362, 6363 };
-	Client *c = this->CastToClient();
-
-	bool missingreags = false;
-
-	for (int t_count = 0; t_count < 4; t_count++) { 	//check normal components first, like Malachite for mage pets
-		int32 component = spells[spell_id].components[t_count];
-		int component_count = spells[spell_id].component_counts[t_count];
-
-		if (component == -1){
-			continue;
-		}
-
-		if (!HasReagent(spell_id, component, component_count, missingreags)){
-			missingreags = true;
-		}
-	}
-
-	for (int t_count = 0; t_count < 4; t_count++) { //check focus components like Fire Beetle Eye for Flame Lick
-		int focuscomponent = spells[spell_id].NoexpendReagent[t_count];
-
-		if (focuscomponent == -1)
-			continue;
-
-		bool petfocuscomponent = false;
-		for (int i = 0; i < sizeof(petfocusItems); i++) {
-			if (focuscomponent == petfocusItems[i]) {
-				petfocuscomponent = true;
-				break;
-			}
-		}
-
-		if (petfocuscomponent){//Ignore pet focus items, they are not required to cast pets.
-			continue;
-		}
-
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags)){
-			missingreags = true;
-		}
-	}
-
-	if (missingreags) {
-		if (c->GetGM())
-			c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing required components.");
-		else {
-			return false;
-		}
-	}
-	else
-	{
-		for (int t_count = 0; t_count < 4; t_count++) {
-			int32 component = spells[spell_id].components[t_count];
-			if (component == -1)
-				continue;
-			int component_count = spells[spell_id].component_counts[t_count];
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Consuming %d of spell component item id %d", spell_id, component, component_count);
-			// Components found, Deleting
-			// now we go looking for and deleting the items one by one
-			for (int s = 0; s < component_count; s++)
-			{
-				int16 inv_slot_id = c->GetInv().HasItem(component, 1, invWhereWorn | invWherePersonal);
-				if (inv_slot_id != -1)
-				{
-					c->DeleteItemInInventory(inv_slot_id, 1, true);
-				}
-				else
-				{	// some kind of error in the code if this happens
-					c->Message(CC_Red, "ERROR: reagent item disappeared while processing?");
-				}
-			}
-		}
-	}
-	return true;
-}
-
-bool Mob::HasReagent(uint16 spell_id, int component, int component_count, bool missingreags){
-	Client *c = this->CastToClient();
-	if (c->GetInv().HasItem(component, component_count, invWhereWorn | invWherePersonal) == -1){
-		if (!missingreags)
-		{
-			c->Message_StringID(CC_Red, MISSING_SPELL_COMP);
-		}
-
-		const Item_Struct *item;
-		if (component != -1)
-		{
-			item = database.GetItem(component);
-		}
-
-		if (item) {
-			c->Message_StringID(CC_Red, MISSING_SPELL_COMP_ITEM, item->Name);
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
-		}
-		else {
-			char TempItemName[64];
-			strcpy((char*)&TempItemName, "UNKNOWN");
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, TempItemName, component);
-		}
-		return false;
-	}
-	return true;
-}
-
 bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center, CastAction_type &CastAction) {
 
 	/*
-		The basic types of spells:
+	The basic types of spells:
 
-		Single target - some might be undead only, self only, etc, but these
-		all affect the target of the caster.
+	Single target - some might be undead only, self only, etc, but these
+	all affect the target of the caster.
 
-		AE around caster - these affect entities close to the caster, and have
-		no target.
+	AE around caster - these affect entities close to the caster, and have
+	no target.
 
-		AE around target - these have a target, and affect the target as well as
-		entities close to the target.
+	AE around target - these have a target, and affect the target as well as
+	entities close to the target.
 
-		AE on location - this is a tricky one that is cast on a mob target but
-		has a special AE duration that keeps it recasting every 2.5 sec on the
-		same location. These work the same as AE around target spells, except
-		the target is a special beacon that's created when the spell is cast
+	AE on location - this is a tricky one that is cast on a mob target but
+	has a special AE duration that keeps it recasting every 2.5 sec on the
+	same location. These work the same as AE around target spells, except
+	the target is a special beacon that's created when the spell is cast
 
-		Group - the caster is always affected, but there's more
-		targetgroupbuffs on - these affect the target and the target's group.
-		targetgroupbuffs off - no target, affects the caster's group.
+	Group - the caster is always affected, but there's more
+	targetgroupbuffs on - these affect the target and the target's group.
+	targetgroupbuffs off - no target, affects the caster's group.
 
-		Group Teleport - the caster plus his group are affected. these cannot
-		be targeted.
+	Group Teleport - the caster plus his group are affected. these cannot
+	be targeted.
 
-		I think the string ID SPELL_NEED_TAR is wrong, it dosent seem to show up.
-		*/
+	I think the string ID SPELL_NEED_TAR is wrong, it dosent seem to show up.
+	*/
 
 	// during this switch, this variable gets set to one of these things
 	// and that causes the spell to be executed differently
@@ -2185,15 +2147,15 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 }
 
 /*
- * handle bard song pulses...
- *
- * we make several assumptions that SpellFinished does not:
- *	- there are no AEDuration (beacon) bard songs
- *	- there are no recourse spells on bard songs
- *	- there is no long recast delay on bard songs
- *
- * return false to stop the song
- */
+* handle bard song pulses...
+*
+* we make several assumptions that SpellFinished does not:
+*	- there are no AEDuration (beacon) bard songs
+*	- there are no recourse spells on bard songs
+*	- there is no long recast delay on bard songs
+*
+* return false to stop the song
+*/
 bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	if (slot == USE_ITEM_SPELL_SLOT) {
 		//bard songs should never come from items...
@@ -4671,16 +4633,16 @@ void Mob::Mesmerize()
 
 	SendPosition();
 	/* this stuns the client for max time, with no way to break it
-		if (this->IsClient()){
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stun, sizeof(Stun_Struct));
-		Stun_Struct* stunon = (Stun_Struct*) outapp->pBuffer;
-		stunon->duration = 0xFFFF;
-		this->CastToClient()->QueuePacket(outapp);
-		safe_delete(outapp);
-		} else {
-		SetRunAnimSpeed(0);
-		}
-		*/
+	if (this->IsClient()){
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stun, sizeof(Stun_Struct));
+	Stun_Struct* stunon = (Stun_Struct*) outapp->pBuffer;
+	stunon->duration = 0xFFFF;
+	this->CastToClient()->QueuePacket(outapp);
+	safe_delete(outapp);
+	} else {
+	SetRunAnimSpeed(0);
+	}
+	*/
 }
 
 void Client::MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message)
