@@ -533,7 +533,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		// for partial range validation checks and 'EmuConstants::MAP_POSSESSIONS_SIZE' for full range iterations
 		{ // local[MainPossessions]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		EmuConstants::MAP_POSSESSIONS_SIZE,
 /*Mac*/			EmuConstants::MAP_POSSESSIONS_SIZE,
 /*evolution*/	0,
 
@@ -543,7 +543,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapBank]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		MAC::consts::MAP_BANK_SIZE,
 /*Mac*/			MAC::consts::MAP_BANK_SIZE,
 /*evolution*/	0,
 
@@ -552,7 +552,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapSharedBank]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	NOT_USED,
 
@@ -561,7 +561,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapTrade]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		EmuConstants::MAP_TRADE_SIZE,
 /*Mac*/			EmuConstants::MAP_TRADE_SIZE,
 /*evolution*/	0,
 
@@ -570,7 +570,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapWorld]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		EmuConstants::MAP_WORLD_SIZE,
 /*Mac*/			EmuConstants::MAP_WORLD_SIZE,
 /*evolution*/	NOT_USED,
 
@@ -579,7 +579,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapLimbo]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		EmuConstants::MAP_LIMBO_SIZE,
 /*Mac*/			EmuConstants::MAP_LIMBO_SIZE,
 /*evolution*/	NOT_USED,
 
@@ -588,7 +588,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapTribute]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	NOT_USED,
 
@@ -597,7 +597,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapTrophyTribute]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	NOT_USED,
 
@@ -606,7 +606,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapGuildTribute]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	NOT_USED,
 
@@ -615,7 +615,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapMerchant]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -624,7 +624,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapDeleted]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -633,7 +633,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapCorpse]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		MAC::consts::MAP_CORPSE_SIZE,
 /*Mac*/			MAC::consts::MAP_CORPSE_SIZE,
 /*evolution*/	0,
 
@@ -642,7 +642,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapBazaar]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			EmuConstants::MAP_BAZAAR_SIZE,
 /*evolution*/	0,
 
@@ -651,7 +651,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapInspect]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		MAC::consts::MAP_INSPECT_SIZE,
 /*Mac*/			MAC::consts::MAP_INSPECT_SIZE,
 /*evolution*/	0,
 
@@ -660,7 +660,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapRealEstate]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	0,
 
@@ -669,7 +669,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapViewMODPC]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -678,7 +678,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapViewMODBank]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -687,7 +687,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapViewMODSharedBank]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -696,7 +696,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapViewMODLimbo]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -705,7 +705,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapAltStorage]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -714,7 +714,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapArchived]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -723,7 +723,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapMail]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -732,7 +732,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapGuildTrophyTribute]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	0,
 
@@ -741,7 +741,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapKrono]
 /*Unknown*/		NOT_USED,
-/*Unused*/		NOT_USED,
+/*Trilogy*/		NOT_USED,
 /*Mac*/			NOT_USED,
 /*evolution*/	0,
 
@@ -750,7 +750,7 @@ uint16 EQLimits::InventoryMapSize(int16 map, uint32 version) {
 		},
 		{ // local[MapOther]
 /*Unknown*/		NOT_USED,
-/*Unused*/		0,
+/*Trilogy*/		0,
 /*Mac*/			0,
 /*evolution*/	0,
 
@@ -773,7 +773,7 @@ uint64 EQLimits::PossessionsBitmask(uint32 version) {
 
 	static const uint64 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		0x000000027FDFFFFF,
 		/*Mac*/			0x000000027FDFFFFF,
 		/*Evolution*/	0,
 
@@ -788,7 +788,7 @@ uint64 EQLimits::PossessionsBitmask(uint32 version) {
 uint64 EQLimits::EquipmentBitmask(uint32 version) {
 	static const uint64 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0x00000000005FFFFF,
+		/*Trilogy*/		0x00000000005FFFFF,
 		/*Mac*/			0x00000000005FFFFF,
 		/*Evolution*/	0x00000000005FFFFF,
 
@@ -803,7 +803,7 @@ uint64 EQLimits::EquipmentBitmask(uint32 version) {
 uint64 EQLimits::GeneralBitmask(uint32 version) {
 	static const uint64 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		0x000000007F800000,
 		/*Mac*/			0x000000007F800000,
 		/*Evolution*/	0,
 
@@ -818,7 +818,7 @@ uint64 EQLimits::GeneralBitmask(uint32 version) {
 uint64 EQLimits::CursorBitmask(uint32 version) {
 	static const uint64 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		0x0000000200000000,
 		/*Mac*/			0x0000000200000000,
 		/*Evolution*/	0,
 
@@ -833,7 +833,7 @@ uint64 EQLimits::CursorBitmask(uint32 version) {
 bool EQLimits::AllowsEmptyBagInBag(uint32 version) {
 	static const bool local[_EmuClientCount] = {
 		/*Unknown*/		false,
-		/*Unused*/		false,
+		/*Trilogy*/		TRILOGY::limits::ALLOWS_EMPTY_BAG_IN_BAG,
 		/*Mac*/			MAC::limits::ALLOWS_EMPTY_BAG_IN_BAG,
 		/*Evolution*/	false,
 
@@ -848,7 +848,7 @@ bool EQLimits::AllowsEmptyBagInBag(uint32 version) {
 bool EQLimits::AllowsClickCastFromBag(uint32 version) {
 	static const bool local[_EmuClientCount] = {
 /*Unknown*/		false,
-/*Unused*/		false,
+/*Trilogy*/		TRILOGY::limits::ALLOWS_CLICK_CAST_FROM_BAG,
 /*Mac*/			MAC::limits::ALLOWS_CLICK_CAST_FROM_BAG,
 /*Evolution*/	false,
 
@@ -863,7 +863,7 @@ bool EQLimits::AllowsClickCastFromBag(uint32 version) {
 uint16 EQLimits::ItemCommonSize(uint32 version) {
 	static const uint16 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		EmuConstants::ITEM_COMMON_SIZE,
 		/*Mac*/			EmuConstants::ITEM_COMMON_SIZE,
 		/*Evolution*/	0,
 
@@ -877,7 +877,7 @@ uint16 EQLimits::ItemCommonSize(uint32 version) {
 uint16 EQLimits::ItemContainerSize(uint32 version) {
 	static const uint16 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		EmuConstants::ITEM_CONTAINER_SIZE,
 		/*Mac*/			EmuConstants::ITEM_CONTAINER_SIZE,
 		/*Evolution*/	0,
 
@@ -891,7 +891,7 @@ uint16 EQLimits::ItemContainerSize(uint32 version) {
 bool EQLimits::CoinHasWeight(uint32 version) {
 	static const bool local[_EmuClientCount] = {
 		/*Unknown*/		true,
-		/*Unused*/		true,
+		/*Trilogy*/		TRILOGY::limits::COIN_HAS_WEIGHT,
 		/*Mac*/			MAC::limits::COIN_HAS_WEIGHT,
 		/*Evolution*/	true,
 
@@ -905,7 +905,7 @@ bool EQLimits::CoinHasWeight(uint32 version) {
 uint32 EQLimits::BandoliersCount(uint32 version) {
 	static const uint32 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		EmuConstants::BANDOLIERS_COUNT,
 		/*Mac*/			EmuConstants::BANDOLIERS_COUNT,
 		/*Evolution*/	0,
 
@@ -919,7 +919,7 @@ uint32 EQLimits::BandoliersCount(uint32 version) {
 uint32 EQLimits::BandolierSize(uint32 version) {
 	static const uint32 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		0,
+		/*Trilogy*/		EmuConstants::BANDOLIER_SIZE,
 		/*Mac*/			EmuConstants::BANDOLIER_SIZE,
 		/*Evolution*/	0,
 
@@ -933,7 +933,7 @@ uint32 EQLimits::BandolierSize(uint32 version) {
 uint32 EQLimits::PotionBeltSize(uint32 version) {
 	static const uint32 local[_EmuClientCount] = {
 		/*Unknown*/		NOT_USED,
-		/*Unused*/		NOT_USED,
+		/*Trilogy*/		NOT_USED,
 		/*Mac*/			NOT_USED,
 		/*Evolution*/	0,
 

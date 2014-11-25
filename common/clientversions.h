@@ -1,7 +1,7 @@
 #ifndef CLIENTVERSIONS_H
 #define CLIENTVERSIONS_H
 
-static const uint32 BIT_Unused = 1;
+static const uint32 BIT_Trilogy = 1;
 static const uint32 BIT_MacPC = 2;
 static const uint32 BIT_MacIntel = 4;
 static const uint32 BIT_MacPPC = 8;
@@ -13,7 +13,7 @@ static const uint32 BIT_AllClients = 0xFFFFFFFF;
 typedef enum
 {
 	EQClientUnknown = 0,
-	EQClientUnused,
+	EQClientTrilogy,
 	EQClientMac,
 	EQClientEvolution,
 	_EQClientCount,			// place new clients before this point (preferably, in release/attribute order)
@@ -32,8 +32,8 @@ static const char* EQClientVersionName(EQClientVersion version)
 	{
 	case EQClientUnknown:
 		return "EQClientUnknown";
-	case EQClientUnused:
-		return "EQClientUnused";
+	case EQClientTrilogy:
+		return "EQClientTrilogy";
 	case EQClientMac:
 		return "EQClientMac";
 	case EQClientEvolution:

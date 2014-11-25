@@ -71,6 +71,7 @@ SET(common_sources
 	platform.cpp
 	patches/patches.cpp
 	patches/mac.cpp
+	patches/trilogy.cpp
 	patches/evolution.cpp
 	SocketLib/Base64.cpp
 	SocketLib/File.cpp
@@ -197,6 +198,10 @@ SET(common_headers
 	patches/mac_constants.h
 	patches/mac_structs.h
 	patches/mac_ops.h
+	patches/trilogy.h
+	patches/trilogy_constants.h
+	patches/trilogy_structs.h
+	patches/trilogy_ops.h
 	patches/evolution.h
 	patches/evolution_structs.h
 	patches/evolution_ops.h
@@ -231,6 +236,11 @@ SOURCE_GROUP(Patches FILES
 	patches/mac_ops.h
 	patches/mac_structs.h
 	patches/mac_constants.h
+	patches/trilogy.cpp
+	patches/trilogy.h
+	patches/trilogy_constants.h
+	patches/trilogy_structs.h
+	patches/trilogy_ops.h
 	patches/evolution.cpp
 	patches/evolution.h
 	patches/evolution_structs.h

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "clientversions.h"
 #include <string>
 #include "../common/patches/mac_constants.h"
+#include "../common/patches/trilogy_constants.h"
 //#include "../common/patches/evolution_constants.h"
 
 // *** DO NOT CHANGE without a full understanding of the consequences..the server is set up to use these settings explicitly!! ***

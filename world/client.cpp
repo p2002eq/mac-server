@@ -218,10 +218,12 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		}
 		else
 		{
-			if(eqs->ClientVersion() == EQClientUnused)
+			if(eqs->ClientVersion() == EQClientTrilogy)
 				ClientVersionBit = 1;
-			else
+			else if(eqs->ClientVersion() == EQClientEvolution)
 				ClientVersionBit = 16;
+			else
+				ClientVersionBit = 0;
 		}
 
 		clog(WORLD__CLIENT,"ClientVersionBit is: %i", ClientVersionBit);

@@ -675,8 +675,8 @@ void Client::CompleteConnect()
 		std::string string;
 		if(GetClientVersion() == EQClientEvolution)
 			string = "Evolution";
-		if(GetClientVersion() == EQClientUnused)
-			string = "Unused";
+		if(GetClientVersion() == EQClientTrilogy)
+			string = "Trilogy";
 		else
 			string = "Unknown";
 
@@ -1036,10 +1036,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 	else
 	{
-		if(Connection()->ClientVersion() == EQClientUnused)
+		if(Connection()->ClientVersion() == EQClientTrilogy)
 			ClientVersionBit = 1;
-		else
+		else if(Connection()->ClientVersion() == EQClientEvolution)
 			ClientVersionBit = 16;
+		else
+			ClientVersionBit = 0;
 	}
 	_log(EQMAC__LOG,"ClientVersionBit is: %i", ClientVersionBit);
 
