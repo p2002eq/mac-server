@@ -1245,7 +1245,7 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 
 bool Mob::HasSpellReagent(uint16 spell_id)
 {
-	static const int petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6360, 6361, 6362, 6363 };
+	static const int16 petfocusItems[] = { 20508, 28144, 11571, 11569, 11567, 11566, 11568, 6360, 6361, 6362, 6363 };
 	Client *c = this->CastToClient();
 
 	bool missingreags = false;
@@ -1270,7 +1270,8 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 
 		bool petfocuscomponent = false;
-		for (int i = 0; i < sizeof(petfocusItems); i++) {
+		int8 petfocusItemsize = sizeof(petfocusItems) / sizeof(petfocusItems[0]);
+		for (int i = 0; i < petfocusItemsize; i++) {
 			if (focuscomponent == petfocusItems[i]) {
 				petfocuscomponent = true;
 				break;

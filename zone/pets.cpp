@@ -121,7 +121,7 @@ const char *GetRandPetName()
 	return petnames[r];
 }
 
-const FocusPetItem Pet::focusItems[11] = {
+const FocusPetItem Pet::focusItems[FocusPetItemSize] = {
 	// Symbol of Ancient Summoning
 	{20508, 25, 75, 59, FocusPetType::ALL},
 	// Dark Gloves of Summoning
@@ -152,22 +152,22 @@ FocusPetType Pet::GetPetItemPetTypeFromSpellId(uint16 spell_id) {
 	static const int earthPets[] = {624, 628, 632, 58, 397, 401, 335, 496, 569, 573, 620};
 	static const int waterPets[] = {625, 629, 633, 315, 398, 403, 336, 497, 570, 574, 621};
 
-	for(int i=0; i < sizeof(firePets); i++) {
+	for(int i=0; i < sizeof(firePets)/ sizeof(firePets[0]); i++) {
 		if((int)spell_id == firePets[i]) {
 			return FocusPetType::FIRE;
 		}
 	}
-	for(int i=0; i < sizeof(airPets); i++) {
+	for(int i=0; i < sizeof(airPets)/ sizeof(airPets[0]); i++) {
 		if((int)spell_id == airPets[i]) {
 			return FocusPetType::AIR;
 		}
 	}
-	for(int i=0; i < sizeof(earthPets); i++) {
+	for(int i=0; i < sizeof(earthPets)/ sizeof(earthPets[0]); i++) {
 		if((int)spell_id == earthPets[i]) {
 			return FocusPetType::EARTH;
 		}
 	}
-	for(int i=0; i < sizeof(waterPets); i++) {
+	for(int i=0; i < sizeof(waterPets)/ sizeof(waterPets[0]); i++) {
 		if((int)spell_id == waterPets[i]) {
 			return FocusPetType::WATER;
 		}
@@ -216,7 +216,8 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 			FocusPetItem petItem;
 			// Loop over all the focus items and figure out which on is the best to use
 			// It will step down from PoP - Classic looking for the best focus item to use based on pet level
-			for(int i=0; i < sizeof(*Pet::focusItems); i++) {
+			int16 slot = 0;
+			for(int i=0; i < FocusPetItemSize; i++) {
 				petItem = Pet::focusItems[i];
 				// Look in out inventory
 				int16 slot_id = this->CastToClient()->GetInv().HasItem(petItem.item_id, 1, invWhereWorn);
@@ -224,6 +225,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 					//skip this focus item if its effect is out of rage for the pet we are casting
 					if(base->level >= petItem.min_level && base->level <= petItem.max_level) {
 						//Message(13, "Found Focus Item in Inventory: %d", slot_id);
+						slot = slot_id;
 						focusItemId = petItem.item_id;
 						break;
 					} //else {
@@ -232,7 +234,8 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				}
 			}
 			// we have a focus item
-			if(focusItemId) {
+			if(focusItemId) 
+			{
 				FocusPetType focusType;
 				// Symbol or Gloves can be used by all NEC, MAG, BST
 				if(petItem.pet_type == FocusPetType::ALL)
@@ -256,16 +259,21 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 					scale_pet = true;
 				}
 				
-				if(focusType == FocusPetType::NECRO ||focusType == FocusPetType::EARTH || focusType == FocusPetType::AIR
+				if(act_power > 0)
+				{
+					Message(CC_Yellow, "Debug: You have cast a powered pet. Unadjusted pet power is: %i. HasItem returned: %i. If your pet is Godzilla, please report this message to cavedude or another devel.", act_power, slot);
+
+					if(focusType == FocusPetType::NECRO ||focusType == FocusPetType::EARTH || focusType == FocusPetType::AIR
 					|| focusType == FocusPetType::FIRE || focusType == FocusPetType::WATER)
-				{
-					if(act_power > 10)
-						act_power = 10;
-				}
-				else
-				{
-					if(act_power > 25)
-						act_power = 25;
+					{
+						if(act_power > 10)
+							act_power = 10;
+					}
+					else	
+					{
+						if(act_power > 25)
+							act_power = 25;
+					}
 				}
 			}
 		}
@@ -299,7 +307,6 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				npc_type->max_dmg = (int16) (npc_type->max_dmg * (1 + (scale_power / 2)));
 				npc_type->size	  = (npc_type->size * (1 + scale_power));
 			}
-			Message(CC_Yellow, "Debug: You have cast a powered pet. Pet level is: %i size is: %0.1f power is: %i. If your pet is Godzilla, please report this message to cavedude or another devel.", npc_type->level, npc_type->size, act_power);
 			record.petpower = act_power;
 		}
 	}

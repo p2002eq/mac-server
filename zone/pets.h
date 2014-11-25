@@ -45,6 +45,8 @@
 		int pet_type;
 	};
 
+	#define FocusPetItemSize 11
+
 	class Pet : public NPC {
 	public:
 		Pet(NPCType *type_data, Mob *owner, PetType type, uint16 spell_id, int16 power);
