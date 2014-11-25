@@ -936,7 +936,7 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req) {
 	clog(WORLD__CLIENT_TRACE, "Sending EQApplicationPacket OpCode 0x%04x",app->GetOpcode());
 	_pkt(WORLD__CLIENT_TRACE, app);
 
-	ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
+	//ack_req = true;	// It's broke right now, dont delete this line till fix it. =P
 	eqs->QueuePacket(app, ack_req);
 }
 

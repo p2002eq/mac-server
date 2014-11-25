@@ -83,6 +83,7 @@ struct ACK_INFO
 		dbASQ_high = dbASQ_low = 0;
 		dwGSQ = 0;
 		dwGSQcount = 0;
+		dwStarted = 0;
 	}
 
 	uint16   dwARQ;			// Comment: Current request ack
@@ -90,6 +91,7 @@ struct ACK_INFO
 	uint16	dbASQ_low  : 8;	//TODO: What is this one?
 	uint16   dwGSQ;			// Comment: Main sequence number SHORT#2
 	uint16	dwGSQcount;
+	uint16	dwStarted;
 
 };
 

@@ -229,7 +229,7 @@ MARK_AS_ADVANCED(EQEMU_STREAM_SEND_RATE EQEMU_STREAM_DECAY_RATE EQEMU_STREAM_RET
 OPTION(EQEMU_DEPOP_INVALIDATES_CACHE "#repop invalidates the npc_types cache (will cause a larger database hit on #repop but is more convienent)." ON)
 
 #Disable entire _mlog system (excludes trade/command logs)
-OPTION(EQEMU_DISABLE_LOGSYS "Disable Logging INI System" ON)
+OPTION(EQEMU_DISABLE_LOGSYS "Disable Logging INI System" OFF)
 
 #Enable GM Command log system
 OPTION(EQEMU_COMMANDS_LOGGING "Enable GM Command logs" ON)
@@ -244,11 +244,11 @@ ENDIF(EQEMU_DISABLE_LOGSYS)
 
 #What to build
 OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
-OPTION(EQEMU_BUILD_LOGIN "Build the login server." OFF)
+OPTION(EQEMU_BUILD_LOGIN "Build the login server." ON)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
 OPTION(EQEMU_BUILD_PERL "Build Perl parser." ON)
 OPTION(EQEMU_BUILD_LUA "Build Lua parser." ON)
-OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Inport/Export Data Programs." ON)
+OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Inport/Export Data Programs." OFF)
 
 #C++11 stuff
 IF(NOT MSVC)
