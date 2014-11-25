@@ -2110,15 +2110,14 @@ struct LSAuth_Struct
 };
 
 // Added this struct for eqemu and started eimplimentation ProcessOP_SendLoginInfo
-//TODO: confirm everything in this struct
+//TODO: cavedude finding zoning field.
+
 struct LoginInfo_Struct 
 {
-	/*000*/	char	AccountName[127];
-	/*127*/	char	Password[24];
-	/*151*/ uint8	unknown189[41];		
-	/*192*/ uint8   zoning;
-	/*193*/ uint8   unknown193[7];
-	/*200*/
+	/*000*/	char	AccountName[127];	
+	/*064*/	uint8	Password[24];
+	/*189*/	uint8	unknown189[19];
+	/*196*/
 };
 
 struct EnterWorld_Struct

@@ -31,12 +31,13 @@ using namespace std;
 
 enum ClientVersion
 {
-	cv_old
+	cv_old,
+	cv_tri
 };
 
 enum MacClientVersion
 {
-	//Unused is 1
+	trilogy=1,
 	pc=2,
 	intel=4,
 	ppc=8

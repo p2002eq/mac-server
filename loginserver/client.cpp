@@ -110,7 +110,7 @@ bool Client::Process()
 			}
 		case OP_PlayEverquestRequest:
 			{
-				if(app->Size() < sizeof(PlayEverquestRequest_Struct) && version != cv_old)
+				if(app->Size() < sizeof(PlayEverquestRequest_Struct) && version != cv_old && version != cv_tri)
 				{
 					server_log->Log(log_network_error, "Play received but it is too small, discarding.");
 					break;
@@ -144,7 +144,7 @@ void Client::Handle_SessionReady(const char* data, unsigned int size)
 		return;
 	}
 
-	if(version != cv_old)
+	if(version != cv_old && version != cv_tri)
 	{
 		if(size < sizeof(unsigned int))
 		{
@@ -168,6 +168,16 @@ void Client::Handle_SessionReady(const char* data, unsigned int size)
 		//Special logic for old streams.
 		char buf[20];
 		strcpy(buf, "12-4-2002 1800");
+		EQApplicationPacket *outapp = new EQApplicationPacket(OP_SessionReady, strlen(buf) + 1);
+		strcpy((char*) outapp->pBuffer, buf);
+		connection->QueuePacket(outapp);
+		delete outapp;
+	}
+	else if(version == cv_tri)
+	{
+		//Special logic for old streams.
+		char buf[20];
+		strcpy(buf, "8-09-2001 14:25");
 		EQApplicationPacket *outapp = new EQApplicationPacket(OP_SessionReady, strlen(buf) + 1);
 		strcpy((char*) outapp->pBuffer, buf);
 		connection->QueuePacket(outapp);
@@ -316,6 +326,11 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 	unsigned int enable;
 	string platform = "PC";
 	macversion = pc;
+	if(version == cv_tri)
+	{
+		platform = "Trilogy";
+		macversion = trilogy;
+	}
 
 	if (server.db->GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
 	{
@@ -408,7 +423,12 @@ void Client::Handle_Play(const char* data)
 
 void Client::SendServerListPacket()
 {
-	EQApplicationPacket *outapp = server.SM->CreateOldServerListPacket(this);
+	EQApplicationPacket *outapp;
+
+	if (version == cv_tri)
+		outapp = server.SM->CreateTrilogyServerListPacket(this);
+	else
+		outapp = server.SM->CreateOldServerListPacket(this);
 
 	if(server.options.IsDumpOutPacketsOn())
 	{

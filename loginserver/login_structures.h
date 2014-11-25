@@ -121,6 +121,15 @@ struct ServerList_Struct {
 	uchar	data[0];
 };
 
+
+struct TrilogyServerList_Struct {
+	uint8	numservers;
+	uint8	unknown1;
+	uint8	unknown2;
+	uint8	showusercount; // 0xFF = show numbers, 0x0 = show "UP"
+	uchar	data[0];
+};
+
 struct ServerListHeader_Struct {
 
 	uint32 Unknown1;
