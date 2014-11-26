@@ -286,7 +286,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		sprintf(temp, "%d", spell_id);
 		parse->EventNPC(EVENT_CAST_BEGIN, CastToNPC(), nullptr, temp, 0);
 	}
-	
+
 	//To prevent NPC ghosting when spells are cast from scripts
 	if (IsNPC() && IsMoving() && cast_time > 0)
 		SendPosition();
@@ -1586,7 +1586,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			{
 				if(!spell_target)
 					return false;
-				
+
 				ae_center = spell_target;
 				CastAction = AETarget;
 			}
@@ -1605,7 +1605,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			{
 				if(!spell_target)
 					return false;
-				
+
 				ae_center = spell_target;
 				CastAction = AETarget;
 			}
@@ -3636,7 +3636,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	if (IsValidSpell(spells[spell_id].RecourseLink))
 		SpellFinished(spells[spell_id].RecourseLink, this, 10, 0, -1, spells[spells[spell_id].RecourseLink].ResistDiff);
-		
+
 	if (IsDetrimentalSpell(spell_id)) {
 
 		CheckNumHitsRemaining(NUMHIT_OutgoingSpells);
@@ -3742,9 +3742,9 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 	rezz->zone_id = zone->GetZoneID();
 	rezz->instance_id = zone->GetInstanceID();
 	rezz->spellid = spellid;
-	rezz->x = this->x_pos;
-	rezz->y = this->y_pos;
-	rezz->z = this->z_pos;
+	rezz->x = this->m_Position.m_X;
+	rezz->y = this->m_Position.m_Y;
+	rezz->z = this->m_Position.m_Z;
 	rezz->unknown000 = 0x00000000;
 	rezz->unknown020 = 0x00000000;
 	rezz->unknown088 = 0x00000000;
@@ -4427,7 +4427,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			if(partial_modifier <= 0)
 			{
 				return 100;
-			} 
+			}
 			else if(partial_modifier >= 100)
 			{
 				return 0;
@@ -4747,7 +4747,7 @@ void Client::UnmemSpell(int slot, bool update_client)
 	m_pp.mem_spells[slot] = 0xFFFFFFFF;
 
 	database.DeleteCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);
-	
+
 	if(update_client)
 	{
 		MemorizeSpell(slot, m_pp.mem_spells[slot], memSpellForget);
@@ -4791,8 +4791,8 @@ void Client::UnscribeSpell(int slot, bool update_client)
 
 	mlog(CLIENT__SPELLS, "Spell %d erased from spell book slot %d", m_pp.spell_book[slot], slot);
 	m_pp.spell_book[slot] = 0xFFFFFFFF;
-	
-	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[slot], slot); 
+
+	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[slot], slot);
 	if(update_client)
 	{
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_DeleteSpell, sizeof(DeleteSpell_Struct));
@@ -4820,7 +4820,7 @@ void Client::UntrainDisc(int slot, bool update_client)
 	if(slot >= MAX_PP_DISCIPLINES || slot < 0)
 		return;
 
-	mlog(CLIENT__SPELLS, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot); 
+	mlog(CLIENT__SPELLS, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
 	m_pp.disciplines.values[slot] = 0;
 	database.DeleteCharacterDisc(this->CharacterID(), slot);
 

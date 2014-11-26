@@ -292,15 +292,15 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	0,								  // uint8		in_qglobal,
 	0,								  // uint8		in_maxlevel,
 	0								  // uint32		in_scalerate
-	),									
+	),
 	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
 	corpse_delay_timer(RuleI(NPC, CorpseUnlockTimer)),
 	corpse_graveyard_timer(RuleI(Zone, GraveyardTimeMS)),
-	loot_cooldown_timer(10) 
+	loot_cooldown_timer(10)
 {
 	int i;
-	
+
 	PlayerProfile_Struct *pp = &client->GetPP();
 	ItemInst *item;
 
@@ -337,7 +337,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	}
 
 	strcpy(corpse_name, pp->name);
-	strcpy(name, pp->name); 
+	strcpy(name, pp->name);
 
 	/* become_npc was not being initialized which led to some pretty funky things with newly created corpses */
 	become_npc = false;
@@ -345,8 +345,8 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	SetPlayerKillItemID(0);
 
 	/* Check Rule to see if we can leave corpses */
-	if(!RuleB(Character, LeaveNakedCorpses) || 
-		RuleB(Character, LeaveCorpses) && 
+	if(!RuleB(Character, LeaveNakedCorpses) ||
+		RuleB(Character, LeaveCorpses) &&
 		GetLevel() >= RuleI(Character, DeathItemLossLevel)) {
 		// cash
 		SetCash(pp->copper, pp->silver, pp->gold, pp->platinum);
@@ -624,18 +624,18 @@ bool Corpse::Save() {
 	ItemList::iterator cur, end;
 	cur = itemlist.begin();
 	end = itemlist.end();
-	for (; cur != end; ++cur) { 
+	for (; cur != end; ++cur) {
 		ServerLootItem_Struct* item = *cur;
 		memcpy((char*)&dbpc->items[x++], (char*)item, sizeof(ServerLootItem_Struct));
 	}
 
 	/* Create New Corpse*/
 	if (corpse_db_id == 0) {
-		corpse_db_id = database.SaveCharacterCorpse(char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, x_pos, y_pos, z_pos, heading);
+		corpse_db_id = database.SaveCharacterCorpse(char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position.m_X, m_Position.m_Y, m_Position.m_Z, m_Position.m_Heading);
 	}
 	/* Update Corpse Data */
 	else{
-		corpse_db_id = database.UpdateCharacterCorpse(corpse_db_id, char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, x_pos, y_pos, z_pos, heading, IsRezzed());
+		corpse_db_id = database.UpdateCharacterCorpse(corpse_db_id, char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position.m_X, m_Position.m_Y, m_Position.m_Z, m_Position.m_Heading, IsRezzed());
 	}
 
 	safe_delete_array(dbpc);
@@ -645,8 +645,8 @@ bool Corpse::Save() {
 
 void Corpse::Delete() {
 	if (IsPlayerCorpse() && corpse_db_id != 0)
-		database.DeleteCharacterCorpse(corpse_db_id); 
-	
+		database.DeleteCharacterCorpse(corpse_db_id);
+
 	corpse_db_id = 0;
 	player_corpse_depop = true;
 }
@@ -760,7 +760,7 @@ void Corpse::RemoveItem(uint16 lootslot) {
 }
 
 void Corpse::RemoveItem(ServerLootItem_Struct* item_data){
-	uint8 material; 
+	uint8 material;
 	ItemList::iterator cur, end;
 	cur = itemlist.begin();
 	end = itemlist.end();
@@ -1004,7 +1004,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			}
 
 			RemoveCash();
-			Save(); 
+			Save();
 		}
 
 		outapp->priority = 6;
@@ -1278,7 +1278,7 @@ void Corpse::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho) {
 		ns->spawn.NPC = 2;
 }
 
-void Corpse::QueryLoot(Client* to) { 
+void Corpse::QueryLoot(Client* to) {
 	int x = 0, y = 0; // x = visible items, y = total items
 	to->Message(0, "Coin: %ip, %ig, %is, %ic", platinum, gold, silver, copper);
 

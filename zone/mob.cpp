@@ -155,10 +155,10 @@ Mob::Mob(const char* in_name,
 	if (runspeed < 0 || runspeed > 20)
 		runspeed = 1.25f;
 
-	heading		= in_heading;
-	x_pos		= in_x_pos;
-	y_pos		= in_y_pos;
-	z_pos		= in_z_pos;
+	m_Position.m_Heading = in_heading;
+	m_Position.m_X = in_x_pos;
+	m_Position.m_Y = in_y_pos;
+	m_Position.m_Z = in_z_pos;
 	light		= in_light;
 	texture		= in_texture;
 	helmtexture	= in_helmtexture;
@@ -847,10 +847,10 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		strn0cpy(ns->spawn.lastName, lastname, sizeof(ns->spawn.lastName));
 	}
 
-	ns->spawn.heading	= heading;
-	ns->spawn.x			= x_pos;//((int32)x_pos)<<3;
-	ns->spawn.y			= y_pos;//((int32)y_pos)<<3;
-	ns->spawn.z			= z_pos;//((int32)z_pos)<<3;
+	ns->spawn.heading	= m_Position.m_Heading;
+	ns->spawn.x			= m_Position.m_X;//((int32)x_pos)<<3;
+	ns->spawn.y			= m_Position.m_Y;//((int32)y_pos)<<3;
+	ns->spawn.z			= m_Position.m_Z;//((int32)z_pos)<<3;
 	ns->spawn.spawnId	= GetID();
 	ns->spawn.curHp	= static_cast<uint8>(GetHPRatio());
 	ns->spawn.max_hp	= 100;		//this field needs a better name
@@ -1079,13 +1079,13 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->x_pos		= x_pos;
-	spu->y_pos		= y_pos;
-	spu->z_pos		= z_pos;
+	spu->x_pos		= m_Position.m_X;
+	spu->y_pos		= m_Position.m_Y;
+	spu->z_pos		= m_Position.m_Z;
 	spu->delta_x	= 0;
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
-	spu->heading	= heading;
+	spu->heading	= m_Position.m_Heading;
 	spu->anim_type	= 0;
 	spu->delta_heading = 0;
 	spu->spacer1	=0;
@@ -1095,10 +1095,10 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
-		params.push_back(std::to_string((double)x_pos));
-		params.push_back(std::to_string((double)y_pos));
-		params.push_back(std::to_string((double)z_pos));
-		params.push_back(std::to_string((double)heading));
+		params.push_back(std::to_string((double)m_Position.m_X));
+		params.push_back(std::to_string((double)m_Position.m_Y));
+		params.push_back(std::to_string((double)m_Position.m_Z));
+		params.push_back(std::to_string((double)m_Position.m_Heading));
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace()));
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
@@ -1108,13 +1108,13 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 // this is for SendPosUpdate()
 void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->spawn_id	= GetID();
-	spu->x_pos		= x_pos;
-	spu->y_pos		= y_pos;
-	spu->z_pos		= z_pos;
+	spu->x_pos		= m_Position.m_X;
+	spu->y_pos		= m_Position.m_Y;
+	spu->z_pos		= m_Position.m_Z;
 	spu->delta_x	= delta_x;
 	spu->delta_y	= delta_y;
 	spu->delta_z	= delta_z;
-	spu->heading	= heading;
+	spu->heading	= m_Position.m_Heading;
 	spu->spacer1	=0;
 	spu->spacer2	=0;
 	if(this->IsClient())
@@ -1241,11 +1241,11 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 		entity_list.ProcessMove(CastToNPC(), x, y, z);
 	}
 
-	x_pos = x;
-	y_pos = y;
-	z_pos = z;
-	if (heading != 0.01)
-		this->heading = heading;
+	m_Position.m_X = x;
+	m_Position.m_Y = y;
+	m_Position.m_Z = z;
+	if (m_Position.m_Heading != 0.01)
+		this->m_Position.m_Heading = heading;
 	if(IsNPC())
 		CastToNPC()->SaveGuardSpot(true);
 	if(SendUpdate)
@@ -1770,9 +1770,9 @@ bool Mob::CanThisClassBlock(void) const
 }
 
 float Mob::Dist(const Mob &other) const {
-	float xDiff = other.x_pos - x_pos;
-	float yDiff = other.y_pos - y_pos;
-	float zDiff = other.z_pos - z_pos;
+	float xDiff = other.m_Position.m_X - m_Position.m_X;
+	float yDiff = other.m_Position.m_Y - m_Position.m_Y;
+	float zDiff = other.m_Position.m_Z - m_Position.m_Z;
 
 	return sqrtf( (xDiff * xDiff)
 				+ (yDiff * yDiff)
@@ -1780,17 +1780,17 @@ float Mob::Dist(const Mob &other) const {
 }
 
 float Mob::DistNoZ(const Mob &other) const {
-	float xDiff = other.x_pos - x_pos;
-	float yDiff = other.y_pos - y_pos;
+	float xDiff = other.m_Position.m_X - m_Position.m_X;
+	float yDiff = other.m_Position.m_Y - m_Position.m_Y;
 
 	return sqrtf( (xDiff * xDiff)
 				+ (yDiff * yDiff) );
 }
 
 float Mob::DistNoRoot(const Mob &other) const {
-	float xDiff = other.x_pos - x_pos;
-	float yDiff = other.y_pos - y_pos;
-	float zDiff = other.z_pos - z_pos;
+	float xDiff = other.m_Position.m_X - m_Position.m_X;
+	float yDiff = other.m_Position.m_Y - m_Position.m_Y;
+	float zDiff = other.m_Position.m_Z - m_Position.m_Z;
 
 	return ( (xDiff * xDiff)
 			+ (yDiff * yDiff)
@@ -1798,9 +1798,9 @@ float Mob::DistNoRoot(const Mob &other) const {
 }
 
 float Mob::DistNoRoot(float x, float y, float z) const {
-	float xDiff = x - x_pos;
-	float yDiff = y - y_pos;
-	float zDiff = z - z_pos;
+	float xDiff = x - m_Position.m_X;
+	float yDiff = y - m_Position.m_Y;
+	float zDiff = z - m_Position.m_Z;
 
 	return ( (xDiff * xDiff)
 			+ (yDiff * yDiff)
@@ -1808,15 +1808,15 @@ float Mob::DistNoRoot(float x, float y, float z) const {
 }
 
 float Mob::DistNoRootNoZ(float x, float y) const {
-	float xDiff = x - x_pos;
-	float yDiff = y - y_pos;
+	float xDiff = x - m_Position.m_X;
+	float yDiff = y - m_Position.m_Y;
 
 	return ( (xDiff * xDiff) + (yDiff * yDiff) );
 }
 
 float Mob::DistNoRootNoZ(const Mob &other) const {
-	float xDiff = other.x_pos - x_pos;
-	float yDiff = other.y_pos - y_pos;
+	float xDiff = other.m_Position.m_X - m_Position.m_X;
+	float yDiff = other.m_Position.m_Y - m_Position.m_Y;
 
 	return ( (xDiff * xDiff) + (yDiff * yDiff) );
 }
@@ -1961,10 +1961,10 @@ bool Mob::HateSummon() {
 			entity_list.MessageClose(this, true, 500, MT_Say, "%s says,'You will not evade me, %s!' ", GetCleanName(), target->GetCleanName() );
 
 			if (target->IsClient()) {
-				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x_pos, y_pos, z_pos, target->GetHeading(), 0, SummonPC);
+				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Position.m_X, m_Position.m_Y, m_Position.m_Z, target->GetHeading(), 0, SummonPC);
 			}
 			else {
-				target->GMMove(x_pos, y_pos, z_pos, target->GetHeading());
+				target->GMMove(m_Position.m_X, m_Position.m_Y, m_Position.m_Z, target->GetHeading());
 			}
 
 			return true;
@@ -2303,9 +2303,9 @@ void Mob::Warp( float x, float y, float z )
 		entity_list.ProcessMove(CastToNPC(), x, y, z);
 	}
 
-	x_pos = x;
-	y_pos = y;
-	z_pos = z;
+	m_Position.m_X = x;
+	m_Position.m_Y = y;
+	m_Position.m_Z = z;
 
 	Mob* target = GetTarget();
 	if (target) {
@@ -2519,9 +2519,9 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 	if (zone->zonemap != nullptr)
 	{
 		Map::Vertex me;
-		me.x = new_x;
-		me.y = new_y;
-		me.z = z_pos+z_offset;
+		me.x = m_Position.m_X;
+		me.y = m_Position.m_Y;
+		me.z = m_Position.m_Z + z_offset;
 		Map::Vertex hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
 		if (best_z != -999999)
@@ -2539,9 +2539,9 @@ float Mob::GetGroundZ(float new_x, float new_y, float z_offset)
 	if (zone->zonemap != 0)
 	{
 		Map::Vertex me;
-		me.x = new_x;
-		me.y = new_y;
-		me.z = z_pos+z_offset;
+		me.x = m_Position.m_X;
+		me.y = m_Position.m_Y;
+		me.z = m_Position.m_Z+z_offset;
 		Map::Vertex hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
 		if (best_z != -999999)
@@ -3651,9 +3651,9 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
 		_log(SPELLS__CASTING, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
-		x_pos = new_x;
-		y_pos = new_y;
-		z_pos = new_z;
+		m_Position.m_X = new_x;
+		m_Position.m_Y = new_y;
+		m_Position.m_Z = new_z;
 
 		if(IsNPC())
 		{
@@ -3701,8 +3701,8 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, GetZ()))
 	{
-		x_pos = new_x;
-		y_pos = new_y;
+		m_Position.m_X = new_x;
+		m_Position.m_Y = new_y;
 
 		if(IsNPC())
 		{
@@ -4817,7 +4817,7 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 
 	if (slot < 4){
 		if (id == "components") { spells[spell_id].components[slot];}
-		else if (id == "component_counts") {spells[spell_id].component_counts[slot];} 
+		else if (id == "component_counts") {spells[spell_id].component_counts[slot];}
 		else if (id == "NoexpendReagent") {spells[spell_id].NoexpendReagent[slot];}
 	}
 
@@ -4895,7 +4895,7 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 	else if (id == "max_dist") {stat = static_cast<int32>(spells[spell_id].max_dist); }
 	else if (id == "min_range") {stat = static_cast<int32>(spells[spell_id].min_range); }
 	else if (id == "DamageShieldType") {stat = spells[spell_id].DamageShieldType; }
-	
+
 	return stat;
 }
 

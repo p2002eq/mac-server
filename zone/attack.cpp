@@ -1512,9 +1512,9 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 			{
 				if(zone->zonemap != nullptr)
 				{
-					z_pos -= 100;
-					Map::Vertex dest(x_pos, y_pos, z_pos);
-					z_pos = zone->zonemap->FindBestZ(dest, nullptr);
+					m_Position.m_Z -= 100;
+					Map::Vertex dest(m_Position.m_X, m_Position.m_Y, m_Position.m_Z);
+					m_Position.m_Z = zone->zonemap->FindBestZ(dest, nullptr);
 				}
 			}
 
