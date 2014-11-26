@@ -891,7 +891,7 @@ uint16 QuestManager::scribespells(uint8 max_level, uint8 min_level) {
 	uint16 book_slot, count;
 	uint16 curspell;
 
-	uint16 Char_ID = initiator->CharacterID();
+	uint32 Char_ID = initiator->CharacterID();
 	bool SpellGlobalRule = RuleB(Spells, EnableSpellGlobals);
 	bool SpellGlobalCheckResult = 0;
 
@@ -1708,7 +1708,7 @@ bool QuestManager::summonburriedplayercorpse(uint32 char_id, float dest_x, float
 	bool Result = false;
 
 	if(char_id > 0) {
-		Corpse* PlayerCorpse = database.SummonBurriedPlayerCorpse(char_id, zone->GetZoneID(), zone->GetInstanceID(), dest_x, dest_y, dest_z, dest_heading);
+		Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), dest_x, dest_y, dest_z, dest_heading);
 		if(PlayerCorpse) {
 			Result = true;
 		}
@@ -1731,7 +1731,7 @@ uint32 QuestManager::getplayerburriedcorpsecount(uint32 char_id) {
 	uint32 Result = 0;
 
 	if(char_id > 0) {
-		Result = database.GetPlayerBurriedCorpseCount(char_id);
+		Result = database.GetCharacterBuriedCorpseCount(char_id);
 	}
 	return Result;
 }
@@ -1745,7 +1745,7 @@ bool QuestManager::buryplayercorpse(uint32 char_id)
 		uint32 PlayerCorpse = database.GetFirstCorpseID(char_id);
 		if(PlayerCorpse > 0)
 		{
-			database.BuryPlayerCorpse(PlayerCorpse);
+			database.BuryCharacterCorpse(PlayerCorpse);
 			Corpse* corpse = entity_list.GetCorpseByDBID(PlayerCorpse);
 			if(corpse)
 			{

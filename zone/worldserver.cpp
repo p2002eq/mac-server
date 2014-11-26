@@ -627,7 +627,7 @@ void WorldServer::Process() {
 
 					_log(SPELLS__REZ, "Found corpse. Marking corpse as rezzed.");
 					// I don't know why Rezzed is not set to true in CompleteRezz().
-					corpse->Rezzed(true);
+					corpse->IsRezzed(true);
 					corpse->CompleteRezz();
 				}
 			}
@@ -754,12 +754,11 @@ void WorldServer::Process() {
 		}
 		case ServerOP_GroupInvite: {
 			// A player in another zone invited a player in this zone to join their group.
-			//
 			GroupInvite_Struct* gis = (GroupInvite_Struct*)pack->pBuffer;
 
 			Mob *Invitee = entity_list.GetMob(gis->invitee_name);
 
-			if(Invitee && Invitee->IsClient() && !Invitee->IsGrouped() && !Invitee->IsRaidGrouped())
+			if(Invitee && Invitee->IsClient()  && !Invitee->IsRaidGrouped())
 			{
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupInvite, sizeof(GroupInvite_Struct));
 				memcpy(outapp->pBuffer, gis, sizeof(GroupInvite_Struct));
@@ -771,7 +770,6 @@ void WorldServer::Process() {
 		}
 		case ServerOP_GroupFollow: {
 			// Player in another zone accepted a group invitation from a player in this zone.
-			//
 			ServerGroupFollow_Struct* sgfs = (ServerGroupFollow_Struct*) pack->pBuffer;
 
 			Mob* Inviter = entity_list.GetClientByName(sgfs->gf.name1);
@@ -780,12 +778,15 @@ void WorldServer::Process() {
 			{
 				Group* group = entity_list.GetGroupByClient(Inviter->CastToClient());
 
-				if(!group){
-
+				if(!group)
+				{
+					//Make new group
 					group = new Group(Inviter);
 
-					if(!group)
+					if (!group)
+					{
 						break;
+					}
 
 					entity_list.AddGroup(group);
 
@@ -795,9 +796,7 @@ void WorldServer::Process() {
 					}
 
 					database.SetGroupID(Inviter->GetName(), group->GetID(), Inviter->CastToClient()->CharacterID());
-
 					database.SetGroupLeaderName(group->GetID(), Inviter->GetName());
-
 
 						EQApplicationPacket* outapp=new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupJoin_Struct));
 						GroupJoin_Struct* outgj=(GroupJoin_Struct*)outapp->pBuffer;
@@ -807,65 +806,52 @@ void WorldServer::Process() {
 						Inviter->CastToClient()->QueuePacket(outapp);
 						safe_delete(outapp);
 				}
+
 				if(!group)
+				{
 					break;
+				}
 
 				EQApplicationPacket* outapp=new EQApplicationPacket(OP_GroupFollow, sizeof(GroupGeneric_Struct));
-
 				GroupGeneric_Struct *gg = (GroupGeneric_Struct *)outapp->pBuffer;
-
 				strn0cpy(gg->name1, sgfs->gf.name1, sizeof(gg->name1));
-
 				strn0cpy(gg->name2, sgfs->gf.name2, sizeof(gg->name2));
-
 				Inviter->CastToClient()->QueuePacket(outapp);
-
 				safe_delete(outapp);
 
 				if(!group->AddMember(nullptr, sgfs->gf.name2, sgfs->CharacterID))
 					break;
 
 				ServerPacket* pack2 = new ServerPacket(ServerOP_GroupJoin, sizeof(ServerGroupJoin_Struct));
-
 				ServerGroupJoin_Struct* gj = (ServerGroupJoin_Struct*)pack2->pBuffer;
-
 				gj->gid = group->GetID();
-
 				gj->zoneid = zone->GetZoneID();
-
 				gj->instance_id = zone->GetInstanceID();
-
 				strn0cpy(gj->member_name, sgfs->gf.name2, sizeof(gj->member_name));
-
 				worldserver.SendPacket(pack2);
-
 				safe_delete(pack2);
+				
+				
 
 				// Send acknowledgement back to the Invitee to let them know we have added them to the group.
-				//
 				ServerPacket* pack3 = new ServerPacket(ServerOP_GroupFollowAck, sizeof(ServerGroupFollowAck_Struct));
-
 				ServerGroupFollowAck_Struct* sgfas = (ServerGroupFollowAck_Struct*)pack3->pBuffer;
-
 				strn0cpy(sgfas->Name, sgfs->gf.name2, sizeof(sgfas->Name));
-
 				worldserver.SendPacket(pack3);
-
 				safe_delete(pack3);
 			}
 			break;
 		}
 		case ServerOP_GroupFollowAck: {
 			// The Inviter (in another zone) has successfully added the Invitee (in this zone) to the group.
-			//
 			ServerGroupFollowAck_Struct* sgfas = (ServerGroupFollowAck_Struct*)pack->pBuffer;
 
-			Client *c = entity_list.GetClientByName(sgfas->Name);
+			Client *client = entity_list.GetClientByName(sgfas->Name);
 
-			if(!c)
+			if(!client)
 				break;
 
-			uint32 groupid = database.GetGroupID(c->GetName());
+			uint32 groupid = database.GetGroupID(client->GetName());
 
 			Group* group = nullptr;
 
@@ -881,21 +867,21 @@ void WorldServer::Process() {
 						entity_list.AddGroup(group, groupid);
 					else
 						group = nullptr;
-				}	//else, somebody from our group is already here...
+				}
 
 				if(group)
-					group->UpdatePlayer(c);
+					group->UpdatePlayer(client);
 				else
-					database.SetGroupID(c->GetName(), 0, c->CharacterID());	//cannot re-establish group, kill it
+					database.SetGroupID(client->GetName(), 0, client->CharacterID());	//cannot re-establish group, kill it
 			}
 
 			if(group)
 			{
-				database.RefreshGroupFromDB(c);
+				database.RefreshGroupFromDB(client);
 
-				group->SendHPPacketsTo(c);
+				group->SendHPPacketsTo(client);
 
-				// If the group leader is not set, pull the group leader infomrmation from the database.
+				// If the group leader is not set, pull the group leader information from the database.
 				if(!group->GetLeader())
 				{
 					char ln[64];
@@ -912,6 +898,7 @@ void WorldServer::Process() {
 
 				}
 			}
+
 			break;
 
 		}
@@ -1270,7 +1257,7 @@ void WorldServer::Process() {
 
 		case ServerOP_SpawnPlayerCorpse: {
 			SpawnPlayerCorpse_Struct* s = (SpawnPlayerCorpse_Struct*)pack->pBuffer;
-			Corpse* NewCorpse = database.LoadPlayerCorpse(s->player_corpse_id);
+			Corpse* NewCorpse = database.LoadCharacterCorpse(s->player_corpse_id);
 			if(NewCorpse)
 				NewCorpse->Spawn();
 			else

@@ -687,22 +687,26 @@ bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
 			return true;
 		}
 
-		CastSpell(spell_id, target, DISCIPLINE_SPELL_SLOT, -1, -1, 0, -1, (uint32)DiscTimer, reduced_recast);
-		if(spells[spell_id].EndurTimerIndex < MAX_DISCIPLINE_TIMERS)
-		{
-			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineTimer, sizeof(DisciplineTimer_Struct));
-			DisciplineTimer_Struct *dts = (DisciplineTimer_Struct *)outapp->pBuffer;
-			dts->TimerID = spells[spell_id].EndurTimerIndex;
-			dts->Duration = reduced_recast;
-			QueuePacket(outapp);
-			safe_delete(outapp);
-		}
+		SendDisciplineTimer(spells[spell_id].EndurTimerIndex, reduced_recast);
 	}
 	else
 	{
 		CastSpell(spell_id, target, DISCIPLINE_SPELL_SLOT);
 	}
 	return(true);
+}
+
+void Client::SendDisciplineTimer(uint32 timer_id, uint32 duration)
+{
+	if (timer_id < MAX_DISCIPLINE_TIMERS)
+	{
+		EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineTimer, sizeof(DisciplineTimer_Struct));
+		DisciplineTimer_Struct *dts = (DisciplineTimer_Struct *)outapp->pBuffer;
+		dts->TimerID = timer_id;
+		dts->Duration = duration;
+		QueuePacket(outapp);
+		safe_delete(outapp);
+	}
 }
 
 void EntityList::AETaunt(Client* taunter, float range)
@@ -767,9 +771,10 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			if (bad) {
 				//affect mobs that are on our hate list, or
 				//which have bad faction with us
-				if (!(caster->CheckAggro(curmob) || f == FACTION_THREATENLY || f == FACTION_SCOWLS) )
+				if (!(caster->CheckAggro(curmob) || f == FACTION_THREATENLY || f == FACTION_SCOWLS))
 					continue;
-			} else {
+			}
+			else {
 				//only affect mobs we would assist.
 				if (!(f <= FACTION_AMIABLE))
 					continue;
@@ -781,7 +786,8 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 				continue;
 			if (!center->CheckLosFN(curmob))
 				continue;
-		} else { // check to stop casting beneficial ae buffs (to wit: bard songs) on enemies...
+		}
+		else { // check to stop casting beneficial ae buffs (to wit: bard songs) on enemies...
 			// This does not check faction for beneficial AE buffs..only agro and attackable.
 			// I've tested for spells that I can find without problem, but a faction-based
 			// check may still be needed. Any changes here should also reflect in BardAEPulse() -U
@@ -798,7 +804,8 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			if (iCounter < MAX_TARGETS_ALLOWED) {
 				caster->SpellOnTarget(spell_id, curmob, false, true, resist_adjust);
 			}
-		} else {
+		}
+		else {
 			caster->SpellOnTarget(spell_id, curmob, false, true, resist_adjust);
 		}
 

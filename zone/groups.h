@@ -62,6 +62,7 @@ public:
 	bool	IsGroupMember(const char *Name);
 	bool	Process();
 	bool	IsGroup()			{ return true; }
+	void	SendGroupJoinOOZ(Mob* NewMember);
 	void	CastGroupSpell(Mob* caster,uint16 spellid);
 	void	GroupBardPulse(Mob* caster,uint16 spellid);
 	void	SplitExp(uint32 exp, Mob* other);

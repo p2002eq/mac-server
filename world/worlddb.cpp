@@ -134,14 +134,14 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 				std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 					" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
 					character_id, pp.binds[4].zoneId, 0, pp.binds[4].x, pp.binds[4].y, pp.binds[4].z, pp.binds[4].heading, 1);
-				auto results_bset = QueryDatabase(query); ThrowDBError(results_bset.ErrorMessage(), "WorldDatabase::GetCharSelectInfo Set Home Point", query);
+				auto results_bset = QueryDatabase(query); 
 			}
 			/* If no regular bind set, set it */
 			if (has_bind == 0){
 				std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 					" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
 					character_id, pp.binds[0].zoneId, 0, pp.binds[0].x, pp.binds[0].y, pp.binds[0].z, pp.binds[0].heading, 0);
-				auto results_bset = QueryDatabase(query); ThrowDBError(results_bset.ErrorMessage(), "WorldDatabase::GetCharSelectInfo Set Bind Point", query);
+				auto results_bset = QueryDatabase(query); 
 			}
 		}
 		/* Bind End */
@@ -208,15 +208,37 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 
 int WorldDatabase::MoveCharacterToBind(int CharID, uint8 bindnum) {
 	/*  if an invalid bind point is specified, use the primary bind */
-	if (bindnum > 4){ bindnum = 0; }
-	int is_home = 0;
-	if (bindnum == 4){ is_home = 1; }
-
-	std::string query = StringFormat("SELECT `zone_id` FROM `character_bind` WHERE `id` = %u AND `is_home` = %u LIMIT 1", CharID, is_home);
-	auto results = database.QueryDatabase(query); int i = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		return atoi(row[0]);
+	if (bindnum > 4)
+	{
+		bindnum = 0;
 	}
+
+	std::string query = StringFormat("SELECT zone_id, instance_id, x, y, z FROM character_bind WHERE id = %u AND is_home = %u LIMIT 1", CharID, bindnum == 4 ? 1 : 0);
+	auto results = database.QueryDatabase(query);
+	if(!results.Success() || results.RowCount() == 0) {
+		return 0;
+	}
+
+	int zone_id, instance_id;
+	double x, y, z, heading;
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		zone_id = atoi(row[0]);
+		instance_id = atoi(row[1]);
+		x = atof(row[2]);
+		y = atof(row[3]);
+		z = atof(row[4]);
+		heading = atof(row[5]);
+	}
+
+	query = StringFormat("UPDATE character_data SET zone_id = '%d', zone_instance = '%d', x = '%f', y = '%f', z = '%f', heading = '%f' WHERE id = %u", 
+						 zone_id, instance_id, x, y, z, heading, CharID);
+
+	results = database.QueryDatabase(query);
+	if(!results.Success()) {
+		return 0;
+	}
+
+	return zone_id;
 }
 
 bool WorldDatabase::GetStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct* in_cc)
@@ -225,7 +247,7 @@ bool WorldDatabase::GetStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct*
 		return false;
 
 	in_pp->x = in_pp->y = in_pp->z = in_pp->heading = in_pp->zone_id = 0;
-	in_pp->binds[0].x = in_pp->binds[0].y = in_pp->binds[0].z = in_pp->binds[0].zoneId = 0;
+	in_pp->binds[0].x = in_pp->binds[0].y = in_pp->binds[0].z = in_pp->binds[0].zoneId = in_pp->binds[0].instance_id = 0;
 
     std::string query = StringFormat("SELECT x, y, z, heading, bind_id,bind_x,bind_y,bind_z FROM start_zones WHERE zone_id = %i "
                                     "AND player_class = %i AND player_deity = %i AND player_race = %i",

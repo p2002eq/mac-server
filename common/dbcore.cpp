@@ -4,6 +4,7 @@
 #include <winsock2.h>
 #endif
 
+#include <fstream>
 #include <iostream>
 #include <errmsg.h>
 #include <mysqld_error.h>
@@ -113,6 +114,16 @@ MySQLRequestResult DBcore::QueryDatabase(const char* query, uint32 querylen, boo
 #ifdef _EQDEBUG
 		std::cout << "DB Query Error #" << mysql_errno(&mysql) << ": " << mysql_error(&mysql) << std::endl;
 #endif
+
+		/* Implement Logging at the Root */
+		if (mysql_errno(&mysql) > 0 && strlen(query) > 0){
+			std::cout << "\n[MYSQL ERR] " << mysql_errno(&mysql) << ": " << mysql_error(&mysql) << " [Query]: \n" << query << "\n" << std::endl;
+			/* Write to log file */
+			std::ofstream log("eqemu_query_error_log.txt", std::ios_base::app | std::ios_base::out);
+			log << "[MYSQL ERR] " << mysql_error(&mysql) << "\n" << query << "\n";
+			log.close();
+		}
+
 		return MySQLRequestResult(nullptr, 0, 0, 0, 0, mysql_errno(&mysql),errorBuffer);
 
 	}
@@ -125,7 +136,6 @@ MySQLRequestResult DBcore::QueryDatabase(const char* query, uint32 querylen, boo
         rowCount = (uint32)mysql_num_rows(res);
 
 	MySQLRequestResult requestResult(res, (uint32)mysql_affected_rows(&mysql), rowCount, (uint32)mysql_field_count(&mysql), (uint32)mysql_insert_id(&mysql));
-
 
 #if DEBUG_MYSQL_QUERIES >= 1
 	if (requestResult.Success())
@@ -222,10 +232,10 @@ bool DBcore::RunQuery(const char* query, uint32 querylen, char* errbuf, MYSQL_RE
 	if (ret) {
 		std::cout << "query successful";
 		if (result && (*result))
-			std::cout << ", " << (int) mysql_num_rows(*result) << " rows returned";
+			std::cout << ", " << (int)mysql_num_rows(*result) << " rows returned";
 		if (affected_rows)
 			std::cout << ", " << (*affected_rows) << " rows affected";
-		std::cout<< std::endl;
+		std::cout << std::endl;
 	}
 	else {
 		std::cout << "QUERY: query FAILED" << std::endl;

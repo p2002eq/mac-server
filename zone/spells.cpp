@@ -122,17 +122,7 @@ void Mob::SpellProcess()
 void NPC::SpellProcess()
 {
 	Mob::SpellProcess();
-
-	if (GetSwarmInfo()) {
-		if (GetSwarmInfo()->duration->Check(false))
-			Depop();
-
-		Mob *targMob = entity_list.GetMob(GetSwarmInfo()->target);
-		if (GetSwarmInfo()->target != 0) {
-			if(!targMob || (targMob && targMob->IsCorpse()))
-				Depop();
-		}
-	}
+	DepopSwarmPets();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -353,6 +343,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if((IsGroupSpell(spell_id) ||
 		spell.targettype == ST_Self ||
 		spell.targettype == ST_AECaster ||
+		spell.targettype == ST_Beam ||
 		spell.targettype == ST_TargetOptional) && target_id == 0)
 	{
 		mlog(SPELLS__CASTING, "Spell %d auto-targeted the caster. Group? %d, target type %d", spell_id, IsGroupSpell(spell_id), spell.targettype);
@@ -1623,9 +1614,48 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			break;
 		}
 
+		case ST_AETargetHateList:
+		{
+			if (spells[spell_id].range > 0)
+			{
+				if(!spell_target)
+					return false;
+				
+				ae_center = spell_target;
+				CastAction = AETarget;
+			}
+			else {
+				spell_target = nullptr;
+				ae_center = this;
+				CastAction = CAHateList;
+			}
+			break;
+		}
+
+		case ST_AreaClientOnly:
+		case ST_AreaNPCOnly:
+		{
+			if (spells[spell_id].range > 0)
+			{
+				if(!spell_target)
+					return false;
+				
+				ae_center = spell_target;
+				CastAction = AETarget;
+			}
+			else {
+				spell_target = nullptr;
+				ae_center = this;
+				CastAction = AECaster;
+			}
+			break;
+		}
+
 		case ST_UndeadAE:	//should only affect undead...
+		case ST_SummonedAE:
 		case ST_TargetAETap:
 		case ST_AETarget:
+		case ST_TargetAENoPlayersPets:
 		{
 			if(!spell_target)
 			{
@@ -1641,6 +1671,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		// Group spells
 		case ST_GroupTeleport:
 		case ST_Group:
+		case ST_GroupNoPets:
 		{
 			if(IsClient() && CastToClient()->TGB() && IsTGBCompatibleSpell(spell_id)) {
 				if( (!target) ||
@@ -1971,17 +2002,18 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			// we can't cast an AE spell without something to center it on
 			assert(ae_center != nullptr);
 
-			if(ae_center->IsBeacon()) {
+			if (ae_center->IsBeacon()) {
 				// special ae duration spell
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
-			} else {
+			}
+			else {
 				// regular PB AE or targeted AE spell - spell_target is null if PB
-				if(spell_target)	// this must be an AETarget spell
+				if (spell_target)	// this must be an AETarget spell
 				{
 					// affect the target too
 					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
 				}
-				if(ae_center && ae_center == this && IsBeneficialSpell(spell_id))
+				if (ae_center && ae_center == this && IsBeneficialSpell(spell_id))
 					SpellOnTarget(spell_id, this);
 
 				bool affect_caster = !IsNPC();	//NPC AE spells do not affect the NPC caster
@@ -2033,7 +2065,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 						SpellOnTarget(spell_id, this);
 	#ifdef GROUP_BUFF_PETS
 						//pet too
-						if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
+						if (spells[spell_id].targettype != ST_GroupNoPets && GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 							SpellOnTarget(spell_id, GetPet());
 	#endif
 					}
@@ -2041,7 +2073,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 					SpellOnTarget(spell_id, spell_target);
 	#ifdef GROUP_BUFF_PETS
 					//pet too
-					if (spell_target->GetPet() && HasPetAffinity() && !spell_target->GetPet()->IsCharmed())
+					if (spells[spell_id].targettype != ST_GroupNoPets && spell_target->GetPet() && HasPetAffinity() && !spell_target->GetPet()->IsCharmed())
 						SpellOnTarget(spell_id, spell_target->GetPet());
 	#endif
 				}
@@ -2063,10 +2095,10 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			float angle_start = spells[spell_id].directional_start + (GetHeading() * 360.0f / 256.0f);
 			float angle_end = spells[spell_id].directional_end + (GetHeading() * 360.0f / 256.0f);
 
-			while(angle_start > 360.0f)
+			while (angle_start > 360.0f)
 				angle_start -= 360.0f;
 
-			while(angle_end > 360.0f)
+			while (angle_end > 360.0f)
 				angle_end -= 360.0f;
 
 			std::list<Mob*> targets_in_range;
@@ -2074,21 +2106,21 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 			entity_list.GetTargetsForConeArea(this, spells[spell_id].min_range, spells[spell_id].aoerange, spells[spell_id].aoerange / 2, targets_in_range);
 			iter = targets_in_range.begin();
-			while(iter != targets_in_range.end())
+			while (iter != targets_in_range.end())
 			{
 				float heading_to_target = (CalculateHeadingToTarget((*iter)->GetX(), (*iter)->GetY()) * 360.0f / 256.0f);
-				while(heading_to_target < 0.0f)
+				while (heading_to_target < 0.0f)
 					heading_to_target += 360.0f;
 
-				while(heading_to_target > 360.0f)
+				while (heading_to_target > 360.0f)
 					heading_to_target -= 360.0f;
 
-				if(angle_start > angle_end)
+				if (angle_start > angle_end)
 				{
-					if((heading_to_target >= angle_start && heading_to_target <= 360.0f) ||
+					if ((heading_to_target >= angle_start && heading_to_target <= 360.0f) ||
 						(heading_to_target >= 0.0f && heading_to_target <= angle_end))
 					{
-						if(CheckLosFN((*iter)) || spells[spell_id].npc_no_los){
+						if (CheckLosFN((*iter)) || spells[spell_id].npc_no_los){
 							(*iter)->CalcSpellPowerDistanceMod(spell_id, 0, this);
 							SpellOnTarget(spell_id, (*iter), false, true, resist_adjust);
 						}
@@ -2096,9 +2128,9 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				}
 				else
 				{
-					if(heading_to_target >= angle_start && heading_to_target <= angle_end)
+					if (heading_to_target >= angle_start && heading_to_target <= angle_end)
 					{
-						if(CheckLosFN((*iter)) || spells[spell_id].npc_no_los){
+						if (CheckLosFN((*iter)) || spells[spell_id].npc_no_los){
 							(*iter)->CalcSpellPowerDistanceMod(spell_id, 0, this);
 							SpellOnTarget(spell_id, (*iter), false, true, resist_adjust);
 						}
@@ -3262,6 +3294,12 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		sprintf(temp1, "%d", spell_id);
 		parse->EventNPC(EVENT_CAST_ON, spelltar->CastToNPC(), this, temp1, 0);
 	}
+	else if (spelltar->IsClient())
+	{
+		char temp1[100];
+		sprintf(temp1, "%d", spell_id);
+		parse->EventPlayer(EVENT_CAST_ON, spelltar->CastToClient(),temp1, 0);
+	}
 
 	mod_spell_cast(spell_id, spelltar, reflect, use_resist_adjust, resist_adjust, isproc);
 
@@ -3716,9 +3754,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 {
-	_log(SPELLS__REZ, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i", spellid,Rezzed(),rezzexp);
+	_log(SPELLS__REZ, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i", spellid,IsRezzed(),rezzexp);
 
-	if(Rezzed()){
+	if(IsRezzed()){
 		if(Caster && Caster->IsClient())
 			Caster->Message(13,"This character has already been resurrected.");
 
@@ -3748,7 +3786,7 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 	rezz->unknown020 = 0x00000000;
 	rezz->unknown088 = 0x00000000;
 	// We send this to world, because it needs to go to the player who may not be in this zone.
-	worldserver.RezzPlayer(outapp, rezzexp, dbid, OP_RezzRequest);
+	worldserver.RezzPlayer(outapp, rezzexp, corpse_db_id, OP_RezzRequest);
 	_pkt(SPELLS__REZ, outapp);
 	safe_delete(outapp);
 }
@@ -4621,7 +4659,7 @@ void NPC::Stun(int duration) {
 
 void NPC::UnStun() {
 	Mob::UnStun();
-	SetRunAnimSpeed(this->GetRunspeed());
+	SetRunAnimSpeed(static_cast<int8>(GetRunspeed()));
 	SendPosition();
 }
 
@@ -4821,7 +4859,7 @@ int Client::FindSpellBookSlotBySpellID(uint16 spellid) {
 	return -1;	//default
 }
 
-bool Client::SpellGlobalCheck(uint16 spell_ID, uint16 char_ID) {
+bool Client::SpellGlobalCheck(uint16 spell_ID, uint32 char_ID) {
 
 	std::string spell_Global_Name;
 	int spell_Global_Value;

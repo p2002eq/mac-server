@@ -1556,7 +1556,7 @@ int EntityList::RezzAllCorpsesByCharID(uint32 charid)
 	while (it != corpse_list.end()) {
 		if (it->second->GetCharID() == charid) {
 			RezzExp += it->second->GetRezzExp();
-			it->second->Rezzed(true);
+			it->second->IsRezzed(true);
 			it->second->CompleteRezz();
 		}
 		++it;
@@ -3316,6 +3316,42 @@ void EntityList::DestroyTempPets(Mob *owner)
 		if (n->GetSwarmInfo()) {
 			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
 				n->Depop();
+			}
+		}
+		++it;
+	}
+}
+
+int16 EntityList::CountTempPets(Mob *owner)
+{
+	int16 count = 0;
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
+				count++;
+			}
+		}
+		++it;
+	}
+	
+	owner->SetTempPetCount(count);
+
+	return count;
+}
+
+void EntityList::AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy)
+{
+	if (!other || !owner)
+		return;
+
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
+				n->CastToNPC()->hate_list.Add(other, 0, 0, bFrenzy);
 			}
 		}
 		++it;

@@ -468,11 +468,11 @@ bool Client::Save(uint8 iCommitNow) {
 	m_pp.endurance = cur_end;
 
 	/* Save Character Currency */
-	database.SaveCharacterCurrency(this->CharacterID(), &m_pp);
+	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
-	/* Save Current Bind Points : Sets Instance to 0 because it is currently not implemented */
-	database.SaveCharacterBindPoint(this->CharacterID(), m_pp.binds[0].zoneId, 0, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0, 0); /* Regular bind */
-	database.SaveCharacterBindPoint(this->CharacterID(), m_pp.binds[4].zoneId, 0, m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0, 1); /* Home Bind */
+	/* Save Current Bind Points */
+	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0, 0); /* Regular bind */
+	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[4].zoneId, m_pp.binds[4].instance_id, m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0, 1); /* Home Bind */
 
 	/* Save Character Buffs */
 	database.SaveBuffs(this);
@@ -2088,38 +2088,6 @@ void Client::LogMerchant(Client* player, Mob* merchant, uint32 quantity, uint32 
 	}
 }
 
-void Client::LogLoot(Client* player, Corpse* corpse, const Item_Struct* item){
-	char* logtext;
-	char itemid[100];
-	char itemname[100];
-	char coinloot[100];
-	if (item!=0){
-		memset(itemid,0,sizeof(itemid));
-		memset(itemname,0,sizeof(itemid));
-		itoa(item->ID,itemid,10);
-		sprintf(itemname,"%s",item->Name);
-		logtext=itemname;
-
-		strcat(logtext,"(");
-		strcat(logtext,itemid);
-		strcat(logtext,") Looted");
-		database.logevents(player->AccountName(),player->AccountID(),player->admin,player->GetName(),corpse->orgname,"Looting Item",logtext,4);
-	}
-	else{
-		if ((corpse->GetPlatinum() + corpse->GetGold() + corpse->GetSilver() + corpse->GetCopper())>0) {
-			memset(coinloot,0,sizeof(coinloot));
-			sprintf(coinloot,"%i PP %i GP %i SP %i CP",corpse->GetPlatinum(),corpse->GetGold(),corpse->GetSilver(),corpse->GetCopper());
-			logtext=coinloot;
-			strcat(logtext," Looted");
-			if (corpse->GetPlatinum()>10000)
-				database.logevents(player->AccountName(),player->AccountID(),player->admin,player->GetName(),corpse->orgname,"Excessive Loot!",logtext,9);
-			else
-				database.logevents(player->AccountName(),player->AccountID(),player->admin,player->GetName(),corpse->orgname,"Looting Money",logtext,5);
-		}
-	}
-}
-
-
 bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 	EQApplicationPacket* outapp = 0;
 	if(!fail) {
@@ -2969,7 +2937,8 @@ void Client::Sacrifice(Client *caster)
 
 void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 
-	if(!Caster || PendingTranslocate) return;
+	if (!Caster || PendingTranslocate)
+		return;
 
 	const SPDat_Spell_Struct &Spell = spells[SpellID];
 
@@ -2977,26 +2946,29 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	Translocate_Struct *ts = (Translocate_Struct*)outapp->pBuffer;
 
 	strcpy(ts->Caster, Caster->GetName());
-	ts->SpellID = SpellID;
+	PendingTranslocateData.spell_id = ts->SpellID = SpellID;
 
-	if((SpellID == 1422) || (SpellID == 1334) || (SpellID == 3243)) {
-		ts->ZoneID = m_pp.binds[0].zoneId;
-		ts->x = m_pp.binds[0].x;
-		ts->y = m_pp.binds[0].y;
-		ts->z = m_pp.binds[0].z;
+	if ((SpellID == 1422) || (SpellID == 1334) || (SpellID == 3243)) {
+		PendingTranslocateData.zone_id = ts->ZoneID = m_pp.binds[0].zoneId;
+		PendingTranslocateData.instance_id = m_pp.binds[0].instance_id;
+		PendingTranslocateData.x = ts->x = m_pp.binds[0].x;
+		PendingTranslocateData.y = ts->y = m_pp.binds[0].y;
+		PendingTranslocateData.z = ts->z = m_pp.binds[0].z;
+		PendingTranslocateData.heading = m_pp.binds[0].heading;
 	}
 	else {
-		ts->ZoneID = database.GetZoneID(Spell.teleport_zone);
-		ts->y = Spell.base[0];
-		ts->x = Spell.base[1];
-		ts->z = Spell.base[2];
+		PendingTranslocateData.zone_id = ts->ZoneID = database.GetZoneID(Spell.teleport_zone);
+		PendingTranslocateData.instance_id = 0;
+		PendingTranslocateData.y = ts->y = Spell.base[0];
+		PendingTranslocateData.x = ts->x = Spell.base[1];
+		PendingTranslocateData.z = ts->z = Spell.base[2];
+		PendingTranslocateData.heading = 0.0;
 	}
 
 	ts->unknown008 = 0;
 	ts->Complete = 0;
 
-	PendingTranslocateData = *ts;
-	PendingTranslocate=true;
+	PendingTranslocate = true;
 	TranslocateTime = time(nullptr);
 
 	QueuePacket(outapp);
@@ -3004,6 +2976,7 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 
 	return;
 }
+
 void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item){
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
 		sPickPocket_Struct* pick_out = (sPickPocket_Struct*) outapp->pBuffer;
@@ -3315,7 +3288,7 @@ void Client::SummonAndRezzAllCorpses()
 
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
-	int CorpseCount = database.SummonAllPlayerCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
+	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
 								GetX(), GetY(), GetZ(), GetHeading());
 	if(CorpseCount <= 0)
 	{
@@ -3353,7 +3326,7 @@ void Client::SummonAllCorpses(float dest_x, float dest_y, float dest_z, float de
 
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
-	int CorpseCount = database.SummonAllPlayerCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
+	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
 								dest_x, dest_y, dest_z, dest_heading);
 	if(CorpseCount <= 0)
 	{
@@ -3397,7 +3370,7 @@ void Client::DepopPlayerCorpse(uint32 dbid)
 
 void Client::BuryPlayerCorpses()
 {
-	database.BuryAllPlayerCorpses(CharacterID());
+	database.BuryAllCharacterCorpses(CharacterID());
 }
 
 void Client::NotifyNewTitlesAvailable()
@@ -4173,7 +4146,6 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 	static const float swarm_pet_x[MAX_SWARM_PETS] = { 5, -5, 5, -5, 10, -10, 10, -10, 8, -8, 8, -8 };
 	static const float swarm_pet_y[MAX_SWARM_PETS] = { 5, 5, -5, -5, 10, 10, -10, -10, 8, 8, -8, -8 };
-	TempPets(true);
 
 	while(summon_count > 0) {
 		NPCType *npc_dup = nullptr;

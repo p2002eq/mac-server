@@ -293,6 +293,8 @@ Mob::Mob(const char* in_name,
 	held = false;
 	nocast = false;
 	focused = false;
+	_IsTempPet = false;
+	pet_owner_client = false;
 
 	attacked_count = 0;
 	mezzed = false;
@@ -353,7 +355,8 @@ Mob::Mob(const char* in_name,
 	nexthpevent = -1;
 	nextinchpevent = -1;
 
-	TempPets(false);
+	hasTempPet = false;
+	count_TempPet = 0;
 
 	m_is_running = false;
 
@@ -410,7 +413,7 @@ Mob::~Mob()
 		delete trade;
 	}
 
-	if(HadTempPets()){
+	if(HasTempPetsActive()){
 		entity_list.DestroyTempPets(this);
 	}
 	safe_delete(PathingLOSCheckTimer);
