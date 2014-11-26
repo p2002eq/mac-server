@@ -418,13 +418,9 @@ namespace Trilogy {
 		DECODE_LENGTH_EXACT(structs::CharCreate_Struct);
 		SETUP_DIRECT_DECODE(CharCreate_Struct, structs::CharCreate_Struct);
 		IN(class_);
-		IN(beardcolor);
-		IN(beard);
-		IN(haircolor);
 		IN(gender);
 		IN(race);
-		IN(start_zone);
-		IN(hairstyle);
+		strncpy(emu->zonename, eq->current_zone, 20);
 		IN(deity);
 		IN(STR);
 		IN(STA);
@@ -434,9 +430,6 @@ namespace Trilogy {
 		IN(INT);
 		IN(CHA);
 		IN(face);
-		IN(eyecolor1);
-		IN(eyecolor2);
-		IN(oldface);
 		FINISH_DIRECT_DECODE();
 	}
 

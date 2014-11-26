@@ -282,9 +282,20 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 		return false;
 	}
 
-	snprintf(char_name, 64, "%s", (char*)app->pBuffer);
-	uchar race = app->pBuffer[64];
-	uchar clas = app->pBuffer[68];
+	uchar race;
+	uchar clas;
+	if(GetClientVersionBit() == BIT_Trilogy)
+	{
+		snprintf(char_name, 30, "%s", (char*)app->pBuffer);
+		race = app->pBuffer[32];
+		clas = app->pBuffer[36];
+	}
+	else
+	{
+		snprintf(char_name, 64, "%s", (char*)app->pBuffer);
+		race = app->pBuffer[64];
+		clas = app->pBuffer[68];
+	}
 
 	clog(WORLD__CLIENT, "Name approval request. Name=%s, race=%s, class=%s", char_name, GetRaceName(race), GetEQClassName(clas));
 

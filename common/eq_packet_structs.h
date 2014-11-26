@@ -634,6 +634,7 @@ struct CharCreate_Struct
 /*0080*/	uint32	drakkin_tattoo;		// added for SoF
 /*0084*/	uint32	drakkin_details;	// added for SoF
 /*0088*/	uint32	tutorial;
+			char	zonename[20]; //For trilogy
 };
 
 /*

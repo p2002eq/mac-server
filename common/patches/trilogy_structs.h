@@ -2626,126 +2626,35 @@ struct PlayerProfile_Struct
 
 /*
 ** CharCreate
-** Length: 8452 Bytes
+** Length: 8100
 */
 struct CharCreate_Struct
 {
-	#define pp_inventory_size 30
-	#define pp_containerinv_size 80
-	#define pp_cursorbaginventory_size 10
-	#define pp_bank_inv_size 8
-	#define pp_bank_cont_inv_size 80
-	/* ***************** */
-	/*0000*/	uint8	unknown0004[2];		// ***Placeholder
-	/*0002*/	char	name[64];			// Player First Name
-	/*0066*/	char	Surname[66];		// Surname OR title.
-	/*0132*/	uint32	uniqueGuildID;
-	/*0136*/	uint8	gender;				// Player Gender
-	/*0137*/	char	genderchar[1];		// ***Placeholder
-	/*0138*/	uint16	race;				// Player Race (Lyenu: Changed to an int16, since races can be over 255)
-	/*0140*/	uint16	class_;				// Player Class
-	/*0142*/	uint16	bodytype;
-	/*0144*/	uint8	level;				// Player Level
-	/*0145*/	char	levelchar[3];		// ***Placeholder
-	/*0148*/	uint32	exp;				// Current Experience
-	/*0152*/	uint16	trainingpoints;				// Players Points
-	/*0154*/	uint16	mana;				// Player Mana
-	/*0156*/	uint16	cur_hp;				// Player Health
-	/*0158*/	uint16	status;				
-	/*0160*/	uint16	STR;				// Player Strength
-	/*0162*/	uint16	STA;				// Player Stamina
-	/*0164*/	uint16	CHA;				// Player Charisma
-	/*0166*/	uint16	DEX;				// Player Dexterity
-	/*0168*/	uint16	INT;				// Player Intelligence
-	/*0170*/	uint16	AGI;				// Player Agility
-	/*0172*/	uint16	WIS;				// Player Wisdom
-	/*0174*/	uint8	oldface;               //
-	/*0175*/    int8    EquipType[9];       // i think its the visible parts of the body armor
-	/*0184*/    int32   EquipColor[9];      //
-	/*0220*/	uint16	inventory[30];		// Player Inventory Item Numbers
-	/*0280*/	uint8	languages[26];		// Player Languages
-	/*0306*/	uint8	unknown0310[6];		// ***Placeholder
-	/*0312*/	struct	OldItemProperties_Struct	invItemProprieties[30];	// These correlate with inventory[30]
-	/*0612*/	struct	OldSpellBuff_Struct	buffs[15];	// Player Buffs Currently On
-	/*0762*/	uint16	containerinv[pp_containerinv_size];	// Player Items In "Bags" -- If a bag is in slot 0, this is where the bag's items are
-	/*0922*/	uint16   cursorbaginventory[10];
-	/*0942*/	struct	OldItemProperties_Struct	bagItemProprieties[pp_containerinv_size];	// Just like InvItemProperties
-	/*1742*/    struct  OldItemProperties_Struct	cursorItemProprieties[10];	  //just like invitemprops[]
-	/*1842*/	int16	spell_book[256];	// Player spells scribed in their book
-	/*2354*/	uint8	unknown2374[512];	// 0xFF
-	/*2866*/	int16	mem_spells[8];	// Player spells memorized
-	/*2882*/	uint8	unknown2886[16];	// 0xFF
-	/*2898*/	uint16	available_slots;
-	/*2900*/	float	y;					// Player Y
-	/*2904*/	float	x;					// Player X
-	/*2908*/	float	z;					// Player Z
-	/*2912*/	float	heading;			// Player Heading
-	/*2916*/	uint32	position;		// ***Placeholder
-	/*2920*/	uint32	platinum;			// Player Platinum (Character)
-	/*2924*/	uint32	gold;				// Player Gold (Character)
-	/*2928*/	uint32	silver;				// Player Silver (Character)
-	/*2932*/	uint32	copper;				// Player Copper (Character)
-	/*2936*/	uint32	platinum_bank;		// Player Platinum (Bank)
-	/*2940*/	uint32	gold_bank;			// Player Gold (Bank)
-	/*2944*/	uint32	silver_bank;		// Player Silver (Bank)
-	/*2948*/	uint32	copper_bank;		// Player Copper (Bank)
-	/*2952*/	uint32	platinum_cursor;
-	/*2956*/	uint32	gold_cursor;
-	/*2960*/	uint32	silver_cursor;
-	/*2964*/	uint32	copper_cursor;
-	/*2968*/	uint8	currency[16];	    //Unused currency?
-	/*2984*/	uint16	skills[75];			// Player Skills
-	/*3134*/	uint8	innate[99];
-	/*3233*/    uint16  air_supply;
-	/*3235*/    uint8   texture;
-	/*3236*/	float   height;
-	/*3240*/	float	width;
-	/*3244*/	float   length;
-	/*3248*/	float   view_height;
-	/*3252*/    uint8   boat_name[16];
-	/*3268*/    uint8   unknown[76];
-	/*3344*/	uint8	autosplit;
-	/*3345*/	uint8	unknown3449[95];
-	/*3440*/	uint32	start_zone;		// 
-	/*3444*/	uint8	unknown3448[336];	// Lots of data on fake PP struct, none in normal decoded packet.
-	/*3780*/	uint32	bind_point_zone;	// Lyenu: Bind zone is saved as a int32 now
-	/*3784*/	uint32	start_point_zone[4];	// Lyenu: Start Point Zones are saved as int32s now
-	/*3800*/	OldBindStruct	bind_location[5];	// Player Bind Location (5 different X,Y,Z - Multiple bind points?)
-	/*3860*/	uint8	unknown3656[20];	// ***Placeholder
-	/*3880*/	OldItemProperties_Struct	bankinvitemproperties[8];
-	/*3960*/	OldItemProperties_Struct	bankbagitemproperties[80];
-	/*4760*/	uint32	login_time;
-	/*4764*/	uint16	bank_inv[8];		// Player Bank Inventory Item Numbers
-	/*4780*/	uint16	bank_cont_inv[80];	// Player Bank Inventory Item Numbers (Bags)
-	/*4940*/	uint16	deity;		// ***Placeholder
-	/*4942*/	uint16	guild_id;			// Player Guild ID Number
-	/*4944*/	uint32  birthday;
-	/*4948*/	uint32  lastlogin;
-	/*4952*/	uint32  timePlayedMin;
-	/*4956*/	int8    thirst_level;
-	/*4957*/    int8    hunger_level;
-	/*4958*/	uint8   fatigue;
-	/*4959*/	uint8	pvp;				// Player PVP Flag
-	/*4960*/	uint8	level2;		// ***Placeholder
-	/*4961*/	uint8	anon;				// Player Anon. Flag
-	/*4962*/	uint8	gm;					// Player GM Flag
-	/*4963*/	uint8	guildrank;			// Player Guild Rank (0=member, 1=officer, 2=leader)
-	/*4964*/    uint8   intoxication;
-	/*4965*/	uint8	unknown4760[43];
-	/*5008*/	char	groupMembers[6][64];	// Group Members
-	/*5392*/	uint8	unknown5124[24];	// ***Placeholder 
-	/*5416*/	uint32	expAA;			
-	/*5420*/    uint8	unknown5424;
-	/*5421*/	uint8	perAA;			    // Player AA Percent
-	/*5422*/	uint8	haircolor;			// Player Hair Color
-	/*5423*/	uint8	beardcolor;			// Player Beard Color
-	/*5424*/	uint8	eyecolor1;			// Player Left Eye Color
-	/*5425*/	uint8	eyecolor2;			// Player Right Eye Color
-	/*5426*/	uint8	hairstyle;			// Player Hair Style
-	/*5427*/	uint8	beard;			// T7g: Beard Type, formerly title - I have no clue why, Title moved a few lines below this one
-	/*5428*/	uint8	face;			// Player Face Type (Is that right?)
-	/*5429*/	uint8	unknown5225[3023];	// ***Placeholder
-	/*8452*/
+/*0000*/ char   name[30];					// Comment: First Name of Character
+/*0030*/ char   Surname[20];				// Comment: Last Name of Character
+/*0050*/ int8   gender;						// Comment: (Confirmed by Sp0tter).
+/*0051*/ int8   deity;						// Comment: Bertoxxoulus=0x10, (Confirmed by Sp0tter). Needs full deity list fixed in header. 
+/*0052*/ int16  race;						// Comment: Race of Character
+/*0054*/ int8   class_;						// Comment: Class of Character
+/*0055*/ int8   pp_unknown3;				// Comment: Cofruben: should be uknownn?
+/*0056*/ int8   level;						// Comment: Level of Character
+/*0057*/ int8   pp_unknown4[3];				// Comment: 
+/*0064*/ int32  exp;						// Comment: Needs confirming -> Current Experiance Character has?
+/*0068*/ int16	trainingpoints;				// Comment: Class training points (Confirmed by Wizzel)
+/*0070*/ int16  mana;						// Comment: Needs confirming -> Current Mana Character has?
+/*0072*/ int8	face;						// Comment: What face the Character has? (Values?)
+/*0073*/ int8   unknown0073[50];			// Comment: 
+/*0123*/ int8   STR;						// Comment: STR of Character
+/*0124*/ int8   STA;						// Comment: STA of Character
+/*0125*/ int8   CHA;						// Comment: CHA of Character
+/*0126*/ int8   DEX;						// Comment: DEX of Character
+/*0127*/ int8   INT;						// Comment: INT of Character
+/*0128*/ int8   AGI;						// Comment: AGI of Character
+/*0129*/ int8   WIS;						// Comment: WIS of Character
+/*0130*/ int8	unused[2294];
+/*2424*/ char   current_zone[15];			// Comment: 
+/*2439*/ int8	unused1[5661];
+/*8100*/
 };
 
 struct Weather_Struct
