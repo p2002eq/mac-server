@@ -1071,7 +1071,6 @@ protected:
 	bool m_is_running; // This bool tells us if the NPC *should* be running or walking, to calculate speed.
 	bool m_running; // This bool is used to tell us if the NPC is currently running or walking.
 
-
 	Timer attack_timer;
 	Timer attack_dw_timer;
 	Timer ranged_timer;
@@ -1099,9 +1098,8 @@ protected:
 	uint8 bardsong_slot;
 	uint32 bardsong_target_id;
 
-	float rewind_x;
-	float rewind_y;
-	float rewind_z;
+	xyz_location m_RewindLocation;
+
 	Timer rewind_timer;
 
 	// Currently 3 max nimbus particle effects at a time

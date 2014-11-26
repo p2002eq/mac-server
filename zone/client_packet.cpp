@@ -2614,28 +2614,22 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float rewind_x_diff = 0;
 	float rewind_y_diff = 0;
 
-	rewind_x_diff = ppu->x_pos - rewind_x;
+	rewind_x_diff = ppu->x_pos - m_RewindLocation.m_X;
 	rewind_x_diff *= rewind_x_diff;
-	rewind_y_diff = ppu->y_pos - rewind_y;
+	rewind_y_diff = ppu->y_pos - m_RewindLocation.m_Y;
 	rewind_y_diff *= rewind_y_diff;
 
 	//We only need to store updated values if the player has moved.
 	//If the player has moved more than units for x or y, then we'll store
 	//his pre-PPU x and y for /rewind, in case he gets stuck.
-	if ((rewind_x_diff > 750) || (rewind_y_diff > 750)) {
-		rewind_x = m_Position.m_X;
-		rewind_y = m_Position.m_Y;
-		rewind_z = m_Position.m_Z;
-	}
+	if ((rewind_x_diff > 750) || (rewind_y_diff > 750))
+        m_RewindLocation = m_Position;
 
 	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
 	//just update rewind coords to the new ppu coords. This will prevent exploitation.
 
-	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000)) {
-		rewind_x = ppu->x_pos;
-		rewind_y = ppu->y_pos;
-		rewind_z = ppu->z_pos;
-	}
+	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000))
+        m_RewindLocation = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 
 	if(proximity_timer.Check()) {
 		entity_list.ProcessMove(this, ppu->x_pos, ppu->y_pos, ppu->z_pos);
