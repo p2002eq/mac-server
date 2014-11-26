@@ -97,6 +97,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		cs->drakkin_heritage[char_num] = atoi(row[16]);
 		cs->drakkin_tattoo[char_num] = atoi(row[17]);
 		cs->drakkin_details[char_num] = atoi(row[18]);
+		strcpy(cs->zonename[char_num], GetZoneName(cs->zone[char_num]));
 
 
 		/* Set Bind Point Data for any character that may possibly be missing it for any reason */

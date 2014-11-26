@@ -150,6 +150,7 @@ struct CharacterSelect_Struct {
 /*1682*/	uint8	eyecolor1[10];			// Characters Eye Color
 /*1692*/	uint8	eyecolor2[10];			// Characters Eye 2 Color
 /*1702*/	uint8	level[10];				// Characters Levels
+			char	zonename[10][20];		// For Trilogy
 /*1712*/
 };
 

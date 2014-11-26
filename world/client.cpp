@@ -247,12 +247,15 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		if (!pZoning && ClientVersionBit != 0)
+		if (!pZoning && ClientVersionBit != 0 && ClientVersionBit != 1)
+		{
 			SendGuildList();
-			SendLogServer();
+			SendLogServer(); //Trilogy sends this on OP_SendExpZonein
+		}
 			SendApproveWorld();
 			SendEnterWorld(cle->name());
-		if (!pZoning) {
+		if (!pZoning) 
+		{
 			SendExpansionInfo();
 			SendCharInfo();
 			database.LoginIP(cle->AccountID(), long2ip(GetIP()).c_str());

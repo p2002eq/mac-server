@@ -94,25 +94,35 @@ enum TSpawnAppearancePositionParameter : uint32
 
 struct CharacterSelect_Struct
 {
-	/*0000*/	char	name[10][64];		// Characters Names
-	/*0640*/	uint8	level[10];			// Characters Levels
-	/*0650*/	uint8	class_[10];			// Characters Classes
-	/*0660*/	uint16	race[10];			// Characters Race
-	/*0680*/	uint32	zone[10];			// Characters Current Zone
-	/*0720*/	uint8	gender[10];			// Characters Gender
-	/*0730*/	uint8	face[10];			// Characters Face Type
-	/*0740*/	uint32	equip[10][9];		// 0=helm, 1=chest, 2=arm, 3=bracer, 4=hand, 5=leg, 6=boot, 7=melee1, 8=melee2
-	/*1100*/	Color_Struct cs_colors[10][9];	// Characters Equipment Colors (RR GG BB 00)
-	/*1460*/	uint16	deity[10];			// Characters Deity
-	/*1480*/	uint32	primary[10];		// Characters primary and secondary IDFile number
-	/*1520*/	uint32	secondary[10];		// Characters primary and secondary IDFile number
-	/*1560*/	uint8	haircolor[10]; 
-	/*1570*/	uint8	beardcolor[10];	
-	/*1580*/	uint8	eyecolor1[10]; 
-	/*1590*/	uint8	eyecolor2[10]; 
-	/*1600*/	uint8	hairstyle[10]; 
-	/*1610*/	uint8	beard[10];
-	/*1620*/
+/*0000*/	char	name[10][30];	// Comment: Name of characters
+/*0300*/	int8	level[10];			// Comment: Level of characters
+/*0310*/	int8	class_[10];			// Comment: Class of characters
+/*0320*/	int16	race[10];			// Comment: Race of characters
+/*0340*/	char	zone[10][20];		// Comment: Current zone of characters
+/*0540*/	int8	gender[10];			// Comment: Gender of characters
+/*0550*/	int8	face[10];			// Comment: Face of characters (Values?)
+/*0560*/	int8	equip[10][9];		// Comment: Needs confirming -> What weap the char is equiping at char select??? (0 - 4 (4 only for humans))
+/*0650*/	int8	unknown1[2];		
+/*0652*/	Color_Struct cs_colors[10][9];	// Comment: Values (RR GG BB AA)
+/*1010*/	uint16	deity[10];		// Comment: Unknown => needs to be found
+/*1020*/	uint32	primary[10];
+			uint32	secondary[10];
+/*1020*/	int8	unknown2[148];		// Comment: Unknown => needs to be found
+};
+
+struct Color_Struct
+{
+	union
+	{
+		struct
+		{
+			uint8	blue;
+			uint8	green;
+			uint8	red;
+			uint8	use_tint;	// if there's a tint this is FF
+		} rgb;
+		uint32 color;
+	};
 };
 
 //This is used to show weapons on char select screen
@@ -1866,13 +1876,12 @@ struct GuildInviteAccept_Struct
 struct GuildsListEntry_Struct 
 {
 	/*0000*/	uint32 guildID;				// Comment: empty = 0xFFFFFFFF
-	/*0004*/	char name[64];				// Comment: 
-	/*0068*/	uint32 unknown1;			// Comment: = 0xFF
-	/*0072*/	uint16 exists;				// Comment: = 1 if exists, 0 on empty
-	/*0074*/	uint8 unknown2[6];			// Comment: = 0x00
-	/*0080*/	uint32 unknown3;			// Comment: = 0xFF
+	/*0004*/	char name[32];				// Comment: 
+	/*0036*/	uint8 unknown1[4];			// Comment: = 0xFF
+	/*0072*/	uint8 exists;				// Comment: = 1 if exists, 0 on empty
+	/*0074*/	uint8 unknown2[7];			// Comment: = 0x00
+	/*0080*/	uint8 unknown3[4];			// Comment: = 0xFF
 	/*0084*/	uint8 unknown4[8];			// Comment: = 0x00
-	/*0092*/	uint32 unknown5;
 	/*0096*/
 };
 
@@ -2110,19 +2119,20 @@ struct LSAuth_Struct
 };
 
 // Added this struct for eqemu and started eimplimentation ProcessOP_SendLoginInfo
-//TODO: cavedude finding zoning field.
 
 struct LoginInfo_Struct 
 {
 	/*000*/	char	AccountName[127];	
-	/*064*/	uint8	Password[24];
-	/*189*/	uint8	unknown189[19];
+	/*127*/	uint8	Password[24];
+	/*151*/	uint8	unknown189[41];
+	/*192*/ uint8   zoning;
+	/*193*/ uint8   unknown193[3];
 	/*196*/
 };
 
 struct EnterWorld_Struct
 {
-	/*000*/	char	charname[64];
+	/*000*/	char	charname[30];
 };
 
 struct NameApproval_Struct
@@ -2797,25 +2807,9 @@ struct	ItemViewRequest_Struct
 	/*066*/
 };
 
-/*_MAC_NET_MSG_rpServer, size: 244*/
 struct LogServer_Struct
 {
-	/*000*/	uint32	enable_FV; //Is FV ruleset?
-	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
-	/*008*/	uint32	auto_identify; //Dunno, keep 0
-	/*012*/	uint32	NameGen;	// Name generator enabled?
-	/*016*/	uint32	Gibberish;	// Disables chat if enabled.
-	/*020*/	uint32	test_server;
-	/*024*/	uint32	Locale;
-	/*028*/	uint32	ProfanityFilter;
-	/*032*/	char	worldshortname[32]; //ServerName on disasm
-	/*064*/	uint8	unknown064[32]; //  loggingServerPassword
-	/*096*/	char	unknown096[16];	// 'pacman' on live
-	/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-	/*126*/	uint8	unknown128[48];
-	/*176*/	uint32	unknown176;
-	/*180*/	char	unknown180[64];	// 'eqdataexceptions@mail.station.sony.com' on live
-	/*244*/
+	/*000*/	uint32	unknown[2];
 };
 
 /* _MAC_NET_MSG_reward_MacMsg, OP_Sound, Size: 48 */

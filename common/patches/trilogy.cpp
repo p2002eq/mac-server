@@ -26,8 +26,8 @@ namespace Trilogy {
 	static inline int16 ServerToTrilogySlot(uint32 ServerSlot);
 	static inline int16 ServerToTrilogyCorpseSlot(uint32 ServerCorpse);
 
-	static inline uint32 TrilogyToServerSlot(int16 MacSlot);
-	static inline uint32 TrilogyToServerCorpseSlot(int16 MacCorpse);
+	static inline uint32 TrilogyToServerSlot(int16 TrilogySlot);
+	static inline uint32 TrilogyToServerCorpseSlot(int16 TrilogyCorpse);
 
 	void Register(EQStreamIdentifier &into)
 	{
@@ -96,7 +96,7 @@ namespace Trilogy {
 	{
 		//all opcodes default to passthrough.
 		#include "ss_register.h"
-		#include "mac_ops.h"
+		#include "trilogy_ops.h"
 	}
 
 	std::string Strategy::Describe() const 
@@ -111,22 +111,22 @@ namespace Trilogy {
 
 	const EQClientVersion Strategy::ClientVersion() const
 	{
-		return EQClientMac;
+		return EQClientTrilogy;
 	}
 
 	DECODE(OP_SendLoginInfo)
 	{
 		DECODE_LENGTH_EXACT(structs::LoginInfo_Struct);
 		SETUP_DIRECT_DECODE(LoginInfo_Struct, structs::LoginInfo_Struct);
-		memcpy(emu->login_info, eq->AccountName, 64);
-		//IN(zoning);
+		memcpy(emu->login_info, eq->AccountName, 30);
+		IN(zoning);
 		FINISH_DIRECT_DECODE();
 	}
 
 	DECODE(OP_EnterWorld) 
 	{
 		SETUP_DIRECT_DECODE(EnterWorld_Struct, structs::EnterWorld_Struct);
-		strn0cpy(emu->name, eq->charname, 64);
+		strn0cpy(emu->name, eq->charname, 30);
 		emu->return_home = 0;
 		emu->tutorial = 0;
 		FINISH_DIRECT_DECODE();
@@ -139,6 +139,68 @@ namespace Trilogy {
 		eq->port = ntohs(emu->port);
 
 		FINISH_ENCODE();
+	}
+
+	ENCODE(OP_LogServer) 
+	{
+		ENCODE_LENGTH_EXACT(LogServer_Struct);
+		SETUP_DIRECT_ENCODE(LogServer_Struct, structs::LogServer_Struct);
+		FINISH_ENCODE();
+	}
+
+
+	ENCODE(OP_ApproveWorld)
+	{
+		SETUP_DIRECT_ENCODE(ApproveWorld_Struct, structs::ApproveWorld_Struct);
+		eq->response = 0;
+		FINISH_ENCODE();	
+	}
+
+	ENCODE(OP_EnterWorld)
+	{
+		SETUP_DIRECT_ENCODE(ApproveWorld_Struct, structs::ApproveWorld_Struct);
+		eq->response = 0;
+		FINISH_ENCODE();	
+	}
+
+	ENCODE(OP_ExpansionInfo)
+	{
+		SETUP_DIRECT_ENCODE(ExpansionInfo_Struct, structs::ExpansionInfo_Struct);
+		if(emu->Expansions > 3)
+			eq->Expansions = 3;
+		else
+			OUT(Expansions);
+		FINISH_ENCODE();	
+	}
+
+	ENCODE(OP_SendCharInfo)
+	{
+		int r;
+		ENCODE_LENGTH_EXACT(CharacterSelect_Struct);
+		SETUP_DIRECT_ENCODE(CharacterSelect_Struct, structs::CharacterSelect_Struct);
+		for(r = 0; r < 10; r++) 
+		{
+			strncpy(eq->zone[r], emu->zonename[r], 20);
+			OUT(primary[r]);
+			if(emu->race[r] > 300)
+				eq->race[r] = 1;
+			else
+				eq->race[r] = emu->race[r];
+			OUT(class_[r]);
+			strncpy(eq->name[r], emu->name[r], 30);
+			OUT(gender[r]);
+			OUT(level[r]);
+			OUT(secondary[r]);
+			OUT(face[r]);
+			int k;
+			for(k = 0; k < 9; k++) 
+			{
+				OUT(equip[r][k]);
+				OUT(cs_colors[r][k].color);
+			}
+			OUT(deity[r]);
+		}
+		FINISH_ENCODE();	
 	}
 
 	ENCODE(OP_ZoneEntry)
@@ -376,66 +438,6 @@ namespace Trilogy {
 		IN(eyecolor2);
 		IN(oldface);
 		FINISH_DIRECT_DECODE();
-	}
-
-	ENCODE(OP_ApproveWorld)
-	{
-		SETUP_DIRECT_ENCODE(ApproveWorld_Struct, structs::ApproveWorld_Struct);
-		eq->response = 0;
-		FINISH_ENCODE();	
-	}
-
-	ENCODE(OP_EnterWorld)
-	{
-		SETUP_DIRECT_ENCODE(ApproveWorld_Struct, structs::ApproveWorld_Struct);
-		eq->response = 0;
-		FINISH_ENCODE();	
-	}
-
-	ENCODE(OP_ExpansionInfo)
-	{
-		SETUP_DIRECT_ENCODE(ExpansionInfo_Struct, structs::ExpansionInfo_Struct);
-		if(emu->Expansions > 15)
-			eq->Expansions = 15;
-		else
-			OUT(Expansions);
-		FINISH_ENCODE();	
-	}
-
-	ENCODE(OP_SendCharInfo)
-	{
-		int r;
-		ENCODE_LENGTH_EXACT(CharacterSelect_Struct);
-		SETUP_DIRECT_ENCODE(CharacterSelect_Struct, structs::CharacterSelect_Struct);
-		for(r = 0; r < 10; r++) 
-		{
-			OUT(zone[r]);
-			OUT(eyecolor1[r]);
-			OUT(eyecolor2[r]);
-			OUT(hairstyle[r]);
-			OUT(primary[r]);
-			if(emu->race[r] > 300)
-				eq->race[r] = 1;
-			else
-				eq->race[r] = emu->race[r];
-			OUT(class_[r]);
-			OUT_str(name[r]);
-			OUT(gender[r]);
-			OUT(level[r]);
-			OUT(secondary[r]);
-			OUT(face[r]);
-			OUT(beard[r]);
-			int k;
-			for(k = 0; k < 9; k++) 
-			{
-				OUT(equip[r][k]);
-				OUT(cs_colors[r][k].color);
-			}
-			OUT(haircolor[r]);
-			OUT(deity[r]);
-			OUT(beardcolor[r]);
-		}
-		FINISH_ENCODE();	
 	}
 
 	DECODE(OP_SetGuildMOTD)
@@ -1001,16 +1003,16 @@ namespace Trilogy {
 	
 		if(item)
 		{
-			structs::Item_Struct* mac_item = TrilogyItem((ItemInst*)int_struct->inst,int_struct->slot_id);
+			structs::Item_Struct* trilogy_item = TrilogyItem((ItemInst*)int_struct->inst,int_struct->slot_id);
 
-			if(mac_item == 0)
+			if(trilogy_item == 0)
 			{
 				delete in;
 				return;
 			}
 
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ItemPacket,sizeof(structs::Item_Struct));
-			memcpy(outapp->pBuffer,mac_item,sizeof(structs::Item_Struct));
+			memcpy(outapp->pBuffer,trilogy_item,sizeof(structs::Item_Struct));
 
 			outapp->SetOpcode(OP_Unknown);
 		
@@ -1663,20 +1665,6 @@ namespace Trilogy {
 		IN(item_id);
 		strcpy(emu->item_name,eq->item_name);
 		FINISH_DIRECT_DECODE();
-	}
-
-	ENCODE(OP_LogServer) 
-	{
-		ENCODE_LENGTH_EXACT(LogServer_Struct);
-		SETUP_DIRECT_ENCODE(LogServer_Struct, structs::LogServer_Struct);
-		strcpy(eq->worldshortname, "alkabor");
-		strcpy(eq->unknown096, "pacman");
-		OUT(enable_pvp);
-		OUT(enable_FV);
-		eq->NameGen = 1;
-		eq->Gibberish = 1;
-		eq->ProfanityFilter = 0;
-		FINISH_ENCODE();
 	}
 
 	ENCODE(OP_RequestClientZoneChange)
