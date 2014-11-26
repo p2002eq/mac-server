@@ -296,3 +296,20 @@ bool ClientListEntry::CheckAuth(uint32 id, const char* iKey, uint32 ip) {
 	return false;
 }
 
+void ClientListEntry::ProcessTellQueue()
+{
+	if (!Server())
+		return;
+
+	ServerPacket *pack;
+	auto it = tell_queue.begin();
+	while (it != tell_queue.end()) {
+		pack = new ServerPacket(ServerOP_ChannelMessage, sizeof(ServerChannelMessage_Struct) + strlen((*it)->message) + 1);
+		memcpy(pack->pBuffer, *it, pack->size);
+		pack->Deflate();
+		Server()->SendPacket(pack);
+		safe_delete(pack);
+		it = tell_queue.erase(it);
+	}
+	return;
+}

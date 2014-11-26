@@ -40,6 +40,7 @@
 #define SKELETON		60
 #define TIGER			63
 #define	SHIP			72
+#define LAUNCH			73
 #define ELEMENTAL		75
 #define ALLIGATOR		91
 #define EYE_OF_ZOMM		108

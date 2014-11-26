@@ -34,7 +34,6 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
-//#include "web_interface.h"
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
@@ -432,7 +431,8 @@ bool ZoneServer::Process() {
 					UCSLink.SendMessage(scm->from, scm->message);
 					break;
 				}
-				if (scm->chan_num == 7 || scm->chan_num == 14) {
+				if (scm->chan_num == 7 || scm->chan_num == 14) 
+				{
 					if (scm->deliverto[0] == '*') {
 						Console* con = 0;
 						con = console_list.FindByAccountName(&scm->deliverto[1]);
@@ -441,38 +441,44 @@ bool ZoneServer::Process() {
 						break;
 					}
 					ClientListEntry* cle = client_list.FindCharacter(scm->deliverto);
-					if (cle == 0 || cle->Online() < CLE_Status_Zoning || (cle->TellsOff() && ((cle->Anon() == 1 && scm->fromadmin < cle->Admin()) || scm->fromadmin < 80))) {
-						if (!scm->noreply)
-							zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
-					}
-					else if (cle->Online() == CLE_Status_Zoning) {
+					if (cle == 0 || cle->Online() < CLE_Status_Zoning ||
+							(cle->TellsOff() && ((cle->Anon() == 1 && scm->fromadmin < cle->Admin()) || scm->fromadmin < 80))) {
 						if (!scm->noreply) {
-							char errbuf[MYSQL_ERRMSG_SIZE];
-							char *query = 0;
-							MYSQL_RES *result;
-							//MYSQL_ROW row; Trumpcard - commenting. Currently unused.
-							time_t rawtime;
-							struct tm * timeinfo;
-							time(&rawtime);
-							timeinfo = localtime(&rawtime);
-							char *telldate = asctime(timeinfo);
-							if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT name from character_ where name='%s'", scm->deliverto), errbuf, &result)) {
-								safe_delete(query);
-								if (result != 0) {
-									if (database.RunQuery(query, MakeAnyLenString(&query, "INSERT INTO tellque (Date,Receiver,Sender,Message) values('%s','%s','%s','%s')", telldate, scm->deliverto, scm->from, scm->message), errbuf, &result))
-										zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "Your message has been added to the %s's que.", scm->to);
-									else
-										zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
-									safe_delete(query);
-								}
-								else
-									zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
-								mysql_free_result(result);
-							}
-							else
-								safe_delete(query);
+							ClientListEntry* sender = client_list.FindCharacter(scm->from);
+							if (!sender || !sender->Server())
+								break;
+							scm->noreply = true;
+							scm->queued = 3; // offline
+							strcpy(scm->deliverto, scm->from);
+							// ideally this would be trimming off the message too, oh well
+							sender->Server()->SendPacket(pack);
 						}
-						//		zoneserver_list.SendEmoteMessage(scm->from, 0, 0, 0, "You told %s, '%s is not online at this time'", scm->to, scm->to);
+					} else if (cle->Online() == CLE_Status_Zoning) {
+						if (!scm->noreply) {
+							ClientListEntry* sender = client_list.FindCharacter(scm->from);
+							if (cle->TellQueueFull()) {
+								if (!sender || !sender->Server())
+									break;
+								scm->noreply = true;
+								scm->queued = 2; // queue full
+								strcpy(scm->deliverto, scm->from);
+								sender->Server()->SendPacket(pack);
+							} else {
+								size_t struct_size = sizeof(ServerChannelMessage_Struct) + strlen(scm->message) + 1;
+								ServerChannelMessage_Struct *temp = (ServerChannelMessage_Struct *) new uchar[struct_size];
+								memset(temp, 0, struct_size); // just in case, was seeing some corrupt messages, but it shouldn't happen
+								memcpy(temp, scm, struct_size);
+								temp->noreply = true;
+								cle->PushToTellQueue(temp); // deallocation is handled in processing or deconstructor
+
+								if (!sender || !sender->Server())
+									break;
+								scm->noreply = true;
+								scm->queued = 1; // queued
+								strcpy(scm->deliverto, scm->from);
+								sender->Server()->SendPacket(pack);
+							}
+						}
 					}
 					else if (cle->Server() == 0) {
 						if (!scm->noreply)
@@ -1203,6 +1209,16 @@ bool ZoneServer::Process() {
 				zoneserver_list.SendPacket(pack);
 				break;
 			}
+			case ServerOP_RequestTellQueue:
+			{
+				ServerRequestTellQueue_Struct* rtq = (ServerRequestTellQueue_Struct*) pack->pBuffer;
+				ClientListEntry *cle = client_list.FindCharacter(rtq->name);
+				if (!cle || cle->TellQueueEmpty())
+					break;
+
+				cle->ProcessTellQueue();
+				break;
+			}
 			default:
 			{
 				zlog(WORLD__ZONE_ERR,"Unknown ServerOPcode from zone 0x%04x, size %d",pack->opcode,pack->size);
@@ -1316,4 +1332,3 @@ void ZoneServer::IncommingClient(Client* client) {
 	SendPacket(pack);
 	delete pack;
 }
-
