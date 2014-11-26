@@ -3361,7 +3361,7 @@ void command_corpse(Client *c, const Seperator *sep){
 			c->Message(0, "Error: Target must be a player corpse.");
 		else if (c->Admin() >= commandEditPlayerCorpses && target->IsPlayerCorpse()) {
 			c->Message(0, "Depoping %s.", target->GetName());
-			target->CastToCorpse()->DepopCorpse();
+			target->CastToCorpse()->DepopPlayerCorpse();
 			if (!sep->arg[2][0] || atoi(sep->arg[2]) != 0)
 				target->CastToCorpse()->Bury();
 		}
@@ -3841,7 +3841,7 @@ void command_save(Client *c, const Seperator *sep){
 	}
 	else if (c->GetTarget()->IsPlayerCorpse()) {
 		if (c->GetTarget()->CastToMob()->Save())
-			c->Message(0, "%s successfully saved. (dbid=%u)", c->GetTarget()->GetName(), c->GetTarget()->CastToCorpse()->GetDBID());
+			c->Message(0, "%s successfully saved. (dbid=%u)", c->GetTarget()->GetName(), c->GetTarget()->CastToCorpse()->GetCorpseDBID());
 		else
 			c->Message(0, "Manual save for %s failed.", c->GetTarget()->GetName());
 	}

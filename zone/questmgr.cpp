@@ -1750,7 +1750,7 @@ bool QuestManager::buryplayercorpse(uint32 char_id)
 			if(corpse)
 			{
 				corpse->Save();
-				corpse->DepopCorpse();
+				corpse->DepopPlayerCorpse();
 			}
 			else
 			{
