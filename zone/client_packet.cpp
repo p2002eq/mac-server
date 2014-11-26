@@ -48,6 +48,7 @@
 #include "../common/zone_numbers.h"
 #include "event_codes.h"
 #include "guild_mgr.h"
+#include "mob.h"
 #include "petitions.h"
 #include "pets.h"
 #include "queryserv.h"
@@ -2644,10 +2645,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	// Update internal state
-	delta_x			= ppu->delta_x;
-	delta_y			= ppu->delta_y;
-	delta_z			= ppu->delta_z;
-	delta_heading	= ppu->delta_heading;
+	m_Delta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 	m_Position.m_Heading = ppu->heading;
 
 	if(IsTracking() && ((m_Position.m_X!=ppu->x_pos) || (m_Position.m_Y!=ppu->y_pos))){
@@ -2679,7 +2677,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = m_Position.m_Y;
 
 	// Outgoing client packet
-	if (ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X || ppu->heading != m_Position.m_Heading || ppu->anim_type != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
+	if (ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X || ppu->heading != m_Position.m_Heading || ppu->anim_type != animation || (m_Delta.m_X != 0 || m_Delta.m_Y != 0 || m_Delta.m_Z != 0) && animation == 0)
 	{
 		m_Position.m_X = ppu->x_pos;
 		m_Position.m_Y = ppu->y_pos;

@@ -249,10 +249,7 @@ Mob::Mob(const char* in_name,
 		}
 	}
 
-	delta_heading = 0;
-	delta_x = 0;
-	delta_y = 0;
-	delta_z = 0;
+	m_Delta = xyz_heading::Origin();
 	animation = 0;
 
 	logging_enabled = false;
@@ -1111,9 +1108,9 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->x_pos		= m_Position.m_X;
 	spu->y_pos		= m_Position.m_Y;
 	spu->z_pos		= m_Position.m_Z;
-	spu->delta_x	= delta_x;
-	spu->delta_y	= delta_y;
-	spu->delta_z	= delta_z;
+	spu->delta_x	= m_Delta.m_X;
+	spu->delta_y	= m_Delta.m_Y;
+	spu->delta_z	= m_Delta.m_Z;
 	spu->heading	= m_Position.m_Heading;
 	spu->spacer1	=0;
 	spu->spacer2	=0;
@@ -1121,7 +1118,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 		spu->anim_type = animation;
 	else
 		spu->anim_type	= pRunAnimSpeed;
-	spu->delta_heading =static_cast<float>(delta_heading);
+	spu->delta_heading =static_cast<float>(m_Delta.m_Heading);
 }
 
 void Mob::ShowStats(Client* client)
@@ -2637,10 +2634,7 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 }
 
 void Mob::SetDeltas(float dx, float dy, float dz, float dh) {
-	delta_x = dx;
-	delta_y = dy;
-	delta_z = dz;
-	delta_heading = static_cast<int>(dh);
+	m_Delta = {dx,dy,dz,dh};
 }
 
 void Mob::SetEntityVariable(const char *id, const char *m_var)
