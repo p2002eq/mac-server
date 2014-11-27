@@ -195,7 +195,7 @@ bool Client::CanFish() {
 		dest.z = m_Position.m_Z;//+10;
 
 		rodPosition.m_Z = zone->zonemap->FindBestZ(dest, nullptr) + 5;
-		bool in_lava = zone->watermap->InLava(rodPosition.m_X, rodPosition.m_Y, rodPosition.m_Z);
+		bool in_lava = zone->watermap->InLava(rodPosition);
 		bool in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
 		//Message(0, "Rod is at %4.3f, %4.3f, %4.3f (dest.z: %4.3f), InWater says %d, InLava says %d RodLength: %f LineLength: %f", RodX, RodY, RodZ, dest.z, in_water, in_lava, RodLength, LineLength);
 		if (in_lava) {

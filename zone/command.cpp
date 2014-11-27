@@ -7304,7 +7304,7 @@ void command_bestz(Client *c, const Seperator *sep){
 			auto position = xyz_location(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
 			RegionType = zone->watermap->ReturnRegionType(position);
 			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
-			c->Message(0,"InLava returns %d", zone->watermap->InLava(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 		else {
@@ -7312,7 +7312,7 @@ void command_bestz(Client *c, const Seperator *sep){
 			auto position = xyz_location(c->GetX(), c->GetY(), z);
 			RegionType = zone->watermap->ReturnRegionType(position);
 			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
-			c->Message(0,"InLava returns %d", zone->watermap->InLava(c->GetX(), c->GetY(), z));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 
