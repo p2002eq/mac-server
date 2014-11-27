@@ -2628,8 +2628,11 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
 	//just update rewind coords to the new ppu coords. This will prevent exploitation.
 
-	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000))
-        m_RewindLocation = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
+	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000)) {
+		rewind_x = ppu->x_pos;
+		rewind_y = ppu->y_pos;
+		rewind_z = ppu->z_pos;
+	}
 
 	if(proximity_timer.Check()) {
 		entity_list.ProcessMove(this, ppu->x_pos, ppu->y_pos, ppu->z_pos);
