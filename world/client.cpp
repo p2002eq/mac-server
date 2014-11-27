@@ -1057,6 +1057,12 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	if(cc->face == 0 && cc->oldface > 0)
 		cc->face = cc->oldface;
 
+	if(eqs->ClientVersion() == EQClientTrilogy)
+	{
+		int32 zoneid = database.GetZoneID(cc->zonename);
+		cc->start_zone =  zoneid;
+	}
+
 	clog(WORLD__CLIENT, "Character creation request from %s LS#%d (%s:%d) : ", GetCLE()->LSName(), GetCLE()->LSID(), inet_ntoa(in), GetPort());
 	clog(WORLD__CLIENT, "Name: %s", name);
 	clog(WORLD__CLIENT, "Race: %d  Class: %d  Gender: %d  Deity: %d  Start zone: %d",

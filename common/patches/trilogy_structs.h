@@ -489,15 +489,17 @@ struct FormattedMessage_Struct
 
 struct WearChange_Struct
 {
-	/*000*/ uint16 spawn_id;
-	/*002*/ uint16 wear_slot_id;
-	/*004*/ uint16 material;
+	/*000*/ uint32 spawn_id;
+	/*004*/ uint8  wear_slot_id;
+	/*005*/ uint8  material;
 	/*006*/ uint16 color;
 	/*008*/ uint8  blue;
-	/*009*/	uint8  green;
-	/*010*/	uint8  red;
-	/*011*/	uint8  use_tint;	// if there's a tint this is FF
-	/*012*/	
+			uint8  green;
+			uint8  red;
+			uint8  use_tint;
+	/*012*/	uint8  	wc_unknown;
+	/*013*/	uint8  flag;
+	/*014*/ uint8  wc_unknown4[2];
 };
 
 struct BindWound_Struct	
@@ -2632,28 +2634,30 @@ struct CharCreate_Struct
 {
 /*0000*/ char   name[30];					// Comment: First Name of Character
 /*0030*/ char   Surname[20];				// Comment: Last Name of Character
-/*0050*/ int8   gender;						// Comment: (Confirmed by Sp0tter).
-/*0051*/ int8   deity;						// Comment: Bertoxxoulus=0x10, (Confirmed by Sp0tter). Needs full deity list fixed in header. 
-/*0052*/ int16  race;						// Comment: Race of Character
-/*0054*/ int8   class_;						// Comment: Class of Character
+/*0050*/ uint8   gender;						// Comment: (Confirmed by Sp0tter).
+/*0051*/ uint8   deity_;						// Comment: Bertoxxoulus=0x10, (Confirmed by Sp0tter). Needs full deity list fixed in header. 
+/*0052*/ uint16  race;						// Comment: Race of Character
+/*0054*/ uint8   class_;						// Comment: Class of Character
 /*0055*/ int8   pp_unknown3;				// Comment: Cofruben: should be uknownn?
-/*0056*/ int8   level;						// Comment: Level of Character
+/*0056*/ uint8   level;						// Comment: Level of Character
 /*0057*/ int8   pp_unknown4[3];				// Comment: 
-/*0064*/ int32  exp;						// Comment: Needs confirming -> Current Experiance Character has?
-/*0068*/ int16	trainingpoints;				// Comment: Class training points (Confirmed by Wizzel)
-/*0070*/ int16  mana;						// Comment: Needs confirming -> Current Mana Character has?
-/*0072*/ int8	face;						// Comment: What face the Character has? (Values?)
-/*0073*/ int8   unknown0073[50];			// Comment: 
-/*0123*/ int8   STR;						// Comment: STR of Character
-/*0124*/ int8   STA;						// Comment: STA of Character
-/*0125*/ int8   CHA;						// Comment: CHA of Character
-/*0126*/ int8   DEX;						// Comment: DEX of Character
-/*0127*/ int8   INT;						// Comment: INT of Character
-/*0128*/ int8   AGI;						// Comment: AGI of Character
-/*0129*/ int8   WIS;						// Comment: WIS of Character
-/*0130*/ int8	unused[2294];
-/*2424*/ char   current_zone[15];			// Comment: 
-/*2439*/ int8	unused1[5661];
+/*0060*/ uint32  exp;						// Comment: Needs confirming -> Current Experiance Character has?
+/*0064*/ int16	trainingpoints;				// Comment: Class training points (Confirmed by Wizzel)
+/*0066*/ uint16  mana;						// Comment: Needs confirming -> Current Mana Character has?
+/*0068*/ uint8	face;						// Comment: What face the Character has? (Values?)
+/*0069*/ int8   unknown0073[50];			// Comment: 
+/*0119*/ uint8   STR;						// Comment: STR of Character
+/*0120*/ uint8   STA;						// Comment: STA of Character
+/*0121*/ uint8   CHA;						// Comment: CHA of Character
+/*0122*/ uint8   DEX;						// Comment: DEX of Character
+/*0123*/ uint8   INT;						// Comment: INT of Character
+/*0124*/ uint8   AGI;						// Comment: AGI of Character
+/*0125*/ uint8   WIS;						// Comment: WIS of Character
+/*0126*/ int8	unused[2294];
+/*2420*/ char   current_zone[15];			// Comment: 
+/*2435*/ int8	unused1[1717];
+/*4152*/ uint8   deity;
+/*4153*/ int8   final_[3947];
 /*8100*/
 };
 

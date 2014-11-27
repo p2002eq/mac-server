@@ -421,7 +421,8 @@ namespace Trilogy {
 		IN(gender);
 		IN(race);
 		strncpy(emu->zonename, eq->current_zone, 20);
-		IN(deity);
+		uint32 deity = (uint8)eq->deity;
+		emu->deity = deity;
 		IN(STR);
 		IN(STA);
 		IN(AGI);
@@ -430,6 +431,12 @@ namespace Trilogy {
 		IN(INT);
 		IN(CHA);
 		IN(face);
+		emu->beard=0;
+		emu->beardcolor=0;
+		emu->hairstyle=0;
+		emu->haircolor=0;
+		emu->eyecolor1=0;
+		emu->eyecolor2=0;
 		FINISH_DIRECT_DECODE();
 	}
 
