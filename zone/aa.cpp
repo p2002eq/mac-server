@@ -542,10 +542,7 @@ void Client::HandleAAAction(aaID activate) {
 	}
 }
 
-
-//Originally written by Branks
-//functionality rewritten by Father Nitwit
-void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, uint32 duration_override) {
+void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, uint32 duration_override, bool followme, bool sticktarg) {
 
 	//It might not be a bad idea to put these into the database, eventually..
 
@@ -563,7 +560,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	pet.count = 1;
 	pet.duration = 1;
 
-	for(int x = 0; x < 12; x++)
+	for(int x = 0; x < MAX_SWARM_PETS; x++)
 	{
 		if(spells[spell_id].effectid[x] == SE_TemporaryPets)
 		{
@@ -607,8 +604,6 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	static const float swarm_pet_y[MAX_SWARM_PETS] = {	5, 5, -5, -5,
 														10, 10, -10, -10,
 														8, 8, -8, -8 };
-	TempPets(true);
-
 	while(summon_count > 0) {
 		int pet_duration = pet.duration;
 		if(duration_override > 0)
@@ -628,7 +623,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 				GetX()+swarm_pet_x[summon_count], GetY()+swarm_pet_y[summon_count],
 				GetZ(), GetHeading(), FlyMode3);
 
-		if((spell_id == 6882) || (spell_id == 6884))
+		if (followme)
 			npca->SetFollowID(GetID());
 
 		if(!npca->GetSwarmInfo()){
@@ -646,7 +641,10 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		//give the pets somebody to "love"
 		if(targ != nullptr){
 			npca->AddToHateList(targ, 1000, 1000);
-			npca->GetSwarmInfo()->target = targ->GetID();
+			if (RuleB(Spells, SwarmPetTargetLock) || sticktarg)
+				npca->GetSwarmInfo()->target = targ->GetID();
+			else
+				npca->GetSwarmInfo()->target = 0;
 		}
 
 		//we allocated a new NPC type object, give the NPC ownership of that memory
@@ -662,7 +660,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		targ->AddToHateList(this, 1, 0);
 }
 
-void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_override, uint32 duration_override, bool followme) {
+void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_override, uint32 duration_override, bool followme, bool sticktarg) {
 
 	AA_SwarmPet pet;
 	pet.count = 1;
@@ -700,7 +698,6 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 	static const float swarm_pet_y[MAX_SWARM_PETS] = {	5, 5, -5, -5,
 														10, 10, -10, -10,
 														8, 8, -8, -8 };
-	TempPets(true);
 
 	while(summon_count > 0) {
 		int pet_duration = pet.duration;
@@ -721,6 +718,9 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 				GetX()+swarm_pet_x[summon_count], GetY()+swarm_pet_y[summon_count],
 				GetZ(), GetHeading(), FlyMode3);
 
+		if (followme)
+			npca->SetFollowID(GetID());
+
 		if(!npca->GetSwarmInfo()){
 			AA_SwarmPetInfo* nSI = new AA_SwarmPetInfo;
 			npca->SetSwarmInfo(nSI);
@@ -736,7 +736,11 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 		//give the pets somebody to "love"
 		if(targ != nullptr){
 			npca->AddToHateList(targ, 1000, 1000);
-			npca->GetSwarmInfo()->target = targ->GetID();
+
+			if (RuleB(Spells, SwarmPetTargetLock) || sticktarg)
+				npca->GetSwarmInfo()->target = targ->GetID();
+			else
+				npca->GetSwarmInfo()->target = 0;
 		}
 
 		//we allocated a new NPC type object, give the NPC ownership of that memory
@@ -893,8 +897,6 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 	make_npc->merchanttype = 0;
 	make_npc->d_meele_texture1 = 0;
 	make_npc->d_meele_texture2 = 0;
-
-	TempPets(true);
 
 	NPC* npca = new NPC(make_npc, 0, GetX(), GetY(), GetZ(), GetHeading(), FlyMode3);
 
@@ -1308,26 +1310,24 @@ bool ZoneDatabase::LoadAAEffects2() {
 
 	return true;
 }
+
 uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	int32 skill_id = 0;
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT skill_id from altadv_vars where eqmacid=%i", eqmacid), errbuf, &result)) {
-		safe_delete_array(query);
-		if (mysql_num_rows(result) == 1) {
-			row = mysql_fetch_row(result);
-			skill_id=atoi(row[0]);
-		}
-		mysql_free_result(result);
-	} else {
-		LogFile->write(EQEMuLog::Error, "Error in GetMacToEmuAA '%s: %s", query, errbuf);
-		safe_delete_array(query);
+
+	std::string query = StringFormat("SELECT skill_id from altadv_vars where eqmacid=%i", eqmacid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0)
+	{
+		LogFile->write(EQEMuLog::Error, "Error in GetMacToEmuAA");
+		return 0;
 	}
-	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", skill_id);
-	return skill_id;
+
+	auto row = results.begin();
+
+	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", atoi(row[0]));
+	return atoi(row[0]);
 }
+
 void Client::ResetAA(){
 	RefundAA(); 
 	uint32 i;

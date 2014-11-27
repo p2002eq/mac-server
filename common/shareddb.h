@@ -41,7 +41,6 @@ public:
 	uint8	GetGMSpeed(uint32 account_id);
 	bool	SetHideMe(uint32 account_id, uint8 hideme);
 	int32	DeleteStalePlayerCorpses();
-	int32	DeleteStalePlayerBackups();
 	bool	GetCommandSettings(std::map<std::string,uint8> &commands);
 	uint32	GetTotalTimeEntitledOnAccount(uint32 AccountID);
 

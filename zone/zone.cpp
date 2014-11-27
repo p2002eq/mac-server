@@ -399,7 +399,7 @@ void Zone::LoadTempMerchantData() {
 	LogFile->write(EQEMuLog::Status, "Loading Temporary Merchant Lists...");
 	std::string query = StringFormat(
 		"SELECT								   "
-		"ml.npcid,							   "
+		"DISTINCT ml.npcid,					   "
 		"ml.slot,							   "
 		"ml.charges,						   "
 		"ml.itemid							   "
@@ -487,7 +487,7 @@ void Zone::GetMerchantDataForZoneLoad() {
 	std::map<uint32, std::list<MerchantList> >::iterator cur;
 	uint32 npcid = 0;
 	if (results.RowCount() == 0) {
-		LogFile->write(EQEMuLog::Error, "Error in loading Merchant Data for zone");
+		LogFile->write(EQEMuLog::Debug, "No Merchant Data found for %s.", GetShortName());
 		return;
 	}
 	for (auto row = results.begin(); row != results.end(); ++row) { 
@@ -627,6 +627,7 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	zoneid = in_zoneid;
 	instanceid = in_instanceid;
 	instanceversion = database.GetInstanceVersion(instanceid);
+	pers_instance = false;
 	zonemap = nullptr;
 	watermap = nullptr;
 	pathing = nullptr;
@@ -692,11 +693,12 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 		if(!is_perma)
 		{
 			if(rem < 150) //give some leeway to people who are zoning in 2.5 minutes to finish zoning in and get ported out
-			rem = 150;
+				rem = 150;
 			Instance_Timer = new Timer(rem * 1000);
 		}
 		else
 		{
+			pers_instance = true;
 			Instance_Timer = nullptr;
 		}
 	}
@@ -775,7 +777,7 @@ bool Zone::Init(bool iStaticZone) {
 	}
 
 	LogFile->write(EQEMuLog::Status, "Loading player corpses...");
-	if (!database.LoadPlayerCorpses(zoneid, instanceid)) {
+	if (!database.LoadCharacterCorpses(zoneid, instanceid)) {
 		LogFile->write(EQEMuLog::Error, "Loading player corpses failed.");
 		return false;
 	}

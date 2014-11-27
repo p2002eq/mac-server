@@ -153,6 +153,8 @@ RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
 RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
 RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_BOOL( World, AnnounceJoinQuits, false) //Broadcasts player logins and log outs if true.
+RULE_INT (World, TellQueueSize, 20) 
+RULE_BOOL (World, UseDBUpdate, false) //Automatic Database Upgrade Script
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Zone )
@@ -302,6 +304,7 @@ RULE_INT ( Spells, AI_IdleNoSpellMaxRecast, 2000) // AI spell recast time(MS) ch
 RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a beneficial spell on self or others.
 RULE_BOOL ( Spells, SHDProcIDOffByOne, true) // pre June 2009 SHD spell procs were off by 1, they stopped doing this in June 2009 (so UF+ spell files need this false)
 RULE_BOOL ( Spells, Jun182014HundredHandsRevamp, false) // this should be true for if you import a spell file newer than June 18, 2014
+RULE_BOOL ( Spells, SwarmPetTargetLock, false) // Use old method of swarm pets target locking till target dies then despawning.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Combat )
@@ -415,6 +418,7 @@ RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on N
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
 RULE_REAL ( NPC, SpeedMultiplier, 31.0 ) //this is used to multiply an NPCs movement rate, yeilding map units..
+RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT ( NPC, RunAnimRatio, 37 )	//This is the multiplier of eqemu speed to get client speed
 									//tweak this if pathing mobs seem to jump forward or backwards
 									//this should prolly be dynamic based on ping time or something.. who knows

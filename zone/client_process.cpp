@@ -78,7 +78,8 @@ bool Client::Process() {
 	if(Connected() || IsLD())
 	{
 		// try to send all packets that weren't sent before
-		if(!IsLD() && zoneinpacket_timer.Check()){
+		if(!IsLD() && zoneinpacket_timer.Check())
+		{
 			SendAllPackets();
 		}
 
@@ -92,10 +93,12 @@ bool Client::Process() {
 
 		if(mana_timer.Check())
 			SendManaUpdatePacket();
-		if(dead && dead_timer.Check()) {
-			database.MoveCharacterToZone(GetName(),database.GetZoneName(m_pp.binds[0].zoneId));
+
+			if(dead && dead_timer.Check()) {
+				database.MoveCharacterToZone(GetName(), database.GetZoneName(m_pp.binds[0].zoneId));
+
 			m_pp.zone_id = m_pp.binds[0].zoneId;
-			m_pp.zoneInstance = 0;
+			m_pp.zoneInstance = m_pp.binds[0].instance_id;
 			m_pp.x = m_pp.binds[0].x;
 			m_pp.y = m_pp.binds[0].y;
 			m_pp.z = m_pp.binds[0].z;
@@ -120,9 +123,11 @@ bool Client::Process() {
 			CalcItemScale();
 		}
 
-		if(linkdead_timer.Check()){
-			Save();
+		if(linkdead_timer.Check())
+		{
 			LeaveGroup();
+			Save();
+			
 			Raid *myraid = entity_list.GetRaidByClient(this);
 			if (myraid)
 			{
@@ -131,7 +136,8 @@ bool Client::Process() {
 			return false; //delete client
 		}
 
-		if (camp_timer.Check()) {
+		if (camp_timer.Check())
+		{
 			LeaveGroup();
 			Save();
 			instalog = true;
@@ -162,7 +168,7 @@ bool Client::Process() {
 			} else {
 				if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
 					InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
-//				SpellFinished(bardsong, bardsong_target, bardsong_slot, spells[bardsong].mana);
+				//SpellFinished(bardsong, bardsong_target, bardsong_slot, spells[bardsong].mana);
 			}
 		}
 
@@ -579,7 +585,8 @@ bool Client::Process() {
 	}
 #endif
 
-	if (client_state != CLIENT_LINKDEAD && (client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED))) {
+	if (client_state != CLIENT_LINKDEAD && (client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED)))
+	{
 		//client logged out or errored out
 		//ResetTrade();
 		if (client_state != CLIENT_KICKED) {
@@ -592,10 +599,13 @@ bool Client::Process() {
 			Group *mygroup = GetGroup();
 			if (mygroup)
 			{
-				if (!zoning) {
+				if (!zoning)
+				{
 					entity_list.MessageGroup(this,true,15,"%s logged out.",GetName());
-					mygroup->DelMember(this);
-				} else {
+					LeaveGroup();
+				}
+				else
+				{
 					entity_list.MessageGroup(this,true,15,"%s left the zone.",GetName());
 					mygroup->MemberZoned(this);
 				}
@@ -604,11 +614,13 @@ bool Client::Process() {
 			Raid *myraid = entity_list.GetRaidByClient(this);
 			if (myraid)
 			{
-				if (!zoning) {
+				if (!zoning)
+				{
 					//entity_list.MessageGroup(this,true,15,"%s logged out.",GetName());
-					//mygroup->DelMember(this);
 					myraid->MemberZoned(this);
-				} else {
+				}
+				else
+				{
 					//entity_list.MessageGroup(this,true,15,"%s left the zone.",GetName());
 					myraid->MemberZoned(this);
 				}
@@ -634,8 +646,9 @@ bool Client::Process() {
 
 /* Just a set of actions preformed all over in Client::Process */
 void Client::OnDisconnect(bool hard_disconnect) {
-	if(hard_disconnect) {
-		LeaveGroup(); 
+	if(hard_disconnect)
+	{
+		LeaveGroup();
 		Raid *MyRaid = entity_list.GetRaidByClient(this);
 
 		if (MyRaid)
@@ -651,7 +664,8 @@ void Client::OnDisconnect(bool hard_disconnect) {
 	}
 
 	Mob *Other = trade->With(); 
-	if(Other) {
+	if(Other)
+	{
 		mlog(TRADING__CLIENT, "Client disconnected during a trade. Returning their items."); 
 		FinishTrade(this);
 
@@ -1500,6 +1514,7 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 		for(int l = 0; l < 32; l++) {
 			gmtrain->language[l] = 201;
 		}
+//#pragma GCC pop_options
 
 		FastQueuePacket(&outapp);
 		// welcome message

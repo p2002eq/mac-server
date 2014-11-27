@@ -329,8 +329,8 @@ void NPC::SetTarget(Mob* mob) {
 	if(mob == GetTarget())		//dont bother if they are allready our target
 		return;
 
-	//our target is already set, do not turn from the course, unless our current target is dead.
-	if(GetSwarmInfo() && GetTarget() && (GetTarget()->GetHP() > 0)) {
+	//This is not the default behavior for swarm pets, must be specified from quest functions or rules value.
+	if(GetSwarmInfo() && GetSwarmInfo()->target && GetTarget() && (GetTarget()->GetHP() > 0)) {
 		Mob *targ = entity_list.GetMob(GetSwarmInfo()->target);
 		if(targ != mob){
 			return;
@@ -353,7 +353,7 @@ ServerLootItem_Struct* NPC::GetItem(int slot_id) {
 	end = itemlist.end();
 	for(; cur != end; ++cur) {
 		ServerLootItem_Struct* item = *cur;
-		if (item->equipSlot == slot_id) {
+		if (item->equip_slot == slot_id) {
 			return item;
 		}
 	}
@@ -370,7 +370,7 @@ void NPC::RemoveItem(uint32 item_id, uint16 quantity, uint16 slot) {
 			itemlist.erase(cur);
 			return;
 		}
-		else if (item->item_id == item_id && item->equipSlot == slot && quantity >= 1) {
+		else if (item->item_id == item_id && item->equip_slot == slot && quantity >= 1) {
 			//std::cout<<"NPC::RemoveItem"<<" equipSlot:"<<iterator.GetData()->equipSlot<<" quantity:"<< quantity<<std::endl; // iterator undefined [CODEBUG]
 			if (item->charges <= quantity)
 				itemlist.erase(cur);
@@ -395,9 +395,9 @@ void NPC::CheckMinMaxLevel(Mob *them)
 		if(!(*cur))
 			return;
 
-		if(themlevel < (*cur)->minlevel || themlevel > (*cur)->maxlevel)
+		if(themlevel < (*cur)->min_level || themlevel > (*cur)->max_level)
 		{
-			material = Inventory::CalcMaterialFromSlot((*cur)->equipSlot);
+			material = Inventory::CalcMaterialFromSlot((*cur)->equip_slot);
 			if(material != 0xFF)
 				SendWearChange(material);
 
@@ -424,16 +424,16 @@ void NPC::QueryLoot(Client* to) {
 	int x = 0;
 	to->Message(0, "Coin: %ip %ig %is %ic", platinum, gold, silver, copper);
 
-	ItemList::iterator cur,end;
+	ItemList::iterator cur, end;
 	cur = itemlist.begin();
 	end = itemlist.end();
-	for(; cur != end; ++cur) {
+	for (; cur != end; ++cur) {
 		const Item_Struct* item = database.GetItem((*cur)->item_id);
 		if (item)
 		{
-				static char itemid[7];
-				sprintf(itemid, "%06d", item->ID);
-				to->Message(0, "minlvl: %i maxlvl: %i %i: %c%c%s%s%c",(*cur)->minlevel, (*cur)->maxlevel, (int) item->ID,0x12, 0x30, itemid, item->Name, 0x12);
+			static char itemid[7];
+			sprintf(itemid, "%06d", item->ID);
+			to->Message(0, "minlvl: %i maxlvl: %i %i: %c%c%s%s%c", (*cur)->min_level, (*cur)->max_level, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			LogFile->write(EQEMuLog::Error, "Database error, invalid item");
@@ -1796,6 +1796,7 @@ void NPC::ModifyNPCStat(const char *identifier, const char *newValue)
 	else if(id == "PhR") { PhR = atoi(val.c_str()); return; }
 	else if(id == "runspeed") { runspeed = (float)atof(val.c_str()); CalcBonuses(); return; }
 	else if(id == "special_attacks") { NPCSpecialAttacks(val.c_str(), 0, 1); return; }
+	else if(id == "special_abilities") { ProcessSpecialAbilities(val.c_str()); return; }
 	else if(id == "attack_speed") { attack_speed = (float)atof(val.c_str()); CalcBonuses(); return; }
 	else if(id == "atk") { ATK = atoi(val.c_str()); return; }
 	else if(id == "accuracy") { accuracy_rating = atoi(val.c_str()); return; }
@@ -2289,4 +2290,31 @@ void NPC::DoQuestPause(Mob *other) {
 		FaceTarget(other);
 	}
 
+}
+
+void NPC::DepopSwarmPets()
+{
+	if (GetSwarmInfo()) {
+		if (GetSwarmInfo()->duration->Check(false)){
+			Mob* owner = entity_list.GetMobID(GetSwarmInfo()->owner_id);
+			if (owner)
+				owner->SetTempPetCount(owner->GetTempPetCount() - 1);
+			
+			Depop();
+			return;
+		}
+
+		//This is only used for optional quest or rule derived behavior now if you force a temp pet on a specific target.
+		if (GetSwarmInfo()->target) {
+			Mob *targMob = entity_list.GetMob(GetSwarmInfo()->target);
+			if(!targMob || (targMob && targMob->IsCorpse())){
+				Mob* owner = entity_list.GetMobID(GetSwarmInfo()->owner_id);
+				if (owner)
+					owner->SetTempPetCount(owner->GetTempPetCount() - 1);
+
+				Depop();
+				return;
+			}
+		}
+	}
 }

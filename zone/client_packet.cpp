@@ -685,6 +685,8 @@ void Client::CompleteConnect()
 		else
 			_log(EQMAC__LOG, "%s 's client version is: %s.", this->GetName(), string.c_str());
 	}
+
+	worldserver.RequestTellQueue(GetName());
 }
 
 
@@ -1905,19 +1907,25 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 {
 
-	if (app->size <= 5)
+	if (app->size <= 5 || app->size > 64) {
+		LogFile->write(EQEMuLog::Error, "Size mismatch in OP_BoardBoad. Expected greater than 5 less than 64, got %i", app->size);
+		DumpPacket(app);
 		return;
+	}
 
-	char *boatname;
-	boatname = new char[app->size - 3];
-	memset(boatname, 0, app->size - 3);
-	memcpy(boatname, app->pBuffer, app->size - 4);
+	char boatname[64];
+	memcpy(boatname, app->pBuffer, app->size);
+	boatname[63] = '\0';
 
 	Mob* boat = entity_list.GetMob(boatname);
+
+	if (!boat || (boat->GetRace() != CONTROLLED_BOAT && boat->GetRace() != SHIP && boat->GetRace() != LAUNCH))
+		return;
+
 	if (boat)
 	{
-		this->BuffFadeByEffect(SE_Levitate);
-		this->BoatID = boat->GetID();	// set the client's BoatID to show that it's on this boat
+		BuffFadeByEffect(SE_Levitate);
+		BoatID = boat->GetID();	// set the client's BoatID to show that it's on this boat
 		m_pp.boatid = boat->GetNPCTypeID(); //For EQMac's boat system.
 		strncpy(m_pp.boat, boatname, 16);
 
@@ -1927,7 +1935,6 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 		parse->EventPlayer(EVENT_BOARD_BOAT, this, buf, 0);
 	}
 
-	safe_delete_array(boatname);
 	return;
 }
 
@@ -2754,7 +2761,7 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			else
 				Message(0, "This corpse will decay in %i minutes and %i seconds.", min, sec);
 
-			Message(0, "This corpse %s be resurrected.", tcorpse->Rezzed() ? "cannot" : "can");
+			Message(0, "This corpse %s be resurrected.", tcorpse->IsRezzed() ? "cannot" : "can");
 			/*
 			hour = 0;
 
@@ -3788,12 +3795,13 @@ void Client::Handle_OP_GMNameChange(const EQApplicationPacket *app)
 	return;
 }
 
+
 void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 {
 	// Could make this into a rule, although there is a hard limit since we are using a popup, of 4096 bytes that can
 	// be displayed in the window, including all the HTML formatting tags.
 	//
-	const int MaxResults = 10;
+	const int maxResults = 10;
 
 	if (app->size < sizeof(GMSearchCorpse_Struct))
 	{
@@ -3806,81 +3814,61 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 	GMSearchCorpse_Struct *gmscs = (GMSearchCorpse_Struct *)app->pBuffer;
 	gmscs->Name[63] = '\0';
 
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* Query = 0;
-	MYSQL_RES *Result;
-	MYSQL_ROW Row;
+	char *escSearchString = new char[129];
+	database.DoEscapeString(escSearchString, gmscs->Name, strlen(gmscs->Name));
 
-	char *EscSearchString = new char[129];
-
-	database.DoEscapeString(EscSearchString, gmscs->Name, strlen(gmscs->Name));
-
-	if (database.RunQuery(Query, MakeAnyLenString(&Query, "select charname, zoneid, x, y, z, timeofdeath, rezzed, IsBurried from "
-		"player_corpses where charname like '%%%s%%' order by charname limit %i",
-		EscSearchString, MaxResults), errbuf, &Result))
-	{
-
-		int NumberOfRows = mysql_num_rows(Result);
-
-		if (NumberOfRows == MaxResults)
-			Message(clientMessageError, "Your search found too many results; some are not displayed.");
-		else {
-			Message(clientMessageYellow, "There are %i corpse(s) that match the search string '%s'.",
-				NumberOfRows, gmscs->Name);
-		}
-
-		if (NumberOfRows == 0)
-		{
-			mysql_free_result(Result);
-			safe_delete_array(Query);
-			return;
-		}
-
-		char CharName[64], TimeOfDeath[20], Buffer[512];
-
-		std::string PopupText = "";
-
-
-		while ((Row = mysql_fetch_row(Result)))
-		{
-
-			strn0cpy(CharName, Row[0], sizeof(CharName));
-
-			uint32 ZoneID = atoi(Row[1]);
-
-			float CorpseX = atof(Row[2]);
-			float CorpseY = atof(Row[3]);
-			float CorpseZ = atof(Row[4]);
-
-			strn0cpy(TimeOfDeath, Row[5], sizeof(TimeOfDeath));
-
-			bool CorpseRezzed = atoi(Row[6]);
-			bool CorpseBuried = atoi(Row[7]);
-
-			sprintf(Buffer, "Name: %s  Zone: %s  Loc: %8.0f, %8.0f, %8.0f,  Date: %s  Rezzed: %s  Buried: %s",
-				CharName, StaticGetZoneName(ZoneID), CorpseX, CorpseY, CorpseZ, TimeOfDeath,
-				CorpseRezzed ? "Yes" : "No", CorpseBuried ? "Yes" : "No");
-
-			PopupText += Buffer;
-
-			if (PopupText.size() > 4000)
-			{
-				Message(clientMessageError, "Unable to display all the results.");
-				break;
-			}
-
-		}
-
-		mysql_free_result(Result);
-
-		Message(0, "%s", PopupText.c_str());
+	std::string query = StringFormat("SELECT charname, zoneid, x, y, z, time_of_death, rezzed, IsBurried "
+		"FROM character_corpses WheRE charname LIKE '%%%s%%' ORDER BY charname LIMIT %i",
+		escSearchString, maxResults);
+	safe_delete_array(escSearchString);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Message(0, "Query failed: %s.", results.ErrorMessage().c_str());
+		return;
 	}
-	else{
-		Message(0, "Query failed: %s.", errbuf);
+
+	if (results.RowCount() == 0)
+		return;
+
+	if (results.RowCount() == maxResults)
+		Message(clientMessageError, "Your search found too many results; some are not displayed.");
+	else
+		Message(clientMessageYellow, "There are %i corpse(s) that match the search string '%s'.", results.RowCount(), gmscs->Name);
+
+	char charName[64], time_of_death[20];
+
+	std::string popupText = "<table><tr><td>Name</td><td>Zone</td><td>X</td><td>Y</td><td>Z</td><td>Date</td><td>"
+		"Rezzed</td><td>Buried</td></tr><tr><td>&nbsp</td><td></td><td></td><td></td><td></td><td>"
+		"</td><td></td><td></td></tr>";
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+
+		strn0cpy(charName, row[0], sizeof(charName));
+
+		uint32 ZoneID = atoi(row[1]);
+		float CorpseX = atof(row[2]);
+		float CorpseY = atof(row[3]);
+		float CorpseZ = atof(row[4]);
+
+		strn0cpy(time_of_death, row[5], sizeof(time_of_death));
+
+		bool corpseRezzed = atoi(row[6]);
+		bool corpseBuried = atoi(row[7]);
+
+		popupText += StringFormat("<tr><td>%s</td><td>%s</td><td>%8.0f</td><td>%8.0f</td><td>%8.0f</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+			charName, StaticGetZoneName(ZoneID), CorpseX, CorpseY, CorpseZ, time_of_death,
+			corpseRezzed ? "Yes" : "No", corpseBuried ? "Yes" : "No");
+
+		if (popupText.size() > 4000) {
+			Message(clientMessageError, "Unable to display all the results.");
+			break;
+		}
 
 	}
-	safe_delete_array(Query);
-	safe_delete_array(EscSearchString);
+
+	popupText += "</table>";
+
+
 }
 
 void Client::Handle_OP_GMServers(const EQApplicationPacket *app)
@@ -4051,7 +4039,6 @@ void Client::Handle_OP_GroupCancelInvite(const EQApplicationPacket *app)
 		safe_delete(pack);
 	}
 
-	database.SetGroupID(GetName(), 0, CharacterID());
 	return;
 }
 
@@ -4068,7 +4055,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 	GroupGeneric_Struct* gd = (GroupGeneric_Struct*)app->pBuffer;
 
 	Raid *raid = entity_list.GetRaidByClient(this);
-	if (raid){
+	if (raid)
+	{
 		Mob* memberToDisband = nullptr;
 
 		if (!raid->IsGroupLeader(GetName()))
@@ -4118,20 +4106,38 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 	if (!group)
 		return;
 
-	if ((group->IsLeader(this) && (GetTarget() == 0 || GetTarget() == this)) || (group->GroupCount()<3)) {
+	if (group->GroupCount() < 3)
+	{
 		group->DisbandGroup();
 	}
-	else {
+	else if (group->IsLeader(this) && GetTarget() == nullptr)
+	{
+		if (group->GroupCount() > 2)
+		{
+			group->DisbandGroup();
+		}
+		else
+		{
+			group->DisbandGroup();
+		}
+	}
+	else if (group->IsLeader(this) && GetTarget() == this)
+	{
+		LeaveGroup();
+	}
+	else
+	{
 		Mob* memberToDisband = nullptr;
 		memberToDisband = GetTarget();
 
 		if (!memberToDisband)
 			memberToDisband = entity_list.GetMob(gd->name2);
 
-		if (memberToDisband) {
-			if (group->IsLeader(this)) {
+		if (memberToDisband)
+		{
+			if (group->IsLeader(this))
+			{
 				// the group leader can kick other members out of the group...
-				//group->DelMember(memberToDisband,false);
 				if (memberToDisband->IsClient())
 				{
 					group->DelMember(memberToDisband, false);
@@ -4151,7 +4157,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 					}
 				}
 			}
-			else {
+			else
+			{
 				// ...but other members can only remove themselves
 				group->DelMember(this, false);
 
@@ -4175,7 +4182,9 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 			}
 		}
 		else
+		{
 			LogFile->write(EQEMuLog::Error, "Failed to remove player from group. Unable to find player named %s in player group", gd->name2);
+		}
 	}
 	return;
 }
@@ -4300,6 +4309,9 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 	}
 	else if (inviter == nullptr)
 	{
+		// Inviter is in another zone - Remove merc from group now if any
+		LeaveGroup();
+		
 		ServerPacket* pack = new ServerPacket(ServerOP_GroupFollow, sizeof(ServerGroupFollow_Struct));
 		ServerGroupFollow_Struct *sgfs = (ServerGroupFollow_Struct *)pack->pBuffer;
 		sgfs->CharacterID = CharacterID();
@@ -6827,7 +6839,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	mpo->npcid = mp->npcid;
 	mpo->itemslot = mp->itemslot;
 
-	int16 freeslotid = 0;
+	int16 freeslotid = INVALID_INDEX;
 	int16 charges = 0;
 	if (item->Stackable || item->MaxCharges > 1)
 		charges = mp->quantity;
@@ -6853,6 +6865,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		return;
 	}
 
+	// this area needs some work..two inventory insertion check failure points
+	// below do not return player's money..is this the intended behavior?
+
 	if (!TakeMoneyFromPP(mpo->price))
 	{
 		char *hacker_str = nullptr;
@@ -6877,6 +6892,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	if (!stacked)
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
+
+	// shouldn't we be reimbursing if these two fail?
 
 	//make sure we are not completely full...
 	if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
@@ -6933,6 +6950,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	safe_delete(outapp);
 
 	// start QS code
+	// stacking purchases not supported at this time - entire process will need some work to catch them properly
 	if (RuleB(QueryServ, PlayerLogMerchantTransactions)) {
 		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
 		QSMerchantLogTransaction_Struct* qsaudit = (QSMerchantLogTransaction_Struct*)qspack->pBuffer;
@@ -6951,9 +6969,17 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		qsaudit->char_money.copper = mpo->price % 10;
 		qsaudit->char_count = 0;
 
-		qsaudit->items[0].char_slot = freeslotid;
-		qsaudit->items[0].item_id = m_inv[freeslotid]->GetID();
+		qsaudit->items[0].char_slot = freeslotid == INVALID_INDEX ? 0 : freeslotid;
+		qsaudit->items[0].item_id = item->ID;
 		qsaudit->items[0].charges = mpo->quantity;
+
+		if (freeslotid == INVALID_INDEX) {
+			qsaudit->items[0].aug_1 = 0;
+			qsaudit->items[0].aug_2 = 0;
+			qsaudit->items[0].aug_3 = 0;
+			qsaudit->items[0].aug_4 = 0;
+			qsaudit->items[0].aug_5 = 0;
+		}
 
 		qspack->Deflate();
 		if (worldserver.Connected()) { worldserver.SendPacket(qspack); }
@@ -6973,7 +6999,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	t1.stop();
 	return;
 }
-
 void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Merchant_Purchase_Struct)) {
@@ -8170,7 +8195,8 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Translocate(const EQApplicationPacket *app) {
+void Client::Handle_OP_Translocate(const EQApplicationPacket *app)
+{
 
 	if (app->size != sizeof(Translocate_Struct)) {
 		LogFile->write(EQEMuLog::Debug, "Size mismatch in OP_Translocate expected %i got %i", sizeof(Translocate_Struct), app->size);
@@ -8179,7 +8205,8 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app) {
 	}
 	Translocate_Struct *its = (Translocate_Struct*)app->pBuffer;
 
-	if (!PendingTranslocate) return;
+	if (!PendingTranslocate)
+		return;
 
 	if ((RuleI(Spells, TranslocateTimeLimit) > 0) && (time(nullptr) > (TranslocateTime + RuleI(Spells, TranslocateTimeLimit)))) {
 		Message(13, "You did not accept the Translocate within the required time limit.");
@@ -8189,7 +8216,7 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app) {
 
 	if (its->Complete == 1) {
 
-		int SpellID = PendingTranslocateData.SpellID;
+		int SpellID = PendingTranslocateData.spell_id;
 		int i = parse->EventSpell(EVENT_SPELL_EFFECT_TRANSLOCATE_COMPLETE, nullptr, this, SpellID, 0);
 
 		if (i == 0)
@@ -8199,26 +8226,24 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app) {
 			// to the bind coords it has from the PlayerProfile, but with the X and Y reversed. I suspect they are
 			// reversed in the pp, and since spells like Gate are handled serverside, this has not mattered before.
 			if (((SpellID == 1422) || (SpellID == 1334) || (SpellID == 3243)) &&
-				zone->GetZoneID() == PendingTranslocateData.ZoneID)
+				(zone->GetZoneID() == PendingTranslocateData.zone_id &&
+				zone->GetInstanceID() == PendingTranslocateData.instance_id))
 			{
 				PendingTranslocate = false;
 				GoToBind();
 				return;
 			}
 
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Translocate, sizeof(Translocate_Struct));
-			Translocate_Struct *ots = (Translocate_Struct*)outapp->pBuffer;
-			memcpy(ots, &PendingTranslocateData, sizeof(Translocate_Struct));
-
-			//Was sending the packet back to initiate client zone...
-			//but that could be abusable, so lets go through proper channels
-			MovePC(ots->ZoneID, 0, ots->x, ots->y, ots->z, GetHeading(), 0, ZoneSolicited);
+			////Was sending the packet back to initiate client zone...
+			////but that could be abusable, so lets go through proper channels
+			MovePC(PendingTranslocateData.zone_id, PendingTranslocateData.instance_id,
+				PendingTranslocateData.x, PendingTranslocateData.y,
+				PendingTranslocateData.z, PendingTranslocateData.heading, 0, ZoneSolicited);
 		}
 	}
 
 	PendingTranslocate = false;
 }
-
 void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(WearChange_Struct)) {

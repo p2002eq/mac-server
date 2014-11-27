@@ -1484,7 +1484,7 @@ Corpse *EntityList::GetCorpseByDBID(uint32 dbid)
 {
 	auto it = corpse_list.begin();
 	while (it != corpse_list.end()) {
-		if (it->second->GetDBID() == dbid)
+		if (it->second->GetCorpseDBID() == dbid)
 			return it->second;
 		++it;
 	}
@@ -1538,7 +1538,7 @@ void EntityList::RemoveCorpseByDBID(uint32 dbid)
 {
 	auto it = corpse_list.begin();
 	while (it != corpse_list.end()) {
-		if (it->second->GetDBID() == dbid) {
+		if (it->second->GetCorpseDBID() == dbid) {
 			safe_delete(it->second);
 			free_ids.push(it->first);
 			it = corpse_list.erase(it);
@@ -1555,9 +1555,9 @@ int EntityList::RezzAllCorpsesByCharID(uint32 charid)
 	auto it = corpse_list.begin();
 	while (it != corpse_list.end()) {
 		if (it->second->GetCharID() == charid) {
-			RezzExp += it->second->GetRezzExp();
-			it->second->Rezzed(true);
-			it->second->CompleteRezz();
+			RezzExp += it->second->GetRezExp();
+			it->second->IsRezzed(true);
+			it->second->CompleteResurrection();
 		}
 		++it;
 	}
@@ -2488,7 +2488,7 @@ int32 EntityList::DeleteNPCCorpses()
 	auto it = corpse_list.begin();
 	while (it != corpse_list.end()) {
 		if (it->second->IsNPCCorpse()) {
-			it->second->Depop();
+			it->second->DepopNPCCorpse();
 			x++;
 		}
 		++it;
@@ -3316,6 +3316,42 @@ void EntityList::DestroyTempPets(Mob *owner)
 		if (n->GetSwarmInfo()) {
 			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
 				n->Depop();
+			}
+		}
+		++it;
+	}
+}
+
+int16 EntityList::CountTempPets(Mob *owner)
+{
+	int16 count = 0;
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
+				count++;
+			}
+		}
+		++it;
+	}
+	
+	owner->SetTempPetCount(count);
+
+	return count;
+}
+
+void EntityList::AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy)
+{
+	if (!other || !owner)
+		return;
+
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID()) {
+				n->CastToNPC()->hate_list.Add(other, 0, 0, bFrenzy);
 			}
 		}
 		++it;

@@ -185,19 +185,19 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 	// This method should either be passed a Mob*, if the new member is in this zone, or a nullptr Mob*
 	// and the name and CharacterID of the new member, if they are out of zone.
 	//
-	if(!newmember && !NewMemberName)
-	return false;
-
-	if(GroupCount() >= MAX_GROUP_MEMBERS) //Sanity check for merging groups together.
+	if (!newmember && !NewMemberName)
 		return false;
 
-	if(!newmember)
+	if (GroupCount() >= MAX_GROUP_MEMBERS) //Sanity check for merging groups together.
+		return false;
+
+	if (!newmember)
 		InZone = false;
 	else
 	{
 		NewMemberName = newmember->GetCleanName();
 
-		if(newmember->IsClient())
+		if (newmember->IsClient())
 			CharacterID = newmember->CastToClient()->CharacterID();
 	}
 
@@ -206,7 +206,7 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 	// See if they are already in the group
 	//
 	for (i = 0; i < MAX_GROUP_MEMBERS; ++i)
-		if(!strcasecmp(membername[i], NewMemberName))
+		if (!strcasecmp(membername[i], NewMemberName))
 			return false;
 
 	// Put them in the group
@@ -214,7 +214,7 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 	{
 		if (membername[i][0] == '\0')
 		{
-			if(InZone)
+			if (InZone)
 				members[i] = newmember;
 
 			break;
@@ -225,30 +225,30 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 		return false;
 
 	strcpy(membername[i], NewMemberName);
-		MemberRoles[i] = 0;
+	MemberRoles[i] = 0;
 
-	int x=1;
+	int x = 1;
 
 	//build the template join packet
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupJoin_Struct));
-	GroupJoin_Struct* gj = (GroupJoin_Struct*) outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupJoin_Struct));
+	GroupJoin_Struct* gj = (GroupJoin_Struct*)outapp->pBuffer;
 	strcpy(gj->membername, NewMemberName);
 	gj->action = groupActJoin;
 
-	for (i = 0;i < MAX_GROUP_MEMBERS; i++) {
+	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr && members[i] != newmember) {
 			//fill in group join & send it
 			strcpy(gj->yourname, members[i]->GetCleanName());
-			if(members[i]->IsClient()) {
+			if (members[i]->IsClient()) {
 				members[i]->CastToClient()->QueuePacket(outapp);
 
 				//put new member into existing person's list
-				strcpy(members[i]->CastToClient()->GetPP().groupMembers[this->GroupCount()-1], NewMemberName);
+				strcpy(members[i]->CastToClient()->GetPP().groupMembers[this->GroupCount() - 1], NewMemberName);
 			}
 
 			//put this existing person into the new member's list
-			if(InZone && newmember->IsClient()) {
-				if(IsLeader(members[i]))
+			if (InZone && newmember->IsClient()) {
+				if (IsLeader(members[i]))
 					strcpy(newmember->CastToClient()->GetPP().groupMembers[0], members[i]->GetCleanName());
 				else {
 					strcpy(newmember->CastToClient()->GetPP().groupMembers[x], members[i]->GetCleanName());
@@ -258,12 +258,12 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 		}
 	}
 
-	if(InZone)
+	if (InZone)
 	{
 		//put new member in his own list.
 		newmember->SetGrouped(true);
 
-		if(newmember->IsClient())
+		if (newmember->IsClient())
 		{
 			strcpy(newmember->CastToClient()->GetPP().groupMembers[x], NewMemberName);
 			newmember->CastToClient()->Save();
@@ -283,7 +283,7 @@ void Group::AddMember(const char *NewMemberName)
 	// This method should be called when both the new member and the group leader are in a different zone to this one.
 	//
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
-		if(!strcasecmp(membername[i], NewMemberName))
+		if (!strcasecmp(membername[i], NewMemberName))
 		{
 			return;
 		}
@@ -394,6 +394,30 @@ void Group::MemberZoned(Mob* removemob) {
 	}
 }
 
+void Group::SendGroupJoinOOZ(Mob* NewMember) {
+
+	if (NewMember == nullptr)
+	{
+		return;
+	}
+	
+	if (!NewMember->HasGroup())
+	{
+		return;
+	}
+
+	//send updates to clients out of zone...
+	ServerPacket* pack = new ServerPacket(ServerOP_GroupJoin, sizeof(ServerGroupJoin_Struct));
+	ServerGroupJoin_Struct* gj = (ServerGroupJoin_Struct*)pack->pBuffer;
+	gj->gid = GetID();
+	gj->zoneid = zone->GetZoneID();
+	gj->instance_id = zone->GetInstanceID();
+	strcpy(gj->member_name, NewMember->GetName());
+	worldserver.SendPacket(pack);
+	safe_delete(pack);
+
+}
+
 bool Group::DelMemberOOZ(const char *Name) {
 
 	if(!Name) return false;
@@ -415,27 +439,20 @@ bool Group::DelMemberOOZ(const char *Name) {
 
 bool Group::DelMember(Mob* oldmember,bool ignoresender)
 {
-	if (oldmember == nullptr){
+	if (oldmember == nullptr)
+	{
 		return false;
 	}
 
-	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
-		if (members[i] == oldmember) {
+	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++)
+	{
+		if (members[i] == oldmember)
+		{
 			members[i] = nullptr;
 			membername[i][0] = '\0';
 			memset(membername[i],0,64);
 			MemberRoles[i] = 0;
 			break;
-		}
-	}
-
-	//handle leader quitting group gracefully
-	if (oldmember == GetLeader() && GroupCount() >= 2) {
-		for(uint32 nl = 0; nl < MAX_GROUP_MEMBERS; nl++) {
-			if(members[nl]) {
-				ChangeLeader(members[nl]);
-				break;
-			}
 		}
 	}
 
@@ -447,8 +464,31 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 	 * a is still "leader" from GetLeader()'s perspective and will crash the zone when we DelMember(b)
 	 * Ultimately we should think up a better solution to this.
 	 */
-	if(oldmember == GetLeader()) {
+	if(oldmember == GetLeader())
+	{
 		SetLeader(nullptr);
+	}
+
+	//handle leader quitting group gracefully
+	if (oldmember == GetLeader() && GroupCount() >= 2)
+	{
+		for(uint32 nl = 0; nl < MAX_GROUP_MEMBERS; nl++)
+		{
+			if(members[nl]) 
+			{
+				if (members[nl]->IsClient())
+				{
+					ChangeLeader(members[nl]);
+					break;
+				}
+			}
+		}
+	}
+	
+	if (GetLeader() == nullptr)
+	{
+		DisbandGroup();
+		return true;
 	}
 
 	ServerPacket* pack = new ServerPacket(ServerOP_GroupLeave, sizeof(ServerGroupLeave_Struct));
@@ -478,7 +518,8 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 		}
 	}
 
-	if (!ignoresender) {
+	if (!ignoresender)
+	{
 		strcpy(gu->yourname,oldmember->GetCleanName());
 		strcpy(gu->membername,oldmember->GetCleanName());
 		gu->action = groupActLeave;
@@ -488,8 +529,10 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 	}
 
 	if(oldmember->IsClient())
+	{
 		database.SetGroupID(oldmember->GetCleanName(), 0, oldmember->CastToClient()->CharacterID());
-
+	}
+	
 	oldmember->SetGrouped(false);
 	disbandcheck = true;
 
@@ -519,7 +562,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 		if(members[z] == caster) {
 			caster->SpellOnTarget(spell_id, caster);
 #ifdef GROUP_BUFF_PETS
-			if(caster->GetPet() && caster->HasPetAffinity() && !caster->GetPet()->IsCharmed())
+			if(spells[spell_id].targettype != ST_GroupNoPets && caster->GetPet() && caster->HasPetAffinity() && !caster->GetPet()->IsCharmed())
 				caster->SpellOnTarget(spell_id, caster->GetPet());
 #endif
 		}
@@ -530,7 +573,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 				members[z]->CalcSpellPowerDistanceMod(spell_id, distance);
 				caster->SpellOnTarget(spell_id, members[z]);
 #ifdef GROUP_BUFF_PETS
-				if(members[z]->GetPet() && members[z]->HasPetAffinity() && !members[z]->GetPet()->IsCharmed())
+				if(spells[spell_id].targettype != ST_GroupNoPets && members[z]->GetPet() && members[z]->HasPetAffinity() && !members[z]->GetPet()->IsCharmed())
 					caster->SpellOnTarget(spell_id, members[z]->GetPet());
 #endif
 			} else
@@ -645,21 +688,25 @@ void Group::DisbandGroup() {
 	Client *Leader = nullptr;
 
 	uint32 i;
-	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
-		if (members[i] == nullptr) {
+	for (i = 0; i < MAX_GROUP_MEMBERS; i++)
+	{
+		if (members[i] == nullptr)
+		{
 			continue;
 		}
 
-		if (members[i]->IsClient()) {
+		if (members[i]->IsClient())
+		{
 			if(IsLeader(members[i]))
+			{
 				Leader = members[i]->CastToClient();
+			}
 
 			strcpy(gu->yourname, members[i]->GetName());
 			database.SetGroupID(members[i]->GetName(), 0, members[i]->CastToClient()->CharacterID());
 			members[i]->CastToClient()->QueuePacket(outapp);
-
 		}
-
+		
 		members[i]->SetGrouped(false);
 		members[i] = nullptr;
 		membername[i][0] = '\0';
@@ -675,7 +722,9 @@ void Group::DisbandGroup() {
 
 	entity_list.RemoveGroup(GetID());
 	if(GetID() != 0)
+	{
 		database.ClearGroup(GetID());
+	}
 
 	safe_delete(outapp);
 }
@@ -721,8 +770,12 @@ uint8 Group::GroupCount() {
 	uint8 MemberCount = 0;
 
 	for(uint8 i = 0; i < MAX_GROUP_MEMBERS; ++i)
+	{
 		if(membername[i][0])
+		{
 			++MemberCount;
+		}
+	}
 
 	return MemberCount;
 }
@@ -854,14 +907,25 @@ void Group::GroupMessage_StringID(Mob* sender, uint32 type, uint32 string_id, co
 void Client::LeaveGroup() {
 	Group *g = GetGroup();
 
-	if(g) {
-		if(g->GroupCount() < 3)
+	if(g)
+	{
+		int32 MemberCount = g->GroupCount();
+		// Account for both client and merc leaving the group
+		
+		if(MemberCount < 3)
+		{
 			g->DisbandGroup();
+		}
 		else
+		{
 			g->DelMember(this);
-	} else {
+		}
+	}
+	else
+	{
 		//force things a little
 		database.SetGroupID(GetName(), 0, CharacterID());
+
 	}
 
 	isgrouped = false;

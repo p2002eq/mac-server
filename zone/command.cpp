@@ -163,7 +163,6 @@ int command_init(void){
 		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 80, command_camerashake) ||
 		command_add("cast", nullptr, 0, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell", 50, command_castspell) ||
-		command_add("charbackup", "[list/restore] - Query or restore character backups", 150, command_charbackup) ||
 		command_add("chat", "[channel num] [message] - Send a channel message to all zones", 200, command_chat) ||
 		command_add("checklos", "- Check for line of sight to your target", 50, command_checklos) ||
 		command_add("close_shop", nullptr, 100, command_merchantcloseshop) ||
@@ -425,8 +424,6 @@ int command_init(void){
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 10, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server", 0, command_version) ||
-		command_add("viewmessage", "[id] - View messages in your tell queue", 100, command_viewmessage) ||
-		command_add("viewmessages", nullptr, 0, command_viewmessage) ||
 		command_add("viewnpctype", "[npctype id] - Show info about an npctype", 100, command_viewnpctype) ||
 		command_add("viewpetition", "[petition number] - View a petition", 20, command_viewpetition) ||
 
@@ -1428,34 +1425,31 @@ void command_movechar(Client *c, const Seperator *sep){
 	}
 }
 
-void command_viewpetition(Client *c, const Seperator *sep){
-	if (sep->arg[1][0] == 0)
+void command_viewpetition(Client *c, const Seperator *sep)
+{
+	if (sep->arg[1][0] == 0) {
 		c->Message(0, "Usage: #viewpetition (petition number) Type #listpetition for a list");
-	else
-	{
-		char errbuf[MYSQL_ERRMSG_SIZE];
-		char *query = 0;
-		int queryfound = 0;
-		MYSQL_RES *result;
-		MYSQL_ROW row;
-		c->Message(13, "	ID : Character Name , Petition Text");
-		if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT petid, charname, petitiontext from petitions order by petid"), errbuf, &result))
-		{
-			while ((row = mysql_fetch_row(result)))
-			{
-				if (strcasecmp(row[0], sep->argplus[1]) == 0)
-				{
-					queryfound = 1;
-					c->Message(15, " %s:	%s , %s ", row[0], row[1], row[2]);
-				}
-			}
-			LogFile->write(EQEMuLog::Normal, "View petition request from %s, petition number:", c->GetName(), atoi(sep->argplus[1]));
-			if (queryfound == 0)
-				c->Message(13, "There was an error in your request: ID not found! Please check the Id and try again.");
-			mysql_free_result(result);
-		}
-		safe_delete_array(query);
-	}
+		return;
+    }
+
+    c->Message(13,"	ID : Character Name , Petition Text");
+
+    std::string query = "SELECT petid, charname, petitiontext FROM petitions ORDER BY petid";
+    auto results = database.QueryDatabase(query);
+    if (!results.Success())
+        return;
+
+    LogFile->write(EQEMuLog::Normal,"View petition request from %s, petition number: %i", c->GetName(), atoi(sep->argplus[1]) );
+
+    if (results.RowCount() == 0) {
+        c->Message(13,"There was an error in your request: ID not found! Please check the Id and try again.");
+        return;
+    }
+
+    for (auto row = results.begin(); row != results.end(); ++row)
+        if (strcasecmp(row[0], sep->argplus[1]) == 0)
+			c->Message(15, " %s:	%s , %s ", row[0], row[1], row[2]);
+
 }
 
 void command_petitioninfo(Client *c, const Seperator *sep){
@@ -2615,84 +2609,6 @@ void command_appearance(Client *c, const Seperator *sep){
 	}
 }
 
-void command_charbackup(Client *c, const Seperator *sep){
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES* result;
-	MYSQL_ROW row;
-	if (strcasecmp(sep->arg[1], "list") == 0) {
-		uint32 charid = 0;
-		if (sep->IsNumber(2))
-			charid = atoi(sep->arg[2]);
-		else
-			database.GetAccountIDByChar(sep->arg[2], &charid);
-		if (charid) {
-			if (database.RunQuery(query, MakeAnyLenString(&query,
-				"Select id, backupreason, charid, account_id, zoneid, DATE_FORMAT(ts, '%%m/%%d/%%Y %%H:%%i:%%s') "
-				" from character_backup where charid=%u", charid), errbuf, &result)) {
-				safe_delete(query);
-				uint32 x = 0;
-				while ((row = mysql_fetch_row(result))) {
-					c->Message(0, " %u: %s, %s (%u), reason=%u", atoi(row[0]), row[5], database.GetZoneName(atoi(row[4])), atoi(row[4]), atoi(row[1]));
-					x++;
-				}
-				c->Message(0, " %u backups found.", x);
-				mysql_free_result(result);
-			}
-			else {
-				c->Message(13, "Query error: '%s' %s", query, errbuf);
-				safe_delete(query);
-			}
-		}
-		else
-			c->Message(0, "Usage: #charbackup list [char name/id]");
-	}
-	else if (strcasecmp(sep->arg[1], "restore") == 0) {
-		uint32 charid = 0;
-		if (sep->IsNumber(2))
-			charid = atoi(sep->arg[2]);
-		else
-			database.GetAccountIDByChar(sep->arg[2], &charid);
-
-		if (charid && sep->IsNumber(3)) {
-			uint32 cbid = atoi(sep->arg[3]);
-			if (database.RunQuery(query, MakeAnyLenString(&query,
-				"Insert into character_backup (backupreason, charid, account_id, name, profile, level, class, x, y, z, zoneid, alt_adv) "
-				" select 1, id, account_id, name, profile, level, class, x, y, z, zoneid, alt_adv from character_ where id=%u", charid), errbuf)) {
-				if (database.RunQuery(query, MakeAnyLenString(&query,
-					"update character_ inner join character_backup on character_.id = character_backup.charid "
-					" set character_.name = character_backup.name, "
-					" character_.profile = character_backup.profile, "
-					" character_.level = character_backup.level, "
-					" character_.class = character_backup.class, "
-					" character_.x = character_backup.x, "
-					" character_.y = character_backup.y, "
-					" character_.z = character_backup.z, "
-					" character_.zoneid = character_backup.zoneid "
-					" where character_backup.charid=%u and character_backup.id=%u", charid, cbid), errbuf)) {
-					safe_delete(query);
-					c->Message(0, "Character restored.");
-				}
-				else {
-					c->Message(13, "Query error: '%s' %s", query, errbuf);
-					safe_delete(query);
-				}
-			}
-			else {
-				c->Message(13, "Query error: '%s' %s", query, errbuf);
-				safe_delete(query);
-			}
-		}
-		else
-			c->Message(0, "Usage: #charbackup list [char name/id]");
-	}
-	else {
-		c->Message(0, "#charbackup sub-commands:");
-		c->Message(0, "  list [char name/id]");
-		c->Message(0, "  restore [char name/id] [backup#]");
-	}
-}
-
 void command_nukeitem(Client *c, const Seperator *sep){
 	int numitems, itemid;
 
@@ -3361,7 +3277,7 @@ void command_corpse(Client *c, const Seperator *sep){
 			c->Message(0, "Error: Target must be a player corpse.");
 		else if (c->Admin() >= commandEditPlayerCorpses && target->IsPlayerCorpse()) {
 			c->Message(0, "Depoping %s.", target->GetName());
-			target->CastToCorpse()->DepopCorpse();
+			target->CastToCorpse()->DepopPlayerCorpse();
 			if (!sep->arg[2][0] || atoi(sep->arg[2]) != 0)
 				target->CastToCorpse()->Bury();
 		}
@@ -3841,7 +3757,7 @@ void command_save(Client *c, const Seperator *sep){
 	}
 	else if (c->GetTarget()->IsPlayerCorpse()) {
 		if (c->GetTarget()->CastToMob()->Save())
-			c->Message(0, "%s successfully saved. (dbid=%u)", c->GetTarget()->GetName(), c->GetTarget()->CastToCorpse()->GetDBID());
+			c->Message(0, "%s successfully saved. (dbid=%u)", c->GetTarget()->GetName(), c->GetTarget()->CastToCorpse()->GetCorpseDBID());
 		else
 			c->Message(0, "Manual save for %s failed.", c->GetTarget()->GetName());
 	}
@@ -4847,52 +4763,6 @@ void command_manaburn(Client *c, const Seperator *sep){
 			else
 				c->Message(0, "You have not learned this skill.");
 		}
-	}
-}
-
-void command_viewmessage(Client *c, const Seperator *sep){
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	if (sep->arg[1][0] == 0)
-	{
-		if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT id,date,receiver,sender,message from tellque where receiver='%s'", c->GetName()), errbuf, &result))
-		{
-			if (mysql_num_rows(result)>0)
-			{
-				c->Message(0, "You have messages waiting for you to view.");
-				c->Message(0, "Type #Viewmessage <Message ID> to view the message.");
-				c->Message(0, " ID , Message Sent Date, Message Sender");
-				while ((row = mysql_fetch_row(result)))
-					c->Message(0, "ID: %s Sent Date: %s Sender: %s ", row[0], row[1], row[3]);
-			}
-			else
-				c->Message(0, "You have no new messages");
-			mysql_free_result(result);
-		}
-		safe_delete_array(query);
-	}
-	else
-	{
-		if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT id,date,receiver,sender,message from tellque where id=%s", sep->argplus[1]), errbuf, &result))
-		{
-			if (mysql_num_rows(result) == 1)
-			{
-				row = mysql_fetch_row(result);
-				mysql_free_result(result);
-				if (strcasecmp((const char *)c->GetName(), (const char *)row[2]) == 0)
-				{
-					c->Message(15, "ID: %s,Sent Date: %s,Sender: %s,Message: %s", row[0], row[1], row[3], row[4]);
-					database.RunQuery(query, MakeAnyLenString(&query, "Delete from tellque where id=%s", row[0]), errbuf);
-				}
-				else
-					c->Message(13, "Invalid Message Number, check the number and try again.");
-			}
-			else
-				c->Message(13, "Invalid Message Number, check the number and try again.");
-		}
-		safe_delete_array(query);
 	}
 }
 
@@ -8311,7 +8181,7 @@ void command_setgraveyard(Client *c, const Seperator *sep){
 	zoneid = database.GetZoneID(sep->arg[1]);
 
 	if (zoneid > 0) {
-		graveyard_id = database.NewGraveyardRecord(zoneid, t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+		graveyard_id = database.CreateGraveyardRecord(zoneid, t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
 
 		if (graveyard_id > 0) {
 			c->Message(0, "Successfuly added a new record for this graveyard!");
@@ -8372,7 +8242,7 @@ void command_summonburriedplayercorpse(Client *c, const Seperator *sep){
 		return;
 	}
 
-	Corpse* PlayerCorpse = database.SummonBurriedPlayerCorpse(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
 
 	if (!PlayerCorpse)
 		c->Message(0, "Your target doesn't have any burried corpses.");
@@ -8390,7 +8260,7 @@ void command_getplayerburriedcorpsecount(Client *c, const Seperator *sep){
 		return;
 	}
 
-	uint32 CorpseCount = database.GetPlayerBurriedCorpseCount(t->CharacterID());
+	uint32 CorpseCount = database.GetCharacterBuriedCorpseCount(t->CharacterID());
 
 	if (CorpseCount > 0)
 		c->Message(0, "Your target has a total of %u burried corpses.", CorpseCount);
