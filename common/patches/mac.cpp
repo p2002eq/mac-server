@@ -336,6 +336,9 @@ namespace Mac {
 		{
 			OUT(item_material[r]);
 		}
+		OUT(abilitySlotRefresh);
+		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
+		eq->eqbackground = 0;
 
 		//_log(NET__STRUCTS, "Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
