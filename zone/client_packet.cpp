@@ -2693,7 +2693,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(m_Position.m_X, m_Position.m_Y, m_Position.m_Z) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		if(zone->watermap->InLiquid(m_Position) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
 			if(zone->random.Roll(50))

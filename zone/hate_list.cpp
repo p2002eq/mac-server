@@ -202,7 +202,7 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 		parse->EventNPC(EVENT_HATE_LIST, owner->CastToNPC(), ent, "1", 0);
 
 		if (ent->IsClient()) {
-			if (owner->CastToNPC()->IsRaidTarget()) 
+			if (owner->CastToNPC()->IsRaidTarget())
 				ent->CastToClient()->SetEngagedRaidTarget(true);
 			ent->CastToClient()->IncrementAggroCount();
 		}
@@ -225,7 +225,7 @@ bool HateList::RemoveEnt(Mob *ent)
 			parse->EventNPC(EVENT_HATE_LIST, owner->CastToNPC(), ent, "0", 0);
 			found = true;
 
-			
+
 			if(ent && ent->IsClient())
 				ent->CastToClient()->DecrementAggroCount();
 
@@ -266,11 +266,11 @@ int HateList::SummonedPetCount(Mob *hater) {
 	auto iterator = list.begin();
 	while(iterator != list.end()) {
 
-		if((*iterator)->ent != nullptr && (*iterator)->ent->IsNPC() && 	((*iterator)->ent->CastToNPC()->IsPet() || ((*iterator)->ent->CastToNPC()->GetSwarmOwner() > 0))) 
+		if((*iterator)->ent != nullptr && (*iterator)->ent->IsNPC() && 	((*iterator)->ent->CastToNPC()->IsPet() || ((*iterator)->ent->CastToNPC()->GetSwarmOwner() > 0)))
 		{
 			++petcount;
 		}
-		
+
 		++iterator;
 	}
 
@@ -306,15 +306,16 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
+            auto hateEntryPosition = xyz_location(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ())) {
+				if(!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
 					continue;
 				}
 			}
 
-			if (cur->ent->Sanctuary()) { 
+			if (cur->ent->Sanctuary()) {
 				if(hate == -1)
 				{
 					top = cur->ent;
@@ -416,8 +417,9 @@ Mob *HateList::GetTop(Mob *center)
 		while(iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
+            auto hateEntryPosition = xyz_location(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ())) {
+				if(!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
 					continue;

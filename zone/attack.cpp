@@ -2314,8 +2314,9 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
+    auto otherPosition = xyz_location(other->GetX(), other->GetY(), other->GetZ());
 	if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-		if(!zone->watermap->InLiquid(other->GetX(), other->GetY(), other->GetZ())) {
+		if(!zone->watermap->InLiquid(otherPosition)) {
 			return;
 		}
 	}
@@ -3080,6 +3081,7 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 		// Reduce damage by the Spell Shielding first so that the runes don't take the raw damage.
 		damage -= (damage * itembonuses.SpellShield / 100);
 
+
 		//Only mitigate if damage is above the minimium specified.
 		if (spellbonuses.SpellThresholdGuard[0]){
 			slot = spellbonuses.SpellThresholdGuard[1];
@@ -3101,6 +3103,7 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 				}
 			}
 		}
+
 
 		// Do runes now.
 		if (spellbonuses.MitigateSpellRune[0] && !DisableSpellRune){
@@ -3249,6 +3252,7 @@ bool Client::CheckDoubleAttack(bool tripleAttack) {
 }
 
 bool Client::CheckDoubleRangedAttack() {
+
 	int32 chance = spellbonuses.DoubleRangedAttack + itembonuses.DoubleRangedAttack + aabonuses.DoubleRangedAttack;
 
 	if(chance && zone->random.Roll(chance))
@@ -4238,14 +4242,16 @@ void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, ui
 	if (spellbonuses.LimitToSkill[skill]){
 
 		for(int e = 0; e < MAX_SKILL_PROCS; e++){
+
 			if (CanProc &&
-				(!Success && spellbonuses.SkillProc[e] && IsValidSpell(spellbonuses.SkillProc[e])) 
+				(!Success && spellbonuses.SkillProc[e] && IsValidSpell(spellbonuses.SkillProc[e]))
 				|| (Success && spellbonuses.SkillProcSuccess[e] && IsValidSpell(spellbonuses.SkillProcSuccess[e]))) {
 				base_spell_id = spellbonuses.SkillProc[e];
 				base_spell_id = 0;
 				ProcMod = 0;
 
 				for (int i = 0; i < EFFECT_COUNT; i++) {
+
 					if (spells[base_spell_id].effectid[i] == SE_SkillProc) {
 						proc_spell_id = spells[base_spell_id].base[i];
 						ProcMod = static_cast<float>(spells[base_spell_id].base2[i]);
@@ -4275,14 +4281,16 @@ void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, ui
 	if (itembonuses.LimitToSkill[skill]){
 		CanProc = true;
 		for(int e = 0; e < MAX_SKILL_PROCS; e++){
+
 			if (CanProc &&
-				((!Success && itembonuses.SkillProc[e] && IsValidSpell(itembonuses.SkillProc[e]))
-				|| (Success && itembonuses.SkillProcSuccess[e] && IsValidSpell(itembonuses.SkillProcSuccess[e])))) {
+				(!Success && itembonuses.SkillProc[e] && IsValidSpell(itembonuses.SkillProc[e]))
+				|| (Success && itembonuses.SkillProcSuccess[e] && IsValidSpell(itembonuses.SkillProcSuccess[e]))) {
 				base_spell_id = itembonuses.SkillProc[e];
 				base_spell_id = 0;
 				ProcMod = 0;
 
 				for (int i = 0; i < EFFECT_COUNT; i++) {
+
 					if (spells[base_spell_id].effectid[i] == SE_SkillProc) {
 						proc_spell_id = spells[base_spell_id].base[i];
 						ProcMod = static_cast<float>(spells[base_spell_id].base2[i]);
@@ -4317,9 +4325,10 @@ void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, ui
 		uint32 slot = 0;
 
 		for(int e = 0; e < MAX_SKILL_PROCS; e++){
+
 			if (CanProc &&
-				((!Success && aabonuses.SkillProc[e])
-				|| (Success && aabonuses.SkillProcSuccess[e]))) {
+				(!Success && aabonuses.SkillProc[e])
+				|| (Success && aabonuses.SkillProcSuccess[e])){
 				int aaid = aabonuses.SkillProc[e];
 				base_spell_id = 0;
 				ProcMod = 0;
@@ -4369,6 +4378,7 @@ float Mob::GetSkillProcChances(uint16 ReuseTime, uint16 hand) {
 	if (!ReuseTime && hand) {
 		weapon_speed = GetWeaponSpeedbyHand(hand);
 		ProcChance = static_cast<float>(weapon_speed) * (RuleR(Combat, AvgProcsPerMinute) / 60000.0f);
+
 		if (hand != MainPrimary)
 			ProcChance /= 2;
 	}
@@ -4381,17 +4391,17 @@ float Mob::GetSkillProcChances(uint16 ReuseTime, uint16 hand) {
 
 bool Mob::TryRootFadeByDamage(int buffslot, Mob* attacker) {
 
-	/*Dev Quote 2010: http://forums.station.sony.com/eq/posts/list.m?topic_id=161443
-	The Viscid Roots AA does the following: Reduces the chance for root to break by X percent.
-	There is no distinction of any kind between the caster inflicted damage, or anyone
-	else's damage. There is also no distinction between Direct and DOT damage in the root code.
+ 	/*Dev Quote 2010: http://forums.station.sony.com/eq/posts/list.m?topic_id=161443
+ 	The Viscid Roots AA does the following: Reduces the chance for root to break by X percent.
+ 	There is no distinction of any kind between the caster inflicted damage, or anyone
+ 	else's damage. There is also no distinction between Direct and DOT damage in the root code.
 
-	General Mechanics
-	- Check buffslot to make sure damage from a root does not cancel the root
-	- If multiple roots on target, always and only checks first root slot and if broken only removes that slots root.
-	- Only roots on determental spells can be broken by damage.
+ 	/* General Mechanics
+ 	- Check buffslot to make sure damage from a root does not cancel the root
+ 	- If multiple roots on target, always and only checks first root slot and if broken only removes that slots root.
+ 	- Only roots on determental spells can be broken by damage.
 	- Root break chance values obtained from live parses.
-	*/
+ 	*/
 
 	if (!attacker || !spellbonuses.Root[0] || spellbonuses.Root[1] < 0)
 		return false;
@@ -4456,6 +4466,7 @@ int32 Mob::RuneAbsorb(int32 damage, uint16 type)
 			}
 		}
 	}
+
 
 	else{
 		for(uint32 slot = 0; slot < buff_max; slot++) {
