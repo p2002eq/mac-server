@@ -1310,26 +1310,24 @@ bool ZoneDatabase::LoadAAEffects2() {
 
 	return true;
 }
+
 uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	int32 skill_id = 0;
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT skill_id from altadv_vars where eqmacid=%i", eqmacid), errbuf, &result)) {
-		safe_delete_array(query);
-		if (mysql_num_rows(result) == 1) {
-			row = mysql_fetch_row(result);
-			skill_id=atoi(row[0]);
-		}
-		mysql_free_result(result);
-	} else {
-		LogFile->write(EQEMuLog::Error, "Error in GetMacToEmuAA '%s: %s", query, errbuf);
-		safe_delete_array(query);
+
+	std::string query = StringFormat("SELECT skill_id from altadv_vars where eqmacid=%i", eqmacid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0)
+	{
+		LogFile->write(EQEMuLog::Error, "Error in GetMacToEmuAA");
+		return 0;
 	}
-	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", skill_id);
-	return skill_id;
+
+	auto row = results.begin();
+
+	LogFile->write(EQEMuLog::Debug, "GetMacToEmuAA is returning: %i", atoi(row[0]));
+	return atoi(row[0]);
 }
+
 void Client::ResetAA(){
 	RefundAA(); 
 	uint32 i;

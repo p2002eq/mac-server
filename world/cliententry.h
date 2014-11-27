@@ -5,6 +5,8 @@
 #include "../common/md5.h"
 //#include "../common/eq_packet_structs.h"
 #include "../common/servertalk.h"
+#include "../common/rulesys.h"
+#include <vector>
 
 
 #define CLE_Status_Never		-1
@@ -81,6 +83,11 @@ public:
 	inline uint8	GetClientVersion() { return pClientVersion; }
 	inline uint8	GetMacClientVersion() { return pversion; }
 
+	inline bool TellQueueFull() const { return tell_queue.size() >= RuleI(World, TellQueueSize); }
+	inline bool TellQueueEmpty() const { return tell_queue.empty(); }
+	inline void PushToTellQueue(ServerChannelMessage_Struct *scm) { tell_queue.push_back(scm); }
+	void ProcessTellQueue();
+
 private:
 	void	ClearVars(bool iAll = false);
 
@@ -123,6 +130,8 @@ private:
 	bool	pLFGMatchFilter;
 	char	pLFGComments[64];
 
+	// Tell Queue -- really a vector :D
+	std::vector<ServerChannelMessage_Struct *> tell_queue;
 };
 
 #endif /*CLIENTENTRY_H_*/

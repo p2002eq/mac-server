@@ -905,18 +905,21 @@ bool Database::CheckDatabaseConversions() {
 	CheckDatabaseConvertPPDeblob(); 
 	CheckDatabaseConvertCorpseDeblob();
 
-	/* Fetch Automatic Database Upgrade Script */
-	if (!std::ifstream("db_update.pl")){
-		std::cout << "Pulling down automatic database upgrade script...\n" << std::endl;
-#ifdef _WIN32
-		system("perl -MLWP::UserAgent -e \"require LWP::UserAgent;  my $ua = LWP::UserAgent->new; $ua->timeout(10); $ua->env_proxy; my $response = $ua->get('https://raw.githubusercontent.com/EQEmu/Server/master/utils/scripts/db_update.pl'); if ($response->is_success){ open(FILE, '> db_update.pl'); print FILE $response->decoded_content; close(FILE); }\"");
-#else
-		system("wget -O db_update.pl https://raw.githubusercontent.com/EQEmu/Server/master/utils/scripts/db_update.pl");
-#endif
-	}
+	if(RuleB(World,UseDBUpdate))
+	{
+		/* Fetch Automatic Database Upgrade Script */
+		if (!std::ifstream("db_update.pl")){
+			std::cout << "Pulling down automatic database upgrade script...\n" << std::endl;
+	#ifdef _WIN32
+			system("perl -MLWP::UserAgent -e \"require LWP::UserAgent;  my $ua = LWP::UserAgent->new; $ua->timeout(10); $ua->env_proxy; my $response = $ua->get('https://raw.githubusercontent.com/EQEmu/Server/master/utils/scripts/db_update.pl'); if ($response->is_success){ open(FILE, '> db_update.pl'); print FILE $response->decoded_content; close(FILE); }\"");
+	#else
+			system("wget -O db_update.pl https://raw.githubusercontent.com/EQEmu/Server/master/utils/scripts/db_update.pl");
+	#endif
+		}
 
-	/* Run Automatic Database Upgrade Script */
-	system("perl db_update.pl ran_from_world"); 
+		/* Run Automatic Database Upgrade Script */
+		system("perl db_update.pl ran_from_world"); 
+	}
 
 	return true;
 }
@@ -3180,26 +3183,19 @@ void Database::ClearGroupLeader(uint32 gid) {
 
 uint16 Database::GetExpansion(uint32 acctid)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES* result;
-	MYSQL_ROW row;
 
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT expansion FROM account WHERE id=%i",acctid), errbuf, &result)) {
-		safe_delete_array(query);
-		if (mysql_num_rows(result) == 1)
-		{
-			row = mysql_fetch_row(result);
-			uint16 expansion = atoi(row[0]);
-			mysql_free_result(result);
-			return expansion;
-		}
-	}
-	else
-	{
-		safe_delete_array(query);
-	}
-	return 0;
+	std::string query = StringFormat("SELECT expansion FROM account WHERE id=%i",acctid);
+	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+		return 0;
+
+	if (results.RowCount() != 1)
+		return 0;
+
+	auto row = results.begin();
+
+	return atoi(row[0]);
 }
 
 uint8 Database::GetAgreementFlag(uint32 acctid)
@@ -3814,28 +3810,13 @@ bool Database::GlobalInstance(uint16 instance_id)
 
 struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
+
 	TimeOfDay_Struct eqTime;
-	if(RunQuery(query, MakeAnyLenString(&query, "SELECT minute,hour,day,month,year,realtime FROM eqtime limit 1"), errbuf, &result))
+	std::string query = StringFormat("SELECT minute,hour,day,month,year,realtime FROM eqtime limit 1");
+	auto results = QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0)
 	{
-		safe_delete_array(query);
-		while((row = mysql_fetch_row(result)) != nullptr)
-		{
-			eqTime.minute = atoi(row[0]);
-			eqTime.hour = atoi(row[1]);
-			eqTime.day = atoi(row[2]);
-			eqTime.month = atoi(row[3]);
-			eqTime.year = atoi(row[4]);
-			realtime = atoi(row[5]);
-		}
-		mysql_free_result(result);
-	} 
-	else
-	{
-		safe_delete_array(query);
 		_log(WORLD__INIT, "Loading EQ time of day failed. Using defaults.");
 		eqTime.minute = 0;
 		eqTime.hour = 9;
@@ -3845,16 +3826,23 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 		realtime = time(0);
 	}
 
+	auto row = results.begin();
+
+	eqTime.minute = atoi(row[0]);
+	eqTime.hour = atoi(row[1]);
+	eqTime.day = atoi(row[2]);
+	eqTime.month = atoi(row[3]);
+	eqTime.year = atoi(row[4]);
+	realtime = atoi(row[5]);
+
 	return eqTime;
 }
 
 bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year)
 {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char* query = 0;
-	if(!RunQuery(query, MakeAnyLenString(&query, "UPDATE eqtime set minute = %d, hour = %d, day = %d, month = %d, year = %d, realtime = %d limit 1", minute, hour, day, month, year, time(0)), errbuf)) {
-		LogFile->write(EQEMuLog::Error, "WorldDatabase::SaveTime(): %s", errbuf);
-		return false;
-	}
-	return true;
+	std::string query = StringFormat("UPDATE eqtime set minute = %d, hour = %d, day = %d, month = %d, year = %d, realtime = %d limit 1", minute, hour, day, month, year, time(0));
+	auto results = QueryDatabase(query);
+
+	return results.Success();
+
 }

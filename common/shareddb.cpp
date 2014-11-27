@@ -1783,33 +1783,25 @@ const LootDrop_Struct* SharedDatabase::GetLootDrop(uint32 lootdrop_id) {
 }
 
 bool SharedDatabase::VerifyToken(std::string token, int& status) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = 0;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	bool res = false;
 	status = 0;
-	if (token.length() > 64) {
+	if (token.length() > 64) 
+	{
 		token = token.substr(0, 64);
 	}
 
 	token = EscapeString(token);
 
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT status FROM tokens WHERE token='%s'", token.c_str()), errbuf, &result)) {
-		safe_delete_array(query);
+	std::string query = StringFormat("SELECT status FROM tokens WHERE token='%s'", token.c_str());
+	auto results = QueryDatabase(query);
 
-		row = mysql_fetch_row(result);
-		if (row) {
-			status = atoi(row[0]);
-			res = true;
-		}
-
-		mysql_free_result(result);
-	}
-	else {
-		std::cerr << "Error in SharedDatabase::VerifyToken query '" << query << "' " << errbuf << std::endl;
-		safe_delete_array(query);
+	if (!results.Success() || results.RowCount() == 0)
+	{
+		std::cerr << "Error in SharedDatabase::VerifyToken" << std::endl;
 	}
 
-	return res;
+	auto row = results.begin();
+
+	status = atoi(row[0]);
+
+	return results.Success();
 }
