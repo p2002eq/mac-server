@@ -31,6 +31,27 @@ void EncryptProfilePacket(EQApplicationPacket* app) {
 	//EncryptProfilePacket(app->pBuffer, app->size);
 }
 
+void EncryptOldProfilePacket(uchar* pBuffer, uint32 size)
+{
+	int32* data=(int32*)pBuffer;
+	int32 crypt = 0x65e7;
+	int32 next_crypt;
+	uint32 len = size;
+
+	int32 swap = data[0];
+	data[0] = data[len/8];
+	data[len/8] = swap;
+
+	for(int i=0; i<len/4;i++)
+	{
+		next_crypt = crypt+data[i]-0x37a9;
+		data[i] = ((data[i]<<0x07)|(data[i]>>0x19))+0x37a9;
+		data[i] =  (data[i]<<0x0f)|(data[i]>>0x11);
+		data[i] = data[i] - crypt;
+		crypt = next_crypt;
+	}
+}
+
 void EncryptProfilePacket(uchar* pBuffer, uint32 size) {
 	uint64* data=(uint64*)pBuffer;
 	uint64 crypt = 0x659365E7;

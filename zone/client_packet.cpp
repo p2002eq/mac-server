@@ -1007,11 +1007,11 @@ void Client::Handle_Connect_OP_WearChange(const EQApplicationPacket *app)
 
 void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(ClientZoneEntry_Struct))
+	if (app->size != sizeof(OldClientZoneEntry_Struct))
 		return;
-	ClientZoneEntry_Struct *cze = (ClientZoneEntry_Struct *)app->pBuffer;
+	OldClientZoneEntry_Struct *cze = (OldClientZoneEntry_Struct *)app->pBuffer;
 
-	if (strlen(cze->char_name) > 63)
+	if (strlen(cze->char_name) > 31)
 		return;
 
 	conn_state = ReceivedZoneEntry;
@@ -1298,7 +1298,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 		}
 	}
-
 	if (SPDAT_RECORDS > 0)
 	{
 		database.LoadBuffs(this);
@@ -1448,12 +1447,16 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				pps->skills[s] = 255;
 		}
 	}
+
+	if(GetClientVersion() == EQClientTrilogy)
+		strcpy(pps->current_zone, database.GetZoneName(pps->zone_id));
+
 	// The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA
 	m_pp.entityid = GetID();
 	memcpy(outapp->pBuffer, pps, outapp->size);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
-
+	_log(EQMAC__LOG, "PP");
 	database.LoadPetInfo(this);
 
 	/* Moved here so it's after where we load the pet data. */
@@ -1463,38 +1466,39 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Server Zone Entry Packet */
 	outapp = new EQApplicationPacket(OP_ZoneEntry, sizeof(ServerZoneEntry_Struct));
 	ServerZoneEntry_Struct* sze = (ServerZoneEntry_Struct*)outapp->pBuffer;
-
+	_log(EQMAC__LOG, "Zone Entry");
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
 	sze->player.spawn.z += 2;	//arbitrary lift, seems to help spawning under zone.
 	sze->player.spawn.zoneID = zone->GetZoneID();
+	strncpy(sze->player.spawn.zonename, zone->GetShortName(), 15);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
-
+	//_log(EQMAC__LOG, "Spawns");
 	/* Zone Spawns Packet */
-	entity_list.SendZoneSpawnsBulk(this);
-	entity_list.SendZoneCorpsesBulk(this);
-	entity_list.SendZonePVPUpdates(this);	//hack until spawn struct is fixed.
-
+//	entity_list.SendZoneSpawnsBulk(this);
+//	entity_list.SendZoneCorpsesBulk(this);
+//	entity_list.SendZonePVPUpdates(this);	//hack until spawn struct is fixed.
+//	_log(EQMAC__LOG, "Time");
 	/* Time of Day packet */
-	outapp = new EQApplicationPacket(OP_TimeOfDay, sizeof(TimeOfDay_Struct));
+	/*outapp = new EQApplicationPacket(OP_TimeOfDay, sizeof(TimeOfDay_Struct));
 	TimeOfDay_Struct* tod = (TimeOfDay_Struct*)outapp->pBuffer;
 	zone->zone_time.getEQTimeOfDay(time(0), tod);
 	outapp->priority = 6;
-	FastQueuePacket(&outapp);
+	FastQueuePacket(&outapp);*/
 
 	/*
 	Character Inventory Packet
 	this is not quite where live sends inventory, they do it after tribute
 	*/
-	if (loaditems) { /* Dont load if a length error occurs */
+/*	if (loaditems) {  //Dont load if a length error occurs 
 		BulkSendItems();
 		BulkSendInventoryItems();
-		/* Send stuff on the cursor which isnt sent in bulk */
+		/* Send stuff on the cursor which isnt sent in bulk 
 		iter_queue it;
 		for (it = m_inv.cursor_begin(); it != m_inv.cursor_end(); ++it) {
-			/* First item cursor is sent in bulk inventory packet */
+			/* First item cursor is sent in bulk inventory packet
 			if (it == m_inv.cursor_begin())
 				continue;
 			const ItemInst *inst = *it;
@@ -1511,8 +1515,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				_log(EQMAC__LOG, "Sending cursor bag item %s in slot: %i to %s", inst->GetItem()->Name, slot_id, GetName());
 			}
 		}
-	}
-
+	}*/
+	_log(EQMAC__LOG, "Weather");
 	/*
 	Weather Packet
 	This shouldent be moved, this seems to be what the client

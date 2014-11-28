@@ -315,6 +315,7 @@ union
 	uint8 DestructibleUnk8;
 	uint32 DestructibleUnk9;
 	uint32 zoneID; // for mac.
+	char  zonename[15]; //For trilogy.
 
 };
 
@@ -333,7 +334,11 @@ struct ClientZoneEntry_Struct {
 /*0004*/	char	char_name[64];			// Character Name
 };
 
-
+struct OldClientZoneEntry_Struct {
+/*0000*/	uint32	unknown00;
+/*0004*/	char	char_name[32];			// Character Name
+};
+ 
 /*
 ** Server Zone Entry Struct
 ** OPCodes: OP_ServerZoneEntry
@@ -529,7 +534,7 @@ struct ItemProperties_Struct {
 
 uint8	unknown01[2];
 uint8	charges;
-uint8	unknown02[13];
+uint8	unknown02[7]; //was 13
 };
 
 struct GMTrainee_Struct
@@ -917,7 +922,7 @@ struct PlayerProfile_Struct
 /*5476*/	int32				hunger_level;
 /*5480*/	int32				thirst_level;
 /*5484*/	uint32				ability_up;
-/*5488*/	char				unknown5524[16];
+/*5488*/	char				current_zone[16];
 /*5504*/	uint16				zone_id;			// Current zone of the player
 /*5506*/	uint16				zoneInstance;		// Instance ID
 /*5508*/	SpellBuff_Struct	buffs[BUFF_COUNT];	// Buffs currently on the player

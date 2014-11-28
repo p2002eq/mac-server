@@ -28,6 +28,7 @@ uint64 rorl(uint64 in, uint8 bits);
 
 void EncryptProfilePacket(EQApplicationPacket* app);
 void EncryptProfilePacket(uchar* pBuffer, uint32 size);
+void EncryptOldProfilePacket(uchar* pBuffer, uint32 size);
 
 void EncryptSpawnPacket(EQApplicationPacket* app);
 void EncryptSpawnPacket(uchar* pBuffer, uint32 size);

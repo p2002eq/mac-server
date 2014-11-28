@@ -133,78 +133,61 @@ struct CharWeapon_Struct
 	/*040*/
 };
 
-struct ServerZoneEntry_Struct 
+struct ClientZoneEntry_Struct {
+/*0000*/	uint32	unknown00;
+/*0004*/	char	char_name[32];			// Character Name
+};
+
+struct ServerZoneEntry_Struct
 {
-	/*0000*/	uint8	checksum[4];		// Checksum
-	/*0004*/	uint8	type;		// ***Placeholder
-	/*0005*/	char	name[64];			// Name
-	/*0069*/	uint8	sze_unknown0069;	// ***Placeholder
-	/*0070*/	uint16	unknown0070;		// ***Placeholder
-	/*0072*/	uint32	zoneID;				// Current Zone
-	/*0076*/	float	y_pos;				// Y Position
-	/*0080*/	float	x_pos;				// X Position
-	/*0084*/	float	z_pos;				// Z Position
-	/*0088*/	float	heading;
-	/*0092*/	float	physicsinfo[8];
-	/*0124*/	int32	prev;
-	/*0128*/	int32	next;
-	/*0132*/	int32	corpse;
-	/*0136*/	int32	LocalInfo;
-	/*0140*/	int32	My_Char;
-	/*0144*/	float	view_height;
-	/*0148*/	float	sprite_oheight;
-	/*0152*/	uint16	sprite_oheights;
-	/*0154*/	uint16	petOwnerId;
-	/*0156*/	uint32	max_hp;
-	/*0160*/	uint32	curHP;
-	/*0164*/	uint16	GuildID;			// Guild ID Number
-	/*0166*/	uint8	my_socket[6];		// ***Placeholder
-	/*0172*/	uint8	NPC;
-	/*0173*/	uint8	class_;				// Class
-	/*0174*/	uint16	race;				// Race
-	/*0176*/	uint8	gender;				// Gender
-	/*0177*/	uint8	level;				// Level
-	/*0178*/	uint8	invis;
-	/*0179*/	uint8	sneaking;
-	/*0180*/	uint8	pvp;				// PVP Flag
-	/*0181*/	uint8	anim_type;
-	/*0182*/	uint8	light;
-	/*0183*/	int8	face;				// Face Type
-	/*0184*/    uint16  equipment[9]; // Array elements correspond to struct equipment above
-	/*0202*/	uint16	unknown; //Probably part of equipment
-	/*0204*/	Color_Struct equipcolors[9]; // Array elements correspond to struct equipment_colors above
-	/*0240*/	uint32	texture;	// Texture (0xFF=Player - See list of textures for more)
-	/*0244*/	float	size;
-	/*0248*/	float	width;
-	/*0252*/	float	length;
-	/*0256*/	uint32	helm;
-	/*0260*/	float	walkspeed;			// Speed when you walk
-	/*0264*/	float	runspeed;			// Speed when you run
-	/*0268*/	int8	LD;
-	/*0269*/	int8	GM;
-	/*0270*/	int16	flymode;
-	/*0272*/	int8	bodytype;
-	/*0273*/	int8	view_player[7];
-	/*0280*/	uint8	anon;				// Anon. Flag
-	/*0281*/	uint16	avatar;
-	/*0283*/	uint8	AFK;
-	/*0284*/	uint8	summoned;
-	/*0285*/	uint8	title;
-	/*0286*/	uint8	extra[18];	// ***Placeholder (At least one flag in here disables a zone point or all)
-	/*0304*/	char	Surname[32];		// Lastname (This has to be wrong.. but 70 is to big =/..)
-	/*0336*/	uint16  guildrank;
-	/*0338*/	uint16	deity;				// Diety (Who you worship for those less literate)
-	/*0340*/	uint8	animation;		// ***Placeholder
-	/*0341*/	uint8	haircolor;			// Hair Color
-	/*0342*/	uint8	beardcolor;			// Beard Color
-	/*0343*/	uint8	eyecolor1;			// Left Eye Color
-	/*0344*/	uint8	eyecolor2;			// Right Eye Color
-	/*0345*/	uint8	hairstyle;			// Hair Style
-	/*0346*/	uint8	beard;				// AA Title
-	/*0347*/	uint32	SerialNumber;
-	/*0351*/	char	m_bTemporaryPet[4];
-	/*0355*/	uint8	void_;
-	/*0356*/
+/*000*/	int8	checksum[4];			// Comment: 
+/*004*/	int8	sze_unknown1;			// Comment: 
+/*005*/	char	name[30];				// Comment: 
+/*035*/	char	zone[15];				// Comment: 
+/*050*/	int8	sze_unknown2[6];		// Comment: 
+/*056*/	float	y_pos;						// Comment: 
+/*060*/	float	x_pos;						// Comment: 
+/*064*/	float	z_pos;						// Comment: 
+/*068*/ float   heading;				// Comment: Cofruben: es cierto que heading est aqu? sino aadir 4 bytes mas al siguiente.
+/*072*/ int8    sze_unknown3[66];		// Comment: 
+/*138*/	uint16	petOwnerId;
+/*140*/	uint32	max_hp;
+/*144*/	uint32	curHP;
+/*148*/ int16   GuildID;				// Comment: 
+/*150*/	uint8	my_socket[6];		// ***Placeholder
+/*156*/ uint8	NPC;
+/*157*/ int8    class_;					// Comment: 
+/*158*/	int16	race;					// Comment: Cofruben: sino va bien, hacerlo int8 y aadir despues un unknown
+/*160*/	int8	gender;					// Comment: 
+/*161*/	int8	level;					// Comment: 
+/*162*/	int8    invis;
+/*163*/	int8	sneaking;
+/*164*/	int8    pvp;					// Comment: 0x0=non_pvp 0x1=pvp
+/*165*/	int8    anim_type;
+/*166*/	int8    light;
+/*167*/	int8    face;					// Comment: 
+/*168*/	uint8   equipment[9]; // Array elements correspond to struct equipment above
+/*177*/	int8    sze_unknown5_2_2_6[3];	// Comment: 
+/*180*/	Color_Struct equipcolors[9]; // Array elements correspond to struct equipment_colors above
+/*216*/	uint32	texture;	// Texture (0xFF=Player - See list of textures for more)
+/*220*/	float	size;
+/*224*/	float	width;
+/*228*/	float	length;
+/*232*/	uint32	helm;
+/*236*/	float   walkspeed;				// Comment: 
+/*240*/	float   runspeed;				// Comment: 
+/*244*/	int8	LD;
+/*245*/	int8	GM;
+/*246*/	int16	flymode;
+/*248*/	int8	bodytype;
+/*249*/	int8	view_player[7];
+/*256*/	int8    anon;					// Comment: 
+/*257*/	int8    sze_unknown6_13[23];	// Comment: At least one flag in here disables a zone point or all
+/*280*/ char	Surname[20];			// Comment: 
+/*300*/	int8    sze_unknown_add2[2];	// Comment: 
+/*302*/ int16	deity;					// Comment: 
+/*304*/ int8	sze_unknown_add2_1[8];	// Comment: 
+/*312*/
 };
 
 struct ZoneServerInfo_Struct
@@ -2467,163 +2450,116 @@ struct AA_Array
 	uint8 value;
 };
 
+static const uint32 MAX_PP_MEMSPELL		= 8;
 static const uint32  MAX_PP_AA_ARRAY		= 120;
 static const uint32 MAX_PP_SKILL		= 74; // _SkillPacketArraySize;	// 100 - actual skills buffer size
+
 struct PlayerProfile_Struct
 {
-	#define pp_inventory_size 30
-	#define pp_containerinv_size 80
-	#define pp_cursorbaginventory_size 10
-	#define pp_bank_inv_size 8
-	#define pp_bank_cont_inv_size 80
-	/* ***************** */
-	/*0000*/	uint32  checksum;		    // Checksum
-	/*0004*/	uint8	unknown0004[2];		// ***Placeholder
-	/*0006*/	char	name[64];			// Player First Name
-	/*0070*/	char	Surname[66];		// Surname OR title.
-	/*0136*/	uint32	uniqueGuildID;
-	/*0140*/	uint8	gender;				// Player Gender
-	/*0141*/	char	genderchar[1];		// ***Placeholder
-	/*0142*/	uint16	race;				// Player Race (Lyenu: Changed to an int16, since races can be over 255)
-	/*0144*/	uint16	class_;				// Player Class
-	/*0146*/	uint16	bodytype;
-	/*0148*/	uint8	level;				// Player Level
-	/*0149*/	char	levelchar[3];		// ***Placeholder
-	/*0152*/	uint32	exp;				// Current Experience
-	/*0156*/	uint16	points;				// Players Points
-	/*0158*/	uint16	mana;				// Player Mana
-	/*0160*/	uint16	cur_hp;				// Player Health
-	/*0162*/	uint16	status;				
-	/*0164*/	uint16	STR;				// Player Strength
-	/*0166*/	uint16	STA;				// Player Stamina
-	/*0168*/	uint16	CHA;				// Player Charisma
-	/*0170*/	uint16	DEX;				// Player Dexterity
-	/*0172*/	uint16	INT;				// Player Intelligence
-	/*0174*/	uint16	AGI;				// Player Agility
-	/*0176*/	uint16	WIS;				// Player Wisdom
-	/*0178*/	uint8	oldface;               //
-	/*0179*/    int8    EquipType[9];       // i think its the visible parts of the body armor
-	/*0188*/    int32   EquipColor[9];      //
-	/*0224*/	uint16	inventory[30];		// Player Inventory Item Numbers
-	/*0284*/	uint8	languages[26];		// Player Languages
-	/*0310*/	uint8	unknown0310[6];		// ***Placeholder
-	/*0316*/	struct	OldItemProperties_Struct	invItemProprieties[30];	// These correlate with inventory[30]
-	/*0616*/	struct	OldSpellBuff_Struct	buffs[15];	// Player Buffs Currently On
-	/*0766*/	uint16	containerinv[pp_containerinv_size];	// Player Items In "Bags" -- If a bag is in slot 0, this is where the bag's items are
-	/*0926*/	uint16   cursorbaginventory[10];
-	/*0946*/	struct	OldItemProperties_Struct	bagItemProprieties[pp_containerinv_size];	// Just like InvItemProperties
-	/*1746*/    struct  OldItemProperties_Struct	cursorItemProprieties[10];	  //just like invitemprops[]
-	/*1846*/	int16	spell_book[256];	// Player spells scribed in their book
-	/*2358*/	uint8	unknown2374[512];	// 0xFF
-	/*2870*/	int16	mem_spells[8];	// Player spells memorized
-	/*2886*/	uint8	unknown2886[16];	// 0xFF
-	/*2902*/	uint16	available_slots;
-	/*2904*/	float	y;					// Player Y
-	/*2908*/	float	x;					// Player X
-	/*2912*/	float	z;					// Player Z
-	/*2916*/	float	heading;			// Player Heading
-	/*2920*/	uint32	position;		// ***Placeholder
-	/*2924*/	uint32	platinum;			// Player Platinum (Character)
-	/*2928*/	uint32	gold;				// Player Gold (Character)
-	/*2932*/	uint32	silver;				// Player Silver (Character)
-	/*2936*/	uint32	copper;				// Player Copper (Character)
-	/*2940*/	uint32	platinum_bank;		// Player Platinum (Bank)
-	/*2944*/	uint32	gold_bank;			// Player Gold (Bank)
-	/*2948*/	uint32	silver_bank;		// Player Silver (Bank)
-	/*2952*/	uint32	copper_bank;		// Player Copper (Bank)
-	/*2956*/	uint32	platinum_cursor;
-	/*2960*/	uint32	gold_cursor;
-	/*2964*/	uint32	silver_cursor;
-	/*2968*/	uint32	copper_cursor;
-	/*2972*/	uint8	currency[16];	    //Unused currency?
-	/*2988*/	uint16	skills[74];			// Player Skills
-	/*3136*/	uint16	innate[23];
-	/*3182*/	uint16	innate_unknowns[4];	//Always 255.
-	/*3190*/	uint16	innate_monk_ranger;	//Monk and Ranger are 0.
-	/*3192*/	uint16	innate_ogre;		//Ogre is 0.
-	/*3194*/	uint16	innate_unknown;		//Always 255.
-	/*3196*/	uint16	innate_druid;		//Only Druids are 0.
-	/*3198*/	uint16	innate_sk;			//Only SKs have this set as 0 in pp
-	/*3200*/	uint16	innate_all;			//Everybody seems to have 0 here.
-	/*3202*/	uint16	innate_paladin;		//Only Paladins have this as 0.
-	/*3204*/	uint16	innate_[16];
-	/*3236*/	uint8	unknown_skillvoid;			//255
-	/*3237*/    uint16  air_supply;
-	/*3239*/    uint8   texture;
-	/*3240*/	float   height;
-	/*3244*/	float	width;
-	/*3248*/	float   length;
-	/*3252*/	float   view_height;
-	/*3256*/    char    boat[16];
-	/*3272*/    uint8   unknown[76];
-	/*3348*/	uint8	autosplit;
-	/*3349*/	uint8	unknown3449[43];
-	/*3392*/	uint8	expansions;			//Effects features such as /disc, AA, raid
-	/*3393*/	uint8	unknown3393[51];
-	/*3444*/	uint32	current_zone;		// 
-	/*3448*/	uint8	unknown3448[336];	// Lots of data on fake PP struct, none in normal decoded packet.
-	/*3784*/	uint32	bind_point_zone;	// Lyenu: Bind zone is saved as a int32 now
-	/*3788*/	uint32	start_point_zone[4];	// Lyenu: Start Point Zones are saved as int32s now
-	/*3804*/	OldBindStruct	bind_location[5];	// Player Bind Location (5 different X,Y,Z - Multiple bind points?)
-	/*3864*/	uint8	unknown3656[20];	// ***Placeholder
-	/*3884*/	OldItemProperties_Struct	bankinvitemproperties[8];
-	/*3964*/	OldItemProperties_Struct	bankbagitemproperties[80];
-	/*4764*/	uint32	login_time;
-	/*4768*/	uint16	bank_inv[8];		// Player Bank Inventory Item Numbers
-	/*4784*/	uint16	bank_cont_inv[80];	// Player Bank Inventory Item Numbers (Bags)
-	/*4944*/	uint16	deity;		// ***Placeholder
-	/*4946*/	uint16	guild_id;			// Player Guild ID Number
-	/*4948*/	uint32  birthday;
-	/*4952*/	uint32  lastlogin;
-	/*4956*/	uint32  timePlayedMin;
-	/*4960*/	int8    thirst_level;
-	/*4961*/    int8    hunger_level;
-	/*4962*/	uint8   fatigue;
-	/*4963*/	uint8	pvp;				// Player PVP Flag
-	/*4964*/	uint8	level2;		// ***Placeholder
-	/*4965*/	uint8	anon;				// Player Anon. Flag
-	/*4966*/	uint8	gm;					// Player GM Flag
-	/*4967*/	uint8	guildrank;			// Player Guild Rank (0=member, 1=officer, 2=leader)
-	/*4968*/    uint8   intoxication;
-	/*4969*/	uint8	unknown4760[43];
-	/*5012*/	char	groupMembers[6][64];	// Group Members
-	/*5396*/	uint8	unknown5124[24];	// ***Placeholder 
-	/*5420*/	uint32	expAA;			
-	/*5424*/    uint8	unknown5424;
-	/*5425*/	uint8	perAA;			    // Player AA Percent
-	/*5426*/	uint8	haircolor;			// Player Hair Color
-	/*5427*/	uint8	beardcolor;			// Player Beard Color
-	/*5428*/	uint8	eyecolor1;			// Player Left Eye Color
-	/*5429*/	uint8	eyecolor2;			// Player Right Eye Color
-	/*5430*/	uint8	hairstyle;			// Player Hair Style
-	/*5431*/	uint8	beard;			// T7g: Beard Type, formerly title - I have no clue why, Title moved a few lines below this one
-	/*5432*/	uint8	face;			// Player Face Type (Is that right?)
-	/*5433*/	uint32	item_material[_MaterialCount];
-	/*5469*/	uint8	unknown5469[143]; //item_tint is in here somewhere.
-	/*5612*/	AA_Array aa_array[MAX_PP_AA_ARRAY];
-	/*5852*/	uint32	ATR_DIVINE_RES_timer;
-	/*5856*/    uint32  ATR_FREE_HOT_timer;
-	/*5860*/	uint32	ATR_TARGET_DA_timer;
-	/*5864*/	uint32	SptWoodTimer;
-	/*5868*/	uint32	DireCharmTimer;
-	/*5872*/	uint32	ATR_STRONG_ROOT_timer;
-	/*5876*/	uint32	ATR_MASOCHISM_timer;
-	/*5880*/	uint32	ATR_MANA_BURN_timer;
-	/*5884*/	uint32	ATR_GATHER_MANA_timer;
-	/*5888*/	uint32	ATR_PET_LOH_timer;
-	/*5892*/	uint32	ExodusTimer;
-	/*5896*/	uint32	ATR_MASS_FEAR_timer;
-	/*5900*/    uint16  air_remaining;
-	/*5902*/    uint16  aapoints;
-	/*5904*/	uint32	MGBTimer;
-	/*5908*/	uint8   unknown5908[90];
-	/*5998*/	uint8	mBitFlags[6];
-	/*6004*/	uint8	Unknown6004[708];
-	/*6712*/	uint32	WrathWildTimer;
-	/*6716*/	uint32	UnknownTimer;
-	/*6720*/	uint32	HarmTouchTimer;
-	/*6724*/	uint8	Unknown6724[1736];
-	/*8460*/
+/*0000*/ int32  checksum;				// Comment: 
+/*0004*/ char   name[30];					// Comment: First Name of Character
+/*0034*/ char   Surname[20];				// Comment: Last Name of Character
+/*0054*/ int8   gender;						// Comment: (Confirmed by Sp0tter).
+/*0055*/ int8   deity;						// Comment: Bertoxxoulus=0x10, (Confirmed by Sp0tter). Needs full deity list fixed in header. 
+/*0056*/ int16  race;						// Comment: Race of Character
+/*0058*/ int8   class_;						// Comment: Class of Character
+/*0059*/ int8   pp_unknown3;				// Comment: Cofruben: should be uknownn?
+/*0060*/ int8   level;						// Comment: Level of Character
+/*0061*/ int8   pp_unknown4[3];				// Comment: 
+/*0064*/ int32  exp;						// Comment: Needs confirming -> Current Experiance Character has?
+/*0068*/ int16	points;				// Comment: Class training points (Confirmed by Wizzel)
+/*0070*/ int16  mana;						// Comment: Needs confirming -> Current Mana Character has?
+/*0072*/ int8	face;						// Comment: What face the Character has? (Values?)
+/*0073*/ int8   unknown0073[47];			// Comment: 
+/*0120*/ int16  cur_hp;						// Comment: Needs Confirming -> Current HP of Character
+/*0122*/ int8   pp_unknown7;				// Comment: 
+/*0123*/ int8   STR;						// Comment: STR of Character
+/*0124*/ int8   STA;						// Comment: STA of Character
+/*0125*/ int8   CHA;						// Comment: CHA of Character
+/*0126*/ int8   DEX;						// Comment: DEX of Character
+/*0127*/ int8   INT;						// Comment: INT of Character
+/*0128*/ int8   AGI;						// Comment: AGI of Character
+/*0129*/ int8   WIS;						// Comment: WIS of Character
+/*0130*/ int8   languages[24];				// Comment: Language of a char (Confirmed by Harakiri)
+/*0154*/ int8   pp_unknown8_2[14];			// Comment: 
+/*0168*/ uint16 inventory[30];				// Comment: Id of items in inventory (Confirmed by Tazadar)
+/*0228*/ uint32 inventoryitemPointers[30];	// Comment: Harakiri these seems to be only used by the client, they are the pointers to the actual item_struct of each item see offset 004C71A3, 
+											// if these are not cleared before sending, the client will print "Got a bogus item, deleting it" - another indication these are pointers
+/*0348*/ struct	ItemProperties_Struct	invItemProprieties[30]; // Comment: infos about the items in the inventory (confirmed by Tazadar)
+/*0648*/ struct OldSpellBuff_Struct buffs[15];	// Comment:
+/*0798*/ uint16 containerinv[80];           // Comment: Ids of items in bags (confirmed by Tazadar)
+/*0958*/ uint16 cursorbaginventory[10];     // Comment: Ids of items in the bag of your cursor (confirmed by Tazadar)
+/*0978*/ struct	ItemProperties_Struct	bagItemProprieties[80]; // Comment: infos about the items in the bag (confirmed by Tazadar)
+/*1778*/ struct	ItemProperties_Struct	cursorItemProprieties[10]; // Comment: infos about the items in the cursor bag (confirmed by Tazadar)
+/*1878*/ short  spell_book[256];			// Comment: 
+/*2390*/ short  mem_spells[8];			// Comment: 
+/*2406*/ int8   pp_unknown10[2];			// Comment: 
+/*2408*/ float  y;							// Comment: 
+/*2412*/ float  x;							// Comment: 
+/*2416*/ float  z;							// Comment: 
+/*2420*/ float  heading;					// Comment: 
+/*2424*/ char   current_zone[15];			// Comment: 
+/*2439*/ int8   pp_unknown13[21];			// Comment: 
+/*2460*/ int32  platinum;					// Comment: 
+/*2464*/ int32  gold;						// Comment: 
+/*2468*/ int32  silver;						// Comment: 
+/*2472*/ int32  copper;						// Comment: 
+/*2476*/ int32  platinum_bank;				// Comment: 
+/*2480*/ int32  gold_bank;					// Comment: 
+/*2484*/ int32  silver_bank;				// Comment: 
+/*2488*/ int32  copper_bank;				// Comment: 
+/*2492*/ int32  platinum_cursor;			// Comment:
+/*2496*/ int32  gold_cursor;				// Comment:
+/*2500*/ int32  silver_cursor;				// Comment:
+/*2504*/ int32  copper_cursor;				// Comment:
+/*2508*/ int8   skills[74];					// Comment: FF = Cannot Learn, FE = Have Not Trained Yet (Confirmed by Wizzel)
+/*2582*/ int8	unknown2582[34];			// Comment: 
+/*2616*/ int8	test_unknown;				// Comment:
+/*2617*/ int8	unknown2617[127];			// Comment: Harakiri some of these bits are very important, if they are not 0 the client will request something from the server with opcode 0x0e40 during login and will not load the zone further (there seems be a 60sec timeout on this), the opcode will be sent from sub_4D5968 if at byte 2648 there is a bit > 0, this bit is set by sending OP_ZoneUnavailable 0xa220 - seems like this is the fallback zone when one zone is down?
+/*2744*/ int8	autosplit;					// Comment: 00 = autosplit off ; 01 = autosplit on (Confirmed by Tazadar)
+/*2745*/ int8	unknown2745[3];				// Comment:
+/*2748*/ int8   pvp;					// Comment: Harakiri Client sets this bit when sending OP_PKAcknowledge back with 1, player name does not go red tho
+/*2749*/ int8	unknown2749[15];			// Comment:
+/*2764*/ int8	gm;							// Comment: 
+/*2765*/ int8	unknown2765[23]; 			// Comment: 
+/*2788*/ int8   expansions;					// Comment: Harakiri needs to be 1 or the client wont sent opcode
+/*2789*/ int8	unknown2789[23];
+/*2812*/ int32	hunger_level;				// Comment: Harakiri: the clients max level is actually 6000 for rightclick check, however to hardcap is 32k ("You could not possibly eat any more, you would explode!"), interesting to know is - MONK class has a longer period to autoconsume food in the client (92000 vs 46000) Min(not hungry): 32000+ Max(very hungry): 0 (Confirmed by Wizzel)
+/*2816*/ int32	thirst_level;				// Comment: Harakiri: the clients max level is actually 6000 for rightclick check, however to hardcap is 32k ("You could not possibly drink any more, you would explode!") Min(not thirsty): 32000+ Max(very thirsty): 0 (Confirmed by Wizzel)
+/*2820*/ int8	unknown2820[24];			// Comment: 
+/*2844*/ char   bind_point_zone[20];		// Comment: 
+/*2864*/ char   start_point_zone[4][20];	// Comment: 
+/*2944*/ struct	ItemProperties_Struct bankinvitemproperties[8];			// Comment: infos of items in bank (Confirmed by Tazadar)
+/*3024*/ struct	ItemProperties_Struct bankbagitemproperties[80];		// Comment: infos of items in bank containers (Confirmed by Tazadar)
+/*3824*/ int8	unknown2944[4];				// Comment: 
+/*3828*/ float	bind_location[3][5];		// Comment: Bind affinity location, Harakiri Confirmed by client method translocatePC in eqgame offset 00495996 : bind_location[1][1]; == x bind location bind_location[0][1] == y bind location bind_location[2][1]; == z bind location
+/*3888*/ int8	unknown3888[24];			// Comment: 
+/*3912*/ int32  bankinvitemPointers[8];		// Comment: Harakiri these seems to be only used by the client, they are the pointers to the actual item_struct of each item see offset 004C71A3
+/*3944*/ int8	unknown3944[12];
+/*3956*/ int32  time1;						// Comment: 
+/*3960*/ int8   unknown3960[20];			// Comment: 
+/*3980*/ int16	bank_inv[8];				// Comment: id of items in bank (Confirmed by Tazadar)
+/*3996*/ int16	bank_cont_inv[80];			// Comment: id of items in bank containers  (Confirmed by Tazadar)
+/*4156*/ int8	unknown4156[2];				// Comment: 
+/*4158*/ int16	guild_id;					// Comment: 
+/*4160*/ int32  time2;						// Comment:
+/*4164*/ int8	unknown4164[6];			    // Comment:
+/*4170*/ int8	fatigue;					// Comment: full endu => fatigue = 0 ; zero endu => fatigue = 100 (Confirmed by Tazadar)
+/*4171*/ int8	unknown4171[2];				// Comment:
+/*4173*/ int8	anon;						// Comment: 
+/*4174*/ int8	unknown4174;				// Comment: 
+/*4175*/ int8	guildrank;				// Comment: 0=member, 1=officer, 2=leader
+/*4176*/ int8	intoxication;					// Comment: 0 = Not Drunk, 200ish = Max Drunk (Confirmed by Wizzel)
+/*4177*/ int8	eqbackground;				// Comment: Cofruben: if not set to 0, it'll show the eq background (unuseful?)		
+/*4178*/ int8	unknown4178;
+/*4179*/ int8	unknown4179;
+/*4180*/ uint32 spellSlotRefresh[8];		// Comment: Harakiri time in ms before a spell slot refreshes, i.e. after zoning to prevent that players refresh a spell just through camp or zone, i havent found out why it doesnt work for spell slot 1
+/*4212*/ int8	unknown4180[4];
+/*4216*/ uint32 abilitySlotRefresh;			// Comment: Harakiri cooldown for Lay on Hands or Death Touch from Paladin/SK in ms
+/*4220*/ char	groupMembers[6][48];		// Comment: Cofruben: 15 max length of each player name.
+/*4508*/ int8	unknown4532[3592];			// Comment:
+/*8100*/ int32	logtime;                    // Comment: Tazadar: The client does not seem to use the last bytes so we store the time in order to delete no rent items
+/*8104*/
 };
 
 /*

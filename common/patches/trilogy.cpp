@@ -203,12 +203,36 @@ namespace Trilogy {
 		FINISH_ENCODE();	
 	}
 
+	/*DECODE(OP_ZoneEntry) 
+	{
+		SETUP_DIRECT_DECODE(ClientZoneEntry_Struct, structs::ClientZoneEntry_Struct);
+
+		OUT_str(char_name);
+
+		FINISH_DIRECT_DECODE();
+	}*/
+
 	ENCODE(OP_ZoneEntry)
 	{ 
 		SETUP_DIRECT_ENCODE(ServerZoneEntry_Struct, structs::ServerZoneEntry_Struct);
 
+			/*eq->prev = 0xa0ae0e00;
+			eq->next = 0xa0ae0e00;
+			eq->view_height = 0x6666c640;
+			eq->sprite_oheight = 0x00004840;
+			eq->extra[10] = 0xFF;
+			eq->extra[11] = 0xFF;
+			eq->extra[12] = 0xFF;
+			eq->extra[13] = 0xFF;
+			eq->type = 0;
+			eq->animation = emu->player.spawn.animation;
+			eq->AFK = emu->player.spawn.afk;
+			eq->guildrank = emu->player.spawn.guildrank;
+			if(eq->guildrank == 0)
+				eq->guildrank = 0xFF;*/
+
 			int k = 0;
-			eq->zoneID = emu->player.spawn.zoneID;
+			strncpy(eq->zone, emu->player.spawn.zonename,15);
 			eq->anon = emu->player.spawn.anon;
 			strncpy(eq->name, emu->player.spawn.name, 64);
 			eq->deity = emu->player.spawn.deity;
@@ -222,15 +246,8 @@ namespace Trilogy {
 			eq->curHP = emu->player.spawn.curHp;
 			eq->x_pos = (float)emu->player.spawn.x;
 			eq->y_pos = (float)emu->player.spawn.y;
-			eq->animation = emu->player.spawn.animation;
 			eq->z_pos = (float)emu->player.spawn.z;///10.0f;
 			eq->heading = (float)emu->player.spawn.heading;
-			eq->haircolor = emu->player.spawn.haircolor;
-			eq->beardcolor = emu->player.spawn.beardcolor;
-			eq->eyecolor1 = emu->player.spawn.eyecolor1;
-			eq->eyecolor2 = emu->player.spawn.eyecolor2;
-			eq->hairstyle = emu->player.spawn.hairstyle;
-			eq->beard = emu->player.spawn.beard;
 			eq->face = emu->player.spawn.face;
 			eq->level = emu->player.spawn.level;
 			for(k = 0; k < 9; k++) 
@@ -238,8 +255,6 @@ namespace Trilogy {
 				eq->equipment[k] = emu->player.spawn.equipment[k];
 				eq->equipcolors[k].color = emu->player.spawn.colors[k].color;
 			}
-			eq->AFK = emu->player.spawn.afk;
-			eq->title = emu->player.spawn.aaitle;
 			eq->anim_type = 0x64;
 			eq->texture = emu->player.spawn.equip_chest2;
 			eq->helm = emu->player.spawn.helm;
@@ -248,9 +263,6 @@ namespace Trilogy {
 			eq->GuildID = emu->player.spawn.guildID;
 			if(eq->GuildID == 0)
 				eq->GuildID = 0xFFFF;
-			eq->guildrank = emu->player.spawn.guildrank;
-			if(eq->guildrank == 0)
-				eq->guildrank = 0xFF;
 			strncpy(eq->Surname, emu->player.spawn.lastName, 32);
 			eq->walkspeed = emu->player.spawn.walkspeed;
 			eq->runspeed = emu->player.spawn.runspeed;
@@ -265,18 +277,9 @@ namespace Trilogy {
 				eq->class_ = emu->player.spawn.class_;
 			eq->gender = emu->player.spawn.gender;
 			eq->flymode = emu->player.spawn.flymode;
-			eq->prev = 0xa0ae0e00;
-			eq->next = 0xa0ae0e00;
-			eq->view_height = 0x6666c640;
-			eq->sprite_oheight = 0x00004840;
-			eq->extra[10] = 0xFF;
-			eq->extra[11] = 0xFF;
-			eq->extra[12] = 0xFF;
-			eq->extra[13] = 0xFF;
-			eq->type = 0;
 			eq->size = emu->player.spawn.size;
 			eq->petOwnerId = emu->player.spawn.petOwnerId;
-
+			_log(NET__STRUCTS, "ZoneEntry Packet is %i bytes uncompressed", sizeof(structs::ServerZoneEntry_Struct));
 			CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::ServerZoneEntry_Struct));
 
 		FINISH_ENCODE();
@@ -286,25 +289,31 @@ namespace Trilogy {
 	{
 		SETUP_DIRECT_ENCODE(PlayerProfile_Struct, structs::PlayerProfile_Struct);
 
-		eq->available_slots=0xffff;
-
-		int r = 0;
-		OUT(gender);
-		OUT(race);
-		OUT(class_);
-		OUT(level);
+		//Find these:
+	/*	eq->available_slots=0xffff;
 		eq->bind_point_zone = emu->binds[0].zoneId;
 		eq->bind_location[0].x = emu->binds[0].x;
 		eq->bind_location[0].y = emu->binds[0].y;
 		eq->bind_location[0].z = emu->binds[0].z;
+		OUT(birthday);
+		OUT(lastlogin);
+		OUT(timePlayedMin);
+		OUT_str(boat);
+		OUT(air_remaining);
+		OUT(level2);
+		for(r = 0; r < 9; r++) 
+		{
+			OUT(item_material[r]);
+		}*/
+
+		int r = 0;
+		strncpy(eq->current_zone, emu->current_zone, 15);
+		OUT(gender);
+		OUT(race);
+		OUT(class_);
+		OUT(level);
 		OUT(deity);
 		OUT(intoxication);
-		OUT(haircolor);
-		OUT(beardcolor);
-		OUT(eyecolor1);
-		OUT(eyecolor2);
-		OUT(hairstyle);
-		OUT(beard);
 		OUT(points);
 		OUT(mana);
 		OUT(cur_hp);
@@ -316,7 +325,6 @@ namespace Trilogy {
 		OUT(AGI);
 		OUT(WIS);
 		OUT(face);
-		eq->oldface = emu->face;
 		OUT_array(spell_book, 256);
 		OUT_array(mem_spells, 8);
 		OUT(platinum);
@@ -329,12 +337,6 @@ namespace Trilogy {
 		OUT(copper_cursor);
 		OUT_array(skills, structs::MAX_PP_SKILL);  // 1:1 direct copy (100 dword)
 
-		//for(r = 0; r < 50; r++) {
-		//	eq->innate[r] = 255;
-		//}
-		//OUT(ATR_PET_LOH_timer);
-		//OUT(UnknownTimer);
-		//OUT(HarmTouchTimer);
 		int value = RuleI(Character,ConsumptionValue);
 
 		float tpercent = (float)emu->thirst_level/(float)value;
@@ -356,9 +358,6 @@ namespace Trilogy {
 		OUT_str(name);
 		strcpy(eq->Surname, emu->last_name);
 		OUT(guild_id);
-		OUT(birthday);
-		OUT(lastlogin);
-		OUT(timePlayedMin);
 		OUT(pvp);
 		OUT(anon);
 		OUT(gm);
@@ -373,33 +372,20 @@ namespace Trilogy {
 		OUT(gold_bank);
 		OUT(silver_bank);
 		OUT(copper_bank);
-		OUT(level2);
 		OUT(autosplit);
-		eq->current_zone = emu->zone_id;
-		OUT_str(boat);
-		OUT(aapoints);
-		OUT(expAA);
-		OUT(perAA);
-		OUT(air_remaining);
-		if(emu->expansions > 15)
-			eq->expansions = 15;
+		if(emu->expansions > 3)
+			eq->expansions = 3;
 		else
 			OUT(expansions);
-		for(r = 0; r < structs::MAX_PP_AA_ARRAY; r++)
-		{
-			OUT(aa_array[r].AA);
-			OUT(aa_array[r].value);
-		}
 		for(r = 0; r < 6; r++) 
 		{
 			OUT_str(groupMembers[r]);
 		}
-		for(r = 0; r < 9; r++) 
-		{
-			OUT(item_material[r]);
-		}
+		OUT(abilitySlotRefresh);
+		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
+		eq->eqbackground = 0;
 
-		//_log(NET__STRUCTS, "Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
+		_log(NET__STRUCTS, "Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
 		CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::PlayerProfile_Struct)-4);
 		EQApplicationPacket* outapp = new EQApplicationPacket();
@@ -407,7 +393,7 @@ namespace Trilogy {
 		outapp->pBuffer = new uchar[10000];
 		outapp->size = DeflatePacket((unsigned char*)__packet->pBuffer, sizeof(structs::PlayerProfile_Struct), outapp->pBuffer, 10000);
 		EncryptProfilePacket(outapp->pBuffer, outapp->size);
-		//_log(NET__STRUCTS, "Player Profile Packet is %i bytes compressed", outapp->size);
+		_log(NET__STRUCTS, "Player Profile Packet is %i bytes compressed", outapp->size);
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
 		delete __packet;
