@@ -2456,6 +2456,7 @@ struct AA_Array
 	uint8 value;
 };
 
+static const uint32 MAX_PP_MEMSPELL		= 8;
 static const uint32  MAX_PP_AA_ARRAY		= 120;
 static const uint32 MAX_PP_SKILL		= 74; // _SkillPacketArraySize;	// 100 - actual skills buffer size
 struct PlayerProfile_Struct
@@ -2574,7 +2575,11 @@ struct PlayerProfile_Struct
 	/*4966*/	uint8	gm;					// Player GM Flag
 	/*4967*/	uint8	guildrank;			// Player Guild Rank (0=member, 1=officer, 2=leader)
 	/*4968*/    uint8   intoxication;
-	/*4969*/	uint8	unknown4760[43];
+	/*4969*/	uint8	eqbackground;
+	/*4970*/	uint8	unknown4760[2];
+	/*4972*/	uint32	spellSlotRefresh[8];
+	/*5004*/	uint32	unknown5003;
+	/*5008*/	uint32	abilitySlotRefresh;
 	/*5012*/	char	groupMembers[6][64];	// Group Members
 	/*5396*/	uint8	unknown5124[24];	// ***Placeholder 
 	/*5420*/	uint32	expAA;			
