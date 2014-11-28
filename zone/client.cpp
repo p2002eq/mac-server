@@ -4686,7 +4686,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " hMR: %i  hPR: %i  hFR: %i  hCR: %i  hDR: %i hCorruption: %i", GetHeroicMR(), GetHeroicPR(), GetHeroicFR(), GetHeroicCR(), GetHeroicDR(), GetHeroicCorrup());
 	client->Message(0, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
 	client->Message(0, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
-	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f", GetRunspeed(), GetWalkspeed());
+	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (%i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID());
 	if(GetClass() == BARD)
 		client->Message(0, " Singing: %i  Brass: %i  String: %i Percussion: %i Wind: %i", GetSingMod(), GetBrassMod(), GetStringMod(), GetPercMod(), GetWindMod());
 
