@@ -1,34 +1,34 @@
 /*	EQEMu: Everquest Server Emulator
-Copyright (C) 2001-2002 EQEMu Development Team (http://eqemulator.org)
+	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemulator.org)
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; version 2 of the License.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY except by those people which sell it, which
-are required to give you total support for your newly bought product;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY except by those people which sell it, which
+	are required to give you total support for your newly bought product;
+	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+	A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 /*
 
-To add a new command 3 things must be done:
+	To add a new command 3 things must be done:
 
-1.	At the bottom of command.h you must add a prototype for it.
-2.	Add the function in this file.
-3.	In the command_init function you must add a call to command_add
-for your function. If you want an alias for your command, add
-a second call to command_add with the description and access args
-set to nullptr and 0 respectively since they aren't used when adding
-an alias. The function pointers being equal is makes it an alias.
-The access level you set with command_add is only a default if
-the command isn't listed in the addon.ini file.
+	1.	At the bottom of command.h you must add a prototype for it.
+	2.	Add the function in this file.
+	3.	In the command_init function you must add a call to command_add
+		for your function. If you want an alias for your command, add
+		a second call to command_add with the description and access args
+		set to nullptr and 0 respectively since they aren't used when adding
+		an alias. The function pointers being equal is makes it an alias.
+		The access level you set with command_add is only a default if
+		the command isn't listed in the addon.ini file.
 
 */
 
@@ -42,28 +42,22 @@ the command isn't listed in the addon.ini file.
 #endif
 
 #include "../common/debug.h"
-#include "../common/ptimer.h"
-#include "../common/packet_functions.h"
-#include "../common/packet_dump.h"
-#include "../common/serverinfo.h"
-#include "../common/opcodemgr.h"
 #include "../common/eq_packet.h"
-#include "../common/guilds.h"
-#include "../common/rulesys.h"
-#include "../common/string_util.h"
-//#include "../common/servertalk.h" // for oocmute and revoke
-#include "worldserver.h"
-#include "masterentity.h"
-#include "map.h"
-#include "water_map.h"
 #include "../common/features.h"
-#include "pathing.h"
+#include "../common/guilds.h"
+#include "../common/patches/patches.h"
+#include "../common/ptimer.h"
+#include "../common/rulesys.h"
+#include "../common/serverinfo.h"
+#include "../common/string_util.h"
 #include "client_logs.h"
 #include "guild_mgr.h"
-#include "titles.h"
-#include "../common/patches/patches.h"
+#include "map.h"
+#include "pathing.h"
 #include "queryserv.h"
-#include <stdlib.h>
+#include "titles.h"
+#include "water_map.h"
+#include "worldserver.h"
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
