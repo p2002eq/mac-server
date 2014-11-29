@@ -97,7 +97,7 @@ extern Zone* zone;
 EQStreamFactory eqsf(ZoneStream);
 npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
-QueryServ *QServ = 0; 
+QueryServ *QServ = 0;
 QuestParserCollection *parse = 0;
 
 const SPDat_Spell_Struct* spells;
