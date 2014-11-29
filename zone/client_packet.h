@@ -1,4 +1,4 @@
-	// connecting opcode handlers
+	/* Connecting OpCode Handlers */
 	void Handle_Connect_0x3e33(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ClientError(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ClientUpdate(const EQApplicationPacket *app);
@@ -13,7 +13,7 @@
 	void Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app);
 	void Handle_Connect_OP_WearChange(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app);
-	// connected opcode handlers
+	/* Connected opcode handlers*/
 	void Handle_0x01e7(const EQApplicationPacket *app);
 	void Handle_OP_AAAction(const EQApplicationPacket *app);
 	void Handle_OP_Action(const EQApplicationPacket *app);
