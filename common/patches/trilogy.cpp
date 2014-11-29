@@ -392,7 +392,7 @@ namespace Trilogy {
 		outapp->SetOpcode(OP_PlayerProfile);
 		outapp->pBuffer = new uchar[10000];
 		outapp->size = DeflatePacket((unsigned char*)__packet->pBuffer, sizeof(structs::PlayerProfile_Struct), outapp->pBuffer, 10000);
-		EncryptProfilePacket(outapp->pBuffer, outapp->size);
+		EncryptOldProfilePacket(outapp->pBuffer, outapp->size);
 		_log(NET__STRUCTS, "Player Profile Packet is %i bytes compressed", outapp->size);
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
