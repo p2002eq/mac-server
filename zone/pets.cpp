@@ -343,7 +343,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	} else if (record.petnaming == 2) {
 		strcpy(npc_type->name, this->GetName());
 		npc_type->name[21] = 0;
-		strcat(npc_type->name, "`s_Warder");
+		strcat(npc_type->name, "`s_warder");
 	} else if (record.petnaming == 4) {
 		// Keep the DB name
 	} else if (record.petnaming == 3 && IsClient()) {
