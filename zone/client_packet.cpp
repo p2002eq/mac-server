@@ -2746,6 +2746,10 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 		}
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
+		if(tcorpse->IsRezzed()){
+			//CORPSE_TOO_OLD doesn't match our logs :(
+			Message(0, "This corpse is too old to be resurrected.");
+		}
 		uint32 day, hour, min, sec, ttime;
 		if ((ttime = tcorpse->GetDecayTime()) != 0) {
 			sec = (ttime / 1000) % 60; // Total seconds
@@ -2760,23 +2764,6 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 				Message(0, "This corpse will decay in %i minutes and %i seconds.", min, sec);
 
 			hour = 0;
-
-			//if((ttime = tcorpse->GetRezTime()) != 0) {
-			if(!tcorpse->IsRezzed()){
-			/*sec = (ttime/1000)%60; // Total seconds
-			min = (ttime/60000)%60; // Total seconds
-			hour = (ttime/3600000)%24; // Total hours
-			if(hour)
-				Message(0, "This corpse can be resurrected for %i hours, %i minutes and %i seconds.", hour, min, sec);
-			else
-				Message(0, "This corpse can be resurrected for %i minutes and %i seconds.", min, sec);
-			}*/
-				Message(0, "This corpse can be resurrected for experience.");
-			}
-			else {
-				Message(0, "This corpse cannot be resurrected for experience.");
-				//Message_StringID(CC_Default, CORPSE_TOO_OLD);
-			}
 		}
 		else {
 			Message_StringID(10, CORPSE_DECAY_NOW);
