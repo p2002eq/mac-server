@@ -101,6 +101,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 		pcs->texture,		   // uint8 in_texture
 		pcs->helmtexture,	   // uint8 in_helmtexture
 		pcs->exp,			   // uint32 in_rezexp
+		pcs->gmexp,			   // uint32 in_gmrezexp
 		was_at_graveyard	   // bool wasAtGraveyard
 	);
 	if (pcs->locked){
@@ -237,6 +238,7 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 		allowed_looters[i] = 0;
 	}
 	this->rez_experience = 0;
+	this->gm_rez_experience = 0;
 }
 
 Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
@@ -291,7 +293,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
 	0,								  // uint8		in_maxlevel,
 	0								  // uint32		in_scalerate
 	),									
-	corpse_decay_timer(RuleI(Character, CorpseDecayTimeMS)),
+	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
 	corpse_delay_timer(RuleI(NPC, CorpseUnlockTimer)),
 	corpse_graveyard_timer(RuleI(Zone, GraveyardTimeMS)),
@@ -315,6 +317,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
 
 	is_corpse_changed		= true;
 	rez_experience			= in_rezexp;
+	gm_rez_experience		= in_rezexp;
 	can_corpse_be_rezzed			= true;
 	is_player_corpse	= true;
 	is_locked			= false;
@@ -401,6 +404,9 @@ Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
 		Save();
 		database.TransactionCommit();
 
+		if(!IsEmpty()) {
+			corpse_decay_timer.SetTimer(RuleI(Character, CorpseDecayTimeMS));
+		}
 		return;
 	} //end "not leaving naked corpses"
 
@@ -438,7 +444,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 
 /* Called from Database Load */
 
-Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, bool wasAtGraveyard)
+Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", // const char* in_name,
 	"",						// const char* in_lastname,
 	0,						// int32		in_cur_hp,
@@ -489,14 +495,20 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	0,						// uint8		in_qglobal,
 	0,						// uint8		in_maxlevel,
 	0),						// uint32		in_scalerate
-	corpse_decay_timer(RuleI(Character, CorpseDecayTimeMS)),
+	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
 	corpse_delay_timer(RuleI(NPC, CorpseUnlockTimer)),
 	corpse_graveyard_timer(RuleI(Zone, GraveyardTimeMS)),
 	loot_cooldown_timer(10)
 {
+	// The timer needs to know if the corpse has items or not before we actually apply the items
+	// to the corpse. The corpse seems to poof shortly after the timer is applied if it is done so
+	// after items are loaded.
+	bool empty = true;
+	if(!in_itemlist->empty() || in_copper != 0 || in_silver != 0 || in_gold != 0 || in_plat != 0)
+		empty = false;
 
-	LoadPlayerCorpseDecayTime(in_dbid);
+	LoadPlayerCorpseDecayTime(in_dbid, empty);
 
 	if (!zone->HasGraveyard() || wasAtGraveyard){
 		corpse_graveyard_timer.Disable();
@@ -523,6 +535,7 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	this->platinum = in_plat;
 
 	rez_experience = in_rezexp;
+	gm_rez_experience = in_gmrezexp;
 
 	for (int i = 0; i < MAX_LOOTERS; i++){
 		allowed_looters[i] = 0;
@@ -587,6 +600,7 @@ bool Corpse::Save() {
 	dbpc->texture = this->texture;
 	dbpc->helmtexture = this->helmtexture;
 	dbpc->exp = rez_experience;
+	dbpc->gmexp = gm_rez_experience;
 
 	memcpy(dbpc->item_tint, item_tint, sizeof(dbpc->item_tint));
 	dbpc->haircolor = haircolor;
@@ -809,12 +823,13 @@ bool Corpse::Process() {
 		corpse_graveyard_timer.Disable();
 		return false;
 	}
-	/*
-	if(corpse_res_timer.Check()) {
-	can_rez = false;
-	corpse_res_timer.Disable();
+
+	if(corpse_rez_timer.Check()) {
+		//can_corpse_be_rezzed = false;
+		IsRezzed(true);
+		CompleteResurrection();
+		corpse_rez_timer.Disable();
 	}
-	*/
 
 	/* This is when a corpse hits decay timer and does checks*/
 	if (corpse_decay_timer.Check()) {
@@ -1003,7 +1018,6 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			ServerLootItem_Struct* item_data = *cur;
 			item_data->lootslot = 0xFFFF;
 
-			int8 offset = 0;
 			// Dont display the item if it's in a bag
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
 			if (!IsPlayerCorpse() || item_data->equip_slot <= EmuConstants::GENERAL_END || item_data->equip_slot == MainPowerSource || Loot_Request_Type >= 3 ||
@@ -1014,7 +1028,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 						ItemInst* inst = database.CreateItem(item, item_data->charges);
 						if(inst) {
 							// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
-							client->SendItemPacket(i + EmuConstants::CORPSE_BEGIN, inst, ItemPacketLoot);
+							client->SendItemPacket(i, inst, ItemPacketLoot);
 							safe_delete(inst);
 						}
 
@@ -1109,10 +1123,10 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 		item = database.GetItem(GetPlayerKillItem());
 	}
 	else if (GetPlayerKillItem() == -1 || GetPlayerKillItem() == 1){
-		item_data = GetItem(lootitem->slot_id - EmuConstants::CORPSE_BEGIN); //dont allow them to loot entire bags of items as pvp reward
+		item_data = GetItem(lootitem->slot_id); //dont allow them to loot entire bags of items as pvp reward
 	}
 	else{
-		item_data = GetItem(lootitem->slot_id - EmuConstants::CORPSE_BEGIN, bag_item_data);
+		item_data = GetItem(lootitem->slot_id, bag_item_data);
 	}
 
 	if (GetPlayerKillItem()<=1 && item_data != 0) {
@@ -1399,13 +1413,23 @@ void Corpse::AddLooter(Mob* who) {
 	}
 }
 
-void Corpse::LoadPlayerCorpseDecayTime(uint32 corpse_db_id){
+void Corpse::LoadPlayerCorpseDecayTime(uint32 corpse_db_id, bool empty){
 	if(!corpse_db_id)
 		return;
 
 	uint32 active_corpse_decay_timer = database.GetCharacterCorpseDecayTimer(corpse_db_id);
-	if (active_corpse_decay_timer > 0 && RuleI(Character, CorpseDecayTimeMS) > (active_corpse_decay_timer * 1000)) {
-		corpse_decay_timer.SetTimer(RuleI(Character, CorpseDecayTimeMS) - (active_corpse_decay_timer * 1000));
+	int32 corpse_decay;
+	if(empty)
+	{
+		corpse_decay = RuleI(Character, EmptyCorpseDecayTimeMS);
+	}
+	else
+	{
+		corpse_decay = RuleI(Character, CorpseDecayTimeMS);
+	}
+
+	if (active_corpse_decay_timer > 0 && corpse_decay > (active_corpse_decay_timer * 1000)) {
+		corpse_decay_timer.SetTimer(corpse_decay - (active_corpse_decay_timer * 1000));
 	}
 	else {
 		corpse_decay_timer.SetTimer(2000);

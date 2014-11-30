@@ -34,7 +34,7 @@ class Corpse : public Mob {
 	
 	Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NPCType** in_npctypedata, uint32 in_decaytime = 600000);
 	Corpse(Client* client, int32 in_rezexp);
-	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, bool wasAtGraveyard = false);
+	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, bool wasAtGraveyard = false);
 	
 	~Corpse(); 
 	static Corpse* LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, float in_x, float in_y, float in_z, float in_heading, std::string time_of_death, bool rezzed, bool was_at_graveyard);
@@ -70,7 +70,7 @@ class Corpse : public Mob {
 	void			Delete();
 	void			Bury();
 	void			CalcCorpseName();
-	void			LoadPlayerCorpseDecayTime(uint32 dbid);
+	void			LoadPlayerCorpseDecayTime(uint32 dbid, bool empty);
 
 	/* Corpse: Items */
 	uint32					GetWornItem(int16 equipSlot) const;
@@ -120,6 +120,7 @@ class Corpse : public Mob {
 	uint32		GetEquipment(uint8 material_slot) const;
 	uint32		GetEquipmentColor(uint8 material_slot) const;
 	inline int	GetRezExp() { return rez_experience; } 
+	inline int	GetGMRezExp() { return gm_rez_experience; } 
 
 protected:
 	std::list<uint32> MoveItemToCorpse(Client *client, ItemInst *item, int16 equipslot);
@@ -139,8 +140,9 @@ private:
 	bool		player_corpse_depop; /* Sets up Corpse::Process to depop the player corpse */
 	uint32		being_looted_by; /* Determines what the corpse is being looted by internally for logic */
 	uint32		rez_experience; /* Amount of experience that the corpse would rez for */
-	bool		rez;
-	bool		can_corpse_be_rezzed; /* Bool declaring whether or not a corpse can be rezzed */
+	uint32		gm_rez_experience; /* Amount of experience that the corpse would rez for from a GM*/
+	bool		rez; /*Sets if a corpse has been rezzed or not to determine if XP should be given or not */
+	bool		can_corpse_be_rezzed; /* Bool declaring whether or not a corpse can be rezzed. Shouldn't be used as corpses can always be rezzed.*/
 	bool		become_npc;
 	int			allowed_looters[MAX_LOOTERS]; /* People allowed to loot the corpse, character id */
 	Timer		corpse_decay_timer; /* The amount of time in millseconds in which a corpse will take to decay (Depop/Poof) */

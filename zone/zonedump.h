@@ -148,6 +148,7 @@ struct PlayerCorpse_Struct {
 	bool	locked;
 	uint32	itemcount;
 	uint32	exp;
+	uint32	gmexp;
 	float	size;
 	uint8	level;
 	uint32	race;

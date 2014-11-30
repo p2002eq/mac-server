@@ -146,8 +146,8 @@ namespace MAC {
 		static const int16 TRIBUTE_BEGIN = 400;
 		static const int16 TRIBUTE_END = 404;
 
-		static const int16 CORPSE_BEGIN = slots::MainGeneral1;
-		static const int16 CORPSE_END = slots::MainGeneral1 + slots::MainCursor;
+		static const int16 CORPSE_BEGIN = 0;
+		static const int16 CORPSE_END = 30;
 
 		static const uint16 ITEM_COMMON_SIZE = 5;
 		static const uint16 ITEM_CONTAINER_SIZE = 10;
