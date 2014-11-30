@@ -3760,7 +3760,7 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 	{
 		if(Caster && Caster->IsClient())
 		{
-			if(Caster->CastToClient()->Admin() >= 80)
+			if(Caster->CastToClient()->GetGM())
 			{
 				rez_experience = gm_rez_experience;
 				gm_rez_experience = 0;
