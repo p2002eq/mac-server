@@ -87,6 +87,12 @@ xyz_location::xyz_location(double x, double y, double z) :
     m_Z(static_cast<float>(z)) {
 }
 
+xyz_location::xyz_location(int x, int y, int z) :
+	m_X(static_cast<float>(x)),
+	m_Y(static_cast<float>(y)),
+	m_Z(static_cast<float>(z)) {
+}
+
 xyz_location::operator xy_location() const {
     return xy_location(m_X, m_Y);
 }

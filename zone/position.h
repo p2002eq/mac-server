@@ -40,6 +40,7 @@ public:
 
     xyz_location(float x = 0.0f, float y = 0.0f, float z = 0.0f);
     xyz_location(double x, double y, double z);
+	xyz_location(int x, int y, int z);
 
     operator xy_location() const;
 

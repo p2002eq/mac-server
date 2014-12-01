@@ -578,7 +578,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			if(zoneID == GetZoneID()) {
 				//Not doing inter-zone for same zone gates. Client is supposed to handle these, based on PP info it is fed.
 				//properly handle proximities
-				entity_list.ProcessMove(this, m_Position.m_X, m_Position.m_Y, m_Position.m_Z);
+				entity_list.ProcessMove(this, m_Position);
 				proximity_x = m_Position.m_X;
 				proximity_y = m_Position.m_Y;
 				proximity_z = m_Position.m_Z;
@@ -636,7 +636,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			if(zoneID == GetZoneID()) {
 				_log(EQMAC__LOG, "Zoning packet about to be sent (GOTO). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				//properly handle proximities
-				entity_list.ProcessMove(this, m_Position.m_X, m_Position.m_Y, m_Position.m_Z);
+				entity_list.ProcessMove(this, m_Position);
 				proximity_x = m_Position.m_X;
 				proximity_y = m_Position.m_Y;
 				proximity_z = m_Position.m_Z;

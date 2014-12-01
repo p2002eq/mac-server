@@ -61,6 +61,7 @@
 #include "remote_call_subscribe.h"
 #include "remote_call_subscribe.h"
 #include "../common/misc.h"
+#include "position.h"
 
 extern QueryServ* QServ;
 extern Zone* zone;
@@ -2629,7 +2630,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	if(proximity_timer.Check()) {
-		entity_list.ProcessMove(this, ppu->x_pos, ppu->y_pos, ppu->z_pos);
+		entity_list.ProcessMove(this, xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos));
 		proximity_x = ppu->x_pos;
 		proximity_y = ppu->y_pos;
 		proximity_z = ppu->z_pos;
@@ -7086,7 +7087,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
 			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+				entity_list.CreateGroundObject(inst->GetID(), xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 				QueuePacket(outapp);
 				safe_delete(outapp);
 				safe_delete(inst);
