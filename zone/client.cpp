@@ -135,7 +135,8 @@ Client::Client(EQStreamInterface* ieqs)
 	TrackingTimer(2000),
 	ItemTickTimer(10000),
 	ItemQuestTimer(500),
-	m_Proximity(FLT_MAX, FLT_MAX, FLT_MAX) //arbitrary large number
+	m_Proximity(FLT_MAX, FLT_MAX, FLT_MAX), //arbitrary large number
+	m_ZoneSummonLocation(-2.0f,-2.0f,-2.0f)
 {
 	for(int cf=0; cf < _FilterCount; cf++)
 		ClientFilters[cf] = FilterShow;
@@ -175,9 +176,6 @@ Client::Client(EQStreamInterface* ieqs)
 	auto_attack = false;
 	auto_fire = false;
 	linkdead_timer.Disable();
-	zonesummon_x = -2;
-	zonesummon_y = -2;
-	zonesummon_z = -2;
 	zonesummon_id = 0;
 	zonesummon_ignorerestrictions = 0;
 	zoning = false;
