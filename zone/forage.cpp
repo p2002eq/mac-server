@@ -272,7 +272,9 @@ void Client::GoFish()
 				if(npc_chance < zone->random.Int(0, 99)) {
 					const NPCType* tmp = database.GetNPCType(npc_id);
 					if(tmp != nullptr) {
-						NPC* npc = new NPC(tmp, nullptr, GetX()+3, GetY(), GetZ(), GetHeading(), FlyMode3);
+                        auto positionNPC = GetPosition();
+                        positionNPC.m_X = positionNPC.m_X + 3;
+						NPC* npc = new NPC(tmp, nullptr, positionNPC, FlyMode3);
 						npc->AddLootTable();
 
 						npc->AddToHateList(this, 1, 0, false);	//no help yelling

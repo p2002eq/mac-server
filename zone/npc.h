@@ -95,10 +95,10 @@ struct Item_Struct;
 class NPC : public Mob
 {
 public:
-	static NPC* SpawnNPC(const char* spawncommand, const xyz_heading& position, Client* client = 0);
+	static NPC* SpawnNPC(const char* spawncommand, const xyz_heading& position, Client* client = nullptr);
 	static int8 GetAILevel(bool iForceReRead = false);
 
-	NPC(const NPCType* data, Spawn2* respawn, float x, float y, float z, float heading, int iflymode, bool IsCorpse = false);
+	NPC(const NPCType* data, Spawn2* respawn, const xyz_heading& position, int iflymode, bool IsCorpse = false);
 
 	virtual ~NPC();
 

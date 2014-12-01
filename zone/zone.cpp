@@ -99,7 +99,7 @@ bool Zone::Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 	}
 	zone->zonemap = Map::LoadMapFile(zone->map_name);
 	zone->watermap = WaterMap::LoadWaterMapfile(zone->map_name);
-	zone->pathing = PathManager::LoadPathFile(zone->map_name); 
+	zone->pathing = PathManager::LoadPathFile(zone->map_name);
 
 	char tmp[10];
 	if (database.GetVariable("loglevel",tmp, 9)) {
@@ -454,7 +454,7 @@ void Zone::LoadNewMerchantData(uint32 merchantid) {
 
 void Zone::GetMerchantDataForZoneLoad() {
 	LogFile->write(EQEmuLog::Status, "Loading Merchant Lists...");
-	std::string query = StringFormat(												   
+	std::string query = StringFormat(
 		"SELECT																		   "
 		"DISTINCT ml.merchantid,													   "
 		"ml.slot,																	   "
@@ -470,14 +470,14 @@ void Zone::GetMerchantDataForZoneLoad() {
 		"WHERE nt.merchant_id = ml.merchantid AND nt.id = se.npcid					   "
 		"AND se.spawngroupid = s2.spawngroupid AND s2.zone = '%s' AND s2.version = %i  "
 		"ORDER BY ml.slot															   ", GetShortName(), GetInstanceVersion());
-	auto results = database.QueryDatabase(query); 
+	auto results = database.QueryDatabase(query);
 	std::map<uint32, std::list<MerchantList> >::iterator cur;
 	uint32 npcid = 0;
 	if (results.RowCount() == 0) {
 		LogFile->write(EQEmuLog::Debug, "No Merchant Data found for %s.", GetShortName());
 		return;
 	}
-	for (auto row = results.begin(); row != results.end(); ++row) { 
+	for (auto row = results.begin(); row != results.end(); ++row) {
 		MerchantList ml;
 		ml.id = atoul(row[0]);
 		if (npcid != ml.id) {
