@@ -2861,7 +2861,8 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`wc_6` =               %u,\n"
 		"`wc_7` =               %u,\n"
 		"`wc_8` =               %u,\n"
-		"`wc_9`	=                %u \n"
+		"`wc_9`	=               %u,\n"
+		"`killedby` =			%u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(), 
 		zone_id, 
@@ -2905,6 +2906,7 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		dbpc->item_tint[6].color,
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
+		dbpc->killedby,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -2963,7 +2965,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`wc_6` =               %u,\n"
 		"`wc_7` =               %u,\n"
 		"`wc_8` =               %u,\n"
-		"`wc_9`	=                %u \n",
+		"`wc_9`	=               %u,\n"
+		"`killedby` =			%u \n",
 		EscapeString(charname).c_str(),
 		zoneid,
 		instanceid,
@@ -3005,7 +3008,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		dbpc->item_tint[5].color,
 		dbpc->item_tint[6].color,
 		dbpc->item_tint[7].color,
-		dbpc->item_tint[8].color
+		dbpc->item_tint[8].color,
+		dbpc->killedby
 	);
 	auto results = QueryDatabase(query); 
 	uint32 last_insert_id = results.LastInsertedID();
@@ -3138,7 +3142,8 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"wc_6,            \n"
 		"wc_7,            \n"
 		"wc_8,            \n"
-		"wc_9             \n"
+		"wc_9,             \n"
+		"killedby		  \n"
 		"FROM             \n"
 		"character_corpses\n"
 		"WHERE `id` = %u  LIMIT 1\n",
@@ -3181,6 +3186,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		pcs->item_tint[6].color = atoul(row[i++]);			// wc_7,
 		pcs->item_tint[7].color = atoul(row[i++]);			// wc_8,
 		pcs->item_tint[8].color = atoul(row[i++]);			// wc_9
+		pcs->killedby = atoi(row[i++]);						// killedby
 	}
 	query = StringFormat(
 		"SELECT                       \n"

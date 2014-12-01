@@ -2612,7 +2612,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
 		MakeSpawnUpdate(ppu);
 		if (gmhideme)
-			entity_list.QueueClientsStatus(this,outapp,true,Admin(),250);
+			entity_list.QueueClientsStatus(this,outapp,true,Admin(),255);
 		else
 			entity_list.QueueCloseClients(this,outapp,true,300,nullptr,false);
 		safe_delete(outapp);
@@ -2976,7 +2976,7 @@ void Client::Handle_OP_Death(const EQApplicationPacket *app)
 	if (EnvDeath == true)
 	{
 		mod_client_death_env();
-		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand);
+		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
 		return;
 	}
 	else
@@ -3319,7 +3319,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	{
 		mod_client_death_env();
 
-		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand);
+		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
 	}
 	SendHPUpdate();
 	return;

@@ -33,14 +33,14 @@ class Corpse : public Mob {
 	static void SendLootReqErrorPacket(Client* client, uint8 response = 2);  
 	
 	Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NPCType** in_npctypedata, uint32 in_decaytime = 600000);
-	Corpse(Client* client, int32 in_rezexp);
-	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, bool wasAtGraveyard = false);
+	Corpse(Client* client, int32 in_rezexp, uint8 killedby = 0);
+	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard = false);
 	
 	~Corpse(); 
 	static Corpse* LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, float in_x, float in_y, float in_z, float in_heading, std::string time_of_death, bool rezzed, bool was_at_graveyard);
 
 	/* Corpse: General */
-	virtual bool	Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill) { return true; }
+	virtual bool	Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, uint8 killedby = 0) { return true; }
 	virtual void	Damage(Mob* from, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false) { return; }
 	virtual bool	Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false,
 		bool			IsStrikethrough = true, bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) {
@@ -121,6 +121,7 @@ class Corpse : public Mob {
 	uint32		GetEquipmentColor(uint8 material_slot) const;
 	inline int	GetRezExp() { return rez_experience; } 
 	inline int	GetGMRezExp() { return gm_rez_experience; } 
+	uint8		GetKilledBy() { return killedby; }
 
 protected:
 	std::list<uint32> MoveItemToCorpse(Client *client, ItemInst *item, int16 equipslot);
@@ -150,6 +151,7 @@ private:
 	Timer		corpse_delay_timer; 
 	Timer		corpse_graveyard_timer;
 	Timer		loot_cooldown_timer; /* Delay between loot actions on the corpse entity */
+	uint8		killedby;
 	Color_Struct item_tint[9];
 
 };

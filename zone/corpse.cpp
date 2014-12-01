@@ -102,6 +102,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 		pcs->helmtexture,	   // uint8 in_helmtexture
 		pcs->exp,			   // uint32 in_rezexp
 		pcs->gmexp,			   // uint32 in_gmrezexp
+		pcs->killedby,		   // uint8 in_killedby
 		was_at_graveyard	   // bool wasAtGraveyard
 	);
 	if (pcs->locked){
@@ -241,7 +242,7 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	this->gm_rez_experience = 0;
 }
 
-Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
+Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	"Unnamed_Corpse",				  // const char*	in_name,
 	"",								  // const char*	in_lastname,
 	0,								  // int32		in_cur_hp,
@@ -329,6 +330,12 @@ Corpse::Corpse(Client* client, int32 in_rezexp) : Mob (
 	silver			= 0;
 	gold			= 0;
 	platinum		= 0;
+	killedby		= in_killedby;
+
+	if(killedby == Killed_DUEL)
+	{
+		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
+	}
 
 	strcpy(corpse_name, pp->name);
 	strcpy(name, pp->name); 
@@ -444,7 +451,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 
 /* Called from Database Load */
 
-Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, bool wasAtGraveyard)
+Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", // const char* in_name,
 	"",						// const char* in_lastname,
 	0,						// int32		in_cur_hp,
@@ -536,6 +543,12 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 
 	rez_experience = in_rezexp;
 	gm_rez_experience = in_gmrezexp;
+	killedby = in_killedby;
+
+	if(killedby == Killed_DUEL)
+	{
+		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
+	}
 
 	for (int i = 0; i < MAX_LOOTERS; i++){
 		allowed_looters[i] = 0;
@@ -601,6 +614,7 @@ bool Corpse::Save() {
 	dbpc->helmtexture = this->helmtexture;
 	dbpc->exp = rez_experience;
 	dbpc->gmexp = gm_rez_experience;
+	dbpc->killedby = killedby;
 
 	memcpy(dbpc->item_tint, item_tint, sizeof(dbpc->item_tint));
 	dbpc->haircolor = haircolor;
@@ -826,8 +840,11 @@ bool Corpse::Process() {
 
 	if(corpse_rez_timer.Check()) {
 		//can_corpse_be_rezzed = false;
+		//We want to mark as rezzed, so the corpse can still be rezzed, but for no exp.
+		//If this is wrong, uncomment the above and the block in Corpse::CastRezz to completely prevent rezzes.
 		IsRezzed(true);
 		CompleteResurrection();
+		database.MarkCorpseAsRezzed(this->GetCorpseDBID());
 		corpse_rez_timer.Disable();
 	}
 

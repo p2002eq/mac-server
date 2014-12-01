@@ -32,6 +32,7 @@ RULE_BOOL( Character, UseDeathExpLossMult, false ) //Adjust to use the above mul
 RULE_INT ( Character, CorpseDecayTimeMS, 604800000 ) // 7 days
 RULE_INT ( Character, EmptyCorpseDecayTimeMS, 10800000 ) // 3 hours
 RULE_INT ( Character, CorpseResTimeMS, 10800000 ) // time before cant res corpse(3 hours)
+RULE_INT ( Character, DuelCorpseResTimeMS, 600000 ) // time before cant res corpse after a duel (10 minutes)
 RULE_BOOL( Character, LeaveCorpses, true )
 RULE_BOOL( Character, LeaveNakedCorpses, true )
 RULE_INT ( Character, MaxDraggedCorpses, 2 )
