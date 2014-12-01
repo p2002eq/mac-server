@@ -221,7 +221,7 @@ public:
 	void		LoadBlockedSpells(uint32 zoneid);
 	void		ClearBlockedSpells();
 	bool		IsSpellBlocked(uint32 spell_id, float nx, float ny, float nz);
-	const char *GetSpellBlockedMessage(uint32 spell_id, float nx, float ny, float nz);
+	const char *GetSpellBlockedMessage(uint32 spell_id, const xyz_location& location);
 	int			GetTotalBlockedSpells() { return totalBS; }
 	inline bool HasMap() { return zonemap != nullptr; }
 	inline bool HasWaterMap() { return watermap != nullptr; }
