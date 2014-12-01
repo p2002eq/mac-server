@@ -971,7 +971,7 @@ protected:
 	Mob* bind_sight_target;
 
 	xyz_heading m_AutoAttackPosition;
-	Map::Vertex aa_los_them;
+	xyz_location m_AutoAttackTargetLocation;
 	Mob *aa_los_them_mob;
 	bool los_status;
 	bool los_status_facing;
