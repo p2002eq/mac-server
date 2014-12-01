@@ -77,10 +77,7 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// npctypeid
 	0,	// size
 	RuleR(Character, BaseRunSpeed),	// runspeed
-	0,	// heading
-	0,	// x
-	0,	// y
-	0,	// z
+	xyz_heading::Origin(),
 	0,	// light
 	0xFF,	// texture
 	0xFF,	// helmtexture
