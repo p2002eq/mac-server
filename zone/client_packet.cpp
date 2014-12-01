@@ -2631,9 +2631,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(proximity_timer.Check()) {
 		entity_list.ProcessMove(this, xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos));
-		proximity_x = ppu->x_pos;
-		proximity_y = ppu->y_pos;
-		proximity_z = ppu->z_pos;
+
+		m_Proximity = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
 	// Update internal state

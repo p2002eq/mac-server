@@ -134,7 +134,8 @@ Client::Client(EQStreamInterface* ieqs)
 	qglobal_purge_timer(30000),
 	TrackingTimer(2000),
 	ItemTickTimer(10000),
-	ItemQuestTimer(500)
+	ItemQuestTimer(500),
+	m_Proximity(FLT_MAX, FLT_MAX, FLT_MAX) //arbitrary large number
 {
 	for(int cf=0; cf < _FilterCount; cf++)
 		ClientFilters[cf] = FilterShow;
@@ -181,9 +182,6 @@ Client::Client(EQStreamInterface* ieqs)
 	zonesummon_ignorerestrictions = 0;
 	zoning = false;
 	zone_mode = ZoneUnsolicited;
-	proximity_x = FLT_MAX;	//arbitrary large number
-	proximity_y = FLT_MAX;
-	proximity_z = FLT_MAX;
 	casting_spell_id = 0;
 	npcflag = false;
 	npclevel = 0;
