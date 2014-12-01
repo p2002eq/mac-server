@@ -27,6 +27,8 @@
 #include "../common/bodytypes.h"
 #include "../common/eq_constants.h"
 
+#include "position.h"
+#include "zonedb.h"
 #include "zonedump.h"
 
 class Beacon;
@@ -50,7 +52,7 @@ struct QGlobal;
 struct UseAA_Struct;
 struct Who_All_Struct;
 
-extern EntityList entity_list; 
+extern EntityList entity_list;
 
 class Entity
 {
@@ -361,7 +363,7 @@ public:
 
 	uint16	CreateGroundObject(uint32 itemid, float x, float y, float z, float heading, uint32 decay_time = 300000);
 	uint16	CreateGroundObjectFromModel(const char *model, float x, float y, float z, float heading, uint8 type = 0x00, uint32 decay_time = 0);
-	uint16	CreateDoor(const char *model, float x, float y, float z, float heading, uint8 type = 0, uint16 size = 100);
+	uint16	CreateDoor(const char *model, const xyz_heading& position, uint8 type = 0, uint16 size = 100);
 	void	ZoneWho(Client *c, Who_All_Struct* Who);
 
 	void	GateAllClients();
