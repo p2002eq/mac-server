@@ -3349,7 +3349,7 @@ void command_corpse(Client *c, const Seperator *sep)
 				return;
 			}
 
-			Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+			Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
 
 			if (!PlayerCorpse)
 				c->Message(0, "Your target doesn't have any buried corpses.");

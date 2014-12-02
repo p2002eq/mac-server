@@ -1664,19 +1664,19 @@ bool QuestManager::summonburriedplayercorpse(uint32 char_id, const xyz_heading& 
 	if(char_id <= 0)
         return false;
 
-	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), position.m_X, position.m_Y, position.m_Z, position.m_Heading);
+	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), position);
 	if(!PlayerCorpse)
 		return false;
 
 	return true;
 }
 
-bool QuestManager::summonallplayercorpses(uint32 char_id, float dest_x, float dest_y, float dest_z, float dest_heading) {
+bool QuestManager::summonallplayercorpses(uint32 char_id, const xyz_heading& position) {
 	bool Result = false;
 
 	if(char_id > 0) {
 		Client* c = entity_list.GetClientByCharID(char_id);
-		c->SummonAllCorpses(dest_x, dest_y, dest_z, dest_heading);
+		c->SummonAllCorpses(position);
 		Result = true;
 	}
 	return Result;

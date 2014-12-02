@@ -3276,7 +3276,7 @@ void Client::SummonAndRezzAllCorpses()
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
 	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
-								GetX(), GetY(), GetZ(), GetHeading());
+								GetPosition());
 	if(CorpseCount <= 0)
 	{
 		Message(clientMessageYellow, "You have no corpses to summnon.");
@@ -3291,12 +3291,12 @@ void Client::SummonAndRezzAllCorpses()
 	Message(clientMessageYellow, "All your corpses have been summoned to your feet and have received a 100% resurrection.");
 }
 
-void Client::SummonAllCorpses(float dest_x, float dest_y, float dest_z, float dest_heading)
+void Client::SummonAllCorpses(const xyz_heading& position)
 {
 
-	if(dest_x == 0 && dest_y == 0 && dest_z == 0 && dest_heading == 0)
+	if (position.m_X == 0 && position.m_Y == 0 && position.m_Z == 0 && position.m_Heading == 0)
 	{
-		dest_x = GetX(); dest_y = GetY(); dest_z = GetZ(); dest_heading = GetHeading();
+		GetPosition();
 	}
 
 	ServerPacket *Pack = new ServerPacket(ServerOP_DepopAllPlayersCorpses, sizeof(ServerDepopAllPlayersCorpses_Struct));
@@ -3314,7 +3314,7 @@ void Client::SummonAllCorpses(float dest_x, float dest_y, float dest_z, float de
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
 	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
-								dest_x, dest_y, dest_z, dest_heading);
+								position);
 	if(CorpseCount <= 0)
 	{
 		return;

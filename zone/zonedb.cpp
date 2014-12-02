@@ -3308,31 +3308,32 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 	return true;
 }
 
-Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, float dest_x, float dest_y, float dest_z, float dest_heading) {
-	Corpse* NewCorpse = 0;
-	std::string query = StringFormat(
-		"SELECT `id`, `charname`, `time_of_death`, `is_rezzed` FROM `character_corpses` WHERE `charid` = '%u' AND `is_buried` = 1 ORDER BY `time_of_death` LIMIT 1",
-		char_id
-	);
+Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, const xyz_heading& position) {
+	Corpse* corpse = nullptr;
+	std::string query = StringFormat("SELECT `id`, `charname`, `time_of_death`, `is_rezzed` "
+                                    "FROM `character_corpses` "
+                                    "WHERE `charid` = '%u' AND `is_buried` = 1 "
+                                    "ORDER BY `time_of_death` LIMIT 1",
+                                    char_id);
 	auto results = QueryDatabase(query);
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
-		NewCorpse = Corpse::LoadCharacterCorpseEntity(
+		corpse = Corpse::LoadCharacterCorpseEntity(
 			atoul(row[0]), 			 // uint32 in_dbid
 			char_id, 				 // uint32 in_charid
 			row[1], 				 // char* in_charname
-			dest_x, 				 // float in_x
-			dest_y, 				 // float in_y
-			dest_z, 				 // float in_z
-			dest_heading, 			 // float in_heading
+			position.m_X, 		     // float in_x
+			position.m_Y, 			 // float in_y
+			position.m_Z, 			 // float in_z
+			position.m_Heading, 	 // float in_heading
 			row[2], 				 // char* time_of_death
 			atoi(row[3]) == 1, 		 // bool rezzed
 			false					 // bool was_at_graveyard
 		);
-		if (NewCorpse) {
-			entity_list.AddCorpse(NewCorpse);
+		if (corpse) {
+			entity_list.AddCorpse(corpse);
 			int32 corpse_decay = 0;
-			if(NewCorpse->IsEmpty())
+			if(corpse->IsEmpty())
 			{
 				corpse_decay = RuleI(Character, EmptyCorpseDecayTimeMS);
 			}
@@ -3340,23 +3341,23 @@ Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_z
 			{
 				corpse_decay = RuleI(Character, CorpseDecayTimeMS);
 			}
-			NewCorpse->SetDecayTimer(corpse_decay);
-			NewCorpse->Spawn();
-			if (!UnburyCharacterCorpse(NewCorpse->GetCorpseDBID(), dest_zone_id, dest_instance_id, dest_x, dest_y, dest_z, dest_heading))
+			corpse->SetDecayTimer(corpse_decay);
+			corpse->Spawn();
+			if (!UnburyCharacterCorpse(corpse->GetCorpseDBID(), dest_zone_id, dest_instance_id, position.m_X, position.m_Y, position.m_Z, position.m_Heading))
 				LogFile->write(EQEmuLog::Error, "Unable to unbury a summoned player corpse for character id %u.", char_id);
 		}
 	}
 
-	return NewCorpse;
+	return corpse;
 }
 
-bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, float dest_x, float dest_y, float dest_z, float dest_heading) {
+bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, const xyz_heading& position) {
 	Corpse* NewCorpse = 0;
 	int CorpseCount = 0;
 
 	std::string update_query = StringFormat(
 		"UPDATE character_corpses SET zone_id = %i, instance_id = %i, x = %f, y = %f, z = %f, heading = %f, is_buried = 0, was_at_graveyard = 0 WHERE charid = %i",
-		dest_zone_id, dest_instance_id, dest_x, dest_y, dest_z, dest_heading, char_id
+		dest_zone_id, dest_instance_id, position.m_X, position.m_Y, position.m_Z, position.m_Heading, char_id
 	);
 	auto results = QueryDatabase(update_query);
 
@@ -3372,10 +3373,10 @@ bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id
 			atoul(row[0]),
 			char_id,
 			row[1],
-			dest_x,
-			dest_y,
-			dest_z,
-			dest_heading,
+			position.m_X, // float in_x
+			position.m_Y, // float in_y
+			position.m_Z, // float in_z
+			position.m_Heading, // float in_heading
 			row[2],
 			atoi(row[3]) == 1,
 			false);

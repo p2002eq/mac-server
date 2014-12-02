@@ -229,14 +229,14 @@ public:
 	uint32		GetCharacterCorpseItemCount(uint32 corpse_id);
 	bool		LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct* pcs);
 	Corpse*		LoadCharacterCorpse(uint32 player_corpse_id);
-	Corpse*		SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, float dest_x, float dest_y, float dest_z, float dest_heading);
+	Corpse*		SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, const xyz_heading& position);
 	void		MarkCorpseAsRezzed(uint32 dbid);
 	bool		GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes);
 	bool		BuryCharacterCorpse(uint32 dbid);
 	bool		BuryAllCharacterCorpses(uint32 charid);
 	bool		DeleteCharacterCorpse(uint32 dbid);
-	bool		SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, float dest_x, float dest_y, float dest_z, float dest_heading);
-	bool		SummonAllGraveyardCorpses(uint32 cur_zoneid, uint32 dest_zoneid, uint16 dest_instanceid, float dest_x, float dest_y, float dest_z, float dest_heading);
+	bool		SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, const xyz_heading& position);
+	bool		SummonAllGraveyardCorpses(uint32 cur_zoneid, uint32 dest_zoneid, uint16 dest_instanceid, const xyz_heading& position);
 	bool		UnburyCharacterCorpse(uint32 dbid, uint32 new_zoneid, uint16 dest_instanceid, float new_x, float new_y, float new_z, float new_heading);
 	bool		LoadCharacterCorpses(uint32 iZoneID, uint16 iInstanceID);
 	bool		DeleteGraveyard(uint32 zone_id, uint32 graveyard_id);
