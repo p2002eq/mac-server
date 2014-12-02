@@ -1691,7 +1691,7 @@ XS(XS__summonallplayercorpses)
 
 	bool RETVAL;
 	uint32	char_id = (int)SvIV(ST(0));
-	auto position = xyz_heading((float)SvIV(ST(1)), (float)SvIV(ST(2)), (float)SvIV(ST(3)), (float)SvIV(ST(4)));
+	auto position = xyz_heading((float)SvIV(ST(1)),(float)SvIV(ST(2)),(float)SvIV(ST(3)),(float)SvIV(ST(4)));
 
 	RETVAL = quest_manager.summonallplayercorpses(char_id, position);
 

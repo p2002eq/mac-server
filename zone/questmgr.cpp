@@ -1672,14 +1672,14 @@ bool QuestManager::summonburriedplayercorpse(uint32 char_id, const xyz_heading& 
 }
 
 bool QuestManager::summonallplayercorpses(uint32 char_id, const xyz_heading& position) {
-	bool Result = false;
 
-	if(char_id > 0) {
-		Client* c = entity_list.GetClientByCharID(char_id);
-		c->SummonAllCorpses(position);
-		Result = true;
-	}
-	return Result;
+	if(char_id <= 0)
+        return false;
+
+	Client* c = entity_list.GetClientByCharID(char_id);
+	c->SummonAllCorpses(position);
+
+	return true;
 }
 
 uint32 QuestManager::getplayerburriedcorpsecount(uint32 char_id) {
