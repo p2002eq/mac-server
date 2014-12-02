@@ -3292,11 +3292,9 @@ void Client::SummonAndRezzAllCorpses()
 
 void Client::SummonAllCorpses(const xyz_heading& position)
 {
-
-	if (position.m_X == 0 && position.m_Y == 0 && position.m_Z == 0 && position.m_Heading == 0)
-	{
-		GetPosition();
-	}
+    auto summonLocation = position;
+	if(position.m_X == 0.0f && position.m_Y == 0.0f && position.m_Z == 0.0f && position.m_Heading == 0.0f)
+        summonLocation = GetPosition();
 
 	ServerPacket *Pack = new ServerPacket(ServerOP_DepopAllPlayersCorpses, sizeof(ServerDepopAllPlayersCorpses_Struct));
 
@@ -3312,12 +3310,7 @@ void Client::SummonAllCorpses(const xyz_heading& position)
 
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
-	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
-								GetPosition());
-	if(CorpseCount <= 0)
-	{
-		return;
-	}
+	database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(), summonLocation);
 }
 
 void Client::DepopAllCorpses()
