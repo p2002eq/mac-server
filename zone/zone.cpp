@@ -601,7 +601,8 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	clientauth_timer(AUTHENTICATION_TIMEOUT * 1000),
 	spawn2_timer(1000),
 	qglobal_purge_timer(30000),
-	hotzone_timer(120000)
+	hotzone_timer(120000),
+	m_SafePoint(0.0f,0.0f,0.0f)
 {
 	zoneid = in_zoneid;
 	instanceid = in_instanceid;
@@ -624,9 +625,6 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	long_name = 0;
 	aggroedmobs =0;
 
-	psafe_x = 0;
-	psafe_y = 0;
-	psafe_z = 0;
 	pgraveyard_id = 0;
 	pgraveyard_zoneid = 0;
 	pgraveyard_x = 0;
@@ -638,7 +636,7 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	pvpzone = false;
 	if(database.GetServerType() == 1)
 		pvpzone = true;
-	database.GetZoneLongName(short_name, &long_name, file_name, &psafe_x, &psafe_y, &psafe_z, &pgraveyard_id, &pMaxClients);
+	database.GetZoneLongName(short_name, &long_name, file_name, &m_SafePoint.m_X, &m_SafePoint.m_Y, &m_SafePoint.m_Z, &pgraveyard_id, &pMaxClients);
 	if(graveyard_id() > 0)
 	{
 		LogFile->write(EQEmuLog::Debug, "Graveyard ID is %i.", graveyard_id());
