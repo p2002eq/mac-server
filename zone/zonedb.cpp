@@ -3364,8 +3364,7 @@ bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id
 	std::string select_query = StringFormat(
 		"SELECT `id`, `charname`, `time_of_death`, `is_rezzed` FROM `character_corpses` WHERE `charid` = '%u'"
 		"ORDER BY time_of_death",
-		char_id
-	);
+		char_id);
 	results = QueryDatabase(select_query);
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
@@ -3373,10 +3372,10 @@ bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id
 			atoul(row[0]),
 			char_id,
 			row[1],
-			position.m_X, // float in_x
-			position.m_Y, // float in_y
-			position.m_Z, // float in_z
-			position.m_Heading, // float in_heading
+			position.m_X,
+			position.m_Y,
+			position.m_Z,
+			position.m_Heading,
 			row[2],
 			atoi(row[3]) == 1,
 			false);
