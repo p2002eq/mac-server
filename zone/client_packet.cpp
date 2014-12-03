@@ -1135,11 +1135,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
 			if(!boat)
 			{
+				auto safePoint = zone->GetSafePoint();
 				m_pp.boatid = 0;
 				m_pp.boat[0] = 0;
-				m_pp.x = zone->safe_x();
-				m_pp.y = zone->safe_y();
-				m_pp.z = zone->safe_z();
+				m_pp.x = safePoint.m_X;
+				m_pp.y = safePoint.m_Y;
+				m_pp.z = safePoint.m_Z;
 			}
 		}
 	}
