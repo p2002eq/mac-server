@@ -605,9 +605,9 @@ namespace Mac {
 		else
 			eq->y_pos = int16(emu->x_pos - 0.5);
 		if(emu->z_pos >= 0)
-			eq->z_pos = int16(emu->z_pos + 0.5)*10;
+			eq->z_pos = int16(emu->z_pos + 0.5)*10-1;
 		else
-			eq->z_pos = int16(emu->z_pos - 0.5)*10;
+			eq->z_pos = int16(emu->z_pos - 0.5)*10-1;
 		/*OUT(delta_x);
 		OUT(delta_y);
 		OUT(delta_z);
@@ -638,9 +638,9 @@ namespace Mac {
 		else
 			emu->y_pos = int16(eq->x_pos - 0.5);
 		if(eq->z_pos >= 0)
-			emu->z_pos = int16(eq->z_pos + 0.5)/10;
+			emu->z_pos = int16(eq->z_pos + 0.5)/10-1;
 		else
-			emu->z_pos = int16(eq->z_pos - 0.5)/10;
+			emu->z_pos = int16(eq->z_pos - 0.5)/10-1;
 		emu->heading = (uint8)eq->heading;
 		/*emu->delta_x = 0;
 		emu->delta_y = 0;
