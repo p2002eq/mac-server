@@ -3011,7 +3011,7 @@ void ZoneDatabase::MarkCorpseAsRezzed(uint32 db_id) {
 	auto results = QueryDatabase(query);
 }
 
-uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading) {
+uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, const xyz_heading& position) {
 	/* Dump Basic Corpse Data */
 	std::string query = StringFormat("INSERT INTO `character_corpses` SET \n"
 		"`charname` =		  '%s',\n"
@@ -3060,10 +3060,10 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		zoneid,
 		instanceid,
 		charid,
-		x,
-		y,
-		z,
-		heading,
+		position.m_X,
+		position.m_Y,
+		position.m_Z,
+		position.m_Heading,
 		dbpc->locked,
 		dbpc->exp,
 		dbpc->gmexp,
