@@ -2916,7 +2916,7 @@ uint32 ZoneDatabase::GetCharacterCorpseDecayTimer(uint32 corpse_db_id){
 	return 0;
 }
 
-uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const char* char_name, uint32 zone_id, uint16 instance_id, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading, bool is_rezzed) {
+uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const char* char_name, uint32 zone_id, uint16 instance_id, PlayerCorpse_Struct* dbpc, const xyz_heading& position, bool is_rezzed) {
 	std::string query = StringFormat("UPDATE `character_corpses` SET \n"
 		"`charname` =		  '%s',\n"
 		"`zone_id` =				%u,\n"
@@ -2963,10 +2963,10 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		zone_id,
 		instance_id,
 		char_id,
-		x,
-		y,
-		z,
-		heading,
+		position.m_X,
+		position.m_Y,
+		position.m_Z,
+		position.m_Heading,
 		dbpc->locked,
 		dbpc->exp,
 		dbpc->gmexp,
