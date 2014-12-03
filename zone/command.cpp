@@ -5517,11 +5517,11 @@ void command_wpinfo(Client *c, const Seperator *sep){
 	n->DisplayWaypointInfo(c);
 }
 
-void command_wpadd(Client *c, const Seperator *sep){
-	int	type1 = 0,
-		type2 = 0,
-		pause = 0,
-		heading = -1;	// Defaults for a new grid
+void command_wpadd(Client *c, const Seperator *sep)
+{
+	int	type1=0,
+		type2=0,
+		pause=0;	// Defaults for a new grid
 
 	Mob *t = c->GetTarget();
 	if (t && t->IsNPC())
@@ -5544,9 +5544,11 @@ void command_wpadd(Client *c, const Seperator *sep){
 				return;
 			}
 		}
-		if (strcmp("-h", sep->arg[2]) == 0)
-			heading = c->GetHeading();
-		uint32 tmp_grid = database.AddWPForSpawn(c, s2info->GetID(), c->GetX(), c->GetY(), c->GetZ(), pause, type1, type2, zone->GetZoneID(), heading);
+		auto position = c->GetPosition();
+		if (strcmp("-h",sep->arg[2]) != 0)
+			position.m_Heading = -1;
+
+		uint32 tmp_grid = database.AddWPForSpawn(c, s2info->GetID(), position, pause, type1, type2, zone->GetZoneID());
 		if (tmp_grid)
 			t->CastToNPC()->SetGrid(tmp_grid);
 
