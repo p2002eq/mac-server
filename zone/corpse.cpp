@@ -96,10 +96,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 		pcs->silver,		   // uint32 in_silver
 		pcs->gold,			   // uint32 in_gold
 		pcs->plat,			   // uint32 in_plat
-		position.m_X,		   // float in_x
-		position.m_Y,		   // float in_y
-		position.m_Z,		   // float in_z
-		position.m_Heading,	   // float in_heading
+		position,
 		pcs->size,			   // float in_size
 		pcs->gender,		   // uint8 in_gender
 		pcs->race,			   // uint16 in_race
@@ -444,7 +441,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 
 /* Called from Database Load */
 
-Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, float in_x, float in_y, float in_z, float in_heading, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard)
+Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const xyz_heading& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", // const char* in_name,
 	"",						// const char* in_lastname,
 	0,						// int32		in_cur_hp,
@@ -458,7 +455,7 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	0,						// uint32		in_npctype_id,
 	in_size,				// float		in_size,
 	0,						// float		in_runspeed,
-	xyz_heading(in_x, in_y, in_z, in_heading),
+	position,
 	0,						// uint8		in_light,
 	in_texture,				// uint8		in_texture,
 	in_helmtexture,			// uint8		in_helmtexture,
@@ -533,13 +530,11 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	killedby = in_killedby;
 
 	if(killedby == Killed_DUEL)
-	{
 		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
-	}
 
-	for (int i = 0; i < MAX_LOOTERS; i++){
+	for (int i = 0; i < MAX_LOOTERS; i++)
 		allowed_looters[i] = 0;
-	}
+
 	SetPlayerKillItemID(0);
 }
 
