@@ -2288,11 +2288,13 @@ void command_wp(Client *c, const Seperator *sep){
 	if (strcasecmp("add", sep->arg[1]) == 0) {
 		if (wp == 0) //default to highest if it's left blank, or we enter 0
 			wp = database.GetHighestWaypoint(zone->GetZoneID(), atoi(sep->arg[2])) + 1;
-		if (strcasecmp("-h", sep->arg[5]) == 0) {
-			database.AddWP(c, atoi(sep->arg[2]), wp, c->GetX(), c->GetY(), c->GetZ(), atoi(sep->arg[3]), zone->GetZoneID(), c->GetHeading());
+		if (strcasecmp("-h",sep->arg[5]) == 0) {
+			database.AddWP(c, atoi(sep->arg[2]),wp, c->GetPosition(), atoi(sep->arg[3]),zone->GetZoneID());
 		}
 		else {
-			database.AddWP(c, atoi(sep->arg[2]), wp, c->GetX(), c->GetY(), c->GetZ(), atoi(sep->arg[3]), zone->GetZoneID(), -1);
+            auto position = c->GetPosition();
+            position.m_Heading = -1;
+			database.AddWP(c, atoi(sep->arg[2]),wp, position, atoi(sep->arg[3]),zone->GetZoneID());
 		}
 	}
 	else if (strcasecmp("delete", sep->arg[1]) == 0)
