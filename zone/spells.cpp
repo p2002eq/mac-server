@@ -4722,6 +4722,15 @@ void Client::MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message)
 
 }
 
+int Client::FindSpellMemSlotBySpellID(uint16 spellid) {
+	for (int i = 0; i < MAX_PP_MEMSPELL; i++) {
+		if (m_pp.mem_spells[i] == spellid)
+			return i;
+	}
+
+	return -1;	//default
+}
+
 void Client::MemSpell(uint16 spell_id, int slot, bool update_client)
 {
 	if(slot >= MAX_PP_MEMSPELL || slot < 0)
