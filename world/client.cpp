@@ -289,7 +289,7 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	outapp->pBuffer = new uchar[1];
 	outapp->size = 1;
 
-	clog(WORLD__CLIENT, "common/client.cpp line 316 pass");
+	clog(WORLD__CLIENT, "common/client.cpp line 292 pass");
 	bool valid = false;
 	if (!database.CheckNameFilter(char_name)) {
 		clog(WORLD__CLIENT, "Invalid name");
@@ -301,23 +301,23 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 		valid = false; 
 	} 
 	else if (database.ReserveName(GetAccountID(), char_name)) {
-		clog(WORLD__CLIENT, "common/client.cpp line 327 pass");
+		clog(WORLD__CLIENT, "common/client.cpp line 304 pass");
 		valid = true; 	
 	}
 	else {
-		clog(WORLD__CLIENT, "common/client.cpp line 332 pass");
+		clog(WORLD__CLIENT, "common/client.cpp line 308 pass");
 		valid = false; 
 	}
 
-	clog(WORLD__CLIENT, "common/client.cpp line 336 pass");
+	clog(WORLD__CLIENT, "common/client.cpp line 312 pass");
 	outapp->pBuffer[0] = valid? 1 : 0;
 	QueuePacket(outapp);
 	safe_delete(outapp);
-	clog(WORLD__CLIENT, "common/client.cpp line 340 pass");
+	clog(WORLD__CLIENT, "common/client.cpp line 316 pass");
 
 	if (!valid)
 		memset(char_name, 0, sizeof(char_name));
-	clog(WORLD__CLIENT, "common/client.cpp line 344 pass");
+		clog(WORLD__CLIENT, "common/client.cpp line 320 pass");
 
 	return true;
 }
