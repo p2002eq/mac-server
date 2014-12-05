@@ -452,7 +452,7 @@ bool Client::Save(uint8 iCommitNow) {
 	/* Wrote current basics to PP for saves */
 	m_pp.x = x_pos;
 	m_pp.y = y_pos;
-	m_pp.z = z_pos;
+	m_pp.z = z_pos + 2;
 	m_pp.guildrank = guildrank;
 	m_pp.heading = heading;
 
