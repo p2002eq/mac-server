@@ -112,7 +112,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		if(zone_mode == ZoneUnsolicited)
 		{
 
-			zone_point = zone->GetClosestZonePoint(GetX(), GetY(), GetZ(), target_zone_id, this, ZONEPOINT_ZONE_RANGE);
+			zone_point = zone->GetClosestZonePoint(GetPosition(), target_zone_id, this, ZONEPOINT_ZONE_RANGE);
 			//if we didnt get a zone point, or its to a different zone,
 			//then we assume this is invalid.
 			if(!zone_point || zone_point->target_zone_id != target_zone_id) {
