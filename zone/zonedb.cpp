@@ -2830,6 +2830,7 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`heading` =			%1.1f,\n"
 		"`is_locked` =          %d,\n"
 		"`exp` =                 %u,\n"
+		"`gmexp` =				%u,\n"
 		"`size` =               %f,\n"
 		"`level` =              %u,\n"
 		"`race` =               %u,\n"
@@ -2860,7 +2861,8 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`wc_6` =               %u,\n"
 		"`wc_7` =               %u,\n"
 		"`wc_8` =               %u,\n"
-		"`wc_9`	=                %u \n"
+		"`wc_9`	=               %u,\n"
+		"`killedby` =			%u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(), 
 		zone_id, 
@@ -2872,6 +2874,7 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		heading,
 		dbpc->locked,
 		dbpc->exp,
+		dbpc->gmexp,
 		dbpc->size,
 		dbpc->level,
 		dbpc->race,
@@ -2903,6 +2906,7 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		dbpc->item_tint[6].color,
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
+		dbpc->killedby,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -2930,6 +2934,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`is_buried` =				0,"
 		"`is_locked` =          %d,\n"
 		"`exp` =                 %u,\n"
+		"`gmexp` =				%u,\n"
 		"`size` =               %f,\n"
 		"`level` =              %u,\n"
 		"`race` =               %u,\n"
@@ -2960,7 +2965,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`wc_6` =               %u,\n"
 		"`wc_7` =               %u,\n"
 		"`wc_8` =               %u,\n"
-		"`wc_9`	=                %u \n",
+		"`wc_9`	=               %u,\n"
+		"`killedby` =			%u \n",
 		EscapeString(charname).c_str(),
 		zoneid,
 		instanceid,
@@ -2971,6 +2977,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		heading,
 		dbpc->locked,
 		dbpc->exp,
+		dbpc->gmexp,
 		dbpc->size,
 		dbpc->level,
 		dbpc->race,
@@ -3001,7 +3008,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		dbpc->item_tint[5].color,
 		dbpc->item_tint[6].color,
 		dbpc->item_tint[7].color,
-		dbpc->item_tint[8].color
+		dbpc->item_tint[8].color,
+		dbpc->killedby
 	);
 	auto results = QueryDatabase(query); 
 	uint32 last_insert_id = results.LastInsertedID();
@@ -3103,6 +3111,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"SELECT           \n"
 		"is_locked,       \n"
 		"exp,             \n"
+		"gmexp,			  \n"
 		"size,            \n"
 		"`level`,         \n"
 		"race,            \n"
@@ -3133,7 +3142,8 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"wc_6,            \n"
 		"wc_7,            \n"
 		"wc_8,            \n"
-		"wc_9             \n"
+		"wc_9,             \n"
+		"killedby		  \n"
 		"FROM             \n"
 		"character_corpses\n"
 		"WHERE `id` = %u  LIMIT 1\n",
@@ -3144,6 +3154,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		pcs->locked = atoi(row[i++]);						// is_locked,
 		pcs->exp = atoul(row[i++]);							// exp,
+		pcs->gmexp = atoul(row[i++]);						// gmexp,
 		pcs->size = atoi(row[i++]);							// size,
 		pcs->level = atoi(row[i++]);						// `level`,
 		pcs->race = atoi(row[i++]);							// race,
@@ -3175,6 +3186,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		pcs->item_tint[6].color = atoul(row[i++]);			// wc_7,
 		pcs->item_tint[7].color = atoul(row[i++]);			// wc_8,
 		pcs->item_tint[8].color = atoul(row[i++]);			// wc_9
+		pcs->killedby = atoi(row[i++]);						// killedby
 	}
 	query = StringFormat(
 		"SELECT                       \n"
@@ -3238,7 +3250,16 @@ Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_z
 		);
 		if (NewCorpse) { 
 			entity_list.AddCorpse(NewCorpse);
-			NewCorpse->SetDecayTimer(RuleI(Character, CorpseDecayTimeMS));
+			int32 corpse_decay = 0;
+			if(NewCorpse->IsEmpty())
+			{
+				corpse_decay = RuleI(Character, EmptyCorpseDecayTimeMS);
+			}
+			else
+			{
+				corpse_decay = RuleI(Character, CorpseDecayTimeMS);
+			}
+			NewCorpse->SetDecayTimer(corpse_decay);
 			NewCorpse->Spawn();
 			if (!UnburyCharacterCorpse(NewCorpse->GetCorpseDBID(), dest_zone_id, dest_instance_id, dest_x, dest_y, dest_z, dest_heading))
 				LogFile->write(EQEMuLog::Error, "Unable to unbury a summoned player corpse for character id %u.", char_id);
@@ -3279,7 +3300,16 @@ bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id
 			false);
 		if (NewCorpse) {
 			entity_list.AddCorpse(NewCorpse);
-			NewCorpse->SetDecayTimer(RuleI(Character, CorpseDecayTimeMS));
+			int32 corpse_decay = 0;
+			if(NewCorpse->IsEmpty())
+			{
+				corpse_decay = RuleI(Character, EmptyCorpseDecayTimeMS);
+			}
+			else
+			{
+				corpse_decay = RuleI(Character, CorpseDecayTimeMS);
+			}
+			NewCorpse->SetDecayTimer(corpse_decay);
 			NewCorpse->Spawn();
 			++CorpseCount;
 		}

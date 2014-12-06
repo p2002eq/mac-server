@@ -879,10 +879,10 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 
 void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
 {
-	SendAATimers();
+	/*SendAATimers();
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
 	QueuePacket(outapp);
-	safe_delete(outapp);
+	safe_delete(outapp);*/ // //Commented this out to avoid zone death until we are ready to deal with aa
 	return;
 }
 
@@ -929,10 +929,10 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	}
 	safe_delete(outapp);
 
-	if (GetLevel() >= 51)
+	/*if (GetLevel() >= 51)
 	{
 		SendAATimers();
-	}
+	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
 
 	outapp = new EQApplicationPacket(OP_SendExpZonein, 0);
 	QueuePacket(outapp);
@@ -1533,7 +1533,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 // connected opcode handlers
 void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 {
-	if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
+	/*if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
 	{
 		if (m_epp.perAA == 0)
 			Message_StringID(CC_Default, AA_ON); //ON
@@ -1591,7 +1591,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		action->ability = database.GetMacToEmuAA(aa);
 		mlog(AA__MESSAGE, "Activating AA %d", action->ability);
 		ActivateAA((aaID)action->ability);
-	}
+	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
 
 	return;
 }
@@ -2612,7 +2612,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
 		MakeSpawnUpdate(ppu);
 		if (gmhideme)
-			entity_list.QueueClientsStatus(this,outapp,true,Admin(),250);
+			entity_list.QueueClientsStatus(this,outapp,true,Admin(),255);
 		else
 			entity_list.QueueCloseClients(this,outapp,true,300,nullptr,false);
 		safe_delete(outapp);
@@ -2746,6 +2746,10 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 		}
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
+		if(tcorpse->IsRezzed()){
+			//CORPSE_TOO_OLD doesn't match our logs :(
+			Message(0, "This corpse is too old to be resurrected.");
+		}
 		uint32 day, hour, min, sec, ttime;
 		if ((ttime = tcorpse->GetDecayTime()) != 0) {
 			sec = (ttime / 1000) % 60; // Total seconds
@@ -2759,23 +2763,7 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			else
 				Message(0, "This corpse will decay in %i minutes and %i seconds.", min, sec);
 
-			Message(0, "This corpse %s be resurrected.", tcorpse->IsRezzed() ? "cannot" : "can");
-			/*
 			hour = 0;
-
-			if((ttime = tcorpse->GetResTime()) != 0) {
-			sec = (ttime/1000)%60; // Total seconds
-			min = (ttime/60000)%60; // Total seconds
-			hour = (ttime/3600000)%24; // Total hours
-			if(hour)
-			Message(0, "This corpse can be resurrected for %i hours, %i minutes and %i seconds.", hour, min, sec);
-			else
-			Message(0, "This corpse can be resurrected for %i minutes and %i seconds.", min, sec);
-			}
-			else {
-			Message_StringID(CC_Default, CORPSE_TOO_OLD);
-			}
-			*/
 		}
 		else {
 			Message_StringID(10, CORPSE_DECAY_NOW);
@@ -2988,7 +2976,7 @@ void Client::Handle_OP_Death(const EQApplicationPacket *app)
 	if (EnvDeath == true)
 	{
 		mod_client_death_env();
-		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand);
+		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
 		return;
 	}
 	else
@@ -3331,7 +3319,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	{
 		mod_client_death_env();
 
-		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand);
+		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
 	}
 	SendHPUpdate();
 	return;

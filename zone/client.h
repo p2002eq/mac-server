@@ -132,6 +132,14 @@ enum {
 	HideCorpseNPC = 5
 };
 
+typedef enum {
+	Killed_Other,
+	Killed_NPC,
+	Killed_ENV,
+	Killed_DUEL,
+	Killed_PVP
+} KilledByTypes;
+
 struct RespawnOption
 {
 	std::string name;
@@ -161,7 +169,7 @@ public:
 	~Client();
 
 	//abstract virtual function implementations required by base abstract class
-	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill);
+	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, uint8 killedby = 0);
 	virtual void Damage(Mob* from, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false);
 	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false, bool IsFromSpell = false,
 			ExtraAttackOptions *opts = nullptr);
@@ -207,6 +215,7 @@ public:
 			const char *message5 = nullptr, const char *message6 = nullptr,
 			const char *message7 = nullptr, const char *message8 = nullptr,
 			const char *message9 = nullptr);
+	void Tell_StringID(uint32 string_id, const char *who, const char *message);
 	void	SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minprice,uint32 maxprice);
 	void	SendTraderItem(uint32 item_id,uint16 quantity);
 	uint16	FindTraderItem(int32 SerialNumber,uint16 Quantity);
@@ -801,6 +810,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	void ProcessInspectRequest(Client* requestee, Client* requester);
 	bool ClientFinishedLoading() { return (conn_state == ClientConnectFinished); }
 	int FindSpellBookSlotBySpellID(uint16 spellid);
+	int FindSpellMemSlotBySpellID(uint16 spellid);
 	int GetNextAvailableSpellBookSlot(int starting_slot = 0);
 	inline uint32 GetSpellByBookSlot(int book_slot) { return m_pp.spell_book[book_slot]; }
 	inline bool HasSpellScribed(int spellid) { return (FindSpellBookSlotBySpellID(spellid) != -1 ? true : false); }

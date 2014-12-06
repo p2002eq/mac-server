@@ -3756,19 +3756,25 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 {
 	_log(SPELLS__REZ, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i", spellid,IsRezzed(),rez_experience);
 
-	if(IsRezzed()){
+	if(IsRezzed())
+	{
 		if(Caster && Caster->IsClient())
-			Caster->Message(13,"This character has already been resurrected.");
-
-		return;
+		{
+			if(Caster->CastToClient()->GetGM())
+			{
+				rez_experience = gm_rez_experience;
+				gm_rez_experience = 0;
+			}
+			else
+				rez_experience = 0;
+		}
 	}
-	/*
-	if(!can_rez) {
+
+	/*if(!can_corpse_be_rezzed) {
 		if(Caster && Caster->IsClient())
 			Caster->Message_StringID(CC_Default, CORPSE_TOO_OLD);
 		return;
-	}
-	*/
+	}*/
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_RezzRequest, sizeof(Resurrect_Struct));
 	Resurrect_Struct* rezz = (Resurrect_Struct*) outapp->pBuffer;
@@ -4714,6 +4720,15 @@ void Client::MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message)
 		const char *fadetext = spells[spell_id].spell_fades;
 	}
 
+}
+
+int Client::FindSpellMemSlotBySpellID(uint16 spellid) {
+	for (int i = 0; i < MAX_PP_MEMSPELL; i++) {
+		if (m_pp.mem_spells[i] == spellid)
+			return i;
+	}
+
+	return -1;	//default
 }
 
 void Client::MemSpell(uint16 spell_id, int slot, bool update_client)

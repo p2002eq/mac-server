@@ -94,6 +94,7 @@ ClientListEntry::~ClientListEntry() {
 		Camp(); // updates zoneserver's numplayers
 		client_list.RemoveCLEReferances(this);
 	}
+	tell_queue.clear();
 }
 
 void ClientListEntry::SetChar(uint32 iCharID, const char* iCharName) {
@@ -234,6 +235,7 @@ void ClientListEntry::ClearVars(bool iAll) {
 	pLFG = 0;
 	gm = 0;
 	pClientVersion = 0;
+	tell_queue.clear();
 }
 
 void ClientListEntry::Camp(ZoneServer* iZS) {

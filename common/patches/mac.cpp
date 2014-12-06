@@ -150,18 +150,18 @@ namespace Mac {
 			eq->anon = emu->player.spawn.anon;
 			strncpy(eq->name, emu->player.spawn.name, 64);
 			eq->deity = emu->player.spawn.deity;
+			eq->race = emu->player.spawn.race;
+			eq->size = emu->player.spawn.size;
 			if(emu->player.spawn.race == 42)
 				eq->size = emu->player.spawn.size + 2.0f;
-			else
-				eq->size = emu->player.spawn.size;
 			eq->NPC = emu->player.spawn.NPC;
 			eq->invis = emu->player.spawn.invis;
 			eq->max_hp = emu->player.spawn.max_hp;
 			eq->curHP = emu->player.spawn.curHp;
 			eq->x_pos = (float)emu->player.spawn.x;
 			eq->y_pos = (float)emu->player.spawn.y;
+			eq->z_pos = (float)emu->player.spawn.z + (eq->size * 0.625f - 4);
 			eq->animation = emu->player.spawn.animation;
-			eq->z_pos = (float)emu->player.spawn.z;///10.0f;
 			eq->heading = (float)emu->player.spawn.heading;
 			eq->haircolor = emu->player.spawn.haircolor;
 			eq->beardcolor = emu->player.spawn.beardcolor;
@@ -181,7 +181,6 @@ namespace Mac {
 			eq->anim_type = 0x64;
 			eq->texture = emu->player.spawn.equip_chest2;
 			eq->helm = emu->player.spawn.helm;
-			eq->race = emu->player.spawn.race;
 			eq->GM = emu->player.spawn.gm;
 			eq->GuildID = emu->player.spawn.guildID;
 			if(eq->GuildID == 0)
@@ -212,7 +211,6 @@ namespace Mac {
 			eq->extra[12] = 0xFF;
 			eq->extra[13] = 0xFF;
 			eq->type = 0;
-			eq->size = emu->player.spawn.size;
 			eq->petOwnerId = emu->player.spawn.petOwnerId;
 
 			CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::ServerZoneEntry_Struct));
@@ -605,9 +603,9 @@ namespace Mac {
 		else
 			eq->y_pos = int16(emu->x_pos - 0.5);
 		if(emu->z_pos >= 0)
-			eq->z_pos = int16(emu->z_pos + 0.5)*10;
+			eq->z_pos = int16(emu->z_pos + 0.5)*10-1;
 		else
-			eq->z_pos = int16(emu->z_pos - 0.5)*10;
+			eq->z_pos = int16(emu->z_pos - 0.5)*10-1;
 		/*OUT(delta_x);
 		OUT(delta_y);
 		OUT(delta_z);
@@ -638,9 +636,9 @@ namespace Mac {
 		else
 			emu->y_pos = int16(eq->x_pos - 0.5);
 		if(eq->z_pos >= 0)
-			emu->z_pos = int16(eq->z_pos + 0.5)/10;
+			emu->z_pos = int16(eq->z_pos + 0.5)/10-1;
 		else
-			emu->z_pos = int16(eq->z_pos - 0.5)/10;
+			emu->z_pos = int16(eq->z_pos - 0.5)/10-1;
 		emu->heading = (uint8)eq->heading;
 		/*emu->delta_x = 0;
 		emu->delta_y = 0;

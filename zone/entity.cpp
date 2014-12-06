@@ -3684,7 +3684,7 @@ void EntityList::SendUntargetable(Client *c)
 
 void EntityList::ZoneWho(Client *c, Who_All_Struct *Who)
 {
-	// This is only called for SoF clients, as regular /who is now handled server-side for that client.
+	// This is only called for SoF clients, as regular /who is now handled server-side for that client. Remove later, seems to not be used on eqmac.
 	uint32 PacketLength = 0;
 	uint32 Entries = 0;
 	uint8 WhomLength = strlen(Who->whom);

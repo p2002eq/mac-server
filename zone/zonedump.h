@@ -148,6 +148,7 @@ struct PlayerCorpse_Struct {
 	bool	locked;
 	uint32	itemcount;
 	uint32	exp;
+	uint32	gmexp;
 	float	size;
 	uint8	level;
 	uint32	race;
@@ -171,6 +172,7 @@ struct PlayerCorpse_Struct {
 	uint32 drakkin_heritage;
 	uint32 drakkin_tattoo;
 	uint32 drakkin_details;
+	uint8 killedby;
 	player_lootitem::ServerLootItem_Struct	items[0];
 	//std::list<player_lootitem::ServerLootItem_Struct*> items;
 };

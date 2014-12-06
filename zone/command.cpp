@@ -419,6 +419,8 @@ int command_init(void){
 		command_add("undyeme", "- Remove dye from all of your armor slots", 0, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target", 80, command_unfreeze) ||
 		command_add("unlock", "- Unlock the worldserver", 150, command_unlock) ||
+		command_add("unmemspell", "[spellid] - Unmem specified spell from your target's spell bar.", 180, command_unmemspell) ||
+		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 180, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 180, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 180, command_unscribespells) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 10, command_uptime) ||
@@ -5354,6 +5356,52 @@ void command_scribespell(Client *c, const Seperator *sep){
 	}
 	else
 		c->Message(13, "Spell ID: %i is an unknown spell and cannot be scribed.", spell_id);
+}
+
+void command_unmemspell(Client *c, const Seperator *sep){
+	uint16 spell_id = 0;
+	uint16 mem_slot = -1;
+	Client *t = c;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+		t = c->GetTarget()->CastToClient();
+
+	if (!sep->arg[1][0]) {
+		c->Message(0, "FORMAT: #unmemspell <spellid>");
+		return;
+	}
+
+	spell_id = atoi(sep->arg[1]);
+
+	if (IsValidSpell(spell_id)) {
+		mem_slot = t->FindSpellMemSlotBySpellID(spell_id);
+
+		if (mem_slot >= 0) {
+			t->UnmemSpell(mem_slot);
+
+			t->Message(0, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
+
+			if (t != c)
+				c->Message(0, "Unmemming spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
+
+			LogFile->write(EQEMuLog::Normal, "Unmem spell: %s (%i) request for %s from %s.", spells[spell_id].name, spell_id, t->GetName(), c->GetName());
+		}
+		else {
+			t->Message(13, "Unable to unmemspell spell: %s (%i) from your gembar. This spell is not memmed.", spells[spell_id].name, spell_id);
+
+			if (t != c)
+				c->Message(13, "Unable to unmemspell spell: %s (%i) for %s due to spell not memmed.", spells[spell_id].name, spell_id, t->GetName());
+		}
+	}
+}
+
+void command_unmemspells(Client *c, const Seperator *sep){
+	Client *t = c;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+		t = c->GetTarget()->CastToClient();
+
+	t->UnmemSpellAll();
 }
 
 void command_unscribespell(Client *c, const Seperator *sep){

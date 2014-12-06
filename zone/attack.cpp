@@ -1383,7 +1383,7 @@ void Mob::AggroPet(Mob* attacker)
 	}
 }
 
-bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill)
+bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill, uint8 killedby)
 {
 	if(!ClientFinishedLoading())
 		return false;
@@ -1445,6 +1445,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 			parse->EventNPC(EVENT_SLAY, killerMob->CastToNPC(), this, "", 0);
 
 			mod_client_death_npc(killerMob);
+			killedby = Killed_NPC;
 
 			uint16 emoteid = killerMob->GetEmoteID();
 			if(emoteid != 0)
@@ -1463,6 +1464,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 				entity_list.DuelMessage(killerMob,this,false);
 
 				mod_client_death_duel(killerMob);
+				killedby = Killed_DUEL;
 
 			} else {
 				//otherwise, we just died, end the duel.
@@ -1473,6 +1475,8 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 				}
 			}
 		}
+		else if(killerMob->IsClient())
+			killedby = Killed_PVP;
 	}
 
 	entity_list.RemoveFromTargets(this);
@@ -1555,7 +1559,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 		if(RuleB(Character, LeaveCorpses) && GetLevel() >= RuleI(Character, DeathItemLossLevel) || RuleB(Character, LeaveNakedCorpses))
 		{
 			// creating the corpse takes the cash/items off the player too
-			Corpse *new_corpse = new Corpse(this, exploss);
+			Corpse *new_corpse = new Corpse(this, exploss, killedby);
 
 			char tmp[20];
 			database.GetVariable("ServerType", tmp, 9);
@@ -1926,7 +1930,7 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 	}
 }
 
-bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill) {
+bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill, uint8 killedby) {
 	mlog(COMBAT__HITS, "Fatal blow dealt by %s with %d damage, spell %d, skill %d", killerMob->GetName(), damage, spell, attack_skill);
 	
 	Mob *oos = nullptr;
