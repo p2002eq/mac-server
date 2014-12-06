@@ -879,10 +879,10 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 
 void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
 {
-	SendAATimers();
+	/*SendAATimers();
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
 	QueuePacket(outapp);
-	safe_delete(outapp);
+	safe_delete(outapp);*/ // //Commented this out to avoid zone death until we are ready to deal with aa
 	return;
 }
 
@@ -929,10 +929,10 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	}
 	safe_delete(outapp);
 
-	if (GetLevel() >= 51)
+	/*if (GetLevel() >= 51)
 	{
 		SendAATimers();
-	}
+	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
 
 	outapp = new EQApplicationPacket(OP_SendExpZonein, 0);
 	QueuePacket(outapp);
@@ -1533,7 +1533,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 // connected opcode handlers
 void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 {
-	if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
+	/*if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
 	{
 		if (m_epp.perAA == 0)
 			Message_StringID(CC_Default, AA_ON); //ON
@@ -1591,7 +1591,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		action->ability = database.GetMacToEmuAA(aa);
 		mlog(AA__MESSAGE, "Activating AA %d", action->ability);
 		ActivateAA((aaID)action->ability);
-	}
+	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
 
 	return;
 }
