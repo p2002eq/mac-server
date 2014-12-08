@@ -123,34 +123,34 @@ const char *GetRandPetName()
 
 const FocusPetItem Pet::focusItems[FocusPetItemSize] = {
 	// Symbol of Ancient Summoning
-	{20508, 25, 75, 59, FocusPetType::ALL},
+	{20508, 25, 60, 40, FocusPetType::ALL},
 	// Dark Gloves of Summoning
-	{28144, 20, 75, 49, FocusPetType::ALL},
+	{28144, 20, 60, 40, FocusPetType::ALL},
 	// Encyclopedia Necrotheurgia
-	{11571, 10, 60, 41, FocusPetType::NECRO},
+	{11571, 10, 48, 40, FocusPetType::NECRO},
 	// Staff of Elemental Mastery: Water
-	{11569, 10, 60, 49, FocusPetType::WATER},
+	{11569, 10, 48, 40, FocusPetType::WATER},
 	// Staff of Elemental Mastery: Earth
-	{11567, 10, 60, 49, FocusPetType::EARTH},
+	{11567, 10, 48, 40, FocusPetType::EARTH},
 	// Staff of Elemental Mastery: Fire
-	{11566, 10, 60, 49, FocusPetType::FIRE},
+	{11566, 10, 48, 40, FocusPetType::FIRE},
 	// Staff of Elemental Mastery: Air
-	{11568, 10, 60, 49, FocusPetType::AIR},
+	{11568, 10, 48, 40, FocusPetType::AIR},
 	// Broom of Trilon
-	{6361, 5, 49, 4, FocusPetType::AIR},
+	{6360, 5, 48, 4, FocusPetType::AIR},
 	// Shovel of Ponz
-	{6361, 5, 49, 4, FocusPetType::EARTH},
+	{6361, 5, 48, 4, FocusPetType::EARTH},
 	// Torch of Alna
-	{6362, 5, 49, 4, FocusPetType::FIRE},
+	{6362, 5, 48, 4, FocusPetType::FIRE},
 	// Stein of Ulissa
-	{6363, 5, 49, 4, FocusPetType::WATER},
+	{6363, 5, 48, 4, FocusPetType::WATER},
 };
 
 FocusPetType Pet::GetPetItemPetTypeFromSpellId(uint16 spell_id) {
-	static const int firePets[]  = {626, 630, 634, 316, 399, 403, 395, 498, 571, 575, 622};
-	static const int airPets[]   = {627, 631, 635, 317, 396, 400, 404, 499, 572, 576, 623};
-	static const int earthPets[] = {624, 628, 632, 58, 397, 401, 335, 496, 569, 573, 620};
-	static const int waterPets[] = {625, 629, 633, 315, 398, 403, 336, 497, 570, 574, 621};
+	static const int firePets[]  = {626, 630, 634, 316, 399, 403, 395, 498, 571, 575, 622, 1673, 1677, 3322};
+	static const int airPets[]   = {627, 631, 635, 317, 396, 400, 404, 499, 572, 576, 623, 1674, 1678, 3371};
+	static const int earthPets[] = {624, 628, 632, 58, 397, 401, 335, 496, 569, 573, 620, 1675, 1671, 3324};
+	static const int waterPets[] = {625, 629, 633, 315, 398, 403, 336, 497, 570, 574, 621, 1676, 1672, 3320};
 
 	for(int i=0; i < sizeof(firePets)/ sizeof(firePets[0]); i++) {
 		if((int)spell_id == firePets[i]) {
@@ -224,17 +224,18 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				if(slot_id != INVALID_INDEX) {
 					//skip this focus item if its effect is out of rage for the pet we are casting
 					if(base->level >= petItem.min_level && base->level <= petItem.max_level) {
-						//Message(13, "Found Focus Item in Inventory: %d", slot_id);
+						if(EQDEBUG>8) Message(13, "Found Focus Item: %d in Inventory: %d", petItem.item_id, slot_id);
+						if(EQDEBUG>8) Message(13, "Npc spell levels: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
 						slot = slot_id;
 						focusItemId = petItem.item_id;
 						break;
-					} //else {
-						//Message(13, "Moving on Pet base level is out of range: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
-					//}
+					} else {
+						if(EQDEBUG>8) Message(13, "Moving on Pet base level is out of range: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
+					}
 				}
 			}
 			// we have a focus item
-			if(focusItemId) 
+			if(focusItemId)
 			{
 				FocusPetType focusType;
 				// Symbol or Gloves can be used by all NEC, MAG, BST
@@ -245,16 +246,27 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				} else {
 					// make sure we can use the focus item as the class .. client should never let us fail this but for sanity!
 					if (GetClass() == MAGICIAN) {
-						//Message(13, "Looking up mage");
+						if(EQDEBUG>8) Message(13, "Looking up mage");
+						if(EQDEBUG>8) Message(13, "Looking up if spell: %d is allowed ot be focused", spell_id);
 						focusType = Pet::GetPetItemPetTypeFromSpellId(spell_id);
+						if(EQDEBUG>8) Message(13, "FocusType fround %i", focusType);
 					} else if (GetClass() == NECROMANCER) {
-						//Message(13, "We are a necro");
+						if(EQDEBUG>8) Message(13, "We are a necro");
 						focusType = FocusPetType::NECRO;
 					}
 				}
 				// Sets the power to be what the focus item has as a mod
+				if(EQDEBUG>8) {
+					Message(13, "Pet Item Type ALL is  %i", FocusPetType::ALL);
+					Message(13, "Pet Item Type FIRE is  %i", FocusPetType::FIRE);
+					Message(13, "Pet Item Type WATER is  %i", FocusPetType::WATER);
+					Message(13, "Pet Item Type AIR is  %i", FocusPetType::AIR);
+					Message(13, "Pet Item Type EARTH is  %i", FocusPetType::EARTH);
+					Message(13, "Pet Item Type NECRO is  %i", FocusPetType::NECRO);
+				}
+				if(EQDEBUG>8) Message(13, "Pet Item Type  %i", petItem.pet_type);
 				if (focusType == petItem.pet_type) {
-					//Message(13, "Setting power to: %d", petItem.power);
+					if(EQDEBUG>8) Message(13, "Setting power to: %d", petItem.power);
 					act_power = petItem.power;
 					scale_pet = true;
 				}
@@ -269,7 +281,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 						if(act_power > 10)
 							act_power = 10;
 					}
-					else	
+					else
 					{
 						if(act_power > 25)
 							act_power = 25;
@@ -283,7 +295,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 		scale_pet = true;
 	}
 
-	//Message(13, "Power is: %d", act_power);
+	if(EQDEBUG>8) Message(13, "Power is: %d", act_power);
 	// optional rule: classic style variance in pets. Achieve this by
 	// adding a random 0-4 to pet power, since it only comes in increments
 	// of five from focus effects.
