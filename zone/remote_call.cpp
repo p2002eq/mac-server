@@ -310,7 +310,7 @@ void handle_rc_get_entity_attributes(const std::string &method, const std::strin
 	}
 }
 
-/* Client -> Server */
+/* Client -> Server :: Zone.SetEntityAttribute */
 void handle_rc_set_entity_attribute(const std::string &method, const std::string &connection_id, const std::string &request_id, const std::vector<std::string> &params) {
 	std::string error;
 	std::map<std::string, std::string> res;
@@ -328,5 +328,6 @@ void handle_rc_set_entity_attribute(const std::string &method, const std::string
 		if (params[1] == "appearance_effect"){ ent->SendAppearanceEffect(atoi(params[2].c_str()), 0, 0, 0, 0); }
 		if (params[1] == "heading"){ ent->GMMove(ent->GetX(), ent->GetY(), ent->GetZ(), atoi(params[2].c_str()), true); }
 		if (params[1] == "size"){ ent->ChangeSize(atoi(params[2].c_str())); }
+		if (params[1] == "texture"){ ent->SendIllusionPacket(0, 0xFF, atoi(params[2].c_str()), 0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0); }
 	}
 }
