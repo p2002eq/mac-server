@@ -215,7 +215,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 	// if the item is stackable and the charge amount is -1 or 0 then set to 1 charge.
 	// removed && item->MaxCharges == 0 if -1 or 0 was passed max charges is irrelevant 
 	if(charges < 0)
-		charges = 1;
+		charges = item->MaxCharges;
 
 	else if (charges == 0){
 		//Item does not have charges and is not stackable (Normal item.)
