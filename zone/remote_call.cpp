@@ -329,5 +329,7 @@ void handle_rc_set_entity_attribute(const std::string &method, const std::string
 		if (params[1] == "heading"){ ent->GMMove(ent->GetX(), ent->GetY(), ent->GetZ(), atoi(params[2].c_str()), true); }
 		if (params[1] == "size"){ ent->ChangeSize(atoi(params[2].c_str())); }
 		if (params[1] == "texture"){ ent->SendIllusionPacket(0, 0xFF, atoi(params[2].c_str()), 0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0); }
+		if (params[1] == "gender"){ ent->SendIllusionPacket(0, atoi(params[2].c_str()), 0xFF, 0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0); }
+
 	}
 }
