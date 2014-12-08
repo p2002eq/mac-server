@@ -1,5 +1,5 @@
 #include "../common/debug.h"
-#include "../common/EmuTCPConnection.h"
+#include "../common/emu_tcp_connection.h"
 #include "../common/logsys.h"
 #include "../common/logtypes.h"
 #include "../common/md5.h"
@@ -11,7 +11,7 @@
 #include "entity.h"
 #include "mob.h"
 #include "npc.h"
-#include "QuestParserCollection.h"
+#include "quest_parser_collection.h"
 #include "remote_call.h"
 #include "remote_call_subscribe.h"
 #include "worldserver.h"
@@ -305,6 +305,7 @@ void handle_rc_set_entity_attribute(const std::string &method, const std::string
 		if (params[1] == "race"){ 
 			ent->SendIllusionPacket(atoi(params[2].c_str())); 
 		}
+		if (params[1] == "heading"){ ent->GMMove(ent->GetX(), ent->GetY(), ent->GetZ(), atoi(params[2].c_str()), true); }
 	}
 
 }
