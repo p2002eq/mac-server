@@ -3041,8 +3041,9 @@ void Client::Handle_OP_DeleteSpell(const EQApplicationPacket *app)
 	if (dss->spell_slot < 0 || dss->spell_slot > int(MAX_PP_SPELLBOOK))
 		return;
 
-	if (m_pp.spell_book[dss->spell_slot] != SPELLBOOK_UNKNOWN) {
-		m_pp.spell_book[dss->spell_slot] = SPELLBOOK_UNKNOWN;
+	if (m_pp.spell_book[dss->spell_slot] != SPELLBOOK_UNKNOWN) 
+	{
+		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[dss->spell_slot], dss->spell_slot);
 		dss->success = 1;
 	}
 	else
