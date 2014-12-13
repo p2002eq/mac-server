@@ -417,12 +417,13 @@ Timer DecayTimer(20);
 			
 			oldstream_itr->second->CheckTimers();
 
-			if (oldstream_itr->second->HasOutgoingData()) {
+		//Commented this so all streams, regardless of them having data, send data out. This is so keepalive packets don't screw up the data rate calculations. Slightly more CPU used.
+		//	if (oldstream_itr->second->HasOutgoingData()) {
 				havework=true; 
 				oldstream_itr->second->SetWriting(true);
 				oldstream_itr->second->PutInUse();
 				old_wants_write.push_back(oldstream_itr->second);
-			}			
+		//	}			
 			
 		}
 
