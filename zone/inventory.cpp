@@ -222,7 +222,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 		{ 
 			quantity = 1;
 		}
-		//Item is not stackable, but has to use quantity.
+		//Item is not stackable, and uses charges.
 		else if(item->StackSize < 1 || !item->Stackable) 
 		{
 			quantity = item->MaxCharges;
