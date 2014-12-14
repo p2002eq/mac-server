@@ -4822,3 +4822,97 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 	return stat;
 }
 
+uint32 Mob::GetRaceStringID() {
+
+	switch (GetRace()) {
+		case HUMAN:
+			return 1257; break;
+		case BARBARIAN:
+			return 1258; break;
+		case ERUDITE:
+			return 1259; break;
+		case WOOD_ELF:
+			return 1260; break;
+		case HIGH_ELF:
+			return 1261; break;
+		case DARK_ELF:
+			return 1262; break;
+		case HALF_ELF:
+			return 1263; break;
+		case DWARF:
+			return 1264; break;
+		case TROLL:
+			return 1265; break;
+		case OGRE:
+			return 1266; break;
+		case HALFLING:
+			return 1267; break;
+		case GNOME:
+			return 1268; break;
+		case IKSAR:
+			return 1269; break;
+		case VAHSHIR:
+			return 1270; break;
+		//case FROGLOK:
+		//	return "Frogloks"; break;
+		default:
+			return 1256; break;
+	}
+}
+
+uint32 Mob::GetClassStringID() {
+
+	switch (GetClass()) {
+		case WARRIOR:
+		case WARRIORGM:
+			return 1240; break;
+		case CLERIC:
+		case CLERICGM:
+			return 1241; break;
+		case PALADIN:
+		case PALADINGM:
+			return 1242; break;
+		case RANGER:
+		case RANGERGM:
+			return 1243; break;
+		case SHADOWKNIGHT:
+		case SHADOWKNIGHTGM:
+			return 1244; break;
+		case DRUID:
+		case DRUIDGM:
+			return 1245; break;
+		case MONK:
+		case MONKGM:
+			return 1246; break;
+		case BARD:
+		case BARDGM:
+			return 1247; break;
+		case ROGUE:
+		case ROGUEGM:
+			return 1248; break;
+		case SHAMAN:
+		case SHAMANGM:
+			return 1249; break;
+		case NECROMANCER:
+		case NECROMANCERGM:
+			return 1250; break;
+		case WIZARD:
+		case WIZARDGM:
+			return 1251; break;
+		case MAGICIAN:
+		case MAGICIANGM:
+			return 1252; break;
+		case ENCHANTER:
+		case ENCHANTERGM:
+			return 1253; break;
+		case BEASTLORD:
+		case BEASTLORDGM:
+			return 1254; break;
+		case BANKER:
+			return 1255; break;
+		default:
+			return 1239; break;
+	}
+}
+
+

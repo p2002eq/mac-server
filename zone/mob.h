@@ -314,6 +314,8 @@ public:
 	virtual inline uint8 GetBaseGender() const { return base_gender; }
 	virtual inline uint16 GetDeity() const { return deity; }
 	inline uint16 GetRace() const { return race; }
+	virtual uint32 GetRaceStringID();
+	virtual uint32 GetClassStringID();
 	inline uint8 GetGender() const { return gender; }
 	inline uint8 GetTexture() const { return texture; }
 	inline uint8 GetHelmTexture() const { return helmtexture; }
