@@ -6884,20 +6884,22 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		cursor = false;
 	}
 
+	//If stacked returns true, the items have already been placed in the inventory. No need to check for available slot
+	//or if the player inventory is full.
 	if (!stacked)
+	{
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
 
-	// shouldn't we be reimbursing if these two fail?
-
-	//make sure we are not completely full...
-	if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
-		if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
-			Message(13, "You do not have room for any more items.");
-			DropInst(inst);
-			QueuePacket(outapp);
-			safe_delete(outapp);
-			safe_delete(inst);
-			return;
+		//make sure we are not completely full...
+		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
+			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
+				Message(13, "You do not have room for any more items.");
+				DropInst(inst);
+				QueuePacket(outapp);
+				safe_delete(outapp);
+				safe_delete(inst);
+				return;
+			}
 		}
 	}
 
