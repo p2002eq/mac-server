@@ -26,6 +26,7 @@
 #include "crc32.h"
 #include "platform.h"
 #include "eq_stream.h"
+#include "logsys.h"
 #ifndef STATIC_OPCODE
 #include "opcodemgr.h"
 #endif
@@ -512,12 +513,14 @@ void DumpPacket(const EQApplicationPacket* app, bool iShowInfo) {
 EQOldPacket::EQOldPacket(const unsigned char *buf, uint32 len)
 {
 	// Clear Fields
+	pExtra = 0;
 	Clear();
 }
 
 EQOldPacket::EQOldPacket()
 {
 	// Clear Fields
+	pExtra = 0;
 	Clear();
 }
 
@@ -525,7 +528,8 @@ EQOldPacket::EQOldPacket()
 // deletes pExtra
 EQOldPacket::~EQOldPacket()
 {
-	//_log(NET__DEBUG, "Killing old packet"); 
+	//_log(NET__DEBUG, "Killing old packet");
+	Clear();
 	if (pExtra)
 	{
 		safe_delete(pExtra);//delete pExtra;
@@ -759,10 +763,15 @@ uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
 	*data = new uchar[dwExtraSize + 39];
 	uchar* buf = *data;
 	uint32 o = 4;
+	bool clearFlags = false;
 	this->dwSEQ = netcon->SACK.dwGSQ;
 	*((uint16*)&buf[2]) = ntohs(netcon->SACK.dwGSQ++);
-	if (!netcon->SACK.dwGSQ)
-		netcon->SACK.dwGSQ = 1;
+
+	if(!netcon->SACK.dwGSQ)
+	{
+		netcon->SACK.dwGSQ = 120; //Magic number. Seems to cause the client to recover. I don't think this is right now /shrug
+	}
+
 	netcon->SACK.dwGSQcount++;
 
 	if (netcon->CACK.dwARQ) {
@@ -798,7 +807,7 @@ uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
         *((uint16*)&buf[o]) = ntohs(fraginfo.dwTotal);
 		o += 2;
 	}
-    if(HDR.a4_ASQ && HDR.a1_ARQ) {
+	if(HDR.a4_ASQ && HDR.a1_ARQ) {
 		*&buf[o++] = dbASQ_high;
 		*&buf[o++] = dbASQ_low;
 	}
@@ -816,5 +825,6 @@ uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
 	memcpy(buf, &HDR, 2);
 	*((uint32*)&buf[o]) = htonl(CRC32::Generate(buf, o));
 	o += 4;
+	netcon->sent_Start = true;
 	return o;
 }

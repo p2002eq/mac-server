@@ -1561,6 +1561,7 @@ EQOldStream::EQOldStream(sockaddr_in in, int fd_sock)
 	no_ack_sent_timer = new Timer(500);
 	bTimeout = false;
 	bTimeoutTrigger = false;
+	sent_Start = false;
 	sent_Fin = false;
 
 	/* 
@@ -1583,7 +1584,7 @@ EQOldStream::EQOldStream(sockaddr_in in, int fd_sock)
 	no_ack_received_timer->Disable();
 	no_ack_sent_timer->Disable();
 	dataflow = 0;
-	SetDataRate(25);
+	SetDataRate(500);
 	debug_level = 0;
 	LOG_PACKETS = false;
 	isWriting = false;
@@ -1609,9 +1610,10 @@ EQOldStream::EQOldStream()
 	no_ack_sent_timer = new Timer(500);
 	bTimeout = false;
 	bTimeoutTrigger = false;
+	sent_Start = false;
 	sent_Fin = false;
 	dataflow = 0;
-	SetDataRate(25);
+	SetDataRate(2500);
 	arsp_response = 0;
 	/* 
 		on a normal server there is always data getting sent 
@@ -1664,7 +1666,6 @@ void EQOldStream::IncomingARSP(uint16 dwARSP)
 	EQOldPacket* pack = 0;
 
 	arsp_response = dwARSP;
-
 	std::deque<EQOldPacket*>::iterator it;
 	for(it = SendQueue.begin(); it != SendQueue.end();)
 	{
@@ -1762,19 +1763,25 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ CHECK FOR ACK/SEQ RESET ************/ 
 	if(pack->HDR.a5_SEQStart)
 	{
-		if (dwLastCACK == pack->dwARQ - 1)
+		if (dwLastCACK == (unsigned int)pack->dwARQ - (unsigned int)1)
+		{
+			//_log(EQMAC__LOG, _L"Packet invalid seqstart? %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 			return true;
+		}
 		//      cout << "resetting SACK.dwGSQ1" << endl;
 		//      SACK.dwGSQ      = 0;            //Main sequence number SHORT#2
 		dwLastCACK      = pack->dwARQ-1;//0;
+		//_log(EQMAC__LOG, _L"Packet seqstart %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 		//      CACK.dwGSQ = 0xFFFF; changed next if to else instead
 	}
 	// Agz: Moved this, was under packet resend before..., later changed to else statement...
-	else if( (pack->dwSEQ - CACK.dwGSQ) <= 0 && !from_buffer)  // Agz: if from the buffer i ignore sequence number..
+	else if( (unsigned int)(pack->dwSEQ - CACK.dwGSQ) <= (unsigned int)0 && !from_buffer)  // Agz: if from the buffer i ignore sequence number..
 	{
+	//	_log(EQMAC__LOG, _L"Packet invalid %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 		return true; //Invalid packet
 	}
 	CACK.dwGSQ = pack->dwSEQ; //Get current sequence #.
+	//_log(EQMAC__LOG, _L"Packet incoming arq%i:seq%i"__L, pack->dwARQ, pack->dwSEQ);
 
 	/************ Process ack responds ************/
 	// Quagmire: Moved this to above "ack request" checking in case the packet is dropped in there
@@ -1800,6 +1807,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			{
 				if ((*iterator)->dwARQ == pack->dwARQ)
 				{
+				//	_log(EQMAC__LOG, _L"Packet already buffered %i"__L, pack->dwARQ);
 					return true; // This packet was already buffered
 				}
 				iterator++;
@@ -1808,9 +1816,14 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			buffered_packets.push_back(pack);
 			return false;
 		}
+		else
+		{
+		//	_log(EQMAC__LOG, _L"Packet over limit! %i"__L, pack->dwARQ);
+		}
 		// Is this packet a resend we have already processed?
 		if(pack->dwARQ - dwLastCACK <= 0)
 		{
+		//	_log(EQMAC__LOG, _L"Packet discarded %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 		//	no_ack_sent_timer->Trigger(); // Added to make sure we send a new ack respond
 			return true;
 		}
@@ -1980,17 +1993,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 		for (int i=0; i<=fragsleft; i++)
 		{
 			EQOldPacket *pack = new EQOldPacket();
-			if(!SACK.dwGSQ && SACK.dwStarted != 1) {
-				SACK.dwGSQ++;
-				SACK.dwStarted = 1;
-				pack->HDR.a5_SEQStart   = 1;
-				SACK.dwARQ              = rand()%0x3FFF;//Current request ack
-				SACK.dbASQ_high         = 1;            //Current sequence number
-				SACK.dbASQ_low          = 0;            //Current sequence number
-				#if EQN_DEBUG_ACK >= 1
-					cout << "New random SACK.dwARQ: 0x" << hex << setw(4) << setfill('0') << SACK.dwARQ << dec << endl;
-				#endif
-			}
 			//IF NON PURE ACK THEN ALWAYS INCLUDE A ACKSEQ              // Agz: Not anymore... Always include ackseq if not a fragmented packet
 			if (i==0 && ack_req) // If this will be a fragmented packet, only include ackseq in first fragment
 				pack->HDR.a4_ASQ = 1;                                   // This is what the eq servers does
@@ -2096,15 +2098,6 @@ void EQOldStream::CheckTimers(void)
 		if (dataflow < 0)
 			dataflow = 0;
 	}
-
-	MOutboundQueue.lock();
-	/************ Should a pure ack be sent? ************/
-	if (!CheckClosed() && no_ack_sent_timer->Check(0) || keep_alive_timer->Check(0))
-	{
-		EQProtocolPacket app(0xFFFF, nullptr, 0);
-		MakeEQPacket(&app, SACK.dwGSQcount > 45);
-	}
-	MOutboundQueue.unlock();
 }
 
 void EQOldStream::QueuePacket(const EQApplicationPacket *p, bool ack_req)
@@ -2232,7 +2225,6 @@ void EQOldStream::SendPacketQueue(bool Block)
 	MOutboundQueue.lock();
 	// Get first send packet on queue and send it!
 	EQOldPacket* pack = 0;    
-	std::deque<EQOldPacket*>::iterator packit = SendQueue.begin();
 	sockaddr_in to;	
 	uint32 size;
 	uchar* data;
@@ -2241,12 +2233,19 @@ void EQOldStream::SendPacketQueue(bool Block)
 	to.sin_port = remote_port;
 	to.sin_addr.s_addr = remote_ip;
 	int sentpacket = 0;
+	/************ Should a pure ack be sent? ************/
+	if(!CheckClosed() && (no_ack_sent_timer->Check(0) || keep_alive_timer->Check(0)))
+	{
+		EQProtocolPacket app(0xFFFF, nullptr, 0);
+		MakeEQPacket(&app, SACK.dwGSQcount > 45);
+	}
+	std::deque<EQOldPacket*>::iterator packit = SendQueue.begin();
 	while (packit != SendQueue.end() && !DataQueueFull()) {
 		pack = (*packit);
 		if(pack->SentCount == 0 && Timer::GetCurrentTime() >= (pack->LastSent+500))
 		{
 			std::cout << ""; //This is really stupid... but helps packets from being discarded in high traffic scenarios
-			if (!CheckClosed() && pack->dwARQ == arsp_response + 10) //This code checks if 10 packets have been sent since last ARSP ("we got this packet yo") response from client, and if so, tags those ten packets that haven't been verifiably recieved for a resend.
+			if (!CheckClosed() && pack->dwARQ == arsp_response + 10 && pack->dwLoopedOnce == 0) //This code checks if 10 packets have been sent since last ARSP ("we got this packet yo") response from client, and if so, tags those ten packets that haven't been verifiably recieved for a resend.
 			{
 				std::deque<EQOldPacket*>::iterator it;
 				for(it = SendQueue.begin(); it != SendQueue.end();it++)
@@ -2416,5 +2415,14 @@ void EQOldStream::Close() {
 		sent_Fin = true;
 		_SendDisconnect();
 		_log(EQMAC__LOG, _L "Stream closing immediate due to Close()" __L);
+	}
+}
+void EQOldStream::ClearOldPackets()
+{		
+	std::deque<EQOldPacket*>::iterator it;
+	for(it = SendQueue.begin(); it != SendQueue.end();)
+	{
+		(*it)->dwLoopedOnce++;
+		it++;
 	}
 }

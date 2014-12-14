@@ -83,7 +83,6 @@ struct ACK_INFO
 		dbASQ_high = dbASQ_low = 0;
 		dwGSQ = 0;
 		dwGSQcount = 0;
-		dwStarted = 0;
 	}
 
 	uint16   dwARQ;			// Comment: Current request ack
@@ -91,7 +90,6 @@ struct ACK_INFO
 	uint16	dbASQ_low  : 8;	//TODO: What is this one?
 	uint16   dwGSQ;			// Comment: Main sequence number SHORT#2
 	uint16	dwGSQcount;
-	uint16	dwStarted;
 
 };
 
@@ -483,6 +481,7 @@ class EQOldStream : public EQStreamInterface {
 		void InboundQueueClear();
 		void OutboundQueueClear();
 		void PacketQueueClear();
+		void ClearOldPackets();
 
 		std::deque<EQOldPacket*>			  SendQueue;	//Store packets thats on the send que
 		MyQueue<EQRawApplicationPacket>           OutQueue;	//parced packets ready to go out of this class
@@ -561,6 +560,7 @@ class EQOldStream : public EQStreamInterface {
 		ACK_INFO    SACK; //Server -> client info.
 		ACK_INFO    CACK; //Client -> server info.
 		uint16       dwLastCACK;
+		bool sent_Start;
 
 		Timer* no_ack_received_timer;
 		Timer* no_ack_sent_timer;

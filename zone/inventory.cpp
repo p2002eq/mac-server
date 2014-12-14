@@ -168,7 +168,7 @@ bool Client::CheckLoreConflict(const Item_Struct* item) {
 	return (m_inv.HasItemByLoreGroup(item->LoreGroup, ~invWhereUnused) != INVALID_INDEX);
 }
 
-bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, bool attuned, uint16 to_slot) {
+bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, bool attuned, uint16 to_slot) {
 	this->EVENT_ITEM_ScriptStopReturn();
 
 	// TODO: update calling methods and script apis to handle a failure return
@@ -210,33 +210,40 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 	uint32 races	= item->Races;
 	uint32 slots	= item->Slots;
 
-	// validation passed..so, set the charges and create the actual item
+	// validation passed..so, set the quantity and create the actual item
 
-	// if the item is stackable and the charge amount is -1 or 0 then set to 1 charge.
-	// removed && item->MaxCharges == 0 if -1 or 0 was passed max charges is irrelevant 
-	if(charges < 0)
-		charges = 1;
+	//Todo: Figure out if we still need this, or if we are good with just using 0.
+	if(quantity < 0)
+		quantity = 1;
 
-	else if (charges == 0){
-		//Item does not have charges and is not stackable (Normal item.)
+	else if (quantity == 0){
+		//Item does not have quantity and is not stackable (Normal item.)
 		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
 		{ 
-			charges = 1;
+			quantity = 1;
 		}
-		//Item is not stackable, but has to use charges.
+		//Item is not stackable, and uses charges.
 		else if(item->StackSize < 1 || !item->Stackable) 
 		{
-			charges = item->MaxCharges;
+			quantity = item->MaxCharges;
 		}
 		//Due to the previous checks, item has to stack.
 		else
 		{
-			charges = item->StackSize;
+			//If no value is set coming from a quest method, only summon a single item.
+			if(to_slot == MainQuest)
+			{
+				quantity = 1;
+			}
+			else
+			{
+				quantity = item->StackSize;
+			}
 		}
 	}	
-	// in any other situation just use charges as passed
+	// in any other situation just use quantity as passed
 
-	ItemInst* inst = database.CreateItem(item, charges);
+	ItemInst* inst = database.CreateItem(item, quantity);
 
 	if(inst == nullptr) {
 		Message(13, "An unknown server error has occurred and your item was not created.");

@@ -197,6 +197,8 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	uint32 id=0;
 	if (strncasecmp(name, "LS#", 3) == 0)
 		id=atoi(&name[3]);
+	else if(database.GetAccountIDByName(name))
+		id=database.GetAccountIDByName(name);
 	else
 		id=atoi(name);
 #ifdef IPBASED_AUTH_HACK
@@ -207,7 +209,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		return false;
 	}
 
-	if (cle = client_list.CheckAuth(id, password))
+	if (((cle = client_list.CheckAuth(name, password)) || (cle = client_list.CheckAuth(id, password))))
 #endif
 	{
 		cle->SetOnline();
