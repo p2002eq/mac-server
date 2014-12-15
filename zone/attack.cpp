@@ -4772,3 +4772,21 @@ void NPC::SetAttackTimer()
 		TimerToUse->SetAtTrigger(std::max(RuleI(Combat, MinHastedDelay), speed), true);
 	}
 }
+
+uint32 NPC::GetAttackTimer()
+{
+	float haste_mod = GetHaste() * 0.01f;
+	int hhe = itembonuses.HundredHands + spellbonuses.HundredHands;
+
+	// Technically NPCs should do some logic for weapons, but the effect is minimal
+	// What they do is take the lower of their set delay and the weapon's
+	// ex. Mob's delay set to 20, weapon set to 19, delay 19
+	// Mob's delay set to 20, weapon set to 21, delay 20
+	int speed = 0;
+	if (RuleB(Spells, Jun182014HundredHandsRevamp))
+		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 1000.0f) * (attack_delay / haste_mod))) * 100);
+	else
+		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
+
+	return speed;
+}

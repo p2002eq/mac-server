@@ -154,6 +154,7 @@ public:
 	virtual void UninitializeBuffSlots();
 
 	virtual void	SetAttackTimer();
+	virtual uint32  GetAttackTimer();
 	virtual void	RangedAttack(Mob* other);
 	virtual void	ThrowingAttack(Mob* other) { }
 	int32 GetNumberOfAttacks() const { return attack_count; }
@@ -260,7 +261,6 @@ public:
 	uint32	GetMaxDMG() const {return max_dmg;}
 	uint32	GetMinDMG() const {return min_dmg;}
 	int16	GetSlowMitigation() const {return slow_mitigation;}
-	float	GetAttackSpeed() const {return attack_speed;}
 	bool	IsAnimal() const { return(bodytype == BT_Animal); }
 	uint16	GetPetSpellID() const {return pet_spell_id;}
 	void	SetPetSpellID(uint16 amt) {pet_spell_id = amt;}

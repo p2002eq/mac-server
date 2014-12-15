@@ -1643,7 +1643,7 @@ void command_npcstats(Client *c, const Seperator *sep){
 		c->Message(0, "Gender: %i  Size: %f  Bodytype: %d", c->GetTarget()->GetGender(), c->GetTarget()->GetSize(), c->GetTarget()->GetBodyType());
 		c->Message(0, "Runspeed: %f  Walkspeed: %f", c->GetTarget()->GetRunspeed(), c->GetTarget()->GetWalkspeed());
 		c->Message(0, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
-		c->Message(0, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackSpeedTimer());
+		c->Message(0, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackTimer());
 		c->GetTarget()->CastToNPC()->QueryLoot(c);
 	}
 }
@@ -6663,17 +6663,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		return;
 	}
 
-	if (strcasecmp(sep->arg[1], "Attackspeed") == 0) {
-		c->Message(15, "NPCID %u now has attack_speed set to %f",
-			npcTypeID, atof(sep->arg[2]));
-
-		std::string query = StringFormat("UPDATE npc_types SET attack_speed = %f WHERE id = %i",
-			atof(sep->argplus[2]), npcTypeID);
-		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
-		return;
-	}
-
 	if (strcasecmp(sep->arg[1], "Attackdelay") == 0) {
 		c->Message(15, "NPCID %u now has attack_delay set to %i", npcTypeID, atoi(sep->arg[2]));
 
@@ -8613,7 +8602,7 @@ void command_modifynpcstat(Client *c, const Seperator *sep){
 	{
 		c->Message(0, "usage #modifynpcstat arg value");
 		c->Message(0, "Args: ac, str, sta, agi, dex, wis, _int, cha, max_hp, mr, fr, cr, pr, dr, runspeed, special_attacks, "
-			"attack_speed, atk, accuracy, trackable, min_hit, max_hit, see_invis_undead, see_hide, see_improved_hide, "
+			"atk, accuracy, trackable, min_hit, max_hit, see_invis_undead, see_hide, see_improved_hide, "
 			"hp_regen, mana_regen, aggro, assist, slow_mitigation, loottable_id, healscale, spellscale");
 		return;
 	}

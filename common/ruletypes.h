@@ -307,6 +307,7 @@ RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a be
 RULE_BOOL ( Spells, SHDProcIDOffByOne, true) // pre June 2009 SHD spell procs were off by 1, they stopped doing this in June 2009 (so UF+ spell files need this false)
 RULE_BOOL ( Spells, Jun182014HundredHandsRevamp, false) // this should be true for if you import a spell file newer than June 18, 2014
 RULE_BOOL ( Spells, SwarmPetTargetLock, false) // Use old method of swarm pets target locking till target dies then despawning.
+RULE_BOOL ( Spells, ShowWornOffMessages, false) //Determines if "Spell has worn off of" messages will display or not.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Combat )

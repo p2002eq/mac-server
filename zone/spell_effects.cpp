@@ -4014,8 +4014,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 		if(p->IsPet())
 			notify = p->GetOwner();
 		if(p) {
-			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
-				spells[buffs[slot].spellid].name, GetCleanName());
+			if(RuleB(Spell,ShowWornOffMessages))
+			{
+				notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
+					spells[buffs[slot].spellid].name, GetCleanName());
+			}
 		}
 	}
 
