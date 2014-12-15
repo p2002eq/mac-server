@@ -2155,6 +2155,7 @@ enum {	//values of AA_Action.action
 };
 
 class Timer;
+class Mob;
 class AA_SwarmPetInfo {
 public:
 	AA_SwarmPetInfo();
