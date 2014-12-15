@@ -175,7 +175,6 @@ Mob::Mob(const char* in_name,
 	drakkin_heritage	= in_drakkin_heritage;
 	drakkin_tattoo		= in_drakkin_tattoo;
 	drakkin_details		= in_drakkin_details;
-	attack_speed = 0;
 	attack_delay = 0;
 	slow_mitigation = 0;
 	findable	= false;
@@ -1157,7 +1156,7 @@ void Mob::ShowStats(Client* client)
 				spawngroupid = n->respawn2->SpawnGroupID();
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
-			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackSpeedTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
+			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  Trackable: %i", n->IsTrackable());
 			n->QueryLoot(client);
 		}
@@ -1681,37 +1680,6 @@ void Mob::SetZone(uint32 zone_id, uint32 instance_id)
 
 void Mob::Kill() {
 	Death(this, 0, SPELL_UNKNOWN, SkillHandtoHand);
-}
-
-int32 Mob::GetAttackSpeedTimer() {
-	int speed = 4000;
-	float PermaHaste;
-	if(GetHaste())
-		PermaHaste = 1 / (1 + (float)GetHaste()/100);
-	else
-		PermaHaste = 1.0f;
-
-	int16 DelayMod = itembonuses.HundredHands + spellbonuses.HundredHands;
-	if (DelayMod < -99)
-		DelayMod = -99;
-	//above checks ensure ranged weapons do not fall into here
-	// Work out if we're a monk
-	if ((GetClass() == MONK) || (GetClass() == BEASTLORD)) {
-		//we are a monk, use special delay
-		speed = (int)( (GetMonkHandToHandDelay()*(100+DelayMod)/100)*(100.0f+attack_speed)*PermaHaste);
-		// 1200 seemed too much, with delay 10 weapons available
-		if(speed < RuleI(Combat, MinHastedDelay))	//lower bound
-			speed = RuleI(Combat, MinHastedDelay);
-		return speed;	// Hand to hand, delay based on level or epic
-	} 
-	else 
-	{
-		//not a monk... using fist, regular delay
-		speed = (int)((36 *(100+DelayMod)/100)*(100.0f+attack_speed)*PermaHaste);
-		if(speed < RuleI(Combat, MinHastedDelay) && IsClient())	//lower bound
-			speed = RuleI(Combat, MinHastedDelay);
-		return speed;	// Hand to hand, non-monk 2/36
-	}
 }
 
 bool Mob::CanThisClassDualWield(void) const {
@@ -4821,4 +4789,98 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 	
 	return stat;
 }
+
+uint32 Mob::GetRaceStringID() {
+
+	switch (GetRace()) {
+		case HUMAN:
+			return 1257; break;
+		case BARBARIAN:
+			return 1258; break;
+		case ERUDITE:
+			return 1259; break;
+		case WOOD_ELF:
+			return 1260; break;
+		case HIGH_ELF:
+			return 1261; break;
+		case DARK_ELF:
+			return 1262; break;
+		case HALF_ELF:
+			return 1263; break;
+		case DWARF:
+			return 1264; break;
+		case TROLL:
+			return 1265; break;
+		case OGRE:
+			return 1266; break;
+		case HALFLING:
+			return 1267; break;
+		case GNOME:
+			return 1268; break;
+		case IKSAR:
+			return 1269; break;
+		case VAHSHIR:
+			return 1270; break;
+		//case FROGLOK:
+		//	return "Frogloks"; break;
+		default:
+			return 1256; break;
+	}
+}
+
+uint32 Mob::GetClassStringID() {
+
+	switch (GetClass()) {
+		case WARRIOR:
+		case WARRIORGM:
+			return 1240; break;
+		case CLERIC:
+		case CLERICGM:
+			return 1241; break;
+		case PALADIN:
+		case PALADINGM:
+			return 1242; break;
+		case RANGER:
+		case RANGERGM:
+			return 1243; break;
+		case SHADOWKNIGHT:
+		case SHADOWKNIGHTGM:
+			return 1244; break;
+		case DRUID:
+		case DRUIDGM:
+			return 1245; break;
+		case MONK:
+		case MONKGM:
+			return 1246; break;
+		case BARD:
+		case BARDGM:
+			return 1247; break;
+		case ROGUE:
+		case ROGUEGM:
+			return 1248; break;
+		case SHAMAN:
+		case SHAMANGM:
+			return 1249; break;
+		case NECROMANCER:
+		case NECROMANCERGM:
+			return 1250; break;
+		case WIZARD:
+		case WIZARDGM:
+			return 1251; break;
+		case MAGICIAN:
+		case MAGICIANGM:
+			return 1252; break;
+		case ENCHANTER:
+		case ENCHANTERGM:
+			return 1253; break;
+		case BEASTLORD:
+		case BEASTLORDGM:
+			return 1254; break;
+		case BANKER:
+			return 1255; break;
+		default:
+			return 1239; break;
+	}
+}
+
 

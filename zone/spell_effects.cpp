@@ -761,10 +761,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					caster->Message(0, "You cannot charm something when you already have a pet.");
 					BuffFadeByEffect(SE_Charm);
 					break;
-				} else if(GetOwner()) {
-					caster->Message(0, "You cannot charm someone else's pet!");
-					BuffFadeByEffect(SE_Charm);
-					break;
 				}
 
 				Mob *my_pet = GetPet();
@@ -4018,8 +4014,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 		if(p->IsPet())
 			notify = p->GetOwner();
 		if(p) {
-			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
-				spells[buffs[slot].spellid].name, GetCleanName());
+			if(RuleB(Spell,ShowWornOffMessages))
+			{
+				notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
+					spells[buffs[slot].spellid].name, GetCleanName());
+			}
 		}
 	}
 

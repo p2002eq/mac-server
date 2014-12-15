@@ -207,18 +207,31 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if (spellbonuses.NegateIfCombat)
 		BuffFadeByEffect(SE_NegateIfCombat);
 
-	if(IsClient() && GetTarget() && IsHarmonySpell(spell_id))
+	if(IsClient() && GetTarget())
 	{
-		for(int i = 0; i < EFFECT_COUNT; i++) {
-			// not important to check limit on SE_Lull as it doesnt have one and if the other components won't land, then SE_Lull wont either
-			if (spells[spell_id].effectid[i] == SE_ChangeFrenzyRad || spells[spell_id].effectid[i] == SE_Harmony) {
-				if((spells[spell_id].max[i] != 0 && GetTarget()->GetLevel() > spells[spell_id].max[i]) || GetTarget()->GetSpecialAbility(IMMUNE_PACIFY)) {
-					InterruptSpell(CANNOT_AFFECT_NPC, CC_Red, spell_id);
-					return(false);
+		if(IsHarmonySpell(spell_id))
+		{
+			for(int i = 0; i < EFFECT_COUNT; i++) {
+				// not important to check limit on SE_Lull as it doesnt have one and if the other components won't land, then SE_Lull wont either
+				if (spells[spell_id].effectid[i] == SE_ChangeFrenzyRad || spells[spell_id].effectid[i] == SE_Harmony) {
+					if((spells[spell_id].max[i] != 0 && GetTarget()->GetLevel() > spells[spell_id].max[i]) || GetTarget()->GetSpecialAbility(IMMUNE_PACIFY)) {
+						InterruptSpell(CANNOT_AFFECT_NPC, CC_Red, spell_id);
+						return(false);
+					}
 				}
 			}
 		}
+		// Charm cannot be cast on a pet.
+		if(IsCharmSpell(spell_id))
+		{
+			if(GetTarget()->GetOwner())
+			{
+				InterruptSpell(CANNOT_AFFECT_NPC, CC_Red, spell_id);
+				return(false);
+			}
+		}
 	}
+
 
 	// check for fizzle
 	// note that CheckFizzle itself doesn't let NPCs fizzle,

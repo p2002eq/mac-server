@@ -240,7 +240,6 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 
 	delaytimer = false;
 	combat_event = false;
-	attack_speed = d->attack_speed;
 	attack_delay = d->attack_delay;
 	slow_mitigation = d->slow_mitigation;
 
@@ -1797,7 +1796,6 @@ void NPC::ModifyNPCStat(const char *identifier, const char *newValue)
 	else if(id == "runspeed") { runspeed = (float)atof(val.c_str()); CalcBonuses(); return; }
 	else if(id == "special_attacks") { NPCSpecialAttacks(val.c_str(), 0, 1); return; }
 	else if(id == "special_abilities") { ProcessSpecialAbilities(val.c_str()); return; }
-	else if(id == "attack_speed") { attack_speed = (float)atof(val.c_str()); CalcBonuses(); return; }
 	else if(id == "atk") { ATK = atoi(val.c_str()); return; }
 	else if(id == "accuracy") { accuracy_rating = atoi(val.c_str()); return; }
 	else if(id == "avoidance") { avoidance_rating = atoi(val.c_str()); return; }

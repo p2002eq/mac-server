@@ -314,6 +314,8 @@ public:
 	virtual inline uint8 GetBaseGender() const { return base_gender; }
 	virtual inline uint16 GetDeity() const { return deity; }
 	inline uint16 GetRace() const { return race; }
+	virtual uint32 GetRaceStringID();
+	virtual uint32 GetClassStringID();
 	inline uint8 GetGender() const { return gender; }
 	inline uint8 GetTexture() const { return texture; }
 	inline uint8 GetHelmTexture() const { return helmtexture; }
@@ -683,7 +685,6 @@ public:
 	bool qglobal;
 
 	virtual void SetAttackTimer();
-	int32 GetAttackSpeedTimer();
 	inline void SetInvul(bool invul) { invulnerable=invul; }
 	inline bool GetInvul(void) { return invulnerable; }
 	inline void SetExtraHaste(int Haste) { ExtraHaste = Haste; }
@@ -1058,7 +1059,6 @@ protected:
 	Timer attack_timer;
 	Timer attack_dw_timer;
 	Timer ranged_timer;
-	float attack_speed; //% increase/decrease in attack speed (not haste)
 	int8 attack_delay; //delay between attacks in 10ths of seconds
 	int16 slow_mitigation; // Allows for a slow mitigation (100 = 100%, 50% = 50%)
 	Timer tic_timer;
