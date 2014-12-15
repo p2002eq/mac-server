@@ -879,10 +879,10 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 
 void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
 {
-	/*SendAATimers();
+	SendAATimers();
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
 	QueuePacket(outapp);
-	safe_delete(outapp);*/ // //Commented this out to avoid zone death until we are ready to deal with aa
+	safe_delete(outapp);
 	return;
 }
 
@@ -929,10 +929,10 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	}
 	safe_delete(outapp);
 
-	/*if (GetLevel() >= 51)
+	if (GetLevel() >= 51)
 	{
 		SendAATimers();
-	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
+	}
 
 	outapp = new EQApplicationPacket(OP_SendExpZonein, 0);
 	QueuePacket(outapp);
@@ -1533,7 +1533,14 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 // connected opcode handlers
 void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 {
-	/*if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
+	//Action packet is always 256 bytes, but fields have varying positions.
+	if (app->size != 256)
+	{
+		_log(EQMAC__LOG, "Caught an invalid AAAction packet. Size is: %d", app->size);
+		return;
+	}
+
+	if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
 	{
 		if (m_epp.perAA == 0)
 			Message_StringID(CC_Default, AA_ON); //ON
@@ -1591,7 +1598,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		action->ability = database.GetMacToEmuAA(aa);
 		mlog(AA__MESSAGE, "Activating AA %d", action->ability);
 		ActivateAA((aaID)action->ability);
-	}*/ //Commented this out to avoid zone death until we are ready to deal with aa
+	}
 
 	return;
 }
@@ -6877,20 +6884,22 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		cursor = false;
 	}
 
+	//If stacked returns true, the items have already been placed in the inventory. No need to check for available slot
+	//or if the player inventory is full.
 	if (!stacked)
+	{
 		freeslotid = m_inv.FindFreeSlot(bag, cursor, item->Size);
 
-	// shouldn't we be reimbursing if these two fail?
-
-	//make sure we are not completely full...
-	if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
-		if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
-			Message(13, "You do not have room for any more items.");
-			DropInst(inst);
-			QueuePacket(outapp);
-			safe_delete(outapp);
-			safe_delete(inst);
-			return;
+		//make sure we are not completely full...
+		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
+			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
+				Message(13, "You do not have room for any more items.");
+				DropInst(inst);
+				QueuePacket(outapp);
+				safe_delete(outapp);
+				safe_delete(inst);
+				return;
+			}
 		}
 	}
 

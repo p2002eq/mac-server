@@ -5025,11 +5025,22 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 		}
 	}
 	// If no primary faction or biggest influence is your faction hit
-	if (primaryfaction <= 0 || lowestvalue == tmpFactionValue) {
+	// Hack to get Shadowhaven messages correct :I
+	if (GetZoneID() != 150 && (primaryfaction <= 0 || lowestvalue == tmpFactionValue)) 
+	{
 		merchant->Say_StringID(MakeRandomInt(WONT_SELL_DEEDS1, WONT_SELL_DEEDS6));
-	} else if (lowestvalue == fmod.race_mod) { // race biggest
+	} 
+	//class biggest
+	else if (lowestvalue == fmod.class_mod) 
+	{
+		merchant->Say_StringID(0, MakeRandomInt(WONT_SELL_CLASS1, WONT_SELL_CLASS5), itoa(GetClassStringID()));
+	}
+	// race biggest/default
+	else
+	{ 
 		// Non-standard race (ex. illusioned to wolf)
-		if (GetRace() > PLAYER_RACE_COUNT) {
+		if (GetRace() > PLAYER_RACE_COUNT) 
+		{
 			messageid = MakeRandomInt(1, 3); // these aren't sequential StringIDs :(
 			switch (messageid) {
 			case 1:
@@ -5046,7 +5057,9 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 				break;
 			}
 			merchant->Say_StringID(messageid);
-		} else { // normal player races
+		} 
+		else 
+		{ // normal player races
 			messageid = MakeRandomInt(1, 4);
 			switch (messageid) {
 			case 1:
@@ -5065,11 +5078,9 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 				messageid = WONT_SELL_RACE1;
 				break;
 			}
-			merchant->Say_StringID(messageid, itoa(GetRace()));
+			merchant->Say_StringID(0, messageid, itoa(GetRaceStringID()));
 		}
-	} else if (lowestvalue == fmod.class_mod) {
-		merchant->Say_StringID(MakeRandomInt(WONT_SELL_CLASS1, WONT_SELL_CLASS5), itoa(GetClass()));
-	}
+	} 
 	return;
 }
 
