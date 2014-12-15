@@ -2156,13 +2156,14 @@ EQApplicationPacket *EQOldStream::PopPacket()
 	if (!OutQueue.empty()) {
 		p=OutQueue.pop();
 	}
-	MInboundQueue.unlock();
-
-
 	if(p)
 	{
 		if(p->GetRawOpcode() == 0 || p->GetRawOpcode() == 0xFFFF)
-		safe_delete(p);
+		{
+			safe_delete(p);
+				MInboundQueue.unlock();
+			return nullptr;
+		}
 	}
 	//resolve the opcode if we can. do not resolve protocol packets in oldstreams
 	if(p) {
@@ -2171,6 +2172,7 @@ EQApplicationPacket *EQOldStream::PopPacket()
 			p->SetOpcode(emu_op);
 		}
 	}
+	MInboundQueue.unlock();
 
 	return p;
 }
