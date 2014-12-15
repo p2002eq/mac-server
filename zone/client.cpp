@@ -5030,8 +5030,13 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	{
 		merchant->Say_StringID(MakeRandomInt(WONT_SELL_DEEDS1, WONT_SELL_DEEDS6));
 	} 
-	// race biggest
-	else if (lowestvalue == fmod.race_mod || GetZoneID() == 150) 
+	//class biggest
+	else if (lowestvalue == fmod.class_mod) 
+	{
+		merchant->Say_StringID(0, MakeRandomInt(WONT_SELL_CLASS1, WONT_SELL_CLASS5), itoa(GetClassStringID()));
+	}
+	// race biggest/default
+	else
 	{ 
 		// Non-standard race (ex. illusioned to wolf)
 		if (GetRace() > PLAYER_RACE_COUNT) 
@@ -5076,11 +5081,6 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 			merchant->Say_StringID(0, messageid, itoa(GetRaceStringID()));
 		}
 	} 
-	//class biggest
-	else if (lowestvalue == fmod.class_mod) 
-	{
-		merchant->Say_StringID(0, MakeRandomInt(WONT_SELL_CLASS1, WONT_SELL_CLASS5), itoa(GetClassStringID()));
-	}
 	return;
 }
 
