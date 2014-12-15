@@ -1,47 +1,54 @@
 /*	EQEMu: Everquest Server Emulator
-Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
+	Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; version 2 of the License.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY except by those people which sell it, which
-are required to give you total support for your newly bought product;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY except by those people which sell it, which
+	are required to give you total support for your newly bought product;
+	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+	A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 /*
 New class for handeling corpses and everything associated with them.
 Child of the Mob class.
 -Quagmire
 */
-#include "../common/debug.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <iostream>
-#include <sstream>
+
 #ifdef _WINDOWS
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
-#define strncasecmp	_strnicmp
-#define strcasecmp	_stricmp
+    #define snprintf	_snprintf
+	#define vsnprintf	_vsnprintf
+    #define strncasecmp	_strnicmp
+    #define strcasecmp	_stricmp
 #endif
 
-#include "masterentity.h"
-#include "../common/packet_functions.h"
+#include "../common/debug.h"
+#include "../common/rulesys.h"
 #include "../common/string_util.h"
-#include "../common/crc32.h"
+
+#include "client.h"
+#include "corpse.h"
+#include "entity.h"
+#include "groups.h"
+#include "mob.h"
+#include "raids.h"
+
+#ifdef BOTS
+#include "bot.h"
+#endif
+
+#include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "worldserver.h"
-#include "../common/rulesys.h"
-#include "quest_parser_collection.h"
+#include <iostream>
 #include "remote_call_subscribe.h"
+
 
 extern EntityList entity_list;
 extern Zone* zone;
