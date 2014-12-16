@@ -163,11 +163,6 @@ public:
 
 	void Clear(void) 
 	{  
-		// Clear & zero out Fields
-		if (pExtra)
-		{
-			safe_delete(pExtra);//delete pExtra;
-		}
 		*((uint16*)&HDR)		   = 0;
 		this->dwSEQ            = 0;        
 		this->dwARSP           = 0;

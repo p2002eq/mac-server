@@ -480,11 +480,10 @@ class EQOldStream : public EQStreamInterface {
 
 		void InboundQueueClear();
 		void OutboundQueueClear();
-		void PacketQueueClear();
 		void ClearOldPackets();
 
 		std::deque<EQOldPacket*>			  SendQueue;	//Store packets thats on the send que
-		MyQueue<EQRawApplicationPacket>           OutQueue;	//parced packets ready to go out of this class
+		std::vector<EQRawApplicationPacket *> OutQueue;	//parced packets ready to go out of this class
 
 
 	private:

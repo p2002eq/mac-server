@@ -1472,6 +1472,11 @@ FragmentGroup::FragmentGroup(uint16 seq, uint16 opcode, uint16 num_fragments)
 
 FragmentGroup::~FragmentGroup()
 {
+	for(int i=0;i<num_fragments;i++)
+	{
+		if(&fragment[i])
+			delete &fragment[i];
+	}
 	safe_delete_array(fragment);//delete[] fragment;
 }
 
@@ -1736,20 +1741,25 @@ void EQOldStream::RemoveData()
 {
 	MInboundQueue.lock();
 	MOutboundQueue.lock();
-	EQRawApplicationPacket* p = 0;
-	while (p = OutQueue.pop()) {
-			safe_delete(p);
-		}
+	EQRawApplicationPacket* p = 0;	
+	std::vector<EQRawApplicationPacket *>::iterator itr=OutQueue.begin();
+	while (itr != OutQueue.end()) {
+			safe_delete(*itr);
+			itr++;
+	}
+	OutQueue.clear();
 	// Send all the packets we "made"
 	for(int i = 0; i < buffered_packets.size(); i++) {
 		safe_delete(buffered_packets[i]);
 	}
+	buffered_packets.clear();
 	EQOldPacket* pack = 0;
 	while (!SendQueue.empty()) {
 		pack = SendQueue.front();
 		safe_delete(pack);
 		SendQueue.pop_front();
 	}
+	SendQueue.clear();
 	MInboundQueue.unlock();
 	MOutboundQueue.unlock();
 }
@@ -1873,11 +1883,12 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		if(pack->fraginfo.dwCurr == (pack->fraginfo.dwTotal - 1) )
 		{
 			//Collect fragments and put them as one packet on the OutQueue
-			uchar* buf = new uchar[8192];
+			uchar* buf = 0;
 			uint32 sizep = 0;
 			buf = fragment_group->AssembleData(&sizep);
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
-			OutQueue.push(app);
+			OutQueue.push_back(app);
+			safe_delete_array(buf);
 			return true;
 		}
 		else
@@ -1891,7 +1902,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		EQRawApplicationPacket *app = new EQRawApplicationPacket(pack->dwOpCode ,pack->pExtra, pack->dwExtraSize);   
 		if(app->GetRawOpcode() != 62272 && (app->GetRawOpcode() != 0 || app->Size() > 2)) //ClientUpdate
 			_log(NET__DEBUG, "Received old opcode - 0x%x size: %i", app->GetRawOpcode(), app->Size());
-		OutQueue.push(app);
+		OutQueue.push_back(app);
 		return true;
 	}
 	/************ END FRAGMENT CHECK ************/
@@ -2151,17 +2162,19 @@ void EQOldStream::FastQueuePacket(EQApplicationPacket **p, bool ack_req)
 EQApplicationPacket *EQOldStream::PopPacket()
 {
 	EQRawApplicationPacket *p=nullptr;
-
 	MInboundQueue.lock();
-	if (!OutQueue.empty()) {
-		p=OutQueue.pop();
+	if (OutQueue.size()) {
+	std::vector<EQRawApplicationPacket *>::iterator itr=OutQueue.begin();
+	p=*itr;
+	OutQueue.erase(itr);
 	}
+	MInboundQueue.unlock();
+
 	if(p)
 	{
 		if(p->GetRawOpcode() == 0 || p->GetRawOpcode() == 0xFFFF)
 		{
 			safe_delete(p);
-				MInboundQueue.unlock();
 			return nullptr;
 		}
 	}
@@ -2172,8 +2185,6 @@ EQApplicationPacket *EQOldStream::PopPacket()
 			p->SetOpcode(emu_op);
 		}
 	}
-	MInboundQueue.unlock();
-
 	return p;
 }
 
@@ -2185,13 +2196,15 @@ EQRawApplicationPacket *p=nullptr;
 	_log(NET__APP_TRACE, _L "Clearing inbound queue" __L);
 
 	MInboundQueue.lock();
-	while (p = OutQueue.pop()) {
-		safe_delete(p);
+	std::vector<EQRawApplicationPacket *>::iterator itr=OutQueue.begin();
+	while (itr != OutQueue.end()) {
+			safe_delete(*itr);
+			itr++;
 	}
+	OutQueue.clear();
 	for(int i = 0; i < buffered_packets.size(); i++) {
 		safe_delete(buffered_packets[i]);
 	}
-
 	buffered_packets.clear();
 
 	MInboundQueue.unlock();
@@ -2209,14 +2222,10 @@ void EQOldStream::OutboundQueueClear()
 		safe_delete(p);
 		SendQueue.pop_front();
 	}
+	SendQueue.clear();
 
 	MOutboundQueue.unlock();
 }
-
-void EQOldStream::PacketQueueClear()
-{
-}
-
 void EQOldStream::ReceiveData(uchar* buf, int len)
 {
 	ParceEQPacket(len, buf);
@@ -2268,7 +2277,7 @@ void EQOldStream::SendPacketQueue(bool Block)
 				size = pack->ReturnPacket(&data, this);
 				sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
 				dataflow += size;
-				safe_delete(data);
+				safe_delete_array(data);
 				safe_delete(pack);
 				packit = SendQueue.erase(packit);
 				continue;
@@ -2277,7 +2286,7 @@ void EQOldStream::SendPacketQueue(bool Block)
 			{
 				size = pack->ReturnPacket(&data, this);
 				sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
-				safe_delete(data);
+				safe_delete_array(data);
 				dataflow += size;
 				pack->LastSent = Timer::GetCurrentTime();
 				if (!pack->HDR.a1_ARQ) { //Wtf is this for?
@@ -2313,7 +2322,7 @@ void EQOldStream::FinalizePacketQueue()
 		p = SendQueue.front();
 		size = p->ReturnPacket(&data, this);
 		sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
-		safe_delete(data);
+		safe_delete_array(data);
 		SendQueue.erase(SendQueue.begin());
 	}
 	// ************ Connection finished ************ //
@@ -2371,11 +2380,11 @@ void EQOldStream::SetStreamType(EQStreamType type)
 EQStream::MatchState EQOldStream::CheckSignature(const EQStream::Signature *sig) {
 	EQRawApplicationPacket *p = nullptr;
 	EQStream::MatchState res = EQStream::MatchState::MatchNotReady;
-
 	MInboundQueue.lock();
 	if (!OutQueue.empty()) {
 		//this is already getting hackish...
-		p = OutQueue.top();
+		std::vector<EQRawApplicationPacket *>::iterator itr=OutQueue.begin();
+		p=*itr;
 		if(sig->ignore_eq_opcode != 0 && p->GetRawOpcode() == sig->ignore_eq_opcode) {
 			if(OutQueue.empty()) {
 				p = nullptr;
