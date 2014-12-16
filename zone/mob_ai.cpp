@@ -1364,7 +1364,7 @@ void Mob::AI_Process() {
 							Attack(target, MainSecondary);
 							if (GetLevel() > 35)
 							{
-								int32 RandRoll = MakeRandomInt(0, 99);
+								int32 RandRoll = zone->random.Int(0, 99);
 								float chance = 0.0f;
 								if(GetLevel() > 35 && GetLevel() < 51)
 									chance = GetLevel() + 8;
