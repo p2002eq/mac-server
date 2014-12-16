@@ -246,7 +246,31 @@ void EQEmuConfig::do_web_interface(TiXmlElement *ele) {
 	}
 }
 
-void EQEmuConfig::do_zones(TiXmlElement *ele) {
+
+void EQEmuConfig::do_web_interface(TiXmlElement *ele) {
+	const char *text;
+
+	text = ParseTextBlock(ele, "port", true);
+	if (text)
+		WebInterfacePort = atoi(text);
+
+	text = ParseTextBlock(ele, "cert", true);
+	if (text)
+		WebInterfaceCert = text;
+
+	text = ParseTextBlock(ele, "priv_key", true);
+	if (text)
+		WebInterfacePrivKey = text;
+
+	TiXmlElement *sub_ele = ele->FirstChildElement("ssl");
+	if (sub_ele != nullptr) {
+		WebInterfaceUseSSL = true;
+	}
+}
+
+
+void EQEmuConfig::do_zones(TiXmlElement *ele)
+{
 	const char *text;
 	TiXmlElement *sub_ele;
 //	TiXmlNode *node,*sub_node;
@@ -435,6 +459,8 @@ std::string EQEmuConfig::GetByName(const std::string &var_name) const {
 //		return(itoa(DynamicCount));
 	return("");
 }
+
+
 
 void EQEmuConfig::Dump() const
 {
