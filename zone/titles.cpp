@@ -328,4 +328,7 @@ void Client::RemoveTitle(int titleSet) {
 		LogFile->write(EQEMuLog::Error, "Error in RemoveTitle query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
+void TitleManager::ClearTitles() {
+	Titles.clear();
+}
 

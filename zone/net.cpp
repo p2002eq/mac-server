@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
 
 	safe_delete(mmf);
 	safe_delete(Config);
-
+	title_manager.ClearTitles();
 	if (zone != 0)
 		Zone::Shutdown(true);
 	//Fix for Linux world server problem.
