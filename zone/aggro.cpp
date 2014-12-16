@@ -923,7 +923,7 @@ bool Mob::CheckRegion(Mob* other) {
 		return true;
 
 	//Hack for kedge and powater since we have issues with watermaps.
-	if(zone->GetZoneID() == 64 || zone->GetZoneID() == 216)
+	if(zone->GetZoneID() == kedge || zone->GetZoneID() == powater)
 		return true;
 
 	WaterRegionType ThisRegionType;

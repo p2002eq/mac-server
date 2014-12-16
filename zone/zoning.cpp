@@ -603,12 +603,12 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
-			if(this->GetZoneID() == 1)
-				gmg->zone_id = 2;
-			else if(this->GetZoneID() == 2)
-				gmg->zone_id = 1;
+			if(this->GetZoneID() == qeynos)
+				gmg->zone_id = qeynos2;
+			else if(this->GetZoneID() == qeynos2)
+				gmg->zone_id = qeynos;
 			else
-				gmg->zone_id = 1;
+				gmg->zone_id = qeynos;
 
 			gmg->x = x;
 			gmg->y = y;

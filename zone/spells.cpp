@@ -1892,7 +1892,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	if
 	(
 		this->IsClient() &&
-		(zone->GetZoneID() == 183 || zone->GetZoneID() == 184) &&	// load
+		(zone->GetZoneID() == tutorial || zone->GetZoneID() == load) &&
 		CastToClient()->Admin() < 80
 	)
 	{

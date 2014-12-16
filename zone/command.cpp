@@ -1243,7 +1243,7 @@ void command_zone(Client *c, const Seperator *sep){
 		c->Message(0, "Optional Usage: #zone [zonename] y x z");
 		return;
 	}
-	else if (zone->GetZoneID() == 184 && c->Admin() < commandZoneToSpecials) {	// Zone: 'Load'
+	else if (zone->GetZoneID() == load && c->Admin() < commandZoneToSpecials) {	// Zone: 'Load'
 		c->Message(0, "The Gods brought you here, only they can send you away.");
 		return;
 	}

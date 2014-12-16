@@ -911,7 +911,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							Message_StringID(MT_SpellFailure, CANNOT_BIND);
 							break;
 						}
-						if(!zone->IsCity())
+
+						// Todo: Expand on CanBindOthers and add it to method that checks whether others can be bound in the particular zone based on coords.
+						if(!zone->IsCity() && !zone->CanBindOthers())
 						{
 							if(caster != this)
 							{

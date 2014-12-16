@@ -1136,7 +1136,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 
 	/* just in case  */
 	if (!pp.zone_id) {
-		pp.zone_id = 1;		// qeynos
+		pp.zone_id = qeynos;
 		pp.x = pp.y = pp.z = -1;
 	}
 

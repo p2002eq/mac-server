@@ -1192,10 +1192,17 @@ void Mob::AI_Process() {
 						//thresholds, and if its truely random, then this should work
 						//out reasonably and will save us compute resources.
 						int32 RandRoll = zone->random.Int(0, 99);
-						if ((CanThisClassDoubleAttack() || GetSpecialAbility(SPECATK_TRIPLE)
-								|| GetSpecialAbility(SPECATK_QUAD))
-								//check double attack, this is NOT the same rules that clients use...
-								&& RandRoll < (GetLevel() + NPCDualAttackModifier)) {
+						float chance = 0.0f;
+						if(GetLevel() < 36)
+							chance = GetLevel();
+						else if(GetLevel() > 35 && GetLevel() < 51)
+							chance = GetLevel() + 8;
+						else if(GetLevel() > 50 && GetLevel() < 66)
+							chance = 61.0f;
+						else
+							chance = 65.0f;
+
+						if (RandRoll < chance) {
 							Attack(target, MainPrimary);
 							// lets see if we can do a triple attack with the main hand
 							//pets are excluded from triple and quads...
@@ -1343,18 +1350,29 @@ void Mob::AI_Process() {
 				}
 
 				//now off hand
-				if (attack_dw_timer.Check() && CanThisClassDualWield())
+				if (attack_dw_timer.Check() && GetLevel() > 3)
 				{
 					int myclass = GetClass();
 					//can only dual wield without a weapon if your a monk
-					if(GetSpecialAbility(SPECATK_INNATE_DW) || (GetEquipment(MaterialSecondary) != 0 && GetLevel() > 29) || myclass == MONK || myclass == MONKGM) {
+
+					if(GetSpecialAbility(SPECATK_INNATE_DW) ||
+						(GetEquipment(MaterialSecondary) != 0 && GetLevel() > 29) ||
+						myclass == MONK || myclass == MONKGM) {
 						float DualWieldProbability = (GetSkill(SkillDualWield) + GetLevel()) / 400.0f;
 						if(zone->random.Roll(DualWieldProbability))
 						{
 							Attack(target, MainSecondary);
-							if (CanThisClassDoubleAttack())
+							if (GetLevel() > 35)
 							{
-								if (zone->random.Roll(GetLevel() + 20))
+								int32 RandRoll = MakeRandomInt(0, 99);
+								float chance = 0.0f;
+								if(GetLevel() > 35 && GetLevel() < 51)
+									chance = GetLevel() + 8;
+								else if(GetLevel() > 50 && GetLevel() < 66)
+									chance = 61.0f;
+								else
+									chance = 65.0f;
+								if (zone->random.Roll(chance))
 								{
 									Attack(target, MainSecondary);
 								}
