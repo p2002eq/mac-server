@@ -4714,10 +4714,7 @@ void Client::SetAttackTimer()
 			if (ItemToUse->ItemType == ItemTypeBow || ItemToUse->ItemType == ItemTypeLargeThrowing)
 				quiver_haste = GetQuiverHaste();
 		}
-		if (RuleB(Spells, Jun182014HundredHandsRevamp))
-			speed = static_cast<int>(((delay / haste_mod) + ((hhe / 1000.0f) * (delay / haste_mod))) * 100);
-		else
-			speed = static_cast<int>(((delay / haste_mod) + ((hhe / 100.0f) * delay)) * 100);
+		speed = static_cast<int>(((delay / haste_mod) + ((hhe / 100.0f) * delay)) * 100);
 		// this is probably wrong
 		if (quiver_haste > 0)
 			speed *= quiver_haste;
@@ -4744,10 +4741,7 @@ void NPC::SetAttackTimer()
 	// ex. Mob's delay set to 20, weapon set to 19, delay 19
 	// Mob's delay set to 20, weapon set to 21, delay 20
 	int speed = 0;
-	if (RuleB(Spells, Jun182014HundredHandsRevamp))
-		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 1000.0f) * (attack_delay / haste_mod))) * 100);
-	else
-		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
+	speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
 
 	for (int i = MainRange; i <= MainSecondary; i++) {
 		//pick a timer
@@ -4762,8 +4756,8 @@ void NPC::SetAttackTimer()
 
 		//special offhand stuff
 		if (i == MainSecondary) {
-			//NPCs get it for free at 13
-			if(GetLevel() < 13) {
+			//NPCs get it for free at 4
+			if(GetLevel() < 4) {
 				attack_dw_timer.Disable();
 				continue;
 			}
@@ -4777,16 +4771,9 @@ uint32 NPC::GetAttackTimer()
 {
 	float haste_mod = GetHaste() * 0.01f;
 	int hhe = itembonuses.HundredHands + spellbonuses.HundredHands;
-
-	// Technically NPCs should do some logic for weapons, but the effect is minimal
-	// What they do is take the lower of their set delay and the weapon's
-	// ex. Mob's delay set to 20, weapon set to 19, delay 19
-	// Mob's delay set to 20, weapon set to 21, delay 20
 	int speed = 0;
-	if (RuleB(Spells, Jun182014HundredHandsRevamp))
-		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 1000.0f) * (attack_delay / haste_mod))) * 100);
-	else
-		speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
+
+	speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
 
 	return speed;
 }
