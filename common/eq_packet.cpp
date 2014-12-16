@@ -15,25 +15,27 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "debug.h"
-#include <stdio.h>
-#include <iostream>
-#include <iomanip>
-#include "eq_packet.h"
-#include "misc.h"
-#include "op_codes.h"
+
 #include "crc16.h"
 #include "crc32.h"
-#include "platform.h"
+#include "debug.h"
+#include "eq_packet.h"
 #include "eq_stream.h"
 #include "logsys.h"
+#include "misc.h"
+#include "op_codes.h"
+#include "platform.h"
 #ifndef STATIC_OPCODE
 #include "opcodemgr.h"
 #endif
 #include "packet_dump.h"
 #include "packet_functions.h"
+
 #include <cstdlib>
 #include <cstring>
+#include <iomanip>
+#include <iostream>
+#include <stdio.h>
 
 EQPacket::EQPacket(EmuOpcode op, const unsigned char *buf, uint32 len)
 :	BasePacket(buf, len),
