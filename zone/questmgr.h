@@ -20,7 +20,6 @@
 
 #include "../common/timer.h"
 
-#include <string>
 #include <list>
 #include <stack>
 
