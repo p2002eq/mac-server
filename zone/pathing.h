@@ -1,11 +1,13 @@
 #ifndef PATHING_H
 #define PATHING_H
-#include <algorithm>
+
 #include "map.h"
-#include "../common/timer.h"
+
 #include <deque>
+#include <list>
 
 class Client;
+class Mob;
 
 #define PATHNODENEIGHBOURS 50
 
