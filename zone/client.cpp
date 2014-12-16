@@ -5026,7 +5026,7 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	}
 	// If no primary faction or biggest influence is your faction hit
 	// Hack to get Shadowhaven messages correct :I
-	if (GetZoneID() != 150 && (primaryfaction <= 0 || lowestvalue == tmpFactionValue)) 
+	if (GetZoneID() != shadowhaven && (primaryfaction <= 0 || lowestvalue == tmpFactionValue)) 
 	{
 		merchant->Say_StringID(MakeRandomInt(WONT_SELL_DEEDS1, WONT_SELL_DEEDS6));
 	} 

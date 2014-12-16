@@ -723,7 +723,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 	if(zname == nullptr) {
 		/* Zone not in the DB, something to prevent crash... */
 		strn0cpy(zone, "qeynos", 49);
-		pp->zone_id = 1;
+		pp->zone_id = qeynos;
 	}
 	else{ strn0cpy(zone, zname, 49); }
 

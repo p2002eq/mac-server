@@ -1802,15 +1802,15 @@ void Client::DoStaminaUpdate() {
 
 	//This is our stomach size. It probably shouldn't be changed from 6000. 
 	int value = RuleI(Character,ConsumptionValue);
-	if(zone->GetZoneID() != 151 && !GetGM()) {
+	if(zone->GetZoneID() != bazaar && !GetGM()) {
 		//Change this rule to raise or lower rate of food consumption.
 		float loss = RuleR(Character, FoodLossPerUpdate);
 
-		//Horse and desert penalities. Todo: Add desert fields to DB.
+		//Horse and desert penalities.
 		float waterloss = 0.0f;
 		if(GetHorseId() != 0)
 			loss += loss*2.0; 
-		if(GetZoneID() == 34 || GetZoneID() == 35 || GetZoneID() == 36 || GetZoneID() == 78 || GetZoneID() == 175) 
+		if(zone->IsDesertZone())
 			waterloss = loss*2.0;
 
 		//AA bonus.

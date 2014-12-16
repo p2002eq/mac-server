@@ -94,7 +94,7 @@ bool ZoneDatabase::SaveZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct
 	return true;
 }
 
-bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *zone_data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, uint8 &zone_type, int &ruleset, char **map_filename) {
+bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *zone_data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, uint8 &zone_type, int &ruleset, char **map_filename, bool &can_bind_others) {
 
 	*map_filename = new char[100];
 	zone_data->zone_id = zoneid;
@@ -157,6 +157,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 
     can_bind = bindable == 0? false: true;
     is_city = bindable == 2? true: false;
+	can_bind_others = bindable == 3? true: false;
     can_combat = atoi(row[32]) == 0? false: true;
     can_levitate = atoi(row[33]) == 0? false: true;
     can_castoutdoor = atoi(row[34]) == 0? false: true;
