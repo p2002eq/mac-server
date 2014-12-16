@@ -294,6 +294,8 @@ Mob::Mob(const char* in_name,
 	focused = false;
 	_IsTempPet = false;
 	pet_owner_client = false;
+	can_equip_secondary = false;
+	can_dual_wield = false;
 
 	attacked_count = 0;
 	mezzed = false;
@@ -1157,7 +1159,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
-			client->Message(0, "  Trackable: %i", n->IsTrackable());
+			client->Message(0, "  Trackable: %i CanEquipSec: %i DualWield: %i KickDmg: %i", n->IsTrackable(), n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {

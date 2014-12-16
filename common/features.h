@@ -175,6 +175,8 @@ enum {	//some random constants
 	NPCQuadAttackModifier = -20
 };
 
+#define DUAL_WIELD_LEVEL 4
+
 //Max number of groups you can link with. Not tied to the client.
 //if group linking is enabled above
 #define MAX_GROUP_LINKS 8

@@ -4746,8 +4746,7 @@ void NPC::SetAttackTimer()
 
 		//special offhand stuff
 		if (i == MainSecondary) {
-			//NPCs get it for free at 4
-			if(GetLevel() < 4) {
+			if(GetLevel() < DUAL_WIELD_LEVEL && !GetSpecialAbility(SPECATK_INNATE_DW)) {
 				attack_dw_timer.Disable();
 				continue;
 			}
