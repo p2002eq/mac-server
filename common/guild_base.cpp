@@ -1044,7 +1044,7 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 			c++; //hehe
 		}
 	}
-	safe_delete_array(gle);
+	safe_delete(gle);
 	length = size;
 	_log(GUILDS__ERROR,"Length: %i", length);
 	return(gl);
