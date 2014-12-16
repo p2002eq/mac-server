@@ -795,18 +795,6 @@ void Client::CheatDetected(CheatTypes CheatType, float x, float y, float z)
 	}
 }
 
-// connecting opcode handlers
-/*
-void Client::Handle_Connect_0x3e33(const EQApplicationPacket *app)
-{
-//OP_0x0380 = 0x642c
-EQApplicationPacket* outapp = new EQApplicationPacket(OP_0x0380, sizeof(uint32)); // Dunno
-QueuePacket(outapp);
-safe_delete(outapp);
-return;
-}
-*/
-
 void Client::Handle_Connect_OP_ClientError(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(ClientError_Struct)) {
@@ -859,7 +847,6 @@ void Client::Handle_Connect_OP_ReqClientSpawn(const EQApplicationPacket *app)
 
 void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 {
-	_log(EQMAC__LOG, "NewZone Requested.");
 	conn_state = NewZoneRequested;
 
 	EQApplicationPacket* outapp;
@@ -1125,6 +1112,31 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
 
+	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
+	// This can lead difficulty entering the zone, since some people's client's don't like
+	// the boat timeout period.
+	if(!zone->IsBoatZone())
+	{
+		m_pp.boatid = 0;
+		m_pp.boat[0] = 0;
+	}
+	else
+	{
+		if(m_pp.boatid > 0)
+		{
+			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
+			if(!boat)
+			{
+				m_pp.boatid = 0;
+				m_pp.boat[0] = 0;
+				m_pp.x = zone->safe_x();
+				m_pp.y = zone->safe_y();
+				m_pp.z = zone->safe_z();
+			}
+		}
+	}
+			
+		
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
@@ -2872,7 +2884,7 @@ void Client::Handle_OP_ControlBoat(const EQApplicationPacket *app)
 	if (boat == 0)
 		return;	// do nothing if the boat isn't valid
 
-	if (!boat->IsNPC() || (boat->GetRace() != CONTROLLED_BOAT && boat->GetRace() != 502))
+	if (!boat->IsNPC() || (boat->GetRace() != CONTROLLED_BOAT))
 	{
 		char *hacked_string = nullptr;
 		MakeAnyLenString(&hacked_string, "OP_Control Boat was sent against %s which is of race %u", boat->GetName(), boat->GetRace());
@@ -3318,7 +3330,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	if (damage < 0)
 		damage = 31337;
 
-	else if (zone->GetZoneID() == 183 || zone->GetZoneID() == 184)
+	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load)
 		return;
 	else
 		SetHP(GetHP() - damage);
