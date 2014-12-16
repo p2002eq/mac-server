@@ -22,6 +22,7 @@
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_type.h"
 #include "../common/eq_stream_factory.h"
+#include "../common/random.h"
 #ifndef WIN32
 #include "eq_crypto_api.h"
 #endif
@@ -172,6 +173,8 @@ public:
 	* Gets the client version for this client.
 	*/
 	unsigned int GetMacClientVersion() const { return macversion; }
+
+	EQEmu::Random random;
 private:
 	EQStreamInterface *connection;
 	ClientVersion version;

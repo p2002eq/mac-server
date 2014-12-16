@@ -1198,7 +1198,6 @@ void lua_create_npc(luabind::adl::object table, float x, float y, float z, float
 	LuaCreateNPCParse(npc_aggro, bool, false);
 	LuaCreateNPCParse(spawn_limit, uint8, false);
 	LuaCreateNPCParse(mount_color, uint8, false);
-	LuaCreateNPCParse(attack_speed, float, 0);
 	LuaCreateNPCParse(attack_delay, uint8, 30);
 	LuaCreateNPCParse(accuracy_rating, int, 0);
 	LuaCreateNPCParse(avoidance_rating, int, 0);

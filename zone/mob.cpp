@@ -175,7 +175,6 @@ Mob::Mob(const char* in_name,
 	drakkin_heritage	= in_drakkin_heritage;
 	drakkin_tattoo		= in_drakkin_tattoo;
 	drakkin_details		= in_drakkin_details;
-	attack_speed = 0;
 	attack_delay = 0;
 	slow_mitigation = 0;
 	findable	= false;
@@ -1157,7 +1156,7 @@ void Mob::ShowStats(Client* client)
 				spawngroupid = n->respawn2->SpawnGroupID();
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
-			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackSpeedTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
+			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  Trackable: %i", n->IsTrackable());
 			n->QueryLoot(client);
 		}
@@ -1683,37 +1682,6 @@ void Mob::Kill() {
 	Death(this, 0, SPELL_UNKNOWN, SkillHandtoHand);
 }
 
-int32 Mob::GetAttackSpeedTimer() {
-	int speed = 4000;
-	float PermaHaste;
-	if(GetHaste())
-		PermaHaste = 1 / (1 + (float)GetHaste()/100);
-	else
-		PermaHaste = 1.0f;
-
-	int16 DelayMod = itembonuses.HundredHands + spellbonuses.HundredHands;
-	if (DelayMod < -99)
-		DelayMod = -99;
-	//above checks ensure ranged weapons do not fall into here
-	// Work out if we're a monk
-	if ((GetClass() == MONK) || (GetClass() == BEASTLORD)) {
-		//we are a monk, use special delay
-		speed = (int)( (GetMonkHandToHandDelay()*(100+DelayMod)/100)*(100.0f+attack_speed)*PermaHaste);
-		// 1200 seemed too much, with delay 10 weapons available
-		if(speed < RuleI(Combat, MinHastedDelay))	//lower bound
-			speed = RuleI(Combat, MinHastedDelay);
-		return speed;	// Hand to hand, delay based on level or epic
-	} 
-	else 
-	{
-		//not a monk... using fist, regular delay
-		speed = (int)((36 *(100+DelayMod)/100)*(100.0f+attack_speed)*PermaHaste);
-		if(speed < RuleI(Combat, MinHastedDelay) && IsClient())	//lower bound
-			speed = RuleI(Combat, MinHastedDelay);
-		return speed;	// Hand to hand, non-monk 2/36
-	}
-}
-
 bool Mob::CanThisClassDualWield(void) const {
 	if(!IsClient()) {
 		return(GetSkill(SkillDualWield) > 0);
@@ -2098,7 +2066,7 @@ uint32 Mob::RandomTimer(int min,int max) {
 	int r = 14000;
 	if(min != 0 && max != 0 && min < max)
 	{
-		r = MakeRandomInt(min, max);
+		r = zone->random.Int(min, max);
 	}
 	return r;
 }
@@ -2486,7 +2454,7 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(IsClient())
 		twinproc_chance = CastToClient()->GetFocusEffect(focusTwincast, spell_id);
 
-	if(twinproc_chance && (MakeRandomInt(0,99) < twinproc_chance))
+	if(twinproc_chance && zone->random.Roll(twinproc_chance))
 		twinproc = true;
 
 	if (IsBeneficialSpell(spell_id)) {
@@ -2813,7 +2781,7 @@ bool Mob::TrySpellTrigger(Mob *target, uint32 spell_id, int effect)
 {
 	if(!target || !IsValidSpell(spell_id))
 		return false;
-	
+
 	int spell_trig = 0;
 	// Count all the percentage chances to trigger for all effects
 	for(int i = 0; i < EFFECT_COUNT; i++)
@@ -2829,7 +2797,7 @@ bool Mob::TrySpellTrigger(Mob *target, uint32 spell_id, int effect)
 		{
 			if (spells[spell_id].effectid[i] == SE_SpellTrigger)
 			{
-				if(MakeRandomInt(0, trig_chance) <= spells[spell_id].base[i])
+				if(zone->random.Int(0, trig_chance) <= spells[spell_id].base[i])
 				{
 					// If we trigger an effect then its over.
 					if (IsValidSpell(spells[spell_id].base2[i])){
@@ -2849,7 +2817,7 @@ bool Mob::TrySpellTrigger(Mob *target, uint32 spell_id, int effect)
 	// if the chances don't add to 100, then each effect gets a chance to fire, chance for no trigger as well.
 	else
 	{
-		if(MakeRandomInt(0, 100) <= spells[spell_id].base[effect])
+		if(zone->random.Int(0, 100) <= spells[spell_id].base[effect])
 		{
 			if (IsValidSpell(spells[spell_id].base2[effect])){
 				SpellFinished(spells[spell_id].base2[effect], target, 10, 0, -1, spells[spells[spell_id].base2[effect]].ResistDiff);
@@ -2954,7 +2922,7 @@ void Mob::TryTwincast(Mob *caster, Mob *target, uint32 spell_id)
 
 		if (focus > 0)
 		{
-			if(MakeRandomInt(0, 100) <= focus)
+			if(zone->random.Roll(focus))
 			{
 				Message(MT_Spells,"You twincast %s!",spells[spell_id].name);
 				SpellFinished(spell_id, target, 10, 0, -1, spells[spell_id].ResistDiff);
@@ -2973,7 +2941,7 @@ void Mob::TryTwincast(Mob *caster, Mob *target, uint32 spell_id)
 				int32 focus = CalcFocusEffect(focusTwincast, buffs[i].spellid, spell_id);
 				if(focus > 0)
 				{
-					if(MakeRandomInt(0, 100) <= focus)
+					if(zone->random.Roll(focus))
 					{
 						SpellFinished(spell_id, target, 10, 0, -1, spells[spell_id].ResistDiff);
 					}
@@ -3744,7 +3712,7 @@ void Mob::TrySpellOnKill(uint8 level, uint16 spell_id)
 				{
 					if (IsValidSpell(spells[spell_id].base2[i]) && spells[spell_id].max[i] <= level)
 					{
-						if(MakeRandomInt(0,99) < spells[spell_id].base[i])
+						if(zone->random.Roll(spells[spell_id].base[i]))
 							SpellFinished(spells[spell_id].base2[i], this, 10, 0, -1, spells[spells[spell_id].base2[i]].ResistDiff);
 					}
 				}
@@ -3759,17 +3727,17 @@ void Mob::TrySpellOnKill(uint8 level, uint16 spell_id)
 	for(int i = 0; i < MAX_SPELL_TRIGGER*3; i+=3) {
 
 		if(aabonuses.SpellOnKill[i] && IsValidSpell(aabonuses.SpellOnKill[i]) && (level >= aabonuses.SpellOnKill[i + 2])) {
-			if(MakeRandomInt(0, 99) < static_cast<int>(aabonuses.SpellOnKill[i + 1]))
+			if(zone->random.Roll(static_cast<int>(aabonuses.SpellOnKill[i + 1])))
 				SpellFinished(aabonuses.SpellOnKill[i], this, 10, 0, -1, spells[aabonuses.SpellOnKill[i]].ResistDiff);
 		}
 
 		if(itembonuses.SpellOnKill[i] && IsValidSpell(itembonuses.SpellOnKill[i]) && (level >= itembonuses.SpellOnKill[i + 2])){
-			if(MakeRandomInt(0, 99) < static_cast<int>(itembonuses.SpellOnKill[i + 1]))
+			if(zone->random.Roll(static_cast<int>(itembonuses.SpellOnKill[i + 1])))
 				SpellFinished(itembonuses.SpellOnKill[i], this, 10, 0, -1, spells[aabonuses.SpellOnKill[i]].ResistDiff);
 		}
 
 		if(spellbonuses.SpellOnKill[i] && IsValidSpell(spellbonuses.SpellOnKill[i]) && (level >= spellbonuses.SpellOnKill[i + 2])) {
-			if(MakeRandomInt(0, 99) < static_cast<int>(spellbonuses.SpellOnKill[i + 1]))
+			if(zone->random.Roll(static_cast<int>(spellbonuses.SpellOnKill[i + 1])))
 				SpellFinished(spellbonuses.SpellOnKill[i], this, 10, 0, -1, spells[aabonuses.SpellOnKill[i]].ResistDiff);
 		}
 
@@ -3786,19 +3754,19 @@ bool Mob::TrySpellOnDeath()
 
 	for(int i = 0; i < MAX_SPELL_TRIGGER*2; i+=2) {
 		if(IsClient() && aabonuses.SpellOnDeath[i] && IsValidSpell(aabonuses.SpellOnDeath[i])) {
-			if(MakeRandomInt(0, 99) < static_cast<int>(aabonuses.SpellOnDeath[i + 1])) {
+			if(zone->random.Roll(static_cast<int>(aabonuses.SpellOnDeath[i + 1]))) {
 				SpellFinished(aabonuses.SpellOnDeath[i], this, 10, 0, -1, spells[aabonuses.SpellOnDeath[i]].ResistDiff);
 			}
 		}
 
 		if(itembonuses.SpellOnDeath[i] && IsValidSpell(itembonuses.SpellOnDeath[i])) {
-			if(MakeRandomInt(0, 99) < static_cast<int>(itembonuses.SpellOnDeath[i + 1])) {
+			if(zone->random.Roll(static_cast<int>(itembonuses.SpellOnDeath[i + 1]))) {
 				SpellFinished(itembonuses.SpellOnDeath[i], this, 10, 0, -1, spells[itembonuses.SpellOnDeath[i]].ResistDiff);
 			}
 		}
 
 		if(spellbonuses.SpellOnDeath[i] && IsValidSpell(spellbonuses.SpellOnDeath[i])) {
-			if(MakeRandomInt(0, 99) < static_cast<int>(spellbonuses.SpellOnDeath[i + 1])) {
+			if(zone->random.Roll(static_cast<int>(spellbonuses.SpellOnDeath[i + 1]))) {
 				SpellFinished(spellbonuses.SpellOnDeath[i], this, 10, 0, -1, spells[spellbonuses.SpellOnDeath[i]].ResistDiff);
 				}
 			}
@@ -3958,7 +3926,7 @@ bool Mob::TryReflectSpell(uint32 spell_id)
 
 	int chance = itembonuses.reflect_chance + spellbonuses.reflect_chance + aabonuses.reflect_chance;
 
-	if(chance && MakeRandomInt(0, 99) < chance)
+	if(chance && zone->random.Roll(chance))
 		return true;
 
 	return false;
@@ -4699,7 +4667,7 @@ bool Mob::GetSeeInvisible(uint8 see_invis)
 			return true;
 		else
 		{
-			if(MakeRandomInt(0,99) < see_invis)
+			if (zone->random.Int(0, 99) < see_invis)
 				return true;
 		}
 	}

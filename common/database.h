@@ -328,9 +328,9 @@ namespace Convert {
 		/*5400*/	uint8							unknown5436[8];		//
 		/*5408*/	uint32							autosplit;			//not used right now
 		/*5412*/	uint8							unknown5448[6];
-		/*5418*/	uint16							boatid;
+		/*5418*/	uint16							boatid;				// We use this ID internally for boats.
 		/*5420*/	uint32							zone_change_count;	// Number of times user has zoned in their career (guessing)
-		/*5424*/	char							boat[16];	//
+		/*5424*/	char							boat[16];			// The client uses this string for boats.
 		/*5440*/	uint32							drakkin_heritage;	//
 		/*5444*/	uint32							drakkin_tattoo;		//
 		/*5448*/	uint32							drakkin_details;	//

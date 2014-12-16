@@ -685,7 +685,6 @@ public:
 	bool qglobal;
 
 	virtual void SetAttackTimer();
-	int32 GetAttackSpeedTimer();
 	inline void SetInvul(bool invul) { invulnerable=invul; }
 	inline bool GetInvul(void) { return invulnerable; }
 	inline void SetExtraHaste(int Haste) { ExtraHaste = Haste; }
@@ -1060,7 +1059,6 @@ protected:
 	Timer attack_timer;
 	Timer attack_dw_timer;
 	Timer ranged_timer;
-	float attack_speed; //% increase/decrease in attack speed (not haste)
 	int8 attack_delay; //delay between attacks in 10ths of seconds
 	int16 slow_mitigation; // Allows for a slow mitigation (100 = 100%, 50% = 50%)
 	Timer tic_timer;

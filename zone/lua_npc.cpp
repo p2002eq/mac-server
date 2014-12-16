@@ -422,11 +422,6 @@ float Lua_NPC::GetSlowMitigation() {
 	return self->GetSlowMitigation();
 }
 
-float Lua_NPC::GetAttackSpeed() {
-	Lua_Safe_Call_Real();
-	return self->GetAttackSpeed();
-}
-
 int Lua_NPC::GetAccuracyRating() {
 	Lua_Safe_Call_Int();
 	return self->GetAccuracyRating();
@@ -538,7 +533,6 @@ luabind::scope lua_register_npc() {
 		.def("GetSpellFocusDMG", (void(Lua_NPC::*)(int))&Lua_NPC::GetSpellFocusDMG)
 		.def("GetSpellFocusHeal", (void(Lua_NPC::*)(int))&Lua_NPC::GetSpellFocusHeal)
 		.def("GetSlowMitigation", (int(Lua_NPC::*)(void))&Lua_NPC::GetSlowMitigation)
-		.def("GetAttackSpeed", (float(Lua_NPC::*)(void))&Lua_NPC::GetAttackSpeed)
 		.def("GetAccuracyRating", (int(Lua_NPC::*)(void))&Lua_NPC::GetAccuracyRating)
 		.def("GetSpawnKillCount", (int(Lua_NPC::*)(void))&Lua_NPC::GetSpawnKillCount)
 		.def("GetScore", (int(Lua_NPC::*)(void))&Lua_NPC::GetScore)

@@ -1243,7 +1243,7 @@ void command_zone(Client *c, const Seperator *sep){
 		c->Message(0, "Optional Usage: #zone [zonename] y x z");
 		return;
 	}
-	else if (zone->GetZoneID() == 184 && c->Admin() < commandZoneToSpecials) {	// Zone: 'Load'
+	else if (zone->GetZoneID() == load && c->Admin() < commandZoneToSpecials) {	// Zone: 'Load'
 		c->Message(0, "The Gods brought you here, only they can send you away.");
 		return;
 	}
@@ -1643,7 +1643,7 @@ void command_npcstats(Client *c, const Seperator *sep){
 		c->Message(0, "Gender: %i  Size: %f  Bodytype: %d", c->GetTarget()->GetGender(), c->GetTarget()->GetSize(), c->GetTarget()->GetBodyType());
 		c->Message(0, "Runspeed: %f  Walkspeed: %f", c->GetTarget()->GetRunspeed(), c->GetTarget()->GetWalkspeed());
 		c->Message(0, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
-		c->Message(0, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackSpeedTimer());
+		c->Message(0, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackTimer());
 		c->GetTarget()->CastToNPC()->QueryLoot(c);
 	}
 }
@@ -4806,157 +4806,157 @@ void command_randomfeatures(Client *c, const Seperator *sep){
 			uint32 DrakkinDetails = 0xFFFFFFFF;
 
 			// Set some common feature settings
-			EyeColor1 = MakeRandomInt(0, 9);
-			EyeColor2 = MakeRandomInt(0, 9);
-			LuclinFace = MakeRandomInt(0, 7);
+			EyeColor1 = zone->random.Int(0, 9);
+			EyeColor2 = zone->random.Int(0, 9);
+			LuclinFace = zone->random.Int(0, 7);
 
 			// Adjust all settings based on the min and max for each feature of each race and gender
 			switch (Race)
 			{
 			case 1:	// Human
-				HairColor = MakeRandomInt(0, 19);
+				HairColor = zone->random.Int(0, 19);
 				if (Gender == 0) {
 					BeardColor = HairColor;
-					HairStyle = MakeRandomInt(0, 3);
-					Beard = MakeRandomInt(0, 5);
+					HairStyle = zone->random.Int(0, 3);
+					Beard = zone->random.Int(0, 5);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 2:	// Barbarian
-				HairColor = MakeRandomInt(0, 19);
-				LuclinFace = MakeRandomInt(0, 87);
+				HairColor = zone->random.Int(0, 19);
+				LuclinFace = zone->random.Int(0, 87);
 				if (Gender == 0) {
 					BeardColor = HairColor;
-					HairStyle = MakeRandomInt(0, 3);
-					Beard = MakeRandomInt(0, 5);
+					HairStyle = zone->random.Int(0, 3);
+					Beard = zone->random.Int(0, 5);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 3: // Erudite
 				if (Gender == 0) {
-					BeardColor = MakeRandomInt(0, 19);
-					Beard = MakeRandomInt(0, 5);
-					LuclinFace = MakeRandomInt(0, 57);
+					BeardColor = zone->random.Int(0, 19);
+					Beard = zone->random.Int(0, 5);
+					LuclinFace = zone->random.Int(0, 57);
 				}
 				if (Gender == 1) {
-					LuclinFace = MakeRandomInt(0, 87);
+					LuclinFace = zone->random.Int(0, 87);
 				}
 				break;
 			case 4: // WoodElf
-				HairColor = MakeRandomInt(0, 19);
+				HairColor = zone->random.Int(0, 19);
 				if (Gender == 0) {
-					HairStyle = MakeRandomInt(0, 3);
+					HairStyle = zone->random.Int(0, 3);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 5: // HighElf
-				HairColor = MakeRandomInt(0, 14);
+				HairColor = zone->random.Int(0, 14);
 				if (Gender == 0) {
-					HairStyle = MakeRandomInt(0, 3);
-					LuclinFace = MakeRandomInt(0, 37);
+					HairStyle = zone->random.Int(0, 3);
+					LuclinFace = zone->random.Int(0, 37);
 					BeardColor = HairColor;
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 6: // DarkElf
-				HairColor = MakeRandomInt(13, 18);
+				HairColor = zone->random.Int(13, 18);
 				if (Gender == 0) {
-					HairStyle = MakeRandomInt(0, 3);
-					LuclinFace = MakeRandomInt(0, 37);
+					HairStyle = zone->random.Int(0, 3);
+					LuclinFace = zone->random.Int(0, 37);
 					BeardColor = HairColor;
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 7: // HalfElf
-				HairColor = MakeRandomInt(0, 19);
+				HairColor = zone->random.Int(0, 19);
 				if (Gender == 0) {
-					HairStyle = MakeRandomInt(0, 3);
-					LuclinFace = MakeRandomInt(0, 37);
+					HairStyle = zone->random.Int(0, 3);
+					LuclinFace = zone->random.Int(0, 37);
 					BeardColor = HairColor;
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 8: // Dwarf
-				HairColor = MakeRandomInt(0, 19);
+				HairColor = zone->random.Int(0, 19);
 				BeardColor = HairColor;
 				if (Gender == 0) {
-					HairStyle = MakeRandomInt(0, 3);
-					Beard = MakeRandomInt(0, 5);
+					HairStyle = zone->random.Int(0, 3);
+					Beard = zone->random.Int(0, 5);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
-					LuclinFace = MakeRandomInt(0, 17);
+					HairStyle = zone->random.Int(0, 2);
+					LuclinFace = zone->random.Int(0, 17);
 				}
 				break;
 			case 9: // Troll
-				EyeColor1 = MakeRandomInt(0, 10);
-				EyeColor2 = MakeRandomInt(0, 10);
+				EyeColor1 = zone->random.Int(0, 10);
+				EyeColor2 = zone->random.Int(0, 10);
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 3);
-					HairColor = MakeRandomInt(0, 23);
+					HairStyle = zone->random.Int(0, 3);
+					HairColor = zone->random.Int(0, 23);
 				}
 				break;
 			case 10: // Ogre
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 3);
-					HairColor = MakeRandomInt(0, 23);
+					HairStyle = zone->random.Int(0, 3);
+					HairColor = zone->random.Int(0, 23);
 				}
 				break;
 			case 11: // Halfling
-				HairColor = MakeRandomInt(0, 19);
+				HairColor = zone->random.Int(0, 19);
 				if (Gender == 0) {
 					BeardColor = HairColor;
-					HairStyle = MakeRandomInt(0, 3);
-					Beard = MakeRandomInt(0, 5);
+					HairStyle = zone->random.Int(0, 3);
+					Beard = zone->random.Int(0, 5);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 12: // Gnome
-				HairColor = MakeRandomInt(0, 24);
+				HairColor = zone->random.Int(0, 24);
 				if (Gender == 0) {
 					BeardColor = HairColor;
-					HairStyle = MakeRandomInt(0, 3);
-					Beard = MakeRandomInt(0, 5);
+					HairStyle = zone->random.Int(0, 3);
+					Beard = zone->random.Int(0, 5);
 				}
 				if (Gender == 1) {
-					HairStyle = MakeRandomInt(0, 2);
+					HairStyle = zone->random.Int(0, 2);
 				}
 				break;
 			case 128: // Iksar
 			case 130: // VahShir
 				break;
 			case 330: // Froglok
-				LuclinFace = MakeRandomInt(0, 9);
+				LuclinFace = zone->random.Int(0, 9);
 			case 522: // Drakkin
-				HairColor = MakeRandomInt(0, 3);
+				HairColor = zone->random.Int(0, 3);
 				BeardColor = HairColor;
-				EyeColor1 = MakeRandomInt(0, 11);
-				EyeColor2 = MakeRandomInt(0, 11);
-				LuclinFace = MakeRandomInt(0, 6);
-				DrakkinHeritage = MakeRandomInt(0, 6);
-				DrakkinTattoo = MakeRandomInt(0, 7);
-				DrakkinDetails = MakeRandomInt(0, 7);
+				EyeColor1 = zone->random.Int(0, 11);
+				EyeColor2 = zone->random.Int(0, 11);
+				LuclinFace = zone->random.Int(0, 6);
+				DrakkinHeritage = zone->random.Int(0, 6);
+				DrakkinTattoo = zone->random.Int(0, 7);
+				DrakkinDetails = zone->random.Int(0, 7);
 				if (Gender == 0) {
-					Beard = MakeRandomInt(0, 12);
-					HairStyle = MakeRandomInt(0, 8);
+					Beard = zone->random.Int(0, 12);
+					HairStyle = zone->random.Int(0, 8);
 				}
 				if (Gender == 1) {
-					Beard = MakeRandomInt(0, 3);
-					HairStyle = MakeRandomInt(0, 7);
+					Beard = zone->random.Int(0, 3);
+					HairStyle = zone->random.Int(0, 7);
 				}
 				break;
 			default:
@@ -6658,17 +6658,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 
 		std::string query = StringFormat("UPDATE npc_types SET limit = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
-		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
-		return;
-	}
-
-	if (strcasecmp(sep->arg[1], "Attackspeed") == 0) {
-		c->Message(15, "NPCID %u now has attack_speed set to %f",
-			npcTypeID, atof(sep->arg[2]));
-
-		std::string query = StringFormat("UPDATE npc_types SET attack_speed = %f WHERE id = %i",
-			atof(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		c->LogSQL(query.c_str());
 		return;
@@ -8613,7 +8602,7 @@ void command_modifynpcstat(Client *c, const Seperator *sep){
 	{
 		c->Message(0, "usage #modifynpcstat arg value");
 		c->Message(0, "Args: ac, str, sta, agi, dex, wis, _int, cha, max_hp, mr, fr, cr, pr, dr, runspeed, special_attacks, "
-			"attack_speed, atk, accuracy, trackable, min_hit, max_hit, see_invis_undead, see_hide, see_improved_hide, "
+			"atk, accuracy, trackable, min_hit, max_hit, see_invis_undead, see_hide, see_improved_hide, "
 			"hp_regen, mana_regen, aggro, assist, slow_mitigation, loottable_id, healscale, spellscale");
 		return;
 	}
@@ -10167,8 +10156,10 @@ void command_distance(Client *c, const Seperator *sep){
 	}
 }
 
-void command_cvs(Client *c, const Seperator *sep){
-	if (c)
+void command_cvs(Client *c, const Seperator *sep)
+{
+	c->Message(0, "%f %d", zone->random.Real(0.0f, 1.0f), zone->random.Int(0, 100));
+	if(c)
 	{
 		ServerPacket *pack = new ServerPacket(ServerOP_ClientVersionSummary, sizeof(ServerRequestClientVersionSummary_Struct));
 

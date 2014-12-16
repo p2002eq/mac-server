@@ -31,6 +31,7 @@
 #include "zonedump.h"
 #include "spawn2.h"
 #include "pathing.h"
+#include "../common/random.h"
 #include "qglobals.h"
 #include <unordered_map>
 
@@ -203,10 +204,13 @@ public:
 	void	weatherSend();
 	bool	CanBind() const { return(can_bind); }
 	bool	IsCity() const { return(is_city); }
+	bool	CanBindOthers() const { return(can_bind_others); }
 	bool	CanDoCombat() const { return(can_combat); }
 	bool	CanLevitate() const {return(can_levitate); } // Magoth78
 	bool	CanCastOutdoor() const {return(can_castoutdoor);} //qadar
 	bool	IsHotzone() const { return(is_hotzone); }
+	bool	IsBoatZone();
+	bool	IsDesertZone();
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 
 	time_t	weather_timer;
@@ -245,6 +249,9 @@ public:
     void    UpdateHotzone();
 	std::unordered_map<int, item_tick_struct> tick_items;
 
+	// random object that provides random values for the zone
+	EQEmu::Random random;
+
 	//MODDING HOOKS
 	void mod_init();
 	void mod_repop();
@@ -263,6 +270,7 @@ private:
 	uint32	pMaxClients;
 	bool	can_bind;
 	bool	is_city;
+	bool	can_bind_others; //Zone is not a city, but has areas where others can be bound.
 	bool	can_combat;
 	bool	can_castoutdoor;
 	bool	can_levitate;
@@ -301,7 +309,7 @@ private:
 	Timer*	Instance_Warning_timer;
 	LinkedList<ZoneClientAuth_Struct*> client_auth_list;
 	QGlobalCache *qGlobals;
-	
+
 	Timer	hotzone_timer;
 };
 

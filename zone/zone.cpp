@@ -908,7 +908,7 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 	{
 		map_name = nullptr;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, zone_type, default_ruleset, &map_name))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, zone_type, default_ruleset, &map_name, can_bind_others))
 		{
 			LogFile->write(EQEMuLog::Error, "Error loading the Zone Config.");
 			return false;
@@ -919,11 +919,11 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 		//Fall back to base zone if we don't find the instance version.
 		map_name = nullptr;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), instance_id, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others))
 		{
 			safe_delete_array(map_name);
 			if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others))
 			{
 				LogFile->write(EQEMuLog::Error, "Error loading the Zone Config.");
 				return false;
@@ -1125,13 +1125,13 @@ void Zone::ChangeWeather()
 		return;
 	}
 
-	int chance = MakeRandomInt(0, 3);
+	int chance = zone->random.Int(0, 3);
 	uint8 rainchance = zone->newzone_data.rain_chance[chance];
 	uint8 rainduration = zone->newzone_data.rain_duration[chance];
 	uint8 snowchance = zone->newzone_data.snow_chance[chance];
 	uint8 snowduration = zone->newzone_data.snow_duration[chance];
 	uint32 weathertimer = 0;
-	uint16 tmpweather = MakeRandomInt(0, 100);
+	uint16 tmpweather = zone->random.Int(0, 100);
 	uint8 duration = 0;
 	uint8 tmpOldWeather = zone->zone_weather;
 	bool changed = false;
@@ -1140,7 +1140,7 @@ void Zone::ChangeWeather()
 	{
 		if(rainchance > 0 || snowchance > 0)
 		{
-			uint8 intensity = MakeRandomInt(1, 3);
+			uint8 intensity = zone->random.Int(1, 3);
 			if((rainchance > snowchance) || (rainchance == snowchance))
 			{
 				//It's gunna rain!
@@ -1919,4 +1919,36 @@ void Zone::UpdateHotzone()
     auto row = results.begin();
 
     is_hotzone = atoi(row[0]) == 0 ? false: true;
+}
+
+bool Zone::IsBoatZone()
+{
+	// This only returns true for zones that contain actual boats. It should not be used for zones that only have 
+	// controllable boats, or the Halas raft.
+
+	static const int16 boatzones[] = { qeynos, freporte, erudnext, butcher, oot, erudsxing };
+
+	int8 boatzonessize = sizeof(boatzones) / sizeof(boatzones[0]);
+	for (int i = 0; i < boatzonessize; i++) {
+		if (GetZoneID() == boatzones[i]) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Zone::IsDesertZone()
+{
+
+	static const int16 desertzones[] = { nro, sro, oasis, fieldofbone, scarlet };
+
+	int8 desertzonessize = sizeof(desertzones) / sizeof(desertzones[0]);
+	for (int i = 0; i < desertzonessize; i++) {
+		if (GetZoneID() == desertzones[i]) {
+			return true;
+		}
+	}
+
+	return false;
 }

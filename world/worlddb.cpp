@@ -266,7 +266,7 @@ bool WorldDatabase::GetStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct*
 		in_pp->x = in_pp->binds[0].x = -51;
 		in_pp->y = in_pp->binds[0].y = -20;
 		in_pp->z = in_pp->binds[0].z = 0.79;
-		in_pp->zone_id = in_pp->binds[0].zoneId = 77; // Arena
+		in_pp->zone_id = in_pp->binds[0].zoneId = arena;
     }
     else
 	{
