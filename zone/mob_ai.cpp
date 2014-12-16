@@ -1191,27 +1191,26 @@ void Mob::AI_Process() {
 						//we use this random value in three comparisons with different
 						//thresholds, and if its truely random, then this should work
 						//out reasonably and will save us compute resources.
-						int32 RandRoll = zone->random.Int(0, 99);
-						float chance = 0.0f;
+						uint8 chance = 0;
 						if(GetLevel() < 36)
 							chance = GetLevel();
 						else if(GetLevel() > 35 && GetLevel() < 51)
 							chance = GetLevel() + 8;
 						else if(GetLevel() > 50 && GetLevel() < 66)
-							chance = 61.0f;
+							chance = 61;
 						else
-							chance = 65.0f;
+							chance = 65;
 
-						if (RandRoll < chance) {
+						if (zone->random.Roll(chance)) {
 							Attack(target, MainPrimary);
 							// lets see if we can do a triple attack with the main hand
 							//pets are excluded from triple and quads...
 							if ((GetSpecialAbility(SPECATK_TRIPLE) || GetSpecialAbility(SPECATK_QUAD))
-									&& !IsPet() && RandRoll < (GetLevel() + NPCTripleAttackModifier)) {
+									&& !IsPet() && chance < (GetLevel() + NPCTripleAttackModifier)) {
 								Attack(target, MainPrimary);
 								// now lets check the quad attack
 								if (GetSpecialAbility(SPECATK_QUAD)
-										&& RandRoll < (GetLevel() + NPCQuadAttackModifier)) {
+										&& chance < (GetLevel() + NPCQuadAttackModifier)) {
 									Attack(target, MainPrimary);
 								}
 							}
@@ -1364,14 +1363,13 @@ void Mob::AI_Process() {
 							Attack(target, MainSecondary);
 							if (GetLevel() > 35)
 							{
-								int32 RandRoll = zone->random.Int(0, 99);
-								float chance = 0.0f;
+								uint8 chance = 0;
 								if(GetLevel() > 35 && GetLevel() < 51)
 									chance = GetLevel() + 8;
 								else if(GetLevel() > 50 && GetLevel() < 66)
-									chance = 61.0f;
+									chance = 61;
 								else
-									chance = 65.0f;
+									chance = 65;
 								if (zone->random.Roll(chance))
 								{
 									Attack(target, MainSecondary);
