@@ -20,7 +20,6 @@
 */
 
 #include "../common/debug.h"
-#include "../common/misc_functions.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
 #include "../common/types.h"
@@ -30,7 +29,6 @@
 #include "mob.h"
 
 #include "pets.h"
-#include "worldserver.h"
 #include "zonedb.h"
 
 #ifndef WIN32
