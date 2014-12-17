@@ -32,7 +32,7 @@
 int Mob::GetKickDamage() {
 	int multiple=(GetLevel()*100/5);
 	multiple += 100;
-	int32 dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 9000) * multiple) + 600;	//Set a base of 6 damage, 1 seemed too low at the sub level 30 level.
+	int32 dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 10000) * multiple);
 	if(GetClass() == WARRIOR || GetClass() == WARRIORGM) {
 		dmg*=12/10;//small increase for warriors
 	}
