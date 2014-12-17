@@ -2129,7 +2129,8 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				{
 					if (item->Click.Level2 > 0)
 					{
-						if (GetLevel() >= item->Click.Level2)
+						// Clickies with 0 casttime had no level requirement on AK
+						if (GetLevel() >= item->Click.Level2 || item->CastTime == 0)
 						{
 							ItemInst* p_inst = (ItemInst*)inst;
 							int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);

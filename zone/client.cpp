@@ -1814,8 +1814,8 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 		if(against_who->GetSpecialAbility(IMMUNE_AGGRO) || against_who->IsClient() ||
 			GetLevelCon(against_who->GetLevel()) == CON_GREEN)
 		{
-			//false by default
-			if( !mod_can_increase_skill(skillid, against_who) ) { return(false); }
+			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
+			return false; 
 		}
 	}
 
@@ -1841,7 +1841,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
 		}
 	} else {
-		_log(SKILLS__GAIN, "Skill %d at value %d cannot increase due to maxmum %d", skillid, skillval, maxskill);
+		_log(SKILLS__GAIN, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
 }
@@ -4695,6 +4695,12 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
 	client->Message(0, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
 	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (%i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID());
+	if(GetClass() == WARRIOR)
+		client->Message(0, "KickDmg: %i BashDmg: %i", GetKickDamage(), GetBashDamage());
+	if(GetClass() == RANGER || GetClass() == BEASTLORD)
+		client->Message(0, "KickDmg: %i", GetKickDamage());
+	if(GetClass() == PALADIN || GetClass() == SHADOWKNIGHT)
+		client->Message(0, "BashDmg: %i", GetBashDamage());
 	if(GetClass() == BARD)
 		client->Message(0, " Singing: %i  Brass: %i  String: %i Percussion: %i Wind: %i", GetSingMod(), GetBrassMod(), GetStringMod(), GetPercMod(), GetWindMod());
 

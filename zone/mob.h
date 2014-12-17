@@ -907,6 +907,9 @@ public:
 	void	mod_spell_cast(uint16 spell_id, Mob* spelltar, bool reflect, bool use_resist_adjust, int16 resist_adjust, bool isproc);
 	bool    mod_will_aggro(Mob *attacker, Mob *on);
 
+	bool	CanEquipSecondary() { return can_equip_secondary; }
+	bool	CanDualWield() { return can_dual_wield; }
+
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
@@ -979,6 +982,8 @@ protected:
 	uint32 follow;
 	uint32 follow_dist;
 	bool no_target_hotkey;
+	bool can_equip_secondary;
+	bool can_dual_wield;
 
 	uint8 gender;
 	uint16 race;

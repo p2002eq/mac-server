@@ -912,8 +912,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							break;
 						}
 
-						// Todo: Expand on CanBindOthers and add it to method that checks whether others can be bound in the particular zone based on coords.
-						if(!zone->IsCity() && !zone->CanBindOthers())
+						if(!zone->IsCity() && !zone->IsBindArea(GetX(),GetY()))
 						{
 							if(caster != this)
 							{

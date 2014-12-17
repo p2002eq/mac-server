@@ -171,10 +171,11 @@ enum {	//timer settings, all in milliseconds
 enum {	//some random constants
 	//each of these attack modifiers are added to the NPC's level to determine their
 	//probability of executing such an attack (which may or may not hit)
-	NPCDualAttackModifier = 20,
 	NPCTripleAttackModifier = 0,
 	NPCQuadAttackModifier = -20
 };
+
+#define DUAL_WIELD_LEVEL 4
 
 //Max number of groups you can link with. Not tied to the client.
 //if group linking is enabled above
@@ -183,12 +184,6 @@ enum {	//some random constants
 //this is the number of levels above the thief's level that
 //an npc can be and still let the theif PP them
 #define THIEF_PICKPOCKET_OVER 5
-
-//this is the % chance that an NPC will dual wield a 2nd weapon
-//in its loot table, if it is able to.
-//Aug 2007: was 5% chance.. changed to 100% by default since that seems more normal
-//Kept it intact codewise incase someone wants to or is already using it.
-#define NPC_DW_CHANCE 100
 
 //This is the entry in npc_types to spawn for trap damagaes
 #define TRAP_NPC_TYPE 1586
