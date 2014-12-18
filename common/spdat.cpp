@@ -235,8 +235,8 @@ bool IsBeneficialSpell(uint16 spell_id)
 			uint16 sai = spells[spell_id].SpellAffectIndex;
 
 			// If the resisttype is magic and SpellAffectIndex is Calm/memblur/dispell sight
-			// it's not beneficial
-			if (spells[spell_id].resisttype == RESIST_MAGIC) {
+			// it's not beneficial. Harmony (250) is a weird exception to resisttype.
+			if (spells[spell_id].resisttype == RESIST_MAGIC || spell_id == 250) {
 				if (sai == SAI_Calm || sai == SAI_Dispell_Sight ||
 						sai == SAI_Memory_Blur || sai == SAI_Calm_Song)
 					return false;
