@@ -595,7 +595,6 @@ int command_realdispatch(Client *c, const char *message){
 #ifdef COMMANDS_LOGGING
 	if (cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
 		const char* targetType;
-		float teststring = 123;
 		if (c->GetTarget()->IsClient()) targetType = "player";
 		else if (c->GetTarget()->IsPet()) targetType = "pet";
 		else if (c->GetTarget()->IsNPC()) targetType = "NPC";
