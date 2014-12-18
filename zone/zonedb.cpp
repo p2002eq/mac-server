@@ -901,7 +901,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->guildAutoconsent = atoi(row[r]); r++;								 // "guild_auto_consent,        "
 		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
-		strcpy(pp->boat, row[r]); r++;											 // "boatname					"
+		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
