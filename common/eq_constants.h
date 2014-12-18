@@ -1013,6 +1013,7 @@ enum Zones
 	akheva=179,
 	arena2=180,
 	jaggedpine=181,
+	tutorial = 183,
 	load=184,
 	load2=185,
 	clz=190,
