@@ -162,13 +162,10 @@ inline const char* StaticGetZoneName(uint32 zoneID) {
 		case 180: return "arena2";
 		case 181: return "jaggedpine";
 		case 182: return "nedaria";
-		case 183: return "tutorial";
 		case 184: return "load";
 		case 185: return "load2";
 		case 186: return "hateplaneb";
 		case 187: return "shadowrest";
-		case 188: return "tutoriala";
-		case 189: return "tutorialb";
 		case 190: return "clz";
 		case 200: return "codecay";
 		case 201: return "pojustice";

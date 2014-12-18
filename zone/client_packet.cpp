@@ -3331,7 +3331,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	if (damage < 0)
 		damage = 31337;
 
-	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load)
+	else if (zone->GetZoneID() == load)
 		return;
 	else
 		SetHP(GetHP() - damage);

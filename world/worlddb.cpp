@@ -43,8 +43,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		strcpy(cs->name[i], "<none>");
 		cs->zone[i] = 0;
 		cs->level[i] = 0;
-		cs->tutorial[i] = 0;
-		cs->gohome[i] = 0;
 	}
 
 	/* Get Character Info */
