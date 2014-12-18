@@ -1195,6 +1195,22 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 	bool HasInstrument = true;
 	Client *c = this->CastToClient();
 	int InstComponent = spells[spell_id].NoexpendReagent[0];
+	// Lyssa`s Solidarity of Vision has instrument in components
+	if(InstComponent == -1)
+	{
+		for (int t_count = 0; t_count < 4; t_count++) {
+			int32 component = spells[spell_id].components[t_count];
+
+			if (component == -1){
+				continue;
+			}
+			else
+			{
+				InstComponent = component;
+				break;
+			}
+		}
+	}
 
 	switch (InstComponent) {
 	case -1:
@@ -1233,11 +1249,11 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 		break;
 
 	default:	// some non-instrument component. Let it go, but record it in the log
-		mlog(SPELLS__CASTING_ERR, "Something odd happened: Song %d required instrument %s", spell_id, InstComponent);
+		mlog(SPELLS__CASTING_ERR, "Something odd happened: Song %d required instrument %d", spell_id, InstComponent);
 	}
 
 	if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
-		mlog(SPELLS__CASTING_ERR, "Song %d: Canceled. Missing required instrument %s", spell_id, InstComponent);
+		mlog(SPELLS__CASTING_ERR, "Song %d: Canceled. Missing required instrument %d", spell_id, InstComponent);
 		if (c->GetGM())
 			c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
 		else {
@@ -2264,7 +2280,8 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	{
 		if(!CheckRegion(spell_target) || 
 		((zone->IsCity() || !zone->CanCastOutdoor()) &&
-		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && spells[spell_id].effectid[0] != SE_BindSight))
+		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
+		!IsBindSightSpell(spell_id)))
 		{
 			mlog(SPELLS__CASTING, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
 			Message_StringID(CC_Red, CANT_SEE_TARGET);
@@ -3274,10 +3291,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	// select target
 	if	// Bind Sight line of spells
-	(
-		spell_id == 500 ||	// bind sight
-		spell_id == 407		// cast sight
-	)
+	(IsBindSightSpell(spell_id))
 	{
 		action->target = GetID();
 	}

@@ -3433,8 +3433,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//fade mez if we are mezzed
 		if (IsMezzed() && attacker) {
 			mlog(COMBAT__HITS, "Breaking mez due to attack.");
-			entity_list.MessageClose_StringID(this, true, 100, MT_WornOff,
-					HAS_BEEN_AWAKENED, GetCleanName(), attacker->GetCleanName());
 			BuffFadeByEffect(SE_Mez);
 		} 
 
@@ -3570,18 +3568,20 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			//if the attacker is a client, try them with the correct filter
 			if(attacker && attacker->IsClient()) {
 				if (((spell_id != SPELL_UNKNOWN)||(FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me
-					char val1[20]={0};
-						if (FromDamageShield)
+					//special crap for spell damage, looks hackish to me					
+					if (FromDamageShield)
+					{
+						if(!attacker->CastToClient()->GetFilter(FilterDamageShields) == FilterHide)
 						{
-							if(!attacker->CastToClient()->GetFilter(FilterDamageShields) == FilterHide)
-							{
-								attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-							}
-						}
-						else
 							char val1[20]={0};
 							attacker->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+						}
+					}
+					else
+					{
+						char val1[20]={0};
+						attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+					}
 				} else {
 					if(damage > 0) {
 						if(spell_id != SPELL_UNKNOWN)

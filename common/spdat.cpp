@@ -235,16 +235,18 @@ bool IsBeneficialSpell(uint16 spell_id)
 			uint16 sai = spells[spell_id].SpellAffectIndex;
 
 			// If the resisttype is magic and SpellAffectIndex is Calm/memblur/dispell sight
-			// it's not beneficial
+			// it's not beneficial.
 			if (spells[spell_id].resisttype == RESIST_MAGIC) {
 				if (sai == SAI_Calm || sai == SAI_Dispell_Sight ||
 						sai == SAI_Memory_Blur || sai == SAI_Calm_Song)
 					return false;
 			} else {
-				// If the resisttype is not magic and spell is Bind Sight or Cast Sight
+				// If the resisttype is not magic and spell is Bind Sight or Cast Sight or Harmony
 				// It's not beneficial
-				if (sai == SAI_Dispell_Sight && spells[spell_id].skill == 18 &&
-						!IsEffectInSpell(spell_id, SE_VoiceGraft))
+				if ((sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony))
+					|| (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
+					|| (sai == SAI_Dispell_Sight && spells[spell_id].skill == 18 &&
+						!IsEffectInSpell(spell_id, SE_VoiceGraft)))
 					return false;
 			}
 		}

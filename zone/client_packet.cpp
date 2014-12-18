@@ -3410,6 +3410,10 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 
 	float totalfeign = feignbase + feignchance;
 
+	// We will always have at least a 5% chance of failure.
+	if(totalfeign >= 143)
+		totalfeign = 142.5f;
+
 	if (zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
 		entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetName());
@@ -5388,8 +5392,16 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	}
 	case PET_TAUNT: {
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 3) || mypet->GetPetType() != petAnimation) {
-			Message_StringID(MT_PetResponse, PET_DO_TAUNT);
-			mypet->CastToNPC()->SetTaunting(true);
+			if(mypet->CastToNPC()->IsTaunting())
+			{
+				Message_StringID(MT_PetResponse, PET_NO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(false);
+			}
+			else
+			{
+				Message_StringID(MT_PetResponse, PET_DO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(true);
+			}
 		}
 		break;
 	}
