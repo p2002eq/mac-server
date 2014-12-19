@@ -141,8 +141,8 @@ float Mob::GetFearSpeed()
 
 		speed = speed * ratio * multiplier / 100;
 
-		//NPC will eventually stop. Snares speeds this up.
-		if (speed < 0.09)
+		//NPC will eventually stop. Snares speeds this up. Below this speed, NPCs warp.
+		if (speed < 0.1667)
 			speed = 0.0001f;
 
 		return speed;

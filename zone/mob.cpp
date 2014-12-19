@@ -1160,6 +1160,8 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  Trackable: %i CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i", n->IsTrackable(), n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage());
+			if(flee_mode)
+				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
