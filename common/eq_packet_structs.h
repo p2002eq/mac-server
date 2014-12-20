@@ -51,8 +51,6 @@ struct LoginInfo_Struct {
 
 struct EnterWorld_Struct {
 /*000*/	char	name[64];
-/*064*/	uint32	tutorial;		// 01 on "Enter Tutorial", 00 if not
-/*068*/	uint32	return_home;		// 01 on "Return Home", 00 if not
 };
 
 struct ExpansionInfo_Struct {
@@ -135,8 +133,6 @@ struct CharacterSelect_Struct {
 /*0860*/	uint32	drakkin_tattoo[10];			// added for SoF
 /*0900*/	uint32	drakkin_details[10];		// added for SoF
 /*0940*/	uint32	deity[10];				// Characters Deity
-/*0980*/	uint8	gohome[10];				// 1=Go Home available, 0=not
-/*0990*/	uint8	tutorial[10];			// 1=Tutorial available, 0=not
 /*1000*/	uint8	beard[10];				// Characters Beard Type
 /*1010*/	uint8	unknown902[10];			// 10x ff
 /*1020*/	uint32	primary[10];			// Characters primary IDFile number
@@ -632,7 +628,6 @@ struct CharCreate_Struct
 /*0076*/	uint32	drakkin_heritage;	// added for SoF
 /*0080*/	uint32	drakkin_tattoo;		// added for SoF
 /*0084*/	uint32	drakkin_details;	// added for SoF
-/*0088*/	uint32	tutorial;
 };
 
 /*
@@ -2506,7 +2501,6 @@ struct LogServer_Struct {
 /*260*/	uint8	enable_petition_wnd;
 /*261*/	uint8	enablevoicemacros;
 /*262*/	uint8	enablemail;
-/*263*/	uint8	disable_tutorial_go_home; // This appears valid on Ti and RoF..other clients need verification
 /*264*/
 };
 
