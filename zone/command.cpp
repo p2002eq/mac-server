@@ -599,6 +599,7 @@ int command_realdispatch(Client *c, const char *message){
 			if (c->GetTarget()->IsClient()) targetType = "player";
 			else if (c->GetTarget()->IsPet()) targetType = "pet";
 			else if (c->GetTarget()->IsNPC()) targetType = "NPC";
+			else if (c->GetTarget()->IsCorpse()) targetType = "Corpse";
 			//else if (c->GetTarget()->IsMob()) targetType = "mob"; //doesn't register correctly so all non-pet/non-players report as NPC
 			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType, c->GetTarget()->GetName(), c->GetTarget()->GetY(), c->GetTarget()->GetX(), c->GetTarget()->GetZ(), c->GetZoneID(), zone->GetShortName());
 		}
