@@ -82,7 +82,6 @@ private:
 	Timer	autobootup_timeout;
 	uint32	pwaitingforbootup;
 
-	bool StartInTutorial;
 	uint32 ClientVersionBit;
 	bool OPCharCreate(char *name, CharCreate_Struct *cc);
 

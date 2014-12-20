@@ -127,8 +127,6 @@ namespace Mac {
 	{
 		SETUP_DIRECT_DECODE(EnterWorld_Struct, structs::EnterWorld_Struct);
 		strn0cpy(emu->name, eq->charname, 64);
-		emu->return_home = 0;
-		emu->tutorial = 0;
 		FINISH_DIRECT_DECODE();
 	}
 

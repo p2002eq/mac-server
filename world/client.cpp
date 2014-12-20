@@ -86,7 +86,6 @@ Client::Client(EQStreamInterface* ieqs)
 	char_name[0] = 0;
 	charid = 0;
 	pwaitingforbootup = 0;
-	StartInTutorial = false;
 	ClientVersionBit = 0;
 	numclients++;
 }
@@ -469,36 +468,6 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		clog(WORLD__CLIENT_ERR,"This account does not own the character named '%s'",char_name);
 		eqs->Close();
 		return true;
-	}
-
-	if(!pZoning && ew->return_home && !ew->tutorial) {
-		CharacterSelect_Struct* cs = new CharacterSelect_Struct;
-		memset(cs, 0, sizeof(CharacterSelect_Struct));
-		database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
-		bool home_enabled = false;
-
-		for(int x = 0; x < 10; ++x)
-		{
-			if(strcasecmp(cs->name[x], char_name) == 0)
-			{
-				if(cs->gohome[x] == 1)
-				{
-					home_enabled = true;
-					break;
-				}
-			}
-		}
-		safe_delete(cs);
-
-		if(home_enabled) {
-			zoneID = database.MoveCharacterToBind(charid,4);
-		}
-		else {
-			clog(WORLD__CLIENT_ERR,"'%s' is trying to go home before they're able...",char_name);
-			database.SetHackerFlag(GetAccountName(), char_name, "MQGoHome: player tried to go home before they were able.");
-			eqs->Close();
-			return true;
-		}
 	}
 
 	if (zoneID == 0 || !database.GetZoneName(zoneID)) {
