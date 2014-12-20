@@ -217,18 +217,15 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 		quantity = 1;
 
 	else if (quantity == 0){
-		//Item does not have quantity and is not stackable (Normal item.)
-		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
+		if(database.ItemQuantityType(item_id) == Quantity_Normal)
 		{ 
 			quantity = 1;
 		}
-		//Item is not stackable, and uses charges.
-		else if(item->StackSize < 1 || !item->Stackable) 
+		else if(database.ItemQuantityType(item_id) == Quantity_Charges)
 		{
 			quantity = item->MaxCharges;
 		}
-		//Due to the previous checks, item has to stack.
-		else
+		else if(database.ItemQuantityType(item_id) == Quantity_Stacked)
 		{
 			//If no value is set coming from a quest method, only summon a single item.
 			if(to_slot == MainQuest)

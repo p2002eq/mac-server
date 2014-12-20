@@ -30,13 +30,14 @@
 
 
 int Mob::GetKickDamage() {
-	int multiple=(GetLevel()*100/5);
-	multiple += 100;
+	int multiple=(GetLevel()*100/5)+100;
 	int32 dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 10000) * multiple);
 	if(GetClass() == WARRIOR || GetClass() == WARRIORGM) {
 		dmg*=12/10;//small increase for warriors
 	}
 	dmg /= 100;
+	if(dmg == 0)
+		dmg = 1;
 
 	int32 mindmg = 1;
 	ApplySpecialAttackMod(SkillKick, dmg,mindmg);
@@ -47,15 +48,24 @@ int Mob::GetKickDamage() {
 }
 
 int Mob::GetBashDamage() {
-	int multiple=(GetLevel()*100/5);
-	multiple += 100;
-
-	//this is complete shite
-	int32 dmg = 1;
-	if (GetSkill(SkillBash) > 0){
-		dmg = ((((GetSkill(SkillBash) + GetSTR()) * 100 + GetLevel() * 100 / 2) / 10000) * multiple) + 600;	//Set a base of 6 damage, 1 seemed too low at the sub level 30 level.
+	int multiple=(GetLevel()*100/5)+100;
+	int32 dmg = 0;
+	if(!HasShieldEquiped())
+	{
+		//Check if we're using SLAM
+		if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN)
+		{
+			dmg=(((GetSkill(SkillBash)/2 + GetSTR()/2 + GetLevel()/2)*100 / 11000) * multiple);
+			dmg /= 100;
+		}
+	}
+	else
+	{
+		dmg=(((GetSkill(SkillBash) + GetSTR() + GetLevel())*100 / 11000) * multiple);
 		dmg /= 100;
 	}
+	if(dmg == 0)
+		dmg = 1;
 
 	int32 mindmg = 1;
 	ApplySpecialAttackMod(SkillBash, dmg, mindmg);
@@ -264,22 +274,12 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 			DoAnim(Animation::Slam);
 
 			int32 ht = 0;
-			if(GetWeaponDamage(GetTarget(), GetInv().GetItem(MainSecondary)) <= 0 &&
-				GetWeaponDamage(GetTarget(), GetInv().GetItem(MainShoulders)) <= 0){
-				dmg = -5;
+			if(!GetTarget()->CheckHitChance(this, SkillBash, 0)) {
+				dmg = 0;
+				ht = GetBashDamage();
 			}
 			else{
-				if(!GetTarget()->CheckHitChance(this, SkillBash, 0)) {
-					dmg = 0;
-					ht = GetBashDamage();
-				}
-				else{
-					if(RuleB(Combat, UseIntervalAC))
-						ht = dmg = GetBashDamage();
-					else
-						ht = dmg = zone->random.Int(1, GetBashDamage());
-
-				}
+				ht = dmg = GetBashDamage();
 			}
 
 			ReuseTime = BashReuseTime-1-skill_reduction;
@@ -1512,16 +1512,8 @@ void NPC::DoClassAttacks(Mob *target) {
 					DoAnim(Animation::Slam);
 					int32 dmg = 0;
 
-					if(GetWeaponDamage(target, (const Item_Struct*)nullptr) <= 0){
-						dmg = -5;
-					}
-					else{
-						if(target->CheckHitChance(this, SkillBash, 0)) {
-							if(RuleB(Combat, UseIntervalAC))
-								dmg = GetBashDamage();
-							else
-								dmg = zone->random.Int(1, GetBashDamage());
-						}
+					if(target->CheckHitChance(this, SkillBash, 0)) {
+						dmg = GetBashDamage();
 					}
 
 					reuse = (BashReuseTime + 3) * 1000;
@@ -1563,16 +1555,8 @@ void NPC::DoClassAttacks(Mob *target) {
 				DoAnim(Animation::Slam);
 				int32 dmg = 0;
 
-				if(GetWeaponDamage(target, (const Item_Struct*)nullptr) <= 0){
-					dmg = -5;
-				}
-				else{
-					if(target->CheckHitChance(this, SkillBash, 0)) {
-						if(RuleB(Combat, UseIntervalAC))
-							dmg = GetBashDamage();
-						else
-							dmg = zone->random.Int(1, GetBashDamage());
-					}
+				if(target->CheckHitChance(this, SkillBash, 0)) {
+					dmg = GetBashDamage();
 				}
 
 				reuse = (BashReuseTime + 3) * 1000;
@@ -1666,20 +1650,11 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		if (ca_target!=this) {
 			DoAnim(Animation::Slam);
 
-			if(GetWeaponDamage(ca_target, GetInv().GetItem(MainSecondary)) <= 0 && GetWeaponDamage(ca_target, GetInv().GetItem(MainShoulders)) <= 0){
-				dmg = -5;
+			if(!ca_target->CheckHitChance(this, SkillBash, 0)) {
+				dmg = 0;
 			}
 			else{
-				if(!ca_target->CheckHitChance(this, SkillBash, 0)) {
-					dmg = 0;
-				}
-				else{
-					if(RuleB(Combat, UseIntervalAC))
-						dmg = GetBashDamage();
-					else
-						dmg = zone->random.Int(1, GetBashDamage());
-
-				}
+				dmg = GetBashDamage();
 			}
 
 			ReuseTime = (BashReuseTime - 1) / HasteMod;
