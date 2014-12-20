@@ -1690,7 +1690,7 @@ bool Mob::CanThisClassDualWield(void) const {
 	if(!IsClient()) {
 		return(GetSkill(SkillDualWield) > 0);
 	}
-	else if(CastToClient()->HasSkill(SkillDualWield)) {
+	else if(CastToClient()->HasSkill(SkillDualWield) || GetClass() == MONK) {
 		const ItemInst* pinst = CastToClient()->GetInv().GetItem(MainPrimary);
 		const ItemInst* sinst = CastToClient()->GetInv().GetItem(MainSecondary);
 
@@ -3776,7 +3776,7 @@ bool Mob::TrySpellOnDeath()
 			}
 		}
 
-	BuffFadeAll();
+	BuffFadeAll(true);
 	return false;
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result

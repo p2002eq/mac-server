@@ -1032,6 +1032,7 @@ private:
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;
+	bool				LFG;
 	bool				auto_attack;
 	bool				auto_fire;
 	uint8				gmspeed;

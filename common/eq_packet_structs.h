@@ -317,6 +317,17 @@ union
 
 };
 
+struct LFG_Struct {
+	char	name[64];
+	int32	value;
+};
+
+struct LFG_Appearance_Struct {
+	int32	entityid;
+	int8	value;
+	int8	void_[3];
+};
+
 /*
 ** New Spawn
 ** Length: 176 Bytes

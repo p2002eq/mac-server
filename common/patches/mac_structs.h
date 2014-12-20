@@ -178,7 +178,7 @@ struct ServerZoneEntry_Struct
 	/*0280*/	uint8	anon;				// Anon. Flag
 	/*0281*/	uint16	avatar;
 	/*0283*/	uint8	AFK;
-	/*0284*/	uint8	summoned;
+	/*0284*/	uint8	LFG;
 	/*0285*/	uint8	title;
 	/*0286*/	uint8	extra[18];	// ***Placeholder (At least one flag in here disables a zone point or all)
 	/*0304*/	char	Surname[32];		// Lastname (This has to be wrong.. but 70 is to big =/..)
@@ -427,7 +427,7 @@ struct Spawn_Struct
 	/*0094*/	uint8	light;				// Light emitting
 	/*0095*/	uint8	anon;				// 0=normal, 1=anon, 2=RP
 	/*0096*/	uint8	AFK;				// 0=off, 1=on
-	/*0097*/	uint8	summoned;
+	/*0097*/	uint8	LFG;
 	/*0098*/	uint8	LD;					// 0=NotLD, 1=LD
 	/*0099*/	uint8	GM;					// 0=NotGM, 1=GM
 	/*0100*/	uint8	flymode;				
@@ -1151,21 +1151,6 @@ struct Random_Struct
 	/*000*/	uint32 low;		// Comment: 
 	/*004*/	uint32 high;		// Comment: 
 	/*008*/	
-};
-
-//Old LFG_Struct (DO NOT DELETE)
-//struct LFG_Struct 
-//{
-//	char	name[64];	// Comment: 
-//	uint32	value;		// Comment: 
-//};
-
-//New LFG_Struct
-struct LFG_Struct 
-{
-	/*000*/	char	name[64 + 2];	// Comment: 
-	/*066*/	uint32	value;		// Comment: 
-	/*070*/	
 };
 
 // EverQuest Time Information:

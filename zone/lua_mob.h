@@ -336,9 +336,9 @@ public:
 	void BuffFadeBySpellID(int spell_id);
 	void BuffFadeByEffect(int effect_id);
 	void BuffFadeByEffect(int effect_id, int skipslot);
-	void BuffFadeAll();
+	void BuffFadeAll(bool death);
 	void BuffFadeBySlot(int slot);
-	void BuffFadeBySlot(int slot, bool recalc_bonuses);
+	void BuffFadeBySlot(int slot, bool recalc_bonuses, bool death);
 	int CanBuffStack(int spell_id, int caster_level);
 	int CanBuffStack(int spell_id, int caster_level, bool fail_if_overwrite);
 };

@@ -1987,7 +1987,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		return false;
 	
 	HasAISpellEffects = false;
-	BuffFadeAll();
+	BuffFadeAll(true);
 	uint8 killed_level = GetLevel();
 
 	EQApplicationPacket* app= new EQApplicationPacket(OP_Death,sizeof(Death_Struct));
