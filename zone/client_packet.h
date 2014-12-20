@@ -168,3 +168,4 @@
 	void Handle_OP_YellForHelp(const EQApplicationPacket *app);
 	void Handle_OP_ZoneChange(const EQApplicationPacket *app);
 	void Handle_OP_ZoneEntryResend(const EQApplicationPacket *app);
+	void Handle_OP_LFGCommand(const EQApplicationPacket *app);

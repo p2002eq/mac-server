@@ -264,6 +264,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_YellForHelp] = &Client::Handle_OP_YellForHelp;
 	ConnectedOpcodes[OP_ZoneChange] = &Client::Handle_OP_ZoneChange;
 	ConnectedOpcodes[OP_ZoneEntryResend] = &Client::Handle_OP_ZoneEntryResend;
+	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -667,7 +668,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
 		else
-			_log(EQMAC__LOG, "%s 's client version is: %s. Your client type is: %s.", this->GetName(), string.c_str(), type.c_str());
+			mlog(EQMAC__LOG, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
 
 	}
 	else
@@ -683,7 +684,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
-			_log(EQMAC__LOG, "%s 's client version is: %s.", this->GetName(), string.c_str());
+			mlog(EQMAC__LOG, "Client version is: %s.", string.c_str());
 	}
 
 	worldserver.RequestTellQueue(GetName());
@@ -1493,6 +1494,17 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	zone->zone_time.getEQTimeOfDay(time(0), tod);
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
+
+	/* LFG packet */
+	/*if(LFG)
+	{
+		outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
+		LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
+		lfga->entityid = GetID();
+		lfga->value = LFG;
+
+		entity_list.QueueClients(this, outapp, true);
+	}*/
 
 	/*
 	Character Inventory Packet
@@ -3409,6 +3421,10 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	feignchance = feignchance / 3.0f;
 
 	float totalfeign = feignbase + feignchance;
+
+	// We will always have at least a 5% chance of failure.
+	if(totalfeign >= 143)
+		totalfeign = 142.5f;
 
 	if (zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
@@ -5388,8 +5404,16 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	}
 	case PET_TAUNT: {
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 3) || mypet->GetPetType() != petAnimation) {
-			Message_StringID(MT_PetResponse, PET_DO_TAUNT);
-			mypet->CastToNPC()->SetTaunting(true);
+			if(mypet->CastToNPC()->IsTaunting())
+			{
+				Message_StringID(MT_PetResponse, PET_NO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(false);
+			}
+			else
+			{
+				Message_StringID(MT_PetResponse, PET_DO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(true);
+			}
 		}
 		break;
 	}
@@ -8298,5 +8322,37 @@ void Client::Handle_OP_YellForHelp(const EQApplicationPacket *app)
 void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 {
 	//EQMac doesn't reply to this according to ShowEQ captures.
+	return;
+}
+
+void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(LFG_Struct)) {
+		LogFile->write(EQEMuLog::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		return;
+	}
+
+	LFG_Struct* lfg = (LFG_Struct*) app->pBuffer;
+	if(lfg->value == 1)
+	{
+		LFG = true;
+	}
+	else if(lfg->value == 0)
+	{
+		LFG = false;
+	}
+	else
+	{
+		mlog(CLIENT__ERROR, "Invalid LFG value sent. %i", lfg->value);
+	}
+
+	UpdateWho();
+
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
+	LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
+	lfga->entityid = GetID();
+	lfga->value = LFG;
+
+	entity_list.QueueClients(this, outapp, true);
 	return;
 }

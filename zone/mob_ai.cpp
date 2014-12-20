@@ -81,7 +81,17 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		}
 		if (iSpellTypes & AIspells[i].type) {
 			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
+			// recastdelay of 0 is recast time + variance. -1 recast time only. -2 is no recast time or variance (chain casting)
+			// All else is specified recast_delay + variance if the rule is enabled.
 			int32 mana_cost = AIspells[i].manacost;
+			int32 recast_delay = AIspells[i].recast_delay;
+			int32 cast_variance = 0;
+			if(RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
+			{
+				if(recast_delay >= 0)
+					cast_variance = zone->random.Int(0, 4) * 1000;
+			}
+
 			if (mana_cost == -1)
 				mana_cost = spells[AIspells[i].spellid].mana;
 			else if (mana_cost == -2)
@@ -94,7 +104,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 1000)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast + cast_variance) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -1929,11 +1939,13 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 		if (iCastSucceeded) {
 			if (casting_spell_AIindex < AIspells.size()) {
 					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
-					if (AIspells[casting_spell_AIindex].recast_delay >= 0)
+					if (AIspells[casting_spell_AIindex].recast_delay > 0)
 					{
 						if (AIspells[casting_spell_AIindex].recast_delay < 10000)
 							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
 					}
+					else if(AIspells[casting_spell_AIindex].recast_delay == -2)
+						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
 					else
 						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
 			}
