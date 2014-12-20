@@ -1160,6 +1160,8 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  Trackable: %i CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i", n->IsTrackable(), n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage());
+			if(flee_mode)
+				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
@@ -1688,7 +1690,7 @@ bool Mob::CanThisClassDualWield(void) const {
 	if(!IsClient()) {
 		return(GetSkill(SkillDualWield) > 0);
 	}
-	else if(CastToClient()->HasSkill(SkillDualWield)) {
+	else if(CastToClient()->HasSkill(SkillDualWield) || GetClass() == MONK) {
 		const ItemInst* pinst = CastToClient()->GetInv().GetItem(MainPrimary);
 		const ItemInst* sinst = CastToClient()->GetInv().GetItem(MainSecondary);
 
@@ -3774,7 +3776,7 @@ bool Mob::TrySpellOnDeath()
 			}
 		}
 
-	BuffFadeAll();
+	BuffFadeAll(true);
 	return false;
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result

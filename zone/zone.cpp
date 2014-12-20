@@ -1974,4 +1974,6 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 		else
 			return true;
 	}
+
+	return false;
 }
