@@ -83,11 +83,6 @@ public:
 		std::string WebInterfaceCert;
 		std::string WebInterfacePrivKey;
 
-		// From <files/>
-		std::string SpellsFile;
-		std::string OpCodesFile;
-		std::string EQTimeFile;
-		std::string LogSettingsFile;
 
 	// From <files/>
 	std::string SpellsFile;

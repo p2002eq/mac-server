@@ -44,8 +44,8 @@
 #include "guild_mgr.h"
 #include "raids.h"
 #include "quest_parser_collection.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf

@@ -83,8 +83,8 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
-//#include "web_interface.h"
-//#include "remote_call_subscribe.h"
+#include "web_interface.h"
+#include "../zone/remote_call_subscribe.h"
 
 TimeoutManager timeout_manager;
 EQStreamFactory eqsf(WorldStream,9000);
@@ -95,7 +95,7 @@ LoginServerList loginserverlist;
 EQWHTTPServer http_server;
 UCSConnection UCSLink;
 QueryServConnection QSLink;
-//WebInterfaceConnection WILink;
+WebInterfaceConnection WILink;
 LauncherList launcher_list;
 EQEmu::Random emu_random;
 volatile bool RunLoops = true;

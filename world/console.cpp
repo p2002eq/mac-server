@@ -46,7 +46,7 @@
 #include "launcher_list.h"
 #include "ucs.h"
 #include "queryserv.h"
-//#include "web_interface.h"
+#include "web_interface.h"
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -61,7 +61,7 @@ extern ClientList client_list;
 extern LauncherList launcher_list;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
-//extern WebInterfaceConnection WILink;
+extern WebInterfaceConnection WILink;
 extern volatile bool	RunLoops;
 
 ConsoleList console_list;

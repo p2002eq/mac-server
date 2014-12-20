@@ -6,8 +6,8 @@
 #include "../common/packet_functions.h"
 #include "../common/packet_dump.h"
 #include "../common/servertalk.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
+#include "remote_call.h"
 #include "worldserver.h"
 #include "zone.h"
 
