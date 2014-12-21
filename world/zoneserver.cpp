@@ -34,6 +34,7 @@
 #include "wguild_mgr.h"
 #include "ucs.h"
 #include "queryserv.h"
+#include "web_interface.h"
 
 extern ClientList client_list;
 extern ZSList zoneserver_list;
@@ -42,7 +43,7 @@ extern LoginServerList loginserverlist;
 extern volatile bool RunLoops;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
-//extern WebInterfaceConnection WILink;
+extern WebInterfaceConnection WILink;
 void CatchSignal(int sig_num);
 
 ZoneServer::ZoneServer(EmuTCPConnection* itcpc)

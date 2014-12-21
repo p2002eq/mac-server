@@ -246,7 +246,8 @@ void EQEmuConfig::do_web_interface(TiXmlElement *ele) {
 	}
 }
 
-void EQEmuConfig::do_zones(TiXmlElement *ele) {
+void EQEmuConfig::do_zones(TiXmlElement *ele)
+{
 	const char *text;
 	TiXmlElement *sub_ele;
 //	TiXmlNode *node,*sub_node;
@@ -435,6 +436,8 @@ std::string EQEmuConfig::GetByName(const std::string &var_name) const {
 //		return(itoa(DynamicCount));
 	return("");
 }
+
+
 
 void EQEmuConfig::Dump() const
 {

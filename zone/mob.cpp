@@ -19,11 +19,11 @@
 #include "masterentity.h"
 #include "../common/spdat.h"
 #include "string_ids.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 #include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "../common/string_util.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 
 #include <sstream>
 #include <math.h>
@@ -1095,15 +1095,15 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 	if(IsNPC()) {
 		std::vector<std::string> params;
-		params.push_back(std::to_string((long)zone->GetZoneID()));
-		params.push_back(std::to_string((long)zone->GetInstanceID()));
 		params.push_back(std::to_string((long)GetID()));
-		params.push_back(GetName());
+		params.push_back(GetCleanName());
 		params.push_back(std::to_string((double)x_pos));
 		params.push_back(std::to_string((double)y_pos));
 		params.push_back(std::to_string((double)z_pos));
 		params.push_back(std::to_string((double)heading));
-		//RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+		params.push_back(std::to_string((double)GetClass()));
+		params.push_back(std::to_string((double)GetRace()));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
 	}
 }
 
