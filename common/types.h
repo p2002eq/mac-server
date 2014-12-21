@@ -17,9 +17,7 @@
 */
 #ifndef TYPES_H
 #define TYPES_H
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
+
 #include <stdint.h>
 typedef uint8_t byte;
 typedef uint8_t uint8;
@@ -32,6 +30,9 @@ typedef int32_t int32;
 typedef int64_t int64;
 
 #ifdef _WINDOWS
+	#define _CRTDBG_MAP_ALLOC
+	#include <stdlib.h>
+	#include <crtdbg.h>
 	#pragma warning( disable : 4200 )
 #endif
 

@@ -144,9 +144,16 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 			if (thischance == 100.0 || drop_chance < thischance)
 			{
 				uint32 itemid = lds->Entries[item].item_id;
-
+				int8 charges = lds->Entries[item].item_charges;
 				const Item_Struct* dbitem = GetItem(itemid);
-				npc->AddLootDrop(dbitem, itemlist, lds->Entries[item].item_charges, lds->Entries[item].minlevel, lds->Entries[item].maxlevel, lds->Entries[item].equip_item, false);
+
+				if(database.ItemQuantityType(itemid) == Quantity_Charges)
+				{
+					if(charges <= 1)
+						charges = dbitem->MaxCharges;
+				}
+
+				npc->AddLootDrop(dbitem, itemlist, charges, lds->Entries[item].minlevel, lds->Entries[item].maxlevel, lds->Entries[item].equip_item, false);
 				pickedcharges++;
 			}
 		}
@@ -275,18 +282,37 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 		}
 
 		if (foundslot == MainPrimary) {
-			if (item2->Proc.Effect != 0)
-				CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
+			// This prevents us from equipping a 2H item when a shield or misc item is already in the off-hand.
+			if(GetEquipment(MaterialSecondary) == 0 || (item2->ItemType != ItemType2HBlunt && item2->ItemType != ItemType2HPiercing && item2->ItemType != ItemType2HSlash))
+			{ 
+				if (item2->ItemType == ItemType1HSlash || item2->ItemType == ItemType1HBlunt || item2->ItemType == ItemType1HPiercing)
+					can_equip_secondary = true;
+				else
+					can_equip_secondary = false;
 
-			eslot = MaterialPrimary;
+				if (item2->Proc.Effect != 0)
+					CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
+
+				eslot = MaterialPrimary;
+			}
 		}
 		else if (foundslot == MainSecondary
-			&& (GetOwner() != nullptr || (GetLevel() >= 13 && zone->random.Roll(NPC_DW_CHANCE)) || (item2->Damage==0)) &&
-			(item2->ItemType == ItemType1HSlash || item2->ItemType == ItemType1HBlunt || item2->ItemType == ItemTypeShield ||
-			item2->ItemType == ItemType1HPiercing))
+			&& (can_equip_secondary
+			&& GetLevel() >= DUAL_WIELD_LEVEL
+			&& (item2->ItemType == ItemType1HSlash || item2->ItemType == ItemType1HBlunt || item2->ItemType == ItemType1HPiercing)) 
+			|| (item2->ItemType == ItemTypeShield || item2->ItemType == ItemTypeMisc))
 		{
+
 			if (item2->Proc.Effect!=0)
 				CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
+
+			can_dual_wield = false;
+			if(item2->ItemType == ItemTypeShield)
+			{
+				ShieldEquiped(true);
+			}
+			else if(item2->ItemType != ItemTypeMisc)
+				can_dual_wield = true;
 
 			eslot = MaterialSecondary;
 		}

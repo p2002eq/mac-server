@@ -222,6 +222,14 @@ enum {
 	ET_Scroll = 7
 };
 
+enum ItemQuantityTypes
+{
+	Quantity_Unknown = 0,
+	Quantity_Normal = 1,
+	Quantity_Charges = 2,
+	Quantity_Stacked = 3
+};
+
 //SpawnAppearance types:
 #define AT_Die			0	// this causes the client to keel over and zone to bind point
 #define AT_WhoLevel		1	// the level that shows up on /who
@@ -1013,7 +1021,7 @@ enum Zones
 	akheva=179,
 	arena2=180,
 	jaggedpine=181,
-	tutorial=183,
+	tutorial = 183,
 	load=184,
 	load2=185,
 	clz=190,

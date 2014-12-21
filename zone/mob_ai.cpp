@@ -33,6 +33,8 @@
 #include "../common/features.h"
 #include "quest_parser_collection.h"
 #include "water_map.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 extern EntityList entity_list;
 
@@ -81,7 +83,17 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		}
 		if (iSpellTypes & AIspells[i].type) {
 			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
+			// recastdelay of 0 is recast time + variance. -1 recast time only. -2 is no recast time or variance (chain casting)
+			// All else is specified recast_delay + variance if the rule is enabled.
 			int32 mana_cost = AIspells[i].manacost;
+			int32 recast_delay = AIspells[i].recast_delay;
+			int32 cast_variance = 0;
+			if(RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
+			{
+				if(recast_delay >= 0)
+					cast_variance = zone->random.Int(0, 4) * 1000;
+			}
+
 			if (mana_cost == -1)
 				mana_cost = spells[AIspells[i].spellid].mana;
 			else if (mana_cost == -2)
@@ -94,7 +106,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 1000)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast + cast_variance) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -1349,13 +1361,13 @@ void Mob::AI_Process() {
 				}
 
 				//now off hand
-				if (attack_dw_timer.Check() && GetLevel() > 3)
+				if (attack_dw_timer.Check())
 				{
 					int myclass = GetClass();
 					//can only dual wield without a weapon if your a monk
 
 					if(GetSpecialAbility(SPECATK_INNATE_DW) ||
-						(GetEquipment(MaterialSecondary) != 0 && GetLevel() > 29) ||
+						(CanDualWield() && GetLevel() >= DUAL_WIELD_LEVEL) ||
 						myclass == MONK || myclass == MONKGM) {
 						float DualWieldProbability = (GetSkill(SkillDualWield) + GetLevel()) / 400.0f;
 						if(zone->random.Roll(DualWieldProbability))
@@ -1881,6 +1893,15 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 					if(emoteid != 0)
 						CastToNPC()->DoNPCEmote(ENTERCOMBAT,emoteid);
 					CastToNPC()->SetCombatEvent(true);
+
+					/* Web Interface: Combat State NPC */
+					if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+						bool wi_aa = true;
+						std::vector<std::string> params;
+						params.push_back(std::to_string((long)GetID()));
+						params.push_back(std::to_string((bool)wi_aa));
+						RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+					}
 				}
 			}
 		}
@@ -1912,11 +1933,20 @@ void Mob::AI_Event_NoLongerEngaged() {
 		{
 			if(entity_list.GetNPCByID(this->GetID()))
 			{
-			uint16 emoteid = CastToNPC()->GetEmoteID();
-			parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
-			if(emoteid != 0)
-				CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
-			CastToNPC()->SetCombatEvent(false);
+				uint16 emoteid = CastToNPC()->GetEmoteID();
+				parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
+				if(emoteid != 0)
+					CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
+				CastToNPC()->SetCombatEvent(false);
+
+				/* Web Interface: Combat State NPC */
+				if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+					bool wi_aa = false;
+					std::vector<std::string> params;
+					params.push_back(std::to_string((long)GetID()));
+					params.push_back(std::to_string((bool)wi_aa));
+					RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+				}
 			}
 		}
 	}
@@ -1929,11 +1959,13 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 		if (iCastSucceeded) {
 			if (casting_spell_AIindex < AIspells.size()) {
 					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
-					if (AIspells[casting_spell_AIindex].recast_delay >= 0)
+					if (AIspells[casting_spell_AIindex].recast_delay > 0)
 					{
 						if (AIspells[casting_spell_AIindex].recast_delay < 10000)
 							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
 					}
+					else if(AIspells[casting_spell_AIindex].recast_delay == -2)
+						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
 					else
 						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
 			}

@@ -44,8 +44,8 @@
 #include "guild_mgr.h"
 #include "raids.h"
 #include "quest_parser_collection.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -585,6 +585,20 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 	npc->SetID(GetFreeID());
 	//npc->SetMerchantProbability((uint8) zone->random.Int(0, 99));
 	parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
+
+	/* Web Interface: NPC Spawn (Pop) */
+	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("NPC.Position")) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)npc->GetID()));
+		params.push_back(npc->GetCleanName());
+		params.push_back(std::to_string((float)npc->GetX()));
+		params.push_back(std::to_string((float)npc->GetY()));
+		params.push_back(std::to_string((float)npc->GetZ()));
+		params.push_back(std::to_string((double)npc->GetHeading())); 
+		params.push_back(std::to_string((double)npc->GetClass()));
+		params.push_back(std::to_string((double)npc->GetRace()));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+	}
 
 	uint16 emoteid = npc->GetEmoteID();
 	if (emoteid != 0)
@@ -2469,7 +2483,7 @@ void EntityList::FindPathsToAllNPCs()
 	while (it != npc_list.end()) {
 		Map::Vertex Node0 = zone->pathing->GetPathNodeCoordinates(0, false);
 		Map::Vertex Dest(it->second->GetX(), it->second->GetY(), it->second->GetZ());
-		std::list<int> Route = zone->pathing->FindRoute(Node0, Dest);
+		std::vector<int> Route = zone->pathing->FindRoute(Node0, Dest);
 		if (Route.size() == 0)
 			printf("Unable to find a route to %s\n", it->second->GetName());
 		else

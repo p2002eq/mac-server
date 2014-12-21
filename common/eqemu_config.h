@@ -77,11 +77,12 @@ public:
 	std::string QSDatabaseDB;
 	uint16 QSDatabasePort;
 
-	// from <web_interface>
-	uint16 WebInterfacePort;
-	bool WebInterfaceUseSSL;
-	std::string WebInterfaceCert;
-	std::string WebInterfacePrivKey;
+		// from <web_interface>
+		uint16 WebInterfacePort;
+		bool WebInterfaceUseSSL;
+		std::string WebInterfaceCert;
+		std::string WebInterfacePrivKey;
+
 
 	// From <files/>
 	std::string SpellsFile;

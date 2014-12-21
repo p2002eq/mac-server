@@ -70,8 +70,8 @@
 #include "../common/zone_numbers.h"
 #include "quest_parser_collection.h"
 #include "queryserv.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 
 extern QueryServ* QServ;
 extern Zone* zone;
@@ -264,6 +264,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_YellForHelp] = &Client::Handle_OP_YellForHelp;
 	ConnectedOpcodes[OP_ZoneChange] = &Client::Handle_OP_ZoneChange;
 	ConnectedOpcodes[OP_ZoneEntryResend] = &Client::Handle_OP_ZoneEntryResend;
+	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -667,7 +668,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
 		else
-			_log(EQMAC__LOG, "%s 's client version is: %s. Your client type is: %s.", this->GetName(), string.c_str(), type.c_str());
+			mlog(EQMAC__LOG, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
 
 	}
 	else
@@ -683,7 +684,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
-			_log(EQMAC__LOG, "%s 's client version is: %s.", this->GetName(), string.c_str());
+			mlog(EQMAC__LOG, "Client version is: %s.", string.c_str());
 	}
 
 	worldserver.RequestTellQueue(GetName());
@@ -1494,6 +1495,17 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
+	/* LFG packet */
+	/*if(LFG)
+	{
+		outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
+		LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
+		lfga->entityid = GetID();
+		lfga->value = LFG;
+
+		entity_list.QueueClients(this, outapp, true);
+	}*/
+
 	/*
 	Character Inventory Packet
 	this is not quite where live sends inventory, they do it after tribute
@@ -1779,11 +1791,6 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 			los_status_facing = false;
 		}
 	}
-}
-
-void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
-{
-	return;
 }
 
 void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
@@ -2129,7 +2136,8 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				{
 					if (item->Click.Level2 > 0)
 					{
-						if (GetLevel() >= item->Click.Level2)
+						// Clickies with 0 casttime had no level requirement on AK
+						if (GetLevel() >= item->Click.Level2 || item->CastTime == 0)
 						{
 							ItemInst* p_inst = (ItemInst*)inst;
 							int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
@@ -2370,18 +2378,18 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 
 	/* Web Interface */
-/*	if (IsClient()) {
+	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
 		std::vector<std::string> params;
-		params.push_back(std::to_string((long)zone->GetZoneID()));
-		params.push_back(std::to_string((long)zone->GetInstanceID()));
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
 		params.push_back(std::to_string((double)ppu->x_pos));
 		params.push_back(std::to_string((double)ppu->y_pos));
 		params.push_back(std::to_string((double)ppu->z_pos));
 		params.push_back(std::to_string((double)heading));
+		params.push_back(std::to_string((double)GetClass()));
+		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
-	}*/
+	}
 
 	if(ppu->spawn_id != GetID()) {
 		// check if the id is for a boat the player is controlling
@@ -2652,7 +2660,76 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 		std::cout << "Wrong size on OP_CombatAbility. Got: " << app->size << ", Expected: " << sizeof(CombatAbility_Struct) << std::endl;
 		return;
 	}
-	OPCombatAbility(app);
+
+	/* Web Interface: Combat State */
+	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
+		bool wi_aa = false;
+		if (app->pBuffer[0] == 0){ wi_aa = false; }
+		else if (app->pBuffer[0] == 1){ wi_aa = true; }
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)GetID()));
+		params.push_back(std::to_string((bool)wi_aa));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
+	}
+
+	if (app->pBuffer[0] == 0)
+	{
+		auto_attack = false;
+
+		if (IsAIControlled())
+			return;
+		attack_timer.Disable();
+		ranged_timer.Disable();
+		attack_dw_timer.Disable();
+
+		aa_los_me.x = 0;
+		aa_los_me.y = 0;
+		aa_los_me.z = 0;
+		aa_los_me_heading = 0;
+		aa_los_them.x = 0;
+		aa_los_them.y = 0;
+		aa_los_them.z = 0;
+		aa_los_them_mob = nullptr;
+	}
+	else if (app->pBuffer[0] == 1)
+	{
+		auto_attack = true;
+		auto_fire = false;
+		if (IsAIControlled())
+			return;
+		SetAttackTimer();
+
+		if(GetTarget())
+		{
+			aa_los_them_mob = GetTarget();
+			aa_los_me.x = GetX();
+			aa_los_me.y = GetY();
+			aa_los_me.z = GetZ();
+			aa_los_me_heading = GetHeading();
+			aa_los_them.x = aa_los_them_mob->GetX();
+			aa_los_them.y = aa_los_them_mob->GetY();
+			aa_los_them.z = aa_los_them_mob->GetZ();
+			los_status = CheckLosFN(aa_los_them_mob);
+			los_status_facing = IsFacingMob(aa_los_them_mob);
+		}
+		else
+		{
+			aa_los_me.x = GetX();
+			aa_los_me.y = GetY();
+			aa_los_me.z = GetZ();
+			aa_los_me_heading = GetHeading();
+			aa_los_them.x = 0;
+			aa_los_them.y = 0;
+			aa_los_them.z = 0;
+			aa_los_them_mob = nullptr;
+			los_status = false;
+			los_status_facing = false;
+		}
+	}
+}
+
+void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
+{
 	return;
 }
 
@@ -3408,6 +3485,10 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	feignchance = feignchance / 3.0f;
 
 	float totalfeign = feignbase + feignchance;
+
+	// We will always have at least a 5% chance of failure.
+	if(totalfeign >= 143)
+		totalfeign = 142.5f;
 
 	if (zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
@@ -5387,8 +5468,16 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	}
 	case PET_TAUNT: {
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 3) || mypet->GetPetType() != petAnimation) {
-			Message_StringID(MT_PetResponse, PET_DO_TAUNT);
-			mypet->CastToNPC()->SetTaunting(true);
+			if(mypet->CastToNPC()->IsTaunting())
+			{
+				Message_StringID(MT_PetResponse, PET_NO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(false);
+			}
+			else
+			{
+				Message_StringID(MT_PetResponse, PET_DO_TAUNT);
+				mypet->CastToNPC()->SetTaunting(true);
+			}
 		}
 		break;
 	}
@@ -8297,5 +8386,37 @@ void Client::Handle_OP_YellForHelp(const EQApplicationPacket *app)
 void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 {
 	//EQMac doesn't reply to this according to ShowEQ captures.
+	return;
+}
+
+void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(LFG_Struct)) {
+		LogFile->write(EQEMuLog::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		return;
+	}
+
+	LFG_Struct* lfg = (LFG_Struct*) app->pBuffer;
+	if(lfg->value == 1)
+	{
+		LFG = true;
+	}
+	else if(lfg->value == 0)
+	{
+		LFG = false;
+	}
+	else
+	{
+		mlog(CLIENT__ERROR, "Invalid LFG value sent. %i", lfg->value);
+	}
+
+	UpdateWho();
+
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
+	LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
+	lfga->entityid = GetID();
+	lfga->value = LFG;
+
+	entity_list.QueueClients(this, outapp, true);
 	return;
 }

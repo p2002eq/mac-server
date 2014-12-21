@@ -42,6 +42,7 @@
 #include "quest_parser_collection.h"
 #include "water_map.h"
 #include "worldserver.h"
+#include "remote_call_subscribe.h"
 #include "queryserv.h"
 
 extern QueryServ* QServ;
@@ -1932,7 +1933,8 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 
 bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill, uint8 killedby) {
 	mlog(COMBAT__HITS, "Fatal blow dealt by %s with %d damage, spell %d, skill %d", killerMob->GetName(), damage, spell, attack_skill);
-	
+	bool MadeCorpse = false;
+	uint16 OrigEntID = this->GetID();
 	Mob *oos = nullptr;
 	if(killerMob) {
 		oos = killerMob->GetOwnerOrSelf();
@@ -1987,7 +1989,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		return false;
 	
 	HasAISpellEffects = false;
-	BuffFadeAll();
+	BuffFadeAll(true);
 	uint8 killed_level = GetLevel();
 
 	EQApplicationPacket* app= new EQApplicationPacket(OP_Death,sizeof(Death_Struct));
@@ -2185,6 +2187,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		uint16 emoteid = this->GetEmoteID();
 
 		Corpse* corpse = new Corpse(this, &itemlist, GetNPCTypeID(), &NPCTypedata,level>54?RuleI(NPC,MajorNPCCorpseDecayTimeMS):RuleI(NPC,MinorNPCCorpseDecayTimeMS));
+		MadeCorpse = true;
 		entity_list.LimitRemoveNPC(this);
 		entity_list.AddCorpse(corpse, GetID());
 
@@ -2249,6 +2252,15 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		}
 	}
 
+	/* Web Interface: Entity Death  */
+	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Entity.Events")) {
+		std::vector<std::string> params;
+		params.push_back(std::to_string((long)EntityEvents::Entity_Death));
+		params.push_back(std::to_string((long)OrigEntID));
+		params.push_back(std::to_string((bool)MadeCorpse));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("Entity.Events", params);
+	}
+
 	// Parse quests even if we're killed by an NPC
 	if(oos) {
 		mod_npc_killed(oos);
@@ -2274,6 +2286,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	char buffer[48] = { 0 };
 	snprintf(buffer, 47, "%d %d %d %d", killerMob ? killerMob->GetID() : 0, damage, spell, static_cast<int>(attack_skill));
 	parse->EventNPC(EVENT_DEATH_COMPLETE, this, oos, buffer, 0);
+	
 	return true;
 }
 
@@ -3433,8 +3446,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//fade mez if we are mezzed
 		if (IsMezzed() && attacker) {
 			mlog(COMBAT__HITS, "Breaking mez due to attack.");
-			entity_list.MessageClose_StringID(this, true, 100, MT_WornOff,
-					HAS_BEEN_AWAKENED, GetCleanName(), attacker->GetCleanName());
 			BuffFadeByEffect(SE_Mez);
 		} 
 
@@ -3570,18 +3581,20 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			//if the attacker is a client, try them with the correct filter
 			if(attacker && attacker->IsClient()) {
 				if (((spell_id != SPELL_UNKNOWN)||(FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me
-					char val1[20]={0};
-						if (FromDamageShield)
+					//special crap for spell damage, looks hackish to me					
+					if (FromDamageShield)
+					{
+						if(!attacker->CastToClient()->GetFilter(FilterDamageShields) == FilterHide)
 						{
-							if(!attacker->CastToClient()->GetFilter(FilterDamageShields) == FilterHide)
-							{
-								attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-							}
-						}
-						else
 							char val1[20]={0};
 							attacker->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+						}
+					}
+					else
+					{
+						char val1[20]={0};
+						attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+					}
 				} else {
 					if(damage > 0) {
 						if(spell_id != SPELL_UNKNOWN)
@@ -4746,8 +4759,7 @@ void NPC::SetAttackTimer()
 
 		//special offhand stuff
 		if (i == MainSecondary) {
-			//NPCs get it for free at 4
-			if(GetLevel() < 4) {
+			if(GetLevel() < DUAL_WIELD_LEVEL && !GetSpecialAbility(SPECATK_INNATE_DW)) {
 				attack_dw_timer.Disable();
 				continue;
 			}

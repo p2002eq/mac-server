@@ -127,8 +127,6 @@ namespace Mac {
 	{
 		SETUP_DIRECT_DECODE(EnterWorld_Struct, structs::EnterWorld_Struct);
 		strn0cpy(emu->name, eq->charname, 64);
-		emu->return_home = 0;
-		emu->tutorial = 0;
 		FINISH_DIRECT_DECODE();
 	}
 
@@ -212,6 +210,7 @@ namespace Mac {
 			eq->extra[13] = 0xFF;
 			eq->type = 0;
 			eq->petOwnerId = emu->player.spawn.petOwnerId;
+			//eq->LFG = emu->player.spawn.lfg;
 
 			CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::ServerZoneEntry_Struct));
 
@@ -2310,6 +2309,7 @@ namespace Mac {
 		eq->bodytype = emu->bodytype;
 		eq->spawn_id = emu->spawnId;
 		eq->flymode = emu->flymode;
+		//eq->LFG = emu->lfg;
 
 		return eq;
 	}

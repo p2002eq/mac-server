@@ -211,6 +211,7 @@ public:
 	bool	IsHotzone() const { return(is_hotzone); }
 	bool	IsBoatZone();
 	bool	IsDesertZone();
+	bool	IsBindArea(float x_coord, float y_coord);
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 
 	time_t	weather_timer;

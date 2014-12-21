@@ -912,8 +912,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							break;
 						}
 
-						// Todo: Expand on CanBindOthers and add it to method that checks whether others can be bound in the particular zone based on coords.
-						if(!zone->IsCity() && !zone->CanBindOthers())
+						if(!zone->IsCity() && !zone->IsBindArea(GetX(),GetY()))
 						{
 							if(caster != this)
 							{
@@ -1121,23 +1120,30 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					if (c->CheckLoreConflict(item)) {
 						c->DuplicateLoreMessage(spell.base[i]);
 					} else {
-						int charges;
-						if (item->Stackable)
-							charges = (spell.formula[i] > item->StackSize) ? item->StackSize : spell.formula[i];
-						else if (item->MaxCharges) // mod rods etc
-							charges = item->MaxCharges;
-						else
-							charges = 1;
 
-						if (charges < 1)
-							charges = 1;
+						int max = spell.max[i];
+						if(max == 0)
+							max = 20;
+
+						int quantity = 0;
+						if(database.ItemQuantityType(spell.base[i]) == Quantity_Charges)
+							quantity = item->MaxCharges;
+						else if(database.ItemQuantityType(spell.base[i]) == Quantity_Normal)
+							quantity = 1;
+						else if(spell.formula[i] > 0 && spell.formula[i] <= 20)
+							quantity = spell.formula[i];
+						else
+							quantity = CalcSpellEffectValue_formula(spell.formula[i],0,max,GetLevel(),spell_id);
+
+						if (quantity < 1)
+							quantity = 1;
 
 						if (SummonedItem) {
 							c->PushItemOnCursor(*SummonedItem);
 							c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
 							safe_delete(SummonedItem);
 						}
-						SummonedItem = database.CreateItem(spell.base[i], charges);
+						SummonedItem = database.CreateItem(spell.base[i], quantity);
 					}
 				}
 
@@ -1371,11 +1377,24 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				// Racial Illusions
 				else {
+					// Texture doesn't seem to be in our spell data :I
+					int8 texture = 0; //spell.base2[i];
+					// Elemental Illusions
+					if(spell_id == 598)
+						texture = 1;
+					if(spell_id == 599)
+						texture = 2;
+					if(spell_id == 597)
+						texture = 3;
+					int8 gender = Mob::GetDefaultGender(spell.base[i], GetGender());
+					// Scaled Wolf is a female wolf.
+					if(spell_id == 3586)
+						gender = 1;
 					SendIllusionPacket
 					(
 						spell.base[i],
-						Mob::GetDefaultGender(spell.base[i], GetGender()),
-						spell.base2[i],
+						gender,
+						texture,
 						spell.max[i]
 					);
 					if (spell.base[i] == TROLL || spell.base[i] == OGRE){
@@ -3638,7 +3657,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 }
 
 // removes the buff in the buff slot 'slot'
-void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
+void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 {
 	if(slot < 0 || slot > GetMaxTotalSlots())
 		return;
@@ -4012,7 +4031,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 		if(p->IsPet())
 			notify = p->GetOwner();
 		if(p) {
-			if(RuleB(Spell,ShowWornOffMessages))
+			if(RuleB(Spell,ShowWornOffMessages) || !death)
 			{
 				notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
 					spells[buffs[slot].spellid].name, GetCleanName());

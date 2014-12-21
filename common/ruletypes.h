@@ -307,6 +307,7 @@ RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a be
 RULE_BOOL ( Spells, SHDProcIDOffByOne, true) // pre June 2009 SHD spell procs were off by 1, they stopped doing this in June 2009 (so UF+ spell files need this false)
 RULE_BOOL ( Spells, SwarmPetTargetLock, false) // Use old method of swarm pets target locking till target dies then despawning.
 RULE_BOOL ( Spells, ShowWornOffMessages, false) //Determines if "Spell has worn off of" messages will display or not.
+RULE_BOOL ( Spells, NPCUseRecastVariance, false) // If recast_delay is set to >= 0 NPCs will use a variance of between 1000 and 4000 ticks.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Combat )
@@ -323,7 +324,7 @@ RULE_BOOL ( Combat, UseIntervalAC, true)
 RULE_INT ( Combat, PetAttackMagicLevel, 30)
 RULE_BOOL ( Combat, EnableFearPathing, true)
 RULE_INT ( Combat, FleeHPRatio, 25)	  //HP % when a NPC starts to flee.
-RULE_REAL ( Combat, FleeMultiplier, 3.0) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
+RULE_REAL ( Combat, FleeMultiplier, 2.0) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
 RULE_BOOL ( Combat, FleeIfNotAlone, false) // If false, mobs won't flee if other mobs are in combat with it.
 RULE_BOOL ( Combat, AdjustProcPerMinute, true)
 RULE_REAL ( Combat, AvgProcsPerMinute, 2.0)

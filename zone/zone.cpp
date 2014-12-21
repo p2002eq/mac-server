@@ -1952,3 +1952,28 @@ bool Zone::IsDesertZone()
 
 	return false;
 }
+
+bool Zone::IsBindArea(float x_coord, float y_coord)
+{
+	if(CanBindOthers())
+	{
+		if(GetZoneID() == northkarana)
+		{
+			if(x_coord >= -215 && x_coord <= -109 &&  y_coord >= -688 && y_coord <= -600)
+				return true;
+			else
+				return false;
+		}
+		else if(GetZoneID() == rathemtn)
+		{
+			if(x_coord >= 1395 && x_coord <= 1474 && y_coord >= 3918 && y_coord <= 4008)
+				return true;
+			else
+				return false;
+		}
+		else
+			return true;
+	}
+
+	return false;
+}

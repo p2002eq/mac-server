@@ -19,11 +19,11 @@
 #include "masterentity.h"
 #include "../common/spdat.h"
 #include "string_ids.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 #include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "../common/string_util.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call_subscribe.h"
 
 #include <sstream>
 #include <math.h>
@@ -294,6 +294,8 @@ Mob::Mob(const char* in_name,
 	focused = false;
 	_IsTempPet = false;
 	pet_owner_client = false;
+	can_equip_secondary = false;
+	can_dual_wield = false;
 
 	attacked_count = 0;
 	mezzed = false;
@@ -1093,15 +1095,15 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 	if(IsNPC()) {
 		std::vector<std::string> params;
-		params.push_back(std::to_string((long)zone->GetZoneID()));
-		params.push_back(std::to_string((long)zone->GetInstanceID()));
 		params.push_back(std::to_string((long)GetID()));
-		params.push_back(GetName());
+		params.push_back(GetCleanName());
 		params.push_back(std::to_string((double)x_pos));
 		params.push_back(std::to_string((double)y_pos));
 		params.push_back(std::to_string((double)z_pos));
 		params.push_back(std::to_string((double)heading));
-		//RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
+		params.push_back(std::to_string((double)GetClass()));
+		params.push_back(std::to_string((double)GetRace()));
+		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
 	}
 }
 
@@ -1157,7 +1159,9 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
-			client->Message(0, "  Trackable: %i", n->IsTrackable());
+			client->Message(0, "  Trackable: %i CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->IsTrackable(), n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
+			if(flee_mode)
+				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
@@ -1686,7 +1690,7 @@ bool Mob::CanThisClassDualWield(void) const {
 	if(!IsClient()) {
 		return(GetSkill(SkillDualWield) > 0);
 	}
-	else if(CastToClient()->HasSkill(SkillDualWield)) {
+	else if(CastToClient()->HasSkill(SkillDualWield) || GetClass() == MONK) {
 		const ItemInst* pinst = CastToClient()->GetInv().GetItem(MainPrimary);
 		const ItemInst* sinst = CastToClient()->GetInv().GetItem(MainSecondary);
 
@@ -3772,7 +3776,7 @@ bool Mob::TrySpellOnDeath()
 			}
 		}
 
-	BuffFadeAll();
+	BuffFadeAll(true);
 	return false;
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result

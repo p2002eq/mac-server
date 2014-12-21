@@ -189,6 +189,7 @@ Client::Client(EQStreamInterface* ieqs)
 	last_reported_endur = 0;
 	gmhideme = false;
 	AFK = false;
+	LFG = false;
 	gmspeed = 0;
 	playeraction = 0;
 	SetTarget(0);
@@ -700,8 +701,8 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 	//Return true to proceed, false to return
 	if(!mod_client_message(message, chan_num)) { return; }
 
-	// Garble the message based on drunkness
-	if (m_pp.intoxication > 0) {
+	// Garble the message based on drunkness, except for OOC and GM
+	if (m_pp.intoxication > 0 && chan_num != 5 && !GetGM()) {
 		GarbleMessage(message, (int)(m_pp.intoxication / 3));
 		language = 0; // No need for language when drunk
 	}
@@ -919,7 +920,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				CheckEmoteHail(GetTarget(), message);
 
 
-				if(DistNoRootNoZ(*GetTarget()) <= 200) {
+				if(DistNoRootNoZ(*GetTarget()) <= 200 && !IsInvisible(this)) {
 					NPC *tar = GetTarget()->CastToNPC();
 					parse->EventNPC(EVENT_SAY, tar->CastToNPC(), this, message, language);
 				}
@@ -1209,6 +1210,7 @@ void Client::UpdateWho(uint8 remove) {
 	scl->ClientVersion = GetClientVersion();
 	scl->tellsoff = tellsoff;
 	scl->guild_id = guild_id;
+	scl->LFG = this->LFG;
 
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
@@ -1343,6 +1345,7 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.anon		= m_pp.anon;
 	ns->spawn.gm		= GetGM() ? 1 : 0;
 	ns->spawn.guildID	= GuildID();
+	ns->spawn.lfg		= LFG;
 //	ns->spawn.linkdead	= IsLD() ? 1 : 0;
 //	ns->spawn.pvp		= GetPVP() ? 1 : 0;
 
@@ -1814,8 +1817,8 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 		if(against_who->GetSpecialAbility(IMMUNE_AGGRO) || against_who->IsClient() ||
 			GetLevelCon(against_who->GetLevel()) == CON_GREEN)
 		{
-			//false by default
-			if( !mod_can_increase_skill(skillid, against_who) ) { return(false); }
+			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
+			return false; 
 		}
 	}
 
@@ -1841,7 +1844,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
 		}
 	} else {
-		_log(SKILLS__GAIN, "Skill %d at value %d cannot increase due to maxmum %d", skillid, skillval, maxskill);
+		_log(SKILLS__GAIN, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
 }
@@ -2917,7 +2920,7 @@ void Client::Sacrifice(Client *caster)
 						app.priority = 6;
 						entity_list.QueueClients(this, &app);
 
-						BuffFadeAll();
+						BuffFadeAll(true);
 						UnmemSpellAll();
 						Group *g = GetGroup();
 						if(g){
@@ -4683,6 +4686,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f  Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
+	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
@@ -4694,7 +4698,14 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " hMR: %i  hPR: %i  hFR: %i  hCR: %i  hDR: %i hCorruption: %i", GetHeroicMR(), GetHeroicPR(), GetHeroicFR(), GetHeroicCR(), GetHeroicDR(), GetHeroicCorrup());
 	client->Message(0, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
 	client->Message(0, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
-	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (%i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID());
+	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
+	client->Message(0, " HasShield: %i", HasShieldEquiped());
+	if(GetClass() == WARRIOR)
+		client->Message(0, "KickDmg: %i BashDmg: %i", GetKickDamage(), GetBashDamage());
+	if(GetClass() == RANGER || GetClass() == BEASTLORD)
+		client->Message(0, "KickDmg: %i", GetKickDamage());
+	if(GetClass() == PALADIN || GetClass() == SHADOWKNIGHT)
+		client->Message(0, "BashDmg: %i", GetBashDamage());
 	if(GetClass() == BARD)
 		client->Message(0, " Singing: %i  Brass: %i  String: %i Percussion: %i Wind: %i", GetSingMod(), GetBrassMod(), GetStringMod(), GetPercMod(), GetWindMod());
 

@@ -163,6 +163,7 @@ public:
 	ItemInst* LoadSingleTraderItem(uint32 char_id, int uniqueid);
 	Trader_Struct* LoadTraderItem(uint32 char_id);
 	TraderCharges_Struct* LoadTraderItemWithCharges(uint32 char_id);
+	int8 ItemQuantityType(int16 item_id);
 
 	/* Buyer/Barter  */
 	void AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char *ItemName, uint32 Quantity, uint32 Price);
@@ -174,6 +175,7 @@ public:
 	bool	SetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 	uint32	GetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 
+	void LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name);
 	void SaveBuffs(Client *c);
 	void LoadBuffs(Client *c);
 	void LoadPetInfo(Client *c);

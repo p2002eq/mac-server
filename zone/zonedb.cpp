@@ -901,7 +901,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->guildAutoconsent = atoi(row[r]); r++;								 // "guild_auto_consent,        "
 		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
-		strcpy(pp->boat, row[r]); r++;											 // "boatname					"
+		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
@@ -2229,6 +2229,40 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
 		std::cerr << "Error in InsertDoor" << query << "' " << results.ErrorMessage() << std::endl;
 }
 
+void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name){
+	std::string rquery = StringFormat("SHOW TABLES LIKE 'commands_log'");
+	auto results = QueryDatabase(rquery);
+	if (results.RowCount() == 0){
+		rquery = StringFormat(
+			"CREATE TABLE	`commands_log` (								"
+			"`entry_id`		int(11) NOT NULL AUTO_INCREMENT,				"
+			"`char_name`	varchar(30) DEFAULT NULL,						"
+			"`acct_name`	varchar(30) DEFAULT NULL,						"
+			"`y`			float NOT NULL DEFAULT '0',						"
+			"`x`			float NOT NULL DEFAULT '0',						"
+			"`z`			float NOT NULL DEFAULT '0',						"
+			"`command`		varchar(30) DEFAULT NULL,						"
+			"`target_type`	varchar(30) DEFAULT NULL,						"
+			"`target`		varchar(30) DEFAULT NULL,						"
+			"`tar_y`		float NOT NULL DEFAULT '0',						"
+			"`tar_x`		float NOT NULL DEFAULT '0',						"
+			"`tar_z`		float NOT NULL DEFAULT '0',						"
+			"`zone_id`		int(11) DEFAULT NULL,							"
+			"`zone_name`	varchar(30) DEFAULT NULL,						"
+			"`time`			datetime DEFAULT NULL,							"
+			"PRIMARY KEY(`entry_id`)										"
+			") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;	"
+			);
+		auto results = QueryDatabase(rquery);
+	}
+	std::string query = StringFormat("INSERT INTO `commands_log` (char_name, acct_name, y, x, z, command, target_type, target, tar_y, tar_x, tar_z, zone_id, zone_name, time) "
+									"VALUES('%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%i', '%s', now())",
+									char_name, acct_name, y, x, z, command, targetType, target, tar_y, tar_x, tar_z, zone_id, zone_name, time);
+	auto log_results = QueryDatabase(query);
+	if (!log_results.Success())
+		LogFile->write(EQEMuLog::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+}
+
 void ZoneDatabase::SaveBuffs(Client *client) {
 
 	std::string query = StringFormat("DELETE FROM `character_buffs` WHERE `character_id` = '%u'", client->CharacterID());
@@ -3432,3 +3466,29 @@ bool ZoneDatabase::DeleteCharacterCorpse(uint32 db_id) {
 	}
 	return false;
 }
+
+int8 ZoneDatabase::ItemQuantityType(int16 item_id)
+{
+	const Item_Struct* item = database.GetItem(item_id);
+	if(item)
+	{
+		//Item does not have quantity and is not stackable (Normal item.)
+		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
+		{ 
+			return 1;
+		}
+		//Item is not stackable, and uses charges.
+		else if(item->StackSize < 1 || !item->Stackable) 
+		{
+			return 2;
+		}
+		//Due to the previous checks, item has to stack.
+		else
+		{
+			return 3;
+		}
+	}
+
+	return 0;
+}
+

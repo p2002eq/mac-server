@@ -389,11 +389,11 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon, bool isAu
 			newbon->DSMitigation += item->DSMitigation;
 	}
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
-		ApplySpellsBonuses(item->Worn.Effect, item->Worn.Level, newbon, 0, true);
+		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
 	}
 
 	if (item->Focus.Effect>0 && (item->Focus.Type == ET_Focus)) { // focus effects
-		ApplySpellsBonuses(item->Focus.Effect, item->Focus.Level, newbon, 0, true);
+		ApplySpellsBonuses(item->Focus.Effect, GetLevel(), newbon, 0, true);
 	}
 
 	switch(item->BardType)
@@ -3026,7 +3026,7 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 					newbon->ProcChance += cur->CombatEffects;
 				}
 				if (cur->Worn.Effect>0 && (cur->Worn.Type == ET_WornEffect)) { // latent effects
-					ApplySpellsBonuses(cur->Worn.Effect, cur->Worn.Level, newbon);
+					ApplySpellsBonuses(cur->Worn.Effect, GetLevel(), newbon);
 				}
 				if (cur->Haste > newbon->haste)
 					newbon->haste = cur->Haste;

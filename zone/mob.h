@@ -244,10 +244,10 @@ public:
 	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
-	void BuffFadeAll();
+	void BuffFadeAll(bool death = false);
 	void BuffFadeNonPersistDeath();
 	void BuffFadeDetrimental();
-	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true);
+	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool death = false);
 	void BuffFadeDetrimentalByCaster(Mob *caster);
 	void BuffFadeBySitModifier();
 	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration);
@@ -907,6 +907,9 @@ public:
 	void	mod_spell_cast(uint16 spell_id, Mob* spelltar, bool reflect, bool use_resist_adjust, int16 resist_adjust, bool isproc);
 	bool    mod_will_aggro(Mob *attacker, Mob *on);
 
+	bool	CanEquipSecondary() { return can_equip_secondary; }
+	bool	CanDualWield() { return can_dual_wield; }
+
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
@@ -979,6 +982,8 @@ protected:
 	uint32 follow;
 	uint32 follow_dist;
 	bool no_target_hotkey;
+	bool can_equip_secondary;
+	bool can_dual_wield;
 
 	uint8 gender;
 	uint16 race;
@@ -1200,7 +1205,7 @@ protected:
 	Map::Vertex PathingLastPosition;
 	int PathingLoopCount;
 	int PathingLastNodeVisited;
-	std::list<int> Route;
+	std::vector<int> Route;
 	LOSType PathingLOSState;
 	Timer *PathingLOSCheckTimer;
 	Timer *PathingRouteUpdateTimerShort;
