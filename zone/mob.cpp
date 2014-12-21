@@ -991,7 +991,7 @@ void Mob::SendHPUpdate()
 	CreateHPPacket(&hp_app);
 
 	// send to people who have us targeted
-	entity_list.QueueClientsByTarget(this, &hp_app, false, 0, false, true, BIT_AllClients);
+	entity_list.QueueClientsByTarget(this, &hp_app, false, 0, true, true, BIT_AllClients);
 
 	// send to group
 	if(IsGrouped())
@@ -1023,7 +1023,7 @@ void Mob::SendHPUpdate()
 	// send to pet
 	if(GetPet() && GetPet()->IsClient())
 	{
-		GetPet()->CastToClient()->QueuePacket(&hp_app, false);
+		GetPet()->CastToClient()->QueuePacket(&hp_app, true);
 	}
 
 	// send to self - we need the actual hps here
