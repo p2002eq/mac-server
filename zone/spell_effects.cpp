@@ -1120,23 +1120,30 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					if (c->CheckLoreConflict(item)) {
 						c->DuplicateLoreMessage(spell.base[i]);
 					} else {
-						int charges;
-						if (item->Stackable)
-							charges = (spell.formula[i] > item->StackSize) ? item->StackSize : spell.formula[i];
-						else if (item->MaxCharges) // mod rods etc
-							charges = item->MaxCharges;
-						else
-							charges = 1;
 
-						if (charges < 1)
-							charges = 1;
+						int max = spell.max[i];
+						if(max == 0)
+							max = 20;
+
+						int quantity = 0;
+						if(database.ItemQuantityType(spell.base[i]) == Quantity_Charges)
+							quantity = item->MaxCharges;
+						else if(database.ItemQuantityType(spell.base[i]) == Quantity_Normal)
+							quantity = 1;
+						else if(spell.formula[i] > 0 && spell.formula[i] <= 20)
+							quantity = spell.formula[i];
+						else
+							quantity = CalcSpellEffectValue_formula(spell.formula[i],0,max,GetLevel(),spell_id);
+
+						if (quantity < 1)
+							quantity = 1;
 
 						if (SummonedItem) {
 							c->PushItemOnCursor(*SummonedItem);
 							c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
 							safe_delete(SummonedItem);
 						}
-						SummonedItem = database.CreateItem(spell.base[i], charges);
+						SummonedItem = database.CreateItem(spell.base[i], quantity);
 					}
 				}
 
