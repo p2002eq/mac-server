@@ -221,15 +221,6 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 				}
 			}
 		}
-		// Charm cannot be cast on a pet.
-		if(IsCharmSpell(spell_id))
-		{
-			if(GetTarget()->GetOwner())
-			{
-				InterruptSpell(CANNOT_AFFECT_NPC, CC_Red, spell_id);
-				return(false);
-			}
-		}
 	}
 
 
@@ -3218,6 +3209,14 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
 		if (!CancelMagicIsAllowedOnTarget(spelltar))
+		{
+			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+			return false;
+		}
+	}
+	else if(IsCharmSpell(spell_id))
+	{
+		if(spelltar->IsPet() || (IsClient() && spelltar->IsClient()) || spelltar->IsCorpse() || GetPet() != nullptr)
 		{
 			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 			return false;

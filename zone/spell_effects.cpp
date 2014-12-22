@@ -749,20 +749,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				entity_list.RemoveFromTargets(this);
 				WipeHateList();
 
-				if (IsClient() && caster->IsClient()) {
-					caster->Message(0, "Unable to cast charm on a fellow player.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				} else if(IsCorpse()) {
-					caster->Message(0, "Unable to cast charm on a corpse.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				} else if(caster->GetPet() != nullptr && caster->IsClient()) {
-					caster->Message(0, "You cannot charm something when you already have a pet.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				}
-
 				Mob *my_pet = GetPet();
 				if(my_pet)
 				{
