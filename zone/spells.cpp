@@ -1195,22 +1195,6 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 	bool HasInstrument = true;
 	Client *c = this->CastToClient();
 	int InstComponent = spells[spell_id].NoexpendReagent[0];
-	// Lyssa`s Solidarity of Vision has instrument in components
-	if(InstComponent == -1)
-	{
-		for (int t_count = 0; t_count < 4; t_count++) {
-			int32 component = spells[spell_id].components[t_count];
-
-			if (component == -1){
-				continue;
-			}
-			else
-			{
-				InstComponent = component;
-				break;
-			}
-		}
-	}
 
 	switch (InstComponent) {
 	case -1:

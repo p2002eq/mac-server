@@ -3061,10 +3061,8 @@ snare has both of them negative, yet their range should work the same:
 			result = updownsign * (ubase + (caster_level / 4)); break;
 
 		case 110:	// confirmed 2/6/04
-			//is there a reason we dont use updownsign here???
-			result = ubase + (caster_level / 6);
+			result = ubase + (caster_level / 5); break;
 			break;
-
 		case 111:
 			result = updownsign * (ubase + 6 * (caster_level - 16));
 			break;
