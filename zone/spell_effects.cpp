@@ -749,20 +749,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				entity_list.RemoveFromTargets(this);
 				WipeHateList();
 
-				if (IsClient() && caster->IsClient()) {
-					caster->Message(0, "Unable to cast charm on a fellow player.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				} else if(IsCorpse()) {
-					caster->Message(0, "Unable to cast charm on a corpse.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				} else if(caster->GetPet() != nullptr && caster->IsClient()) {
-					caster->Message(0, "You cannot charm something when you already have a pet.");
-					BuffFadeByEffect(SE_Charm);
-					break;
-				}
-
 				Mob *my_pet = GetPet();
 				if(my_pet)
 				{
@@ -3061,10 +3047,8 @@ snare has both of them negative, yet their range should work the same:
 			result = updownsign * (ubase + (caster_level / 4)); break;
 
 		case 110:	// confirmed 2/6/04
-			//is there a reason we dont use updownsign here???
-			result = ubase + (caster_level / 6);
+			result = ubase + (caster_level / 5); break;
 			break;
-
 		case 111:
 			result = updownsign * (ubase + 6 * (caster_level - 16));
 			break;

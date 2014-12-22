@@ -48,22 +48,45 @@ int Mob::GetKickDamage() {
 }
 
 int Mob::GetBashDamage() {
-	int multiple=(GetLevel()*100/5)+100;
+
 	int32 dmg = 0;
-	if(!HasShieldEquiped())
+
+	if(IsClient())
 	{
-		//Check if we're using SLAM
-		if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN)
+		int multiple=(GetLevel()*100/5)+100;
+
+		if(!HasShieldEquiped())
 		{
-			dmg=(((GetSkill(SkillBash)/2 + GetSTR()/2 + GetLevel()/2)*100 / 11000) * multiple);
+			//Slam
+			if(GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN)
+			{
+				dmg=(((GetSkill(SkillBash)/2 + GetSTR()/2 + GetLevel()/2)*100 / 11000) * multiple);
+				dmg /= 100;
+			}
+		}
+		else
+		{
+			//Bash
+			dmg=(((GetSkill(SkillBash) + GetSTR() + GetLevel())*100 / 11000) * multiple);
 			dmg /= 100;
 		}
 	}
-	else
+	else if(IsNPC())
 	{
-		dmg=(((GetSkill(SkillBash) + GetSTR() + GetLevel())*100 / 11000) * multiple);
-		dmg /= 100;
+		//NPC Bash
+		int16 mindmg = CastToNPC()->GetMinDMG();
+		int16 maxdmg = CastToNPC()->GetMaxDMG();
+		int8 modifier = 6;
+		if(GetLevel() >= 15 && GetLevel() <= 24)
+			modifier = 8;
+		else if(GetLevel() >= 25 && GetLevel() <=34)
+			modifier = 10;
+		else if(GetLevel() >= 35)
+			modifier = 12;
+
+		dmg =  mindmg - ( maxdmg - mindmg)/19 + modifier;
 	}
+
 	if(dmg == 0)
 		dmg = 1;
 

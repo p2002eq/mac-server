@@ -221,15 +221,6 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 				}
 			}
 		}
-		// Charm cannot be cast on a pet.
-		if(IsCharmSpell(spell_id))
-		{
-			if(GetTarget()->GetOwner())
-			{
-				InterruptSpell(CANNOT_AFFECT_NPC, CC_Red, spell_id);
-				return(false);
-			}
-		}
 	}
 
 
@@ -1195,22 +1186,6 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 	bool HasInstrument = true;
 	Client *c = this->CastToClient();
 	int InstComponent = spells[spell_id].NoexpendReagent[0];
-	// Lyssa`s Solidarity of Vision has instrument in components
-	if(InstComponent == -1)
-	{
-		for (int t_count = 0; t_count < 4; t_count++) {
-			int32 component = spells[spell_id].components[t_count];
-
-			if (component == -1){
-				continue;
-			}
-			else
-			{
-				InstComponent = component;
-				break;
-			}
-		}
-	}
 
 	switch (InstComponent) {
 	case -1:
@@ -3234,6 +3209,14 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
 		if (!CancelMagicIsAllowedOnTarget(spelltar))
+		{
+			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+			return false;
+		}
+	}
+	else if(IsCharmSpell(spell_id))
+	{
+		if(spelltar->IsPet() || (IsClient() && spelltar->IsClient()) || spelltar->IsCorpse() || GetPet() != nullptr)
 		{
 			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 			return false;
