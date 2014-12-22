@@ -144,9 +144,16 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 			if (thischance == 100.0 || drop_chance < thischance)
 			{
 				uint32 itemid = lds->Entries[item].item_id;
-
+				int8 charges = lds->Entries[item].item_charges;
 				const Item_Struct* dbitem = GetItem(itemid);
-				npc->AddLootDrop(dbitem, itemlist, lds->Entries[item].item_charges, lds->Entries[item].minlevel, lds->Entries[item].maxlevel, lds->Entries[item].equip_item, false);
+
+				if(database.ItemQuantityType(itemid) == Quantity_Charges)
+				{
+					if(charges <= 1)
+						charges = dbitem->MaxCharges;
+				}
+
+				npc->AddLootDrop(dbitem, itemlist, charges, lds->Entries[item].minlevel, lds->Entries[item].maxlevel, lds->Entries[item].equip_item, false);
 				pickedcharges++;
 			}
 		}
@@ -299,9 +306,12 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 			if (item2->Proc.Effect!=0)
 				CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
 
-			if(item2->ItemType == ItemTypeShield || item2->ItemType == ItemTypeMisc)
-				can_dual_wield = false;
-			else
+			can_dual_wield = false;
+			if(item2->ItemType == ItemTypeShield)
+			{
+				ShieldEquiped(true);
+			}
+			else if(item2->ItemType != ItemTypeMisc)
 				can_dual_wield = true;
 
 			eslot = MaterialSecondary;

@@ -330,7 +330,7 @@ namespace Convert {
 		/*5412*/	uint8							unknown5448[6];
 		/*5418*/	uint16							boatid;				// We use this ID internally for boats.
 		/*5420*/	uint32							zone_change_count;	// Number of times user has zoned in their career (guessing)
-		/*5424*/	char							boat[16];			// The client uses this string for boats.
+		/*5424*/	char							unknown5424[16];			
 		/*5440*/	uint32							drakkin_heritage;	//
 		/*5444*/	uint32							drakkin_tattoo;		//
 		/*5448*/	uint32							drakkin_details;	//
@@ -345,7 +345,8 @@ namespace Convert {
 		/*5506*/	uint16							zoneInstance;		// Instance ID
 		/*5508*/	Convert::SpellBuff_Struct		buffs[BUFF_COUNT];	// Buffs currently on the player
 		/*6008*/	char							groupMembers[6][64];//
-		/*6392*/	char							unknown6428[656];
+					char							boat[20];			// The client uses this string for boats.
+		/*6392*/	char							unknown6428[636];
 		/*7048*/	uint32							entityid;
 		/*7052*/	uint32							leadAAActive;
 		/*7056*/	uint32							unknown7092;

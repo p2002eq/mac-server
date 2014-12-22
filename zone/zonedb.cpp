@@ -3466,3 +3466,29 @@ bool ZoneDatabase::DeleteCharacterCorpse(uint32 db_id) {
 	}
 	return false;
 }
+
+int8 ZoneDatabase::ItemQuantityType(int16 item_id)
+{
+	const Item_Struct* item = database.GetItem(item_id);
+	if(item)
+	{
+		//Item does not have quantity and is not stackable (Normal item.)
+		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
+		{ 
+			return 1;
+		}
+		//Item is not stackable, and uses charges.
+		else if(item->StackSize < 1 || !item->Stackable) 
+		{
+			return 2;
+		}
+		//Due to the previous checks, item has to stack.
+		else
+		{
+			return 3;
+		}
+	}
+
+	return 0;
+}
+

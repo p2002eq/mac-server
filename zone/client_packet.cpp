@@ -1931,15 +1931,15 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 {
 
-	if (app->size <= 5 || app->size > 64) {
-		LogFile->write(EQEMuLog::Error, "Size mismatch in OP_BoardBoad. Expected greater than 5 less than 64, got %i", app->size);
+	if (app->size <= 7 || app->size > 20) {
+		LogFile->write(EQEMuLog::Error, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 20, got %i", app->size);
 		DumpPacket(app);
 		return;
 	}
 
-	char boatname[64];
+	char boatname[20];
 	memcpy(boatname, app->pBuffer, app->size);
-	boatname[63] = '\0';
+	boatname[19] = '\0';
 
 	Mob* boat = entity_list.GetMob(boatname);
 
@@ -1951,7 +1951,7 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 		BuffFadeByEffect(SE_Levitate);
 		BoatID = boat->GetID();	// set the client's BoatID to show that it's on this boat
 		m_pp.boatid = boat->GetNPCTypeID(); //For EQMac's boat system.
-		strncpy(m_pp.boat, boatname, 16);
+		strcpy(m_pp.boat, boatname);
 
 		char buf[24];
 		snprintf(buf, 23, "%d", boat->GetNPCTypeID());
@@ -2672,6 +2672,8 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Combat.States", params);
 	}
 
+	//This came down in an web interface cherry pick. no clue what it does, but if it's important uncomment.
+	/*
 	if (app->pBuffer[0] == 0)
 	{
 		auto_attack = false;
@@ -2725,7 +2727,10 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 			los_status = false;
 			los_status_facing = false;
 		}
-	}
+	}*/
+
+	OPCombatAbility(app);
+	return;
 }
 
 void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
