@@ -1035,12 +1035,21 @@ void command_npcloot(Client *c, const Seperator *sep){
 		if (c->GetTarget()->IsNPC() && sep->IsNumber(2))
 		{
 			uint32 item = atoi(sep->arg[2]);
-			if (database.GetItem(item))
+			const Item_Struct* dbitem = database.GetItem(item);
+			if (dbitem)
 			{
 				if (sep->arg[3][0] != 0 && sep->IsNumber(3))
 					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0);
 				else
-					c->GetTarget()->CastToNPC()->AddItem(item, 1, 0);
+				{
+					if(database.ItemQuantityType(item) == Quantity_Charges)
+					{
+						int8 charges = dbitem->MaxCharges;
+						c->GetTarget()->CastToNPC()->AddItem(item, charges, 0);
+					}
+					else
+						c->GetTarget()->CastToNPC()->AddItem(item, 1, 0);
+				}
 				c->Message(0, "Added item(%i) to the %s's loot.", item, c->GetTarget()->GetName());
 			}
 			else
@@ -1089,7 +1098,7 @@ void command_npcloot(Client *c, const Seperator *sep){
 			c->Message(0, "Usage: #npcloot money platinum gold silver copper");
 	}
 	else
-		c->Message(0, "Usage: #npcloot [show/money/add/remove] [itemid/all/money: pp gp sp cp]");
+		c->Message(0, "Usage: #npcloot [show/money/add/remove] [itemid/all/money: pp gp sp cp] [quantity]");
 }
 
 void command_log(Client *c, const Seperator *sep){
