@@ -1602,7 +1602,7 @@ void Client::DyeArmor(DyeStruct* dye){
 
 bool Client::DecreaseByID(uint32 type, uint8 amt) {
 	const Item_Struct* TempItem = 0;
-	ItemInst* ins;
+	ItemInst* ins = nullptr;
 	int x;
 	int num = 0;
 	for(x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::GENERAL_BAGS_END; x++)
@@ -1710,6 +1710,7 @@ void Client::RemoveNoRent(bool client_update) {
 		std::list<ItemInst*>::iterator iter = local.begin();
 		while (iter != local.end()) {
 			inst = *iter;
+			// should probably put a check here for valid pointer..but, that was checked when the item was put into inventory -U
 			if (!inst->GetItem()->NoRent)
 				Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from `Limbo`", inst->GetItem()->Name);
 			else
@@ -1833,6 +1834,7 @@ void Client::RemoveDuplicateLore(bool client_update) {
 		std::list<ItemInst*>::iterator iter = local.begin();
 		while (iter != local.end()) {
 			inst = *iter;
+			// probably needs a valid pointer check -U
 			if (CheckLoreConflict(inst->GetItem())) {
 				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from `Limbo`", inst->GetItem()->Name);
 				safe_delete(*iter);

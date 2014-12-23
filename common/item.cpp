@@ -1175,7 +1175,7 @@ int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, int16 item_id, uin
 
 			for (itb = inst->_begin(); itb != inst->_end(); ++itb) {
 				ItemInst* baginst = itb->second;
-				if (baginst->GetID() == item_id) {
+				if (baginst && baginst->GetID() == item_id) {
 					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
 					if (quantity_found >= quantity)
 						return Inventory::CalcSlotId(it->first, itb->first);
@@ -1211,7 +1211,7 @@ int16 Inventory::_HasItem(ItemInstQueue& iqueue, int16 item_id, uint8 quantity)
 
 			for (itb = inst->_begin(); itb != inst->_end(); ++itb) {
 				ItemInst* baginst = itb->second;
-				if (baginst->GetID() == item_id) {
+				if (baginst && baginst->GetID() == item_id) {
 					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
 					if (quantity_found >= quantity)
 						return Inventory::CalcSlotId(MainCursor, itb->first);
@@ -1612,6 +1612,8 @@ void ItemInst::ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent)
 	end = m_contents.end();
 	for (; cur != end;) {
 		ItemInst* inst = cur->second;
+		if (inst == nullptr)
+			continue;
 		const Item_Struct* item = inst->GetItem();
 		del = cur;
 		++cur;
