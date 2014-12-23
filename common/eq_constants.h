@@ -457,35 +457,23 @@ enum ChatColor
 
 
 typedef enum {
-	FilterNone = 0,
-	FilterGuildChat = 1,		//0=hide, 1=show
-	FilterSocials = 2,			//0=hide, 1=show
-	FilterGroupChat = 3,		//0=hide, 1=show
-	FilterShouts = 4,			//0=hide, 1=show
-	FilterAuctions = 5,			//0=hide, 1=show
-	FilterOOC = 6,				//0=hide, 1=show
-	FilterBadWords = 7,			//0=hide, 1=show
-	FilterPCSpells = 8,			//0=show, 1=hide, 2=group only
-	FilterNPCSpells = 9,		//0=show, 1=hide
-	FilterBardSongs = 10,		//0=show, 1=mine only, 2=group only, 3=hide
-	FilterSpellCrits = 11,		//0=show, 1=mine only, 2=hide
-	FilterMeleeCrits = 12,		//0=show, 1=hide
-	FilterSpellDamage = 13,		//0=show, 1=mine only, 2=hide
-	FilterMyMisses = 14,		//0=hide, 1=show
-	FilterOthersMiss = 15,		//0=hide, 1=show
-	FilterOthersHit = 16,		//0=hide, 1=show
-	FilterMissedMe = 17,		//0=hide, 1=show
-	FilterDamageShields = 18,	//0=show, 1=hide
-	FilterDOT = 19,				//0=show, 1=hide
-	FilterPetHits = 20,			//0=show, 1=hide
-	FilterPetMisses = 21,		//0=show, 1=hide
-	FilterFocusEffects = 22,	//0=show, 1=hide
-	FilterPetSpells = 23,		//0=show, 1=hide
-	FilterHealOverTime = 24,	//0=show, 1=hide
-	FilterUnknown25 = 25,
-	FilterUnknown26 = 26,
-	FilterUnknown27 = 27,
-	FilterUnknown28 = 28,
+	FilterDamageShields = 0,	//0 is on 1 is off
+	FilterNPCSpells = 1,		//0 is on - doesn't send packet	
+	FilterPCSpells = 2,			//0 is on 1 is off 2 is group
+	FilterBardSongs = 3,		//0 is on 1 is self 2 is group 3 is off
+	FilterNone = 4,				//0 is on
+	FilterGuildChat = 5,		//0 is off 1 is on		
+	FilterSocials = 6,			//0 is off 1 is on
+	FilterGroupChat = 7,		//0 is off 1 is on	
+	FilterShouts = 8,		    //0 is off 1 is on
+	FilterAuctions = 9,		    //0 is off 1 is on
+	FilterOOC = 10,				//0 is off 1 is on
+	FilterMyMisses = 11,		//0 is off 1 is on
+	FilterOthersMiss = 12,		//0 is off 1 is on
+	FilterOthersHit = 13,		//0 is off 1 is on
+	FilterMissedMe = 14,		//0 is off 1 is on
+	FilterSpellCrits = 15,		//0 is on 1 is self 2 is off
+	FilterMeleeCrits = 16,		//0 is on 1 is self 2 is off
 	_FilterCount
 } eqFilterType;
 

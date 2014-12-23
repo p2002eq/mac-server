@@ -4887,4 +4887,18 @@ uint32 Mob::GetClassStringID() {
 	}
 }
 
+uint8 Mob::DoubleAttackChance()
+{
+	uint8 mod = GetLevel();
+
+	if(GetLevel() >= 51 && GetLevel() <= 65)
+		mod = 51;
+	else if(GetLevel() > 65)
+		mod = 54;
+
+	float chance = (mod*3.8f + mod) / 4;
+	uint8 finalval = (uint8)floor(chance + 0.5);
+
+	return finalval;
+}
 

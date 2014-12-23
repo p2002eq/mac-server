@@ -3218,7 +3218,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	{
 		if(spelltar->IsPet() || (IsClient() && spelltar->IsClient()) || spelltar->IsCorpse() || GetPet() != nullptr)
 		{
-			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+			Message_StringID(MT_SpellFailure, CANNOT_CHARM);
 			return false;
 		}
 	}
@@ -3740,8 +3740,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	//live dosent send this to anybody but the caster
 	//entity_list.QueueCloseClients(spelltar, action_packet, true, 200, this, true, spelltar->IsClient() ? FILTER_PCSPELLS : FILTER_NPCSPELLS);
 
-	// TEMPORARY - this is the message for the spell.
-	// double message on effects that use ChangeHP - working on this
+	// This is the message for the spell.
 	message_packet = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
 	CombatDamage_Struct *cd = (CombatDamage_Struct *)message_packet->pBuffer;
 	cd->target = action->target;
@@ -3753,7 +3752,12 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	mlog(SPELLS__CASTING, "target: %i, source: %i, type: %i, spellid: %i, sequence: %i, damage: %i", cd->target, cd->source, cd->type, cd->spellid, cd->sequence, cd->damage);
 	if(!IsEffectInSpell(spell_id, SE_BindAffinity))
 	{
-		entity_list.QueueCloseClients(spelltar, message_packet, false, 200, 0, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
+		// We send this packet in Mob::CommonDamage for damage spells
+		bool ignoresender = false;
+		if(IsDamageSpell(spell_id))
+			ignoresender = true;
+
+		entity_list.QueueCloseClients(spelltar, message_packet, ignoresender, 200, 0, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
 	}
 	safe_delete(action_packet);
 	safe_delete(message_packet);

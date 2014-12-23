@@ -2027,8 +2027,10 @@ struct SetDataRate_Struct {
 };
 
 //OP_SetServerFilter
-struct SetServerFilter_Struct {
-	uint32 filters[29];		//see enum eqFilterType
+struct SetServerFilter_Struct 
+{
+	/*000*/	uint32 filters[17];	// Comment: 
+	/*068*/	
 };
 
 //Op_SetServerFilterAck
