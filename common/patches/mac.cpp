@@ -985,11 +985,11 @@ namespace Mac {
 				outapp->SetOpcode(OP_MerchantItemPacket);
 			else if(old_item_pkt->PacketType == ItemPacketLoot)
 				outapp->SetOpcode(OP_LootItemPacket);
-			else if(item->GetItem()->ItemClass == 1)
+			else if(item->GetItem()->ItemClass == ItemClassContainer)
 				outapp->SetOpcode(OP_ContainerPacket);
-			else if(item->GetItem()->ItemClass == 2)
+			else if(item->GetItem()->ItemClass == ItemClassBook)
 				outapp->SetOpcode(OP_BookPacket);
-			else if(int_struct->slot_id == 0)
+			else if(int_struct->slot_id == MainCursor)
 				outapp->SetOpcode(OP_SummonedItem);
 			else
 				outapp->SetOpcode(OP_ItemPacket);

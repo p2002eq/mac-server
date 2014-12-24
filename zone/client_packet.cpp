@@ -6922,6 +6922,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(15, "You can only have one of a lore item.");
 		return;
 	}
+	// This makes sure the vendor deletes charged items from their temp list properly.
 	if (tmpmer_used && (mp->quantity > prevcharges || item->MaxCharges > 1))
 	{
 		if (prevcharges > item->MaxCharges && item->MaxCharges > 1)
@@ -6929,11 +6930,13 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		else
 			mp->quantity = prevcharges;
 	}
-
-	//This sets the correct price for items with charges.
 	uint8 quantity = mp->quantity;
+	//This sets the correct price for items with charges.
 	if(database.ItemQuantityType(item_id) == Quantity_Charges)
-		quantity = 1;
+		quantity = 1; 
+	//This makes sure we don't overflow the quantity in our packet.
+	else if(database.ItemQuantityType(item_id) == Quantity_Stacked && quantity > 20)
+		quantity = 20; 
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
@@ -6943,10 +6946,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	mpo->itemslot = mp->itemslot;
 
 	int16 freeslotid = INVALID_INDEX;
-	int16 charges = 0;
-	if (item->Stackable || item->MaxCharges > 1)
-		charges = mp->quantity;
-	else
+	uint8 charges = quantity;
+	// We want to actually give the player an item with maxed charges, regardless of what we send in the packet
+	if(database.ItemQuantityType(item_id) == Quantity_Charges)
 		charges = item->MaxCharges;
 
 	ItemInst* inst = database.CreateItem(item, charges);
@@ -7040,15 +7042,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			safe_delete(delitempacket);
 		}
 		else {
-			// Update the charges/quantity in the merchant window
+			// Since we only show 1 in the merchant window, no need to send a packet here.
 			inst->SetCharges(new_charges);
 			inst->SetPrice(SinglePrice);
 			inst->SetMerchantSlot(mp->itemslot);
 			inst->SetMerchantCount(new_charges);
-			if (freeslotid == MainCursor)
-				SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
-			else
-				SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
 		}
 	}
 	safe_delete(inst);

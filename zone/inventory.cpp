@@ -463,6 +463,21 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 			database.SaveInventory(character_id, inst, slot_id);
 	}
 
+	bool returnitem = false;
+	if(inst && !isDeleted)
+	{
+		if(inst->GetCharges() <= 0)
+		{
+			if (inst->IsStackable() 
+			|| (!inst->IsStackable() && ((inst->GetItem()->MaxCharges == 0) || inst->IsExpendable()))) 
+			{
+				returnitem = false;
+			}
+			else 
+				returnitem = true;
+		}
+	}
+
 	if(client_update && IsValidSlot(slot_id)) {
 		EQApplicationPacket* outapp;
 		if(inst) {
@@ -475,7 +490,10 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 				delitem->number_in_stack	= 0xFFFFFFFF;
 				QueuePacket(outapp);
 				safe_delete(outapp);
-				
+				if(returnitem)
+				{
+					SendItemPacket(slot_id, inst, ItemPacketTrade);
+				}
 			}
 			else {
 				outapp = new EQApplicationPacket(OP_MoveItem, sizeof(MoveItem_Struct));
@@ -576,6 +594,42 @@ bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cur
 		return false;
 	int16 i;
 	uint32 item_id = item->GetItem()->ID;
+	// Do all we can get to arrows to go to quiver first.
+	if(item->GetItem()->ItemType == ItemTypeArrow)
+	{
+		for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
+		{
+			ItemInst* bag = m_inv.GetItem(i);
+			if(bag->GetItem()->BagType == BagTypeQuiver)
+			{
+				int8 slots = bag->GetItem()->BagSlots;
+				uint16 emptyslot = 0;
+				for (uint8 j = SUB_BEGIN; j < slots; j++)
+				{
+					uint16 slotid = Inventory::CalcSlotId(i, j);
+					ItemInst* tmp_inst = m_inv.GetItem(slotid);
+					if(!tmp_inst)
+					{
+						emptyslot = slotid;
+					}
+					// Partial stack found use this first
+					if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
+						MoveItemCharges(*item, slotid, type);
+						CalcBonuses();
+						if(item->GetCharges())	// we didn't get them all
+							return AutoPutLootInInventory(*item, try_worn, try_cursor, 0);
+						return true;
+					}
+				}
+				// Use empty slot if no partial stacks
+				if(emptyslot != 0)
+				{
+					PutItemInInventory(emptyslot, *item, true);
+					return true;
+				}
+			}
+		}
+	}
 	for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
 	{
 		ItemInst* tmp_inst = m_inv.GetItem(i);
