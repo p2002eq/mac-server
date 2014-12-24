@@ -1080,7 +1080,6 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->spawn_id	= GetID();
 	spu->x_pos		= x_pos;
 	spu->y_pos		= y_pos;
 	spu->z_pos		= z_pos;
