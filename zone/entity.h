@@ -375,6 +375,7 @@ public:
 	void	DepopAll(int NPCTypeID, bool StartSpawnTimer = true);
 
 	uint16 GetFreeID();
+	void SendLFG(Client* client, bool lfg);
 
 protected:
 	friend class Zone;

@@ -319,9 +319,9 @@ struct LFG_Struct {
 };
 
 struct LFG_Appearance_Struct {
-	int32	entityid;
-	int8	value;
-	int8	void_[3];
+	int16	entityid;
+	int16	unknown;
+	int32	value;
 };
 
 /*

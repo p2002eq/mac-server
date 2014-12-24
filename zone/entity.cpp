@@ -4293,3 +4293,20 @@ Mob *EntityList::GetTargetForVirus(Mob *spreader, int range)
 	return TargetsInRange[zone->random.Int(0, TargetsInRange.size() - 1)];
 }
 
+void EntityList::SendLFG(Client* client, bool lfg)
+{
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		if (it->second->IsLFG() == lfg) 
+		{
+			EQApplicationPacket	*outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
+			LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)outapp->pBuffer;
+			lfga->entityid = it->second->GetID();
+			lfga->value = it->second->IsLFG();
+
+			client->QueuePacket(outapp);
+			safe_delete(outapp);
+		}
+		++it;
+	}
+}
