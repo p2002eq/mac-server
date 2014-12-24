@@ -3,9 +3,7 @@
 #include <algorithm>
 #include "map.h"
 #include "../common/timer.h"
-#include <vector>
-#include <vector>
-#include <algorithm>
+#include <deque>
 
 class Client;
 
@@ -61,8 +59,8 @@ public:
 	static PathManager *LoadPathFile(const char *ZoneName);
 	bool loadPaths(FILE *fp);
 	void PrintPathing();
-	std::vector<int> FindRoute(Map::Vertex Start, Map::Vertex End);
-	std::vector<int> FindRoute(int startID, int endID);
+	std::deque<int> FindRoute(Map::Vertex Start, Map::Vertex End);
+	std::deque<int> FindRoute(int startID, int endID);
 
 	Map::Vertex GetPathNodeCoordinates(int NodeNumber, bool BestZ = true);
 	bool CheckLosFN(Map::Vertex a, Map::Vertex b);
