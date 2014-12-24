@@ -4123,8 +4123,8 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	made_npc->hairstyle = GetHairStyle();
 	made_npc->luclinface = GetLuclinFace();
 	made_npc->beard = GetBeard();
-	made_npc->d_meele_texture1 = GetEquipmentMaterial(MaterialPrimary);
-	made_npc->d_meele_texture2 = GetEquipmentMaterial(MaterialSecondary);
+	made_npc->d_melee_texture1 = GetEquipmentMaterial(MaterialPrimary);
+	made_npc->d_melee_texture2 = GetEquipmentMaterial(MaterialSecondary);
 	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_END; i++)	{
 		made_npc->armor_tint[i] = GetEquipmentColor(i);
 	}
