@@ -450,6 +450,12 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 			//then jump in if they are our friend
 			if(attacker->GetLevelCon(mob->GetLevel()) != CON_GREEN)
 			{
+				// AK Style pet pulling.
+				if(attacker->IsPet() && mob->GetLevelCon(attacker->GetLevel()) == CON_GREEN)
+				{
+					return;
+				}
+
 				bool useprimfaction = false;
 				if(mob->GetPrimaryFaction() == sender->CastToNPC()->GetPrimaryFaction())
 				{
