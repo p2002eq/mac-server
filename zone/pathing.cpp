@@ -346,10 +346,10 @@ bool CheckLOSBetweenPoints(Map::Vertex start, Map::Vertex end) {
 	return true;
 }
 
-bool SortPathNodesByDistance(PathNodeSortStruct n1, PathNodeSortStruct n2)
+auto path_compare = [](const PathNodeSortStruct& a, const PathNodeSortStruct& b)
 {
-	return n1.Distance < n2.Distance;
-}
+	return a.Distance < b.Distance;
+};
 
 std::deque<int> PathManager::FindRoute(Map::Vertex Start, Map::Vertex End)
 {
@@ -383,7 +383,7 @@ std::deque<int> PathManager::FindRoute(Map::Vertex Start, Map::Vertex End)
 		}
 	}
 
-	std::sort(SortedByDistance.begin(), SortedByDistance.end(), SortPathNodesByDistance);
+	std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
@@ -421,7 +421,7 @@ std::deque<int> PathManager::FindRoute(Map::Vertex Start, Map::Vertex End)
 		}
 	}
 
-	std::sort(SortedByDistance.begin(), SortedByDistance.end(), SortPathNodesByDistance);
+	std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
@@ -1123,7 +1123,7 @@ int PathManager::FindNearestPathNode(Map::Vertex Position)
 		}
 	}
 
-	std::sort(SortedByDistance.begin(), SortedByDistance.end(), SortPathNodesByDistance);
+	std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
