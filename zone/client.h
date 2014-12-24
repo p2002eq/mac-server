@@ -934,6 +934,8 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	bool InterrogateInventory(Client* requester, bool log, bool silent, bool allowtrip, bool& error, bool autolog = true);
 
+	bool IsLFG() { return LFG; }
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);

@@ -1496,15 +1496,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FastQueuePacket(&outapp);
 
 	/* LFG packet */
-	/*if(LFG)
-	{
-		outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
-		LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
-		lfga->entityid = GetID();
-		lfga->value = LFG;
-
-		entity_list.QueueClients(this, outapp, true);
-	}*/
+	LFG = false; //LFG doesn't survive zoning.
+	entity_list.SendLFG(this, true);
 
 	/*
 	Character Inventory Packet
@@ -8416,9 +8409,9 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	UpdateWho();
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LFGCommand, sizeof(LFG_Appearance_Struct));
-	LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)app->pBuffer;
+	LFG_Appearance_Struct* lfga = (LFG_Appearance_Struct*)outapp->pBuffer;
 	lfga->entityid = GetID();
-	lfga->value = LFG;
+	lfga->value = (int8)LFG;
 
 	entity_list.QueueClients(this, outapp, true);
 	return;
