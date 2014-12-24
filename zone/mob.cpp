@@ -1080,7 +1080,6 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->spawn_id	= GetID();
 	spu->x_pos		= x_pos;
 	spu->y_pos		= y_pos;
 	spu->z_pos		= z_pos;
@@ -4887,4 +4886,18 @@ uint32 Mob::GetClassStringID() {
 	}
 }
 
+uint8 Mob::DoubleAttackChance()
+{
+	uint8 mod = GetLevel();
+
+	if(GetLevel() >= 51 && GetLevel() <= 65)
+		mod = 51;
+	else if(GetLevel() > 65)
+		mod = 54;
+
+	float chance = (mod*3.8f + mod) / 4;
+	uint8 finalval = (uint8)floor(chance + 0.5);
+
+	return finalval;
+}
 

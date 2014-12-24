@@ -909,6 +909,7 @@ public:
 
 	bool	CanEquipSecondary() { return can_equip_secondary; }
 	bool	CanDualWield() { return can_dual_wield; }
+	uint8	DoubleAttackChance();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);

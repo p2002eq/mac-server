@@ -1203,26 +1203,17 @@ void Mob::AI_Process() {
 						//we use this random value in three comparisons with different
 						//thresholds, and if its truely random, then this should work
 						//out reasonably and will save us compute resources.
-						uint8 chance = 0;
-						if(GetLevel() < 36)
-							chance = GetLevel();
-						else if(GetLevel() > 35 && GetLevel() < 51)
-							chance = GetLevel() + 8;
-						else if(GetLevel() > 50 && GetLevel() < 66)
-							chance = 61;
-						else
-							chance = 65;
-
-						if (zone->random.Roll(chance)) {
+						uint8 random = zone->random.Int(0, 99);
+						if (zone->random.Roll(DoubleAttackChance())) {
 							Attack(target, MainPrimary);
 							// lets see if we can do a triple attack with the main hand
 							//pets are excluded from triple and quads...
 							if ((GetSpecialAbility(SPECATK_TRIPLE) || GetSpecialAbility(SPECATK_QUAD))
-									&& !IsPet() && chance < (GetLevel() + NPCTripleAttackModifier)) {
+									&& !IsPet() && random < (GetLevel() + NPCTripleAttackModifier)) {
 								Attack(target, MainPrimary);
 								// now lets check the quad attack
 								if (GetSpecialAbility(SPECATK_QUAD)
-										&& chance < (GetLevel() + NPCQuadAttackModifier)) {
+										&& random < (GetLevel() + NPCQuadAttackModifier)) {
 									Attack(target, MainPrimary);
 								}
 							}
@@ -1369,20 +1360,14 @@ void Mob::AI_Process() {
 					if(GetSpecialAbility(SPECATK_INNATE_DW) ||
 						(CanDualWield() && GetLevel() >= DUAL_WIELD_LEVEL) ||
 						myclass == MONK || myclass == MONKGM) {
-						float DualWieldProbability = (GetSkill(SkillDualWield) + GetLevel()) / 400.0f;
-						if(zone->random.Roll(DualWieldProbability))
+						if(zone->random.Roll(DoubleAttackChance()))
 						{
 							Attack(target, MainSecondary);
+
+							// Try for double attack
 							if (GetLevel() > 35)
 							{
-								uint8 chance = 0;
-								if(GetLevel() > 35 && GetLevel() < 51)
-									chance = GetLevel() + 8;
-								else if(GetLevel() > 50 && GetLevel() < 66)
-									chance = 61;
-								else
-									chance = 65;
-								if (zone->random.Roll(chance))
+								if (zone->random.Roll(DoubleAttackChance()))
 								{
 									Attack(target, MainSecondary);
 								}
@@ -1456,7 +1441,7 @@ void Mob::AI_Process() {
 						SetMoving(false);
 						moved=false;
 					}
-					else{
+					else if(IsRooted()){
 						FaceTarget(target);
 					}
 				}

@@ -1037,8 +1037,6 @@ void Client::ChannelMessageSend(const char* from, const char* to, uint8 chan_num
 }
 
 void Client::Message(uint32 type, const char* message, ...) {
-	if (GetFilter(FilterSpellDamage) == FilterHide && type == MT_NonMelee)
-		return;
 	if (GetFilter(FilterMeleeCrits) == FilterHide && type == MT_CritMelee) //98 is self...
 		return;
 	if (GetFilter(FilterSpellCrits) == FilterHide && type == MT_SpellCrits)
@@ -2303,13 +2301,13 @@ void Client::ServerFilter(SetServerFilter_Struct* filter){
 	else \
 		ClientFilters[type] = FilterHide;
 
+	Filter1(FilterNone);
 	Filter0(FilterGuildChat);
 	Filter0(FilterSocials);
 	Filter0(FilterGroupChat);
 	Filter0(FilterShouts);
 	Filter0(FilterAuctions);
 	Filter0(FilterOOC);
-	Filter0(FilterBadWords);
 
 	if(filter->filters[FilterPCSpells] == 0)
 		ClientFilters[FilterPCSpells] = FilterShow;
@@ -2343,36 +2341,16 @@ void Client::ServerFilter(SetServerFilter_Struct* filter){
 	else
 		ClientFilters[FilterMeleeCrits] = FilterHide;
 
-	if(filter->filters[FilterSpellDamage] == 0)
-		ClientFilters[FilterSpellDamage] = FilterShow;
-	else if(filter->filters[FilterSpellDamage] == 1)
-		ClientFilters[FilterSpellDamage] = FilterShowSelfOnly;
-	else
-		ClientFilters[FilterSpellDamage] = FilterHide;
-
 	Filter0(FilterMyMisses);
 	Filter0(FilterOthersMiss);
 	Filter0(FilterOthersHit);
 	Filter0(FilterMissedMe);
 	Filter1(FilterDamageShields);
-
-	if (filter->filters[FilterDOT] == 0) // show functions as self only
-		ClientFilters[FilterDOT] = FilterShowSelfOnly;
-	else
-		ClientFilters[FilterDOT] = FilterHide;
-
-	Filter1(FilterPetHits);
-	Filter1(FilterPetMisses);
-	Filter1(FilterFocusEffects);
-	Filter1(FilterPetSpells);
-	Filter1(FilterHealOverTime);
 }
 
 // this version is for messages with no parameters
 void Client::Message_StringID(uint32 type, uint32 string_id, uint32 distance)
 {
-	if (GetFilter(FilterSpellDamage) == FilterHide && type == MT_NonMelee)
-		return;
 	if (GetFilter(FilterMeleeCrits) == FilterHide && type == MT_CritMelee) //98 is self...
 		return;
 	if (GetFilter(FilterSpellCrits) == FilterHide && type == MT_SpellCrits)
@@ -2401,13 +2379,11 @@ void Client::Message_StringID(uint32 type, uint32 string_id, const char* message
 	const char* message5,const char* message6,const char* message7,
 	const char* message8,const char* message9, uint32 distance)
 {
-	if (GetFilter(FilterSpellDamage) == FilterHide && type == MT_NonMelee)
-		return;
 	if (GetFilter(FilterMeleeCrits) == FilterHide && type == MT_CritMelee) //98 is self...
 		return;
 	if (GetFilter(FilterSpellCrits) == FilterHide && type == MT_SpellCrits)
 		return;
-	if (GetFilter(FilterDamageShields) == FilterHide && type == MT_DS)
+	if (GetFilter(FilterDamageShields) == FilterHide)
 		return;
 
 	int i, argcount, length;

@@ -606,6 +606,18 @@ int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, boo
 			if (inst && inst->IsType(ItemClassContainer)
 				&& inst->GetItem()->BagSize >= min_size)
 			{
+				if(is_arrow && inst->GetItem()->BagType == BagTypeQuiver)
+				{
+					int16 base_slot_id = Inventory::CalcSlotId(i, SUB_BEGIN);
+
+					uint8 slots = inst->GetItem()->BagSlots;
+					uint8 j;
+					for (j = SUB_BEGIN; j<slots; j++) {
+						if (!GetItem(base_slot_id + j))
+							// Found available slot within bag
+							return (base_slot_id + j);
+					}
+				}
 				if (inst->GetItem()->BagType == BagTypeQuiver && inst->GetItem()->ItemType != ItemTypeArrow)
 				{
 					continue;

@@ -3701,12 +3701,10 @@ void Client::Handle_OP_GMGoto(const EQApplicationPacket *app)
 	Mob* gt = entity_list.GetMob(gmg->charname);
 	if (gt != nullptr) {
 		this->MovePC(zone->GetZoneID(), zone->GetInstanceID(), gt->GetX(), gt->GetY(), gt->GetZ(), gt->GetHeading());
-		Message(0, "Entity was not found, either it's a typo, or whoall bug.");
 	}
 	else if (!worldserver.Connected())
 		Message(0, "Error: World server disconnected.");
 	else {
-		Message(0, "Entity was found server side. Packet being sent to world.");
 		ServerPacket* pack = new ServerPacket(ServerOP_GMGoto, sizeof(ServerGMGoto_Struct));
 		memset(pack->pBuffer, 0, pack->size);
 		ServerGMGoto_Struct* wsgmg = (ServerGMGoto_Struct*)pack->pBuffer;
@@ -6924,6 +6922,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(15, "You can only have one of a lore item.");
 		return;
 	}
+	// This makes sure the vendor deletes charged items from their temp list properly.
 	if (tmpmer_used && (mp->quantity > prevcharges || item->MaxCharges > 1))
 	{
 		if (prevcharges > item->MaxCharges && item->MaxCharges > 1)
@@ -6931,19 +6930,25 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		else
 			mp->quantity = prevcharges;
 	}
+	uint8 quantity = mp->quantity;
+	//This sets the correct price for items with charges.
+	if(database.ItemQuantityType(item_id) == Quantity_Charges)
+		quantity = 1; 
+	//This makes sure we don't overflow the quantity in our packet.
+	else if(database.ItemQuantityType(item_id) == Quantity_Stacked && quantity > 20)
+		quantity = 20; 
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
-	mpo->quantity = mp->quantity;
+	mpo->quantity = quantity;
 	mpo->playerid = mp->playerid;
 	mpo->npcid = mp->npcid;
 	mpo->itemslot = mp->itemslot;
 
 	int16 freeslotid = INVALID_INDEX;
-	int16 charges = 0;
-	if (item->Stackable || item->MaxCharges > 1)
-		charges = mp->quantity;
-	else
+	uint8 charges = quantity;
+	// We want to actually give the player an item with maxed charges, regardless of what we send in the packet
+	if(database.ItemQuantityType(item_id) == Quantity_Charges)
 		charges = item->MaxCharges;
 
 	ItemInst* inst = database.CreateItem(item, charges);
@@ -7037,15 +7042,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			safe_delete(delitempacket);
 		}
 		else {
-			// Update the charges/quantity in the merchant window
+			// Since we only show 1 in the merchant window, no need to send a packet here.
 			inst->SetCharges(new_charges);
 			inst->SetPrice(SinglePrice);
 			inst->SetMerchantSlot(mp->itemslot);
 			inst->SetMerchantCount(new_charges);
-			if (freeslotid == MainCursor)
-				SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
-			else
-				SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
 		}
 	}
 	safe_delete(inst);
@@ -7137,7 +7138,6 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	}
 
 	if (!item->NoDrop) {
-		//Message(13,"%s tells you, 'LOL NOPE'", vendor->GetName());
 		return;
 	}
 
@@ -7151,12 +7151,14 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		price = (int)((item->Price*cost_quantity)*(RuleR(Merchant, BuyCostMod)) + 0.5);
 	AddMoneyToPP(price, false);
 
-	if (inst->IsStackable() || inst->IsCharged())
+	if (inst->IsStackable())
 	{
 		unsigned int i_quan = inst->GetCharges();
-		if (mp->quantity > i_quan || inst->IsCharged())
+		if (mp->quantity > i_quan)
 			mp->quantity = i_quan;
 	}
+	else if(inst->IsCharged())
+		mp->quantity = item->MaxCharges; //AK recharges items
 	else
 		mp->quantity = 1;
 
@@ -7164,10 +7166,6 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		LogMerchant(this, vendor, mp->quantity, price, item, false);
 
 	int charges = mp->quantity;
-	//Hack workaround so usable items with 0 charges aren't simply deleted
-	if (charges == 0 && item->ItemType != 11 && item->ItemType != 17 && item->ItemType != 19 && item->ItemType != 21)
-		charges = 1;
-
 	int freeslot = 0;
 	if (charges > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, charges, true)) > 0){
 		ItemInst* inst2 = inst->Clone();

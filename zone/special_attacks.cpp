@@ -30,12 +30,34 @@
 
 
 int Mob::GetKickDamage() {
-	int multiple=(GetLevel()*100/5)+100;
-	int32 dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 10000) * multiple);
+
+	int32 dmg = 0;
+
+	if(IsClient())
+	{
+		int multiple=(GetLevel()*100/5)+100;
+		dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 10000) * multiple);
+		dmg /= 100;
+	}
+	else if(IsNPC())
+	{
+		int16 mindmg = CastToNPC()->GetMinDMG();
+		int16 maxdmg = CastToNPC()->GetMaxDMG();
+		int8 modifier = 6;
+		if(GetLevel() >= 15 && GetLevel() <= 24)
+			modifier = 8;
+		else if(GetLevel() >= 25 && GetLevel() <=34)
+			modifier = 10;
+		else if(GetLevel() >= 35)
+			modifier = 12;
+
+		dmg =  mindmg - ( maxdmg - mindmg)/19 + modifier;
+	}
+
 	if(GetClass() == WARRIOR || GetClass() == WARRIORGM) {
 		dmg*=12/10;//small increase for warriors
 	}
-	dmg /= 100;
+
 	if(dmg == 0)
 		dmg = 1;
 

@@ -130,7 +130,7 @@
 #define AA_IMPROVE					411		//You have improved %T1 %2 at a cost of %3 ability %T4.
 #define AA_REUSE_MSG				413		//You can use the ability %B1(1) again in %2 hour(s) %3 minute(s) %4 seconds.
 #define AA_REUSE_MSG2				414		//You can use the ability %B1(1) again in %2 minute(s) %3 seconds.
-#define YOU_HEALED					419		//%1 has healed you for %2 points of damage.
+#define YOU_HEALED					419		//You have been healed for %1 points of damage.
 #define BEGINS_TO_GLOW				422		//Your %1 begins to glow.
 #define ALREADY_INVIS				423		//%1 tries to cast an invisibility spell on you, but you are already invisible.
 #define YOU_ARE_PROTECTED			424		//%1 tries to cast a spell on you, but you are protected.

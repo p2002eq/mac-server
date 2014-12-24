@@ -145,8 +145,7 @@ void NPC::PauseWandering(int pausetime)
 	if (GetGrid() != 0)
 	{
 		DistractedFromGrid = true;
-		mlog(QUESTS__PATHING, "Paused Wandering requested. Grid %d. Resuming in %d ms (0=not until told)", GetGrid(), pausetime);
-		SendPosition();
+		_log(QUESTS__PATHING, "Paused Wandering requested for: %s. Grid %d. Resuming in %d ms (0=not until told)", GetName(), GetGrid(), pausetime*1000);
 		if (pausetime<1)
 		{	// negative grid number stops him dead in his tracks until ResumeWandering()
 			SetGrid( 0 - GetGrid());
@@ -155,6 +154,8 @@ void NPC::PauseWandering(int pausetime)
 		{	// specified waiting time, he'll resume after that
 			AIwalking_timer->Start(pausetime*1000); // set the timer
 		}
+		SetMoving(false);
+		SendPosition();
 	} else {
 		LogFile->write(EQEMuLog::Error, "NPC not on grid - can't pause wandering: %lu", (unsigned long)GetNPCTypeID());
 	}

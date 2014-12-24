@@ -2475,7 +2475,7 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 		cds->target = attacker->GetID();
 		cds->source = GetID();
 		cds->type = spellbonuses.DamageShieldType;
-		cds->spellid = 0x0;
+		cds->spellid = spellid;
 		cds->damage = DS;
 		entity_list.QueueCloseClients(this, outapp);
 		safe_delete(outapp);
@@ -3562,13 +3562,13 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				} else {
 					if(damage > 0) {
 						if(spell_id != SPELL_UNKNOWN)
-							filter = iBuffTic ? FilterDOT : FilterSpellDamage;
+							filter = FilterNone;
 						else
-							filter = FilterPetHits;
+							filter = FilterOthersHit;
 					} else if(damage == -5)
 						filter = FilterNone;	//cant filter invulnerable
 					else
-						filter = FilterPetMisses;
+						filter = FilterOthersMiss;
 
 					if(!FromDamageShield)
 						owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
@@ -3581,24 +3581,20 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			//if the attacker is a client, try them with the correct filter
 			if(attacker && attacker->IsClient()) {
 				if (((spell_id != SPELL_UNKNOWN)||(FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me					
+					//special crap for spell damage, looks hackish to me	
+					char val1[20]={0};
 					if (FromDamageShield)
 					{
-						if(!attacker->CastToClient()->GetFilter(FilterDamageShields) == FilterHide)
-						{
-							char val1[20]={0};
-							attacker->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-						}
+						attacker->FilteredMessage_StringID(this,MT_NonMelee,FilterDamageShields,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
 					}
 					else
 					{
-						char val1[20]={0};
-						attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+						attacker->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
 					}
 				} else {
 					if(damage > 0) {
 						if(spell_id != SPELL_UNKNOWN)
-							filter = iBuffTic ? FilterDOT : FilterSpellDamage;
+							filter = FilterNone;
 						else
 							filter = FilterNone;	//cant filter our own hits
 					} else if(damage == -5)
@@ -3615,7 +3611,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//send damage to all clients around except the specified skip mob (attacker or the attacker's owner) and ourself
 		if(damage > 0) {
 			if(spell_id != SPELL_UNKNOWN)
-				filter = iBuffTic ? FilterDOT : FilterSpellDamage;
+				filter = FilterNone;
 			else
 				filter = FilterOthersHit;
 		} else if(damage == -5)
@@ -3658,32 +3654,24 @@ void Mob::HealDamage(uint32 amount, Mob *caster, uint16 spell_id)
 		acthealed = (maxhp - curhp);
 	else
 		acthealed = amount;
-	if (acthealed > 1) {
-		if (caster) {
-			if (IsBuffSpell(spell_id)) { // hots
-				// message to caster	
-				if (caster->IsClient() && caster == this) {
-					FilteredMessage_StringID(caster, MT_NonMelee, FilterHealOverTime,
-								YOU_HEALED, GetCleanName(), itoa(acthealed));
-				} else if (caster->IsClient() && caster != this) {
-						caster->FilteredMessage_StringID(caster, MT_NonMelee, FilterHealOverTime,
-								YOU_HEAL, GetCleanName(), itoa(acthealed));
-				}
-				// message to target
-				if (IsClient() && caster != this) {
-						FilteredMessage_StringID(this, MT_NonMelee, FilterHealOverTime,
-								YOU_HEALED, caster->GetCleanName(), itoa(acthealed));
-				}
-			} else { // normal heals
-				if(strcasecmp(GetCleanName(),caster->GetCleanName()) == 0)
-					Message(MT_NonMelee, "You have been healed for %d points of damage.", acthealed);
-				else
-					Message(MT_NonMelee, "%s has healed you for %i points of damage.", caster->GetCleanName(), acthealed);
-				if (caster != this)
-					caster->Message(MT_NonMelee, "You have healed %s for %i points of damage.", GetCleanName(), acthealed);
+	if (acthealed > 0) 
+	{
+		if (caster) 
+		{
+			// message to target	
+			if (caster->IsClient()) 
+			{
+				FilteredMessage_StringID(this, MT_NonMelee, FilterNone, YOU_HEALED, itoa(acthealed));
+			} 
+			// message to caster
+			if (caster->IsClient() && caster != this) 
+			{
+				caster->Message(MT_NonMelee, "You have healed %s for %i points of damage.", GetCleanName(), acthealed);
 			}
-		} else {
-			Message(MT_NonMelee, "You have been healed for %d points of damage.", acthealed);
+		} 
+		else 
+		{
+			FilteredMessage_StringID(this, MT_NonMelee, FilterNone, YOU_HEALED, itoa(acthealed));
 		}
 	}
 
