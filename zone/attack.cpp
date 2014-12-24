@@ -3585,7 +3585,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 					char val1[20]={0};
 					if (FromDamageShield)
 					{
-						attacker->Message_StringID(MT_DS,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
+						attacker->FilteredMessage_StringID(this,MT_NonMelee,FilterDamageShields,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
 					}
 					else
 					{

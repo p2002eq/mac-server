@@ -37,6 +37,7 @@ int Mob::GetKickDamage() {
 	{
 		int multiple=(GetLevel()*100/5)+100;
 		dmg=(((GetSkill(SkillKick) + GetSTR() + GetLevel())*100 / 10000) * multiple);
+		dmg /= 100;
 	}
 	else if(IsNPC())
 	{
@@ -57,7 +58,6 @@ int Mob::GetKickDamage() {
 		dmg*=12/10;//small increase for warriors
 	}
 
-	dmg /= 100;
 	if(dmg == 0)
 		dmg = 1;
 
