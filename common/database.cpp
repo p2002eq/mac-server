@@ -2961,15 +2961,19 @@ bool Database::UpdateLiveChar(char* charname,uint32 lsaccount_id) {
 }
 
 bool Database::CharacterJoin(uint32 char_id){
-	std::string query = StringFormat("UPDATE `character_data` SET `last_login`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
-	auto results = QueryDatabase(query);
-		LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i at %i", char_id, time(nullptr));
-	if (!results.Success()){
+	std::string join_query = StringFormat("UPDATE `character_data` SET `last_login`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
+	std::string clear_query = StringFormat("UPDATE `character_data` SET `last_seen`='0' WHERE `id` = '%i'", char_id);
+	auto join_results = QueryDatabase(join_query);
+	auto clear_results = QueryDatabase(clear_query);
+	if (join_results.Success() && clear_results.Success()){
+		LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i at %i and last_seen should be zero.", char_id, time(nullptr));
+		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
+		return true;
+	}
+	if (!join_results.Success() || !clear_results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
-	LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i...", char_id);
-	return true;
 }
 
 void Database::CharacterQuit(uint32 char_id){
