@@ -511,6 +511,9 @@ public:
 	* General Character Related Stuff
 	*/
 
+	bool	CharacterJoin(uint32 char_id);
+	void	CharacterQuit(uint32 char_id);
+
 	/* Character Creation */
 	bool	SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp);
 
@@ -618,6 +621,12 @@ public:
 	bool	CheckDatabaseConversions();
 	bool	CheckDatabaseConvertPPDeblob();
 	bool	CheckDatabaseConvertCorpseDeblob();
+
+	/*
+	* Database Setup for boostraps only.
+	*/
+	bool Database::DBSetup();
+	bool Database::DBSetup_character_data();
 
 	/*
 	* Database Variables

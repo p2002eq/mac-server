@@ -2953,14 +2953,33 @@ bool Database::UpdateLiveChar(char* charname,uint32 lsaccount_id) {
 
 	std::string query = StringFormat("UPDATE account SET charname='%s' WHERE id=%i;",charname, lsaccount_id);
 	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-	{
+	if (!results.Success()){
 		std::cerr << "Error in UpdateLiveChar query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
-
 	return true;
+}
+
+bool Database::CharacterJoin(uint32 char_id){
+	std::string query = StringFormat("UPDATE `character_data` SET `last_login`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
+	auto results = QueryDatabase(query);
+		LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i at %i", char_id, time(nullptr));
+	if (!results.Success()){
+		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
+		return false;
+	}
+	LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i...", char_id);
+	return true;
+}
+
+void Database::CharacterQuit(uint32 char_id){
+	std::string query = StringFormat("UPDATE `character_data` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
+	auto results = QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	if (!results.Success()){
+		LogFile->write(EQEMuLog::Debug, "Error updating character_data table from CharacterQuit.");
+	}
+	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
 }
 
 bool Database::GetLiveChar(uint32 account_id, char* cname) {
@@ -3844,4 +3863,32 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 
 	return results.Success();
 
+}
+
+/*	This section past here is for setting up the database in bootstrap ONLY.
+	Please put regular server changes and additions above this. 
+	Don't use this for the login server. It should never have access to the game database. */
+
+bool Database::DBSetup(){
+	DBSetup_character_data();
+	return true;
+}
+
+bool Database::DBSetup_character_data(){
+	std::string check_query = StringFormat("SELECT `last_seen` FROM character_data");
+	auto check_results = QueryDatabase(check_query);
+	LogFile->write(EQEMuLog::Debug, "Database setup started..");
+	if (!check_results.Success()){
+		std::string alter_query = StringFormat("ALTER TABLE `character_data` ADD `last_seen` int(11) NOT NULL DEFAULT 0 AFTER `last_login`");
+		LogFile->write(EQEMuLog::Debug, "Database UPDATE attempting to be applied..");
+		auto alter_results = QueryDatabase(alter_query);
+		if (!alter_results.Success()){
+			LogFile->write(EQEMuLog::Error, "Error updating database table.");
+			return false;
+		}
+		LogFile->write(EQEMuLog::Debug, "Database UPDATE applied.");
+		return true;
+	}
+	LogFile->write(EQEMuLog::Debug, "Database already applied.");
+	return true;
 }

@@ -1393,7 +1393,7 @@ void EQStream::Close() {
 	} else {
 		//otherwise, we are done, we can drop immediately.
 		_SendDisconnect();
-		_log(NET__DEBUG, _L "Stream closing immediate due to Close()" __L);
+		_log(NET__DEBUG, _L "EQStream closing immediate due to Close()" __L);
 		SetState(DISCONNECTING);
 	}
 }
@@ -2425,7 +2425,7 @@ void EQOldStream::Close() {
 	{
 		sent_Fin = true;
 		_SendDisconnect();
-		_log(EQMAC__LOG, _L "Stream closing immediate due to Close()" __L);
+		_log(EQMAC__LOG, _L "EQOldStream closing immediate due to Close()" __L);
 	}
 }
 void EQOldStream::ClearOldPackets()

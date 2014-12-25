@@ -496,12 +496,6 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	if(!pZoning) {
 		database.SetGroupID(char_name, 0, charid);
 		database.SetFirstLogon(charid, 1);
-
-		if (RuleB(World, AnnounceJoinQuits) == true) //this is having an issue, its not taking a true false swap, only takes default.
-		{
-			zoneserver_list.SendEmoteMessage(0, 0, 0, 15, "%s is logging on!", GetCharName());
-			clog(WORLD__CLIENT_ERR, "Character is logging on: %s", GetCharName());
-		}
 	}
 	else{
 		uint32 groupid = database.GetGroupID(char_name);
@@ -775,6 +769,8 @@ void Client::EnterWorld(bool TryBootup) {
 	pwaitingforbootup = 0;
 
 	cle->SetChar(charid, char_name);
+
+	database.CharacterJoin(charid);
 	database.UpdateLiveChar(char_name, GetAccountID());
 	clog(WORLD__CLIENT,"%s %s (%d:%d)",seencharsel ? "Entering zone" : "Zoning to",zone_name,zoneID,instanceID);
 //	database.SetAuthentication(account_id, char_name, zone_name, ip);
