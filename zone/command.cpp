@@ -114,8 +114,8 @@ Access Levels:
 0		Normal
 10	* Steward *
 20	* Apprentice Guide *
-50	* Guide *
-80	* QuestTroupe *
+50	* Novice Guide *
+80	* Guide *
 81	* Senior Guide *
 85	* GM-Tester *
 90	* EQ Support *
