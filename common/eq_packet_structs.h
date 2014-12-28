@@ -1040,13 +1040,13 @@ struct DeleteSpawn_Struct
 */
 struct ChannelMessage_Struct
 {
-/*000*/	char	targetname[64];		// Tell recipient
-/*064*/	char	sender[64];			// The senders name (len might be wrong)
-/*128*/	uint32	language;			// Language
-/*132*/	uint32	chan_num;			// Channel
-/*136*/	uint32	cm_unknown4[2];		// ***Placeholder
-/*144*/	uint32	skill_in_language;	// The players skill in this language? might be wrong
-/*148*/	char	message[0];			// Variable length message
+	/*000*/	char	targetname[64];		// Tell recipient
+	/*064*/	char	sender[64];			// The senders name (len might be wrong)
+	/*128*/	uint16	language;			// Language
+	/*130*/	uint16	chan_num;			// Channel
+	/*132*/	uint16	cm_unknown4;		// ***Placeholder
+	/*134*/	uint16	skill_in_language;	// The players skill in this language? might be wrong
+	/*136*/	char	message[0];			// Variable length message
 };
 
 /*
@@ -3531,6 +3531,14 @@ struct ClientMarqueeMessage_Struct {
 	uint32 duration; //in ms
 	char msg[1]; //message plus null terminator
 	
+};
+
+struct Disarm_Struct {
+/*000*/ int16 entityid;
+/*002*/ int16 target;
+/*004*/ int16 skill;
+/*006*/ int16 status;
+/*008*/
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;

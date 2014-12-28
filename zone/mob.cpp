@@ -1155,10 +1155,11 @@ void Mob::ShowStats(Client* client)
 			uint32 spawngroupid = 0;
 			if(n->respawn2 != 0)
 				spawngroupid = n->respawn2->SpawnGroupID();
-			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
+			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i PreCharmFactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetPreCharmNPCFactionID(), n->GetNPCSpellsID());
 			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %f Walkspeed: %f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), n->GetRunspeed(), n->GetWalkspeed());
 			client->Message(0, "  Attack Speed: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetAttackTimer(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  Trackable: %i CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->IsTrackable(), n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
+			client->Message(0, "  PriSkill: % i SecSkill: %i PriMelee: %i SecMelee: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
@@ -4901,3 +4902,31 @@ uint8 Mob::DoubleAttackChance()
 	return finalval;
 }
 
+void Mob::Disarm()
+{
+	if(this->IsNPC())
+	{
+		CastToNPC()->SetPrimSkill(SkillHandtoHand);
+
+		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
+		if(weapon)
+		{
+			uint16 weaponid = weapon->item_id;
+			const ItemInst* inst = database.CreateItem(weaponid);
+			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+			if(inst->GetItem()->NoDrop == 0)
+			{
+				const Item_Struct* item = inst->GetItem();
+				int8 charges = item->MaxCharges;
+				CastToNPC()->AddLootDrop(item,&CastToNPC()->itemlist,charges,1,127,false,true);
+			}
+			else
+			{
+				entity_list.CreateGroundObject(weaponid,GetX(),GetY(),GetZ(),0);
+			}
+			safe_delete(inst);
+		}
+	}
+	can_dual_wield = false;
+	WearChange(MaterialPrimary, 0, 0);
+}

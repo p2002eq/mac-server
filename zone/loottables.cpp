@@ -290,10 +290,15 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 				else
 					can_equip_secondary = false;
 
+				// If we get disarmed, this will allow us to dual wield again when re-equipped.
+				if(GetEquipment(MaterialSecondary) != 0 && can_equip_secondary == true)
+					can_dual_wield = true;
+
 				if (item2->Proc.Effect != 0)
 					CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
 
 				eslot = MaterialPrimary;
+				item->equip_slot = MainPrimary;
 			}
 		}
 		else if (foundslot == MainSecondary
@@ -315,44 +320,39 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 				can_dual_wield = true;
 
 			eslot = MaterialSecondary;
+			item->equip_slot = MainSecondary;
 		}
 		else if (foundslot == MainHead) {
 			eslot = MaterialHead;
+			item->equip_slot = MainHead;
 		}
 		else if (foundslot == MainChest) {
 			eslot = MaterialChest;
+			item->equip_slot = MainChest;
 		}
 		else if (foundslot == MainArms) {
 			eslot = MaterialArms;
+			item->equip_slot = MainArms;
 		}
 		else if (foundslot == MainWrist1 || foundslot == MainWrist2) {
 			eslot = MaterialWrist;
+			if(foundslot == MainWrist1)
+				item->equip_slot = MainWrist1;
+			if(foundslot == MainWrist2)
+				item->equip_slot = MainWrist2;
 		}
 		else if (foundslot == MainHands) {
 			eslot = MaterialHands;
+			item->equip_slot = MainHands;
 		}
 		else if (foundslot == MainLegs) {
 			eslot = MaterialLegs;
+			item->equip_slot = MainLegs;
 		}
 		else if (foundslot == MainFeet) {
 			eslot = MaterialFeet;
+			item->equip_slot = MainFeet;
 		}
-
-		/*
-		what was this about???
-
-		if (((npc->GetRace()==127) && (npc->CastToMob()->GetOwnerID()!=0)) && (item2->Slots==24576) || (item2->Slots==8192) || (item2->Slots==16384)){
-			npc->d_meele_texture2=atoi(newid);
-			wc->wear_slot_id=8;
-			if (item2->Material >0)
-				wc->material=item2->Material;
-			else
-				wc->material=atoi(newid);
-			npc->AC+=item2->AC;
-			npc->STR+=item2->STR;
-			npc->INT+=item2->INT;
-		}
-		*/
 
 		//if we found an open slot it goes in...
 		if(eslot != 0xFF) {
@@ -365,7 +365,6 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 		if (found) {
 			CalcBonuses(); // This is less than ideal for bulk adding of items
 		}
-		item->equip_slot = item2->Slots;
 	}
 
 	if(itemlist != nullptr)

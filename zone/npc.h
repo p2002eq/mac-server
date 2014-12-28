@@ -250,11 +250,14 @@ public:
 	void	SignalNPC(int _signal_id);
 
 	inline int32	GetNPCFactionID()	const { return npc_faction_id; }
+	inline int32	GetPreCharmNPCFactionID()	const { return precharm_npc_faction_id; }
 	inline int32			GetPrimaryFaction()	const { return primary_faction; }
 	int32	GetNPCHate(Mob* in_ent) {return hate_list.GetEntHate(in_ent);}
 	bool	IsOnHatelist(Mob*p) { return hate_list.IsOnHateList(p);}
 
 	void	SetNPCFactionID(int32 in) { npc_faction_id = in; database.GetFactionIdsForNPC(npc_faction_id, &faction_list, &primary_faction); }
+	void	SetPreCharmNPCFactionID(int32 in) { precharm_npc_faction_id = in; }
+	void	RestoreNPCFactionID() { npc_faction_id = precharm_npc_faction_id; database.GetFactionIdsForNPC(npc_faction_id, &faction_list, &primary_faction); }
 
 	float	org_x, org_y, org_z, org_heading;
 
@@ -372,6 +375,9 @@ public:
 
 	bool IsRaidTarget() const { return raid_target; };
 
+	uint16 GetPrimaryMeleeTexture() { return d_meele_texture1; }
+	uint16 GetSecondaryMeleeTexture() { return d_meele_texture2; }
+
 protected:
 
 	const NPCType*	NPCTypedata;
@@ -388,6 +394,7 @@ protected:
 	uint16	wp_m;
 
 	int32	npc_faction_id;
+	int32	precharm_npc_faction_id;
 	int32	primary_faction;
 
 	Timer	attacked_timer;		//running while we are being attacked (damaged)
