@@ -4914,7 +4914,7 @@ void Mob::Disarm()
 			uint16 weaponid = weapon->item_id;
 			const ItemInst* inst = database.CreateItem(weaponid);
 			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-			if(inst->GetItem()->NoDrop == 0)
+			if(inst->GetItem()->NoDrop == 0 || inst->GetItem()->Magic)
 			{
 				const Item_Struct* item = inst->GetItem();
 				int8 charges = item->MaxCharges;
