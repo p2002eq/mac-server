@@ -743,6 +743,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(IsNPC())
 				{
 					CastToNPC()->SaveGuardSpotCharm();
+					CastToNPC()->SetNPCFactionID(0);
 				}
 				InterruptSpell();
 				entity_list.RemoveDebuffs(this);
@@ -3839,6 +3840,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 				{
 					CastToNPC()->RestoreGuardSpotCharm();
 					SendAppearancePacket(AT_Pet, 0, true, true);
+					CastToNPC()->RestoreNPCFactionID();
 				}
 
 				Mob* tempmob = GetOwner();

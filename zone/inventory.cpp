@@ -287,8 +287,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 			if(to_slot == MainCursor || to_slot == INVALID_INDEX) {
 				if(m_inv.GetItem(MainCursor) != nullptr || to_slot == INVALID_INDEX) {
 					Message(13,"You have no more room. The item falls to the ground."); 
-					//This crashes the Intel client. But, we still need to put the item somewhere.
-					DropInst(inst);
+					//DropInst(inst) crashes Intel here, so just create the groundspawn.
+					entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0);
 				}
 			}
 		}

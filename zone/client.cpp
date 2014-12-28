@@ -5535,3 +5535,22 @@ bool Client::IsTargetInMyGroup(Client* target)
 
 	return false;
 }
+
+bool Client::Disarm(Client* client)
+{
+	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
+	if(weapon)
+	{
+		uint8 charges = weapon->GetCharges();
+		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+		if(freeslotid != INVALID_INDEX)
+		{
+			client->DeleteItemInInventory(MainPrimary,0,true);
+			client->SummonItem(weapon->GetID(),charges,0,0,0,0,0,false,freeslotid);
+			client->WearChange(MaterialPrimary,0,0);
+
+			return true;
+		}
+	}
+	return false;
+}

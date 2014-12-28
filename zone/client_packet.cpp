@@ -72,6 +72,7 @@
 #include "queryserv.h"
 #include "remote_call_subscribe.h"
 #include "remote_call_subscribe.h"
+#include "../common/misc.h"
 
 extern QueryServ* QServ;
 extern Zone* zone;
@@ -265,6 +266,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_ZoneChange] = &Client::Handle_OP_ZoneChange;
 	ConnectedOpcodes[OP_ZoneEntryResend] = &Client::Handle_OP_ZoneEntryResend;
 	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
+	ConnectedOpcodes[OP_Disarm] = &Client::Handle_OP_Disarm;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -2256,7 +2258,11 @@ void Client::Handle_OP_ChannelMessage(const EQApplicationPacket *app)
 		return;
 	}
 
-	ChannelMessageReceived(cm->chan_num, cm->language, cm->skill_in_language, cm->message, cm->targetname);
+	std::string s(cm->message);
+	replace_all(s, "%", "percent");
+	const char* filteredmessage = s.c_str();
+
+	ChannelMessageReceived(cm->chan_num, cm->language, cm->skill_in_language, filteredmessage, cm->targetname);
 	return;
 }
 
@@ -8414,5 +8420,84 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	lfga->value = (int8)LFG;
 
 	entity_list.QueueClients(this, outapp, true);
+	return;
+}
+
+void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(Disarm_Struct)) {
+		LogFile->write(EQEMuLog::Error, "Invalid size for Disarm_Struct: Expected: %i, Got: %i", sizeof(Disarm_Struct), app->size);
+		return;
+	}
+
+	Disarm_Struct* disin = (Disarm_Struct*)app->pBuffer;
+	Mob* target = entity_list.GetMob(disin->target);
+
+	if(!target)
+		return;
+
+	if(target != GetTarget())
+		return;
+
+	// It looks like the client does its own check, but let's double check.
+	if(target->IsCorpse() || !IsAttackAllowed(target))
+	{
+		Message(CC_Red, "You cannot disarm this target.");
+		return;
+	}
+
+	int8 level_diff = 0;
+	uint16 skill = GetSkill(SkillDisarm);
+	level_diff = GetLevel()-target->GetLevel();
+	float disarmbase = (int16)skill/1.2f;
+	float disarmchance = 0.0f;
+
+	if (skill > 100)
+		disarmchance = (int16)skill - 100.0f;
+
+	disarmchance = disarmchance / 3.0f;
+
+	float totaldisarm = disarmbase + disarmchance + level_diff;
+
+	// We will always have at least a 5% chance of failure.
+	if(totaldisarm >= 143)
+		totaldisarm = 142.5f;
+
+	if(totaldisarm <= 0)
+		totaldisarm = 0.1f;
+
+	int8 success = 0;
+	float roll = zone->random.Real(0, 150);
+	if (roll < totaldisarm) {
+		success = 1;
+		if(target->IsClient())
+		{
+			if(!Disarm(target->CastToClient()))
+			{
+				Message(CC_Red, "Unable to disarm target.");
+			}
+		}
+		else if(target->IsNPC())
+		{
+			target->Disarm();
+			if(!GetGM())
+				AddToHateList(target, 1);
+		}
+	}
+
+	//Message(CC_Yellow, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
+
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
+	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;
+	dis->entityid = disin->target;// These are reversed on the out packet.
+	dis->target = disin->entityid;
+	dis->skill = disin->skill;
+	dis->status = success;
+
+	QueuePacket(outapp);
+	safe_delete(outapp);
+
+	CheckIncreaseSkill(SkillDisarm, target, 5);
+
 	return;
 }
