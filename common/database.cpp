@@ -2960,30 +2960,88 @@ bool Database::UpdateLiveChar(char* charname,uint32 lsaccount_id) {
 	return true;
 }
 
-bool Database::CharacterJoin(uint32 char_id){
-	std::string join_query = StringFormat("UPDATE `character_data` SET `last_login`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
-	std::string clear_query = StringFormat("UPDATE `character_data` SET `last_seen`='0' WHERE `id` = '%i'", char_id);
+bool Database::CharacterJoin(uint32 char_id, char* char_name) {
+	std::string join_query = StringFormat(
+		"INSERT INTO `webdata_character` (	"
+		"id,								" // char_id
+		"name,								" // char_name
+		"last_login,						" // time(nullptr)
+		"last_seen							" // 0
+		") VALUES (							"
+		"%i,								" // id	
+		"'%s',								" // name
+		"%i,								" // last_login
+		"0									" // last_seen
+		") ON DUPLICATE KEY UPDATE			"
+		"name='%s',							" // char_name
+		"last_login=%i,						" // time(nullptr)
+		"last_seen=0						" // 0
+		,
+		char_id,							  // id	
+		char_name,							  // name
+		time(nullptr),						  // last_login
+		char_name,							  // name
+		time(nullptr)						  // last_login
+		);
 	auto join_results = QueryDatabase(join_query);
-	auto clear_results = QueryDatabase(clear_query);
-	if (join_results.Success() && clear_results.Success()){
-		LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %i at %i and last_seen should be zero.", char_id, time(nullptr));
-		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
-		return true;
-	}
-	if (!join_results.Success() || !clear_results.Success()){
+	LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+
+	if (!join_results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
+	return true;
 }
 
-void Database::CharacterQuit(uint32 char_id){
-	std::string query = StringFormat("UPDATE `character_data` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
+bool Database::CharacterQuit(uint32 char_id) {
+	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
 	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Debug, "Error updating character_data table from CharacterQuit.");
+		return false;
 	}
 	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
+	return true;
+}
+
+bool Database::ZoneConnected(uint32 id, const char* name) {
+	std::string connect_query = StringFormat(
+		"INSERT INTO `webdata_servers` (	"
+		"id,								" // id
+		"name,								" // name
+		"connected							" // 1
+		") VALUES (							"
+		"%i,								" // id
+		"'%s',								" // name
+		"1									" // connected
+		") ON DUPLICATE KEY UPDATE			"
+		"name='%s',							" // name
+		"connected=1						" // 1
+		,
+		id,									// id
+		name,								// name
+		name								// name
+		);
+	auto connect_results = QueryDatabase(connect_query);
+	LogFile->write(EQEMuLog::Debug, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+
+	if (!connect_results.Success()){
+		LogFile->write(EQEMuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
+		return false;
+	}
+	return true;
+}
+
+bool Database::ZoneDisconnect(uint32 id) {
+	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
+	auto results = QueryDatabase(query);
+		LogFile->write(EQEMuLog::Debug, "ZoneConnected should have wrote '0' to webdata_servers for %i.", id);
+	if (!results.Success()){
+		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+	}
+	LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+	return true;
 }
 
 bool Database::GetLiveChar(uint32 account_id, char* cname) {
@@ -3873,26 +3931,56 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 	Please put regular server changes and additions above this. 
 	Don't use this for the login server. It should never have access to the game database. */
 
-bool Database::DBSetup(){
-	DBSetup_character_data();
+bool Database::DBSetup() {
+	LogFile->write(EQEMuLog::Debug, "Database setup started..");
+	DBSetup_webdata_character();
+	DBSetup_webdata_servers();
 	return true;
 }
 
-bool Database::DBSetup_character_data(){
-	std::string check_query = StringFormat("SELECT `last_seen` FROM character_data");
-	auto check_results = QueryDatabase(check_query);
-	LogFile->write(EQEMuLog::Debug, "Database setup started..");
-	if (!check_results.Success()){
-		std::string alter_query = StringFormat("ALTER TABLE `character_data` ADD `last_seen` int(11) NOT NULL DEFAULT 0 AFTER `last_login`");
-		LogFile->write(EQEMuLog::Debug, "Database UPDATE attempting to be applied..");
-		auto alter_results = QueryDatabase(alter_query);
-		if (!alter_results.Success()){
-			LogFile->write(EQEMuLog::Error, "Error updating database table.");
+bool Database::DBSetup_webdata_character() {
+	std::string check_query = StringFormat("SHOW TABLES LIKE 'webdata_character'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() == 0){
+		std::string create_query = StringFormat(
+			"Create TABLE `webdata_character` (								"
+			"`id` int(11) NOT NULL,											"
+			"`name` varchar(32) NULL,										"
+			"`last_login` int(11) NULL,										"
+			"`last_seen` int(11) NULL,										"
+			"PRIMARY KEY(`id`)												"
+			") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;	"
+			);
+		LogFile->write(EQEMuLog::Debug, "Attepting to create table webdata_character..");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success()){
+			LogFile->write(EQEMuLog::Error, "Error creating webdata_character table.");
 			return false;
 		}
-		LogFile->write(EQEMuLog::Debug, "Database UPDATE applied.");
-		return true;
+		LogFile->write(EQEMuLog::Debug, "webdata_character table created.");
 	}
-	LogFile->write(EQEMuLog::Debug, "Database already applied.");
+	return true;
+}
+
+bool Database::DBSetup_webdata_servers() {
+	std::string check_query = StringFormat("SHOW TABLES LIKE 'webdata_servers'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() == 0){
+		std::string create_query = StringFormat(
+			"Create TABLE `webdata_servers` (								"
+			"`id` int(11) NOT NULL,											"
+			"`name` varchar(32) NULL,										"
+			"`connected` tinyint(3) NULL DEFAULT 0,							"
+			"PRIMARY KEY(`id`)												"
+			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
+			);
+		LogFile->write(EQEMuLog::Debug, "Attepting to create table webdata_servers..");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success()){
+			LogFile->write(EQEMuLog::Error, "Error creating webdata_servers table.");
+			return false;
+		}
+		LogFile->write(EQEMuLog::Debug, "webdata_servers table created.");
+	}
 	return true;
 }

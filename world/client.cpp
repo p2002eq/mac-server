@@ -770,7 +770,7 @@ void Client::EnterWorld(bool TryBootup) {
 
 	cle->SetChar(charid, char_name);
 
-	database.CharacterJoin(charid);
+	database.CharacterJoin(charid, char_name);
 	database.UpdateLiveChar(char_name, GetAccountID());
 	clog(WORLD__CLIENT,"%s %s (%d:%d)",seencharsel ? "Entering zone" : "Zoning to",zone_name,zoneID,instanceID);
 //	database.SetAuthentication(account_id, char_name, zone_name, ip);
