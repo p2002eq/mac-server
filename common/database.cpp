@@ -3036,11 +3036,11 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-		LogFile->write(EQEMuLog::Debug, "ZoneConnected should have wrote '0' to webdata_servers for %i.", id);
+		LogFile->write(EQEMuLog::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
 	}
-	LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+	LogFile->write(EQEMuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
 	return true;
 }
 
