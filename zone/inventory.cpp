@@ -1017,14 +1017,14 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 		uint32 srcbagid =0;
 		uint32 dstbagid = 0;
 
-		//if (src_slot_id >= 250 && src_slot_id < 330) {
-		if (src_slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && src_slot_id <= EmuConstants::GENERAL_BAGS_END) {
+		//if (src_slot_id >= 250 && src_slot_id < 339) {
+		if (src_slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && src_slot_id <= EmuConstants::CURSOR_BAG_END) {
 			srcbag = m_inv.GetItem(((int)(src_slot_id / 10)) - 3);
 			if (srcbag)
 				srcbagid = srcbag->GetItem()->ID;
 		}
-		//if (dst_slot_id >= 250 && dst_slot_id < 330) {
-		if (dst_slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && dst_slot_id <= EmuConstants::GENERAL_BAGS_END) {
+		//if (dst_slot_id >= 250 && dst_slot_id < 339) {
+		if (dst_slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && dst_slot_id <= EmuConstants::CURSOR_BAG_END) {
 			dstbag = m_inv.GetItem(((int)(dst_slot_id / 10)) - 3);
 			if (dstbag)
 				dstbagid = dstbag->GetItem()->ID;

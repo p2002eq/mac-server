@@ -485,13 +485,47 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 				if (inst && inst->IsType(ItemClassContainer)) {
 					mlog(TRADING__CLIENT, "Giving container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
 
-					// TODO: need to check bag items/augments for no drop..everything for attuned...
 					if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
 						int16 free_slot = other->GetInv().FindFreeSlotForTradeItem(inst);
 
 						if (free_slot != INVALID_INDEX) {
 							if (other->PutItemInInventory(free_slot, *inst, true)) {
 								mlog(TRADING__CLIENT, "Container %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
+								
+								// step 1a: process items in bags
+								uint8 bagidx = 0;
+								for (int16 trade_bag_slot = EmuConstants::TRADE_BAGS_BEGIN; trade_bag_slot <= EmuConstants::TRADE_BAGS_END; ++trade_bag_slot) {
+									const ItemInst* inst = m_inv[trade_bag_slot];
+
+									if (inst) {
+									mlog(TRADING__CLIENT, "Giving item in container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_bag_slot, other->GetName());
+	
+										if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
+											int16 free_bag_slot = other->GetInv().CalcSlotId(free_slot, bagidx);
+											mlog(TRADING__CLIENT, "Free slot is: %i. Bag slot is: %i", free_bag_slot, free_slot);
+											if (free_bag_slot != INVALID_INDEX) {
+												if (other->PutItemInInventory(free_bag_slot, *inst, true)) {
+													bagidx++;
+													mlog(TRADING__CLIENT, "Container item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
+												}
+
+												else {
+													mlog(TRADING__ERROR, "Transfer of container item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
+													PushItemOnCursor(*inst, true);
+												}
+											}
+											else {
+												mlog(TRADING__ERROR, "%s's inventory is full, returning container item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
+												PushItemOnCursor(*inst, true);
+											}
+										}
+										else {
+											mlog(TRADING__ERROR, "Container item %s (%d) is NoDrop, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID);
+											PushItemOnCursor(*inst, true);
+										}
+										DeleteItemInInventory(trade_bag_slot);
+									}
+								}
 								if (qs_log) {
 									QSTradeItems_Struct* detail = new QSTradeItems_Struct;
 
