@@ -629,9 +629,9 @@ public:
 	/*
 	* Database Setup for boostraps only.
 	*/
-	bool Database::DBSetup();
-	bool Database::DBSetup_webdata_character();
-	bool Database::DBSetup_webdata_servers();
+	bool DBSetup();
+	bool DBSetup_webdata_character();
+	bool DBSetup_webdata_servers();
 
 	/*
 	* Database Variables
