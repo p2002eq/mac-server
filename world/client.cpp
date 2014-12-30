@@ -647,6 +647,12 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 			// they are handled.
 			return true;
 		}
+		case OP_ChecksumExe:
+		case OP_ChecksumSpell:
+		{
+			// Implementation is not open source.
+			return true;
+		}
 		default:
 		{
 			clog(WORLD__CLIENT_ERR,"Received unknown EQApplicationPacket");

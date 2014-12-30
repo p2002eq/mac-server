@@ -303,7 +303,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 		return;
 
 	if(!p_timers.Expired(&database, pTimerCombatAbility, false)) {
-		Message(13,"Ability recovery time not yet met.");
+		Message(CC_Red,"Ability recovery time not yet met.");
 		return;
 	}
 

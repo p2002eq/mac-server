@@ -265,15 +265,15 @@ void WorldServer::Process() {
 				switch(ztz->response)
 				{
 				case -2: {
-					entity->CastToClient()->Message(13,"You do not own the required locations to enter this zone.");
+					entity->CastToClient()->Message(CC_Red,"You do not own the required locations to enter this zone.");
 					break;
 				}
 				case -1: {
-					entity->CastToClient()->Message(13,"The zone is currently full, please try again later.");
+					entity->CastToClient()->Message(CC_Red,"The zone is currently full, please try again later.");
 					break;
 				}
 				case 0:	{
-					entity->CastToClient()->Message(13,"All zone servers are taken at this time, please try again later.");
+					entity->CastToClient()->Message(CC_Red,"All zone servers are taken at this time, please try again later.");
 					break;
 				}
 				}
@@ -1601,9 +1601,7 @@ bool WorldServer::SendChannelMessage(Client* from, const char* to, uint8 chan_nu
 	va_list argptr;
 	char buffer[512];
 
-	va_start(argptr, message);
-	vsnprintf(buffer, 512, message, argptr);
-	va_end(argptr);
+	memcpy(buffer, message, 512);
 	buffer[511] = '\0';
 
 	ServerPacket* pack = new ServerPacket(ServerOP_ChannelMessage, sizeof(ServerChannelMessage_Struct) + strlen(buffer) + 1);

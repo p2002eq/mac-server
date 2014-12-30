@@ -110,6 +110,7 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_UpdateAA] = &Client::Handle_Connect_OP_UpdateAA;
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
+	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 
 	//temporary hack
 	ConnectingOpcodes[OP_GetGuildsList] = &Client::Handle_OP_GetGuildsList;
@@ -1494,7 +1495,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FastQueuePacket(&outapp);
 
 	/* LFG packet */
-	LFG = false; //LFG doesn't survive zoning.
+	// This tells the client who in the zone are LFG. Our own status is handled by a Connecting handle
 	entity_list.SendLFG(this, true);
 
 	/*
@@ -1521,7 +1522,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			const ItemInst* inst = m_inv[slot_id];
 			if (inst){
 				itemsinabag = true;
-				_log(EQMAC__LOG, "Sending cursor bag item %s in slot: %i to %s", inst->GetItem()->Name, slot_id, GetName());
+				mlog(INVENTORY__SLOTS, "Sending cursor bag with items.");
+				break;
 			}
 		}
 	}
@@ -1551,7 +1553,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 	//Action packet is always 256 bytes, but fields have varying positions.
 	if (app->size != 256)
 	{
-		_log(EQMAC__LOG, "Caught an invalid AAAction packet. Size is: %d", app->size);
+		LogFile->write(EQEMuLog::Error, "Caught an invalid AAAction packet. Size is: %d", app->size);
 		return;
 	}
 
@@ -1596,7 +1598,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		action->exp_value = m_epp.perAA;
 		action->unknown08 = 0;
 
-		LogFile->write(EQEMuLog::Debug, "Buying: EmuaaID: %i, MacaaID: %i, action: %i, exp: %i", action->ability, aa, action->action, action->exp_value);
+		mlog(AA__MESSAGE, "Buying: EmuaaID: %i, MacaaID: %i, action: %i, exp: %i", action->ability, aa, action->action, action->exp_value);
 		BuyAA(action);
 	}
 	else if (strncmp((char *)app->pBuffer, "activate ", 9) == 0)
@@ -2254,11 +2256,7 @@ void Client::Handle_OP_ChannelMessage(const EQApplicationPacket *app)
 		return;
 	}
 
-	std::string s(cm->message);
-	replace_all(s, "%", "percent");
-	const char* filteredmessage = s.c_str();
-
-	ChannelMessageReceived(cm->chan_num, cm->language, cm->skill_in_language, filteredmessage, cm->targetname);
+	ChannelMessageReceived(cm->chan_num, cm->language, cm->skill_in_language, cm->message, cm->targetname);
 	return;
 }
 
@@ -7000,7 +6998,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
 			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 				Message(CC_Red, "You do not have room for any more items.");
-				DropInst(inst);
+				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 				QueuePacket(outapp);
 				safe_delete(outapp);
 				safe_delete(inst);

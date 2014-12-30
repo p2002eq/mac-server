@@ -1448,7 +1448,7 @@ void command_viewpetition(Client *c, const Seperator *sep)
 		return;
     }
 
-    c->Message(13,"	ID : Character Name , Petition Text");
+    c->Message(CC_Red,"	ID : Character Name , Petition Text");
 
     std::string query = "SELECT petid, charname, petitiontext FROM petitions ORDER BY petid";
     auto results = database.QueryDatabase(query);
@@ -1458,7 +1458,7 @@ void command_viewpetition(Client *c, const Seperator *sep)
     LogFile->write(EQEMuLog::Normal,"View petition request from %s, petition number: %i", c->GetName(), atoi(sep->argplus[1]) );
 
     if (results.RowCount() == 0) {
-        c->Message(13,"There was an error in your request: ID not found! Please check the Id and try again.");
+        c->Message(CC_Red,"There was an error in your request: ID not found! Please check the Id and try again.");
         return;
     }
 

@@ -527,6 +527,9 @@ RULE_CATEGORY_END()
 
 RULE_CATEGORY( Groundspawns )
 RULE_INT ( Groundspawns, DecayTime, 300000 )	// Decay time of player dropped items.
+RULE_INT ( Groundspawns, DisarmDecayTime, 300000 )	// Decay time of weapons dropped due to disarm
+RULE_INT ( Groundspawns, FullInvDecayTime, 300000 )	// Decay time of items dropped due to full inventory (trades/merchants)
+RULE_BOOL ( Groundspawns, RandomSpawn, true )	// Determines if groundspawns with random spanw locs will periodically despawn and respawn elsewhere.
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

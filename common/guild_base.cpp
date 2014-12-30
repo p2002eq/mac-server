@@ -1038,7 +1038,7 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 			gle->unknown1 = 0xFFFFFFFF;
 			gle->unknown3 = 0xFFFFFFFF;
 
-			_log(GUILDS__ERROR,"Added Guild: %i (%s)",gle->guildID,gle->name);
+			_log(GUILDS__REFRESH, "Added Guild: %i (%s)",gle->guildID,gle->name);
 			memcpy(&gl->Guilds[c-1],gle,sizeof(OldGuildsListEntry_Struct));
 			size += sizeof(OldGuildsListEntry_Struct);
 			c++; //hehe
@@ -1046,7 +1046,6 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 	}
 	safe_delete(gle);
 	length = size;
-	_log(GUILDS__ERROR,"Length: %i", length);
 	return(gl);
 }
 

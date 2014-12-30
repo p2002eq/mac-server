@@ -335,7 +335,7 @@ void Client::ResetTrade() {
 				SendItemPacket(free_slot, inst, ItemPacketTrade);
 			}
 			else {
-				DropInst(inst);
+				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 			}
 
 			DeleteItemInInventory(trade_slot);
@@ -435,7 +435,7 @@ void Client::ResetTrade() {
 				SendItemPacket(free_slot, inst, ItemPacketTrade);
 			}
 			else {
-				DropInst(inst);
+				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 			}
 
 			DeleteItemInInventory(trade_slot);

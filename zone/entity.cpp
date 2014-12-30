@@ -1106,9 +1106,7 @@ void EntityList::ChannelMessage(Mob *from, uint8 chan_num, uint8 language,
 	va_list argptr;
 	char buffer[4096];
 
-	va_start(argptr, message);
-	vsnprintf(buffer, 4096, message, argptr);
-	va_end(argptr);
+	memcpy(buffer, message, 4096);
 
 	auto it = client_list.begin();
 	while(it != client_list.end()) {
@@ -1132,9 +1130,7 @@ void EntityList::ChannelMessageSend(Mob *to, uint8 chan_num, uint8 language, con
 	va_list argptr;
 	char buffer[4096];
 
-	va_start(argptr, message);
-	vsnprintf(buffer, 4096, message, argptr);
-	va_end(argptr);
+	memcpy(buffer, message, 4096);
 
 	if (client_list.count(to->GetID()))
 		client_list.at(to->GetID())->ChannelMessageSend(0, 0, chan_num, language, buffer);
