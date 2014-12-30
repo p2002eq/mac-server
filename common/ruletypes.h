@@ -154,7 +154,6 @@ RULE_INT ( World, PVPSettings, 0) // Sets the PVP settings for the server, 1 = R
 RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
 RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
 RULE_BOOL (World, IPLimitDisconnectAll, false)
-RULE_BOOL( World, AnnounceJoinQuits, false) //Broadcasts player logins and log outs if true.
 RULE_INT (World, TellQueueSize, 20) 
 RULE_BOOL (World, UseDBUpdate, false) //Automatic Database Upgrade Script
 RULE_CATEGORY_END()
@@ -524,6 +523,10 @@ RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
 RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
 RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
+RULE_CATEGORY_END()
+
+RULE_CATEGORY( Groundspawns )
+RULE_INT ( Groundspawns, DecayTime, 300000 )	// Decay time of player dropped items.
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

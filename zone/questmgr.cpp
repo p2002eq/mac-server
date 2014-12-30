@@ -952,7 +952,7 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 				//we may want to come up with a function like Client::GetNextAvailableSpellBookSlot() to help speed this up a little
 				for(uint32 r = 0; r < MAX_PP_DISCIPLINES; r++) {
 					if(initiator->GetPP().disciplines.values[r] == curspell) {
-						initiator->Message(13, "You already know this discipline.");
+						initiator->Message(CC_Red, "You already know this discipline.");
 						break;	//continue the 1st loop
 					}
 					else if(initiator->GetPP().disciplines.values[r] == 0) {
@@ -2210,13 +2210,13 @@ uint16 QuestManager::CreateInstance(const char *zone, int16 version, uint32 dura
 		uint16 id = 0;
 		if(!database.GetUnusedInstanceID(id))
 		{
-			initiator->Message(13, "Server was unable to find a free instance id.");
+			initiator->Message(CC_Red, "Server was unable to find a free instance id.");
 			return 0;
 		}
 
 		if(!database.CreateInstance(id, zone_id, version, duration))
 		{
-			initiator->Message(13, "Server was unable to create a new instance.");
+			initiator->Message(CC_Red, "Server was unable to create a new instance.");
 			return 0;
 		}
 		return id;

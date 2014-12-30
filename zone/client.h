@@ -936,6 +936,8 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	bool IsLFG() { return LFG; }
 
+	bool Disarm(Client* client);
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);

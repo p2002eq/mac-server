@@ -69,7 +69,6 @@ void command_sendop(Client *c, const Seperator *sep);
 void command_optest(Client *c, const Seperator *sep);
 void command_help(Client *c, const Seperator *sep);
 void command_version(Client *c, const Seperator *sep);
-void command_dbversion(Client *c, const Seperator *sep);
 void command_setfaction(Client *c, const Seperator *sep);
 void command_serversidename(Client *c, const Seperator *sep);
 void command_testspawnkill(Client *c, const Seperator *sep);
@@ -319,6 +318,7 @@ void command_npctype_cache(Client *c, const Seperator *sep);
 void command_starve(Client *c, const Seperator *sep);
 void command_merchantopenshop(Client *c, const Seperator *sep);
 void command_merchantcloseshop(Client *c, const Seperator *sep);
+void command_questupdate(Client *c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);

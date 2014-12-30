@@ -428,10 +428,9 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if(!CheckRegion(spell_target) || 
-		((zone->IsCity() || !zone->CanCastOutdoor()) && 
+		if((zone->IsCity() || !zone->CanCastOutdoor()) && 
 		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id)))
+		!IsBindSightSpell(spell_id))
 		{
 			mlog(SPELLS__CASTING, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_Red,spell_id);
@@ -534,7 +533,7 @@ bool Mob::DoCastingChecks()
 	}
 
 	if (IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()) {
-		Message(13, "You can't levitate in this zone.");
+		Message(CC_Red, "You can't levitate in this zone.");
 		return false;
 	}
 
@@ -544,7 +543,7 @@ bool Mob::DoCastingChecks()
 			Message(13, msg);
 			return false;
 		} else {
-			Message(13, "You can't cast this spell here.");
+			Message(CC_Red, "You can't cast this spell here.");
 			return false;
 		}
 	}
@@ -1096,7 +1095,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		else
 		{
 			mlog(SPELLS__CASTING_ERR, "Item used to cast spell %d was missing from inventory slot %d after casting!", spell_id, inventory_slot);
-			Message(13, "Casting Error: Active casting item not found in inventory slot %i", inventory_slot);
+			Message(CC_Red, "Casting Error: Active casting item not found in inventory slot %i", inventory_slot);
 			InterruptSpell();
 			return;
 		}
@@ -1858,7 +1857,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	if(IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()){
 			if(IsClient()){
 				if(!CastToClient()->GetGM()){
-					Message(13, "You can't levitate in this zone.");
+					Message(CC_Red, "You can't levitate in this zone.");
 					return false;
 				}
 			}
@@ -1873,7 +1872,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				return false;
 			}
 			else{
-				Message(13, "You can't cast this spell here.");
+				Message(CC_Red, "You can't cast this spell here.");
 				return false;
 			}
 
@@ -2253,10 +2252,12 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target)
 	{
-		if(!CheckRegion(spell_target) || 
-		((zone->IsCity() || !zone->CanCastOutdoor()) &&
+		if(!CheckRegion(spell_target))
+			return(false);
+
+		if((zone->IsCity() || !zone->CanCastOutdoor()) &&
 		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id)))
+		!IsBindSightSpell(spell_id))
 		{
 			mlog(SPELLS__CASTING, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
 			Message_StringID(CC_Red, CANT_SEE_TARGET);
@@ -3203,7 +3204,17 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	if(!spelltar)
 	{
 		mlog(SPELLS__CASTING_ERR, "Unable to apply spell %d without a target", spell_id);
-		Message(13, "SOT: You must have a target for this spell.");
+		Message(CC_Red, "SOT: You must have a target for this spell.");
+		return false;
+	}
+
+	// Casting on an entity in a different region silently fails after letting the spell be cast
+	if(!CheckRegion(spelltar))
+	{
+		if(IsClient() && spelltar->IsClient())
+		{
+			spelltar->Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetName());
+		}
 		return false;
 	}
 
@@ -4027,7 +4038,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 
 		else if (IsClient() && CastToClient()->CheckAAEffect(aaEffectWarcry))
 		{
-			Message(13, "Your are immune to fear.");
+			Message(CC_Red, "Your are immune to fear.");
 			mlog(SPELLS__RESISTS, "Clients has WarCry effect, immune to fear!");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
 			return true;

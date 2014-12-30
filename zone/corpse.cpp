@@ -931,14 +931,14 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 
 	if(IsPlayerCorpse() && corpse_db_id == 0) {
 		// SendLootReqErrorPacket(client, 0);
-		client->Message(13, "Warning: Corpse's dbid = 0! Corpse will not survive zone shutdown!");
+		client->Message(CC_Red, "Warning: Corpse's dbid = 0! Corpse will not survive zone shutdown!");
 		std::cout << "Error: PlayerCorpse::MakeLootRequestPackets: dbid = 0!" << std::endl;
 		// return;
 	}
 
 	if(is_locked && client->Admin() < 100) {
 		SendLootReqErrorPacket(client, 0);
-		client->Message(13, "Error: Corpse locked by GM.");
+		client->Message(CC_Red, "Error: Corpse locked by GM.");
 		return;
 	}
 
@@ -1026,7 +1026,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 				client->SendItemPacket(EmuConstants::CORPSE_BEGIN, inst, ItemPacketLoot);
 				safe_delete(inst);
 			}
-			else { client->Message(13, "Could not find item number %i to send!!", GetPlayerKillItem()); }
+			else { client->Message(CC_Red, "Could not find item number %i to send!!", GetPlayerKillItem()); }
 
 			client->QueuePacket(app);
 			return;
@@ -1074,7 +1074,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			}
 
 			if (IsPlayerCorpse() && i == 0 && itemlist.size() > 0) { // somehow, player corpse contains items, but client doesn't see them...
-				client->Message(13, "This corpse contains items that are inaccessable!");
+				client->Message(CC_Red, "This corpse contains items that are inaccessable!");
 				client->Message(15, "Contact a GM for item replacement, if necessary.");
 				client->Message(15, "BUGGED CORPSE [DBID: %i, Name: %s, Item Count: %i]", GetCorpseDBID(), GetName(), itemlist.size());
 
@@ -1108,7 +1108,7 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 
 	/* To prevent item loss for a player using 'Loot All' who doesn't have inventory space for all their items. */
 	if (RuleB(Character, CheckCursorEmptyWhenLooting) && !client->GetInv().CursorEmpty()) {
-		client->Message(13, "You may not loot an item while you have an item on your cursor.");
+		client->Message(CC_Red, "You may not loot an item while you have an item on your cursor.");
 		SendEndLootErrorPacket(client);
 		/* Unlock corpse for others */
 		if (this->being_looted_by = client->GetID()) {
@@ -1120,22 +1120,22 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 	LootingItem_Struct* lootitem = (LootingItem_Struct*)app->pBuffer;
 
 	if (this->being_looted_by != client->GetID()) {
-		client->Message(13, "Error: Corpse::LootItem: BeingLootedBy != client");
+		client->Message(CC_Red, "Error: Corpse::LootItem: BeingLootedBy != client");
 		SendEndLootErrorPacket(client);
 		return;
 	}
 	if (IsPlayerCorpse() && !CanPlayerLoot(client->CharacterID()) && !become_npc && (char_id != client->CharacterID() && client->Admin() < 150)) {
-		client->Message(13, "Error: This is a player corpse and you dont own it.");
+		client->Message(CC_Red, "Error: This is a player corpse and you dont own it.");
 		SendEndLootErrorPacket(client);
 		return;
 	}
 	if (is_locked && client->Admin() < 100) {
 		SendLootReqErrorPacket(client, 0);
-		client->Message(13, "Error: Corpse locked by GM.");
+		client->Message(CC_Red, "Error: Corpse locked by GM.");
 		return;
 	}
 	if (IsPlayerCorpse() && (char_id != client->CharacterID()) && CanPlayerLoot(client->CharacterID()) && GetPlayerKillItem() == 0){
-		client->Message(13, "Error: You cannot loot any more items from this corpse.");
+		client->Message(CC_Red, "Error: You cannot loot any more items from this corpse.");
 		SendEndLootErrorPacket(client);
 		being_looted_by = 0xFFFFFFFF;
 		return;
@@ -1343,7 +1343,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 	if (!spell) {
 		if (this->GetCharID() == client->CharacterID()) {
 			if (IsLocked() && client->Admin() < 100) {
-				client->Message(13, "That corpse is locked by a GM.");
+				client->Message(CC_Red, "That corpse is locked by a GM.");
 				return false;
 			}
 			if (!CheckDistance || (DistNoRootNoZ(*client) <= dist2)) {

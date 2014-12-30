@@ -57,7 +57,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 
 	if (in_combine->container_slot == legacy::SLOT_TRADESKILL) {
 		if(!worldo) {
-			user->Message(13, "Error: Server is not aware of the tradeskill container you are attempting to use");
+			user->Message(CC_Red, "Error: Server is not aware of the tradeskill container you are attempting to use");
 			return;
 		}
 		c_type = worldo->m_type;
@@ -76,7 +76,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 	}
 
 	if (!inst || !inst->IsType(ItemClassContainer)) {
-		user->Message(13, "Error: Server does not recognize specified tradeskill container");
+		user->Message(CC_Red, "Error: Server does not recognize specified tradeskill container");
 		return;
 	}
 
@@ -118,23 +118,23 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 	//changing from a switch to string of if's since we don't need to iterate through all of the skills in the SkillType enum
 	if (spec.tradeskill == SkillAlchemy) {
 		if (user_pp.class_ != SHAMAN) {
-			user->Message(13, "This tradeskill can only be performed by a shaman.");
+			user->Message(CC_Red, "This tradeskill can only be performed by a shaman.");
 			return;
 		}
 		else if (user_pp.level < MIN_LEVEL_ALCHEMY) {
-			user->Message(13, "You cannot perform alchemy until you reach level %i.", MIN_LEVEL_ALCHEMY);
+			user->Message(CC_Red, "You cannot perform alchemy until you reach level %i.", MIN_LEVEL_ALCHEMY);
 			return;
 		}
 	}
 	else if (spec.tradeskill == SkillTinkering) {
 		if (user_pp.race != GNOME) {
-			user->Message(13, "Only gnomes can tinker.");
+			user->Message(CC_Red, "Only gnomes can tinker.");
 			return;
 		}
 	}
 	else if (spec.tradeskill == SkillMakePoison) {
 		if (user_pp.class_ != ROGUE) {
-			user->Message(13, "Only rogues can mix poisons.");
+			user->Message(CC_Red, "Only rogues can mix poisons.");
 			return;
 		}
 	}

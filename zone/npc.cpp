@@ -228,6 +228,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 
 	primary_faction = 0;
 	SetNPCFactionID(d->npc_faction_id);
+	SetPreCharmNPCFactionID(d->npc_faction_id);
 
 	npc_spells_id = 0;
 	HasAISpell = false;
@@ -432,7 +433,7 @@ void NPC::QueryLoot(Client* to) {
 		{
 			static char itemid[7];
 			sprintf(itemid, "%06d", item->ID);
-			to->Message(0, "minlvl: %i maxlvl: %i %i: %c%c%s%s%c", (*cur)->min_level, (*cur)->max_level, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
+			to->Message(0, "(%i:%i) minlvl: %i maxlvl: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->lootslot, (*cur)->min_level, (*cur)->max_level, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			LogFile->write(EQEMuLog::Error, "Database error, invalid item");
@@ -1254,7 +1255,7 @@ void NPC::PickPocket(Client* thief) {
 	//make sure were allowed to targte them:
 	int olevel = GetLevel();
 	if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
-		thief->Message(13, "You are too inexperienced to pick pocket this target");
+		thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		//should we check aggro
 		return;
@@ -1263,7 +1264,7 @@ void NPC::PickPocket(Client* thief) {
 	if(zone->random.Roll(5)) {
 		AddToHateList(thief, 50);
 		Say("Stop thief!");
-		thief->Message(13, "You are noticed trying to steal!");
+		thief->Message(CC_Red, "You are noticed trying to steal!");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		return;
 	}

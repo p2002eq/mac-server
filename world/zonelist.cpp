@@ -100,6 +100,7 @@ void ZSList::Process() {
 			struct in_addr in;
 			in.s_addr = zs->GetIP();
 			_log(WORLD__ZONELIST,"Removing zoneserver #%d at %s:%d",zs->GetID(),zs->GetCAddress(),zs->GetCPort());
+			database.ZoneDisconnect(zs->GetZoneID());
 			zs->LSShutDownUpdate(zs->GetZoneID());
 			if (holdzones){
 				_log(WORLD__ZONELIST,"Hold Zones mode is ON - rebooting lost zone");
@@ -435,7 +436,6 @@ void ZSList::SendChannelMessageRaw(const char* from, const char* to, uint8 chan_
 	SendPacket(pack);
 	delete pack;
 }
-
 
 void ZSList::SendEmoteMessage(const char* to, uint32 to_guilddbid, int16 to_minstatus, uint32 type, const char* message, ...) {
 	if (!message)

@@ -978,9 +978,9 @@ void ClientList::ConsoleSendWhoAll(const char* to, int16 admin, Who_All_Struct* 
 			else if (cle->Admin() >= 81)
 				strcpy(tmpgm, "* Senior Guide * ");
 			else if (cle->Admin() >= 80)
-				strcpy(tmpgm, "* QuestTroupe * ");
-			else if (cle->Admin() >= 50)
 				strcpy(tmpgm, "* Guide * ");
+			else if (cle->Admin() >= 50)
+				strcpy(tmpgm, "* Novice Guide * ");
 			else if (cle->Admin() >= 20)
 				strcpy(tmpgm, "* Apprentice Guide * ");
 			else if (cle->Admin() >= 10)

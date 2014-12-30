@@ -508,8 +508,15 @@ public:
 	bool	ThrowDBError(std::string ErrorMessage, std::string query_title, std::string query);
 
 	/*
-	* General Character Related Stuff
+	* General Web page interface related stuff
 	*/
+	
+	bool	CharacterJoin(uint32 char_id, char* char_name);
+	bool	CharacterQuit(uint32 char_id);
+	bool	ZoneConnected(uint32 id, const char* name);
+	bool	ZoneDisconnect(uint32 id);
+	bool	LSConnected(uint32 port);
+	bool	LSDisconnect();
 
 	/* Character Creation */
 	bool	SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp);
@@ -618,6 +625,13 @@ public:
 	bool	CheckDatabaseConversions();
 	bool	CheckDatabaseConvertPPDeblob();
 	bool	CheckDatabaseConvertCorpseDeblob();
+
+	/*
+	* Database Setup for boostraps only.
+	*/
+	bool DBSetup();
+	bool DBSetup_webdata_character();
+	bool DBSetup_webdata_servers();
 
 	/*
 	* Database Variables

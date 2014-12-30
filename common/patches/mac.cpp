@@ -495,30 +495,6 @@ namespace Mac {
 		FINISH_ENCODE();	
 	}
 
-	ENCODE(OP_ChannelMessage) 
-	{
-		EQApplicationPacket *__packet = *p; 
-		*p = nullptr; 
-		unsigned char *__emu_buffer = __packet->pBuffer; 
-		ChannelMessage_Struct *emu = (ChannelMessage_Struct *) __emu_buffer; 
-		uint32 __i = 0; 
-		__i++; /* to shut up compiler */
-	
-		int msglen = __packet->size - sizeof(ChannelMessage_Struct);
-		int len = sizeof(structs::ChannelMessage_Struct) + msglen + 4;
-		__packet->pBuffer = new unsigned char[len]; 
-		__packet->size = len; 
-		memset(__packet->pBuffer, 0, len); 
-		structs::ChannelMessage_Struct *eq = (structs::ChannelMessage_Struct *) __packet->pBuffer; 
-		strncpy(eq->targetname, emu->targetname, 64);
-		strncpy(eq->sender, emu->sender, 64);
-		eq->language = emu->language;
-		eq->chan_num = emu->chan_num;
-		eq->skill_in_language = emu->skill_in_language;
-		strcpy(eq->message, emu->message);
-		FINISH_ENCODE();
-	}
-
 	ENCODE(OP_SpecialMesg)
 	{
 		EQApplicationPacket *__packet = *p; 
@@ -537,24 +513,6 @@ namespace Mac {
 		eq->msg_type = emu->msg_type;
 		strcpy(eq->message, emu->message);
 		FINISH_ENCODE();
-	}
-
-	DECODE(OP_ChannelMessage)
-	{
-		unsigned char *__eq_buffer = __packet->pBuffer;
-		structs::ChannelMessage_Struct *eq = (structs::ChannelMessage_Struct *) __eq_buffer;
-		int msglen = __packet->size - sizeof(structs::ChannelMessage_Struct) - 4;
-		int len = msglen + sizeof(ChannelMessage_Struct);
-		__packet->size = len; 
-		__packet->pBuffer = new unsigned char[len];
-		MEMSET_IN(ChannelMessage_Struct);
-		ChannelMessage_Struct *emu = (ChannelMessage_Struct *) __packet->pBuffer;
-		strncpy(emu->targetname, eq->targetname, 64);
-		strncpy(emu->sender, eq->targetname, 64);
-		emu->language = eq->language;
-		emu->chan_num = eq->chan_num;
-		emu->skill_in_language = eq->skill_in_language;
-		strcpy(emu->message, eq->message);
 	}
 
 	ENCODE(OP_MobUpdate)
@@ -1445,12 +1403,12 @@ namespace Mac {
 		int g;
 		for(g=0; g<10; g++)
 		{
-			/*if(eq->itemsinbag[g] > 0)
+			if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
 				_log(EQMAC__LOG, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
-			else*/
+			else
 				eq->itemsinbag[g] = 0xFFFF;
 		}
 		eq->unknown208 = 0xFFFFFFFF;

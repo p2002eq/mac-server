@@ -892,11 +892,11 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				if(parse->PlayerHasQuestSub(EVENT_COMMAND)) {
 					int i = parse->EventPlayer(EVENT_COMMAND, this, message, 0);
 					if(i == 0 && !RuleB(Chat, SuppressCommandErrors)) {
-						Message(13, "Command '%s' not recognized.", message);
+						Message(CC_Red, "Command '%s' not recognized.", message);
 					}
 				} else {
 					if(!RuleB(Chat, SuppressCommandErrors))
-						Message(13, "Command '%s' not recognized.", message);
+						Message(CC_Red, "Command '%s' not recognized.", message);
 				}
 			}
 			break;
@@ -1516,7 +1516,7 @@ bool Client::ChangeFirstName(const char* in_firstname, const char* gmname)
 
 void Client::SetGM(bool toggle) {
 	m_pp.gm = toggle ? 1 : 0;
-	Message(13, "You are %s a GM.", m_pp.gm ? "now" : "no longer");
+	Message(CC_Red, "You are %s a GM.", m_pp.gm ? "now" : "no longer");
 	SendAppearancePacket(AT_GM, m_pp.gm);
 	Save();
 	UpdateWho();
@@ -1967,7 +1967,7 @@ uint16 Client::GetMaxSkillAfterSpecializationRules(SkillUseTypes skillid, uint16
 			}
 			else
 			{
-				Message(13, "Your spell casting specializations skills have been reset. "
+				Message(CC_Red, "Your spell casting specializations skills have been reset. "
 						"Only %i primary specialization skill is allowed.", MaxSpecializations);
 
 				for(int i = SkillSpecializeAbjure; i <= SkillSpecializeEvocation; ++i)
@@ -2003,7 +2003,7 @@ void Client::SetPVP(bool toggle) {
 	if(GetPVP())
 		this->Message_StringID(MT_Shout,PVP_ON);
 	else
-		Message(13, "You no longer follow the ways of discord.");
+		Message(CC_Red, "You no longer follow the ways of discord.");
 
 	SendAppearancePacket(AT_PVP, GetPVP());
 	Save();
@@ -2773,7 +2773,7 @@ void Client::ChangeSQLLog(const char *file) {
 	}
 	if(file != nullptr) {
 		if(strstr(file, "..") != nullptr) {
-			Message(13, ".. is forbibben in SQL log file names.");
+			Message(CC_Red, ".. is forbibben in SQL log file names.");
 			return;
 		}
 		char buf[512];
@@ -2781,7 +2781,7 @@ void Client::ChangeSQLLog(const char *file) {
 		buf[511] = '\0';
 		SQL_log = fopen(buf, "a");
 		if(SQL_log == nullptr) {
-			Message(13, "Unable to open SQL log file: %s\n", strerror(errno));
+			Message(CC_Red, "Unable to open SQL log file: %s\n", strerror(errno));
 		}
 	}
 }
@@ -3763,7 +3763,7 @@ void Client::SuspendMinion()
 
 			if(!CurrentPet)
 			{
-				Message(13, "Failed to recall suspended minion.");
+				Message(CC_Red, "Failed to recall suspended minion.");
 				return;
 			}
 
@@ -4066,7 +4066,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	if(!database.GetPetEntry(spells[spell_id].teleport_zone, &record))
 	{
 		LogFile->write(EQEMuLog::Error, "Unknown doppelganger spell id: %d, check pets table", spell_id);
-		Message(13, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
+		Message(CC_Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
 		return;
 	}
 
@@ -5533,5 +5533,24 @@ bool Client::IsTargetInMyGroup(Client* target)
 		return this->GetGroup() == target->GetGroup();
 	}
 
+	return false;
+}
+
+bool Client::Disarm(Client* client)
+{
+	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
+	if(weapon)
+	{
+		uint8 charges = weapon->GetCharges();
+		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+		if(freeslotid != INVALID_INDEX)
+		{
+			client->DeleteItemInInventory(MainPrimary,0,true);
+			client->SummonItem(weapon->GetID(),charges,0,0,0,0,0,false,freeslotid);
+			client->WearChange(MaterialPrimary,0,0);
+
+			return true;
+		}
+	}
 	return false;
 }

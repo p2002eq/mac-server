@@ -152,7 +152,7 @@ bool Zone::LoadZoneObjects() {
 
 	std::string query = StringFormat("SELECT id, zoneid, xpos, ypos, zpos, heading, "
                                     "itemid, charges, objectname, type, icon, unknown08, "
-                                    "unknown10, unknown20, unknown24, unknown76 fROM object "
+                                    "unknown10, unknown20, unknown24, unknown76 FROM object "
                                     "WHERE zoneid = %i AND (version = %u OR version = -1)",
                                     zoneid, instanceversion);
     auto results = database.QueryDatabase(query);
@@ -249,26 +249,19 @@ bool Zone::LoadZoneObjects() {
             inst = database.CreateItem(itemid);
         }
 
-			// Load child objects if container
-			if (inst && inst->IsType(ItemClassContainer)) {
-				database.LoadWorldContainer(id, inst);
-				for (uint8 i=0; i<10; i++) {
-					const ItemInst* b_inst = inst->GetItem(i);
-					if (b_inst) {
-						data.itemsinbag[i] = b_inst->GetID();
-					}
+		// Load child objects if container
+		if (inst && inst->IsType(ItemClassContainer)) {
+			database.LoadWorldContainer(id, inst);
+			for (uint8 i=0; i<10; i++) {
+				const ItemInst* b_inst = inst->GetItem(i);
+				if (b_inst) {
+					data.itemsinbag[i] = b_inst->GetID();
 				}
 			}
-
-        // Load child objects if container
-        if (inst && inst->IsType(ItemClassContainer)) {
-            database.LoadWorldContainer(id, inst);
-        }
+		}
 
         Object* object = new Object(id, type, icon, data, inst);
         entity_list.AddObject(object, false);
-        if(type == OT_DROPPEDITEM && itemid != 0)
-            entity_list.RemoveObject(object->GetID());
 
         safe_delete(inst);
     }

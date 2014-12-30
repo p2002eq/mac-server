@@ -123,35 +123,45 @@ int Mob::GetBashDamage() {
 void Mob::ApplySpecialAttackMod(SkillUseTypes skill, int32 &dmg, int32 &mindmg) {
 	int item_slot = -1;
 	//1: Apply bonus from AC (BOOT/SHIELD/HANDS) est. 40AC=6dmg
+	switch (skill){
+
+		case SkillFlyingKick:
+		case SkillRoundKick:
+		case SkillKick:
+			item_slot = MainFeet;
+			break;
+
+		case SkillBash:
+			item_slot = MainSecondary;
+			break;
+
+		case SkillDragonPunch:
+		case SkillEagleStrike:
+		case SkillTigerClaw:
+			item_slot = MainHands;
+			break;
+
+		default:
+			break;
+	}
 	if (IsClient()){
-		switch (skill){
-
-			case SkillFlyingKick:
-			case SkillRoundKick:
-			case SkillKick:
-				item_slot = MainFeet;
-				break;
-
-			case SkillBash:
-				item_slot = MainSecondary;
-				break;
-
-			case SkillDragonPunch:
-			case SkillEagleStrike:
-			case SkillTigerClaw:
-				item_slot = MainHands;
-				break;
-
-			default:
-				break;
-		}
-
 		if (item_slot >= 0){
 			const ItemInst* itm = nullptr;
 			itm = CastToClient()->GetInv().GetItem(item_slot);
 			if(itm)
 				dmg += itm->GetItem()->AC * (RuleI(Combat, SpecialAttackACBonus))/100;
 		}
+	}
+	else if(IsNPC()){
+		if (item_slot >= 0){
+			ServerLootItem_Struct* item = CastToNPC()->GetItem(item_slot);
+			if(item)
+			{
+				const ItemInst* itm  = database.CreateItem(item->item_id);
+				dmg += itm->GetItem()->AC * (RuleI(Combat, SpecialAttackACBonus))/100;
+			}
+		}
+
 	}
 }
 

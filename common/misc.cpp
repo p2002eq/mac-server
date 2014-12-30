@@ -570,3 +570,12 @@ char printable[17];
 	sprintf(ptr,"  | %.16s",printable);
 }
 
+void replace_all(std::string& in, std::string old, std::string repl)
+{
+	for (std::string::size_type pos = 0;
+		(pos = in.find(old, pos)) != std::string::npos;
+		pos += repl.size())
+	{
+		in.replace(pos, old.size(), repl);
+	}
+}

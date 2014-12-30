@@ -37,6 +37,7 @@ int EQsprintf(char *buffer, const char *pattern, const char *arg1, const char *a
 std::string generate_key(int length);
 void build_hex_line(const char *buffer, unsigned long length, unsigned long offset, char *out_buffer, unsigned char padding=4);
 void print_hex(const char *buffer, unsigned long length);
+void replace_all(std::string& in, std::string old, std::string repl);
 
 #endif
 
