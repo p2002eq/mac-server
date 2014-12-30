@@ -318,6 +318,7 @@ void command_npctype_cache(Client *c, const Seperator *sep);
 void command_starve(Client *c, const Seperator *sep);
 void command_merchantopenshop(Client *c, const Seperator *sep);
 void command_merchantcloseshop(Client *c, const Seperator *sep);
+void command_questupdate(Client *c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);
