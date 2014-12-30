@@ -650,10 +650,6 @@ void Client::CompleteConnect()
 
 	SendStaminaUpdate();
 
-	//Send a message until we can figure out how to send these items to the client.
-	if (itemsinabag)
-		Message(CC_Red, "You have zoned with items in a bag on your cursor. Please put the bag in your inventory and camp or zone to avoid desyncs!");
-
 	if(GetClientVersion() == EQClientMac)
 	{
 		std::string string("Mac");
@@ -1519,7 +1515,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 
 		//Items in cursor container
-		itemsinabag = false;
+		itemsinabag = false; // This used to provide a message when we zoned with items in a bag before that worked, now it doesn't do anything but may be useful in the future.
 		int16 slot_id = 0;
 		for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
 			const ItemInst* inst = m_inv[slot_id];

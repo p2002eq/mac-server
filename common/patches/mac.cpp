@@ -1403,12 +1403,12 @@ namespace Mac {
 		int g;
 		for(g=0; g<10; g++)
 		{
-			/*if(eq->itemsinbag[g] > 0)
+			if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
 				_log(EQMAC__LOG, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
-			else*/
+			else
 				eq->itemsinbag[g] = 0xFFFF;
 		}
 		eq->unknown208 = 0xFFFFFFFF;

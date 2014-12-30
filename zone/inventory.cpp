@@ -349,6 +349,7 @@ void Client::DropItem(int16 slot_id)
 	// Package as zone object
 	Object* object = new Object(this, inst);
 	entity_list.AddObject(object, true);
+	object->Save();
 	object->StartDecay();
 
 	safe_delete(inst);
@@ -1297,8 +1298,29 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	if (dst_slot_id == MainCursor) {
 		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
 		database.SaveCursor(character_id, s, e);
-	} else
+
+	} 
+	else
+	{
 		database.SaveInventory(character_id, m_inv.GetItem(dst_slot_id), dst_slot_id);
+
+		// When we have a bag on the cursor filled with items that is new (zoned with it, summoned it, picked it up from the ground)
+		// the client is only aware of the bag. So, we have to send packets for each item within the bag once it is placed in the inventory.
+		const ItemInst* baginst = m_inv[dst_slot_id];
+		if(src_slot_id == MainCursor && baginst && baginst->IsType(ItemClassContainer))
+		{
+			for (int16 trade_bag_slot = EmuConstants::GENERAL_BAGS_BEGIN + (dst_slot_id - EmuConstants::GENERAL_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE; 
+				trade_bag_slot <= EmuConstants::GENERAL_BAGS_BEGIN + (dst_slot_id - EmuConstants::GENERAL_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE + 9; 
+				++trade_bag_slot) {
+				const ItemInst* inst = m_inv[trade_bag_slot];
+				if(inst)
+				{
+					mlog(INVENTORY__SLOTS, "Sending out packet for bagged item: %s in slot: %i bag slot: %i", inst->GetItem()->Name, trade_bag_slot, dst_slot_id);
+					SendItemPacket(trade_bag_slot, inst, ItemPacketTrade);
+				}
+			}
+		}
+	}
 
 	if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in, true); } // QS Audit
 

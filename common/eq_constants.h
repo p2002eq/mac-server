@@ -303,7 +303,7 @@ typedef enum {
 #define MT_NonMelee				283
 #define MT_WornOff				284
 #define MT_MoneySplit			285
-#define MT_LootMessages			286
+#define MT_LootMessages			286 // Filters under Damage Shield?
 #define MT_DiceRoll				287
 #define MT_OtherSpells			288
 #define MT_SpellFailure			289
@@ -346,7 +346,7 @@ typedef enum {
 #define MT_ItemLink				326
 #define MT_RaidSay				327
 #define MT_MyPet				328
-#define MT_DS					329
+#define MT_DS					329 //White text (should be non-melee) unknown filter
 #define MT_Leadership			330
 #define MT_PetFlurry			331
 #define MT_PetCrit				332
@@ -824,8 +824,8 @@ namespace legacy {
 		SLOT_PERSONAL_BAGS_BEGIN	= 251,
 		SLOT_PERSONAL_BAGS_END		= 330,
 
-		MainCursor_BAG_BEGIN		= 331,
-		MainCursor_BAG_END			= 340,
+		MainCursor_BAG_BEGIN		= 330,
+		MainCursor_BAG_END			= 339,
 
 		SLOT_TRIBUTE_BEGIN	= 400,
 		SLOT_TRIBUTE_END	= 404,
