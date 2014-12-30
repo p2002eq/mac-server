@@ -163,11 +163,12 @@ bool LoginServer::Process() {
 				WorldConfig::DisableLoginserver();
 				_log(WORLD__LS_ERR, "Login server responded with FatalError. Disabling reconnect.");
 	#else
-			_log(WORLD__LS_ERR, "Login server responded with FatalError.");
+				_log(WORLD__LS_ERR, "Login server responded with FatalError.");
 	#endif
 				if (pack->size > 1) {
 					_log(WORLD__LS_ERR, "     %s",pack->pBuffer);
 				}
+				database.LSDisconnect();
 				break;
 			}
 			case ServerOP_SystemwideMessage: {
@@ -190,7 +191,8 @@ bool LoginServer::Process() {
 			default:
 			{
 				_log(WORLD__LS_ERR, "Unknown LSOpCode: 0x%04x size=%d",(int)pack->opcode,pack->size);
-	DumpPacket(pack->pBuffer, pack->size);
+				DumpPacket(pack->pBuffer, pack->size);
+				database.LSDisconnect();
 				break;
 			}
 		}
@@ -207,7 +209,8 @@ bool LoginServer::InitLoginServer() {
 			Connect();
 		} else {
 			_log(WORLD__LS_ERR, "Not connected but not ready to connect, this is bad: %s:%d",
-				LoginServerAddress,LoginServerPort);
+			LoginServerAddress, LoginServerPort);
+			database.LSDisconnect();
 		}
 	}
 	return true;
@@ -218,24 +221,28 @@ bool LoginServer::Connect() {
 
 	char errbuf[TCPConnection_ErrorBufferSize];
 	if ((LoginServerIP = ResolveIP(LoginServerAddress, errbuf)) == 0) {
-		_log(WORLD__LS_ERR, "Unable to resolve '%s' to an IP.",LoginServerAddress);
+		_log(WORLD__LS_ERR, "Unable to resolve '%s' to an IP.", LoginServerAddress);
+		database.LSDisconnect();
 		return false;
 	}
 
 	if (LoginServerIP == 0 || LoginServerPort == 0) {
 		_log(WORLD__LS_ERR, "Connect info incomplete, cannot connect: %s:%d",LoginServerAddress,LoginServerPort);
+		database.LSDisconnect();
 		return false;
 	}
 
 	if (tcpc->ConnectIP(LoginServerIP, LoginServerPort, errbuf)) {
 		_log(WORLD__LS, "Connected to Loginserver: %s:%d",LoginServerAddress,LoginServerPort);
+		database.LSConnected(LoginServerPort);
 		SendNewInfo();
 		SendStatus();
 		zoneserver_list.SendLSZones();
 		return true;
 	}
 	else {
-		_log(WORLD__LS_ERR, "Could not connect to login server: %s:%d %s",LoginServerAddress,LoginServerPort,errbuf);
+		_log(WORLD__LS_ERR, "Could not connect to login server: %s:%d %s", LoginServerAddress, LoginServerPort, errbuf);
+		database.LSDisconnect();
 		return false;
 	}
 }

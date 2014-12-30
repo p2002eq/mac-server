@@ -515,6 +515,8 @@ public:
 	bool	CharacterQuit(uint32 char_id);
 	bool	ZoneConnected(uint32 id, const char* name);
 	bool	ZoneDisconnect(uint32 id);
+	bool	LSConnected(uint32 port);
+	bool	LSDisconnect();
 
 	/* Character Creation */
 	bool	SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp);

@@ -3039,8 +3039,46 @@ bool Database::ZoneDisconnect(uint32 id) {
 		LogFile->write(EQEMuLog::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+		return false;
 	}
 	LogFile->write(EQEMuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
+	return true;
+}
+
+bool Database::LSConnected(uint32 port) {
+	std::string connect_query = StringFormat(
+		"INSERT INTO `webdata_servers` (	"
+		"id,								" // id
+		"name,								" // name
+		"connected							" // 1
+		") VALUES (							"
+		"%i,								" // id
+		"'LoginServer',						" // name
+		"1									" // connected
+		") ON DUPLICATE KEY UPDATE			"
+		"connected=1						" // 1
+		,
+		port								// id
+		);
+	auto connect_results = QueryDatabase(connect_query);
+	LogFile->write(EQEMuLog::Debug, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+
+	if (!connect_results.Success()){
+		LogFile->write(EQEMuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
+		return false;
+	}
+	return true;
+}
+
+bool Database::LSDisconnect() {
+	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
+	auto results = QueryDatabase(query);
+	LogFile->write(EQEMuLog::Debug, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	if (!results.Success()){
+		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
+		return false;
+	}
+	LogFile->write(EQEMuLog::Error, "Updated webdata_servers table from LSDisconnect.");
 	return true;
 }
 
