@@ -526,6 +526,10 @@ RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Tra
 RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
 RULE_CATEGORY_END()
 
+RULE_CATEGORY( Groundspawns )
+RULE_INT ( Groundspawns, DecayTime, 300000 )	// Decay time of player dropped items.
+RULE_CATEGORY_END()
+
 #undef RULE_CATEGORY
 #undef RULE_INT
 #undef RULE_REAL

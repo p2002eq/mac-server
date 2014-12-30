@@ -1255,7 +1255,7 @@ void NPC::PickPocket(Client* thief) {
 	//make sure were allowed to targte them:
 	int olevel = GetLevel();
 	if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
-		thief->Message(13, "You are too inexperienced to pick pocket this target");
+		thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		//should we check aggro
 		return;
@@ -1264,7 +1264,7 @@ void NPC::PickPocket(Client* thief) {
 	if(zone->random.Roll(5)) {
 		AddToHateList(thief, 50);
 		Say("Stop thief!");
-		thief->Message(13, "You are noticed trying to steal!");
+		thief->Message(CC_Red, "You are noticed trying to steal!");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		return;
 	}

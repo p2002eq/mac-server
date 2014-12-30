@@ -153,7 +153,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	//max_AAXP = GetEXPForLevel(52) - GetEXPForLevel(51);	//GetEXPForLevel() doesn't depend on class/race, just level, so it shouldn't change between Clients
 	max_AAXP = RuleI(AA, ExpPerPoint);	//this may be redundant since we're doing this in Client::FinishConnState2()
 	if (max_AAXP == 0 || GetEXPForLevel(GetLevel()) == 0xFFFFFFFF) {
-		Message(13, "Error in Client::SetEXP. EXP not set.");
+		Message(CC_Red, "Error in Client::SetEXP. EXP not set.");
 		return; // Must be invalid class/race
 	}
 

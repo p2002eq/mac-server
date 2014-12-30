@@ -94,7 +94,7 @@ void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
 	ItemInst* inst = client->GetInv().GetItem(MainCursor);
 
 	if (!inst) {
-		client->Message(13, "Error: Could not find item on your cursor!");
+		client->Message(CC_Red, "Error: Could not find item on your cursor!");
 		return;
 	}
 
@@ -1091,7 +1091,7 @@ void Client::Trader_EndTrader() {
 			tdis->Unknown000 = 0;
 			tdis->TraderID = Customer->GetID();
 			tdis->Unknown012 = 0;
-			Customer->Message(13, "The Trader is no longer open for business");
+			Customer->Message(CC_Red, "The Trader is no longer open for business");
 
 			for(int i = 0; i < 80; i++) {
 				if(gis->Items[i] != 0) {
@@ -1582,8 +1582,8 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	_log(TRADING__CLIENT, "Actual quantity that will be traded is %i for cost: %i", outtbs->Quantity, outtbs->Price);
 
 	if(outtbs->Price <= 0) {
-		Message(13, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
-		Trader->Message(13, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
+		Message(CC_Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
+		Trader->Message(CC_Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
 		LogFile->write(EQEMuLog::Error, "Bazaar: Zero price transaction between %s and %s aborted."
 						"Item: %s, Charges: %i, TBS: Qty %i, Price: %i",
 						GetName(), Trader->GetName(),
@@ -1596,7 +1596,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	//uint64 TotalTransactionValue = static_cast<uint64>(tbs->Price) * static_cast<uint64>(outtbs->Quantity);
 
 	if(outtbs->Price > MAX_TRANSACTION_VALUE) {
-		Message(13, "That would exceed the single transaction limit of %u platinum.", MAX_TRANSACTION_VALUE / 1000);
+		Message(CC_Red, "That would exceed the single transaction limit of %u platinum.", MAX_TRANSACTION_VALUE / 1000);
 		TradeRequestFailed(app);
 		safe_delete(outapp);
 		return;
@@ -1957,7 +1957,7 @@ static void UpdateTraderCustomerItemsAdded(uint32 SellerID, uint32 CustomerID, T
 
 	if(!inst) return;
 
-	Customer->Message(13, "The Trader has put up %s for sale.", item->Name);
+	Customer->Message(CC_Red, "The Trader has put up %s for sale.", item->Name);
 
 	for(int i = 0; i < 80; i++) {
 
@@ -2008,7 +2008,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 			tdis->playerid = 0;
 			tdis->npcid = Customer->GetID();
 			tdis->type=65;
-			Customer->Message(13, "The Trader has withdrawn the %s from sale.", item->Name);
+			Customer->Message(CC_Red, "The Trader has withdrawn the %s from sale.", item->Name);
 
 			for(int i = 0; i < 80; i++) {
 				if(gis->ItemID[i] == ItemID) {
@@ -2038,7 +2038,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 		inst->SetMerchantCount(Charges);
 
 	// Let the customer know the price in the window has suddenly just changed on them.
-	Customer->Message(13, "The Trader has changed the price of %s.", item->Name);
+	Customer->Message(CC_Red, "The Trader has changed the price of %s.", item->Name);
 
 	for(int i = 0; i < 80; i++) {
 		if((gis->ItemID[i] != ItemID) ||
@@ -2187,7 +2187,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 			}
 
 			if(SameItemWithDifferingCharges)
-				Message(13, "Warning: You have more than one %s with different charges. They have all been added for sale "
+				Message(CC_Red, "Warning: You have more than one %s with different charges. They have all been added for sale "
 						"at the same price.", item->Name);
 		}
 
@@ -2235,8 +2235,8 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 		tsis->SubAction = BazaarPriceChange_Fail;
 		QueuePacket(outapp);
 		Trader_EndTrader();
-		Message(13, "You must remove the item from sale before you can increase the price while a customer is browsing.");
-		Message(13, "Click 'Begin Trader' to restart Trader mode with the increased price for this item.");
+		Message(CC_Red, "You must remove the item from sale before you can increase the price while a customer is browsing.");
+		Message(CC_Red, "Click 'Begin Trader' to restart Trader mode with the increased price for this item.");
 		safe_delete(gis);
 		return;
 	}

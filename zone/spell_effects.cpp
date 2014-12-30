@@ -626,11 +626,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 								CastToClient()->SummonItem(13073, fcharges);
 							}
 							else{
-								Message(13, "You can only transmute flesh to bone.");
+								Message(CC_Red, "You can only transmute flesh to bone.");
 							}
 						}
 					else{
-						Message(13, "You can only transmute flesh to bone.");
+						Message(CC_Red, "You can only transmute flesh to bone.");
 					}
 				}
 				break;
@@ -663,9 +663,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							{
 								g->members[gi]->CastToClient()->EnableAAEffect(aaEffectWarcry , time);
 								if (g->members[gi]->GetID() != caster->GetID())
-									g->members[gi]->Message(13, "You hear the war cry.");
+									g->members[gi]->Message(CC_Red, "You hear the war cry.");
 								else
-									Message(13, "You let loose a fierce war cry.");
+									Message(CC_Red, "You let loose a fierce war cry.");
 							}
 						}
 					}
@@ -673,7 +673,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				else{
 					CastToClient()->EnableAAEffect(aaEffectWarcry , time);
-					Message(13, "You let loose a fierce war cry.");
+					Message(CC_Red, "You let loose a fierce war cry.");
 				}
 
 				break;
@@ -1101,7 +1101,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Summon Item: %s (id %d)", itemname, spell.base[i]);
 #endif
 				if (!item) {
-					Message(13, "Unable to summon item %d. Item not found.", spell.base[i]);
+					Message(CC_Red, "Unable to summon item %d. Item not found.", spell.base[i]);
 				} else if (IsClient()) {
 					Client *c = CastToClient();
 					if (c->CheckLoreConflict(item)) {
@@ -1147,10 +1147,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if (!SummonedItem || !SummonedItem->IsType(ItemClassContainer)) {
 					if (caster)
-						caster->Message(13, "SE_SummonItemIntoBag but no bag has been summoned!");
+						caster->Message(CC_Red, "SE_SummonItemIntoBag but no bag has been summoned!");
 				} else if ((slot = SummonedItem->FirstOpenSlot()) == 0xff) {
 					if (caster)
-						caster->Message(13, "SE_SummonItemIntoBag but no room in summoned bag!");
+						caster->Message(CC_Red, "SE_SummonItemIntoBag but no room in summoned bag!");
 				} else if (IsClient()) {
 					if (CastToClient()->CheckLoreConflict(item)) {
 						CastToClient()->DuplicateLoreMessage(spell.base[i]);
@@ -1192,7 +1192,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				else
 				{
-                    //Message(13, "MakePet");
+                    //Message(CC_Red, "MakePet");
 					MakePet(spell_id, spell.teleport_zone);
 				}
 				break;
@@ -1459,7 +1459,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					{
 						WipeHateList();
 					}
-					Message(13, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
+					Message(CC_Red, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
 				}
 				break;
 			}
@@ -1920,7 +1920,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					if(GetLevel() <= 52)
 						CastToNPC()->Depop();
 					else
-						Message(13, "Your target is too high level to be affected by this spell.");
+						Message(CC_Red, "Your target is too high level to be affected by this spell.");
 				}
 				break;
 			}
@@ -2016,7 +2016,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					entity_list.ClearAggro(this);
 				}
 				else
-					caster->Message(13, "This spell can only be cast on players.");
+					caster->Message(CC_Red, "This spell can only be cast on players.");
 
 				break;
 			}
@@ -3475,7 +3475,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					{
 						WipeHateList();
 					}
-					Message(13, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
+					Message(CC_Red, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
 				}
 				break;
 			}

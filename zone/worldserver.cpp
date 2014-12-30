@@ -797,7 +797,7 @@ void WorldServer::Process() {
 					entity_list.AddGroup(group);
 
 					if(group->GetID() == 0) {
-						Inviter->Message(13, "Unable to get new group id. Cannot create group.");
+						Inviter->Message(CC_Red, "Unable to get new group id. Cannot create group.");
 						break;
 					}
 

@@ -41,7 +41,7 @@ extern EntityList entity_list;
 
 // Loading object from database
 Object::Object(uint32 id, uint32 type, uint32 icon, const Object_Struct& object, const ItemInst* inst)
- : respawn_timer(0), decay_timer(300000)
+ : respawn_timer(0), decay_timer(RuleI(Groundspawns, DecayTime))
 {
 
 	user = nullptr;
@@ -70,7 +70,7 @@ Object::Object(uint32 id, uint32 type, uint32 icon, const Object_Struct& object,
 
 //creating a re-ocurring ground spawn.
 Object::Object(const ItemInst* inst, char* name,float max_x,float min_x,float max_y,float min_y,float z,float heading,uint32 respawntimer)
- : respawn_timer(respawntimer), decay_timer(300000)
+ : respawn_timer(respawntimer), decay_timer(RuleI(Groundspawns, DecayTime))
 {
 
 	user = nullptr;
@@ -99,7 +99,7 @@ Object::Object(const ItemInst* inst, char* name,float max_x,float min_x,float ma
 
 // Loading object from client dropping item on ground
 Object::Object(Client* client, const ItemInst* inst)
- : respawn_timer(0), decay_timer(300000)
+ : respawn_timer(0), decay_timer(RuleI(Groundspawns, DecayTime))
 {
 	user = nullptr;
 	last_user = nullptr;
@@ -514,7 +514,7 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 			coa->open		= 0x01;
 		else {
 			coa->open		= 0x00;
-			//sender->Message(13, "Somebody is allready using that container.");
+			//sender->Message(CC_Red, "Somebody is allready using that container.");
 		}
 		m_inuse			= true;
 		coa->type		= m_type;

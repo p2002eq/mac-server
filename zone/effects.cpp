@@ -501,13 +501,13 @@ bool Client::TrainDiscipline(uint32 itemid) {
 	//get the item info
 	const Item_Struct *item = database.GetItem(itemid);
 	if(item == nullptr) {
-		Message(13, "Unable to find the tome you turned in!");
+		Message(CC_Red, "Unable to find the tome you turned in!");
 		LogFile->write(EQEMuLog::Error, "Unable to find turned in tome id %lu\n", (unsigned long)itemid);
 		return(false);
 	}
 
 	if(item->ItemClass != ItemClassCommon || item->ItemType != ItemTypeSpell) {
-		Message(13, "Invalid item type, you cannot learn from this item.");
+		Message(CC_Red, "Invalid item type, you cannot learn from this item.");
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
@@ -531,7 +531,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 		item->Name[5] == ':' &&
 		item->Name[6] == ' '
 		)) {
-		Message(13, "This item is not a tome.");
+		Message(CC_Red, "This item is not a tome.");
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
@@ -539,7 +539,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 
 	int myclass = GetClass();
 	if(myclass == WIZARD || myclass == ENCHANTER || myclass == MAGICIAN || myclass == NECROMANCER) {
-		Message(13, "Your class cannot learn from this tome.");
+		Message(CC_Red, "Your class cannot learn from this tome.");
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
@@ -549,7 +549,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 	//can we use the item?
 	uint32 cbit = 1 << (myclass-1);
 	if(!(item->Classes & cbit)) {
-		Message(13, "Your class cannot learn from this tome.");
+		Message(CC_Red, "Your class cannot learn from this tome.");
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
@@ -557,7 +557,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 
 	uint32 spell_id = item->Scroll.Effect;
 	if(!IsValidSpell(spell_id)) {
-		Message(13, "This tome contains invalid knowledge.");
+		Message(CC_Red, "This tome contains invalid knowledge.");
 		return(false);
 	}
 
@@ -565,14 +565,14 @@ bool Client::TrainDiscipline(uint32 itemid) {
 	const SPDat_Spell_Struct &spell = spells[spell_id];
 	uint8 level_to_use = spell.classes[myclass - 1];
 	if(level_to_use == 255) {
-		Message(13, "Your class cannot learn from this tome.");
+		Message(CC_Red, "Your class cannot learn from this tome.");
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
 	}
 
 	if(level_to_use > GetLevel()) {
-		Message(13, "You must be at least level %d to learn this discipline.", level_to_use);
+		Message(CC_Red, "You must be at least level %d to learn this discipline.", level_to_use);
 		//summon them the item back...
 		SummonItem(itemid);
 		return(false);
@@ -582,7 +582,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 	int r;
 	for(r = 0; r < MAX_PP_DISCIPLINES; r++) {
 		if(m_pp.disciplines.values[r] == spell_id) {
-			Message(13, "You already know this discipline.");
+			Message(CC_Red, "You already know this discipline.");
 			//summon them the item back...
 			SummonItem(itemid);
 			return(false);
@@ -594,7 +594,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 			return(true);
 		}
 	}
-	Message(13, "You have learned too many disciplines and can learn no more.");
+	Message(CC_Red, "You have learned too many disciplines and can learn no more.");
 	return(false);
 }
 
@@ -625,7 +625,7 @@ bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
 
 	//make sure we can use it..
 	if(!IsValidSpell(spell_id)) {
-		Message(13, "This tome contains invalid knowledge.");
+		Message(CC_Red, "This tome contains invalid knowledge.");
 		return(false);
 	}
 
@@ -633,7 +633,7 @@ bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
 	const SPDat_Spell_Struct &spell = spells[spell_id];
 	uint8 level_to_use = spell.classes[GetClass() - 1];
 	if(level_to_use == 255) {
-		Message(13, "Your class cannot learn from this tome.");
+		Message(CC_Red, "Your class cannot learn from this tome.");
 		//should summon them a new one...
 		return(false);
 	}

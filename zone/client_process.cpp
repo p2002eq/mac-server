@@ -1020,7 +1020,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 	if(PendingRezzXP < 0) {
 		// pendingrezexp is set to -1 if we are not expecting an OP_RezzAnswer
 		_log(SPELLS__REZ, "Unexpected OP_RezzAnswer. Ignoring it.");
-		Message(13, "You have already been resurrected.\n");
+		Message(CC_Red, "You have already been resurrected.\n");
 		return;
 	}
 
@@ -1087,7 +1087,7 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 
 	if(!IsValidSpell(memspell->spell_id))
 	{
-		Message(13, "Unexpected error: spell id out of range");
+		Message(CC_Red, "Unexpected error: spell id out of range");
 		return;
 	}
 
@@ -1099,7 +1099,7 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 	{
 		char val1[20]={0};
 		Message_StringID(CC_Red,SPELL_LEVEL_TO_LOW,ConvertArray(spells[memspell->spell_id].classes[GetClass()-1],val1),spells[memspell->spell_id].name);
-		//Message(13, "Unexpected error: Class cant use this spell at your level!");
+		//Message(CC_Red, "Unexpected error: Class cant use this spell at your level!");
 		return;
 	}
 
@@ -1439,7 +1439,7 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 		}
 		else{
 			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared){
-				this->Message(13, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM WILL BE DESTROYED IF YOU PUT IT HERE");
+				this->Message(CC_Red, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM WILL BE DESTROYED IF YOU PUT IT HERE");
 			}
 		}
 	}

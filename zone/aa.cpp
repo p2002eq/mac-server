@@ -203,17 +203,17 @@ void Client::ActivateAA(aaID activate){
 
 		if(aa2) {
 			if (aaremain_hr >= 1)	//1 hour or more
-				Message(13, "You can use the ability %s again in %u hour(s) %u minute(s) %u seconds",
+				Message(CC_Red, "You can use the ability %s again in %u hour(s) %u minute(s) %u seconds",
 				aa2->name, aaremain_hr, aaremain_min, aaremain_sec);
 			else	//less than an hour
-				Message(13, "You can use the ability %s again in %u minute(s) %u seconds",
+				Message(CC_Red, "You can use the ability %s again in %u minute(s) %u seconds",
 				aa2->name, aaremain_min, aaremain_sec);
 		} else {
 			if (aaremain_hr >= 1)	//1 hour or more
-				Message(13, "You can use this ability again in %u hour(s) %u minute(s) %u seconds",
+				Message(CC_Red, "You can use this ability again in %u hour(s) %u minute(s) %u seconds",
 				aaremain_hr, aaremain_min, aaremain_sec);
 			else	//less than an hour
-				Message(13, "You can use this ability again in %u minute(s) %u seconds",
+				Message(CC_Red, "You can use this ability again in %u minute(s) %u seconds",
 				aaremain_min, aaremain_sec);
 		}
 		return;
@@ -552,7 +552,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	if(!database.GetPetEntry(spells[spell_id].teleport_zone, &record))
 	{
 		LogFile->write(EQEMuLog::Error, "Unknown swarm pet spell id: %d, check pets table", spell_id);
-		Message(13, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
+		Message(CC_Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
 		return;
 	}
 

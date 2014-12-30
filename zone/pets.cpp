@@ -195,7 +195,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	//lookup our pets table record for this type
 	PetRecord record;
 	if(!database.GetPoweredPetEntry(pettype, petpower, &record)) {
-		Message(13, "Unable to find data for pet %s", pettype);
+		Message(CC_Red, "Unable to find data for pet %s", pettype);
 		LogFile->write(EQEMuLog::Error, "Unable to find data for pet %s, check pets table.", pettype);
 		return;
 	}
@@ -203,7 +203,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	//find the NPC data for the specified NPC type
 	const NPCType *base = database.GetNPCType(record.npc_type);
 	if(base == nullptr) {
-		Message(13, "Unable to load NPC data for pet %s", pettype);
+		Message(CC_Red, "Unable to load NPC data for pet %s", pettype);
 		LogFile->write(EQEMuLog::Error, "Unable to load NPC data for pet %s (NPC ID %d), check pets and npc_types tables.", pettype, record.npc_type);
 		return;
 	}
@@ -211,7 +211,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	int act_power = 0; // The actual pet power we'll use.
 	if (petpower == -1) {
 		if (this->IsClient()) {
-			//Message(13, "We are a client time to check for focus items");
+			//Message(CC_Red, "We are a client time to check for focus items");
 			uint16 focusItemId;
 			FocusPetItem petItem;
 			// Loop over all the focus items and figure out which on is the best to use
@@ -224,13 +224,13 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				if(slot_id != INVALID_INDEX) {
 					//skip this focus item if its effect is out of rage for the pet we are casting
 					if(base->level >= petItem.min_level && base->level <= petItem.max_level) {
-						if(EQDEBUG>8) Message(13, "Found Focus Item: %d in Inventory: %d", petItem.item_id, slot_id);
-						if(EQDEBUG>8) Message(13, "Npc spell levels: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
+						if(EQDEBUG>8) Message(CC_Red, "Found Focus Item: %d in Inventory: %d", petItem.item_id, slot_id);
+						if(EQDEBUG>8) Message(CC_Red, "Npc spell levels: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
 						slot = slot_id;
 						focusItemId = petItem.item_id;
 						break;
 					} else {
-						if(EQDEBUG>8) Message(13, "Moving on Pet base level is out of range: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
+						if(EQDEBUG>8) Message(CC_Red, "Moving on Pet base level is out of range: %d (%d - %d)", base->level, petItem.min_level, petItem.max_level);
 					}
 				}
 			}
@@ -241,32 +241,32 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				// Symbol or Gloves can be used by all NEC, MAG, BST
 				if(petItem.pet_type == FocusPetType::ALL)
 				{
-					//Message(13, "Type is ALL");
+					//Message(CC_Red, "Type is ALL");
 					focusType = FocusPetType::ALL;
 				} else {
 					// make sure we can use the focus item as the class .. client should never let us fail this but for sanity!
 					if (GetClass() == MAGICIAN) {
-						if(EQDEBUG>8) Message(13, "Looking up mage");
-						if(EQDEBUG>8) Message(13, "Looking up if spell: %d is allowed ot be focused", spell_id);
+						if(EQDEBUG>8) Message(CC_Red, "Looking up mage");
+						if(EQDEBUG>8) Message(CC_Red, "Looking up if spell: %d is allowed ot be focused", spell_id);
 						focusType = Pet::GetPetItemPetTypeFromSpellId(spell_id);
-						if(EQDEBUG>8) Message(13, "FocusType fround %i", focusType);
+						if(EQDEBUG>8) Message(CC_Red, "FocusType fround %i", focusType);
 					} else if (GetClass() == NECROMANCER) {
-						if(EQDEBUG>8) Message(13, "We are a necro");
+						if(EQDEBUG>8) Message(CC_Red, "We are a necro");
 						focusType = FocusPetType::NECRO;
 					}
 				}
 				// Sets the power to be what the focus item has as a mod
 				if(EQDEBUG>8) {
-					Message(13, "Pet Item Type ALL is  %i", FocusPetType::ALL);
-					Message(13, "Pet Item Type FIRE is  %i", FocusPetType::FIRE);
-					Message(13, "Pet Item Type WATER is  %i", FocusPetType::WATER);
-					Message(13, "Pet Item Type AIR is  %i", FocusPetType::AIR);
-					Message(13, "Pet Item Type EARTH is  %i", FocusPetType::EARTH);
-					Message(13, "Pet Item Type NECRO is  %i", FocusPetType::NECRO);
+					Message(CC_Red, "Pet Item Type ALL is  %i", FocusPetType::ALL);
+					Message(CC_Red, "Pet Item Type FIRE is  %i", FocusPetType::FIRE);
+					Message(CC_Red, "Pet Item Type WATER is  %i", FocusPetType::WATER);
+					Message(CC_Red, "Pet Item Type AIR is  %i", FocusPetType::AIR);
+					Message(CC_Red, "Pet Item Type EARTH is  %i", FocusPetType::EARTH);
+					Message(CC_Red, "Pet Item Type NECRO is  %i", FocusPetType::NECRO);
 				}
-				if(EQDEBUG>8) Message(13, "Pet Item Type  %i", petItem.pet_type);
+				if(EQDEBUG>8) Message(CC_Red, "Pet Item Type  %i", petItem.pet_type);
 				if (focusType == petItem.pet_type) {
-					if(EQDEBUG>8) Message(13, "Setting power to: %d", petItem.power);
+					if(EQDEBUG>8) Message(CC_Red, "Setting power to: %d", petItem.power);
 					act_power = petItem.power;
 					scale_pet = true;
 				}
@@ -295,7 +295,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 		scale_pet = true;
 	}
 
-	if(EQDEBUG>8) Message(13, "Power is: %d", act_power);
+	if(EQDEBUG>8) Message(CC_Red, "Power is: %d", act_power);
 	// optional rule: classic style variance in pets. Achieve this by
 	// adding a random 0-4 to pet power, since it only comes in increments
 	// of five from focus effects.

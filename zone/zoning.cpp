@@ -86,7 +86,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 				//unable to find a zone point... is there anything else
 				//that can be a valid un-zolicited zone request?
 
-				Message(13, "Invalid unsolicited zone request.");
+				Message(CC_Red, "Invalid unsolicited zone request.");
 				LogFile->write(EQEMuLog::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
 				SendZoneCancel(zc);
 				return;
@@ -126,14 +126,14 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		//make sure we are in it and it's unexpired.
 		if(!database.VerifyInstanceAlive(target_instance_id, CharacterID()))
 		{
-			Message(13, "Instance ID was expired or you were not in it.");
+			Message(CC_Red, "Instance ID was expired or you were not in it.");
 			SendZoneCancel(zc);
 			return;
 		}
 
 		if(!database.VerifyZoneInstance(target_zone_id, target_instance_id))
 		{
-			Message(13, "Instance ID was %u does not go with zone id %u", target_instance_id, target_zone_id);
+			Message(CC_Red, "Instance ID was %u does not go with zone id %u", target_instance_id, target_zone_id);
 			SendZoneCancel(zc);
 			return;
 		}
@@ -143,7 +143,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	const char *target_zone_name = database.GetZoneName(target_zone_id);
 	if(target_zone_name == nullptr) {
 		//invalid zone...
-		Message(13, "Invalid target zone ID.");
+		Message(CC_Red, "Invalid target zone ID.");
 		LogFile->write(EQEMuLog::Error, "Zoning %s: Unable to get zone name for zone id '%d'.", GetName(), target_zone_id);
 		SendZoneCancel(zc);
 		return;
@@ -156,7 +156,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	char flag_needed[128];
 	if(!database.GetSafePoints(target_zone_name, database.GetInstanceVersion(target_instance_id), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed)) {
 		//invalid zone...
-		Message(13, "Invalid target zone while getting safe points.");
+		Message(CC_Red, "Invalid target zone while getting safe points.");
 		LogFile->write(EQEMuLog::Error, "Zoning %s: Unable to get safe coordinates for zone '%s'.", GetName(), target_zone_name);
 		SendZoneCancel(zc);
 		return;
@@ -261,7 +261,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		//the flag needed string is not empty, meaning a flag is required.
 		if(Admin() < minStatusToIgnoreZoneFlags && !HasZoneFlag(target_zone_id))
 		{
-			Message(13, "You do not have the flag to enter %s.", target_zone_name);
+			Message(CC_Red, "You do not have the flag to enter %s.", target_zone_name);
 			myerror = ZONE_ERROR_NOEXPERIENCE;
 		}
 	}
@@ -472,7 +472,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 	SetPortExemption(true);
 
 	if(!pZoneName) {
-		Message(13, "Invalid zone number specified");
+		Message(CC_Red, "Invalid zone number specified");
 		safe_delete_array(pZoneName);
 		return;
 	}
@@ -546,12 +546,12 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			Entity* entity = entity_list.GetID(entity_id_being_looted);
 			if (entity == 0)
 			{
-				Message(13, "Error: OP_EndLootRequest: Corpse not found (ent = 0)");
+				Message(CC_Red, "Error: OP_EndLootRequest: Corpse not found (ent = 0)");
 				Corpse::SendLootReqErrorPacket(this);
 			}
 			else if (!entity->IsCorpse())
 			{
-				Message(13, "Error: OP_EndLootRequest: Corpse not found (!entity->IsCorpse())");
+				Message(CC_Red, "Error: OP_EndLootRequest: Corpse not found (!entity->IsCorpse())");
 				Corpse::SendLootReqErrorPacket(this);
 			}
 			else
