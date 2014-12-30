@@ -63,6 +63,7 @@ the command isn't listed in the addon.ini file.
 #include "titles.h"
 #include "../common/patches/patches.h"
 #include "queryserv.h"
+#include <stdlib.h>
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
@@ -329,6 +330,7 @@ int command_init(void){
 		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 100, command_qglobal) ||
 		command_add("qtest", "- QueryServ testing command.", 255, command_qtest) ||
 		command_add("questerrors", "Shows quest errors.", 100, command_questerrors) ||
+		command_add("questupdate", "Updates the quest folder if it is tied to an svn.", 250, command_questupdate) ||
 
 		command_add("race", "[racenum] - Change your or your target's race. Use racenum 0 to return to normal", 50, command_race) ||
 		command_add("raidloot", "LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.", 0, command_raidloot) ||
@@ -10439,6 +10441,10 @@ void command_questerrors(Client *c, const Seperator *sep){
 		++i;
 		++iter;
 	}
+}
+
+void command_questupdate(Client *c, const Seperator *sep){
+	system("svn update quests");
 }
 
 void command_enablerecipe(Client *c, const Seperator *sep){

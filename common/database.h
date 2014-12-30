@@ -515,6 +515,8 @@ public:
 	bool	CharacterQuit(uint32 char_id);
 	bool	ZoneConnected(uint32 id, const char* name);
 	bool	ZoneDisconnect(uint32 id);
+	bool	LSConnected(uint32 port);
+	bool	LSDisconnect();
 
 	/* Character Creation */
 	bool	SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp);
@@ -627,9 +629,9 @@ public:
 	/*
 	* Database Setup for boostraps only.
 	*/
-	bool Database::DBSetup();
-	bool Database::DBSetup_webdata_character();
-	bool Database::DBSetup_webdata_servers();
+	bool DBSetup();
+	bool DBSetup_webdata_character();
+	bool DBSetup_webdata_servers();
 
 	/*
 	* Database Variables
