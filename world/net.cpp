@@ -284,6 +284,8 @@ int main(int argc, char** argv) {
 
 	_log(WORLD__INIT, "Checking Database Conversions..");
 	database.CheckDatabaseConversions(); 
+	_log(WORLD__INIT, "Scanning Database setup for updates..");
+	database.DBSetup();
 	_log(WORLD__INIT, "Loading variables..");
 	database.LoadVariables();
 	_log(WORLD__INIT, "Loading zones..");
