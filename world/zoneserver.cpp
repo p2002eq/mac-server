@@ -130,6 +130,7 @@ void ZoneServer::LSShutDownUpdate(uint32 zoneid){
 		safe_delete(pack);
 	}
 }
+
 void ZoneServer::LSBootUpdate(uint32 zoneid, uint32 instanceid, bool startup){
 	if(WorldConfig::get()->UpdateStats){
 		ServerPacket* pack = new ServerPacket;
@@ -593,6 +594,7 @@ bool ZoneServer::Process() {
 				const LaunchName_Struct* ln = (const LaunchName_Struct*)pack->pBuffer;
 				launcher_name = ln->launcher_name;
 				launched_name = ln->zone_name;
+				database.ZoneConnected(database.GetZoneID(ln->zone_name), ln->zone_name);
 				zlog(WORLD__ZONE, "Zone started with name %s by launcher %s", launched_name.c_str(), launcher_name.c_str());
 				break;
 			}
@@ -1289,7 +1291,6 @@ void ZoneServer::ChangeWID(uint32 iCharID, uint32 iWID) {
 	zoneserver_list.SendPacket(pack);
 	delete pack;
 }
-
 
 void ZoneServer::TriggerBootup(uint32 iZoneID, uint32 iInstanceID, const char* adminname, bool iMakeStatic) {
 	BootingUp = true;
