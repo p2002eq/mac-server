@@ -942,6 +942,8 @@ namespace Mac {
 				outapp->SetOpcode(OP_MerchantItemPacket);
 			else if(old_item_pkt->PacketType == ItemPacketLoot)
 				outapp->SetOpcode(OP_LootItemPacket);
+			else if(old_item_pkt->PacketType == ItemPacketWorldContainer)
+				outapp->SetOpcode(OP_ObjectItemPacket);
 			else if(item->GetItem()->ItemClass == ItemClassContainer)
 				outapp->SetOpcode(OP_ContainerPacket);
 			else if(item->GetItem()->ItemClass == ItemClassBook)
