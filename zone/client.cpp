@@ -2381,8 +2381,6 @@ void Client::Message_StringID(uint32 type, uint32 string_id, const char* message
 		return;
 	if (GetFilter(FilterSpellCrits) == FilterHide && type == MT_SpellCrits)
 		return;
-	if (GetFilter(FilterDamageShields) == FilterHide)
-		return;
 
 	int i, argcount, length;
 	char *bufptr;
