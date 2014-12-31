@@ -977,9 +977,7 @@ void Client::ChannelMessageSend(const char* from, const char* to, uint8 chan_num
 	char buffer[4096];
 	char message_sender[64];
 
-	va_start(argptr, message);
-	vsnprintf(buffer, 4096, message, argptr);
-	va_end(argptr);
+	memcpy(buffer, message, 4096);
 
 	EQApplicationPacket app(OP_ChannelMessage, sizeof(ChannelMessage_Struct)+strlen(buffer)+1);
 	ChannelMessage_Struct* cm = (ChannelMessage_Struct*)app.pBuffer;
@@ -2808,9 +2806,9 @@ void Client::EnteringMessages(Client* client)
 		uint8 flag = database.GetAgreementFlag(client->AccountID());
 		if(!flag)
 		{
-			client->Message(13,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
-			client->Message(13,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
-			client->Message(13,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
+			client->Message(CC_Red,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
+			client->Message(CC_Red,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
+			client->Message(CC_Red,"You must agree to the Rules, before you can move. (type #serverrules to view the rules)");
 			client->SendAppearancePacket(AT_Anim, ANIM_FREEZE);
 		}
 	}

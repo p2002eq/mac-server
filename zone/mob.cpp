@@ -4922,7 +4922,7 @@ void Mob::Disarm()
 			}
 			else
 			{
-				entity_list.CreateGroundObject(weaponid,GetX(),GetY(),GetZ(),0);
+				entity_list.CreateGroundObject(weaponid,GetX(),GetY(),GetZ(),0,RuleI(Groundspawns, DisarmDecayTime));
 			}
 			safe_delete(inst);
 		}

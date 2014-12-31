@@ -157,7 +157,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 	uint32 playerkey = 0;
 	const ItemInst *lockpicks = sender->GetInv().GetItem(MainCursor);
 
-	haskey = sender->GetInv().HasItem(keyneeded, 1);
+	haskey = sender->GetInv().HasItem(keyneeded, 1, invWhereCursor);
 
 	if(haskey == MainCursor)
 	{
@@ -234,10 +234,6 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 		{	// they have something they are trying to open it with
 			if(keyneeded && (keyneeded == playerkey))
 			{	// key required and client is using the right key
-				if(!keepoffkeyring)
-				{
-					sender->KeyRingAdd(playerkey);
-				}
 				sender->Message(4, "You got it open!");
 				if(!IsDoorOpen() || (opentype == 58))
 				{

@@ -4768,6 +4768,8 @@ void Client::MemSpell(uint16 spell_id, int slot, bool update_client)
 	}
 
 	m_pp.mem_spells[slot] = spell_id;
+	uint32 recast = spells[spell_id].recast_time/1000;
+	CastToClient()->GetPTimers().Start(pTimerSpellStart + spell_id, recast); // This is for the benefit of spells like Spirit of Cheetah, so the player can't cast the newly memmed spell right after zoning.
 	mlog(CLIENT__SPELLS, "Spell %d memorized into slot %d", spell_id, slot);
 
 	database.SaveCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);

@@ -3533,6 +3533,11 @@ struct ClientMarqueeMessage_Struct {
 	
 };
 
+struct Checksum_Struct {
+	uint64 checksum;
+	uint8  data[2048];
+};
+
 struct Disarm_Struct {
 /*000*/ int16 entityid;
 /*002*/ int16 target;

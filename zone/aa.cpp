@@ -227,7 +227,7 @@ void Client::ActivateAA(aaID activate){
 	const AA_DBAction *caa = &AA_Actions[aaid][activate_val];
 
 	if((aaid == aaImprovedHarmTouch || aaid == aaLeechTouch) && !p_timers.Expired(&database, pTimerHarmTouch)){
-		Message(13,"Ability recovery time not yet met.");
+		Message(CC_Red,"Ability recovery time not yet met.");
 		return;
 	}
 

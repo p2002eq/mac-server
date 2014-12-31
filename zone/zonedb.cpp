@@ -1191,7 +1191,7 @@ bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Str
 
 bool ZoneDatabase::SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_languages` (id, lang_id, value) VALUES (%u, %u, %u)", character_id, lang_id, value); QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
 	return true;
 }
 
@@ -1203,7 +1203,7 @@ bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, uint32 zone_id, u
 	/* Save Home Bind Point */
 	std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 		" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)", character_id, zone_id, instance_id, x, y, z, heading, is_home);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u x: %f y: %f z: %f heading: %f ishome: %u", character_id, zone_id, instance_id, x, y, z, heading, is_home);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u x: %f y: %f z: %f heading: %f ishome: %u", character_id, zone_id, instance_id, x, y, z, heading, is_home);
 	auto results = QueryDatabase(query); 
 	if (!results.RowsAffected()) {
 		LogFile->write(EQEMuLog::Debug, "ERROR Bind Home Save: %s. %s", results.ErrorMessage().c_str(), query.c_str());
@@ -1217,20 +1217,20 @@ bool ZoneDatabase::SaveCharacterMaterialColor(uint32 character_id, uint32 slot_i
 	uint8 blue = (color & 0x000000FF); 
 
 	std::string query = StringFormat("REPLACE INTO `character_material` (id, slot, red, green, blue, color, use_tint) VALUES (%u, %u, %u, %u, %u, %u, 255)", character_id, slot_id, red, green, blue, color); auto results = QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterMaterialColor for character ID: %i, slot_id: %u color: %u done", character_id, slot_id, color);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterMaterialColor for character ID: %i, slot_id: %u color: %u done", character_id, slot_id, color);
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_skills` (id, skill_id, value) VALUES (%u, %u, %u)", character_id, skill_id, value); auto results = QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id){
 	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id); 
 	auto results = QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
 	return true; 
 }
 
@@ -1242,7 +1242,7 @@ bool ZoneDatabase::SaveCharacterTribute(uint32 character_id, PlayerProfile_Struc
 		if (pp->tributes[i].tribute > 0 && pp->tributes[i].tribute != TRIBUTE_NONE){
 			std::string query = StringFormat("REPLACE INTO `character_tribute` (id, tier, tribute) VALUES (%u, %u, %u)", character_id, pp->tributes[i].tier, pp->tributes[i].tribute); 
 			QueryDatabase(query);
-			//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterTribute for character ID: %i, tier:%u tribute:%u done", character_id, pp->tributes[i].tier, pp->tributes[i].tribute);
+			_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterTribute for character ID: %i, tier:%u tribute:%u done", character_id, pp->tributes[i].tier, pp->tributes[i].tribute);
 		}
 	} 
 	return true;
@@ -1253,7 +1253,7 @@ bool ZoneDatabase::SaveCharacterBandolier(uint32 character_id, uint8 bandolier_i
 	DoEscapeString(bandolier_name_esc, bandolier_name, strlen(bandolier_name));
 	std::string query = StringFormat("REPLACE INTO `character_bandolier` (id, bandolier_id, bandolier_slot, item_id, icon, bandolier_name) VALUES (%u, %u, %u, %u, %u,'%s')", character_id, bandolier_id, bandolier_slot, item_id, icon, bandolier_name_esc); 
 	auto results = QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterBandolier for character ID: %i, bandolier_id: %u, bandolier_slot: %u item_id: %u, icon:%u band_name:%s  done", character_id, bandolier_id, bandolier_slot, item_id, icon, bandolier_name);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterBandolier for character ID: %i, bandolier_id: %u, bandolier_slot: %u item_id: %u, icon:%u band_name:%s  done", character_id, bandolier_id, bandolier_slot, item_id, icon, bandolier_name);
 	if (!results.RowsAffected()){ std::cout << "ERROR Bandolier Save: " << results.ErrorMessage() << "\n\n" << query << "\n" << std::endl; }
 	return true;
 }
@@ -1577,7 +1577,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		m_epp->expended_aa
 	);
 	auto results = database.QueryDatabase(query);
-	//LogFile->write(EQEMuLog::Debug, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
+	_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
 	return true;
 }
 

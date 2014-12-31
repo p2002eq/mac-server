@@ -286,9 +286,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 			//make sure we are not completely full...
 			if(to_slot == MainCursor || to_slot == INVALID_INDEX) {
 				if(m_inv.GetItem(MainCursor) != nullptr || to_slot == INVALID_INDEX) {
-					Message(13,"You have no more room. The item falls to the ground."); 
-					//DropInst(inst) crashes Intel here, so just create the groundspawn.
-					entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0);
+					Message(CC_Red,"You have no more room. The item falls to the ground."); 
+					entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 				}
 			}
 		}
@@ -1032,7 +1031,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		if (srcitemid==17899 || srcbagid==17899 || dstitemid==17899 || dstbagid==17899){
 			this->Trader_EndTrader();
-			this->Message(13,"You cannot move your Trader Satchels, or items inside them, while Trading.");
+			this->Message(CC_Red,"You cannot move your Trader Satchels, or items inside them, while Trading.");
 		}
 	}
 
@@ -1529,7 +1528,7 @@ void Client::DyeArmor(DyeStruct* dye){
 				SendWearChange(i);
 			}
 			else{
-				Message(13,"Could not locate A Vial of Prismatic Dye.");
+				Message(CC_Red,"Could not locate A Vial of Prismatic Dye.");
 				return;
 			}
 		}
