@@ -195,6 +195,7 @@ int command_init(void){
 		command_add("equipitem", "[slotid(0-21)] - Equip the item on your cursor into the specified slot", 50, command_equipitem) ||
 
 		command_add("face", "- Change the face of your target", 80, command_face) ||
+		command_add("falltest", "[+Z] sends you to your current loc plus the Z specified.", 80, command_falltest) ||
 		command_add("fi", nullptr, 10, command_itemsearch) ||
 		command_add("finditem", nullptr, 10, command_itemsearch) ||
 		command_add("findnpctype", "[search criteria] - Search database NPC types", 100, command_findnpctype) ||
@@ -10555,4 +10556,22 @@ void command_merchantcloseshop(Client *c, const Seperator *sep){
 	}
 
 	merchant->CastToNPC()->MerchantCloseShop();
+}
+
+void command_falltest(Client *c, const Seperator *sep)
+{
+	float zmod;
+	if(c)
+	{
+		if (!sep->IsNumber(1)) {
+			c->Message(0, "Invalid number of arguments.\nUsage: #falltest [+z]");
+			return;
+		}
+		else
+		{
+			zmod = c->GetZ() + atof(sep->arg[1]);
+			c->MovePC(zone->GetZoneID(), zone->GetInstanceID(), c->GetX(), c->GetY(), zmod, c->GetHeading());
+			c->Message(0, "Moving to X: %0.2f Y: %0.2f Z: %0.2f", c->GetX(), c->GetY(), zmod);
+		}
+	}
 }

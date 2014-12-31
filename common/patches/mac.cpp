@@ -1321,26 +1321,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	ENCODE(OP_Animation)
-	{
-		ENCODE_LENGTH_EXACT(Animation_Struct);
-		SETUP_DIRECT_ENCODE(Animation_Struct, structs::Animation_Struct);
-		OUT(spawnid);
-		OUT(action);
-		eq->a_unknown[5]=0x80;
-		eq->a_unknown[6]=0x3F;
-		FINISH_ENCODE();
-	}
-
-	DECODE(OP_Animation)
-	{
-		DECODE_LENGTH_EXACT(structs::Animation_Struct);
-		SETUP_DIRECT_DECODE(Animation_Struct, structs::Animation_Struct);
-		IN(spawnid);
-		IN(action);
-		FINISH_DIRECT_DECODE();
-	}
-
 	ENCODE(OP_LootItem)
 	{
 		ENCODE_LENGTH_EXACT(LootingItem_Struct);

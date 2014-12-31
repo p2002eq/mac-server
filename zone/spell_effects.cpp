@@ -570,8 +570,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility");
 #endif
-				SetInvisible(spell.base[i]);
-				DepopPet();
+				SetInvisible(INVIS_NORMAL);
 				break;
 			}
 
@@ -581,8 +580,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Invisibility to Animals");
 #endif
 				invisible_animals = true;
-				SetInvisible(spell.base[i], false);
-				DepopPet();
+				SetInvisible(INVIS_VSANIMAL, false);
 				break;
 			}
 
@@ -593,8 +591,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Invisibility to Undead");
 #endif
 				invisible_undead = true;
-				SetInvisible(spell.base[i], false);
-				DepopPet();
+				SetInvisible(INVIS_VSUNDEAD, false);
 				break;
 			}
 			case SE_SeeInvis:
@@ -2086,7 +2083,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					else
 					{
 						entity_list.RemoveFromTargets(caster);
-						SetInvisible(GO_INVISIBLE);
+						SetInvisible(INVIS_NORMAL);
 					}
 				}
 				break;
@@ -3763,7 +3760,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 			case SE_Invisibility2:
 			case SE_Invisibility:
 			{
-				SetInvisible(DROP_INVISIBLE);
+				SetInvisible(INVIS_OFF);
 				break;
 			}
 

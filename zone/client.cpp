@@ -2478,7 +2478,7 @@ void Client::FilteredMessage_StringID(Mob *sender, uint32 type,
 	if (!FilteredMessageCheck(sender, filter))
 		return;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_SimpleMessage, 12);
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Animation, 12);
 	SimpleMessage_Struct *sms = (SimpleMessage_Struct *)outapp->pBuffer;
 	sms->color = type;
 	sms->string_id = string_id;
@@ -2712,7 +2712,7 @@ uint8 Client::SlotConvert2(uint8 slot){
 void Client::Escape()
 {
 	entity_list.RemoveFromTargets(this);
-	SetInvisible(GO_INVISIBLE);
+	SetInvisible(INVIS_NORMAL);
 	Message_StringID(MT_Skills, ESCAPE);
 }
 
@@ -4661,6 +4661,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
+	client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
 	client->Message(0, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
 	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);

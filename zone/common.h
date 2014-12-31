@@ -515,6 +515,7 @@ typedef enum : uint16 {	//type arguments to DoAnim
 	LaughAt,
 	Cough,
 	WeirdDance,
+	HeadSideways,
 	Dance,
 	DontKnow,
 	Stuborne, // 60

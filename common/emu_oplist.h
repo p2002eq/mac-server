@@ -270,4 +270,5 @@ N(OP_ZoneSpawns),
 N(OP_ZoneUnavail),
 N(OP_ChecksumExe),
 N(OP_ChecksumSpell),
+N(OP_Feedback),
 // mail and chat opcodes located in ../mail_oplist.h

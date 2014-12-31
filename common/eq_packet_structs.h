@@ -1135,9 +1135,11 @@ struct RequestClientZoneChange_Struct {
 
 struct Animation_Struct {
 /*00*/	uint16 spawnid;
-/*02*/	uint8 action;
-/*03*/	uint8 value;
-/*04*/
+/*02*/	uint16 target;
+/*04*/	uint8  action;
+/*05*/  uint8  value;
+/*06*/	uint32 unknown06;
+/*10*/	uint16 unknown10; // 80 3F
 };
 
 // solar: this is what causes the caster to animate and the target to
@@ -3544,6 +3546,13 @@ struct Disarm_Struct {
 /*004*/ int16 skill;
 /*006*/ int16 status;
 /*008*/
+};
+
+struct Feedback_Struct {
+/*0000*/ char	name[64];	
+/*0064*/ char	unknown[43];
+/*0107*/ char	message[1024];
+/*1131*/
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;
