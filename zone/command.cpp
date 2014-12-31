@@ -147,315 +147,318 @@ int command_init(void){
 	*/
 	if
 		(
-		command_add("acceptrules", "[acceptrules] - Accept the EQEmu Agreement", 0, command_acceptrules) ||
-		command_add("advnpc", "analog for advnpcspawn [maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox]", 150, command_advnpcspawn) ||
-		command_add("advnpcspawn", "[maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox]", 150, command_advnpcspawn) ||
-		command_add("aggro", "(range) [-v] - Display aggro information for all mobs 'range' distance from your target. -v is verbose faction info.", 80, command_aggro) ||
-		command_add("aggrozone", "[aggro] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 100, command_aggrozone) ||
-		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target", 100, command_ai) ||
-		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information", 0, command_altactivate) ||
-		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target", 150, command_appearance) ||
+		command_add("acceptrules", "[acceptrules] - Accept the EQEmu Agreement", 255, command_acceptrules) ||
+		command_add("advnpc", "analog for advnpcspawn [maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox]", 250, command_advnpcspawn) ||
+		command_add("advnpcspawn", "[maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox]", 250, command_advnpcspawn) ||
+		command_add("aggro", "(range) [-v] - Display aggro information for all mobs 'range' distance from your target. -v is verbose faction info.", 95, command_aggro) ||
+		command_add("aggrozone", "[aggro] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 250, command_aggrozone) ||
+		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target", 250, command_ai) ||
+		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information", 150, command_altactivate) ||
+		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target", 250, command_appearance) ||
 		command_add("attack", "[targetname] - Make your NPC target attack targetname", 150, command_attack) ||
 		command_add("ban", "[name][reason] - Ban by character name", 150, command_ban) ||
-		command_add("beard", "- Change the beard of your target", 80, command_beard) ||
-		command_add("beardcolor", "- Change the beard color of your target", 80, command_beardcolor) ||
-		command_add("bestz", "- Ask map for a good Z coord for your x,y coords.", 0, command_bestz) ||
-		command_add("bind", "- Sets your targets bind spot to their current location", 200, command_bind) ||
-		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 80, command_camerashake) ||
-		command_add("cast", nullptr, 0, command_castspell) ||
-		command_add("castspell", "[spellid] - Cast a spell", 50, command_castspell) ||
-		command_add("chat", "[channel num] [message] - Send a channel message to all zones", 200, command_chat) ||
-		command_add("checklos", "- Check for line of sight to your target", 50, command_checklos) ||
-		command_add("close_shop", nullptr, 100, command_merchantcloseshop) ||
-		command_add("connectworld", nullptr, 0, command_connectworldserver) ||
-		command_add("connectworldserver", "- Make zone attempt to connect to worldserver", 200, command_connectworldserver) ||
-		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 50, command_corpse) ||
+		command_add("beard", "- Change the beard of your target", 250, command_beard) ||
+		command_add("beardcolor", "- Change the beard color of your target", 250, command_beardcolor) ||
+		command_add("bestz", "- Ask map for a good Z coord for your x,y coords.", 20, command_bestz) ||
+		command_add("bind", "- Sets your targets bind spot to their current location", 90, command_bind) ||
+		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 255, command_camerashake) ||
+		command_add("cast", nullptr, 150, command_castspell) ||
+		command_add("castspell", "[spellid] - Cast a spell", 150, command_castspell) ||
+		command_add("chat", "[channel num] [message] - Send a channel message to all zones", 90, command_chat) ||
+		command_add("checklos", "- Check for line of sight to your target", 95, command_checklos) ||
+		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
+		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
+		command_add("connectworldserver", "- Make zone attempt to connect to worldserver", 85, command_connectworldserver) ||
+		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 90, command_corpse) ||
 		command_add("crashtest", "- Crash the zoneserver", 200, command_crashtest) ||
-		command_add("cvs", "- Summary of client versions currently online.", 200, command_cvs) ||
+		command_add("cvs", "- Summary of client versions currently online.", 180, command_cvs) ||
 
-		command_add("damage", "[amount] - Damage your target", 100, command_damage) ||
-		command_add("date", "[yyyy] [mm] [dd] [HH] [MM] - Set EQ time", 90, command_date) ||
-		command_add("dbspawn", nullptr, 0, command_npctypespawn) ||
-		command_add("dbspawn2", "[spawngroup] [respawn] [variance] - Spawn an NPC from a predefined row in the spawn2 table", 100, command_dbspawn2) ||
-		command_add("delacct", "[accountname] - Delete an account", 150, command_delacct) ||
-		command_add("deletegraveyard", "[zone name] - Deletes the graveyard for the specified zone.", 200, command_deletegraveyard) ||
-		command_add("delpetition", "[petition number] - Delete a petition", 20, command_delpetition) ||
-		command_add("depop", "- Depop your NPC target", 50, command_depop) ||
-		command_add("depopzone", "- Depop the zone", 100, command_depopzone) ||
-		command_add("details", "- Change the details of your target (Drakkin Only)", 80, command_details) ||
-		command_add("disablerecipe", "[recipe_id] - Disables a recipe using the recipe id.", 80, command_disablerecipe) ||
-		command_add("distance", "- Reports the distance between you and your target.", 80, command_distance) ||
-		command_add("d1", "[type] [spell] [damage] - Send an OP_Action packet with the specified values", 200, command_d1) ||
-		command_add("doanim", "[animnum] [type] - Send an EmoteAnim for you or your target", 50, command_doanim) ||
+		command_add("damage", "[amount] - Damage your target", 150, command_damage) ||
+		command_add("date", "[yyyy] [mm] [dd] [HH] [MM] - Set EQ time", 250, command_date) ||
+		command_add("dbspawn", nullptr, 150, command_npctypespawn) ||
+		command_add("dbspawn2", "[spawngroup] [respawn] [variance] - Spawn an NPC from a predefined row in the spawn2 table", 150, command_dbspawn2) ||
+		command_add("delacct", "[accountname] - Delete an account", 250, command_delacct) ||
+		command_add("deletegraveyard", "[zone name] - Deletes the graveyard for the specified zone.", 250, command_deletegraveyard) ||
+		command_add("delpetition", "[petition number] - Delete a petition", 170, command_delpetition) ||
+		command_add("depop", "- Depop your NPC target", 150, command_depop) ||
+		command_add("depopzone", "- Depop the zone", 170, command_depopzone) ||
+		command_add("details", "- Change the details of your target (Drakkin Only)", 255, command_details) ||
+		command_add("disablerecipe", "[recipe_id] - Disables a recipe using the recipe id.", 250, command_disablerecipe) ||
+		command_add("distance", "- Reports the distance between you and your target.", 10, command_distance) ||
+		command_add("d1", "[type] [spell] [damage] - Send an OP_Action packet with the specified values", 250, command_d1) ||
+		command_add("doanim", "[animnum] [type] - Send an EmoteAnim for you or your target", 95, command_doanim) ||
 
-		command_add("emote", "['name'/'world'/'zone'] [type] [message] - Send an emote message", 80, command_emote) ||
-		command_add("emotesearch", "Searches NPC Emotes", 80, command_emotesearch) ||
-		command_add("emoteview", "Lists all NPC Emotes", 80, command_emoteview) ||
-		command_add("enablerecipe", "[recipe_id] - Enables a recipe using the recipe id.", 80, command_enablerecipe) ||
-		command_add("equipitem", "[slotid(0-21)] - Equip the item on your cursor into the specified slot", 50, command_equipitem) ||
+		command_add("emote", "['name'/'world'/'zone'] [type] [message] - Send an emote message", 95, command_emote) ||
+		command_add("emotesearch", "Searches NPC Emotes", 95, command_emotesearch) ||
+		command_add("emoteview", "Lists all NPC Emotes", 95, command_emoteview) ||
+		command_add("enablerecipe", "[recipe_id] - Enables a recipe using the recipe id.", 250, command_enablerecipe) ||
+		command_add("equipitem", "[slotid(0-21)] - Equip the item on your cursor into the specified slot", 150, command_equipitem) ||
 
 		command_add("face", "- Change the face of your target", 80, command_face) ||
-		command_add("falltest", "[+Z] sends you to your current loc plus the Z specified.", 80, command_falltest) ||
+		command_add("falltest", "[+Z] sends you to your current loc plus the Z specified.", 250, command_falltest) ||
 		command_add("fi", nullptr, 10, command_itemsearch) ||
 		command_add("finditem", nullptr, 10, command_itemsearch) ||
-		command_add("findnpctype", "[search criteria] - Search database NPC types", 100, command_findnpctype) ||
-		command_add("findspell", "[searchstring] - Search for a spell", 50, command_findspell) ||
-		command_add("findzone", "[search criteria] - Search database zones", 100, command_findzone) ||
-		command_add("fixmob", "[race|gender|texture|helm|face|hair|haircolor|beard|beardcolor|heritage|tattoo|detail] [next|prev] - Manipulate appearance of your target", 80, command_fixmob) ||
-		command_add("flag", "[status] [acctname] - Refresh your admin status, or set an account's admin status if arguments provided", 0, command_flag) ||
-		command_add("flagedit", "- Edit zone flags on your target", 100, command_flagedit) ||
-		command_add("flags", "- displays the flags of you or your target", 0, command_flags) ||
-		command_add("flymode", "[0/1/2] - Set your or your player target's flymode to off/on/levitate", 50, command_flymode) ||
+		command_add("face", "- Change the face of your target", 150, command_face) ||
+		command_add("fi", nullptr, 0, command_itemsearch) ||
+		command_add("finditem", nullptr, 0, command_itemsearch) ||
+		command_add("findnpctype", "[search criteria] - Search database NPC types", 95, command_findnpctype) ||
+		command_add("findspell", "[searchstring] - Search for a spell", 0, command_findspell) ||
+		command_add("findzone", "[search criteria] - Search database zones", 80, command_findzone) ||
+		command_add("fixmob", "[race|gender|texture|helm|face|hair|haircolor|beard|beardcolor|heritage|tattoo|detail] [next|prev] - Manipulate appearance of your target", 250, command_fixmob) ||
+		command_add("flag", "[status] [acctname] - Refresh your admin status, or set an account's admin status if arguments provided", 250, command_flag) ||
+		command_add("flagedit", "- Edit zone flags on your target", 200, command_flagedit) ||
+		command_add("flags", "- displays the flags of you or your target", 90, command_flags) ||
+		command_add("flymode", "[0/1/2] - Set your or your player target's flymode to off/on/levitate", 150, command_flymode) ||
 		command_add("fov", "- Check wether you're behind or in your target's field of view", 80, command_fov) ||
-		command_add("freeze", "- Freeze your target", 80, command_freeze) ||
-		command_add("fz", nullptr, 100, command_findzone) ||
+		command_add("freeze", "- Freeze your target", 150, command_freeze) ||
+		command_add("fz", nullptr, 150, command_findzone) ||
 
-		command_add("gassign", "[id] - Assign targetted NPC to predefined wandering grid id", 100, command_gassign) ||
-		command_add("gender", "[0/1/2] - Change your or your target's gender to male/female/neuter", 50, command_gender) ||
-		command_add("getplayerburriedcorpsecount", "- Get the target's total number of burried player corpses.", 100, command_getplayerburriedcorpsecount) ||
-		command_add("getvariable", "[varname] - Get the value of a variable from the database", 200, command_getvariable) ||
-		command_add("gi", nullptr, 200, command_giveitem) ||
-		command_add("ginfo", "- get group info on target.", 20, command_ginfo) ||
-		command_add("giveitem", "[itemid] [charges] - Summon an item onto your target's cursor. Charges are optional.", 200, command_giveitem) ||
-		command_add("givemoney", "[pp] [gp] [sp] [cp] - Gives specified amount of money to the target player.", 200, command_givemoney) ||
-		command_add("globalview", "Lists all qglobals in cache if you were to do a quest with this target.", 80, command_globalview) ||
-		command_add("gm", "- Turn player target's or your GM flag on or off", 80, command_gm) ||
-		command_add("gmhideme", nullptr, 0, command_hideme) ||
-		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target", 100, command_gmspeed) ||
-		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target", 10, command_goto) ||
-		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid", 170, command_grid) ||
-		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 10, command_guild) ||
-		command_add("guildapprove", "[guildapproveid] - Approve a guild with specified ID (guild creator receives the id)", 0, command_guildapprove) ||
-		command_add("guildcreate", "[guildname] - Creates an approval setup for guild name specified", 0, command_guildcreate) ||
-		command_add("guildlist", "[guildapproveid] - Lists character names who have approved the guild specified by the approve id", 0, command_guildlist) ||
-		command_add("guilds", nullptr, 0, command_guild) ||
+		command_add("gassign", "[id] - Assign targetted NPC to predefined wandering grid id", 250, command_gassign) ||
+		command_add("gender", "[0/1/2] - Change your or your target's gender to male/female/neuter", 100, command_gender) ||
+		command_add("getplayerburriedcorpsecount", "- Get the target's total number of burried player corpses.", 90, command_getplayerburriedcorpsecount) ||
+		command_add("getvariable", "[varname] - Get the value of a variable from the database", 180, command_getvariable) ||
+		command_add("gi", nullptr, 160, command_giveitem) ||
+		command_add("ginfo", "- get group info on target.", 80, command_ginfo) ||
+		command_add("giveitem", "[itemid] [charges] - Summon an item onto your target's cursor. Charges are optional.", 160, command_giveitem) ||
+		command_add("givemoney", "[pp] [gp] [sp] [cp] - Gives specified amount of money to the target player.", 160, command_givemoney) ||
+		command_add("globalview", "Lists all qglobals in cache if you were to do a quest with this target.", 95, command_globalview) ||
+		command_add("gm", "- Turn player target's or your GM flag on or off", 95, command_gm) ||
+		command_add("gmhideme", nullptr, 81, command_hideme) ||
+		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target", 150, command_gmspeed) ||
+		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target", 20, command_goto) ||
+		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid", 250, command_grid) ||
+		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 90, command_guild) ||
+		command_add("guildapprove", "[guildapproveid] - Approve a guild with specified ID (guild creator receives the id)", 90, command_guildapprove) ||
+		command_add("guildcreate", "[guildname] - Creates an approval setup for guild name specified", 90, command_guildcreate) ||
+		command_add("guildlist", "[guildapproveid] - Lists character names who have approved the guild specified by the approve id", 90, command_guildlist) ||
+		command_add("guilds", nullptr, 90, command_guild) ||
 
-		command_add("hair", "- Change the hair style of your target", 80, command_hair) ||
-		command_add("haircolor", "- Change the hair color of your target", 80, command_haircolor) ||
-		command_add("haste", "[percentage] - Set your haste percentage", 100, command_haste) ||
+		command_add("hair", "- Change the hair style of your target", 250, command_hair) ||
+		command_add("haircolor", "- Change the hair color of your target", 250, command_haircolor) ||
+		command_add("haste", "[percentage] - Set your haste percentage", 150, command_haste) ||
 		command_add("hatelist", " - Display hate list for target.", 80, command_hatelist) ||
-		command_add("heal", "- Completely heal your target", 10, command_heal) ||
-		command_add("helm", "- Change the helm of your target", 80, command_helm) ||
+		command_add("heal", "- Completely heal your target", 200, command_heal) ||
+		command_add("helm", "- Change the helm of your target", 250, command_helm) ||
 		command_add("help", "[search term] - List available commands and their description, specify partial command as argument to search", 0, command_help) ||
 		//command_add("heritage","- Change the heritage of your target (Drakkin Only)",80,command_heritage) ||
-		command_add("hideme", "[on/off] - Hide yourself from spawn lists.", 80, command_hideme) ||
-		command_add("hp", "- Refresh your HP bar from the server.", 0, command_hp) ||
+		command_add("hideme", "[on/off] - Hide yourself from spawn lists.", 81, command_hideme) ||
+		command_add("hp", "- Refresh your HP bar from the server.", 255, command_hp) ||
 
-		command_add("instance", "- Modify Instances", 200, command_instance) ||
-		command_add("interrogateinv", "- use [help] argument for available options", 0, command_interrogateinv) ||
-		command_add("interrupt", "[message id] [color] - Interrupt your casting. Arguments are optional.", 50, command_interrupt) ||
-		command_add("invul", nullptr, 0, command_invul) ||
-		command_add("invulnerable", "[on/off] - Turn player target's or your invulnerable flag on or off", 80, command_invul) ||
+		command_add("instance", "- Modify Instances", 255, command_instance) ||
+		command_add("interrogateinv", "- use [help] argument for available options", 150, command_interrogateinv) ||
+		command_add("interrupt", "[message id] [color] - Interrupt your casting. Arguments are optional.", 90, command_interrupt) ||
+		command_add("invul", nullptr, 150, command_invul) ||
+		command_add("invulnerable", "[on/off] - Turn player target's or your invulnerable flag on or off", 150, command_invul) ||
 		command_add("ipban", "[IP address] - Ban IP by character name", 200, command_ipban) ||
 #ifdef IPC
-		command_add("ipc", "- Toggle an NPC's interactive flag", 200, command_ipc) ||
+		command_add("ipc", "- Toggle an NPC's interactive flag", 250, command_ipc) ||
 #endif
-		command_add("iplookup", "[charname] - Look up IP address of charname", 200, command_iplookup) ||
-		command_add("iteminfo", "- Get information about the item on your cursor", 10, command_iteminfo) ||
-		command_add("itemsearch", "[search criteria] - Search for an item", 10, command_itemsearch) ||
-		command_add("itemtest", "- merth's test function", 250, command_itemtest) ||
+		command_add("iplookup", "[charname] - Look up IP address of charname", 95, command_iplookup) ||
+		command_add("iteminfo", "- Get information about the item on your cursor", 50, command_iteminfo) ||
+		command_add("itemsearch", "[search criteria] - Search for an item", 100, command_itemsearch) ||
+		command_add("itemtest", "- merth's test function", 255, command_itemtest) ||
 
-		command_add("kick", "[charname] - Disconnect charname", 150, command_kick) ||
-		command_add("kill", "- Kill your target", 100, command_kill) ||
+		command_add("kick", "[charname] - Disconnect charname", 100, command_kick) ||
+		command_add("kill", "- Kill your target", 150, command_kill) ||
 
-		command_add("lastname", "[new lastname] - Set your or your player target's lastname", 50, command_lastname) ||
-		command_add("level", "[level] - Set your or your target's level", 10, command_level) ||
-		command_add("listnpcs", "[name/range] - Search NPCs", 20, command_listnpcs) ||
-		command_add("listpetition", "- List petitions", 50, command_listpetition) ||
+		command_add("lastname", "[new lastname] - Set your or your player target's lastname", 81, command_lastname) ||
+		command_add("level", "[level] - Set your or your target's level", 150, command_level) ||
+		command_add("listnpcs", "[name/range] - Search NPCs", 90, command_listnpcs) ||
+		command_add("listpetition", "- List petitions", 20, command_listpetition) ||
 		command_add("loc", "- Print out your or your target's current location and heading", 0, command_loc) ||
-		command_add("lock", "- Lock the worldserver", 150, command_lock) ||
-		command_add("log", "- Search character event log", 80, command_log) ||
-		command_add("logs", "[status|normal|error|debug|quest|all] - Subscribe to a log type", 250, command_logs) ||
-		command_add("logsql", "- enable SQL logging", 200, command_logsql) ||
-		command_add("los", nullptr, 0, command_checklos) ||
+		command_add("lock", "- Lock the worldserver", 250, command_lock) ||
+		command_add("log", "- Search character event log", 95, command_log) ||
+		command_add("logs", "[status|normal|error|debug|quest|all] - Subscribe to a log type", 180, command_logs) ||
+		command_add("logsql", "- enable SQL logging", 250, command_logsql) ||
+		command_add("los", nullptr, 80, command_checklos) ||
 
-		command_add("makepet", "[level] [class] [race] [texture] - Make a pet", 50, command_makepet) ||
-		command_add("mana", "- Fill your or your target's mana", 50, command_mana) ||
-		command_add("manaburn", "- Use AA Wizard class skill manaburn on target", 10, command_manaburn) ||
-		command_add("manastat", "- Report your or your target's cur/max mana", 80, command_manastat) ||
-		command_add("maxskills", "Maxes skills for you.", 200, command_max_all_skills) ||
-		command_add("memspell", "[slotid] [spellid] - Memorize spellid in the specified slot", 50, command_memspell) ||
-		command_add("merchant_close_shop", "Closes a merchant shop", 100, command_merchantcloseshop) ||
-		command_add("merchant_open_shop", "Opens a merchants shop", 100, command_merchantopenshop) ||
+		command_add("makepet", "[level] [class] [race] [texture] - Make a pet", 150, command_makepet) ||
+		command_add("mana", "- Fill your or your target's mana", 200, command_mana) ||
+		command_add("manaburn", "- Use AA Wizard class skill manaburn on target", 100, command_manaburn) ||
+		command_add("manastat", "- Report your or your target's cur/max mana", 50, command_manastat) ||
+		command_add("maxskills", "Maxes skills for you.", 50, command_max_all_skills) ||
+		command_add("memspell", "[slotid] [spellid] - Memorize spellid in the specified slot", 150, command_memspell) ||
+		command_add("merchant_close_shop", "Closes a merchant shop", 250, command_merchantcloseshop) ||
+		command_add("merchant_open_shop", "Opens a merchants shop", 250, command_merchantopenshop) ||
 		command_add("mlog", "- Manage log settings", 250, command_mlog) ||
-		command_add("modifynpcstat", "- Modifys a NPC's stats", 150, command_modifynpcstat) ||
+		command_add("modifynpcstat", "- Modifys a NPC's stats", 250, command_modifynpcstat) ||
 		command_add("motd", "[new motd] - Set message of the day", 150, command_motd) ||
-		command_add("movechar", "[charname] [zonename] - Move charname to zonename", 50, command_movechar) ||
-		//command_add("myskills","- Show details about your current skill levels",0,command_myskills) ||
+		command_add("movechar", "[charname] [zonename] - Move charname to zonename", 95, command_movechar) ||
+		//command_add("myskills","- Show details about your current skill levels",50,command_myskills) ||
 		command_add("mysql", "Mysql CLI, see 'help' for options.", 250, command_mysql) ||
 		command_add("mystats", "- Show details about you or your pet", 50, command_mystats) ||
 
-		command_add("name", "[newname] - Rename your player target", 150, command_name) ||
-		command_add("netstats", "- Gets the network stats for a stream.", 200, command_netstats) ||
-		command_add("nologs", "[status|normal|error|debug|quest|all] - Unsubscribe to a log type", 250, command_nologs) ||
-		command_add("npccast", "[targetname/entityid] [spellid] - Causes NPC target to cast spellid on targetname/entityid", 80, command_npccast) ||
-		command_add("npcedit", "[column] [value] - Mega NPC editing command", 100, command_npcedit) ||
-		command_add("npcemote", "[message] - Make your NPC target emote a message.", 150, command_npcemote) ||
-		command_add("npcloot", "[show/money/add/remove] [itemid/all/money: pp gp sp cp] - Manipulate the loot an NPC is carrying", 80, command_npcloot) ||
-		command_add("npcsay", "[message] - Make your NPC target say a message.", 150, command_npcsay) ||
-		command_add("npcshout", "[message] - Make your NPC target shout a message.", 150, command_npcshout) ||
-		command_add("npcspawn", "[create/add/update/remove/delete] - Manipulate spawn DB", 170, command_npcspawn) ||
-		command_add("npcspecialatk", nullptr, 0, command_npcspecialattk) ||
-		command_add("npcspecialattack", nullptr, 0, command_npcspecialattk) ||
-		command_add("npcspecialattk", "[flagchar] [perm] - Set NPC special attack flags. Flags are E(nrage) F(lurry) R(ampage) S(ummon).", 80, command_npcspecialattk) ||
-		command_add("npcstats", "- Show stats about target NPC", 80, command_npcstats) ||
+		command_add("name", "[newname] - Rename your player target", 81, command_name) ||
+		command_add("netstats", "- Gets the network stats for a stream.", 180, command_netstats) ||
+		command_add("nologs", "[status|normal|error|debug|quest|all] - Unsubscribe to a log type", 95, command_nologs) ||
+		command_add("npccast", "[targetname/entityid] [spellid] - Causes NPC target to cast spellid on targetname/entityid", 150, command_npccast) ||
+		command_add("npcedit", "[column] [value] - Mega NPC editing command", 250, command_npcedit) ||
+		command_add("npcemote", "[message] - Make your NPC target emote a message.", 100, command_npcemote) ||
+		command_add("npcloot", "[show/money/add/remove] [itemid/all/money: pp gp sp cp] - Manipulate the loot an NPC is carrying", 160, command_npcloot) ||
+		command_add("npcsay", "[message] - Make your NPC target say a message.", 100, command_npcsay) ||
+		command_add("npcshout", "[message] - Make your NPC target shout a message.", 100, command_npcshout) ||
+		command_add("npcspawn", "[create/add/update/remove/delete] - Manipulate spawn DB", 250, command_npcspawn) ||
+		command_add("npcspecialatk", nullptr, 250, command_npcspecialattk) ||
+		command_add("npcspecialattack", nullptr, 250, command_npcspecialattk) ||
+		command_add("npcspecialattk", "[flagchar] [perm] - Set NPC special attack flags. Flags are E(nrage) F(lurry) R(ampage) S(ummon).", 250, command_npcspecialattk) ||
+		command_add("npcstats", "- Show stats about target NPC", 90, command_npcstats) ||
 		command_add("npctype_cache", "[id] or all - Clears the npc type cache for either the id or all npcs.", 250, command_npctype_cache) ||
-		command_add("npctypespawn", "[npctypeid] [factionid] - Spawn an NPC from the db", 10, command_npctypespawn) ||
-		command_add("nukebuffs", "- Strip all buffs on you or your target", 50, command_nukebuffs) ||
+		command_add("npctypespawn", "[npctypeid] [factionid] - Spawn an NPC from the db", 160, command_npctypespawn) ||
+		command_add("nukebuffs", "- Strip all buffs on you or your target", 255, command_nukebuffs) ||
 		command_add("nukeitem", "[itemid] - Remove itemid from your player target's inventory", 150, command_nukeitem) ||
-		command_add("numauths", "- TODO: describe this command", 200, command_numauths) ||
+		command_add("numauths", "- TODO: describe this command", 255, command_numauths) ||
 
-		command_add("object", "List|Add|Edit|Move|Rotate|Copy|Save|Undo|Delete - Manipulate static and tradeskill objects within the zone", 100, command_object) ||
-		command_add("oocmute", "[1/0] - Mutes OOC chat", 200, command_oocmute) ||
-		command_add("opcode", "- opcode management", 250, command_opcode) ||
-		command_add("open_shop", nullptr, 100, command_merchantopenshop) ||
-		command_add("optest", "- solar's private test command", 255, command_optest) ||
+		command_add("object", "List|Add|Edit|Move|Rotate|Copy|Save|Undo|Delete - Manipulate static and tradeskill objects within the zone", 200, command_object) ||
+		command_add("oocmute", "[1/0] - Mutes OOC chat", 95, command_oocmute) ||
+		command_add("opcode", "- opcode management", 180, command_opcode) ||
+		command_add("open_shop", nullptr, 250, command_merchantopenshop) ||
+		command_add("optest", "- solar's private test command", 180, command_optest) ||
 
 #ifdef PACKET_PROFILER
-		command_add("packetprofile", "- Dump packet profile for target or self.", 250, command_packetprofile) ||
+		command_add("packetprofile", "- Dump packet profile for target or self.", 180, command_packetprofile) ||
 #endif
-		command_add("path", "- view and edit pathing", 200, command_path) ||
-		command_add("peekinv", "[worn/cursor/inv/bank/trade/trib/all] - Print out contents of your player target's inventory", 100, command_peekinv) ||
-		command_add("permaclass", "[classnum] - Change your or your player target's class (target is disconnected)", 80, command_permaclass) ||
-		command_add("permagender", "[gendernum] - Change your or your player target's gender (zone to take effect)", 80, command_permagender) ||
-		command_add("permarace", "[racenum] - Change your or your player target's race (zone to take effect)", 80, command_permarace) ||
+		command_add("path", "- view and edit pathing", 250, command_path) ||
+		command_add("peekinv", "[worn/cursor/inv/bank/trade/trib/all] - Print out contents of your player target's inventory", 90, command_peekinv) ||
+		command_add("permaclass", "[classnum] - Change your or your player target's class (target is disconnected)", 200, command_permaclass) ||
+		command_add("permagender", "[gendernum] - Change your or your player target's gender (zone to take effect)", 200, command_permagender) ||
+		command_add("permarace", "[racenum] - Change your or your player target's race (zone to take effect)", 200, command_permarace) ||
 		command_add("petitioninfo", "[petition number] - Get info about a petition", 20, command_petitioninfo) ||
-		command_add("peqzone", "[zonename] - Go to specified zone, if you have > 75% health", 0, command_peqzone) ||
-		command_add("pf", "- Display additional mob coordinate and wandering data", 0, command_pf) ||
+		command_add("peqzone", "[zonename] - Go to specified zone, if you have > 75% health", 255, command_peqzone) ||
+		command_add("pf", "- Display additional mob coordinate and wandering data", 95, command_pf) ||
 #ifdef EQPROFILE
 		command_add("profiledump", "- Dump profiling info to logs", 250, command_profiledump) ||
 		command_add("profilereset", "- Reset profiling info", 250, command_profilereset) ||
 #endif
-		command_add("pvp", "[on/off] - Set your or your player target's PVP status", 100, command_pvp) ||
+		command_add("pvp", "[on/off] - Set your or your player target's PVP status", 160, command_pvp) ||
 
-		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 100, command_qglobal) ||
-		command_add("qtest", "- QueryServ testing command.", 255, command_qtest) ||
-		command_add("questerrors", "Shows quest errors.", 100, command_questerrors) ||
+		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 250, command_qglobal) ||
+		command_add("qtest", "- QueryServ testing command.", 85, command_qtest) ||
+		command_add("questerrors", "Shows quest errors.", 0, command_questerrors) ||
 		command_add("questupdate", "Updates the quest folder if it is tied to an svn.", 250, command_questupdate) ||
 
-		command_add("race", "[racenum] - Change your or your target's race. Use racenum 0 to return to normal", 50, command_race) ||
-		command_add("raidloot", "LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.", 0, command_raidloot) ||
-		command_add("randomfeatures", "- Temporarily randomizes the Facial Features of your target", 80, command_randomfeatures) ||
-		command_add("refreshgroup", "- Refreshes Group.", 0, command_refreshgroup) ||
-		command_add("reloadallrules", "Executes a reload of all rules.", 80, command_reloadallrules) ||
-		command_add("reloademote", "Reloads NPC Emotes", 80, command_reloademote) ||
+		command_add("race", "[racenum] - Change your or your target's race. Use racenum 0 to return to normal", 160, command_race) ||
+		command_add("raidloot", "LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.", 1, command_raidloot) ||
+		command_add("randomfeatures", "- Temporarily randomizes the Facial Features of your target", 180, command_randomfeatures) ||
+		command_add("refreshgroup", "- Refreshes Group.", 95, command_refreshgroup) ||
+		command_add("reloadallrules", "Executes a reload of all rules.", 180, command_reloadallrules) ||
+		command_add("reloademote", "Reloads NPC Emotes", 180, command_reloademote) ||
 		command_add("reloadlevelmods", nullptr, 255, command_reloadlevelmods) ||
-		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers)", 150, command_reloadqst) ||
-		command_add("reloadquest", " - Clear quest cache (any argument causes it to also stop all timers)", 150, command_reloadqst) ||
-		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 80, command_reloadworldrules) ||
-		command_add("reloadstatic", "- Reload Static Zone Data", 150, command_reloadstatic) ||
-		command_add("reloadtitles", "- Reload player titles from the database", 150, command_reloadtitles) ||
-		command_add("reloadworld", "[0|1] - Clear quest cache (0 - no repop, 1 - repop)", 255, command_reloadworld) ||
-		command_add("reloadzonepoints", "- Reload zone points from database", 150, command_reloadzps) ||
-		command_add("reloadzps", nullptr, 0, command_reloadzps) ||
-		command_add("repop", "[delay] - Repop the zone with optional delay", 100, command_repop) ||
+		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers)", 160, command_reloadqst) ||
+		command_add("reloadquest", " - Clear quest cache (any argument causes it to also stop all timers)", 160, command_reloadqst) ||
+		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
+		command_add("reloadstatic", "- Reload Static Zone Data", 180, command_reloadstatic) ||
+		command_add("reloadtitles", "- Reload player titles from the database", 180, command_reloadtitles) ||
+		command_add("reloadworld", "[0|1] - Clear quest cache (0 - no repop, 1 - repop)", 250, command_reloadworld) ||
+		command_add("reloadzonepoints", "- Reload zone points from database", 180, command_reloadzps) ||
+		command_add("reloadzps", nullptr, 180, command_reloadzps) ||
+		command_add("repop", "[delay] - Repop the zone with optional delay", 150, command_repop) ||
 		command_add("rewind", nullptr, 0, command_rewind) ||
-		command_add("resetaa", "- Resets a Player's AA in their profile and refunds spent AA's to unspent, disconnects player.", 200, command_resetaa) ||
-		command_add("resetboat", "- Sets player's boat to 0 in their profile.", 100, command_resetboat) ||
-		command_add("revoke", "[charname] [1/0] - Makes charname unable to talk on OOC", 200, command_revoke) ||
-		command_add("rf", nullptr, 80, command_randomfeatures) ||
+		command_add("resetaa", "- Resets a Player's AA in their profile and refunds spent AA's to unspent, disconnects player.", 250, command_resetaa) ||
+		command_add("resetboat", "- Sets player's boat to 0 in their profile.", 95, command_resetboat) ||
+		command_add("revoke", "[charname] [1/0] - Makes charname unable to talk on OOC", 95, command_revoke) ||
+		command_add("rf", nullptr, 180, command_randomfeatures) ||
 		command_add("rules", "(subcommand) - Manage server rules", 250, command_rules) ||
-		command_add("rq", nullptr, 0, command_reloadqst) ||
+		command_add("rq", nullptr, 160, command_reloadqst) ||
 
-		command_add("save", "- Force your player or player corpse target to be saved to the database", 50, command_save) ||
-		command_add("scribespell", "[spellid] - Scribe specified spell in your target's spell book.", 180, command_scribespell) ||
+		command_add("save", "- Force your player or player corpse target to be saved to the database", 150, command_save) ||
+		command_add("scribespell", "[spellid] - Scribe specified spell in your target's spell book.", 150, command_scribespell) ||
 		command_add("scribespells", "[max level] [min level] - Scribe all spells for you or your player target that are usable by them, up to level specified. (may freeze client for a few seconds)", 150, command_scribespells) ||
-		command_add("search", nullptr, 10, command_itemsearch) ||
-		command_add("sendop", "[opcode] - LE's Private test command, leave it alone", 200, command_sendop) ||
-		command_add("sendzonespawns", "- Refresh spawn list for all clients in zone", 150, command_sendzonespawns) ||
-		command_add("serverinfo", "- Get OS info about server host", 200, command_serverinfo) ||
-		command_add("serverrules", "- Read this server's rules", 0, command_serverrules) ||
-		command_add("serversidename", "- Prints target's server side name", 0, command_serversidename) ||
-		command_add("setaaexp", nullptr, 0, command_setaaxp) ||
-		command_add("setaapoints", nullptr, 0, command_setaapts) ||
-		command_add("setaapts", "[value] - Set your or your player target's available AA points", 100, command_setaapts) ||
-		command_add("setaaxp", "[value] - Set your or your player target's AA experience", 100, command_setaaxp) ||
-		command_add("setallskill", nullptr, 0, command_setskillall) ||
-		command_add("setallskills", nullptr, 0, command_setskillall) ||
-		command_add("setanim", "[animnum] - Set target's appearance to animnum", 200, command_setanim) ||
-		command_add("setexp", nullptr, 0, command_setxp) ||
-		command_add("setskill", "[skillnum] [value] - Set your target's skill skillnum to value", 50, command_setskill) ||
-		command_add("setskillall", "[value] - Set all of your target's skills to value", 50, command_setskillall) ||
-		command_add("setfaction", "[faction number] - Sets targeted NPC's faction in the database", 170, command_setfaction) ||
-		command_add("setgraveyard", "[zone name] - Creates a graveyard for the specified zone based on your target's LOC.", 200, command_setgraveyard) ||
-		command_add("setlanguage", "[language ID] [value] - Set your target's language skillnum to value", 50, command_setlanguage) ||
-		command_add("setlsinfo", "[email] [password] - Set login server email address and password (if supported by login server)", 10, command_setlsinfo) ||
-		command_add("setpass", "[accountname] [password] - Set local password for accountname", 150, command_setpass) ||
-		command_add("setxp", "[value] - Set your or your player target's experience", 100, command_setxp) ||
+		command_add("search", nullptr, 80, command_itemsearch) ||
+		command_add("sendop", "[opcode] - LE's Private test command, leave it alone", 180, command_sendop) ||
+		command_add("sendzonespawns", "- Refresh spawn list for all clients in zone", 100, command_sendzonespawns) ||
+		command_add("serverinfo", "- Get OS info about server host", 250, command_serverinfo) ||
+		command_add("serverrules", "- Read this server's rules", 255, command_serverrules) ||
+		command_add("serversidename", "- Prints target's server side name", 100, command_serversidename) ||
+		command_add("setaaexp", nullptr, 250, command_setaaxp) ||
+		command_add("setaapoints", nullptr, 250, command_setaapts) ||
+		command_add("setaapts", "[value] - Set your or your player target's available AA points", 250, command_setaapts) ||
+		command_add("setaaxp", "[value] - Set your or your player target's AA experience", 250, command_setaaxp) ||
+		command_add("setallskill", nullptr, 150, command_setskillall) ||
+		command_add("setallskills", nullptr, 150, command_setskillall) ||
+		command_add("setanim", "[animnum] - Set target's appearance to animnum", 250, command_setanim) ||
+		command_add("setexp", nullptr, 250, command_setxp) ||
+		command_add("setskill", "[skillnum] [value] - Set your target's skill skillnum to value", 150, command_setskill) ||
+		command_add("setskillall", "[value] - Set all of your target's skills to value", 150, command_setskillall) ||
+		command_add("setfaction", "[faction number] - Sets targeted NPC's faction in the database", 250, command_setfaction) ||
+		command_add("setgraveyard", "[zone name] - Creates a graveyard for the specified zone based on your target's LOC.", 250, command_setgraveyard) ||
+		command_add("setlanguage", "[language ID] [value] - Set your target's language skillnum to value", 100, command_setlanguage) ||
+		command_add("setlsinfo", "[email] [password] - Set login server email address and password (if supported by login server)", 255, command_setlsinfo) ||
+		command_add("setpass", "[accountname] [password] - Set local password for accountname", 255, command_setpass) ||
+		command_add("setxp", "[value] - Set your or your player target's experience", 150, command_setxp) ||
 		command_add("showbonusstats", "[item|spell|all] Shows bonus stats for target from items or spells. Shows both by default.", 50, command_showbonusstats) ||
 		command_add("showbuffs", "- List buffs active on your target or you if no target", 50, command_showbuffs) ||
-		command_add("showpetspell", "[spellid/searchstring] - search pet summoning spells", 200, command_showpetspell) ||
+		command_add("showpetspell", "[spellid/searchstring] - search pet summoning spells", 50, command_showpetspell) ||
 		command_add("showskills", "- Show the values of your or your player target's skills", 50, command_showskills) ||
-		command_add("showspellslist", "Shows spell list of targeted NPC", 100, command_showspellslist) ||
+		command_add("showspellslist", "Shows spell list of targeted NPC", 95, command_showspellslist) ||
 		command_add("showstats", "- Show details about you or your target", 50, command_showstats) ||
-		command_add("shutdown", "- Shut this zone process down", 150, command_shutdown) ||
-		command_add("si", nullptr, 200, command_summonitem) ||
-		command_add("size", "[size] - Change size of you or your target", 50, command_size) ||
-		command_add("spawn", "[name] [race] [level] [material] [hp] [gender] [class] [priweapon] [secweapon] [merchantid] - Spawn an NPC", 10, command_spawn) ||
-		command_add("spawnfix", "- Find targeted NPC in database based on its X/Y/heading and update the database to make it spawn at your current location/heading.", 170, command_spawnfix) ||
-		command_add("spawnstatus", "- Show respawn timer status", 100, command_spawnstatus) ||
-		command_add("spellinfo", "[spellid] - Get detailed info about a spell", 10, command_spellinfo) ||
+		command_add("shutdown", "- Shut this zone process down", 250, command_shutdown) ||
+		command_add("si", nullptr, 160, command_summonitem) ||
+		command_add("size", "[size] - Change size of you or your target", 100, command_size) ||
+		command_add("spawn", "[name] [race] [level] [material] [hp] [gender] [class] [priweapon] [secweapon] [merchantid] - Spawn an NPC", 250, command_spawn) ||
+		command_add("spawnfix", "- Find targeted NPC in database based on its X/Y/heading and update the database to make it spawn at your current location/heading.", 250, command_spawnfix) ||
+		command_add("spawnstatus", "- Show respawn timer status", 95, command_spawnstatus) ||
+		command_add("spellinfo", "[spellid] - Get detailed info about a spell", 50, command_spellinfo) ||
 		command_add("spfind", nullptr, 0, command_findspell) ||
-		command_add("spoff", "- Sends OP_ManaChange", 80, command_spoff) ||
-		command_add("spon", "- Sends OP_MemorizeSpell", 80, command_spon) ||
-		command_add("starve", "Sets hunger and thirst to 0.", 100, command_starve) ||
-		command_add("stun", "[duration] - Stuns you or your target for duration", 100, command_stun) ||
-		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified", 80, command_summon) ||
-		command_add("summonburriedplayercorpse", "- Summons the target's oldest burried corpse, if any exist.", 100, command_summonburriedplayercorpse) ||
-		command_add("summonitem", "[itemid] [charges] - Summon an item onto your cursor. Charges are optional.", 200, command_summonitem) ||
+		command_add("spoff", "- Sends OP_ManaChange", 255, command_spoff) ||
+		command_add("spon", "- Sends OP_MemorizeSpell", 255, command_spon) ||
+		command_add("starve", "Sets hunger and thirst to 0.", 180, command_starve) ||
+		command_add("stun", "[duration] - Stuns you or your target for duration", 150, command_stun) ||
+		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified", 95, command_summon) ||
+		command_add("summonburriedplayercorpse", "- Summons the target's oldest burried corpse, if any exist.", 95, command_summonburriedplayercorpse) ||
+		command_add("summonitem", "[itemid] [charges] - Summon an item onto your cursor. Charges are optional.", 160, command_summonitem) ||
 		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days", 150, command_suspend) ||
-		command_add("synctod", "- Send a time of day update to every client in zone", 90, command_synctod) ||
+		command_add("synctod", "- Send a time of day update to every client in zone", 100, command_synctod) ||
 
-		command_add("tattoo", "- Change the tattoo of your target (Drakkin Only)", 80, command_tattoo) ||
-		command_add("testspawn", "[memloc] [value] - spawns a NPC for you only, with the specified values set in the spawn struct", 200, command_testspawn) ||
-		command_add("testspawnkill", "- Sends an OP_Death packet for spawn made with #testspawn", 200, command_testspawnkill) ||
-		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment", 10, command_texture) ||
-		command_add("tgczone", nullptr, 0, command_peqzone) ||
-		command_add("time", "[HH] [MM] - Set EQ time", 90, command_time) ||
-		command_add("timers", "- Display persistent timers for target", 200, command_timers) ||
-		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional", 90, command_timezone) ||
-		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
-		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
+		command_add("tattoo", "- Change the tattoo of your target (Drakkin Only)", 255, command_tattoo) ||
+		command_add("testspawn", "[memloc] [value] - spawns a NPC for you only, with the specified values set in the spawn struct", 180, command_testspawn) ||
+		command_add("testspawnkill", "- Sends an OP_Death packet for spawn made with #testspawn", 180, command_testspawnkill) ||
+		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment", 250, command_texture) ||
+		command_add("tgczone", nullptr, 255, command_peqzone) ||
+		command_add("time", "[HH] [MM] - Set EQ time", 250, command_time) ||
+		command_add("timers", "- Display persistent timers for target", 100, command_timers) ||
+		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional", 250, command_timezone) ||
+		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 95, command_title) ||
+		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 255, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
 
-		command_add("undyeme", "- Remove dye from all of your armor slots", 0, command_undyeme) ||
-		command_add("unfreeze", "- Unfreeze your target", 80, command_unfreeze) ||
-		command_add("unlock", "- Unlock the worldserver", 150, command_unlock) ||
-		command_add("unmemspell", "[spellid] - Unmem specified spell from your target's spell bar.", 180, command_unmemspell) ||
-		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 180, command_unmemspells) ||
-		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 180, command_unscribespell) ||
-		command_add("unscribespells", "- Clear out your or your player target's spell book.", 180, command_unscribespells) ||
-		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 10, command_uptime) ||
+		command_add("undyeme", "- Remove dye from all of your armor slots", 255, command_undyeme) ||
+		command_add("unfreeze", "- Unfreeze your target", 150, command_unfreeze) ||
+		command_add("unlock", "- Unlock the worldserver", 250, command_unlock) ||
+		command_add("unmemspell", "[spellid] - Unmem specified spell from your target's spell bar.", 150, command_unmemspell) ||
+		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 150, command_unmemspells) ||
+		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 150, command_unscribespell) ||
+		command_add("unscribespells", "- Clear out your or your player target's spell book.", 150, command_unscribespells) ||
+		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 95, command_uptime) ||
 
-		command_add("version", "- Display current version of EQEmu server", 0, command_version) ||
-		command_add("viewnpctype", "[npctype id] - Show info about an npctype", 100, command_viewnpctype) ||
+		command_add("version", "- Display current version of EQEmu server", 180, command_version) ||
+		command_add("viewnpctype", "[npctype id] - Show info about an npctype", 95, command_viewnpctype) ||
 		command_add("viewpetition", "[petition number] - View a petition", 20, command_viewpetition) ||
 
-		command_add("wc", "[wear slot] [material] - Sends an OP_WearChange for your target", 200, command_wc) ||
-		command_add("weather", "[0/1/2/3] (Off/Rain/Snow/Manual) - Change the weather", 80, command_weather) ||
-		command_add("worldshutdown", "- Shut down world and all zones", 200, command_worldshutdown) ||
-		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 170, command_wp) ||
-		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 170, command_wpadd) ||
-		command_add("wpinfo", "- Show waypoint info about your NPC target", 170, command_wpinfo) ||
+		command_add("wc", "[wear slot] [material] - Sends an OP_WearChange for your target", 250, command_wc) ||
+		command_add("weather", "[0/1/2/3] (Off/Rain/Snow/Manual) - Change the weather", 150, command_weather) ||
+		command_add("worldshutdown", "- Shut down world and all zones", 250, command_worldshutdown) ||
+		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 250, command_wp) ||
+		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 250, command_wpadd) ||
+		command_add("wpinfo", "- Show waypoint info about your NPC target", 250, command_wpinfo) ||
 
-		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 80, command_zclip) ||
-		command_add("zcolor", "[red] [green] [blue] - Change sky color", 80, command_zcolor) ||
-		command_add("zhdr", nullptr, 0, command_zheader) ||
-		command_add("zheader", "[zonename] - Load zheader for zonename from the database", 80, command_zheader) ||
-		command_add("zone", "[zonename] [x] [y] [z] - Go to specified zone (coords optional)", 50, command_zone) ||
-		command_add("zonebootup", "[ZoneServerID] [shortname] - Make a zone server boot a specific zone", 150, command_zonebootup) ||
-		command_add("zoneinstance", "[instanceid] [x] [y] [z] - Go to specified instance zone (coords optional)", 50, command_zone_instance) ||
-		command_add("zonelock", "[list/lock/unlock] - Set/query lock flag for zoneservers", 100, command_zonelock) ||
-		command_add("zoneshutdown", "[shortname] - Shut down a zone server", 150, command_zoneshutdown) ||
-		command_add("zonespawn", "- Not implemented", 250, command_zonespawn) ||
-		command_add("zonestatus", "- Show connected zoneservers, synonymous with /servers", 150, command_zonestatus) ||
-		command_add("zopp", "Troubleshooting command - Sends a fake item packet to you. No server reference is created.", 250, command_zopp) ||
-		command_add("zsafecoords", "[x] [y] [z] - Set safe coords", 80, command_zsafecoords) ||
-		command_add("zsave", " - Saves zheader to the database", 80, command_zsave) ||
-		command_add("zsky", "[skytype] - Change zone sky type", 80, command_zsky) ||
+		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 250, command_zclip) ||
+		command_add("zcolor", "[red] [green] [blue] - Change sky color", 250, command_zcolor) ||
+		command_add("zhdr", nullptr, 250, command_zheader) ||
+		command_add("zheader", "[zonename] - Load zheader for zonename from the database", 250, command_zheader) ||
+		command_add("zone", "[zonename] [x] [y] [z] - Go to specified zone (coords optional)", 80, command_zone) ||
+		command_add("zonebootup", "[ZoneServerID] [shortname] - Make a zone server boot a specific zone", 250, command_zonebootup) ||
+		command_add("zoneinstance", "[instanceid] [x] [y] [z] - Go to specified instance zone (coords optional)", 250, command_zone_instance) ||
+		command_add("zonelock", "[list/lock/unlock] - Set/query lock flag for zoneservers", 150, command_zonelock) ||
+		command_add("zoneshutdown", "[shortname] - Shut down a zone server", 250, command_zoneshutdown) ||
+		command_add("zonespawn", "- Not implemented", 255, command_zonespawn) ||
+		command_add("zonestatus", "- Show connected zoneservers, synonymous with /servers", 95, command_zonestatus) ||
+		command_add("zopp", "Troubleshooting command - Sends a fake item packet to you. No server reference is created.", 180, command_zopp) ||
+		command_add("zsafecoords", "[x] [y] [z] - Set safe coords", 250, command_zsafecoords) ||
+		command_add("zsave", " - Saves zheader to the database", 250, command_zsave) ||
+		command_add("zsky", "[skytype] - Change zone sky type", 250, command_zsky) ||
 		command_add("zstats", "- Show info about zone header", 80, command_zstats) ||
-		command_add("zunderworld", "[zcoord] - Sets the underworld using zcoord", 80, command_zunderworld) ||
-		command_add("zuwcoords", "[z coord] - Set underworld coord", 80, command_zuwcoords)
+		command_add("zunderworld", "[zcoord] - Sets the underworld using zcoord", 250, command_zunderworld) ||
+		command_add("zuwcoords", "[z coord] - Set underworld coord", 250, command_zuwcoords)
 		)
 	{
 		command_deinit();
