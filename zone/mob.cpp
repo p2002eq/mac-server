@@ -450,15 +450,21 @@ uint32 Mob::GetAppearanceValue(EmuAppearance iAppearance) {
 
 void Mob::SetInvisible(uint8 state, bool showInvis)
 {
-	invisible = (bool) state;
-	if(showInvis) {
+	if(state == INVIS_OFF || state == INVIS_NORMAL)
+	{
+		invisible = (bool) state;
+	}
+
+	if(showInvis) 
+	{
 		SendAppearancePacket(AT_Invis, invisible);
 	}
-	// Invis and hide breaks charms
 
-	if (invisible || hidden || improved_hidden)
+	// Invis and hide breaks charms
+	if (HasPet() && state != INVIS_OFF)
 	{
 		FadePetCharmBuff();
+		DepopPet();
 	}
 }
 
@@ -1142,10 +1148,11 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetHaste());
 		client->Message(0, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
 		client->Message(0, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
+		client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
 		client->Message(0, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
 		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i Corruption: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR(), GetCorrup());
-		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender());
+		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor());
 		if (client->Admin() >= 100)
 			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), IsAIControlled(), targeted);
@@ -1174,15 +1181,12 @@ void Mob::DoAnim(Animation animnum, int type, bool ackreq, eqFilterType filter) 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Animation, sizeof(Animation_Struct));
 	Animation_Struct* anim = (Animation_Struct*)outapp->pBuffer;
 	anim->spawnid = GetID();
+	if(GetTarget())
+		anim->target = GetTarget()->GetID();
+	anim->action = animnum;
+	anim->value=type;
+	anim->unknown10=16256;
 
-	/*if(type == 0){
-		anim->action = 10;
-		anim->value=animnum;
-	}
-	else{*/
-		anim->action = animnum;
-		anim->value=type;
-	//}
 	entity_list.QueueCloseClients(this, outapp, false, 200, 0, ackreq, filter);
 	safe_delete(outapp);
 }

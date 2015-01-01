@@ -331,6 +331,35 @@ void ZoneDatabase::UpdateBug(BugStruct* bug) {
 
 }
 
+void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
+
+	uint32 len = strlen(feedback->name);
+	char* name = nullptr;
+	if (len > 0)
+	{
+		name = new char[2 * len + 1];
+		memset(name, 0, 2 * len + 1);
+		DoEscapeString(name, feedback->name, len);
+	}
+
+	len = strlen(feedback->message);
+	char* message = nullptr;
+	if (len > 0)
+	{
+		message = new char[2 * len + 1];
+		memset(message, 0, 2 * len + 1);
+		DoEscapeString(message, feedback->message, len);
+	}
+
+	std::string query = StringFormat("INSERT INTO feedback (name, message, zone, date) "
+		"VALUES('%s', '%s', '%s', CURDATE())",
+		name, message, zone->GetShortName());
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+		std::cerr << "Error in UpdateFeedback '" << query << "' " << results.ErrorMessage() << std::endl;
+
+}
+
 bool ZoneDatabase::SetSpecialAttkFlag(uint8 id, const char* flag) {
 
 	std::string query = StringFormat("UPDATE npc_types SET npcspecialattks='%s' WHERE id = %i;", flag, id);

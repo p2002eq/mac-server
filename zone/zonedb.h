@@ -334,6 +334,7 @@ public:
 
 	/* Petitions   */
 	void	UpdateBug(BugStruct* bug);
+	void	UpdateFeedback(Feedback_Struct* feedback);
 	void	DeletePetitionFromDB(Petition* wpet);
 	void	UpdatePetitionToDB(Petition* wpet);
 	void	InsertPetitionToDB(Petition* wpet);

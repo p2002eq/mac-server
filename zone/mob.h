@@ -27,8 +27,12 @@
 #include <vector>
 #include <string>
 
-#define GO_INVISIBLE 1
-#define DROP_INVISIBLE 0
+#define INVIS_OFF 0
+#define INVIS_NORMAL 1
+#define INVIS_VSANIMAL 2
+#define INVIS_VSUNDEAD 3
+#define INVIS_HIDDEN 4
+#define INVIS_IMPHIDDEN 5
 
 char* strn0cpy(char* dest, const char* source, uint32 size);
 

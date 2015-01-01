@@ -632,6 +632,7 @@ public:
 	bool DBSetup();
 	bool DBSetup_webdata_character();
 	bool DBSetup_webdata_servers();
+	bool DBSetup_feedback();
 
 	/*
 	* Database Variables

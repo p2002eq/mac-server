@@ -333,21 +333,7 @@ void Object::Close() {
 	if(user != nullptr)
 	{
 		last_user = user;
-		// put any remaining items from the world container back into the player's inventory to avoid item loss
-		// if they close the container without removing all items
-		ItemInst* container = this->m_inst;
-		if(container != nullptr)
-		{
-			for (uint8 i = SUB_BEGIN; i < EmuConstants::ITEM_CONTAINER_SIZE; i++)
-			{
-				ItemInst* inst = container->PopItem(i);
-				if(inst != nullptr)
-				{
-					user->MoveItemToInventory(inst, true);
-				}
-			}
-		}
-
+		database.SaveWorldContainer(zone->GetZoneID(),m_id,m_inst);
 		user->SetTradeskillObject(nullptr);
 	}
 	user = nullptr;
@@ -549,15 +535,14 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 			//Clear out no-drop and no-rent items first if different player opens it
 			if(user != last_user)
 				m_inst->ClearByFlags(byFlagSet, byFlagSet);
+			else
+				m_inst->ClearByFlags(byFlagIgnore, byFlagSet);
 
 			uint8 i = 0;
-			int trade_slot = i + IDX_TRADESKILL;
 			for (i=0; i<10; i++) {
 				const ItemInst* inst = m_inst->GetItem(i);
 				if (inst) {
-					//sender->GetInv().RefPutItem(i+4000,inst);
-					//sender->SendItemPacket(i+4000, inst, ItemPacketLoot);
-					//sender->PutItemInInventory(trade_slot, *inst, true);
+					sender->SendItemPacket(i, inst, ItemPacketWorldContainer);
 				}
 			}
 		}

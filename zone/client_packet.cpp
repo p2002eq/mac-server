@@ -268,6 +268,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_ZoneEntryResend] = &Client::Handle_OP_ZoneEntryResend;
 	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 	ConnectedOpcodes[OP_Disarm] = &Client::Handle_OP_Disarm;
+	ConnectedOpcodes[OP_Feedback] = &Client::Handle_OP_Feedback;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -4875,8 +4876,7 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 			improved_hidden = true;
 		}
 		hidden = true;
-		FadePetCharmBuff();
-		DepopPet();
+		SetInvisible(INVIS_HIDDEN, false); // We handle the apperance packet below based on if we failed or not.
 	}
 	else
 	{
@@ -8495,3 +8495,22 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 
 	return;
 }
+
+void Client::Handle_OP_Feedback(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(Feedback_Struct)) {
+		LogFile->write(EQEMuLog::Error, "Invalid size for Feedback_Struct: Expected: %i, Got: %i", sizeof(Feedback_Struct), app->size);
+		return;
+	}
+
+	char* packet_dump = "text_packets.txt";
+	FilePrintLine(packet_dump,true,"OP_Feedback");
+	FileDumpPacketHex(packet_dump, app);
+
+	Feedback_Struct* in = (Feedback_Struct*)app->pBuffer;
+	database.UpdateFeedback(in);
+
+	Message(CC_Yellow, "Thank you, %s. Your feedback has been recieved.", in->name);
+	return;
+}
+

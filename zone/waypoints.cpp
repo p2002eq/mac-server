@@ -937,7 +937,7 @@ void NPC::AssignWaypoints(int32 grid) {
 
         if(zone->HasMap() && RuleB(Map, FixPathingZWhenLoading) )
         {
-            if(!RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
+            if(RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
                 (zone->HasWaterMap() && !zone->watermap->InWater(newwp.x, newwp.y, newwp.z)))
             {
                 Map::Vertex dest(newwp.x, newwp.y, newwp.z);

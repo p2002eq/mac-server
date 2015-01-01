@@ -3973,6 +3973,7 @@ bool Database::DBSetup() {
 	LogFile->write(EQEMuLog::Debug, "Database setup started..");
 	DBSetup_webdata_character();
 	DBSetup_webdata_servers();
+	DBSetup_feedback();
 	return true;
 }
 
@@ -4022,3 +4023,29 @@ bool Database::DBSetup_webdata_servers() {
 	}
 	return true;
 }
+
+bool Database::DBSetup_feedback() {
+	std::string check_query = StringFormat("SHOW TABLES LIKE 'feedback'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() == 0){
+		std::string create_query = StringFormat(
+			"Create TABLE `feedback` (										"
+			"`id` int(11) NOT NULL AUTO_INCREMENT,				"
+			"`name` varchar(64) NULL,										"
+			"`message` varchar(1024) NULL,									"
+			"`zone` varchar(32) NULL,										"
+			"`date` date NOT NULL,											"
+			"PRIMARY KEY(`id`)												"
+			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
+			);
+		LogFile->write(EQEMuLog::Debug, "Attepting to create table feedback..");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success()){
+			LogFile->write(EQEMuLog::Error, "Error creating feedback table.");
+			return false;
+		}
+		LogFile->write(EQEMuLog::Debug, "feedback table created.");
+	}
+	return true;
+}
+
