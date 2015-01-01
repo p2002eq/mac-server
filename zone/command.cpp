@@ -194,11 +194,9 @@ int command_init(void){
 		command_add("enablerecipe", "[recipe_id] - Enables a recipe using the recipe id.", 250, command_enablerecipe) ||
 		command_add("equipitem", "[slotid(0-21)] - Equip the item on your cursor into the specified slot", 150, command_equipitem) ||
 
-		command_add("face", "- Change the face of your target", 80, command_face) ||
+
+		command_add("face", "- Change the face of your target", 150, command_face) || 
 		command_add("falltest", "[+Z] sends you to your current loc plus the Z specified.", 250, command_falltest) ||
-		command_add("fi", nullptr, 10, command_itemsearch) ||
-		command_add("finditem", nullptr, 10, command_itemsearch) ||
-		command_add("face", "- Change the face of your target", 150, command_face) ||
 		command_add("fi", nullptr, 0, command_itemsearch) ||
 		command_add("finditem", nullptr, 0, command_itemsearch) ||
 		command_add("findnpctype", "[search criteria] - Search database NPC types", 95, command_findnpctype) ||
@@ -211,7 +209,7 @@ int command_init(void){
 		command_add("flymode", "[0/1/2] - Set your or your player target's flymode to off/on/levitate", 150, command_flymode) ||
 		command_add("fov", "- Check wether you're behind or in your target's field of view", 80, command_fov) ||
 		command_add("freeze", "- Freeze your target", 150, command_freeze) ||
-		command_add("fz", nullptr, 150, command_findzone) ||
+		command_add("fz", nullptr, 80, command_findzone) ||
 
 		command_add("gassign", "[id] - Assign targetted NPC to predefined wandering grid id", 250, command_gassign) ||
 		command_add("gender", "[0/1/2] - Change your or your target's gender to male/female/neuter", 100, command_gender) ||
