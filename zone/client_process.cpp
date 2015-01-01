@@ -602,7 +602,7 @@ bool Client::Process() {
 				if (!zoning)
 				{
 					entity_list.MessageGroup(this,true,15,"%s logged out.",GetName());
-					LeaveGroup();
+					mygroup->DelMember(this);
 				}
 				else
 				{
