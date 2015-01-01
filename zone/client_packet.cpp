@@ -3440,9 +3440,6 @@ void Client::Handle_OP_FaceChange(const EQApplicationPacket *app)
 	m_pp.hairstyle = fc->hairstyle;
 	m_pp.face = fc->face;
 	m_pp.beard = fc->beard;
-	m_pp.drakkin_heritage = fc->drakkin_heritage;
-	m_pp.drakkin_tattoo = fc->drakkin_tattoo;
-	m_pp.drakkin_details = fc->drakkin_details;
 	Save();
 
 	return;

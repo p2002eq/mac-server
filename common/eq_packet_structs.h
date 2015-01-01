@@ -129,9 +129,6 @@ struct CharacterSelect_Struct {
 /*0410*/	uint8	hairstyle[10];			// Characters hair style
 /*0420*/	uint32	equip[10][9];			// 0=helm, 1=chest, 2=arm, 3=bracer, 4=hand, 5=leg, 6=boot, 7=melee1, 8=melee2 (Might not be)
 /*0780*/	uint32	secondary[10];			// Characters secondary IDFile number
-/*0820*/	uint32	drakkin_heritage[10];		// added for SoF
-/*0860*/	uint32	drakkin_tattoo[10];			// added for SoF
-/*0900*/	uint32	drakkin_details[10];		// added for SoF
 /*0940*/	uint32	deity[10];				// Characters Deity
 /*1000*/	uint8	beard[10];				// Characters Beard Type
 /*1010*/	uint8	unknown902[10];			// 10x ff
@@ -211,9 +208,6 @@ struct Spawn_Struct {
 /*0114*/ uint8	eyecolor1;			// Player's left eye color
 /*0115*/ uint8	unknown0115[11];	// Was [24]
 /*0126*/ uint8	StandState;	// stand state for SoF+ 0x64 for normal animation
-/*0127*/ uint32	drakkin_heritage;	// Added for SoF
-/*0131*/ uint32	drakkin_tattoo;		// Added for SoF
-/*0135*/ uint32	drakkin_details;	// Added for SoF
 /*0139*/ uint8	showhelm;			// 0=no, 1=yes
 /*0140*/ uint8	unknown0140[4];
 /*0144*/ uint8	is_npc;				// 0=no, 1=yes
@@ -636,9 +630,6 @@ struct CharCreate_Struct
 /*006*/		uint16  face;
 /*0068*/	uint32	eyecolor1;	//its possiable we could have these switched
 /*0073*/	uint32	eyecolor2;	//since setting one sets the other we really can't check
-/*0076*/	uint32	drakkin_heritage;	// added for SoF
-/*0080*/	uint32	drakkin_tattoo;		// added for SoF
-/*0084*/	uint32	drakkin_details;	// added for SoF
 };
 
 /*
@@ -1738,9 +1729,6 @@ struct Illusion_Struct { //size: 256 - SoF
 /*086*/	uint8	beard;			//
 /*087*/	uint8	beardcolor;		//
 /*088*/	float	size;			//
-/*092*/	uint32	drakkin_heritage;	//
-/*096*/	uint32	drakkin_tattoo;		//
-/*100*/	uint32	drakkin_details;	//
 /*104*/	uint32	armor_tint[_MaterialCount];	//
 /*140*/	uint8	eyecolor1;		// Field Not Identified in any Illusion Struct
 /*141*/	uint8	eyecolor2;		// Field Not Identified in any Illusion Struct
@@ -1895,9 +1883,6 @@ struct FaceChange_Struct {
 /*004*/	uint8	hairstyle;
 /*005*/	uint8	beard;
 /*006*/	uint8	face;
-/*007*/ uint32	drakkin_heritage;
-/*011*/ uint32	drakkin_tattoo;
-/*015*/ uint32	drakkin_details;
 //there are only 10 faces for barbs changing woad just
 //increase the face value by ten so if there were 8 woad
 //designs then there would be 80 barb faces

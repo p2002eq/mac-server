@@ -72,7 +72,6 @@
 #define iksar_1			4096
 #define vahshir_1		8192
 #define rall_1			16384 //froglok?
-#define drakkin_1		32768
 
 const char* GetRaceName(uint16 race);
 
@@ -95,11 +94,10 @@ inline uint32 GetRaceBitmask(uint16 race) { return uint32(pow(2.0f, float(GetArr
 #define Array_Race_IKSAR		13
 #define Array_Race_VAHSHIR		14
 #define Array_Race_FROGLOK		15
-#define Array_Race_DRAKKIN		16
-#define Array_Race_NPC			17
-#define Array_Race_PET			18
-#define Count_Array_Race		19 // used for array defines, must be the max + 1
-#define PLAYER_RACE_COUNT		16 // The count of all player races
+#define Array_Race_NPC			16
+#define Array_Race_PET			17
+#define Count_Array_Race		18 // used for array defines, must be the max + 1
+#define PLAYER_RACE_COUNT		15 // The count of all player races
 
 /*
 
