@@ -432,9 +432,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"pvp_type,"
 		"autosplit_enabled,"
 		"zone_change_count,"
-		"drakkin_heritage,"
-		"drakkin_tattoo,"
-		"drakkin_details,"
 		"toxicity,"
 		"hunger_level,"
 		"thirst_level,"
@@ -526,9 +523,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // pvp_type				
 		"%u,"  // autosplit_enabled		
 		"%u,"  // zone_change_count		
-		"%u,"  // drakkin_heritage		
-		"%u,"  // drakkin_tattoo		
-		"%u,"  // drakkin_details		
 		"%i,"  // toxicity				
 		"%i,"  // hunger_level			
 		"%i,"  // thirst_level			
@@ -620,9 +614,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
-		pp->drakkin_heritage,			  // " drakkin_heritage,          "
-		pp->drakkin_tattoo,				  // " drakkin_tattoo,            "
-		pp->drakkin_details,			  // " drakkin_details,           "
 		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
