@@ -1832,7 +1832,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		if (tmpNPCType->assistradius <= 0)
 			tmpNPCType->assistradius = tmpNPCType->aggroradius;
 
-		if (row[48] && strlen(row[47]))
+		if (row[47] && strlen(row[47]))
             tmpNPCType->bodytype = (uint8)atoi(row[47]);
         else
             tmpNPCType->bodytype = 0;
