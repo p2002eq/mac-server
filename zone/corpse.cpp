@@ -129,9 +129,6 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 	pc->hairstyle = pcs->hairstyle;
 	pc->luclinface = pcs->face;
 	pc->beard = pcs->beard;
-	pc->drakkin_heritage = pcs->drakkin_heritage;
-	pc->drakkin_tattoo = pcs->drakkin_tattoo;
-	pc->drakkin_details = pcs->drakkin_details;
 	pc->IsRezzed(rezzed);
 	pc->become_npc = false;
 
@@ -177,9 +174,6 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	0,							// uint8		in_hairstyle,
 	0,							// uint8		in_luclinface,
 	0,							// uint8		in_beard,
-	0,							// uint32		in_drakkin_heritage,
-	0,							// uint32		in_drakkin_tattoo,
-	0,							// uint32		in_drakkin_details,
 	0,							// uint32		in_armor_tint[_MaterialCount], 
 	0xff,						// uint8		in_aa_title,
 	0,							// uint8		in_see_invis, // see through invis/ivu
@@ -280,9 +274,6 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	client->GetPP().hairstyle,		  // uint8		in_hairstyle,
 	client->GetPP().face,			  // uint8		in_luclinface,
 	client->GetPP().beard,			  // uint8		in_beard,
-	client->GetPP().drakkin_heritage, // uint32		in_drakkin_heritage,
-	client->GetPP().drakkin_tattoo,	  // uint32		in_drakkin_tattoo,
-	client->GetPP().drakkin_details,  // uint32		in_drakkin_details,
 	0,								  // uint32		in_armor_tint[_MaterialCount],
 	0xff,							  // uint8		in_aa_title,
 	0,								  // uint8		in_see_invis, // see through invis
@@ -489,9 +480,6 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	0,						// uint8		in_hairstyle,
 	0,						// uint8		in_luclinface,
 	0,						// uint8		in_beard,
-	0,						// uint32		in_drakkin_heritage,
-	0,						// uint32		in_drakkin_tattoo,
-	0,						// uint32		in_drakkin_details,
 	0,						// uint32		in_armor_tint[_MaterialCount], 
 	0xff,					// uint8		in_aa_title,
 	0,						// uint8		in_see_invis, // see through invis/ivu
@@ -624,9 +612,6 @@ bool Corpse::Save() {
 	dbpc->hairstyle = hairstyle;
 	dbpc->face = luclinface;
 	dbpc->beard = beard;
-	dbpc->drakkin_heritage = drakkin_heritage;
-	dbpc->drakkin_tattoo = drakkin_tattoo;
-	dbpc->drakkin_details = drakkin_details;
 
 	uint32 x = 0;
 	ItemList::iterator cur, end;

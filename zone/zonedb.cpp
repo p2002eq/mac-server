@@ -794,9 +794,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"pvp_type,                  "
 		"autosplit_enabled,         "
 		"zone_change_count,         "
-		"drakkin_heritage,          "
-		"drakkin_tattoo,            "
-		"drakkin_details,           "
 		"toxicity,                  "
 		"hunger_level,              "
 		"thirst_level,              "
@@ -893,9 +890,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->pvptype = atoi(row[r]); r++;										 // "pvp_type,                  "
 		pp->autosplit = atoi(row[r]); r++;										 // "autosplit_enabled,         "
 		pp->zone_change_count = atoi(row[r]); r++;								 // "zone_change_count,         "
-		pp->drakkin_heritage = atoi(row[r]); r++;								 // "drakkin_heritage,          "
-		pp->drakkin_tattoo = atoi(row[r]); r++;									 // "drakkin_tattoo,            "
-		pp->drakkin_details = atoi(row[r]); r++;								 // "drakkin_details,           "
 		pp->toxicity = atoi(row[r]); r++;										 // "toxicity,                  "
 		pp->hunger_level = atoi(row[r]); r++;									 // "hunger_level,              "
 		pp->thirst_level = atoi(row[r]); r++;									 // "thirst_level,              "
@@ -1362,9 +1356,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" pvp_type,                  "
 		" autosplit_enabled,         "
 		" zone_change_count,         "
-		" drakkin_heritage,          "
-		" drakkin_tattoo,            "
-		" drakkin_details,           "
 		" toxicity,                  "
 		" hunger_level,              "
 		" thirst_level,              "
@@ -1460,9 +1451,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // pvp_type					  pp->pvptype,							" pvp_type,                  "
 		"%u,"  // autosplit_enabled			  pp->autosplit,						" autosplit_enabled,         "
 		"%u,"  // zone_change_count			  pp->zone_change_count,				" zone_change_count,         "
-		"%u,"  // drakkin_heritage			  pp->drakkin_heritage,					" drakkin_heritage,          "
-		"%u,"  // drakkin_tattoo			  pp->drakkin_tattoo,					" drakkin_tattoo,            "
-		"%u,"  // drakkin_details			  pp->drakkin_details,					" drakkin_details,           "
 		"%i,"  // toxicity					  pp->toxicity,							" toxicity,                  "
 		"%i,"  // hunger_level				  pp->hunger_level,						" hunger_level,              "
 		"%i,"  // thirst_level				  pp->thirst_level,						" thirst_level,              "
@@ -1557,9 +1545,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
-		pp->drakkin_heritage,			  // " drakkin_heritage,          "
-		pp->drakkin_tattoo,				  // " drakkin_tattoo,            "
-		pp->drakkin_details,			  // " drakkin_details,           "
 		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
@@ -1764,8 +1749,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.aggroradius, npc_types.assistradius, npc_types.bodytype, npc_types.npc_faction_id, "
                         "npc_types.face, npc_types.luclin_hairstyle, npc_types.luclin_haircolor, "
                         "npc_types.luclin_eyecolor, npc_types.luclin_eyecolor2, npc_types.luclin_beardcolor,"
-                        "npc_types.luclin_beard, npc_types.drakkin_heritage, npc_types.drakkin_tattoo, "
-                        "npc_types.drakkin_details, npc_types.armortint_id, "
+                        "npc_types.luclin_beard, npc_types.armortint_id, "
                         "npc_types.armortint_red, npc_types.armortint_green, npc_types.armortint_blue, "
                         "npc_types.see_invis, npc_types.see_invis_undead, npc_types.lastname, "
                         "npc_types.qglobal, npc_types.AC, npc_types.npc_aggro, npc_types.spawn_limit, "
@@ -1862,15 +1846,12 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->eyecolor2 = atoi(row[53]);
 		tmpNPCType->beardcolor = atoi(row[54]);
 		tmpNPCType->beard = atoi(row[55]);
-		tmpNPCType->drakkin_heritage = atoi(row[56]);
-		tmpNPCType->drakkin_tattoo = atoi(row[57]);
-		tmpNPCType->drakkin_details = atoi(row[58]);
 
-		uint32 armor_tint_id = atoi(row[59]);
+		uint32 armor_tint_id = atoi(row[56]);
 
-		tmpNPCType->armor_tint[0] = (atoi(row[60]) & 0xFF) << 16;
-        tmpNPCType->armor_tint[0] |= (atoi(row[61]) & 0xFF) << 8;
-		tmpNPCType->armor_tint[0] |= (atoi(row[62]) & 0xFF);
+		tmpNPCType->armor_tint[0] = (atoi(row[57]) & 0xFF) << 16;
+        tmpNPCType->armor_tint[0] |= (atoi(row[58]) & 0xFF) << 8;
+		tmpNPCType->armor_tint[0] |= (atoi(row[59]) & 0xFF);
 		tmpNPCType->armor_tint[0] |= (tmpNPCType->armor_tint[0]) ? (0xFF << 24) : 0;
 
 		if (armor_tint_id == 0)
@@ -1905,33 +1886,33 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
         } else
             armor_tint_id = 0;
 
-		tmpNPCType->see_invis = atoi(row[63]);
-		tmpNPCType->see_invis_undead = atoi(row[64]) == 0? false: true;	// Set see_invis_undead flag
-		if (row[65] != nullptr)
-			strn0cpy(tmpNPCType->lastname, row[65], 32);
+		tmpNPCType->see_invis = atoi(row[60]);
+		tmpNPCType->see_invis_undead = atoi(row[61]) == 0? false: true;	// Set see_invis_undead flag
+		if (row[62] != nullptr)
+			strn0cpy(tmpNPCType->lastname, row[62], 32);
 
-		tmpNPCType->qglobal = atoi(row[66]) == 0? false: true;	// qglobal
-		tmpNPCType->AC = atoi(row[67]);
-		tmpNPCType->npc_aggro = atoi(row[68]) == 0? false: true;
-		tmpNPCType->spawn_limit = atoi(row[69]);
-		tmpNPCType->see_hide = atoi(row[70]) == 0? false: true;
-		tmpNPCType->see_improved_hide = atoi(row[71]) == 0? false: true;
-		tmpNPCType->ATK = atoi(row[72]);
-		tmpNPCType->accuracy_rating = atoi(row[73]);
-		tmpNPCType->avoidance_rating = atoi(row[74]);
-		tmpNPCType->slow_mitigation = atoi(row[75]);
-		tmpNPCType->maxlevel = atoi(row[76]);
-		tmpNPCType->scalerate = atoi(row[77]);
-		tmpNPCType->private_corpse = atoi(row[78]) == 1 ? true: false;
-		tmpNPCType->unique_spawn_by_name = atoi(row[79]) == 1 ? true: false;
-		tmpNPCType->underwater = atoi(row[80]) == 1 ? true: false;
-		tmpNPCType->emoteid = atoi(row[81]);
-		tmpNPCType->spellscale = atoi(row[82]);
-		tmpNPCType->healscale = atoi(row[83]);
-		tmpNPCType->no_target_hotkey = atoi(row[84]) == 1 ? true: false;
-		tmpNPCType->raid_target = atoi(row[85]) == 0 ? false: true;
-		tmpNPCType->attack_delay = atoi(row[86]);
-		tmpNPCType->walkspeed= atof(row[87]);
+		tmpNPCType->qglobal = atoi(row[63]) == 0? false: true;	// qglobal
+		tmpNPCType->AC = atoi(row[64]);
+		tmpNPCType->npc_aggro = atoi(row[65]) == 0? false: true;
+		tmpNPCType->spawn_limit = atoi(row[66]);
+		tmpNPCType->see_hide = atoi(row[67]) == 0? false: true;
+		tmpNPCType->see_improved_hide = atoi(row[68]) == 0? false: true;
+		tmpNPCType->ATK = atoi(row[69]);
+		tmpNPCType->accuracy_rating = atoi(row[70]);
+		tmpNPCType->avoidance_rating = atoi(row[71]);
+		tmpNPCType->slow_mitigation = atoi(row[72]);
+		tmpNPCType->maxlevel = atoi(row[73]);
+		tmpNPCType->scalerate = atoi(row[74]);
+		tmpNPCType->private_corpse = atoi(row[75]) == 1 ? true: false;
+		tmpNPCType->unique_spawn_by_name = atoi(row[76]) == 1 ? true: false;
+		tmpNPCType->underwater = atoi(row[77]) == 1 ? true: false;
+		tmpNPCType->emoteid = atoi(row[78]);
+		tmpNPCType->spellscale = atoi(row[79]);
+		tmpNPCType->healscale = atoi(row[80]);
+		tmpNPCType->no_target_hotkey = atoi(row[81]) == 1 ? true: false;
+		tmpNPCType->raid_target = atoi(row[82]) == 0 ? false: true;
+		tmpNPCType->attack_delay = atoi(row[83]);
+		tmpNPCType->walkspeed= atof(row[84]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -2918,9 +2899,6 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`hair_style`  =        %u,\n"
 		"`face` =               %u,\n"
 		"`beard` =              %u,\n"
-		"`drakkin_heritage` =    %u,\n"
-		"`drakkin_tattoo`  =    %u,\n"
-		"`drakkin_details` =    %u,\n"
 		"`wc_1` =               %u,\n"
 		"`wc_2` =               %u,\n"
 		"`wc_3` =               %u,\n"
@@ -2962,9 +2940,6 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		dbpc->hairstyle,
 		dbpc->face,
 		dbpc->beard,
-		dbpc->drakkin_heritage,
-		dbpc->drakkin_tattoo,
-		dbpc->drakkin_details,
 		dbpc->item_tint[0].color,
 		dbpc->item_tint[1].color,
 		dbpc->item_tint[2].color,
@@ -3022,9 +2997,6 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`hair_style`  =        %u,\n"
 		"`face` =               %u,\n"
 		"`beard` =              %u,\n"
-		"`drakkin_heritage` =    %u,\n"
-		"`drakkin_tattoo`  =    %u,\n"
-		"`drakkin_details` =    %u,\n"
 		"`wc_1` =               %u,\n"
 		"`wc_2` =               %u,\n"
 		"`wc_3` =               %u,\n"
@@ -3065,9 +3037,6 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		dbpc->hairstyle,
 		dbpc->face,
 		dbpc->beard,
-		dbpc->drakkin_heritage,
-		dbpc->drakkin_tattoo,
-		dbpc->drakkin_details,
 		dbpc->item_tint[0].color,
 		dbpc->item_tint[1].color,
 		dbpc->item_tint[2].color,
@@ -3199,9 +3168,6 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"hair_style,      \n"
 		"face,            \n"
 		"beard,           \n"
-		"drakkin_heritage,\n"
-		"drakkin_tattoo,  \n"
-		"drakkin_details, \n"
 		"wc_1,            \n"
 		"wc_2,            \n"
 		"wc_3,            \n"
@@ -3242,9 +3208,6 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		pcs->hairstyle = atoi(row[i++]);					// hair_style,
 		pcs->face = atoi(row[i++]);							// face,
 		pcs->beard = atoi(row[i++]);						// beard,
-		pcs->drakkin_heritage = atoul(row[i++]);			// drakkin_heritage,
-		pcs->drakkin_tattoo = atoul(row[i++]);				// drakkin_tattoo,
-		pcs->drakkin_details = atoul(row[i++]);				// drakkin_details,
 		pcs->item_tint[0].color = atoul(row[i++]);			// wc_1,
 		pcs->item_tint[1].color = atoul(row[i++]);			// wc_2,
 		pcs->item_tint[2].color = atoul(row[i++]);			// wc_3,
