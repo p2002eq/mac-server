@@ -745,19 +745,6 @@ float Mob::SetRunAnimation(float speed)
 	if(IsNPC() || IsClient() || IsPet()) 
 	{
 		float speedmult = RuleR(NPC, SpeedMultiplier);
-		/*if(speed >= 0.2 && speed < 0.3)
-			speedmult = speedmult+3.0f;
-		if(speed >= 0.3 && speed < 0.4)
-			speedmult = speedmult+2.0f;
-		if(speed >= 0.4 && speed < 0.5)
-			speedmult = speedmult+1.0f;
-		if(speed >= 0.6 && speed < 0.7)
-			speedmult = speedmult-1.0f;
-		if(speed >= 0.7 && speed < 0.8)
-			speedmult = speedmult-2.0f;
-		if(speed >= 0.8 && speed < 0.9)
-			speedmult = speedmult-3.0f;*/
-
 		pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
 		speed *= speedmult;
 	}

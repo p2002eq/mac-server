@@ -2425,7 +2425,7 @@ void EQOldStream::Close() {
 	{
 		sent_Fin = true;
 		_SendDisconnect();
-		_log(EQMAC__LOG, _L "EQOldStream closing immediate due to Close()" __L);
+		_log(NET__NET_TRACE, _L "EQOldStream closing immediate due to Close()" __L);
 	}
 }
 void EQOldStream::ClearOldPackets()

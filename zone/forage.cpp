@@ -419,7 +419,10 @@ void Client::ForageItem(bool guarantee) {
 		if(foragedfood == 0) {
 			uint8 index = 0;
 			index = zone->random.Int(0, MAX_COMMON_FOOD_IDS-1);
-			foragedfood = common_food_ids[index];
+			if(GetZoneID() == poknowledge)
+				foragedfood = 13047; //PoK only has roots from the above array.
+			else
+				foragedfood = common_food_ids[index];
 		}
 
 		const Item_Struct* food_item = database.GetItem(foragedfood);

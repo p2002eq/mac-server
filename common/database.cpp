@@ -2975,7 +2975,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	LogFile->write(EQEMuLog::Debug, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	_log(DATABASE__LOG, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
@@ -2987,12 +2987,12 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	LogFile->write(EQEMuLog::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
+	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -3015,7 +3015,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	LogFile->write(EQEMuLog::Debug, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	_log(DATABASE__LOG, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
@@ -3027,7 +3027,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-		LogFile->write(EQEMuLog::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+		_log(DATABASE__LOG, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
@@ -3052,7 +3052,7 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	LogFile->write(EQEMuLog::Debug, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	_log(DATABASE__LOG, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
@@ -3064,7 +3064,7 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	LogFile->write(EQEMuLog::Debug, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	_log(DATABASE__LOG, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
 		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
@@ -3200,7 +3200,7 @@ char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf) {
 	if (group_id == 0)
 		return leaderbuf;
 
-	query = StringFormat("SELECT `leadername` FROM `group_leader` WHERE `gid` = '%u' AND `groupid` = %u LIMIT 1", group_id);
+	query = StringFormat("SELECT `leadername` FROM `group_leaders` WHERE `gid` = '%u' LIMIT 1", group_id);
 	results = QueryDatabase(query);
 
 	for (auto row = results.begin(); row != results.end(); ++row)

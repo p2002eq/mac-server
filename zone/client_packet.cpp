@@ -1031,7 +1031,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		else
 			ClientVersionBit = 16;
 	}
-	_log(EQMAC__LOG,"ClientVersionBit is: %i", ClientVersionBit);
+	_log(ZONE__INIT,"ClientVersionBit is: %i", ClientVersionBit);
 
 	strcpy(name, cze->char_name);
 	/* Check for Client Spoofing */
@@ -2642,7 +2642,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	if(zone->watermap)
 	{
 		if(zone->watermap->InLiquid(x_pos, y_pos, z_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
-			CheckIncreaseSkill(SkillSwimming, nullptr, -10);
+			CheckIncreaseSkill(SkillSwimming, nullptr, -20);
 	}
 
 	return;
@@ -4187,20 +4187,9 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 	if (!group)
 		return;
 
-	if (group->GroupCount() < 3)
+	if (group->GroupCount() < 2 || (group->IsLeader(this) && GetTarget() == nullptr))
 	{
 		group->DisbandGroup();
-	}
-	else if (group->IsLeader(this) && GetTarget() == nullptr)
-	{
-		if (group->GroupCount() > 2)
-		{
-			group->DisbandGroup();
-		}
-		else
-		{
-			group->DisbandGroup();
-		}
 	}
 	else if (group->IsLeader(this) && GetTarget() == this)
 	{
@@ -4234,6 +4223,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 								safe_delete(g);
 								return;
 							}
+
+							g->DisbandGroup(); //This sends the wrong message to the client but allows them to re-join a group without zoning.
 						}
 					}
 				}
@@ -4259,6 +4250,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 						safe_delete(g);
 						return;
 					}
+
+					g->DisbandGroup(); //This sends the wrong message to the client but allows them to re-join a group without zoning.
 				}
 			}
 		}

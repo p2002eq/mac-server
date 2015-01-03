@@ -348,8 +348,9 @@ public:
 	NPC* GetClosestBanker(Mob* sender, uint32 &distance);
 	Mob*	GetClosestMobByBodyType(Mob* sender, bodyType BodyType);
 	void	ForceGroupUpdate(uint32 gid);
-	void	SendGroupLeave(uint32 gid, const char *name);
+	void	SendGroupLeave(uint32 gid, const char *name, bool checkleader);
 	void	SendGroupJoin(uint32 gid, const char *name);
+	void	SendGroupLeader(uint32 gid, const char *lname, const char *oldlname);
 
 	uint16	CreateGroundObject(uint32 itemid, float x, float y, float z, float heading, uint32 decay_time = 300000);
 	uint16	CreateGroundObjectFromModel(const char *model, float x, float y, float z, float heading, uint8 type = 0x00, uint32 decay_time = 0);
