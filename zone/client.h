@@ -768,6 +768,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	float CalcPriceMod(Mob* other = 0, bool reverse = false);
 	void ResetTrade();
 	void DropInst(const ItemInst* inst);
+	void CreateGroundObject(const ItemInst* item, float x, float y, float z, float heading, uint32 decay_time = 300000);
 	bool TrainDiscipline(uint32 itemid);
 	void SendDisciplineUpdate();
 	void SendDisciplineTimer(uint32 timer_id, uint32 duration);

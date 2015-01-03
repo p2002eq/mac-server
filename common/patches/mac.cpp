@@ -1033,7 +1033,7 @@ namespace Mac {
 			{
 				char *mac_item_char = reinterpret_cast<char*>(mac_item);
 				mac_item_string.append(mac_item_char,sizeof(structs::Item_Struct));
-				safe_delete_array(mac_item_char);	
+				safe_delete_array(mac_item);	
 			}
 		}
 		int32 length = 5000;
@@ -1088,7 +1088,7 @@ namespace Mac {
 
 				char *mac_item_char = reinterpret_cast<char*>(merchant);
 				mac_item_string.append(mac_item_char,sizeof(structs::MerchantItemsPacket_Struct));
-				safe_delete_array(mac_item_char);	
+				safe_delete_array(mac_item);	
 			}
 		}
 		int32 length = 5000;

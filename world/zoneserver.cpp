@@ -302,6 +302,13 @@ bool ZoneServer::Process() {
 				break;
 			}
 
+			case ServerOP_ChangeGroupLeader: {
+				if(pack->size != sizeof(ServerGroupLeader_Struct))
+					break;
+				zoneserver_list.SendPacket(pack); //bounce it to all zones
+				break;
+			}
+
 			case ServerOP_RaidAdd:{
 				if(pack->size != sizeof(ServerRaidGeneralAction_Struct))
 					break;

@@ -481,6 +481,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 			// step 1: process bags
 			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
 				const ItemInst* inst = m_inv[trade_slot];
+				bool dropitem = false;
 
 				if (inst && inst->IsType(ItemClassContainer)) {
 					mlog(TRADING__CLIENT, "Giving container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
@@ -488,35 +489,40 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 					if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
 						int16 free_slot = other->GetInv().FindFreeSlotForTradeItem(inst);
 
-						if (free_slot != INVALID_INDEX) {
-							if (other->PutItemInInventory(free_slot, *inst, true)) {
+						if (free_slot != INVALID_INDEX) 
+						{
+							if (other->PutItemInInventory(free_slot, *inst, true)) 
+							{
 								mlog(TRADING__CLIENT, "Container %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
 								
 								// step 1a: process items in bags
 								uint8 bagidx = 0;
-								for (int16 trade_bag_slot = EmuConstants::TRADE_BAGS_BEGIN; trade_bag_slot <= EmuConstants::TRADE_BAGS_END; ++trade_bag_slot) {
+								for (int16 trade_bag_slot = EmuConstants::TRADE_BAGS_BEGIN; trade_bag_slot <= EmuConstants::TRADE_BAGS_END; ++trade_bag_slot) 
+								{
 									const ItemInst* inst = m_inv[trade_bag_slot];
 
 									if (inst) {
 									mlog(TRADING__CLIENT, "Giving item in container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_bag_slot, other->GetName());
 	
-										if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) {
+										if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) 
+										{
 											int16 free_bag_slot = other->GetInv().CalcSlotId(free_slot, bagidx);
 											mlog(TRADING__CLIENT, "Free slot is: %i. Bag slot is: %i", free_bag_slot, free_slot);
 											if (free_bag_slot != INVALID_INDEX) {
-												if (other->PutItemInInventory(free_bag_slot, *inst, true)) {
+												if (other->PutItemInInventory(free_bag_slot, *inst, true)) 
+												{
 													bagidx++;
 													mlog(TRADING__CLIENT, "Container item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
 												}
 
 												else {
 													mlog(TRADING__ERROR, "Transfer of container item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
-													PushItemOnCursor(*inst, true);
+													dropitem = true;
 												}
 											}
 											else {
 												mlog(TRADING__ERROR, "%s's inventory is full, returning container item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
-												PushItemOnCursor(*inst, true);
+												dropitem = true;
 											}
 										}
 										else {
@@ -524,6 +530,11 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 											PushItemOnCursor(*inst, true);
 										}
 										DeleteItemInInventory(trade_bag_slot);
+									}
+									if(dropitem)
+									{
+										other->Message(CC_Red, "You do not have room for any more items.");
+										CreateGroundObject(inst,other->GetX(),other->GetY(),other->GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 									}
 								}
 								if (qs_log) {
@@ -569,12 +580,12 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 							}
 							else {
 								mlog(TRADING__ERROR, "Transfer of container %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
-								PushItemOnCursor(*inst, true);
+								dropitem = true;
 							}
 						}
 						else {
 							mlog(TRADING__ERROR, "%s's inventory is full, returning container %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
-							PushItemOnCursor(*inst, true);
+							dropitem = true;
 						}
 					}
 					else {
@@ -583,6 +594,11 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 					}
 
 					DeleteItemInInventory(trade_slot);
+				}
+				if(dropitem)
+				{
+					other->Message(CC_Red, "You do not have room for any more items.");
+					CreateGroundObject(inst,other->GetX(),other->GetY(),other->GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 				}
 			}
 
@@ -724,6 +740,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 			// step 3: process everything else
 			for (int16 trade_slot = EmuConstants::TRADE_BEGIN; trade_slot <= EmuConstants::TRADE_END; ++trade_slot) {
 				const ItemInst* inst = m_inv[trade_slot];
+				bool dropitem = false;
 
 				if (inst) {
 					mlog(TRADING__CLIENT, "Giving item %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_slot, other->GetName());
@@ -779,12 +796,12 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 							}
 							else {
 								mlog(TRADING__ERROR, "Transfer of Item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
-								PushItemOnCursor(*inst, true);
+								dropitem = true;
 							}
 						}
 						else {
 							mlog(TRADING__ERROR, "%s's inventory is full, returning item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
-							PushItemOnCursor(*inst, true);
+							dropitem = true;
 						}
 					}
 					else {
@@ -793,6 +810,11 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 					}
 
 					DeleteItemInInventory(trade_slot);
+				}
+				if(dropitem)
+				{
+					other->Message(CC_Red, "You do not have room for any more items.");
+					CreateGroundObject(inst,other->GetX(),other->GetY(),other->GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 				}
 			}
 

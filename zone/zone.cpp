@@ -560,7 +560,7 @@ void Zone::Shutdown(bool quite)
 	}
 
 	std::map<uint32,NPCType *>::iterator itr;
-	while(zone->npctable.size()) {
+	while(!zone->npctable.empty()) {
 		itr=zone->npctable.begin();
 		delete itr->second;
 		zone->npctable.erase(itr);
@@ -1249,7 +1249,7 @@ std::map<uint32,NPCType *>::iterator itr;
 
 #ifdef DEPOP_INVALIDATES_NPC_TYPES_CACHE
 	// Refresh npctable, getting current info from database.
-	while(npctable.size()) {
+	while(!npctable.empty()) {
 		itr=npctable.begin();
 		delete itr->second;
 		npctable.erase(itr);

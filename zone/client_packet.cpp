@@ -982,7 +982,8 @@ void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) {
+void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) 
+{
 
 	SendAATable();
 }
@@ -1031,7 +1032,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		else
 			ClientVersionBit = 16;
 	}
-	_log(EQMAC__LOG,"ClientVersionBit is: %i", ClientVersionBit);
+	_log(ZONE__INIT,"ClientVersionBit is: %i", ClientVersionBit);
 
 	strcpy(name, cze->char_name);
 	/* Check for Client Spoofing */
@@ -1549,8 +1550,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 }
 
 // connected opcode handlers
+
 void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	//Action packet is always 256 bytes, but fields have varying positions.
 	if (app->size != 256)
 	{
@@ -1621,7 +1625,8 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Action(const EQApplicationPacket *app) {
+void Client::Handle_OP_Action(const EQApplicationPacket *app) 
+{
 	//EQmac sends this when drowning.
 }
 
@@ -1644,7 +1649,13 @@ void Client::Handle_OP_Animation(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) {
+void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) 
+{
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		DumpPacket(app);
+		return;
+	}
+
 	if (app->size != sizeof(ApplyPoison_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
 		DumpPacket(app);
@@ -1727,6 +1738,8 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app)
 
 void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != 4) {
 		LogFile->write(EQEMuLog::Error, "OP size error: OP_AutoAttack expected:4 got:%i", app->size);
 		return;
@@ -1831,8 +1844,10 @@ void Client::Handle_OP_BazaarSearchCon(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Begging(const EQApplicationPacket *app)
+void Client::Handle_OP_Begging(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (!p_timers.Expired(&database, pTimerBeggingPickPocket, false))
 	{
 		Message(CC_Red, "Ability recovery time not yet met.");
@@ -1904,8 +1919,13 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	CheckIncreaseSkill(SkillBegging, nullptr, -10);
 }
 
-void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
+void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		DumpPacket(app);
+		return;
+	}
+
 	if (app->size != sizeof(BindWound_Struct)){
 		LogFile->write(EQEMuLog::Error, "Size mismatch for Bind wound packet");
 		DumpPacket(app);
@@ -1990,7 +2010,8 @@ void Client::Handle_OP_Bug(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Camp(const EQApplicationPacket *app) {
+void Client::Handle_OP_Camp(const EQApplicationPacket *app) 
+{
 
 	if (GetBoatNPCID() > 0)
 	{
@@ -2050,8 +2071,9 @@ void Client::Handle_OP_CancelTrade(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
+void Client::Handle_OP_CastSpell(const EQApplicationPacket *app) 
 {
+
 	if (app->size != sizeof(CastSpell_Struct)) {
 		std::cout << "Wrong size: OP_CastSpell, size=" << app->size << ", expected " << sizeof(CastSpell_Struct) << std::endl;
 		return;
@@ -2083,7 +2105,12 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	}
 
 	/* Memorized Spell */
-	if (m_pp.mem_spells[castspell->slot] && m_pp.mem_spells[castspell->slot] == castspell->spell_id){
+	if (m_pp.mem_spells[castspell->slot] && m_pp.mem_spells[castspell->slot] == castspell->spell_id) {
+
+		if ((Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)) {
+			InterruptSpell(castspell->spell_id);
+			return;
+		}
 
 		uint16 spell_to_cast = 0;
 		if (castspell->slot < MAX_PP_MEMSPELL) {
@@ -2100,7 +2127,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 		CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
 	}
-	/* Spell Slot or Potion Belt Slot */
+	/* Item Spell Slot or Potion Belt Slot */
 	else if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
@@ -2113,6 +2140,16 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		}
 		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
 		{
+			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+				int guideClicks[] = { 30, 35, 36, 84, 119, 206, 214, 354, 595, 722, 778, 810, 811, 813, 814, 815, 816, 817, 818, 
+										959, 970, 994, 1209, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1355, 3921 };
+				int* found = std::find(guideClicks, std::end(guideClicks), castspell->spell_id);
+				if (found == std::end(guideClicks)) {
+					InterruptSpell(castspell->spell_id);
+					return;
+				}
+			}
+
 			// packet field types will be reviewed as packet transistions occur -U
 			const ItemInst* inst = m_inv[castspell->inventoryslot]; //slot values are int16, need to check packet on this field
 			//bool cancast = true;
@@ -2286,7 +2323,7 @@ void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_ClickObject(const EQApplicationPacket *app)
+void Client::Handle_OP_ClickObject(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(ClickObject_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Invalid size on ClickObject_Struct: Expected %i, Got %i",
@@ -2642,14 +2679,22 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	if(zone->watermap)
 	{
 		if(zone->watermap->InLiquid(x_pos, y_pos, z_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
-			CheckIncreaseSkill(SkillSwimming, nullptr, -10);
+		{
+			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
+			if(zone->random.Roll(50))
+			{
+				CheckIncreaseSkill(SkillSwimming, nullptr, -20);
+			}
+		}
 	}
 
 	return;
 }
 
-void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
+void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(CombatAbility_Struct)) {
 		std::cout << "Wrong size on OP_CombatAbility. Got: " << app->size << ", Expected: " << sizeof(CombatAbility_Struct) << std::endl;
 		return;
@@ -3032,14 +3077,18 @@ void Client::Handle_OP_CorpseDrag(const EQApplicationPacket *app)
 	Message_StringID(MT_DefaultText, CORPSEDRAG_BEGIN, cds->CorpseName);
 }
 
-void Client::Handle_OP_CreateObject(const EQApplicationPacket *app)
+void Client::Handle_OP_CreateObject(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	DropItem(MainCursor);
 	return;
 }
 
-void Client::Handle_OP_Damage(const EQApplicationPacket *app)
+void Client::Handle_OP_Damage(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	Handle_OP_EnvDamage(app);
 	return;
 }
@@ -3148,8 +3197,10 @@ void Client::Handle_OP_DeleteSpell(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
+void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (!HasSkill(SkillDisarmTraps))
 		return;
 
@@ -3199,8 +3250,10 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
+void Client::Handle_OP_Discipline(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	//Don't change this yet, I'll need the EQEmu code to implement /disc on TAK
 	char* packet_dump = "Disc.txt";
 	FileDumpPacketHex(packet_dump, app);
@@ -3231,8 +3284,10 @@ void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
 	}
 }
 
-void Client::Handle_OP_DuelResponse(const EQApplicationPacket *app)
+void Client::Handle_OP_DuelResponse(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(DuelResponse_Struct))
 		return;
 	DuelResponse_Struct* ds = (DuelResponse_Struct*)app->pBuffer;
@@ -3252,8 +3307,10 @@ void Client::Handle_OP_DuelResponse(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app)
+void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Duel_Struct))
 		return;
 
@@ -3363,7 +3420,7 @@ void Client::Handle_OP_EndLootRequest(const EQApplicationPacket *app)
 
 void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 {
-	if (!ClientFinishedLoading())
+	if (!ClientFinishedLoading() || (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0))
 	{
 		SetHP(GetHP() - 1);
 		return;
@@ -3498,8 +3555,10 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Fishing(const EQApplicationPacket *app)
+void Client::Handle_OP_Fishing(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (!p_timers.Expired(&database, pTimerFishing, false)) {
 		Message(CC_Red, "Ability recovery time not yet met.");
 		return;
@@ -3517,8 +3576,9 @@ void Client::Handle_OP_Fishing(const EQApplicationPacket *app)
 	// forage for.
 }
 
-void Client::Handle_OP_Forage(const EQApplicationPacket *app)
+void Client::Handle_OP_Forage(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (!p_timers.Expired(&database, pTimerForaging, false)) {
 		Message(CC_Red, "Ability recovery time not yet met.");
@@ -3876,7 +3936,6 @@ void Client::Handle_OP_GMNameChange(const EQApplicationPacket *app)
 	return;
 }
 
-
 void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 {
 	// Could make this into a rule, although there is a hard limit since we are using a popup, of 4096 bytes that can
@@ -4187,20 +4246,9 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 	if (!group)
 		return;
 
-	if (group->GroupCount() < 3)
+	if (group->GroupCount() < 2 || (group->IsLeader(this) && GetTarget() == nullptr))
 	{
 		group->DisbandGroup();
-	}
-	else if (group->IsLeader(this) && GetTarget() == nullptr)
-	{
-		if (group->GroupCount() > 2)
-		{
-			group->DisbandGroup();
-		}
-		else
-		{
-			group->DisbandGroup();
-		}
 	}
 	else if (group->IsLeader(this) && GetTarget() == this)
 	{
@@ -4234,6 +4282,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 								safe_delete(g);
 								return;
 							}
+
+							g->DisbandGroup(); //This sends the wrong message to the client but allows them to re-join a group without zoning.
 						}
 					}
 				}
@@ -4259,6 +4309,8 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 						safe_delete(g);
 						return;
 					}
+
+					g->DisbandGroup(); //This sends the wrong message to the client but allows them to re-join a group without zoning.
 				}
 			}
 		}
@@ -4949,7 +5001,8 @@ void Client::Handle_OP_Illusion(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) {
+void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) 
+{
 
 	if (app->size != sizeof(OldInspectResponse_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_InspectAnswer, size=%i, expected %i", app->size, sizeof(OldInspectResponse_Struct));
@@ -4968,7 +5021,8 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app) {
 	return;
 }
 
-void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) {
+void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) 
+{
 
 	if (app->size != sizeof(Inspect_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_InspectRequest, size=%i, expected %i", app->size, sizeof(Inspect_Struct));
@@ -4985,8 +5039,10 @@ void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app) {
 	return;
 }
 
-void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app)
+void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	//packet is empty as of 12/14/04
 
 	if (!p_timers.Expired(&database, pTimerInstillDoubt, false)) {
@@ -4999,7 +5055,8 @@ void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_ItemLinkResponse(const EQApplicationPacket *app) {
+void Client::Handle_OP_ItemLinkResponse(const EQApplicationPacket *app) 
+{
 	if (app->size != sizeof(ItemViewRequest_Struct)) {
 		LogFile->write(EQEMuLog::Error, "OP size error: OP_ItemLinkResponse expected:%i got:%i", sizeof(ItemViewRequest_Struct), app->size);
 		return;
@@ -5053,8 +5110,10 @@ void Client::Handle_OP_Logout(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_LootItem(const EQApplicationPacket *app)
+void Client::Handle_OP_LootItem(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(LootingItem_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_LootItem, size=%i, expected %i", app->size, sizeof(LootingItem_Struct));
 		return;
@@ -5088,8 +5147,10 @@ void Client::Handle_OP_LootItem(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
+void Client::Handle_OP_LootRequest(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(uint16)) {
 		std::cout << "Wrong size: OP_EndLootRequest, size=" << app->size << ", expected " << sizeof(uint16) << std::endl;
 		return;
@@ -5180,14 +5241,16 @@ void Client::Handle_OP_Medding(const EQApplicationPacket *app)
 }
 #endif
 
-void Client::Handle_OP_MemorizeSpell(const EQApplicationPacket *app)
+void Client::Handle_OP_MemorizeSpell(const EQApplicationPacket *app) 
 {
 	OPMemorizeSpell(app);
 	return;
 }
 
-void Client::Handle_OP_Mend(const EQApplicationPacket *app)
+void Client::Handle_OP_Mend(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (!HasSkill(SkillMend))
 		return;
 
@@ -5244,7 +5307,6 @@ void Client::Handle_OP_MoveCoin(const EQApplicationPacket *app)
 
 	return;
 }
-
 
 void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 {
@@ -5324,8 +5386,10 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
+void Client::Handle_OP_PetCommands(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(PetCommand_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_PetCommands, size=%i, expected %i", app->size, sizeof(PetCommand_Struct));
 		return;
@@ -5730,8 +5794,10 @@ void Client::Handle_OP_PetitionRefresh(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
+void Client::Handle_OP_PickPocket(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(PickPocket_Struct))
 	{
 		LogFile->write(EQEMuLog::Error, "Size mismatch for Pick Pocket packet");
@@ -6471,8 +6537,10 @@ void Client::Handle_OP_Report(const EQApplicationPacket *app)
 	database.AddReport(reporter, reported, current_string);
 }
 
-void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
+void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Duel_Struct))
 		return;
 
@@ -6529,7 +6597,12 @@ void Client::Handle_OP_RezzAnswer(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app) {
+void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app) 
+{
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		DumpPacket(app);
+		return;
+	}
 
 	if (app->size != sizeof(Sacrifice_Struct)) {
 		LogFile->write(EQEMuLog::Debug, "Size mismatch in OP_Sacrifice expected %i got %i", sizeof(Sacrifice_Struct), app->size);
@@ -6580,8 +6653,10 @@ void Client::Handle_OP_SenseHeading(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
+void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (!HasSkill(SkillSenseTraps))
 		return;
 
@@ -6731,8 +6806,10 @@ void Client::Handle_OP_SetTitle(const EQApplicationPacket *app)
 	}
 }
 
-void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
+void Client::Handle_OP_Shielding(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Shielding_Struct)) {
 		LogFile->write(EQEMuLog::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
@@ -6828,7 +6905,7 @@ void Client::Handle_OP_ShopEnd(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
+void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(Merchant_Sell_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Invalid size on OP_ShopPlayerBuy: Expected %i, Got %i",
@@ -7092,8 +7169,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	t1.stop();
 	return;
 }
-void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
+
+void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Merchant_Purchase_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Invalid size on OP_ShopPlayerSell: Expected %i, Got %i",
 			sizeof(Merchant_Purchase_Struct), app->size);
@@ -7235,7 +7315,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
+void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(Merchant_Click_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_ShopRequest, size=%i, expected %i", app->size, sizeof(Merchant_Click_Struct));
@@ -7530,8 +7610,10 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Split(const EQApplicationPacket *app)
+void Client::Handle_OP_Split(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Split_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_Split, size=%i, expected %i", app->size, sizeof(Split_Struct));
 		return;
@@ -7803,8 +7885,10 @@ void Client::Handle_OP_TargetMouse(const EQApplicationPacket *app)
 	Handle_OP_TargetCommand(app);
 }
 
-void Client::Handle_OP_Taunt(const EQApplicationPacket *app)
+void Client::Handle_OP_Taunt(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(ClientTarget_Struct)) {
 		std::cout << "Wrong size on OP_Taunt. Got: " << app->size << ", Expected: " << sizeof(ClientTarget_Struct) << std::endl;
 		return;
@@ -7823,7 +7907,7 @@ void Client::Handle_OP_Taunt(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TGB(const EQApplicationPacket *app)
+void Client::Handle_OP_TGB(const EQApplicationPacket *app) 
 {
 	OPTGB(app);
 	return;
@@ -7979,8 +8063,13 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Trader(const EQApplicationPacket *app)
+void Client::Handle_OP_Trader(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		Trader_EndTrader();
+		return;
+	}
+
 	// Bazaar Trader:
 	//
 	// SoF sends 1 or more unhandled OP_Trader packets of size 96 when a trade has completed.
@@ -8130,8 +8219,10 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
+void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	// Bazaar Trader:
 	//
 	// Client has elected to buy an item from a Trader
@@ -8157,8 +8248,13 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
+void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		Handle_OP_CancelTrade(app);
+		return;
+	}
+
 	if (app->size != sizeof(TradeRequest_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_TradeRequest, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
 		return;
@@ -8193,8 +8289,13 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app)
+void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		Handle_OP_CancelTrade(app);
+		return;
+	}
+
 	if (app->size != sizeof(TradeRequest_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Wrong size: OP_TradeRequestAck, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
 		return;
@@ -8212,8 +8313,10 @@ void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
+void Client::Handle_OP_TraderShop(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	// Bazaar Trader:
 	//
 	// This is when a potential purchaser right clicks on this client who is in Trader mode to
@@ -8264,8 +8367,10 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
+void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(NewCombine_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Invalid size for NewCombine_Struct: Expected: %i, Got: %i",
 			sizeof(NewCombine_Struct), app->size);
@@ -8285,8 +8390,10 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Translocate(const EQApplicationPacket *app)
+void Client::Handle_OP_Translocate(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 
 	if (app->size != sizeof(Translocate_Struct)) {
 		LogFile->write(EQEMuLog::Debug, "Size mismatch in OP_Translocate expected %i got %i", sizeof(Translocate_Struct), app->size);
@@ -8334,6 +8441,7 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app)
 
 	PendingTranslocate = false;
 }
+
 void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(WearChange_Struct)) {
@@ -8371,10 +8479,6 @@ void Client::Handle_OP_YellForHelp(const EQApplicationPacket *app)
 	safe_delete(outapp);
 	return;
 }
-
-//in zoning.cpp
-//void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
-//}
 
 void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 {
@@ -8414,8 +8518,10 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
+void Client::Handle_OP_Disarm(const EQApplicationPacket *app) 
 {
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+
 	if (app->size != sizeof(Disarm_Struct)) {
 		LogFile->write(EQEMuLog::Error, "Invalid size for Disarm_Struct: Expected: %i, Got: %i", sizeof(Disarm_Struct), app->size);
 		return;
@@ -8500,14 +8606,9 @@ void Client::Handle_OP_Feedback(const EQApplicationPacket *app)
 		return;
 	}
 
-	char* packet_dump = "text_packets.txt";
-	FilePrintLine(packet_dump,true,"OP_Feedback");
-	FileDumpPacketHex(packet_dump, app);
-
 	Feedback_Struct* in = (Feedback_Struct*)app->pBuffer;
 	database.UpdateFeedback(in);
 
 	Message(CC_Yellow, "Thank you, %s. Your feedback has been recieved.", in->name);
 	return;
 }
-
