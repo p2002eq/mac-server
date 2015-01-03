@@ -128,7 +128,10 @@ RULE_BOOL( Pets, UnTargetableSwarmPet, false )
 RULE_BOOL( Pets, SwarmPetNotTargetableWithHotKey, false ) //On SOF+ clients this a semi-hack to make swarm pets not F8 targetable.
 RULE_CATEGORY_END()
 
-RULE_CATEGORY( GM )
+RULE_CATEGORY(GM)
+RULE_INT(GM, GMWhoList, 80)
+RULE_INT(GM, NoCombatLow, 2)
+RULE_INT(GM, NoCombatHigh, 2)	// effectively disables this for now
 RULE_INT ( GM, MinStatusToSummonItem, 250)
 RULE_INT ( GM, MinStatusToZoneAnywhere, 250 )
 RULE_CATEGORY_END()

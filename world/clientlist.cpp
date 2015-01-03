@@ -517,6 +517,7 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 	uint32 outsize = 0, outlen = 0;
 	uint16 totalusers=0;
 	uint16 totallength=0;
+	uint8 gmwholist = RuleI(GM, GMWhoList);
 	AppendAnyLenString(&output, &outsize, &outlen, "Players on server:");
 	if (connection->IsConsole())
 		AppendAnyLenString(&output, &outsize, &outlen, "\r\n");
@@ -538,18 +539,18 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 			(tmpZone != 0 && strncasecmp(tmpZone, whom->whom, whomlen) == 0) ||
 			strncasecmp(countcle->name(),whom->whom, whomlen) == 0 ||
 			(strncasecmp(guild_mgr.GetGuildName(countcle->GuildID()), whom->whom, whomlen) == 0) ||
-			(admin >= 100 && strncasecmp(countcle->AccountName(), whom->whom, whomlen) == 0)
+			(admin >= gmwholist && strncasecmp(countcle->AccountName(), whom->whom, whomlen) == 0)
 		))
 	))
 ) {
 			if((countcle->Anon()>0 && admin>=countcle->Admin() && admin>0) || countcle->Anon()==0 ){
 				totalusers++;
-				if(totalusers<=20 || admin>=100)
+				if (totalusers <= 20 || admin >= gmwholist)
 					totallength=totallength+strlen(countcle->name())+strlen(countcle->AccountName())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
 			}
 			else if((countcle->Anon()>0 && admin<=countcle->Admin()) || countcle->Anon()==0 && !countcle->GetGM()){
 				totalusers++;
-				if(totalusers<=20 || admin>=100)
+				if (totalusers <= 20 || admin >= gmwholist)
 					totallength=totallength+strlen(countcle->name())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
 			}
 		}
@@ -561,7 +562,7 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 	uint8 unknown35=0x0A;
 	uint16 unknown36=0;
 	uint16 playersinzonestring=5028;
-	if(totalusers>20 && admin<100){
+	if (totalusers>20 && admin<gmwholist){
 		totalusers=20;
 		playersinzonestring=5033;
 	}
@@ -627,13 +628,13 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 			(tmpZone != 0 && strncasecmp(tmpZone, whom->whom, whomlen) == 0) ||
 			strncasecmp(cle->name(),whom->whom, whomlen) == 0 ||
 			(strncasecmp(guild_mgr.GetGuildName(cle->GuildID()), whom->whom, whomlen) == 0) ||
-			(admin >= 100 && strncasecmp(cle->AccountName(), whom->whom, whomlen) == 0)
+			(admin >= gmwholist && strncasecmp(cle->AccountName(), whom->whom, whomlen) == 0)
 		))
 	))
 ) {
 			line[0] = 0;
 			uint16 rankstring=0xFFFF;
-				if((cle->Anon()==1 && cle->GetGM() && cle->Admin()>admin) || (idx>=20 && admin<100)){ //hide gms that are anon from lesser gms and normal players, cut off at 20
+			if ((cle->Anon() == 1 && cle->GetGM() && cle->Admin()>admin) || (idx >= 20 && admin<gmwholist)){ //hide gms that are anon from lesser gms and normal players, cut off at 20
 					rankstring=0;
 					iterator.Advance();
 					continue;
@@ -695,7 +696,7 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 	if(cle->Anon()==0 || (admin>=cle->Admin() && admin>0)){
 		plclass_=cle->class_();
 		pllevel=cle->level();
-		if(admin>=100)
+		if (admin >= gmwholist)
 			pidstring=5003;
 		plrace=cle->race();
 		zonestring=5006;

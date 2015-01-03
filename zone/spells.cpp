@@ -2266,9 +2266,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	}
 
 	//range check our target, if we have one and it is not us
-	float range = 0.00f;
-
-	range = GetActSpellRange(spell_id, spells[spell_id].range, true);
+	float range = GetActSpellRange(spell_id, spells[spell_id].range, true);
 	if(spell_target != nullptr && spell_target != this) {
 		//casting a spell on somebody but ourself, make sure they are in range
 		float dist2 = DistNoRoot(*spell_target);
