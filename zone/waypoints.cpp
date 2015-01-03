@@ -272,7 +272,7 @@ void NPC::CalculateNewWaypoint()
 		std::list<wplist> closest;
 		GetClosestWaypoint(closest, 10, GetX(), GetY(), GetZ());
 		std::list<wplist>::iterator iter = closest.begin();
-		if(closest.size() != 0)
+		if(!closest.empty())
 		{
 			iter = closest.begin();
 			std::advance(iter, zone->random.Int(0, closest.size() - 1));
@@ -341,7 +341,7 @@ void NPC::CalculateNewWaypoint()
 			}
 		}
 
-		if(closest.size() != 0)
+		if(!closest.empty())
 		{
 			iter = closest.begin();
 			std::advance(iter, zone->random.Int(0, closest.size() - 1));
@@ -1347,8 +1347,8 @@ uint32 ZoneDatabase::GetFreeGrid(uint16 zoneid) {
         return 0;
 
     auto row = results.begin();
-    uint32 freeGridID = 1;
-	freeGridID = atoi(row[0]) + 1;
+
+	uint32 freeGridID = atoi(row[0]) + 1;
 
     return freeGridID;
 }

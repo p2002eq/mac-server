@@ -1693,8 +1693,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 						if(r)
 						{
-							uint32 gid = 0xFFFFFFFF;
-							gid = r->GetGroup(caster->GetName());
+							uint32 gid = r->GetGroup(caster->GetName());
 							if(gid < 11)
 							{
 								if(r->GetGroup(TargetClient->GetName()) != gid) {
@@ -2291,8 +2290,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->BalanceHP(spell.base[i], gid, spell.range, caster, spell.base2[i]);
@@ -2319,8 +2317,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->BalanceMana(spell.base[i], gid, spell.range, caster, spell.base2[i]);
@@ -2401,8 +2398,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->HealGroup(heal_amt,caster, gid, spell.range);

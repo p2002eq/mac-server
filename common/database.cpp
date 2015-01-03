@@ -4021,7 +4021,7 @@ bool Database::DBSetup_feedback() {
 	if (results.RowCount() == 0){
 		std::string create_query = StringFormat(
 			"Create TABLE `feedback` (										"
-			"`id` int(11) NOT NULL AUTO_INCREMENT,				"
+			"`id` int(11) NOT NULL AUTO_INCREMENT,							"
 			"`name` varchar(64) NULL,										"
 			"`message` varchar(1024) NULL,									"
 			"`zone` varchar(32) NULL,										"
