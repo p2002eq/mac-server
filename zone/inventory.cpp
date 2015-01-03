@@ -363,7 +363,6 @@ void Client::DropInst(const ItemInst* inst)
 		return;
 	}
 
-
 	if (inst->GetItem()->NoDrop == 0)
 	{
 		Message(CC_Red, "This item is NODROP. Deleting.");
@@ -373,7 +372,31 @@ void Client::DropInst(const ItemInst* inst)
 	// Package as zone object
 	Object* object = new Object(this, inst);
 	entity_list.AddObject(object, true);
+	object->Save();
 	object->StartDecay();
+}
+
+//This differs from EntityList::CreateGroundObject by using the inst, so bag contents are
+//preserved. EntityList creates a new instance using ID, so bag contents are lost.
+void Client::CreateGroundObject(const ItemInst* inst, float x, float y, float z,
+		float heading, uint32 decay_time)
+{
+	if (!inst) {
+		// Item doesn't exist in inventory!
+		Message(CC_Red, "Error: Item not found");
+		return;
+	}
+
+	if (inst->GetItem()->NoDrop == 0)
+	{
+		Message(CC_Red, "This item is NODROP. Deleting.");
+		return;
+	}
+
+	// Package as zone object
+	Object *object = new Object(inst, x, y, z, heading,decay_time);
+	entity_list.AddObject(object, true);
+	object->Save();
 }
 
 // Returns a slot's item ID (returns INVALID_ID if not found)
