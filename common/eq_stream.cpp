@@ -1959,7 +1959,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	int16 restore_op = 0x0000;
 
 	/************ PM STATE = NOT ACTIVE ************/
-	if(CheckState(CLOSING) || !app || sent_Fin || app && app->GetRawOpcode() == 0)
+	if(CheckState(CLOSING) || CheckState(CLOSED) || !app || sent_Fin || app && app->GetRawOpcode() == 0)
 	{
 		return;
 	}
@@ -2097,9 +2097,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 
 void EQOldStream::CheckTimers(void)
 {
-	//This is to avoid recursive locking.
-	bool setClosing = false;
-	bool shuffleQueueAfter = false;
 	/************ Should packets be resent? ************/
 
 	if (datarate_timer->Check(0))
@@ -2305,7 +2302,6 @@ void EQOldStream::SendPacketQueue(bool Block)
 void EQOldStream::FinalizePacketQueue()
 {
 	MOutboundQueue.lock();
-	SetState(CLOSING);
 	// Send out our existing queue
 	EQOldPacket* p = 0;    
 	sockaddr_in to;	
@@ -2364,6 +2360,13 @@ void EQOldStream::CheckTimeout(uint32 now, uint32 timeout) {
 
 void EQOldStream::SetState(EQStreamState state) {
 	MState.lock();
+
+	if(pm_state == CLOSED)
+	{
+		MState.unlock();
+		return;
+	}
+
 	_log(NET__NET_TRACE, _L "Changing state from %d to %d" __L, pm_state, state);
 	pm_state=state;
 	MState.unlock();

@@ -382,6 +382,7 @@ void Client::FatalError(const char* message) {
 	}
 	connection->QueuePacket(outapp);
 	delete outapp;
+	connection->Close();
 	return;
 }
 
