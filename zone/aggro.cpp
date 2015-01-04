@@ -420,6 +420,58 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude)
 
 }
 
+int EntityList::GetHatedCountByFaction(Mob *attacker, Mob *exclude)
+{
+	// Return a list of how many non-feared, non-mezzed, non-green mobs, within aggro range, hate *attacker
+	if (!attacker)
+		return 0;
+
+	int Count = 0;
+
+	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
+		NPC *mob = it->second;
+		if (!mob || (mob == exclude))
+			continue;
+
+		if (!mob->IsEngaged())
+			continue;
+
+		if (mob->IsFeared() || mob->IsMezzed())
+			continue;
+
+		//if (attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
+		//	continue;
+
+		if (!mob->CheckAggro(attacker))
+			continue;
+
+		float AggroRange = mob->GetAggroRange();
+
+		// Square it because we will be using DistNoRoot
+
+		AggroRange *= AggroRange;
+
+		if (mob->DistNoRoot(*attacker) > AggroRange)
+			continue;
+
+		// If exclude doesn't have a faction, check for buddies based on race.
+		if(exclude->GetPrimaryFaction() != 0)
+		{
+			if (mob->GetPrimaryFaction() != exclude->GetPrimaryFaction())
+					continue;
+		}
+		else
+		{
+			if (mob->GetBaseRace() != exclude->GetBaseRace())
+				continue;
+		}
+
+		Count++;
+	}
+
+	return Count;
+
+}
 void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 	if(!sender || !attacker)
 		return;

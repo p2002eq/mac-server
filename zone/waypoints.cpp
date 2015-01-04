@@ -742,14 +742,24 @@ bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool che
 
 float Mob::SetRunAnimation(float speed)
 {
-	if(IsNPC() || IsClient() || IsPet()) 
+	float newspeed;
+	if(IsNPC()) 
 	{
-		float speedmult = RuleR(NPC, SpeedMultiplier);
-		pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-		speed *= speedmult;
+		if(speed == GetRunspeed())
+		{
+			SetRunning(true);
+			newspeed = speed * RuleR(NPC, SpeedMultiplier);
+			pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
+		}
+		else
+		{
+			SetRunning(false);
+			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
+			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
+		}
 	}
 
-	return speed;
+	return newspeed;
 }
 
 bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool checkZ) {
