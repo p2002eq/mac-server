@@ -903,9 +903,6 @@ struct PlayerProfile_Struct
 /*5418*/	uint16				boatid;
 /*5420*/	uint32				zone_change_count;	// Number of times user has zoned in their career (guessing)
 /*5424*/	char				unknown5424[16];	//
-/*5440*/	uint32				drakkin_heritage;	//
-/*5444*/	uint32				drakkin_tattoo;		//
-/*5448*/	uint32				drakkin_details;	//
 /*5452*/	uint32				expansions;			// expansion setting, bit field of expansions avaliable
 /*5456*/	int32				toxicity;			//from drinking potions, seems to increase by 3 each time you drink
 /*5460*/	char				unknown5496[16];	//
@@ -1078,7 +1075,7 @@ struct WearChange_Struct{
 /*000*/ uint16 spawn_id;
 /*002*/ uint32 material;
 /*006*/ uint32 unknown06;
-/*010*/ uint32 elite_material;	// 1 for Drakkin Elite Material
+/*010*/ uint32 elite_material;	// 
 /*014*/ uint32 hero_forge_model; // New to VoA
 /*018*/ uint32 unknown18; // New to RoF
 /*022*/ Color_Struct color;
