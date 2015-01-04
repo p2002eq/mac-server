@@ -662,7 +662,7 @@ int16 Inventory::FindFreeSlotForTradeItem(const ItemInst* inst) {
 			if (!m_inv[free_slot])
 				return free_slot;
 
-		return MainCursor; // return cursor since bags do not stack and will not fit inside other bags..yet...)
+		return INVALID_INDEX; // Intel doesn't like things being put on the cursor
 	}
 
 	// step 2: find partial room for stackables
@@ -746,8 +746,7 @@ int16 Inventory::FindFreeSlotForTradeItem(const ItemInst* inst) {
 		}
 	}
 
-	//return INVALID_INDEX; // everything else pushes to the cursor
-	return MainCursor;
+	return INVALID_INDEX; // Intel doesn't like things being put on the cursor
 }
 
 // Opposite of below: Get parent bag slot_id from a slot inside of bag

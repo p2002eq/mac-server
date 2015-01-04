@@ -658,6 +658,9 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	//the target of these swarm pets will take offense to being cast on...
 	if(targ != nullptr)
 		targ->AddToHateList(this, 1, 0);
+
+	// The other pointers we make are handled elsewhere.
+	delete made_npc;
 }
 
 void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_override, uint32 duration_override, bool followme, bool sticktarg) {
@@ -750,6 +753,9 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 		entity_list.AddNPC(npca, true, true);
 		summon_count--;
 	}
+
+	// The other pointers we make are handled elsewhere.
+	delete made_npc;
 }
 
 void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
@@ -1141,7 +1147,7 @@ void Client::SendAATimers() {
 					uaaout->end = static_cast<uint32>(time(nullptr));
 					uaaout->ability = zone->EmuToEQMacAA(aa2->id);
 					QueuePacket(outapp);
-					_log(EQMAC__LOG, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
+					_log(AA__MESSAGE, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
 				}
 			}
 		}

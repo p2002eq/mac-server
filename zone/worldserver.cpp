@@ -754,7 +754,7 @@ void WorldServer::Process() {
 				if(gl->zoneid == zone->GetZoneID() && gl->instance_id == zone->GetInstanceID())
 					break;
 
-				entity_list.SendGroupLeave(gl->gid, gl->member_name);
+				entity_list.SendGroupLeave(gl->gid, gl->member_name, gl->checkleader);
 			}
 			break;
 		}
@@ -949,6 +949,17 @@ void WorldServer::Process() {
 			break;
 		}
 
+		case ServerOP_ChangeGroupLeader: {
+			ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;
+			if(zone){
+				if(fgu->zoneid == zone->GetZoneID())
+					break;
+
+				entity_list.SendGroupLeader(fgu->gid, fgu->leader_name, fgu->oldleader_name);
+			}
+			break;
+		}
+
 		case ServerOP_OOZGroupMessage: {
 			ServerGroupChannelMessage_Struct* gcm = (ServerGroupChannelMessage_Struct*)pack->pBuffer;
 			if(zone){
@@ -967,7 +978,9 @@ void WorldServer::Process() {
 
 				Group *g = entity_list.GetGroupByID(sd->groupid);
 				if(g)
+				{
 					g->DisbandGroup();
+				}
 			}
 			break;
 		}

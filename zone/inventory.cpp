@@ -363,7 +363,6 @@ void Client::DropInst(const ItemInst* inst)
 		return;
 	}
 
-
 	if (inst->GetItem()->NoDrop == 0)
 	{
 		Message(CC_Red, "This item is NODROP. Deleting.");
@@ -373,7 +372,31 @@ void Client::DropInst(const ItemInst* inst)
 	// Package as zone object
 	Object* object = new Object(this, inst);
 	entity_list.AddObject(object, true);
+	object->Save();
 	object->StartDecay();
+}
+
+//This differs from EntityList::CreateGroundObject by using the inst, so bag contents are
+//preserved. EntityList creates a new instance using ID, so bag contents are lost.
+void Client::CreateGroundObject(const ItemInst* inst, float x, float y, float z,
+		float heading, uint32 decay_time)
+{
+	if (!inst) {
+		// Item doesn't exist in inventory!
+		Message(CC_Red, "Error: Item not found");
+		return;
+	}
+
+	if (inst->GetItem()->NoDrop == 0)
+	{
+		Message(CC_Red, "This item is NODROP. Deleting.");
+		return;
+	}
+
+	// Package as zone object
+	Object *object = new Object(inst, x, y, z, heading,decay_time);
+	entity_list.AddObject(object, true);
+	object->Save();
 }
 
 // Returns a slot's item ID (returns INVALID_ID if not found)
@@ -600,32 +623,35 @@ bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cur
 		for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
 		{
 			ItemInst* bag = m_inv.GetItem(i);
-			if(bag->GetItem()->BagType == BagTypeQuiver)
+			if(bag)
 			{
-				int8 slots = bag->GetItem()->BagSlots;
-				uint16 emptyslot = 0;
-				for (uint8 j = SUB_BEGIN; j < slots; j++)
+				if(bag->GetItem()->BagType == BagTypeQuiver)
 				{
-					uint16 slotid = Inventory::CalcSlotId(i, j);
-					ItemInst* tmp_inst = m_inv.GetItem(slotid);
-					if(!tmp_inst)
+					int8 slots = bag->GetItem()->BagSlots;
+					uint16 emptyslot = 0;
+					for (uint8 j = SUB_BEGIN; j < slots; j++)
 					{
-						emptyslot = slotid;
+						uint16 slotid = Inventory::CalcSlotId(i, j);
+						ItemInst* tmp_inst = m_inv.GetItem(slotid);
+						if(!tmp_inst)
+						{
+							emptyslot = slotid;
+						}
+						// Partial stack found use this first
+						if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
+							MoveItemCharges(*item, slotid, type);
+							CalcBonuses();
+							if(item->GetCharges())	// we didn't get them all
+								return AutoPutLootInInventory(*item, try_worn, try_cursor, 0);
+							return true;
+						}
 					}
-					// Partial stack found use this first
-					if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
-						MoveItemCharges(*item, slotid, type);
-						CalcBonuses();
-						if(item->GetCharges())	// we didn't get them all
-							return AutoPutLootInInventory(*item, try_worn, try_cursor, 0);
+					// Use empty slot if no partial stacks
+					if(emptyslot != 0)
+					{
+						PutItemInInventory(emptyslot, *item, true);
 						return true;
 					}
-				}
-				// Use empty slot if no partial stacks
-				if(emptyslot != 0)
-				{
-					PutItemInInventory(emptyslot, *item, true);
-					return true;
 				}
 			}
 		}

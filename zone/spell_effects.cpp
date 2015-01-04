@@ -1693,8 +1693,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 						if(r)
 						{
-							uint32 gid = 0xFFFFFFFF;
-							gid = r->GetGroup(caster->GetName());
+							uint32 gid = r->GetGroup(caster->GetName());
 							if(gid < 11)
 							{
 								if(r->GetGroup(TargetClient->GetName()) != gid) {
@@ -2291,8 +2290,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->BalanceHP(spell.base[i], gid, spell.range, caster, spell.base2[i]);
@@ -2319,8 +2317,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->BalanceMana(spell.base[i], gid, spell.range, caster, spell.base2[i]);
@@ -2401,8 +2398,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
 				if(r)
 				{
-					uint32 gid = 0xFFFFFFFF;
-					gid = r->GetGroup(caster->GetName());
+					uint32 gid = r->GetGroup(caster->GetName());
 					if(gid < 11)
 					{
 						r->HealGroup(heal_amt,caster, gid, spell.range);
@@ -5868,7 +5864,7 @@ bool Mob::PassCastRestriction(bool UseCastRestriction,  int16 value, bool IsDama
 	Range 112		: *Sporali
 	Range 113		: *Kobold
 	Range 114		: *Shade Giant
-	Range 115		: *Drakkin
+	Range 115		: NOT USED
 	Range 116		: NOT USED
 	Range 117		: *Animal OR Plant
 	Range 118		: *Summoned
@@ -5973,11 +5969,6 @@ bool Mob::PassCastRestriction(bool UseCastRestriction,  int16 value, bool IsDama
 
 			case 114:	
 				if (GetRace() == 526)
-					return true;
-				break;
-
-			case 115:	
-				if (GetRace() == 522)
 					return true;
 				break;
 

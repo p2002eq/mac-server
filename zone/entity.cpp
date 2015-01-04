@@ -1888,8 +1888,10 @@ void EntityList::RemoveAllNPCs()
 
 void EntityList::RemoveAllGroups()
 {
-	while (group_list.size())
+	while (!group_list.empty()) {
+		safe_delete(group_list.front());
 		group_list.pop_front();
+	}
 #if EQDEBUG >= 5
 	CheckGroupList (__FILE__, __LINE__);
 #endif
@@ -1897,8 +1899,10 @@ void EntityList::RemoveAllGroups()
 
 void EntityList::RemoveAllRaids()
 {
-	while (raid_list.size())
+	while (!raid_list.empty()) {
+		safe_delete(raid_list.front());
 		raid_list.pop_front();
+	}
 }
 
 void EntityList::RemoveAllDoors()
@@ -2098,7 +2102,8 @@ bool EntityList::RemoveGroup(uint32 delete_id)
 	while(iterator != group_list.end())
 	{
 		if((*iterator)->GetID() == delete_id) {
-			group_list.remove (*iterator);
+			safe_delete(*iterator);
+			group_list.remove(*iterator);
 #if EQDEBUG >= 5
 	CheckGroupList (__FILE__, __LINE__);
 #endif
@@ -2121,7 +2126,8 @@ bool EntityList::RemoveRaid(uint32 delete_id)
 	while(iterator != raid_list.end())
 	{
 		if((*iterator)->GetID() == delete_id) {
-			raid_list.remove (*iterator);
+			safe_delete(*iterator);
+			raid_list.remove(*iterator);
 			return true;
 		}
 		++iterator;
@@ -3462,7 +3468,7 @@ void EntityList::ForceGroupUpdate(uint32 gid)
 	}
 }
 
-void EntityList::SendGroupLeave(uint32 gid, const char *name)
+void EntityList::SendGroupLeave(uint32 gid, const char *name, bool checkleader)
 {
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
@@ -3480,7 +3486,31 @@ void EntityList::SendGroupLeave(uint32 gid, const char *name)
 					Mob *Leader = g->GetLeader();
 					c->QueuePacket(outapp);
 					safe_delete(outapp);
-					g->DelMemberOOZ(name);
+					g->DelMemberOOZ(name, checkleader);
+				}
+			}
+		}
+		++it;
+	}
+}
+
+void EntityList::SendGroupLeader(uint32 gid, const char *lname, const char *oldlname)
+{
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		if (it->second){
+			Group *g = nullptr;
+			g = it->second->GetGroup();
+			if (g) {
+				if (g->GetID() == gid) {
+					EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupJoin_Struct));
+					GroupJoin_Struct* gj = (GroupJoin_Struct*) outapp->pBuffer;
+					gj->action = groupActMakeLeader;
+					strcpy(gj->membername, lname);
+					strcpy(gj->yourname, oldlname);
+					it->second->QueuePacket(outapp);
+					_log(_GROUP__LOG, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
+					safe_delete(outapp);
 				}
 			}
 		}

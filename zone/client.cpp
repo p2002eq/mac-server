@@ -4674,6 +4674,11 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 		client->Message(0, "BashDmg: %i", GetBashDamage());
 	if(GetClass() == BARD)
 		client->Message(0, " Singing: %i  Brass: %i  String: %i Percussion: %i Wind: %i", GetSingMod(), GetBrassMod(), GetStringMod(), GetPercMod(), GetWindMod());
+	if(HasGroup())
+	{
+		Group* g = GetGroup();
+		client->Message(0, " GroupID: %i Count: %i GroupLeader: %s GroupLeaderCached: %s", g->GetID(), g->GroupCount(), g->GetLeaderName(), g->GetOldLeaderName());
+	}
 
 	Extra_Info:
 

@@ -3304,18 +3304,18 @@ bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id
 	Corpse* NewCorpse = 0;
 	int CorpseCount = 0;
 
-	std::string query = StringFormat(
+	std::string update_query = StringFormat(
 		"UPDATE character_corpses SET zone_id = %i, instance_id = %i, x = %f, y = %f, z = %f, heading = %f, is_buried = 0, was_at_graveyard = 0 WHERE charid = %i",
 		dest_zone_id, dest_instance_id, dest_x, dest_y, dest_z, dest_heading, char_id
 	);
-	auto results = QueryDatabase(query);
+	auto results = QueryDatabase(update_query);
 
-	query = StringFormat(
+	std::string select_query = StringFormat(
 		"SELECT `id`, `charname`, `time_of_death`, `is_rezzed` FROM `character_corpses` WHERE `charid` = '%u'"
 		"ORDER BY time_of_death", 
 		char_id
 	);
-	results = QueryDatabase(query);
+	results = QueryDatabase(select_query);
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		NewCorpse = Corpse::LoadCharacterCorpseEntity(
