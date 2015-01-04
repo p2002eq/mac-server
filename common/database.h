@@ -331,9 +331,6 @@ namespace Convert {
 		/*5418*/	uint16							boatid;				// We use this ID internally for boats.
 		/*5420*/	uint32							zone_change_count;	// Number of times user has zoned in their career (guessing)
 		/*5424*/	char							unknown5424[16];			
-		/*5440*/	uint32							drakkin_heritage;	//
-		/*5444*/	uint32							drakkin_tattoo;		//
-		/*5448*/	uint32							drakkin_details;	//
 		/*5452*/	uint32							expansions;			// expansion setting, bit field of expansions avaliable
 		/*5456*/	int32							toxicity;			//from drinking potions, seems to increase by 3 each time you drink
 		/*5460*/	char							unknown5496[16];	//
@@ -460,9 +457,6 @@ namespace Convert {
 		uint8 hairstyle;
 		uint8 face;
 		uint8 beard;
-		uint32 drakkin_heritage;
-		uint32 drakkin_tattoo;
-		uint32 drakkin_details;
 		player_lootitem_temp::ServerLootItem_Struct_temp	items[0];
 	};
 
