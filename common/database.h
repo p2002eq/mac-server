@@ -404,10 +404,6 @@ namespace Convert {
 		/*19240*/	uint32							timeentitledonaccount;
 		/*19244*/	Convert::PotionBelt_Struct		potionbelt;			//there should be 3 more of these
 		/*19532*/	uint8							unknown19568[8];
-		/*19540*/	uint32							currentRadCrystals; // Current count of radiant crystals
-		/*19544*/	uint32							careerRadCrystals;	// Total count of radiant crystals ever
-		/*19548*/	uint32							currentEbonCrystals;// Current count of ebon crystals
-		/*19552*/	uint32							careerEbonCrystals;	// Total count of ebon crystals ever
 		/*19556*/	uint8							groupAutoconsent;	// 0=off, 1=on
 		/*19557*/	uint8							raidAutoconsent;	// 0=off, 1=on
 		/*19558*/	uint8							guildAutoconsent;	// 0=off, 1=on
