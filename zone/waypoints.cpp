@@ -341,7 +341,7 @@ void NPC::CalculateNewWaypoint()
 			}
 		}
 
-		if(!closest.empty())
+		if (closest.size() != 0)
 		{
 			iter = closest.begin();
 			std::advance(iter, zone->random.Int(0, closest.size() - 1));

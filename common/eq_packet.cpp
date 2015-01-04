@@ -407,23 +407,25 @@ void EQProtocolPacket::ChatDecode(unsigned char *buffer, int size, int DecodeKey
 	if ((size >= 2) && buffer[1]!=0x01 && buffer[0]!=0x02 && buffer[0]!=0x1d) {
 		int Key=DecodeKey;
 		unsigned char *test=(unsigned char *)malloc(size);
-		buffer+=2;
-		size-=2;
+		if (test) {	// avoid NULL pointer dereference
+			buffer += 2;
+			size -= 2;
 
-		int i;
-		for (i = 0 ; i+4 <= size ; i+=4)
-		{
-			int pt = (*(int*)&buffer[i])^(Key);
-			Key = (*(int*)&buffer[i]);
-			*(int*)&test[i]=pt;
+			int i;
+			for (i = 0; i + 4 <= size; i += 4)
+			{
+				int pt = (*(int*)&buffer[i]) ^ (Key);
+				Key = (*(int*)&buffer[i]);
+				*(int*)&test[i] = pt;
+			}
+			unsigned char KC = Key & 0xFF;
+			for (; i < size; i++)
+			{
+				test[i] = buffer[i] ^ KC;
+			}
+			memcpy(buffer, test, size);
+			free(test);
 		}
-		unsigned char KC=Key&0xFF;
-		for ( ; i < size ; i++)
-		{
-			test[i]=buffer[i]^KC;
-		}
-		memcpy(buffer,test,size);
-		free(test);
 	}
 }
 
@@ -431,23 +433,26 @@ void EQProtocolPacket::ChatEncode(unsigned char *buffer, int size, int EncodeKey
 {
 	if (buffer[1]!=0x01 && buffer[0]!=0x02 && buffer[0]!=0x1d) {
 		int Key=EncodeKey;
-		char *test=(char*)malloc(size);
-		int i;
-		buffer+=2;
-		size-=2;
-		for ( i = 0 ; i+4 <= size ; i+=4)
-		{
-			int pt = (*(int*)&buffer[i])^(Key);
-			Key = pt;
-			*(int*)&test[i]=pt;
+		char *test = (char*)malloc(size);
+		if (test)
+		{	// avoid NULL pointer dereference
+			int i;
+			buffer += 2;
+			size -= 2;
+			for (i = 0; i + 4 <= size; i += 4)
+			{
+				int pt = (*(int*)&buffer[i]) ^ (Key);
+				Key = pt;
+				*(int*)&test[i] = pt;
+			}
+			unsigned char KC = Key & 0xFF;
+			for (; i < size; i++)
+			{
+				test[i] = buffer[i] ^ KC;
+			}
+			memcpy(buffer, test, size);
+			free(test);
 		}
-		unsigned char KC=Key&0xFF;
-		for ( ; i < size ; i++)
-		{
-			test[i]=buffer[i]^KC;
-		}
-		memcpy(buffer,test,size);
-		free(test);
 	}
 }
 
