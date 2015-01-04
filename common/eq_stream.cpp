@@ -1849,7 +1849,22 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ CHECK FOR THREAD TERMINATION ************/
 	if(pack->HDR.a2_Closing && pack->HDR.a6_Closing)
 	{
-		FinalizePacketQueue();
+		EQStreamState state = GetState();
+		if(state == ESTABLISHED) {
+			//client initiated disconnect?
+			_log(NET__NET_TRACE, _L "Received OP_SessionDisconnect. Treating like a client-initiated disconnect." __L);
+			_SendDisconnect();
+			SetState(CLOSED);
+		} else if(state == CLOSING) {
+			//we were waiting for this anyways, ignore pending messages, send the reply and be closed.
+			_log(NET__NET_TRACE, _L "Received OP_SessionDisconnect when we have a pending close, they beat us to it. Were happy though." __L);
+			_SendDisconnect();
+			SetState(CLOSED);
+		} else {
+			//we are expecting this (or have already gotten it, but dont care either way)
+			_log(NET__NET_TRACE, _L "Received expected OP_SessionDisconnect. Moving to closed state." __L);
+			SetState(CLOSED);
+		}
 		return false;
 	}
 	/************ END CHECK THREAD TERMINATION ************/
@@ -1959,7 +1974,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	int16 restore_op = 0x0000;
 
 	/************ PM STATE = NOT ACTIVE ************/
-	if(CheckState(CLOSING) || !app || sent_Fin || app && app->GetRawOpcode() == 0)
+	if(CheckState(CLOSED) || !app || app && app->GetRawOpcode() == 0)
 	{
 		return;
 	}
@@ -2097,9 +2112,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 
 void EQOldStream::CheckTimers(void)
 {
-	//This is to avoid recursive locking.
-	bool setClosing = false;
-	bool shuffleQueueAfter = false;
 	/************ Should packets be resent? ************/
 
 	if (datarate_timer->Check(0))
@@ -2245,7 +2257,7 @@ void EQOldStream::SendPacketQueue(bool Block)
 	to.sin_addr.s_addr = remote_ip;
 	int sentpacket = 0;
 	/************ Should a pure ack be sent? ************/
-	if(!CheckClosed() && (no_ack_sent_timer->Check(0) || keep_alive_timer->Check(0)))
+	if(GetState() == ESTABLISHED && (no_ack_sent_timer->Check(0) || keep_alive_timer->Check(0)))
 	{
 		EQProtocolPacket app(0xFFFF, nullptr, 0);
 		MakeEQPacket(&app, SACK.dwGSQcount > 45);
@@ -2299,13 +2311,23 @@ void EQOldStream::SendPacketQueue(bool Block)
 		packit++;
 	}
 	// ************ Processing finished ************ //
+
 	MOutboundQueue.unlock();
+
+	if(GetState() == CLOSING)
+	{
+		FinalizePacketQueue();
+	}
+
+
 }
 
 void EQOldStream::FinalizePacketQueue()
 {
+	if(GetState() == CLOSED)
+		return;
+
 	MOutboundQueue.lock();
-	SetState(CLOSING);
 	// Send out our existing queue
 	EQOldPacket* p = 0;    
 	sockaddr_in to;	
@@ -2326,7 +2348,6 @@ void EQOldStream::FinalizePacketQueue()
 		SendQueue.erase(SendQueue.begin());
 	}
 	// ************ Connection finished ************ //
-	SetState(CLOSED);
 	MOutboundQueue.unlock();
 }
 
@@ -2346,15 +2367,30 @@ void EQOldStream::CheckTimeout(uint32 now, uint32 timeout) {
 
 	EQStreamState orig_state = GetState();
 	if (orig_state == CLOSING && !outgoing_data) {
-		_log(EQMAC__LOG, _L "Out of data in closing state, disconnecting." __L);
-		Close();
+		_log(NET__NET_TRACE, _L "Out of data in closing state, disconnecting." __L);
+		SetState(CLOSED);
 	} else if (LastPacket && (now-LastPacket) > timeout) {
 		switch(orig_state) {
+		case CLOSING:
+			//if we time out in the closing state, they are not acking us, just give up
+			_log(NET__DEBUG, _L "Timeout expired in closing state. Moving to closed state." __L);
+			_SendDisconnect();
+			SetState(CLOSED);
+			break;
+		case DISCONNECTING:
+			//we timed out waiting for them to send us the disconnect reply, just give up.
+			_log(NET__DEBUG, _L "Timeout expired in disconnecting state. Moving to closed state." __L);
+			SetState(CLOSED);
+			break;
+		case CLOSED:
+			_log(NET__DEBUG, _L "Timeout expired in closed state??" __L);
+			break;
 		case ESTABLISHED:
 			//we timed out during normal operation. Try to be nice about it.
 			//we will almost certainly time out again waiting for the disconnect reply, but oh well.
-			_log(EQMAC__LOG, _L "Timeout expired in established state. Closing connection." __L);
-			Close();
+			_log(NET__DEBUG, _L "Timeout expired in established state. Closing connection." __L);
+			_SendDisconnect();
+			SetState(DISCONNECTING);
 			break;
 		default:
 			break;
@@ -2364,6 +2400,13 @@ void EQOldStream::CheckTimeout(uint32 now, uint32 timeout) {
 
 void EQOldStream::SetState(EQStreamState state) {
 	MState.lock();
+
+	if(pm_state == CLOSED)
+	{
+		MState.unlock();
+		return;
+	}
+
 	_log(NET__NET_TRACE, _L "Changing state from %d to %d" __L, pm_state, state);
 	pm_state=state;
 	MState.unlock();
@@ -2421,11 +2464,15 @@ void EQOldStream::_SendDisconnect()
 	FinalizePacketQueue();
 }
 void EQOldStream::Close() {
-	if(!sent_Fin)
-	{
-		sent_Fin = true;
+	if(HasOutgoingData()) {
+		//there is pending data, wait for it to go out.
+		_log(NET__DEBUG, _L "Stream requested to Close(), but there is pending data, waiting for it." __L);
+		SetState(CLOSING);
+	} else {
+		//otherwise, we are done, we can drop immediately.
 		_SendDisconnect();
-		_log(NET__NET_TRACE, _L "EQOldStream closing immediate due to Close()" __L);
+		_log(NET__DEBUG, _L "EQStream closing immediate due to Close()" __L);
+		SetState(DISCONNECTING);
 	}
 }
 void EQOldStream::ClearOldPackets()

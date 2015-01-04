@@ -337,7 +337,7 @@ void EQStreamFactory::CheckTimeout()
 		EQStreamState state = s->GetState();
 		//not part of the else so we check it right away on state change
 		if (state==CLOSED) {
-			if (s->IsInUse() || s->IsWriting()) {
+			if (s->IsInUse()) {
 				//give it a little time for everybody to finish with it
 			} else {
 				//everybody is done, we can delete it now
@@ -417,14 +417,12 @@ Timer DecayTimer(20);
 			
 			oldstream_itr->second->CheckTimers();
 
-		//Commented this so all streams, regardless of them having data, send data out. This is so keepalive packets don't screw up the data rate calculations. Slightly more CPU used.
-		//	if (oldstream_itr->second->HasOutgoingData()) {
-				havework=true; 
-				oldstream_itr->second->SetWriting(true);
-				oldstream_itr->second->PutInUse();
-				old_wants_write.push_back(oldstream_itr->second);
-		//	}			
-			
+			//Commented this so all streams, regardless of them having data, send data out. This is so keepalive packets don't screw up the data rate calculations. Slightly more CPU used.
+	//		if (oldstream_itr->second->HasOutgoingData()) {
+					havework=true; 
+					oldstream_itr->second->PutInUse();
+					old_wants_write.push_back(oldstream_itr->second);
+	//		}						
 		}
 
 		MStreams.unlock();
@@ -443,7 +441,6 @@ Timer DecayTimer(20);
 			for(; oldcur != oldend; oldcur++) {
 				(*oldcur)->SendPacketQueue();
 				(*oldcur)->ReleaseFromUse();
-				(*oldcur)->SetWriting(false);
 			}
 		Sleep(10);
 

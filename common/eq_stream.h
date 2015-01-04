@@ -528,7 +528,7 @@ class EQOldStream : public EQStreamInterface {
 		virtual void RemoveData();
 		virtual bool CheckState(EQStreamState state) { return GetState() == state; }
 		virtual std::string Describe() const { return("Direct EQOldStream"); }
-		virtual bool IsInUse() { bool flag; MInUse.lock(); flag=(active_users>0); MInUse.unlock(); if(IsWriting()) return true; return flag; }
+		virtual bool IsInUse() { bool flag; MInUse.lock(); flag=(active_users>0); MInUse.unlock(); return flag; }
 		bool IsWriting() { return isWriting; }
 		void SetWriting(bool var) { isWriting = var; } 
 		inline void PutInUse() { MInUse.lock(); active_users++; MInUse.unlock(); }
