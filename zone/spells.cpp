@@ -428,8 +428,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if((zone->IsCity() || !zone->CanCastOutdoor()) && 
-		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
+		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
 		!IsBindSightSpell(spell_id))
 		{
 			mlog(SPELLS__CASTING, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
@@ -2255,8 +2254,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 		if(!CheckRegion(spell_target))
 			return(false);
 
-		if((zone->IsCity() || !zone->CanCastOutdoor()) &&
-		IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
+		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
 		!IsBindSightSpell(spell_id))
 		{
 			mlog(SPELLS__CASTING, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());

@@ -94,7 +94,7 @@ bool ZoneDatabase::SaveZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct
 	return true;
 }
 
-bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *zone_data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, uint8 &zone_type, int &ruleset, char **map_filename, bool &can_bind_others) {
+bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *zone_data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, uint8 &zone_type, int &ruleset, char **map_filename, bool &can_bind_others, bool &skip_los) {
 
 	*map_filename = new char[100];
 	zone_data->zone_id = zoneid;
@@ -109,7 +109,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
                                     "rain_chance1, rain_chance2, rain_chance3, rain_chance4, " // 4
                                     "rain_duration1, rain_duration2, rain_duration3, rain_duration4, " // 4
                                     "snow_chance1, snow_chance2, snow_chance3, snow_chance4, " // 4
-                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4 " // 4
+                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, skip_los " // 4
                                     "FROM zone WHERE zoneidnumber = %i AND version = %i", zoneid, instance_id);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -184,6 +184,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 
 	for(index = 0; index < 4; index++)
         zone_data->snow_duration[index]=atof(row[52 + index]);
+
+	skip_los = atoi(row[56]) == 0? false: true;
 
 	return true;
 }

@@ -423,6 +423,8 @@ public:
 	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); }
 	bool IsRunning() const { return m_is_running; }
 	void SetRunning(bool val) { m_is_running = val; }
+	bool IsCurrentlyRunning() const { return m_running; }
+	void SetCurrentlyRunning(bool val) { m_running = val; }
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDeltas(float delta_x, float delta_y, float delta_z, float delta_h);
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
@@ -1057,7 +1059,8 @@ protected:
 	float fixedZ;
 	EmuAppearance _appearance;
 	uint8 pRunAnimSpeed;
-	bool m_is_running;
+	bool m_is_running; // This bool tells us if the NPC *should* be running or walking, to calculate speed.
+	bool m_running; // This bool is used to tell us if the NPC is currently running or walking.
 
 
 	Timer attack_timer;

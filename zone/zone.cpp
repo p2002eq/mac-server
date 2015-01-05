@@ -901,7 +901,7 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 	{
 		map_name = nullptr;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, zone_type, default_ruleset, &map_name, can_bind_others))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, zone_type, default_ruleset, &map_name, can_bind_others, skip_los))
 		{
 			LogFile->write(EQEMuLog::Error, "Error loading the Zone Config.");
 			return false;
@@ -912,11 +912,11 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 		//Fall back to base zone if we don't find the instance version.
 		map_name = nullptr;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), instance_id, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others, skip_los))
 		{
 			safe_delete_array(map_name);
 			if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind,
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others))
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone,  zone_type, default_ruleset, &map_name, can_bind_others, skip_los))
 			{
 				LogFile->write(EQEMuLog::Error, "Error loading the Zone Config.");
 				return false;
@@ -1853,11 +1853,7 @@ void Zone::ReloadWorld(uint32 Option){
 		entity_list.ClearAreas();
 		parse->ReloadQuests();
 		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
-	} else if(Option == 1) {
 		zone->Repop(0);
-		entity_list.ClearAreas();
-		parse->ReloadQuests();
-		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
 	}
 }
 
