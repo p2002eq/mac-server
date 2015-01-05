@@ -422,7 +422,7 @@ RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
 RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
-RULE_REAL ( NPC, SpeedMultiplier, 100.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
+RULE_REAL ( NPC, SpeedMultiplier, 45.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
 RULE_INT ( NPC, RunAnimRatio, 37 )	//This changes their animation based on their movement speed.
 RULE_REAL ( NPC, WalkSpeedMultiplier, 30.0 ) //Same as above for walking.
 RULE_INT ( NPC, WalkAnimRatio, 37 ) //Same as above for walking. Probably okay to combine with the runspeed rule.

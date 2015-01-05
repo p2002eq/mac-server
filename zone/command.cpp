@@ -344,7 +344,7 @@ int command_init(void){
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
 		command_add("reloadstatic", "- Reload Static Zone Data", 180, command_reloadstatic) ||
 		command_add("reloadtitles", "- Reload player titles from the database", 180, command_reloadtitles) ||
-		command_add("reloadworld", "[0|1] - Clear quest cache (0 - no repop, 1 - repop)", 250, command_reloadworld) ||
+		command_add("reloadworld", "[0|1] - Clear quest cache and reload all rules (0 - no repop, 1 - repop)", 250, command_reloadworld) ||
 		command_add("reloadzonepoints", "- Reload zone points from database", 180, command_reloadzps) ||
 		command_add("reloadzps", nullptr, 180, command_reloadzps) ||
 		command_add("repop", "[delay] - Repop the zone with optional delay", 150, command_repop) ||
@@ -2929,7 +2929,7 @@ void command_reloadqst(Client *c, const Seperator *sep){
 }
 
 void command_reloadworld(Client *c, const Seperator *sep){
-	c->Message(0, "Reloading quest cache and repopping zones worldwide.");
+	c->Message(0, "Reloading quest cache, reloading rules, and repopping zones worldwide.");
 	ServerPacket* pack = new ServerPacket(ServerOP_ReloadWorld, sizeof(ReloadWorld_Struct));
 	ReloadWorld_Struct* RW = (ReloadWorld_Struct*) pack->pBuffer;
 	RW->Option = ((atoi(sep->arg[1]) == 1) ? 1 : 0);
