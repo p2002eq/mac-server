@@ -1852,10 +1852,12 @@ void Zone::ReloadWorld(uint32 Option){
 	if (Option == 0) {
 		entity_list.ClearAreas();
 		parse->ReloadQuests();
+		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
 	} else if(Option == 1) {
 		zone->Repop(0);
 		entity_list.ClearAreas();
 		parse->ReloadQuests();
+		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
 	}
 }
 

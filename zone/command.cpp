@@ -156,11 +156,13 @@ int command_init(void){
 		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information", 150, command_altactivate) ||
 		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target", 250, command_appearance) ||
 		command_add("attack", "[targetname] - Make your NPC target attack targetname", 150, command_attack) ||
+
 		command_add("ban", "[name][reason] - Ban by character name", 150, command_ban) ||
 		command_add("beard", "- Change the beard of your target", 250, command_beard) ||
 		command_add("beardcolor", "- Change the beard color of your target", 250, command_beardcolor) ||
 		command_add("bestz", "- Ask map for a good Z coord for your x,y coords.", 20, command_bestz) ||
 		command_add("bind", "- Sets your targets bind spot to their current location", 90, command_bind) ||
+
 		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 255, command_camerashake) ||
 		command_add("cast", nullptr, 150, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell", 150, command_castspell) ||
@@ -169,6 +171,7 @@ int command_init(void){
 		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
 		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
 		command_add("connectworldserver", "- Make zone attempt to connect to worldserver", 85, command_connectworldserver) ||
+		command_add("coredump", "Dumps a core log of any existing cores to view on web page.", 250, command_coredump) ||
 		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 90, command_corpse) ||
 		command_add("crashtest", "- Crash the zoneserver", 200, command_crashtest) ||
 		command_add("cvs", "- Summary of client versions currently online.", 180, command_cvs) ||
@@ -344,7 +347,7 @@ int command_init(void){
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
 		command_add("reloadstatic", "- Reload Static Zone Data", 180, command_reloadstatic) ||
 		command_add("reloadtitles", "- Reload player titles from the database", 180, command_reloadtitles) ||
-		command_add("reloadworld", "[0|1] - Clear quest cache (0 - no repop, 1 - repop)", 250, command_reloadworld) ||
+		command_add("reloadworld", "[0|1] - Clear quest cache and reload all rules (0 - no repop, 1 - repop)", 250, command_reloadworld) ||
 		command_add("reloadzonepoints", "- Reload zone points from database", 180, command_reloadzps) ||
 		command_add("reloadzps", nullptr, 180, command_reloadzps) ||
 		command_add("repop", "[delay] - Repop the zone with optional delay", 150, command_repop) ||
@@ -2929,7 +2932,7 @@ void command_reloadqst(Client *c, const Seperator *sep){
 }
 
 void command_reloadworld(Client *c, const Seperator *sep){
-	c->Message(0, "Reloading quest cache and repopping zones worldwide.");
+	c->Message(0, "Reloading quest cache, reloading rules, and repopping zones worldwide.");
 	ServerPacket* pack = new ServerPacket(ServerOP_ReloadWorld, sizeof(ReloadWorld_Struct));
 	ReloadWorld_Struct* RW = (ReloadWorld_Struct*) pack->pBuffer;
 	RW->Option = ((atoi(sep->arg[1]) == 1) ? 1 : 0);
@@ -10260,6 +10263,10 @@ void command_questerrors(Client *c, const Seperator *sep){
 
 void command_questupdate(Client *c, const Seperator *sep){
 	system("svn update quests");
+}
+
+void command_coredump(Client *c, const Seperator *sep){
+	system("dump");
 }
 
 void command_enablerecipe(Client *c, const Seperator *sep){

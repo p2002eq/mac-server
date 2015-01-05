@@ -497,7 +497,9 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 								
 								// step 1a: process items in bags
 								uint8 bagidx = 0;
-								for (int16 trade_bag_slot = EmuConstants::TRADE_BAGS_BEGIN; trade_bag_slot <= EmuConstants::TRADE_BAGS_END; ++trade_bag_slot) 
+								for (int16 trade_bag_slot = EmuConstants::TRADE_BAGS_BEGIN + (trade_slot - EmuConstants::TRADE_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE; 
+									trade_bag_slot <= EmuConstants::TRADE_BAGS_BEGIN + (trade_slot- EmuConstants::TRADE_BEGIN) * EmuConstants::ITEM_CONTAINER_SIZE + 9; 
+									++trade_bag_slot)
 								{
 									const ItemInst* inst = m_inv[trade_bag_slot];
 
@@ -507,11 +509,10 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 										if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) 
 										{
 											int16 free_bag_slot = other->GetInv().CalcSlotId(free_slot, bagidx);
-											mlog(TRADING__CLIENT, "Free slot is: %i. Bag slot is: %i", free_bag_slot, free_slot);
+											mlog(TRADING__CLIENT, "Free slot is: %i. Slot bag is in: %i Index is: %i", free_bag_slot, free_slot, bagidx);
 											if (free_bag_slot != INVALID_INDEX) {
 												if (other->PutItemInInventory(free_bag_slot, *inst, true)) 
 												{
-													bagidx++;
 													mlog(TRADING__CLIENT, "Container item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
 												}
 
@@ -536,6 +537,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 										other->Message(CC_Red, "You do not have room for any more items.");
 										CreateGroundObject(inst,other->GetX(),other->GetY(),other->GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
 									}
+									bagidx++;
 								}
 								if (qs_log) {
 									QSTradeItems_Struct* detail = new QSTradeItems_Struct;

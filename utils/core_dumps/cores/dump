@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+# A script to extract core-file informations
+#
+
+#Set datestamp
+#DATE=$(date +%H:%M.%S_%h_%d_%Y)
+DATE=$(date +%h_%d_%Y_%H:%M.%S)
+
+#Binary image
+zoneimg=/cores/zone
+worldimg=/cores/world
+
+# cores #
+
+###### ZONES #####
+
+mv core.zone.*.*.* corezone
+corezone=/cores/corezone
+
+if [ -f corezone ]; then
+
+	gdblogfile="$corezone-gdb-zone_${DATE}.log"
+	
+	gdb -batch-silent \
+		-q \
+		-ex "set logging file $gdblogfile" \
+		-ex "set logging on" \
+		-ex "thread apply all bt full" \
+		-ex quit \
+		"$zoneimg" \
+		"$corezone"
+		
+	rm corezone
+
+fi
+
+##### WORLD #####
+
+mv core.world.*.*.* coreworld
+coreworld=/cores/coreworld
+
+if [ -f coreworld ]; then
+
+	gdblogfile="$coreworld-gdb-world_${DATE}.log"
+	
+	gdb -batch-silent \
+		-q \
+		-ex "set logging file $gdblogfile" \
+		-ex "set logging on" \
+		-ex "thread apply all bt full" \
+		-ex quit \
+		"$worldimg" \
+		"$coreworld"
+	
+	rm coreworld
+
+fi
+
+# rm /cores/core_log/*
+mv corezone-gdb* /cores/core_log
+mv coreworld-gdb* /cores/core_log

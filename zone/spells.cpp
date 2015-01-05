@@ -3322,11 +3322,23 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	mod_spell_cast(spell_id, spelltar, reflect, use_resist_adjust, resist_adjust, isproc);
 
+	bool GM;
+	if(spelltar->IsClient())
+	{
+		GM = spelltar->CastToClient()->GetGM();
+	}
+	else
+	{
+		GM = false;
+	}
 	// invuln mobs can't be affected by any spells, good or bad
 	if(spelltar->GetInvul() || spelltar->DivineAura()) {
-		mlog(SPELLS__CASTING_ERR, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
-		safe_delete(action_packet);
-		return false;
+		if(!GM || IsDetrimentalSpell(spell_id))
+		{
+			mlog(SPELLS__CASTING_ERR, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
+			safe_delete(action_packet);
+			return false;
+		}
 	}
 
 	//cannot hurt untargetable mobs
