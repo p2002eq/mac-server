@@ -1534,34 +1534,8 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		}
 
 		case ST_Tap:
-		case ST_LDoNChest_Cursed:
-		case ST_Target: {
-			if(IsLDoNObjectSpell(spell_id))
-			{
-				if(!spell_target)
-				{
-					mlog(SPELLS__CASTING_ERR, "Spell %d canceled: invalid target (ldon object)", spell_id);
-					Message_StringID(CC_Red,SPELL_NEED_TAR);
-					return false;
-				}
-				else
-				{
-					if(!spell_target->IsNPC())
-					{
-						mlog(SPELLS__CASTING_ERR, "Spell %d canceled: invalid target (normal)", spell_id);
-						Message_StringID(CC_Red,SPELL_NEED_TAR);
-						return false;
-					}
-
-					if(spell_target->GetClass() != LDON_TREASURE)
-					{
-						mlog(SPELLS__CASTING_ERR, "Spell %d canceled: invalid target (normal)", spell_id);
-						Message_StringID(CC_Red,SPELL_NEED_TAR);
-						return false;
-					}
-				}
-			}
-
+		case ST_Target: 
+		{
 			if(!spell_target)
 			{
 				mlog(SPELLS__CASTING_ERR, "Spell %d canceled: invalid target (normal)", spell_id);

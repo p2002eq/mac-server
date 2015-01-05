@@ -857,7 +857,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.HeroicSVCorrup = (int32)atoi(row[ItemField::heroic_svcorrup]);
 		item.HealAmt = (int32)atoi(row[ItemField::healamt]);
 		item.SpellDmg = (int32)atoi(row[ItemField::spelldmg]);
-		item.LDoNSellBackRate = (uint32)atoul(row[ItemField::ldonsellbackrate]);
 		item.ScriptFileID = (uint32)atoul(row[ItemField::scriptfileid]);
 		item.ExpendableArrow = (uint16)atoul(row[ItemField::expendablearrow]);
 		item.Clairvoyance = (uint32)atoul(row[ItemField::clairvoyance]);
@@ -1414,7 +1413,6 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 		sp[tempid].reflectable = atoi(row[161]) != 0;
 		sp[tempid].bonushate=atoi(row[162]);
 
-		sp[tempid].ldon_trap = atoi(row[165]) != 0;
 		sp[tempid].EndurCost=atoi(row[166]);
 		sp[tempid].EndurTimerIndex=atoi(row[167]);
 		sp[tempid].IsDisciplineBuff = atoi(row[168]) != 0;

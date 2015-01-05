@@ -55,7 +55,6 @@ public:
 	float	GetDestZ() { return dest_z; }
 	float	GetDestHeading() { return dest_heading; }
 
-	uint8	IsLDoNDoor() { return is_ldon_door; }
 	uint32	GetClientVersionMask() { return client_version_mask; }
 
 	void	NPCOpen(NPC* sender, bool alt_mode=false);
@@ -107,7 +106,6 @@ private:
 	float	dest_z;
 	float	dest_heading;
 
-	uint8	is_ldon_door;
 	uint32	client_version_mask;
 };
 #endif
