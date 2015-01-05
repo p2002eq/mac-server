@@ -5864,7 +5864,7 @@ bool Mob::PassCastRestriction(bool UseCastRestriction,  int16 value, bool IsDama
 	Range 112		: *Sporali
 	Range 113		: *Kobold
 	Range 114		: *Shade Giant
-	Range 115		: *Drakkin
+	Range 115		: NOT USED
 	Range 116		: NOT USED
 	Range 117		: *Animal OR Plant
 	Range 118		: *Summoned
@@ -5969,11 +5969,6 @@ bool Mob::PassCastRestriction(bool UseCastRestriction,  int16 value, bool IsDama
 
 			case 114:	
 				if (GetRace() == 526)
-					return true;
-				break;
-
-			case 115:	
-				if (GetRace() == 522)
 					return true;
 				break;
 

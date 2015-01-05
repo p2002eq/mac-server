@@ -97,8 +97,6 @@ void ExportSpells(SharedDatabase *db) {
 
 bool SkillUsable(SharedDatabase *db, int skill_id, int class_id) {
 
-	bool res = false;
-
 	std::string query = StringFormat("SELECT max(cap) FROM skill_caps WHERE class=%d AND skillID=%d",
                                     class_id, skill_id);
 	auto results = db->QueryDatabase(query);

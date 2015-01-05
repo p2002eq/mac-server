@@ -1079,11 +1079,7 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		"platinum_cursor,        "
 		"gold_cursor,            "
 		"silver_cursor,          "
-		"copper_cursor,          "
-		"radiant_crystals,       "
-		"career_radiant_crystals,"
-		"ebon_crystals,          "
-		"career_ebon_crystals    "
+		"copper_cursor           "
 		"FROM                    "
 		"character_currency      " 
 		"WHERE `id` = %i         ", character_id);
@@ -1101,10 +1097,7 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->gold_cursor = atoi(row[9]);
 		pp->silver_cursor = atoi(row[10]);
 		pp->copper_cursor = atoi(row[11]);
-		pp->currentRadCrystals = atoi(row[12]);
-		pp->careerRadCrystals = atoi(row[13]);
-		pp->currentEbonCrystals = atoi(row[14]);
-		pp->careerEbonCrystals = atoi(row[15]);
+
 	}
 	return true;
 }
@@ -1611,9 +1604,8 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 	std::string query = StringFormat(
 		"REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 		"platinum_bank, gold_bank, silver_bank, copper_bank,"
-		"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
-		"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
-		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+		"platinum_cursor, gold_cursor, silver_cursor, copper_cursor)"
+		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 		character_id,
 		pp->platinum,
 		pp->gold,
@@ -1626,11 +1618,7 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->platinum_cursor,
 		pp->gold_cursor,
 		pp->silver_cursor,
-		pp->copper_cursor,
-		pp->currentRadCrystals,
-		pp->careerRadCrystals,
-		pp->currentEbonCrystals,
-		pp->careerEbonCrystals);
+		pp->copper_cursor);
 	auto results = database.QueryDatabase(query); 
 	//LogFile->write(EQEMuLog::Debug, "Saving Currency for character ID: %i, done", character_id); 
 	return true;

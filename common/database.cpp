@@ -995,9 +995,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"`beard_color` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_1` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`eye_color_2` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`drakkin_heritage` int(11) UNSIGNED NOT NULL DEFAULT 0,			"
-				"`drakkin_tattoo` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`drakkin_details` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_time_seconds` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
 				"`ability_number` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,			"
 				"`ability_time_minutes` tinyint(11) UNSIGNED NOT NULL DEFAULT 0,	"
@@ -1093,10 +1090,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				" 	`gold_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,                 "
 				" 	`silver_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
 				" 	`copper_cursor` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
-				" 	`radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,            "
-				" 	`career_radiant_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,     "
-				" 	`ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,               "
-				" 	`career_ebon_crystals` int(11) UNSIGNED NOT NULL DEFAULT 0,        "
 				" 	PRIMARY KEY (`id`),                                                "
 				"   KEY `id` (`id`)                                                    "
 				" ) ENGINE=InnoDB DEFAULT CHARSET=latin1;             "
@@ -1406,9 +1399,8 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				/* Run Currency Convert */
 				std::string rquery = StringFormat("REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 					"platinum_bank, gold_bank, silver_bank, copper_bank,"
-					"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
-					"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
-					"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+					"platinum_cursor, gold_cursor, silver_cursor, copper_cursor)"
+					"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 					character_id,
 					pp->platinum,
 					pp->gold,
@@ -1421,11 +1413,7 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 					pp->platinum_cursor,
 					pp->gold_cursor,
 					pp->silver_cursor,
-					pp->copper_cursor,
-					pp->currentRadCrystals,
-					pp->careerRadCrystals,
-					pp->currentEbonCrystals,
-					pp->careerEbonCrystals
+					pp->copper_cursor
 					);
 				auto results = QueryDatabase(rquery);
 
@@ -1484,9 +1472,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"pvp_type,"
 				"autosplit_enabled,"
 				"zone_change_count,"
-				"drakkin_heritage,"
-				"drakkin_tattoo,"
-				"drakkin_details,"
 				"toxicity,"
 				"hunger_level,"
 				"thirst_level,"
@@ -1587,9 +1572,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"%u,"		// pvp_type					  
 				"%u,"		// autosplit_enabled				
 				"%u,"		// zone_change_count				
-				"%u,"		// drakkin_heritage			  
-				"%u,"		// drakkin_tattoo			  
-				"%u,"		// drakkin_details			  
 				"%i,"		// toxicity	 				  
 				"%u,"		// hunger_level				  
 				"%u,"		// thirst_level				  
@@ -1689,9 +1671,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				pp->pvptype,
 				pp->autosplit,
 				pp->zone_change_count,
-				pp->drakkin_heritage,
-				pp->drakkin_tattoo,
-				pp->drakkin_details,
 				pp->toxicity,
 				pp->hunger_level,
 				pp->thirst_level,
@@ -1971,9 +1950,6 @@ bool Database::CheckDatabaseConvertCorpseDeblob(){
 			" ADD COLUMN `hair_style`            int(11) UNSIGNED NULL DEFAULT 0,											\n"
 			" ADD COLUMN `face`                  int(11) UNSIGNED NULL DEFAULT 0,											\n"
 			" ADD COLUMN `beard`                 int(11) UNSIGNED NULL DEFAULT 0,											\n"
-			" ADD COLUMN `drakkin_heritage`      int(11) UNSIGNED NULL DEFAULT 0,											\n"
-			" ADD COLUMN `drakkin_tattoo`        int(11) UNSIGNED NULL DEFAULT 0,											\n"
-			" ADD COLUMN `drakkin_details`       int(11) UNSIGNED NULL DEFAULT 0,											\n"
 			" ADD COLUMN `wc_1`       		   int(11) UNSIGNED NULL DEFAULT 0,												\n"
 			" ADD COLUMN `wc_2`       		   int(11) UNSIGNED NULL DEFAULT 0,												\n"
 			" ADD COLUMN `wc_3`       		   int(11) UNSIGNED NULL DEFAULT 0,												\n"
@@ -2039,220 +2015,109 @@ bool Database::CheckDatabaseConvertCorpseDeblob(){
 				}
 				std::cout << "Converting Corpse: [OK] [" << c_type << "]: " << "ID: " << atoi(row2[0]) << std::endl;
 
-				if (is_sof){
-					scquery = StringFormat("UPDATE `character_corpses` SET \n"
-						"`is_locked` =          %d,\n"
-						"`exp` =                 %u,\n"
-						"`size` =               %f,\n"
-						"`level` =              %u,\n"
-						"`race` =               %u,\n"
-						"`gender` =             %u,\n"
-						"`class` =              %u,\n"
-						"`deity` =              %u,\n"
-						"`texture` =            %u,\n"
-						"`helm_texture` =       %u,\n"
-						"`copper` =             %u,\n"
-						"`silver` =             %u,\n"
-						"`gold` =               %u,\n"
-						"`platinum` =           %u,\n"
-						"`hair_color`  =        %u,\n"
-						"`beard_color` =        %u,\n"
-						"`eye_color_1` =        %u,\n"
-						"`eye_color_2` =        %u,\n"
-						"`hair_style`  =        %u,\n"
-						"`face` =               %u,\n"
-						"`beard` =              %u,\n"
-						"`drakkin_heritage` =    %u,\n"
-						"`drakkin_tattoo`  =    %u,\n"
-						"`drakkin_details` =    %u,\n"
-						"`wc_1` =               %u,\n"
-						"`wc_2` =               %u,\n"
-						"`wc_3` =               %u,\n"
-						"`wc_4` =               %u,\n"
-						"`wc_5` =               %u,\n"
-						"`wc_6` =               %u,\n"
-						"`wc_7` =               %u,\n"
-						"`wc_8` =               %u,\n"
-						"`wc_9`	=                %u \n"
-						"WHERE `id` = %u		   \n",
-						dbpc->locked,
-						dbpc->exp,
-						dbpc->size,
-						dbpc->level,
-						dbpc->race,
-						dbpc->gender,
-						dbpc->class_,
-						dbpc->deity,
-						dbpc->texture,
-						dbpc->helmtexture,
-						dbpc->copper,
-						dbpc->silver,
-						dbpc->gold,
-						dbpc->plat,
-						dbpc->haircolor,
-						dbpc->beardcolor,
-						dbpc->eyecolor1,
-						dbpc->eyecolor2,
-						dbpc->hairstyle,
-						dbpc->face,
-						dbpc->beard,
-						dbpc->drakkin_heritage,
-						dbpc->drakkin_tattoo,
-						dbpc->drakkin_details,
-						dbpc->item_tint[0].color,
-						dbpc->item_tint[1].color,
-						dbpc->item_tint[2].color,
-						dbpc->item_tint[3].color,
-						dbpc->item_tint[4].color,
-						dbpc->item_tint[5].color,
-						dbpc->item_tint[6].color,
-						dbpc->item_tint[7].color,
-						dbpc->item_tint[8].color,
-						atoi(row2[0])
+				/* Classic Converter */
+				scquery = StringFormat("UPDATE `character_corpses` SET \n"
+					"`is_locked` =          %d,\n"
+					"`exp` =                 %u,\n"
+					"`size` =               %f,\n"
+					"`level` =              %u,\n"
+					"`race` =               %u,\n"
+					"`gender` =             %u,\n"
+					"`class` =              %u,\n"
+					"`deity` =              %u,\n"
+					"`texture` =            %u,\n"
+					"`helm_texture` =       %u,\n"
+					"`copper` =             %u,\n"
+					"`silver` =             %u,\n"
+					"`gold` =               %u,\n"
+					"`platinum` =           %u,\n"
+					"`hair_color`  =        %u,\n"
+					"`beard_color` =        %u,\n"
+					"`eye_color_1` =        %u,\n"
+					"`eye_color_2` =        %u,\n"
+					"`hair_style`  =        %u,\n"
+					"`face` =               %u,\n"
+					"`beard` =              %u,\n"
+					"`wc_1` =               %u,\n"
+					"`wc_2` =               %u,\n"
+					"`wc_3` =               %u,\n"
+					"`wc_4` =               %u,\n"
+					"`wc_5` =               %u,\n"
+					"`wc_6` =               %u,\n"
+					"`wc_7` =               %u,\n"
+					"`wc_8` =               %u,\n"
+					"`wc_9`	=                %u \n"
+					"WHERE `id` = %u		   \n",
+					dbpc_c->locked,
+					dbpc_c->exp,
+					dbpc_c->size,
+					dbpc_c->level,
+					dbpc_c->race,
+					dbpc_c->gender,
+					dbpc_c->class_,
+					dbpc_c->deity,
+					dbpc_c->texture,
+					dbpc_c->helmtexture,
+					dbpc_c->copper,
+					dbpc_c->silver,
+					dbpc_c->gold,
+					dbpc_c->plat,
+					dbpc_c->haircolor,
+					dbpc_c->beardcolor,
+					dbpc_c->eyecolor1,
+					dbpc_c->eyecolor2,
+					dbpc_c->hairstyle,
+					dbpc_c->face,
+					dbpc_c->beard,
+					dbpc_c->item_tint[0].color,
+					dbpc_c->item_tint[1].color,
+					dbpc_c->item_tint[2].color,
+					dbpc_c->item_tint[3].color,
+					dbpc_c->item_tint[4].color,
+					dbpc_c->item_tint[5].color,
+					dbpc_c->item_tint[6].color,
+					dbpc_c->item_tint[7].color,
+					dbpc_c->item_tint[8].color,
+					atoi(row2[0])
+					);
+				if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
+
+				first_entry = 0;
+				scquery = "";
+
+				/* Print Items */
+				for (unsigned int i = 0; i < dbpc_c->itemcount; i++) {
+					if (first_entry != 1){
+						scquery = StringFormat("REPLACE INTO `character_corpse_items` \n"
+							" (corpse_id, equip_slot, item_id, charges, aug_1, aug_2, aug_3, aug_4, aug_5, attuned) \n"
+							" VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
+							atoi(row2[0]),
+							dbpc_c->items[i].equipSlot,
+							dbpc_c->items[i].item_id,
+							dbpc_c->items[i].charges,
+							dbpc_c->items[i].aug1,
+							dbpc_c->items[i].aug2,
+							dbpc_c->items[i].aug3,
+							dbpc_c->items[i].aug4,
+							dbpc_c->items[i].aug5
 						);
-					if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
-
-					first_entry = 0;
-					scquery = "";
-					/* Print Items */
-					for (unsigned int i = 0; i < dbpc->itemcount; i++) {
-						if (first_entry != 1){
-							scquery = StringFormat("REPLACE INTO `character_corpse_items` \n"
-								" (corpse_id, equip_slot, item_id, charges, aug_1, aug_2, aug_3, aug_4, aug_5, attuned) \n"
-								" VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
-								atoi(row2[0]),
-								dbpc->items[i].equipSlot,
-								dbpc->items[i].item_id,
-								dbpc->items[i].charges,
-								dbpc->items[i].aug1,
-								dbpc->items[i].aug2,
-								dbpc->items[i].aug3,
-								dbpc->items[i].aug4,
-								dbpc->items[i].aug5
-								);
-							first_entry = 1;
-						}
-						else{
-							scquery = scquery + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
-								atoi(row2[0]),
-								dbpc->items[i].equipSlot,
-								dbpc->items[i].item_id,
-								dbpc->items[i].charges,
-								dbpc->items[i].aug1,
-								dbpc->items[i].aug2,
-								dbpc->items[i].aug3,
-								dbpc->items[i].aug4,
-								dbpc->items[i].aug5
-								);
-						}
+						first_entry = 1;
 					}
-					if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
-				}
-				else{
-					/* Classic Converter */
-					scquery = StringFormat("UPDATE `character_corpses` SET \n"
-						"`is_locked` =          %d,\n"
-						"`exp` =                 %u,\n"
-						"`size` =               %f,\n"
-						"`level` =              %u,\n"
-						"`race` =               %u,\n"
-						"`gender` =             %u,\n"
-						"`class` =              %u,\n"
-						"`deity` =              %u,\n"
-						"`texture` =            %u,\n"
-						"`helm_texture` =       %u,\n"
-						"`copper` =             %u,\n"
-						"`silver` =             %u,\n"
-						"`gold` =               %u,\n"
-						"`platinum` =           %u,\n"
-						"`hair_color`  =        %u,\n"
-						"`beard_color` =        %u,\n"
-						"`eye_color_1` =        %u,\n"
-						"`eye_color_2` =        %u,\n"
-						"`hair_style`  =        %u,\n"
-						"`face` =               %u,\n"
-						"`beard` =              %u,\n"
-						"`wc_1` =               %u,\n"
-						"`wc_2` =               %u,\n"
-						"`wc_3` =               %u,\n"
-						"`wc_4` =               %u,\n"
-						"`wc_5` =               %u,\n"
-						"`wc_6` =               %u,\n"
-						"`wc_7` =               %u,\n"
-						"`wc_8` =               %u,\n"
-						"`wc_9`	=                %u \n"
-						"WHERE `id` = %u		   \n",
-						dbpc_c->locked,
-						dbpc_c->exp,
-						dbpc_c->size,
-						dbpc_c->level,
-						dbpc_c->race,
-						dbpc_c->gender,
-						dbpc_c->class_,
-						dbpc_c->deity,
-						dbpc_c->texture,
-						dbpc_c->helmtexture,
-						dbpc_c->copper,
-						dbpc_c->silver,
-						dbpc_c->gold,
-						dbpc_c->plat,
-						dbpc_c->haircolor,
-						dbpc_c->beardcolor,
-						dbpc_c->eyecolor1,
-						dbpc_c->eyecolor2,
-						dbpc_c->hairstyle,
-						dbpc_c->face,
-						dbpc_c->beard,
-						dbpc_c->item_tint[0].color,
-						dbpc_c->item_tint[1].color,
-						dbpc_c->item_tint[2].color,
-						dbpc_c->item_tint[3].color,
-						dbpc_c->item_tint[4].color,
-						dbpc_c->item_tint[5].color,
-						dbpc_c->item_tint[6].color,
-						dbpc_c->item_tint[7].color,
-						dbpc_c->item_tint[8].color,
-						atoi(row2[0])
-						);
-					if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
-
-					first_entry = 0;
-					scquery = "";
-
-					/* Print Items */
-					for (unsigned int i = 0; i < dbpc_c->itemcount; i++) {
-						if (first_entry != 1){
-							scquery = StringFormat("REPLACE INTO `character_corpse_items` \n"
-								" (corpse_id, equip_slot, item_id, charges, aug_1, aug_2, aug_3, aug_4, aug_5, attuned) \n"
-								" VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
-								atoi(row2[0]),
-								dbpc_c->items[i].equipSlot,
-								dbpc_c->items[i].item_id,
-								dbpc_c->items[i].charges,
-								dbpc_c->items[i].aug1,
-								dbpc_c->items[i].aug2,
-								dbpc_c->items[i].aug3,
-								dbpc_c->items[i].aug4,
-								dbpc_c->items[i].aug5
-								);
-							first_entry = 1;
-						}
-						else{
-							scquery = scquery + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
-								atoi(row2[0]),
-								dbpc_c->items[i].equipSlot,
-								dbpc_c->items[i].item_id,
-								dbpc_c->items[i].charges,
-								dbpc_c->items[i].aug1,
-								dbpc_c->items[i].aug2,
-								dbpc_c->items[i].aug3,
-								dbpc_c->items[i].aug4,
-								dbpc_c->items[i].aug5
-								);
-						}
+					else{
+						scquery = scquery + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
+							atoi(row2[0]),
+							dbpc_c->items[i].equipSlot,
+							dbpc_c->items[i].item_id,
+							dbpc_c->items[i].charges,
+							dbpc_c->items[i].aug1,
+							dbpc_c->items[i].aug2,
+							dbpc_c->items[i].aug3,
+							dbpc_c->items[i].aug4,
+							dbpc_c->items[i].aug5
+							);
 					}
-					if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
 				}
+				if (scquery != ""){ auto sc_results = QueryDatabase(scquery); }
 			}
 		}
 		QueryDatabase(StringFormat("ALTER TABLE `character_corpses` DROP COLUMN `data`"));
