@@ -1064,10 +1064,10 @@ namespace Mac {
 			delete in;
 			return;
 		}
-		if(itemcount > 80)
-			itemcount = 80;
+		if(itemcount > 79)
+			itemcount = 79;
 
-		int pisize = sizeof(structs::MerchantItems_Struct) + (80 * sizeof(structs::MerchantItemsPacket_Struct));
+		int pisize = sizeof(structs::MerchantItems_Struct) + (79 * sizeof(structs::MerchantItemsPacket_Struct));
 		structs::MerchantItems_Struct* pi = (structs::MerchantItems_Struct*) new uchar[pisize];
 		memset(pi, 0, pisize);
 

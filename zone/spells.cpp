@@ -3577,15 +3577,31 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	// resist check - every spell can be resisted, beneficial or not
-	// add: ok this isn't true, eqlive's spell data is fucked up, buffs are
-	// not all unresistable, so changing this to only check certain spells
 	if(IsResistableSpell(spell_id))
 	{
 		if (IsCharmSpell(spell_id) || IsMezSpell(spell_id) || IsFearSpell(spell_id))
 			spell_effectiveness = spelltar->ResistSpell(spells[spell_id].resisttype, spell_id, this, use_resist_adjust, resist_adjust,true);
 		else
 			spell_effectiveness = spelltar->ResistSpell(spells[spell_id].resisttype, spell_id, this, use_resist_adjust, resist_adjust);
+
+		if(spell_effectiveness != 0 && spells[spell_id].resisttype != RESIST_NONE)
+		{
+			// On AK, charm and pacify were near impossible to land on a yellow or red.
+			if(IsCharmSpell(spell_id) || IsPacifySpell(spell_id))
+			{
+				uint8 con = GetLevelCon(spelltar->GetLevel());
+				if(con == CON_RED || con == CON_YELLOW)
+				{
+					uint8 roll = con-10;
+					if(!zone->random.Roll(roll))
+					{
+						mlog(SPELLS__RESISTS, "Charm/Pacify Spell %d was resisted due to con by %s. Con is: %i Roll is: %i Spell Effectiveness was: %0.2f", spell_id, spelltar->GetName(), con, roll, spell_effectiveness);
+						spell_effectiveness = 0;
+					}
+
+				}
+			}
+		}
 
 		if(spell_effectiveness < 100)
 		{

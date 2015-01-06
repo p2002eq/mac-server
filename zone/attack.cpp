@@ -1490,49 +1490,9 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	/*
 		#3: exp loss and corpse generation
 	*/
+	if(IsClient())
+		CastToClient()->GetExpLoss(killerMob, spell, exploss);
 
-	// figure out if they should lose exp
-	if(RuleB(Character, UseDeathExpLossMult)){
-		float GetNum [] = {0.005f,0.015f,0.025f,0.035f,0.045f,0.055f,0.065f,0.075f,0.085f,0.095f,0.110f };
-		int Num = RuleI(Character, DeathExpLossMultiplier);
-		if((Num < 0) || (Num > 10))
-			Num = 3;
-		float loss = GetNum[Num];
-		exploss=(int)((float)GetEXP() * (loss)); //loose % of total XP pending rule (choose 0-10)
-	}
-
-	if(!RuleB(Character, UseDeathExpLossMult)){
-		exploss = (int)(GetLevel() * (GetLevel() / 18.0) * 12000);
-	}
-
-	if( (GetLevel() < RuleI(Character, DeathExpLossLevel)) || (GetLevel() > RuleI(Character, DeathExpLossMaxLevel)) || IsBecomeNPC() )
-	{
-		exploss = 0;
-	}
-	else if( killerMob )
-	{
-		if( killerMob->IsClient() )
-		{
-			exploss = 0;
-		}
-		else if( killerMob->GetOwner() && killerMob->GetOwner()->IsClient() )
-		{
-			exploss = 0;
-		}
-	}
-
-	if(spell != SPELL_UNKNOWN)
-	{
-		uint32 buff_count = GetMaxTotalSlots();
-		for(uint16 buffIt = 0; buffIt < buff_count; buffIt++)
-		{
-			if(buffs[buffIt].spellid == spell && buffs[buffIt].client)
-			{
-				exploss = 0;	// no exp loss for pvp dot
-				break;
-			}
-		}
-	}
 	SetMana(GetMaxMana());
 
 	bool LeftCorpse = false;

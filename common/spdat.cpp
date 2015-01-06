@@ -200,8 +200,12 @@ bool IsHasteSpell(uint16 spell_id)
 
 bool IsHarmonySpell(uint16 spell_id)
 {
-	// IsEffectInSpell(spell_id, SE_Lull) - Lull is not calculated anywhere atm
 	return (IsEffectInSpell(spell_id, SE_Harmony) || IsEffectInSpell(spell_id, SE_ChangeFrenzyRad));
+}
+
+bool IsPacifySpell(uint16 spell_id)
+{
+	return IsEffectInSpell(spell_id, SE_ChangeFrenzyRad);
 }
 
 bool IsPercentalHealSpell(uint16 spell_id)

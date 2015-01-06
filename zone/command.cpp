@@ -3938,13 +3938,41 @@ void command_setxp(Client *c, const Seperator *sep){
 		t = c->GetTarget()->CastToClient();
 
 	if (sep->IsNumber(1)) {
-		if (atoi(sep->arg[1]) > 9999999)
+		int exploss;
+		t->GetExpLoss(nullptr,0,exploss);
+		uint32 currentXP = t->GetEXP();
+		int input = atoi(sep->arg[1]);
+
+		if (input > 9999999)
 			c->Message(0, "Error: Value too high.");
+		else if(input == -1)
+		{
+			uint32 newxp = currentXP - exploss;
+			if(newxp < 1000)
+				newxp = 1000;
+			t->SetEXP(newxp, 0);
+		}
+		else if(input == 0)
+		{
+			uint32 newxp = currentXP + exploss;
+			t->SetEXP(newxp, 0);
+		}
+		else if(input <= 100)
+		{
+			float percent = input/100.0f;
+			uint32 requiredxp = t->GetEXPForLevel(t->GetLevel()+1) - t->GetEXPForLevel(t->GetLevel());
+			float final_ = requiredxp*percent;
+			uint32 newxp = (uint32)final_ + currentXP;
+			t->SetEXP(newxp, 0);
+		}
 		else
-			t->AddEXP(atoi(sep->arg[1]));
+		{
+			uint32 newxp = currentXP + input;
+			t->SetEXP(newxp, 0);
+		}
 	}
 	else
-		c->Message(0, "Usage: #setxp number");
+		c->Message(0, "Usage: #setxp number or percentage. If 0, will 'rez' a single death. If -1 will subtract a single death.");
 }
 
 void command_name(Client *c, const Seperator *sep){
