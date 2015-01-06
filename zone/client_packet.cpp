@@ -5052,6 +5052,7 @@ void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app)
 	p_timers.Start(pTimerInstillDoubt, InstillDoubtReuseTime - 1);
 
 	InstillDoubt(GetTarget());
+	CheckIncreaseSkill(SkillIntimidation, GetTarget(), 10);
 	return;
 }
 
@@ -5251,7 +5252,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 {
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
-	if (!HasSkill(SkillMend))
+	if (GetClass() != MONK)
 		return;
 
 	if (!p_timers.Expired(&database, pTimerMend, false)) {

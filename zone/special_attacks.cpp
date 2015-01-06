@@ -1927,10 +1927,6 @@ void Mob::InstillDoubt(Mob *who) {
 	if(!CombatRange(who))
 		return;
 
-	if(IsClient()) {
-		CastToClient()->CheckIncreaseSkill(SkillIntimidation, who, 10);
-	}
-
 	//I think this formula needs work
 	int value = 0;
 

@@ -747,13 +747,13 @@ float Mob::SetRunAnimation(float speed)
 	{
 		if(speed == GetRunspeed())
 		{
-			SetRunning(true);
+			SetCurrentlyRunning(true);
 			newspeed = speed * RuleR(NPC, SpeedMultiplier);
 			pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
 		}
 		else
 		{
-			SetRunning(false);
+			SetCurrentlyRunning(false);
 			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
 			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
 		}

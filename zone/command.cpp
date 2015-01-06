@@ -2932,12 +2932,16 @@ void command_reloadqst(Client *c, const Seperator *sep){
 }
 
 void command_reloadworld(Client *c, const Seperator *sep){
-	c->Message(0, "Reloading quest cache, reloading rules, and repopping zones worldwide.");
+	//c->Message(0, "Reloading quest cache, reloading rules, and repopping zones worldwide.");
 	ServerPacket* pack = new ServerPacket(ServerOP_ReloadWorld, sizeof(ReloadWorld_Struct));
 	ReloadWorld_Struct* RW = (ReloadWorld_Struct*) pack->pBuffer;
-	RW->Option = ((atoi(sep->arg[1]) == 1) ? 1 : 0);
+	RW->Option = 0; //Keep it, maybe we'll use it in the future.
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
+	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, and repopping zones worldwide."))
+		c->Message(0, "Error: World server disconnected");
+
+	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, and repopping zones worldwide.");
 }
 
 void command_reloadlevelmods(Client *c, const Seperator *sep){

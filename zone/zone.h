@@ -212,6 +212,7 @@ public:
 	bool	IsBoatZone();
 	bool	IsDesertZone();
 	bool	IsBindArea(float x_coord, float y_coord);
+	bool	SkipLoS() const { return(skip_los); }
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 
 	time_t	weather_timer;
@@ -276,6 +277,7 @@ private:
 	bool	can_castoutdoor;
 	bool	can_levitate;
 	bool	is_hotzone;
+	bool	skip_los; // Zone does not do a LOS spell check.
 	uint8	zone_type;
 	uint32	pgraveyard_id, pgraveyard_zoneid;
 	float	pgraveyard_x, pgraveyard_y, pgraveyard_z, pgraveyard_heading;
