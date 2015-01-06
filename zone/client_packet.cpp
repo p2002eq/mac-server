@@ -4962,7 +4962,11 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 	sa_out->spawn_id = GetID();
 	sa_out->type = AT_Invis;
 	sa_out->parameter = hidden;
-	entity_list.QueueClients(this, outapp);
+
+	if(!hidden && GetClass() != ROGUE)
+		entity_list.QueueClients(this, outapp, true);
+	else
+		entity_list.QueueClients(this, outapp);
 	safe_delete(outapp);
 
 	return;
