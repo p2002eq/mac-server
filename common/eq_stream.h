@@ -489,6 +489,7 @@ class EQOldStream : public EQStreamInterface {
 	private:
 		bool ProcessPacket(EQOldPacket* pack, bool from_buffer=false);
 		void CheckBufferedPackets();
+		EQRawApplicationPacket *MakeApplicationPacket(EQOldPacket *p);
 
 		FragmentGroupList fragment_group_list;
 		std::vector<EQOldPacket *> buffered_packets; // Buffer of incoming packets

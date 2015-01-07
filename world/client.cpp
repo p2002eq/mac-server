@@ -719,6 +719,9 @@ void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
 		return;
 
+	if(!cle)
+		return;
+
 	ZoneServer* zs = nullptr;
 	if(instanceID > 0)
 	{

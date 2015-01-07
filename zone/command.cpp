@@ -10288,7 +10288,7 @@ void command_questupdate(Client *c, const Seperator *sep){
 }
 
 void command_coredump(Client *c, const Seperator *sep){
-	system("dump");
+	system("./dump");
 }
 
 void command_enablerecipe(Client *c, const Seperator *sep){

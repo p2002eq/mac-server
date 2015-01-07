@@ -125,7 +125,17 @@ namespace Mac {
 
 	DECODE(OP_EnterWorld) 
 	{
-		SETUP_DIRECT_DECODE(EnterWorld_Struct, structs::EnterWorld_Struct);
+		unsigned char *__eq_buffer = __packet->pBuffer;
+		if(!__eq_buffer)
+		{
+			__packet->SetOpcode(OP_Unknown);
+			return;
+		}
+
+		__packet->size = sizeof(structs::EnterWorld_Struct);
+		__packet->pBuffer = new unsigned char[__packet->size]; 
+		EnterWorld_Struct *emu = (EnterWorld_Struct*) __packet->pBuffer;
+		structs::EnterWorld_Struct *eq = (structs::EnterWorld_Struct *) __eq_buffer;
 		strn0cpy(emu->name, eq->charname, 64);
 		FINISH_DIRECT_DECODE();
 	}
@@ -1959,10 +1969,7 @@ namespace Mac {
   		{ 
   			mac_pop_item->Charges = 1;
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			if(item->NoDrop == 0)
-				mac_pop_item->Price = 0; 
-			else
-				mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
 			mac_pop_item->SellRate = 1;
 		}
   

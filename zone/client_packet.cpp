@@ -3168,7 +3168,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 void Client::Handle_OP_DeleteSpawn(const EQApplicationPacket *app)
 {
 	// The client will send this with his id when he zones, maybe when he disconnects too?
-	eqs->RemoveData(); // Flushing the queue of packet data to allow for proper zoning
+	//eqs->RemoveData(); // Flushing the queue of packet data to allow for proper zoning
 	hate_list.RemoveEnt(this->CastToMob());
 	Disconnect();
 	return;
