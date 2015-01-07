@@ -347,22 +347,6 @@ namespace Convert {
 		/*7048*/	uint32							entityid;
 		/*7052*/	uint32							leadAAActive;
 		/*7056*/	uint32							unknown7092;
-		/*7060*/	int32							ldon_points_guk;	//client uses these as signed
-		/*7064*/	int32							ldon_points_mir;
-		/*7068*/	int32							ldon_points_mmc;
-		/*7072*/	int32							ldon_points_ruj;
-		/*7076*/	int32							ldon_points_tak;
-		/*7080*/	int32							ldon_points_available;
-		/*7084*/	int32							ldon_wins_guk;
-		/*7088*/	int32							ldon_wins_mir;
-		/*7092*/	int32							ldon_wins_mmc;
-		/*7096*/	int32							ldon_wins_ruj;
-		/*7100*/	int32							ldon_wins_tak;
-		/*7104*/	int32							ldon_losses_guk;
-		/*7108*/	int32							ldon_losses_mir;
-		/*7112*/	int32							ldon_losses_mmc;
-		/*7116*/	int32							ldon_losses_ruj;
-		/*7120*/	int32							ldon_losses_tak;
 		/*7124*/	uint8							unknown7160[72];
 		/*7196*/	uint32							tribute_time_remaining;	//in miliseconds
 		/*7200*/	uint32							showhelm;

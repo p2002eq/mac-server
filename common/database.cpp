@@ -350,7 +350,6 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `inventory` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `adventure_stats` WHERE `player_id` ='%d'", charid); results = QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); results = QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);		  
@@ -439,12 +438,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"zone_id,"
 		"zone_instance,"
 		"leadership_exp_on,"
-		"ldon_points_guk,"
-		"ldon_points_mir,"
-		"ldon_points_mmc,"
-		"ldon_points_ruj,"
-		"ldon_points_tak,"
-		"ldon_points_available,"
 		"tribute_time_remaining,"
 		"show_helm,"
 		"career_tribute_points,"
@@ -530,12 +523,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // zone_id				
 		"%u,"  // zone_instance			
 		"%u,"  // leadership_exp_on		
-		"%u,"  // ldon_points_guk		
-		"%u,"  // ldon_points_mir		
-		"%u,"  // ldon_points_mmc		
-		"%u,"  // ldon_points_ruj		
-		"%u,"  // ldon_points_tak		
-		"%u,"  // ldon_points_available	
 		"%u,"  // tribute_time_remaining
 		"%u,"  // show_helm				
 		"%u,"  // career_tribute_points	
@@ -621,12 +608,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->ldon_points_guk,			  // " ldon_points_guk,           "
-		pp->ldon_points_mir,			  // " ldon_points_mir,           "
-		pp->ldon_points_mmc,			  // " ldon_points_mmc,           "
-		pp->ldon_points_ruj,			  // " ldon_points_ruj,           "
-		pp->ldon_points_tak,			  // " ldon_points_tak,           "
-		pp->ldon_points_available,		  // " ldon_points_available,     "
 		pp->tribute_time_remaining,		  // " tribute_time_remaining,    "
 		pp->showhelm,					  // " show_helm,                 "
 		pp->career_tribute_points,		  // " career_tribute_points,     "
@@ -1024,12 +1005,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"`hunger_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`thirst_level` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
 				"`ability_up` int(11) UNSIGNED NOT NULL DEFAULT 0,					"
-				"`ldon_points_guk` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_mir` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_mmc` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_ruj` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_tak` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
-				"`ldon_points_available` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`tribute_time_remaining` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`career_tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,		"
 				"`tribute_points` int(11) UNSIGNED NOT NULL DEFAULT 0,				"
@@ -1479,12 +1454,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"zone_id,"
 				"zone_instance,"
 				"leadership_exp_on,"
-				"ldon_points_guk,"
-				"ldon_points_mir,"
-				"ldon_points_mmc,"
-				"ldon_points_ruj,"
-				"ldon_points_tak,"
-				"ldon_points_available,"
 				"tribute_time_remaining,"
 				"show_helm,"
 				"career_tribute_points,"
@@ -1579,12 +1548,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				"%u,"		// zone_id					  
 				"%u,"		// zone_instance					
 				"%u,"		// leadership_exp_on				
-				"%u,"		// ldon_points_guk			  
-				"%u,"		// ldon_points_mir			  
-				"%u,"		// ldon_points_mmc			  
-				"%u,"		// ldon_points_ruj			  
-				"%u,"		// ldon_points_tak			  
-				"%u,"		// ldon_points_available			
 				"%u,"		// tribute_time_remaining	  
 				"%u,"		// show_helm						
 				"%u,"		// career_tribute_points			
@@ -1678,12 +1641,6 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				pp->zone_id,
 				pp->zoneInstance,
 				pp->leadAAActive == 0 ? 0 : 1,
-				pp->ldon_points_guk,
-				pp->ldon_points_mir,
-				pp->ldon_points_mmc,
-				pp->ldon_points_ruj,
-				pp->ldon_points_tak,
-				pp->ldon_points_available,
 				pp->tribute_time_remaining,
 				pp->showhelm,
 				pp->career_tribute_points,

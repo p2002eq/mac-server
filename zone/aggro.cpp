@@ -606,14 +606,6 @@ bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack, int16 spellid)
 		}
 	}
 
-	if(!isSpellAttack)
-	{
-		if(GetClass() == LDON_TREASURE)
-		{
-			return false;
-		}
-	}
-
 	// solar: the format here is a matrix of mob type vs mob type.
 	// redundant ones are omitted and the reverse is tried if it falls through.
 

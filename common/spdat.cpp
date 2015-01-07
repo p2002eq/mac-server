@@ -876,16 +876,6 @@ DmgShieldType GetDamageShieldType(uint16 spell_id, int32 DSType)
 	return DS_THORNS;
 }
 
-bool IsLDoNObjectSpell(uint16 spell_id)
-{
-	if (IsEffectInSpell(spell_id, SE_AppraiseLDonChest) ||
-			IsEffectInSpell(spell_id, SE_DisarmLDoNTrap) ||
-			IsEffectInSpell(spell_id, SE_UnlockLDoNChest))
-		return true;
-
-	return false;
-}
-
 int32 GetSpellResistType(uint16 spell_id)
 {
 	return spells[spell_id].resisttype;
