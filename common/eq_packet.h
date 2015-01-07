@@ -145,22 +145,7 @@ public:
 public:
 	void  DecodePacket(uint16 length, uchar *pPacket);
 	uint32 ReturnPacket(uchar** data, EQOldStream* netcon);
-
-	void AddAdditional(int size, uchar *pAdd) 
-	{   
-		// if pExtra exsists, delete it
-		if(!this->pExtra)
-		{
-			safe_delete_array(this->pExtra);//delete[] this->pExtra;
-		}
-
-		// create a new instance
-		this->pExtra = new uchar[size];
-
-		// copy the size of pAdd to pExtra
-		memcpy( (void*)this->pExtra, (void*) pAdd, size);
-	}       
-
+	EQRawApplicationPacket *MakeAppPacket() const;
 	void Clear(void) 
 	{  
 		*((uint16*)&HDR)		   = 0;

@@ -1865,7 +1865,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			_log(NET__NET_TRACE, _L "Received expected OP_SessionDisconnect. Moving to closed state." __L);
 			SetState(CLOSED);
 		}
-		return false;
+		return true;
 	}
 	/************ END CHECK THREAD TERMINATION ************/
 
@@ -1901,9 +1901,18 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			uchar* buf = 0;
 			uint32 sizep = 0;
 			buf = fragment_group->AssembleData(&sizep);
+
+			//Why does the client sometimes send fragments with 0-size packets, and why do they get completed?
+			//This should help prevent a crash.
+			if(sizep == 0 || !buf || fragment_group->GetOpcode() == 0)
+			{
+				safe_delete_array(buf);
+				return true;
+			}
+
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
-			OutQueue.push_back(app);
 			safe_delete_array(buf);
+			OutQueue.push_back(app);
 			return true;
 		}
 		else
@@ -1914,10 +1923,19 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	/************ ELSE - NO FRAGMENT ************/
 	else 
 	{
-		EQRawApplicationPacket *app = new EQRawApplicationPacket(pack->dwOpCode ,pack->pExtra, pack->dwExtraSize);   
+
+		//seems to be happening, hardening this crap
+		if(!pack || pack && !pack->pExtra && pack->dwExtraSize > 0 || pack->dwOpCode == 0)
+		{
+			return true;
+		}
+
+
+		EQRawApplicationPacket *app=MakeApplicationPacket(pack);
 		if(app->GetRawOpcode() != 62272 && (app->GetRawOpcode() != 0 || app->Size() > 2)) //ClientUpdate
 			_log(NET__DEBUG, "Received old opcode - 0x%x size: %i", app->GetRawOpcode(), app->Size());
-		OutQueue.push_back(app);
+		if(app)
+			OutQueue.push_back(app);
 		return true;
 	}
 	/************ END FRAGMENT CHECK ************/
@@ -1936,8 +1954,11 @@ void EQOldStream::CheckBufferedPackets()
 		// Check if we have a packet we want already buffered
 		if ((*iterator)->dwARQ - dwLastCACK == 1)
 		{
-			ProcessPacket((*iterator), true);
-			iterator = buffered_packets.erase(iterator);
+			if(ProcessPacket((*iterator), true))
+			{
+				safe_delete(*iterator);
+				iterator = buffered_packets.erase(iterator);
+			}
 		}
 		else
 		{
@@ -2483,4 +2504,12 @@ void EQOldStream::ClearOldPackets()
 		(*it)->dwLoopedOnce++;
 		it++;
 	}
+}
+
+EQRawApplicationPacket *EQOldStream::MakeApplicationPacket(EQOldPacket *p)
+{
+	EQRawApplicationPacket *ap=nullptr;
+	_log(NET__APP_CREATE, _L "Creating old application packet, length %d" __L, p->dwExtraSize);
+	ap = p->MakeAppPacket();
+	return ap;
 }

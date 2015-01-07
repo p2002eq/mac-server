@@ -829,3 +829,16 @@ uint32 EQOldPacket::ReturnPacket(uchar** data, EQOldStream* netcon) {
 	netcon->sent_Start = true;
 	return o;
 }
+
+
+EQRawApplicationPacket *EQOldPacket::MakeAppPacket() const {
+
+
+	if(pExtra == 0 && dwExtraSize > 0)
+	{
+		return nullptr;
+	}
+
+	EQRawApplicationPacket *res = new EQRawApplicationPacket(dwOpCode, pExtra, dwExtraSize);
+	return(res);
+}
