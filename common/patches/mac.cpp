@@ -1959,10 +1959,7 @@ namespace Mac {
   		{ 
   			mac_pop_item->Charges = 1;
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			if(item->NoDrop == 0)
-				mac_pop_item->Price = 0; 
-			else
-				mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
 			mac_pop_item->SellRate = 1;
 		}
   
