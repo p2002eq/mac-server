@@ -8,7 +8,7 @@
 #DATE=$(date +%H:%M.%S_%h_%d_%Y)
 DATE=$(date +%h_%d_%Y_%H:%M.%S)
 
-#Binary image
+#Binary images
 zoneimg=/cores/zone
 worldimg=/cores/world
 
@@ -16,11 +16,15 @@ worldimg=/cores/world
 
 ###### ZONES #####
 
-mv core.zone.*.*.* corezone
-corezone=/cores/corezone
+count=$(ls /cores/core.zone.*.*.* 2>/dev/null| wc -l)
 
-if [ -f corezone ]; then
+while [ $count -gt 0 ]; do
 
+	var=(core.zone.*.*.*)
+	corezone=$var
+	echo $var
+	echo $corezone
+	
 	gdblogfile="$corezone-gdb-zone_${DATE}.log"
 	
 	gdb -batch-silent \
@@ -32,17 +36,24 @@ if [ -f corezone ]; then
 		"$zoneimg" \
 		"$corezone"
 		
-	rm corezone
+	mv $var-gdb* /cores/core_log
 
-fi
+	mv $corezone /cores/processed/$corezone
+	let count=count-1
+
+done
 
 ##### WORLD #####
 
-mv core.world.*.*.* coreworld
-coreworld=/cores/coreworld
+count=$(ls /cores/core.world.*.*.* 2>/dev/null| wc -l)
 
-if [ -f coreworld ]; then
+while [ $count -gt 0 ]; do
 
+	var=(core.world.*.*.*)
+	coreworld=$var
+	echo $var
+	echo $coreworld
+	
 	gdblogfile="$coreworld-gdb-world_${DATE}.log"
 	
 	gdb -batch-silent \
@@ -53,11 +64,10 @@ if [ -f coreworld ]; then
 		-ex quit \
 		"$worldimg" \
 		"$coreworld"
-	
-	rm coreworld
+		
+	mv $var-gdb* /cores/core_log
 
-fi
+	mv $coreworld /cores/processed/$coreworld
+	let count=count-1
 
-# rm /cores/core_log/*
-mv corezone-gdb* /cores/core_log
-mv coreworld-gdb* /cores/core_log
+done
