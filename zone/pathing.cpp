@@ -1,5 +1,6 @@
 #include "../common/debug.h"
 #include <string.h>
+#include "../common/string_util.h"
 #include <math.h>
 #include <list>
 #include <algorithm>
@@ -2097,7 +2098,15 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 			}
 		}
 	}
-	DumpPath(filename);
+	try
+	{
+		std::string newfile = StringFormat("./newmaps/%s.path", filename);
+		DumpPath(newfile);
+	}
+	catch (const std::exception& e)
+	{
+		DumpPath(filename);
+	}
 }
 
 void PathManager::ResortConnections()
