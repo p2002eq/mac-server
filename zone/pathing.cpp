@@ -2100,12 +2100,11 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 	}
 	try
 	{
-		std::string newfile = StringFormat("./newmaps/%s.path", filename);
+		std::string newfile = StringFormat("./newmaps/%s.path", filename.c_str());
 		DumpPath(newfile);
 	}
-	catch (const std::exception& e)
+	catch (std::exception &ex)
 	{
-		DumpPath(filename);
 	}
 }
 
