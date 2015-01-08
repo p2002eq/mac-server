@@ -3643,41 +3643,150 @@ int Mob::QGVarDuration(const char *fmt)
 	return duration;
 }
 
-void Mob::DoKnockback(Mob *caster, uint32 pushback, uint32 pushup)
+bool Mob::DoKnockback(Mob *caster, uint16 pushback, uint32 pushup)
 {
-	if(IsClient())
+	// This method should only be used for spell effects.
+
+	float new_x = GetX();
+	float new_y = GetY();
+	float new_z = GetZ() + pushup;
+
+	GetPushHeadingMod(caster, pushback, new_x, new_y);
+	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		CastToClient()->SetKnockBackExemption(true);
+		x_pos = new_x;
+		y_pos = new_y;
+		z_pos = new_z;
 
-		EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-		SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
+		if(IsNPC())
+		{
+			SendPosition();
+		}
+		else if(IsClient())
+		{
+			CastToClient()->SetKnockBackExemption(true);
 
-		double look_heading = caster->CalculateHeadingToTarget(GetX(), GetY());
-		look_heading /= 256;
-		look_heading *= 360;
-		if(look_heading > 360)
-			look_heading -= 360;
+			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
 
-		//x and y are crossed mkay
-		double new_x = pushback * sin(double(look_heading * 3.141592 / 180.0));
-		double new_y = pushback * cos(double(look_heading * 3.141592 / 180.0));
-
-		spu->spawn_id	= GetID();
-		spu->x_pos		= GetX();
-		spu->y_pos		= GetY();
-		spu->z_pos		= GetZ();
-		spu->delta_x	= static_cast<float>(new_x);
-		spu->delta_y	= static_cast<float>(new_y);
-		spu->delta_z	= static_cast<float>(pushup);
-		spu->heading	= GetHeading();
-		spu->spacer1	=0;
-		spu->spacer2	=0;
-		spu->anim_type = 0;
-		spu->delta_heading = NewFloatToEQ13(0);
-		outapp_push->priority = 6;
-		entity_list.QueueClients(this, outapp_push, true);
-		CastToClient()->FastQueuePacket(&outapp_push);
+			spu->spawn_id	= GetID();
+			spu->x_pos		= new_x;
+			spu->y_pos		= new_y;
+			spu->z_pos		= new_z;
+			spu->delta_x	= NewFloatToEQ13(0);
+			spu->delta_y	= NewFloatToEQ13(0);
+			spu->delta_z	= NewFloatToEQ13(0);
+			spu->heading	= GetHeading();
+			spu->spacer1	=0;
+			spu->spacer2	=0;
+			spu->anim_type = 0;
+			spu->delta_heading = NewFloatToEQ13(0);
+			outapp_push->priority = 6;
+			entity_list.QueueClients(this, outapp_push, true);
+			CastToClient()->FastQueuePacket(&outapp_push);
+		}
+		return true;
 	}
+	return false;
+}
+
+bool Mob::CombatPush(Mob* attacker, uint16 pushback)
+{
+	// Use this method for stun/combat pushback.
+
+	float new_x = GetX();
+	float new_y = GetY();
+
+	GetPushHeadingMod(attacker, pushback, new_x, new_y);
+	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, GetZ()))
+	{
+		x_pos = new_x;
+		y_pos = new_y;
+
+		if(IsNPC())
+		{
+			SendPosition();
+		}
+		else if(IsClient())
+		{
+			CastToClient()->SetKnockBackExemption(true);
+
+			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
+			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
+
+			spu->spawn_id	= GetID();
+			spu->x_pos		= new_x;
+			spu->y_pos		= new_y;
+			spu->z_pos		= GetZ();
+			spu->delta_x	= NewFloatToEQ13(0);
+			spu->delta_y	= NewFloatToEQ13(0);
+			spu->delta_z	= NewFloatToEQ13(0);
+			spu->heading	= GetHeading();
+			spu->spacer1	=0;
+			spu->spacer2	=0;
+			spu->anim_type = 0;
+			spu->delta_heading = NewFloatToEQ13(0);
+			outapp_push->priority = 6;
+			entity_list.QueueClients(this, outapp_push, true);
+			CastToClient()->FastQueuePacket(&outapp_push);
+		}
+		return true;
+	}
+	return false;
+}
+
+void Mob::GetPushHeadingMod(Mob* attacker, uint16 pushback, float &x_coord, float &y_coord)
+{
+
+	float tmpx = 0.0f;
+	float tmpy = 0.0f;
+	//NW 32
+	if(attacker->GetHeading() >= 16 && attacker->GetHeading() <= 48)
+	{
+		tmpx = pushback;
+		tmpy = pushback;
+	}
+	//West 64
+	else if(attacker->GetHeading() >= 49 && attacker->GetHeading() <= 80)
+	{
+		tmpx = pushback;
+	}
+	//SW 96
+	else if(attacker->GetHeading() >= 81 && attacker->GetHeading() <= 112)
+	{
+		tmpx = pushback;
+		tmpy = -abs(pushback);
+	}
+	//South 128
+	else if(attacker->GetHeading() >= 113 && attacker->GetHeading() <= 144)
+	{
+		tmpy = -abs(pushback);
+	}
+	//SE 160
+	else if(attacker->GetHeading() >= 145 && attacker->GetHeading() <= 176)
+	{
+		tmpx = -abs(pushback);
+		tmpy = -abs(pushback);
+	}
+	//East 192
+	else if(attacker->GetHeading() >= 177 && attacker->GetHeading() <= 208)
+	{
+		tmpx = -abs(pushback);
+	}
+	//NE 224
+	else if(attacker->GetHeading() >= 209 && attacker->GetHeading() <= 240)
+	{
+		tmpx = -abs(pushback);
+		tmpy = pushback;
+	}
+	//North 0
+	else
+	{
+		tmpy = pushback;
+	}
+	
+	x_coord += tmpx;
+	y_coord += tmpy;
 }
 
 void Mob::TrySpellOnKill(uint8 level, uint16 spell_id)

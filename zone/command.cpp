@@ -328,6 +328,7 @@ int command_init(void){
 		command_add("profiledump", "- Dump profiling info to logs", 250, command_profiledump) ||
 		command_add("profilereset", "- Reset profiling info", 250, command_profilereset) ||
 #endif
+		command_add("push", "[pushback] [pushup] - Pushes the target the specified amount", 250, command_push) ||
 		command_add("pvp", "[on/off] - Set your or your player target's PVP status", 160, command_pvp) ||
 
 		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 250, command_qglobal) ||
@@ -5642,9 +5643,9 @@ void command_stun(Client *c, const Seperator *sep){
 		if (c->GetTarget())
 			t = c->GetTarget();
 		if (t->IsClient())
-			t->CastToClient()->Stun(duration);
+			t->CastToClient()->Stun(duration, c);
 		else
-			t->CastToNPC()->Stun(duration);
+			t->CastToNPC()->Stun(duration, c);
 	}
 	else
 		c->Message(0, "Usage: #stun [duration]");
@@ -10415,6 +10416,58 @@ void command_falltest(Client *c, const Seperator *sep)
 			zmod = c->GetZ() + atof(sep->arg[1]);
 			c->MovePC(zone->GetZoneID(), zone->GetInstanceID(), c->GetX(), c->GetY(), zmod, c->GetHeading());
 			c->Message(0, "Moving to X: %0.2f Y: %0.2f Z: %0.2f", c->GetX(), c->GetY(), zmod);
+		}
+	}
+}
+
+void command_push(Client *c, const Seperator *sep){
+
+	Mob* t;
+	if (!c->GetTarget())
+	{
+		c->Message(0, "You need a target to push.");
+		return;
+	}
+	else if(!c->GetTarget()->IsNPC() && !c->GetTarget()->IsClient())
+	{
+		c->Message(0, "That's an invalid target, nerd.");
+		return;
+	}
+	else if(!sep->IsNumber(1))
+	{
+		c->Message(0, "Invalid number of arguments.\nUsage: #push [pushback] [pushup]");
+		return;
+	}
+	else
+	{
+		bool success = false;
+		uint32 pushback = atoi(sep->arg[1]);
+		t = c->GetTarget();
+		if(sep->IsNumber(2))
+		{
+			uint32 pushup = atoi(sep->arg[2]);
+			if(t->DoKnockback(c, pushback, pushup))
+			{
+				success = true;
+			}
+		}
+		else
+		{
+			if(t->CombatPush(c, pushback))
+			{
+				success = true;	
+			}
+		}
+
+		if(success)
+		{
+			c->Message(0, "%s was pushed for %i!", t->GetCleanName(), pushback);
+			return;
+		}
+		else
+		{
+			c->Message(0, "Pushed failed on %s. Coord check likely failed.", t->GetCleanName());
+			return;
 		}
 	}
 }

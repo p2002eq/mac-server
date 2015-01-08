@@ -4246,7 +4246,7 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 	if (!group)
 		return;
 
-	if (group->GroupCount() < 2 || (group->IsLeader(this) && GetTarget() == nullptr))
+	if (group->GroupCount() <= 2 || (group->IsLeader(this) && GetTarget() == nullptr))
 	{
 		group->DisbandGroup();
 	}

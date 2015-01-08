@@ -717,7 +717,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						if (caster->IsClient())
 							effect_value += effect_value*caster->CastToClient()->GetFocusEffect(focusFcStunTimeMod, spell_id)/100;
 
-						Stun(effect_value);
+						Stun(effect_value, caster);
 					} else {
 						if (IsClient())
 							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
@@ -841,7 +841,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				else
 				{
-					Stun(buffs[buffslot].ticsremaining * 6000 - (6000 - tic_timer.GetRemainingTime()));
+					Stun(buffs[buffslot].ticsremaining * 6000 - (6000 - tic_timer.GetRemainingTime()), caster);
 				}
 				break;
 			}
@@ -1482,7 +1482,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				{
 					// the spinning is handled by the client
 					// Stun duration is based on the effect_value, not the buff duration(alot don't have buffs)
-					Stun(effect_value);
+					Stun(effect_value, caster);
 					if(!IsClient()) {
 						Spin();
 						spun_timer.Start(100); // spins alittle every 100 ms
@@ -1932,7 +1932,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if(IsNPC())
 				{
-					Stun(static_cast<int>(toss_amt));
+					Stun(static_cast<int>(toss_amt), caster);
 				}
 				toss_amt = sqrt(toss_amt)-2.0;
 
@@ -1944,39 +1944,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if(IsClient())
 				{
-					CastToClient()->SetKnockBackExemption(true);
+					DoKnockback(caster, spells[spell_id].pushback, toss_amt);
 				}
-
-				double look_heading = GetHeading();
-				look_heading /= 256;
-				look_heading *= 360;
-				look_heading += 180;
-				if(look_heading > 360)
-					look_heading -= 360;
-
-				//x and y are crossed mkay
-				double new_x = spells[spell_id].pushback * sin(double(look_heading * 3.141592 / 180.0));
-				double new_y = spells[spell_id].pushback * cos(double(look_heading * 3.141592 / 180.0));
-
-				EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-				SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-				spu->spawn_id	= GetID();
-				spu->x_pos		= GetX();
-				spu->y_pos		= GetY();
-				spu->z_pos		= GetZ();
-				spu->delta_x	= NewFloatToEQ13(new_x);
-				spu->delta_y	= NewFloatToEQ13(new_y);
-				spu->delta_z	= NewFloatToEQ13(toss_amt);
-				spu->heading	= GetHeading();
-				spu->spacer1	=0;
-				spu->spacer2	=0;
-				spu->anim_type = 0;
-				spu->delta_heading = NewFloatToEQ13(0);
-				outapp_push->priority = 5;
-				entity_list.QueueClients(this, outapp_push, true);
-				if(IsClient())
-					CastToClient()->FastQueuePacket(&outapp_push);
 
 				break;
 			}

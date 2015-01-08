@@ -2389,38 +2389,8 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 				{
 					if(!IsBuffSpell(spell_id))
 					{
-						CastToClient()->SetKnockBackExemption(true);
-
 						action->buff_unknown = 0;
-						EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-						SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-						double look_heading = caster->CalculateHeadingToTarget(GetX(), GetY());
-						look_heading /= 256;
-						look_heading *= 360;
-						if(look_heading > 360)
-							look_heading -= 360;
-
-						//x and y are crossed mkay
-						double new_x = spells[spell_id].pushback * sin(double(look_heading * 3.141592 / 180.0));
-						double new_y = spells[spell_id].pushback * cos(double(look_heading * 3.141592 / 180.0));
-
-						spu->spawn_id	= GetID();
-						spu->x_pos		= GetX();
-						spu->y_pos		= GetY();
-						spu->z_pos		= GetZ();
-						spu->delta_x	= NewFloatToEQ13(new_x);
-						spu->delta_y	= NewFloatToEQ13(new_y);
-						spu->delta_z	= NewFloatToEQ13(spells[spell_id].pushup);
-						spu->heading	= GetHeading();
-						spu->spacer1	=0;
-						spu->spacer2	=0;
-						spu->anim_type = 0;
-						spu->delta_heading = NewFloatToEQ13(0);
-
-						outapp_push->priority = 6;
-						entity_list.QueueClients(this, outapp_push, true);
-						CastToClient()->FastQueuePacket(&outapp_push);
+						DoKnockback(caster, spells[spell_id].pushback, spells[spell_id].pushup);
 					}
 				}
 			}
@@ -3693,37 +3663,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		{
 			if(!IsBuffSpell(spell_id))
 			{
-				spelltar->CastToClient()->SetKnockBackExemption(true);
-
 				action->buff_unknown = 0;
-				EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-				SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-				double look_heading = CalculateHeadingToTarget(spelltar->GetX(), spelltar->GetY());
-				look_heading /= 256;
-				look_heading *= 360;
-				if(look_heading > 360)
-					look_heading -= 360;
-
-				//x and y are crossed mkay
-				double new_x = spells[spell_id].pushback * sin(double(look_heading * 3.141592 / 180.0));
-				double new_y = spells[spell_id].pushback * cos(double(look_heading * 3.141592 / 180.0));
-
-				spu->spawn_id	= spelltar->GetID();
-				spu->x_pos		= spelltar->GetX();
-				spu->y_pos		= spelltar->GetY();
-				spu->z_pos		= spelltar->GetZ();
-				spu->delta_x	= NewFloatToEQ13(new_x);
-				spu->delta_y	= NewFloatToEQ13(new_y);
-				spu->delta_z	= NewFloatToEQ13(spells[spell_id].pushup);
-				spu->heading	= spelltar->GetHeading();
-				spu->spacer1	=0;
-				spu->spacer2	=0;
-				spu->anim_type = 0;
-				spu->delta_heading = NewFloatToEQ13(0);
-				outapp_push->priority = 6;
-				entity_list.QueueClients(this, outapp_push, true);
-				spelltar->CastToClient()->FastQueuePacket(&outapp_push);
+				spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
 			}
 		}
 	}
@@ -4629,7 +4570,7 @@ void Mob::SendSpellBarEnable(uint16 spell_id)
 	safe_delete(outapp);
 }
 
-void Mob::Stun(int duration)
+void Mob::Stun(int duration, Mob* attacker)
 {
 	//make sure a shorter stun does not overwrite a longer one.
 	if(stunned && stunned_timer.GetRemainingTime() > uint32(duration))
@@ -4647,6 +4588,11 @@ void Mob::Stun(int duration)
 		stunned = true;
 		stunned_timer.Start(duration);
 	}
+
+	if(attacker)
+	{
+		CombatPush(attacker, RuleI(Combat, PushBackAmount));
+	}
 }
 
 void Mob::UnStun() {
@@ -4657,9 +4603,9 @@ void Mob::UnStun() {
 }
 
 // Stuns "this"
-void Client::Stun(int duration)
+void Client::Stun(int duration, Mob* attacker)
 {
-	Mob::Stun(duration);
+	Mob::Stun(duration, attacker);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stun, sizeof(Stun_Struct));
 	Stun_Struct* stunon = (Stun_Struct*) outapp->pBuffer;
@@ -4680,10 +4626,10 @@ void Client::UnStun() {
 	safe_delete(outapp);
 }
 
-void NPC::Stun(int duration) {
-	Mob::Stun(duration);
+void NPC::Stun(int duration, Mob* attacker) {
+	Mob::Stun(duration, attacker);
 	SetRunAnimSpeed(0);
-	SendPosition();
+	//SendPosition();
 }
 
 void NPC::UnStun() {

@@ -931,7 +931,7 @@ void Client::LeaveGroup() {
 	if(g)
 	{
 		int32 MemberCount = g->GroupCount();
-		if(MemberCount < 2)
+		if(MemberCount <= 2)
 		{
 			g->DisbandGroup();
 		}

@@ -239,7 +239,7 @@ public:
 	inline void	MerchantCloseShop() { merchant_open = false; }
 	inline bool	IsMerchantOpen() { return merchant_open; }
 	void	Depop(bool StartSpawnTimer = false);
-	void	Stun(int duration);
+	void	Stun(int duration, Mob* attacker);
 	void	UnStun();
 	uint32	GetSwarmOwner();
 	uint32	GetSwarmTarget();
