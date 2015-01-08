@@ -402,6 +402,7 @@ RULE_INT ( Combat, ArcheryBonusChance, 50)
 RULE_INT ( Combat, BerserkerFrenzyStart, 35)
 RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
+RULE_INT ( Combat, PushBackAmount, 3)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )

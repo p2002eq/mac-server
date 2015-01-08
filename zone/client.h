@@ -564,7 +564,7 @@ public:
 	void	WhoAll(Who_All_Struct* whom);
 	void	FriendsWho(char *FriendsString);
 
-	void	Stun(int duration);
+	void	Stun(int duration, Mob* attacker);
 	void	UnStun();
 	void	ReadBook(BookRequest_Struct *book);
 	void	QuestReadBook(const char* text, uint8 type);

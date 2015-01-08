@@ -3465,7 +3465,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 						mlog(COMBAT__HITS, "Stun Resisted. %d chance.", stun_resist);
 					} else {
 						mlog(COMBAT__HITS, "Stunned. %d resist chance.", stun_resist);
-						Stun(zone->random.Int(0, 2) * 1000); // 0-2 seconds
+						Stun(zone->random.Int(0, 2) * 1000, attacker); // 0-2 seconds
 					}
 				}
 			} else {
@@ -4074,7 +4074,7 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 				//Kayen: Crippling Blow would cause a chance to interrupt for npcs < 55, with a staggers message.
 				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)){
 					defender->Emote("staggers.");
-					defender->Stun(0);
+					defender->Stun(0, this);
 				}
 			} else if (deadlySuccess) {
 				entity_list.FilteredMessageClose_StringID(this, false, 200,

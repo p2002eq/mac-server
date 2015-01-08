@@ -564,7 +564,7 @@ public:
 	void SendIllusionPacket(uint16 in_race, uint8 in_gender = 0xFF, uint8 in_texture = 0xFF, uint8 in_helmtexture = 0xFF, 
 		uint8 in_haircolor = 0xFF, uint8 in_beardcolor = 0xFF, uint8 in_eyecolor1 = 0xFF, uint8 in_eyecolor2 = 0xFF, 
 		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF, float in_size = -1.0f);
-	virtual void Stun(int duration);
+	virtual void Stun(int duration, Mob* attacker);
 	virtual void UnStun();
 	inline void Silence(bool newval) { silenced = newval; }
 	inline void Amnesia(bool newval) { amnesiad = newval; }
@@ -590,7 +590,9 @@ public:
 	int32 GetFcDamageAmtIncoming(Mob *caster, uint32 spell_id, bool use_skill = false, uint16 skill=0);
 	int32 GetFocusIncoming(focusType type, int effect, Mob *caster, uint32 spell_id);
 	int16 GetSkillDmgTaken(const SkillUseTypes skill_used);
-	void DoKnockback(Mob *caster, uint32 pushback, uint32 pushup);
+	bool DoKnockback(Mob *caster, uint16 pushback, uint32 pushup);
+	bool CombatPush(Mob* attacker, uint16 pushback);
+	void GetPushHeadingMod(Mob* attacker, uint16 pushback, float &x_coord, float &y_coord);
 	int16 CalcResistChanceBonus();
 	int16 CalcFearResistChance();
 	void TrySpellOnKill(uint8 level, uint16 spell_id);

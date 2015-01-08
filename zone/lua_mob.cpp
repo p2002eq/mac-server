@@ -934,7 +934,7 @@ bool Lua_Mob::CheckAggro(Lua_Mob other) {
 
 void Lua_Mob::Stun(int duration) {
 	Lua_Safe_Call_Void();
-	self->Stun(duration);
+	self->Stun(duration, nullptr);
 }
 
 void Lua_Mob::UnStun() {

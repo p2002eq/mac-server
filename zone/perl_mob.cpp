@@ -4466,7 +4466,7 @@ XS(XS_Mob_Stun)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		THIS->Stun(duration);
+		THIS->Stun(duration, nullptr);
 	}
 	XSRETURN_EMPTY;
 }
