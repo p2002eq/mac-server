@@ -316,9 +316,6 @@ typedef enum {
 #define SE_MitigateSpellDamage			161	// implemented - rune with max value
 #define SE_MitigateMeleeDamage			162	// implemented - rune with max value
 #define SE_NegateAttacks				163	// implemented
-#define SE_AppraiseLDonChest			164	// implemented
-#define SE_DisarmLDoNTrap				165	// implemented
-#define SE_UnlockLDoNChest				166	// implemented
 #define SE_PetPowerIncrease				167 // implemented
 #define SE_MeleeMitigation				168	// implemented
 #define SE_CriticalHitChance			169	// implemented
@@ -700,7 +697,7 @@ struct SPDat_Spell_Struct
 /* 162 */	int bonushate;
 /* 163 */
 /* 164 */	// for most spells this appears to mimic ResistDiff
-/* 165 */	bool ldon_trap; //Flag found on all LDON trap / chest related spells.
+/* 165 */	//Flag found on all LDON trap / chest related spells.
 /* 166 */	int EndurCost;
 /* 167 */	int8 EndurTimerIndex;
 /* 168 */	bool IsDisciplineBuff; //Will goto the combat window when cast
@@ -841,7 +838,6 @@ bool IsSuccorSpell(uint16 spell_id);
 bool IsTeleportSpell(uint16 spell_id);
 bool IsGateSpell(uint16 spell_id);
 bool IsPlayerIllusionSpell(uint16 spell_id); // seveian 2008-09-23
-bool IsLDoNObjectSpell(uint16 spell_id);
 int32 GetSpellResistType(uint16 spell_id);
 int32 GetSpellTargetType(uint16 spell_id);
 bool IsHealOverTimeSpell(uint16 spell_id);

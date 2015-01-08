@@ -506,21 +506,6 @@ int Lua_Item::GetAugSlotUnk2(int i) {
 	return self->AugSlotUnk2[i];
 }
 
-uint32 Lua_Item::GetLDoNTheme() {
-	Lua_Safe_Call_Int();
-	return self->LDoNTheme;
-}
-
-uint32 Lua_Item::GetLDoNPrice() {
-	Lua_Safe_Call_Int();
-	return self->LDoNPrice;
-}
-
-uint32 Lua_Item::GetLDoNSold() {
-	Lua_Safe_Call_Int();
-	return self->LDoNSold;
-}
-
 uint32 Lua_Item::GetBaneDmgRaceAmt() {
 	Lua_Safe_Call_Int();
 	return self->BaneDmgRaceAmt;
@@ -846,11 +831,6 @@ int Lua_Item::GetSpellDmg() {
 	return self->SpellDmg;
 }
 
-uint32 Lua_Item::GetLDoNSellBackRate() {
-	Lua_Safe_Call_Int();
-	return self->LDoNSellBackRate;
-}
-
 uint32 Lua_Item::GetScriptFileID() {
 	Lua_Safe_Call_Int();
 	return self->ScriptFileID;
@@ -993,9 +973,6 @@ luabind::scope lua_register_item() {
 		.def("AugSlotType", &Lua_Item::GetAugSlotType)
 		.def("AugSlotVisible", &Lua_Item::GetAugSlotVisible)
 		.def("AugSlotUnk2", &Lua_Item::GetAugSlotUnk2)
-		.def("LDoNTheme", &Lua_Item::GetLDoNTheme)
-		.def("LDoNPrice", &Lua_Item::GetLDoNPrice)
-		.def("LDoNSold", &Lua_Item::GetLDoNSold)
 		.def("BaneDmgRaceAmt", &Lua_Item::GetBaneDmgRaceAmt)
 		.def("AugRestrict", &Lua_Item::GetAugRestrict)
 		.def("Endur", &Lua_Item::GetEndur)
@@ -1061,7 +1038,6 @@ luabind::scope lua_register_item() {
 		.def("HeroicSVCorrup", &Lua_Item::GetHeroicSVCorrup)
 		.def("HealAmt", &Lua_Item::GetHealAmt)
 		.def("SpellDmg", &Lua_Item::GetSpellDmg)
-		.def("LDoNSellBackRate", &Lua_Item::GetLDoNSellBackRate)
 		.def("ScriptFileID", &Lua_Item::GetScriptFileID)
 		.def("ExpendableArrow", &Lua_Item::GetExpendableArrow)
 		.def("Clairvoyance", &Lua_Item::GetClairvoyance)
