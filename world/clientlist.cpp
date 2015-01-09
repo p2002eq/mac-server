@@ -116,7 +116,8 @@ void ClientList::EnforceSessionLimit(uint32 iLSAccountID) {
 				// If we have a char name, they are in a zone, so send a kick to the zone server
 				if(strlen(ClientEntry->name())) {
 
-					ServerPacket* pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
+					auto pack =
+					    new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
 					ServerKickPlayer_Struct* skp = (ServerKickPlayer_Struct*) pack->pBuffer;
 					strcpy(skp->adminname, "SessionLimit");
 					strcpy(skp->name, ClientEntry->name());
@@ -223,7 +224,7 @@ void ClientList::DisconnectByIP(uint32 iIP) {
 		countCLEIPs = iterator.GetData();
 		if ((countCLEIPs->GetIP() == iIP)) {
 			if(strlen(countCLEIPs->name())) {
-				ServerPacket* pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
+				auto pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
 				ServerKickPlayer_Struct* skp = (ServerKickPlayer_Struct*) pack->pBuffer;
 				strcpy(skp->adminname, "SessionLimit");
 				strcpy(skp->name, countCLEIPs->name());
@@ -328,7 +329,7 @@ void ClientList::SendCLEList(const int16& admin, const char* to, WorldTCPConnect
 
 
 void ClientList::CLEAdd(uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin, uint32 ip, uint8 local, uint8 version) {
-	ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), iLSID, iLoginName, iLoginKey, iWorldAdmin, ip, local, version);
+	auto tmp = new ClientListEntry(GetNextCLEID(), iLSID, iLoginName, iLoginKey, iWorldAdmin, ip, local, version);
 
 	clientlist.Append(tmp);
 }
@@ -430,7 +431,7 @@ ClientListEntry* ClientList::CheckAuth(const char* iName, const char* iPassword)
 	if (accid) {
 		uint32 lsid = 0;
 		database.GetAccountIDByName(iName, &tmpadmin, &lsid);
-		ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), lsid, iName, iPassword, tmpadmin, 0, 0, 2);
+		auto tmp = new ClientListEntry(GetNextCLEID(), lsid, iName, iPassword, tmpadmin, 0, 0, 2);
 		clientlist.Append(tmp);
 		return tmp;
 	}
@@ -470,7 +471,7 @@ void ClientList::SendOnlineGuildMembers(uint32 FromID, uint32 GuildID)
 
 	Iterator.Reset();
 
-	ServerPacket* pack = new ServerPacket(ServerOP_OnlineGuildMembersResponse, PacketLength);
+	auto pack = new ServerPacket(ServerOP_OnlineGuildMembersResponse, PacketLength);
 
 	char *Buffer = (char *)pack->pBuffer;
 
@@ -576,7 +577,7 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 	unknown44[4]=0;
 	uint32 unknown52=totalusers;
 	uint32 unknown56=1;
-	ServerPacket* pack2 = new ServerPacket(ServerOP_WhoAllReply,58+totallength+(30*totalusers));
+	auto pack2 = new ServerPacket(ServerOP_WhoAllReply,58+totallength+(30*totalusers));
 	memset(pack2->pBuffer,0,pack2->size);
 	uchar *buffer=pack2->pBuffer;
 	uchar *bufptr=buffer;
@@ -813,7 +814,7 @@ void ClientList::SendFriendsWho(ServerFriendsWho_Struct *FriendsWho, WorldTCPCon
 		ClientListEntry* cle;
 		int FriendsOnline = FriendsCLEs.size();
 		int PacketLength = sizeof(WhoAllReturnStruct) + (47 * FriendsOnline) + TotalLength;
-		ServerPacket* pack2 = new ServerPacket(ServerOP_WhoAllReply, PacketLength);
+		auto pack2 = new ServerPacket(ServerOP_WhoAllReply, PacketLength);
 		memset(pack2->pBuffer,0,pack2->size);
 		uchar *buffer=pack2->pBuffer;
 		uchar *bufptr=buffer;
