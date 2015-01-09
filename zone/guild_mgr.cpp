@@ -169,9 +169,6 @@ uint8 *ZoneGuildManager::MakeGuildMembers(uint32 guild_id, const char *prefix_na
 		PutField(class_);
 		PutField(rank);
 		PutField(time_last_on);
-		PutField(tribute_enable);
-		PutField(total_tribute);
-		PutField(last_tribute);
 		SlideStructString( note_buf, ci->public_note );
 		e->zoneinstance = 0;
 		e->zone_id = 0;	// Flag them as offline (zoneid 0) as world will update us with their online status afterwards.

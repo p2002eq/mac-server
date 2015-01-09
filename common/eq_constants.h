@@ -827,9 +827,6 @@ namespace legacy {
 		MainCursor_BAG_BEGIN		= 330,
 		MainCursor_BAG_END			= 339,
 
-		SLOT_TRIBUTE_BEGIN	= 400,
-		SLOT_TRIBUTE_END	= 404,
-
 		SLOT_BANK_BEGIN			= 2000,
 		SLOT_BANK_END			= 2007,
 		SLOT_BANK_BAGS_BEGIN	= 2030,

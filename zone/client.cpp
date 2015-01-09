@@ -497,8 +497,6 @@ bool Client::Save(uint8 iCommitNow) {
 
 	p_timers.Store(&database);
 
-	database.SaveCharacterTribute(this->CharacterID(), &m_pp);
-
 	m_pp.hunger_level = EQEmu::Clamp(m_pp.hunger_level, 0, 50000);
 	m_pp.thirst_level = EQEmu::Clamp(m_pp.thirst_level, 0, 50000);
 	database.SaveCharacterData(this->CharacterID(), this->AccountID(), &m_pp, &m_epp); /* Save Character Data */

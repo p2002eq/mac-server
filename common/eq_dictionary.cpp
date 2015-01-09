@@ -39,12 +39,6 @@ uint16 EmuConstants::InventoryMapSize(int16 map) {
 		return MAP_WORLD_SIZE;
 	case MapLimbo:
 		return MAP_LIMBO_SIZE;
-	case MapTribute:
-		return MAP_TRIBUTE_SIZE;
-	case MapTrophyTribute:
-		return MAP_TROPHY_TRIBUTE_SIZE;
-	case MapGuildTribute:
-		return MAP_GUILD_TRIBUTE_SIZE;
 	case MapMerchant:
 		return MAP_MERCHANT_SIZE;
 	case MapDeleted:
@@ -71,10 +65,6 @@ uint16 EmuConstants::InventoryMapSize(int16 map) {
 		return MAP_ARCHIVED_SIZE;
 	case MapMail:
 		return MAP_MAIL_SIZE;
-	case MapGuildTrophyTribute:
-		return MAP_GUILD_TROPHY_TRIBUTE_SIZE;
-	case MapKrono:
-		return MAP_KRONO_SIZE;
 	case MapOther:
 		return MAP_OTHER_SIZE;
 	default:
