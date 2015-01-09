@@ -59,9 +59,6 @@ public:
 	static const uint16 MAP_TRADE_SIZE = 8;
 	static const uint16 MAP_WORLD_SIZE = 10;
 	static const uint16 MAP_LIMBO_SIZE = 36;
-	static const uint16 MAP_TRIBUTE_SIZE = 5; // (need client values)
-	static const uint16 MAP_TROPHY_TRIBUTE_SIZE = 0;
-	static const uint16 MAP_GUILD_TRIBUTE_SIZE = 0;
 	static const uint16 MAP_MERCHANT_SIZE = 0;
 	static const uint16 MAP_DELETED_SIZE = 0;
 	static const uint16 MAP_CORPSE_SIZE = _MainCount; // no bitmask use..limits to size of client corpse window (see EQLimits::InventoryMapSize(MapCorpse, <EQClientVersion))
@@ -75,8 +72,6 @@ public:
 	static const uint16 MAP_ALT_STORAGE_SIZE = 0;
 	static const uint16 MAP_ARCHIVED_SIZE = 0;
 	static const uint16 MAP_MAIL_SIZE = 0;
-	static const uint16 MAP_GUILD_TROPHY_TRIBUTE_SIZE = 0;
-	static const uint16 MAP_KRONO_SIZE = 0;
 	static const uint16 MAP_OTHER_SIZE = 0;
 
 	// most of these definitions will go away with the structure-based system..this maintains compatibility for now
@@ -118,10 +113,6 @@ public:
 	static const int16 WORLD_BEGIN = 4000;
 	static const int16 WORLD_END = 4009;
 	static const int16 WORLD_SIZE = MAP_WORLD_SIZE;
-
-	static const int16 TRIBUTE_BEGIN = 400;
-	static const int16 TRIBUTE_END = 404;
-	static const int16 TRIBUTE_SIZE = MAP_TRIBUTE_SIZE;
 
 	static const int16 CORPSE_BEGIN = 22;
 	//static const int16 CORPSE_END = RoF::consts::CORPSE_END; // not ready for use

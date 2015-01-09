@@ -909,7 +909,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	int16 mod_pet_power(int16 act_power, uint16 spell_id);
 	float mod_tradeskill_chance(float chance, DBTradeskillRecipe_Struct *spec);
 	float mod_tradeskill_skillup(float chance_stage2);
-	int32 mod_tribute_item_value(int32 pts, const ItemInst* item);
 	void mod_client_death_npc(Mob* killerMob);
 	void mod_client_death_duel(Mob* killerMob);
 	void mod_client_death_env();
@@ -1128,8 +1127,6 @@ private:
 	void	BulkSendItems();
 
 	faction_map factionvalues;
-
-	uint32 tribute_master_id;
 
 	FILE *SQL_log;
 	uint32 max_AAXP;

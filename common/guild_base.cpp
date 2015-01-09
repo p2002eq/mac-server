@@ -876,7 +876,7 @@ bool BaseGuildManager::QueryWithLogging(std::string query, const char *errmsg) {
 //factored out so I dont have to copy this crap.
 #define GuildMemberBaseQuery \
 "SELECT c.id,c.name,c.class,c.level,c.last_login,c.zone_id," \
-" g.guild_id,g.rank,g.tribute_enable,g.total_tribute,g.last_tribute," \
+" g.guild_id,g.rank," \
 " g.banker,g.public_note,g.alt " \
 " FROM `character_data` AS c LEFT JOIN guild_members AS g ON c.id=g.char_id "
 
@@ -892,12 +892,9 @@ static void ProcessGuildMember(MySQLRequestRow row, CharGuildInfo &into) {
 	//fields from `guild_members`, leave at defaults if missing
 	into.guild_id		= row[6] ? atoi(row[6]) : GUILD_NONE;
 	into.rank			= row[7] ? atoi(row[7]) : (GUILD_MAX_RANK+1);
-	into.tribute_enable = row[8] ? (row[8][0] == '0'?false:true) : false;
-	into.total_tribute	= row[9] ? atoi(row[9]) : 0;
-	into.last_tribute	= row[10]? atoul(row[10]) : 0;		//timestamp
-	into.banker			= row[11]? (row[11][0] == '0'?false:true) : false;
-	into.public_note	= row[12]? row[12] : "";
-	into.alt		= row[13]? (row[13][0] == '0'?false:true) : false;
+	into.banker			= row[8]? (row[8][0] == '0'?false:true) : false;
+	into.public_note	= row[9]? row[9] : "";
+	into.alt		= row[10]? (row[10][0] == '0'?false:true) : false;
 
 	//a little sanity checking/cleanup
 	if(into.guild_id == 0)

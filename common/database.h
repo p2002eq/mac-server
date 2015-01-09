@@ -135,10 +135,6 @@ namespace Convert {
 		/*016*/	uint32	player_id;	//'global' ID of the caster, for wearoff messages
 		/*020*/
 	};
-	struct Tribute_Struct {
-		uint32 tribute;
-		uint32 tier;
-	};
 	struct Disciplines_Struct {
 		uint32 values[MAX_PP_DISCIPLINES];
 	};
@@ -348,14 +344,9 @@ namespace Convert {
 		/*7052*/	uint32							leadAAActive;
 		/*7056*/	uint32							unknown7092;
 		/*7124*/	uint8							unknown7160[72];
-		/*7196*/	uint32							tribute_time_remaining;	//in miliseconds
 		/*7200*/	uint32							showhelm;
-		/*7204*/	uint32							career_tribute_points;
 		/*7208*/	uint32							unknown7244;
-		/*7212*/	uint32							tribute_points;
 		/*7216*/	uint32							unknown7252;
-		/*7220*/	uint32							tribute_active;		//1=active
-		/*7224*/	Convert::Tribute_Struct			tributes[EmuConstants::TRIBUTE_SIZE];
 		/*7264*/	Convert::Disciplines_Struct		disciplines;
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7744*/	char							unknown7780[160];
@@ -594,11 +585,6 @@ public:
 	void	ClearRaidDetails(uint32 rid = 0);
 	uint32	GetRaidID(const char* name);
 	const char *GetRaidLeaderName(uint32 rid);
-
-	/* Database Conversions*/
-	bool	CheckDatabaseConversions();
-	bool	CheckDatabaseConvertPPDeblob();
-	bool	CheckDatabaseConvertCorpseDeblob();
 
 	/*
 	* Database Setup for boostraps only.

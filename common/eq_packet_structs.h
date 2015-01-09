@@ -664,12 +664,6 @@ struct ClientDiscipline_Struct {
     uint8	disc_id;	// There are only a few discs < 60
     uint8	unknown3[3];	// Which leaves room for ??
 };
-static const uint32 TRIBUTE_NONE = 0xFFFFFFFF;
-
-struct Tribute_Struct {
-	uint32 tribute;
-	uint32 tier;
-};
 
 //len = 72
 struct BandolierItem_Struct {
@@ -783,11 +777,6 @@ sed -e 's/_t//g' -e 's/MAX_AA/MAX_PP_AA_ARRAY/g' \
 	-e 's/ldon_ruj_points/ldon_points_ruj/g' \
 	-e 's/ldonak_points/ldon_points_tak/g' \
 	-e 's/ldon_avail_points/ldon_points_available/g' \
-	-e 's/tributeTime/tribute_time_remaining/g' \
-	-e 's/careerTribute/career_tribute_points/g' \
-	-e 's/currentTribute/tribute_points/g' \
-	-e 's/tributeActive/tribute_active/g' \
-	-e 's/TributeStruct/Tribute_Struct/g' \
 	-e 's/expGroupLeadAA/group_leadership_exp/g' \
 	-e 's/expRaidLeadAA/raid_leadership_exp/g' \
 	-e 's/groupLeadAAUnspent/group_leadership_points/g' \
@@ -920,14 +909,9 @@ struct PlayerProfile_Struct
 /*7052*/	uint32				leadAAActive;
 /*7056*/	uint32				unknown7092;
 /*7124*/	uint8				unknown7160[72];
-/*7196*/	uint32				tribute_time_remaining;	//in miliseconds
 /*7200*/	uint32				showhelm;
-/*7204*/	uint32				career_tribute_points;
 /*7208*/	uint32				unknown7244;
-/*7212*/	uint32				tribute_points;
 /*7216*/	uint32				unknown7252;
-/*7220*/	uint32				tribute_active;		//1=active
-/*7224*/	Tribute_Struct		tributes[EmuConstants::TRIBUTE_SIZE];
 /*7264*/	Disciplines_Struct	disciplines;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7744*/	char				unknown7780[160];
@@ -2701,9 +2685,6 @@ struct Internal_GuildMemberEntry_Struct {
 	uint32	class_;						//network byte order
 	uint32	rank;						//network byte order
 	uint32	time_last_on;				//network byte order
-	uint32	tribute_enable;				//network byte order
-	uint32	total_tribute;				//total guild tribute donated, network byte order
-	uint32	last_tribute;				//unix timestamp
 //	char	public_note[1];				//variable length.
 	uint16	zoneinstance;				//network byte order
 	uint16	zone_id;					//network byte order
@@ -2818,72 +2799,6 @@ struct ZoneInSendName_Struct2 {
 	uint32	unknown68[145];
 };
 
-static const uint32 MAX_TRIBUTE_TIERS = 10;
-
-struct StartTribute_Struct {
-	uint32	client_id;
-	uint32	tribute_master_id;
-	uint32	response;
-};
-
-struct TributeLevel_Struct {
-	uint32	level;	//backwards byte order!
-	uint32	tribute_item_id;	//backwards byte order!
-	uint32	cost;	//backwards byte order!
-};
-
-struct TributeAbility_Struct {
-	uint32	tribute_id;	//backwards byte order!
-	uint32	tier_count;	//backwards byte order!
-	TributeLevel_Struct tiers[MAX_TRIBUTE_TIERS];
-	char	name[0];
-};
-
-struct GuildTributeAbility_Struct {
-	uint32	guild_id;
-	TributeAbility_Struct ability;
-};
-
-struct SelectTributeReq_Struct {
-	uint32	client_id;	//? maybe action ID?
-	uint32	tribute_id;
-	uint32	unknown8;	//seen E3 00 00 00
-};
-
-struct SelectTributeReply_Struct {
-	uint32	client_id;	//echoed from request.
-	uint32	tribute_id;
-	char		desc[0];
-};
-
-struct TributeInfo_Struct {
-	uint32	active;		//0 == inactive, 1 == active
-	uint32	tributes[EmuConstants::TRIBUTE_SIZE];	//-1 == NONE
-	uint32	tiers[EmuConstants::TRIBUTE_SIZE];		//all 00's
-	uint32	tribute_master_id;
-};
-
-struct TributeItem_Struct {
-	uint32	slot;
-	uint32	quantity;
-	uint32	tribute_master_id;
-	int32	tribute_points;
-};
-
-struct TributePoint_Struct {
-	int32	tribute_points;
-	uint32	unknown04;
-	int32	career_tribute_points;
-	uint32	unknown12;
-};
-
-struct TributeMoney_Struct {
-	uint32	platinum;
-	uint32	tribute_master_id;
-	int32	tribute_points;
-};
-
-
 struct Split_Struct
 {
 	uint32	platinum;
@@ -2903,7 +2818,6 @@ struct Split_Struct
 */
 struct NewCombine_Struct {
 /*00*/	int16	container_slot;
-/*02*/	int16	guildtribute_slot;
 /*04*/
 };
 

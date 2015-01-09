@@ -803,11 +803,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"zone_id,                   "
 		"zone_instance,             "
 		"leadership_exp_on,         "
-		"tribute_time_remaining,    "
 		"show_helm,                 "
-		"career_tribute_points,     "
-		"tribute_points,            "
-		"tribute_active,            "
 		"endurance,                 "
 		"group_leadership_exp,      "
 		"raid_leadership_exp,       "
@@ -893,11 +889,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
 		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
-		pp->tribute_time_remaining = atoi(row[r]); r++;							 // "tribute_time_remaining,    "
 		pp->showhelm = atoi(row[r]); r++;										 // "show_helm,                 "
-		pp->career_tribute_points = atoi(row[r]); r++;							 // "career_tribute_points,     "
-		pp->tribute_points = atoi(row[r]); r++;									 // "tribute_points,            "
-		pp->tribute_active = atoi(row[r]); r++;									 // "tribute_active,            "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
 		pp->group_leadership_exp = atoi(row[r]); r++;							 // "group_leadership_exp,      "
 		pp->raid_leadership_exp = atoi(row[r]); r++;							 // "raid_leadership_exp,       "
@@ -1127,25 +1119,6 @@ bool ZoneDatabase::LoadCharacterBandolier(uint32 character_id, PlayerProfile_Str
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterTribute(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat("SELECT `tier`, `tribute` FROM `character_tribute` WHERE `id` = %u", character_id);
-	auto results = database.QueryDatabase(query); 
-	int i = 0;
-	for (i = 0; i < EmuConstants::TRIBUTE_SIZE; i++){
-		pp->tributes[i].tribute = 0xFFFFFFFF;
-		pp->tributes[i].tier = 0;
-	}
-	i = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		if(atoi(row[1]) != TRIBUTE_NONE){
-			pp->tributes[i].tier = atoi(row[0]);
-			pp->tributes[i].tribute = atoi(row[1]);
-			i++;
-		}
-	}
-	return true;
-}
-
 bool ZoneDatabase::LoadCharacterPotions(uint32 character_id, PlayerProfile_Struct* pp){
 	std::string query = StringFormat("SELECT `potion_id`, `item_id`, `icon` FROM `character_potionbelt` WHERE `id` = %u LIMIT 4", character_id); 
 	auto results = database.QueryDatabase(query); int i = 0;
@@ -1240,20 +1213,6 @@ bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32
 	return true; 
 }
 
-bool ZoneDatabase::SaveCharacterTribute(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", character_id); 
-	QueryDatabase(query);
-	/* Save Tributes only if we have values... */
-	for (int i = 0; i < EmuConstants::TRIBUTE_SIZE; i++){
-		if (pp->tributes[i].tribute > 0 && pp->tributes[i].tribute != TRIBUTE_NONE){
-			std::string query = StringFormat("REPLACE INTO `character_tribute` (id, tier, tribute) VALUES (%u, %u, %u)", character_id, pp->tributes[i].tier, pp->tributes[i].tribute); 
-			QueryDatabase(query);
-			_log(CLIENT__CHARACTER, "ZoneDatabase::SaveCharacterTribute for character ID: %i, tier:%u tribute:%u done", character_id, pp->tributes[i].tier, pp->tributes[i].tribute);
-		}
-	} 
-	return true;
-}
-
 bool ZoneDatabase::SaveCharacterBandolier(uint32 character_id, uint8 bandolier_id, uint8 bandolier_slot, uint32 item_id, uint32 icon, const char* bandolier_name){
 	char bandolier_name_esc[64];
 	DoEscapeString(bandolier_name_esc, bandolier_name, strlen(bandolier_name));
@@ -1346,11 +1305,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" zone_id,                   "
 		" zone_instance,             "
 		" leadership_exp_on,         "
-		" tribute_time_remaining,    "
 		" show_helm,                 "
-		" career_tribute_points,     "
-		" tribute_points,            "
-		" tribute_active,            "
 		" endurance,                 "
 		" group_leadership_exp,      "
 		" raid_leadership_exp,       "
@@ -1435,11 +1390,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
 		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
-		"%u,"  // tribute_time_remaining	  pp->tribute_time_remaining,			" tribute_time_remaining,    "
 		"%u,"  // show_helm					  pp->showhelm,							" show_helm,                 "
-		"%u,"  // career_tribute_points		  pp->career_tribute_points,			" career_tribute_points,     "
-		"%u,"  // tribute_points			  pp->tribute_points,					" tribute_points,            "
-		"%u,"  // tribute_active			  pp->tribute_active,					" tribute_active,            "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
 		"%u,"  // group_leadership_exp		  pp->group_leadership_exp,				" group_leadership_exp,      "
 		"%u,"  // raid_leadership_exp		  pp->raid_leadership_exp,				" raid_leadership_exp,       "
@@ -1523,11 +1474,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->tribute_time_remaining,		  // " tribute_time_remaining,    "
 		pp->showhelm,					  // " show_helm,                 "
-		pp->career_tribute_points,		  // " career_tribute_points,     "
-		pp->tribute_points,				  // " tribute_points,            "
-		pp->tribute_active,				  // " tribute_active,            "
 		pp->endurance,					  // " endurance,                 "
 		pp->group_leadership_exp,		  // " group_leadership_exp,      "
 		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
