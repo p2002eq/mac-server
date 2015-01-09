@@ -306,7 +306,6 @@ RULE_INT ( Spells, AI_IdleNoSpellMaxRecast, 2000) // AI spell recast time(MS) ch
 RULE_INT ( Spells, AI_IdleBeneficialChance, 100) // Chance while idle to do a beneficial spell on self or others.
 RULE_BOOL ( Spells, SHDProcIDOffByOne, true) // pre June 2009 SHD spell procs were off by 1, they stopped doing this in June 2009 (so UF+ spell files need this false)
 RULE_BOOL ( Spells, SwarmPetTargetLock, false) // Use old method of swarm pets target locking till target dies then despawning.
-RULE_BOOL ( Spells, ShowWornOffMessages, false) //Determines if "Spell has worn off of" messages will display or not.
 RULE_BOOL ( Spells, NPCUseRecastVariance, false) // If recast_delay is set to >= 0 NPCs will use a variance of between 1000 and 4000 ticks.
 RULE_CATEGORY_END()
 
@@ -402,7 +401,7 @@ RULE_INT ( Combat, ArcheryBonusChance, 50)
 RULE_INT ( Combat, BerserkerFrenzyStart, 35)
 RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
-RULE_INT ( Combat, PushBackAmount, 3)
+RULE_REAL ( Combat, PushBackAmount, 3.0)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )

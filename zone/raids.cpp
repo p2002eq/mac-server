@@ -701,14 +701,11 @@ void Raid::GroupBardPulse(Mob* caster, uint16 spellid, uint32 gid){
 		{
 			if(members[z].GroupNumber == gid){
 				distance = caster->DistNoRoot(*members[z].member);
-				if(distance <= range2) {
-					members[z].member->BardPulse(spellid, caster);
+				members[z].member->BardPulse(spellid, caster);
 #ifdef GROUP_BUFF_PETS
-					if(members[z].member->GetPet() && members[z].member->HasPetAffinity() && !members[z].member->GetPet()->IsCharmed())
-						members[z].member->GetPet()->BardPulse(spellid, caster);
+				if(members[z].member->GetPet() && members[z].member->HasPetAffinity() && !members[z].member->GetPet()->IsCharmed())
+					members[z].member->GetPet()->BardPulse(spellid, caster);
 #endif
-				} else
-					_log(SPELLS__BARDS, "Group bard pulse: %s is out of range %f at distance %f from %s", members[z].member->GetName(), range, distance, caster->GetName());
 			}
 		}
 	}

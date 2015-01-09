@@ -163,7 +163,8 @@ bool Client::Process() {
 				song_target = entity_list.GetMob(bardsong_target_id);
 			}
 
-			if (song_target == nullptr) {
+			if (song_target == nullptr || (IsCharmSpell(bardsong) && song_target->IsCharmed()))
+			{
 				InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
 			} else {
 				if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))

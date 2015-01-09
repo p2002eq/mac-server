@@ -10441,11 +10441,11 @@ void command_push(Client *c, const Seperator *sep){
 	else
 	{
 		bool success = false;
-		uint32 pushback = atoi(sep->arg[1]);
+		float pushback = atof(sep->arg[1]);
 		t = c->GetTarget();
 		if(sep->IsNumber(2))
 		{
-			uint32 pushup = atoi(sep->arg[2]);
+			float pushup = atof(sep->arg[2]);
 			if(t->DoKnockback(c, pushback, pushup))
 			{
 				success = true;
@@ -10461,7 +10461,7 @@ void command_push(Client *c, const Seperator *sep){
 
 		if(success)
 		{
-			c->Message(0, "%s was pushed for %i!", t->GetCleanName(), pushback);
+			c->Message(0, "%s was pushed for %0.1f!", t->GetCleanName(), pushback);
 			return;
 		}
 		else

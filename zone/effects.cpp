@@ -765,7 +765,11 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		//finally, make sure they are within range
 		if (bad) {
 			if (!caster->IsAttackAllowed(curmob, true))
+			{
+				_log(SPELLS__CASTING_ERR, "Attempting to cast a detrimental AE spell/song on a player.");
+				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
+			}
 			if (!center->CheckLosFN(curmob))
 				continue;
 		}
@@ -774,7 +778,11 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			// I've tested for spells that I can find without problem, but a faction-based
 			// check may still be needed. Any changes here should also reflect in BardAEPulse() -U
 			if (caster->IsAttackAllowed(curmob, true))
+			{
+				_log(SPELLS__CASTING_ERR, "Attempting to cast a beneficial AE spell/song on a NPC.");
+				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
+			}
 			if (caster->CheckAggro(curmob))
 				continue;
 		}

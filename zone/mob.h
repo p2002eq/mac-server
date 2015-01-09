@@ -590,9 +590,9 @@ public:
 	int32 GetFcDamageAmtIncoming(Mob *caster, uint32 spell_id, bool use_skill = false, uint16 skill=0);
 	int32 GetFocusIncoming(focusType type, int effect, Mob *caster, uint32 spell_id);
 	int16 GetSkillDmgTaken(const SkillUseTypes skill_used);
-	bool DoKnockback(Mob *caster, uint16 pushback, uint32 pushup);
-	bool CombatPush(Mob* attacker, uint16 pushback);
-	void GetPushHeadingMod(Mob* attacker, uint16 pushback, float &x_coord, float &y_coord);
+	bool DoKnockback(Mob *caster, float pushback, float pushup);
+	bool CombatPush(Mob* attacker, float pushback);
+	void GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float &y_coord);
 	int16 CalcResistChanceBonus();
 	int16 CalcFearResistChance();
 	void TrySpellOnKill(uint8 level, uint16 spell_id);

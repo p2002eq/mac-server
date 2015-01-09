@@ -3643,10 +3643,11 @@ int Mob::QGVarDuration(const char *fmt)
 	return duration;
 }
 
-bool Mob::DoKnockback(Mob *caster, uint16 pushback, uint32 pushup)
+bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 {
 	// This method should only be used for spell effects.
 
+	_log(SPELLS__CASTING, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
 	float new_x = GetX();
 	float new_y = GetY();
 	float new_z = GetZ() + pushup;
@@ -3654,6 +3655,7 @@ bool Mob::DoKnockback(Mob *caster, uint16 pushback, uint32 pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
+		_log(SPELLS__CASTING, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		x_pos = new_x;
 		y_pos = new_y;
 		z_pos = new_z;
@@ -3687,10 +3689,14 @@ bool Mob::DoKnockback(Mob *caster, uint16 pushback, uint32 pushup)
 		}
 		return true;
 	}
-	return false;
+	else
+	{
+		_log(SPELLS__CASTING, "DoKnockback(): LOS check failed.");
+		return false;
+	}
 }
 
-bool Mob::CombatPush(Mob* attacker, uint16 pushback)
+bool Mob::CombatPush(Mob* attacker, float pushback)
 {
 	// Use this method for stun/combat pushback.
 
@@ -3735,46 +3741,54 @@ bool Mob::CombatPush(Mob* attacker, uint16 pushback)
 	return false;
 }
 
-void Mob::GetPushHeadingMod(Mob* attacker, uint16 pushback, float &x_coord, float &y_coord)
+void Mob::GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float &y_coord)
 {
-
+	float heading = attacker->GetHeading();
 	float tmpx = 0.0f;
 	float tmpy = 0.0f;
+	bool reverse = false;
+
+	if(pushback < 0)
+	{
+		reverse = true;
+		pushback = abs(pushback);
+	}
+
 	//NW 32
-	if(attacker->GetHeading() >= 16 && attacker->GetHeading() <= 48)
+	if(heading >= 16 && heading <= 48)
 	{
 		tmpx = pushback;
 		tmpy = pushback;
 	}
 	//West 64
-	else if(attacker->GetHeading() >= 49 && attacker->GetHeading() <= 80)
+	else if(heading >= 49 && heading <= 80)
 	{
 		tmpx = pushback;
 	}
 	//SW 96
-	else if(attacker->GetHeading() >= 81 && attacker->GetHeading() <= 112)
+	else if(heading >= 81 && heading <= 112)
 	{
 		tmpx = pushback;
 		tmpy = -abs(pushback);
 	}
 	//South 128
-	else if(attacker->GetHeading() >= 113 && attacker->GetHeading() <= 144)
+	else if(heading >= 113 && heading <= 144)
 	{
 		tmpy = -abs(pushback);
 	}
 	//SE 160
-	else if(attacker->GetHeading() >= 145 && attacker->GetHeading() <= 176)
+	else if(heading >= 145 && heading <= 176)
 	{
 		tmpx = -abs(pushback);
 		tmpy = -abs(pushback);
 	}
 	//East 192
-	else if(attacker->GetHeading() >= 177 && attacker->GetHeading() <= 208)
+	else if(heading >= 177 && heading <= 208)
 	{
 		tmpx = -abs(pushback);
 	}
 	//NE 224
-	else if(attacker->GetHeading() >= 209 && attacker->GetHeading() <= 240)
+	else if(heading >= 209 && heading <= 240)
 	{
 		tmpx = -abs(pushback);
 		tmpy = pushback;
@@ -3785,6 +3799,19 @@ void Mob::GetPushHeadingMod(Mob* attacker, uint16 pushback, float &x_coord, floa
 		tmpy = pushback;
 	}
 	
+	if(reverse)
+	{
+		if(tmpx < 0)
+			tmpx = abs(tmpx);
+		else
+			tmpx = -abs(tmpx);
+
+		if(tmpy < 0)
+			tmpy = abs(tmpy);
+		else
+			tmpy = -abs(tmpy);
+	}
+
 	x_coord += tmpx;
 	y_coord += tmpy;
 }
