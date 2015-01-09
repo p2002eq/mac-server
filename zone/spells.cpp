@@ -3535,25 +3535,6 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		else
 			spell_effectiveness = spelltar->ResistSpell(spells[spell_id].resisttype, spell_id, this, use_resist_adjust, resist_adjust);
 
-		if(spell_effectiveness != 0 && spells[spell_id].resisttype != RESIST_NONE)
-		{
-			// On AK, charm and pacify were near impossible to land on a yellow or red.
-			if(IsCharmSpell(spell_id) || IsPacifySpell(spell_id))
-			{
-				uint8 con = GetLevelCon(spelltar->GetLevel());
-				if(con == CON_RED || con == CON_YELLOW)
-				{
-					uint8 roll = con-10;
-					if(!zone->random.Roll(roll))
-					{
-						mlog(SPELLS__RESISTS, "Charm/Pacify Spell %d was resisted due to con by %s. Con is: %i Roll is: %i Spell Effectiveness was: %0.2f", spell_id, spelltar->GetName(), con, roll, spell_effectiveness);
-						spell_effectiveness = 0;
-					}
-
-				}
-			}
-		}
-
 		if(spell_effectiveness < 100)
 		{
 			if(spell_effectiveness == 0 || !IsPartialCapableSpell(spell_id) )
@@ -4317,13 +4298,30 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			}
 			else
 				resist_modifier += ((75 - charisma)/10) * 6; //Increase Resist Chance
+
+			int8 leveldiff = GetLevel() - caster->GetLevel();
+			if(leveldiff >= 1)
+			{
+				resist_modifier += 20 * (leveldiff + leveldiff);
+			}
+			_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  Charisma check and we're not a fear spell. resist_modifier is: %i", spell_id, resist_modifier);
 		}
 	}
 
 	//Lull spells DO NOT use regular resists on initial cast, instead they use a flat +15 modifier. Live parses confirm this.
 	//Regular resists are used when checking if mob will aggro off of a lull resist.
 	if(!CharismaCheck && IsHarmonySpell(spell_id))
-		target_resist = 15;
+	{
+		int8 leveldiff = GetLevel() - caster->GetLevel();
+		if(leveldiff >= 1)
+		{
+			resist_modifier += 20 * (leveldiff + leveldiff);
+		}
+		else
+			target_resist = 15;
+
+		_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  No Charisma check and we're a lull/pacify/harmony spell. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
+	}
 
 	//Add our level, resist and -spell resist modifier to our roll chance
 	resist_chance += level_mod;
@@ -4365,6 +4363,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
+	_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d roll %i > resist_chance %i", spell_id, roll, resist_chance);
 	if(roll > resist_chance)
 	{
 		return 100;

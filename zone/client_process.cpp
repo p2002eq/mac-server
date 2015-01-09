@@ -577,14 +577,12 @@ bool Client::Process() {
 		}
 	}
 
-#ifdef REVERSE_AGGRO
 	//At this point, we are still connected, everything important has taken
 	//place, now check to see if anybody wants to aggro us.
 	// only if client is not feigned
 	if(ret && !GetFeigned() && scanarea_timer.Check()) {
 		entity_list.CheckClientAggro(this);
 	}
-#endif
 
 	if (client_state != CLIENT_LINKDEAD && (client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED)))
 	{

@@ -494,10 +494,8 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 	AItarget_check_timer = new Timer(AItarget_check_duration);
 	AIfeignremember_timer = new Timer(AIfeignremember_delay);
 	AIscanarea_timer = new Timer(AIscanarea_delay);
-#ifdef REVERSE_AGGRO
 	if(IsNPC() && !CastToNPC()->WillAggroNPCs())
 		AIscanarea_timer->Disable();
-#endif
 
 	if (GetAggroRange() == 0)
 		pAggroRange = 70;
@@ -1479,11 +1477,7 @@ void Mob::AI_Process() {
 		{
 			/*
 			* This is where NPCs look around to see if they want to attack anybody.
-			*
-			* if REVERSE_AGGRO is enabled, then this timer is disabled unless they
-			* have the npc_aggro flag on them, and aggro against clients is checked
-			* by the clients.
-			*
+			* It it only used if the NPC has npc_aggro enabled.
 			*/
 
 			Mob* tmptar = entity_list.AICheckCloseAggro(this, GetAggroRange(), GetAssistRange());
