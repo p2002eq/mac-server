@@ -235,7 +235,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	if(inst == nullptr) {
 		Message(CC_Red, "An unknown server error has occurred and your item was not created.");
 		// this goes to logfile since this is a major error
-		LogFile->write(EQEMuLog::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
+		LogFile->write(EQEmuLog::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
 			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5);
 
 		return false;
@@ -402,7 +402,7 @@ int32 Client::GetItemIDAt(int16 slot_id) {
 // Remove item from inventory
 void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) {
 	#if (EQDEBUG >= 5)
-		LogFile->write(EQEMuLog::Debug, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
+		LogFile->write(EQEmuLog::Debug, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
 	#endif
 
 	// Added 'IsSlotValid(slot_id)' check to both segments of client packet processing.

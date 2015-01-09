@@ -57,7 +57,7 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 	if (weapon && weapon->IsType(ItemClassCommon)) {
 		const Item_Struct* item = weapon->GetItem();
 #if EQDEBUG >= 11
-			LogFile->write(EQEMuLog::Debug, "Weapon skill:%i", item->ItemType);
+			LogFile->write(EQEmuLog::Debug, "Weapon skill:%i", item->ItemType);
 #endif
 		switch (item->ItemType)
 		{
@@ -183,7 +183,7 @@ bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 c
 		chancetohit += RuleR(Combat, NPCBonusHitChance);
 
 #if ATTACK_DEBUG>=11
-		LogFile->write(EQEMuLog::Debug, "CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
+		LogFile->write(EQEmuLog::Debug, "CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
 #endif
 	mlog(COMBAT__TOHIT,"CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
 
@@ -325,7 +325,7 @@ bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 c
 	//agains a garunteed riposte (for example) discipline... for now, garunteed hit wins
 
 	#if EQDEBUG>=11
-		LogFile->write(EQEMuLog::Debug, "3 FINAL calculated chance to hit is: %5.2f", chancetohit);
+		LogFile->write(EQEmuLog::Debug, "3 FINAL calculated chance to hit is: %5.2f", chancetohit);
 	#endif
 
 	//
@@ -1081,7 +1081,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 {
 	if (!other) {
 		SetTarget(nullptr);
-		LogFile->write(EQEMuLog::Error, "A null Mob object was passed to Client::Attack() for evaluation!");
+		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Client::Attack() for evaluation!");
 		return false;
 	}
 
@@ -1593,7 +1593,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 {   
 	if (!other) {
 		SetTarget(nullptr);
-		LogFile->write(EQEMuLog::Error, "A null Mob object was passed to NPC::Attack() for evaluation!");
+		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to NPC::Attack() for evaluation!");
 		return false;
 	}
 
@@ -1916,7 +1916,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	{
 		zone->DelAggroMob();
 #if EQDEBUG >= 11
-		LogFile->write(EQEMuLog::Debug,"NPC::Death() Mobs currently Aggro %i", zone->MobsAggroCount());
+		LogFile->write(EQEmuLog::Debug,"NPC::Death() Mobs currently Aggro %i", zone->MobsAggroCount());
 #endif
 	}
 	SetHP(0);
@@ -3664,7 +3664,7 @@ void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
 
 	if (!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEMuLog::Error, "A null Mob object was passed to Mob::TryDefensiveProc for evaluation!");
+		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TryDefensiveProc for evaluation!");
 		return;
 	}
 
@@ -3695,7 +3695,7 @@ void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
 void Mob::TryWeaponProc(const ItemInst* weapon_g, Mob *on, uint16 hand) {
 	if(!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEMuLog::Error, "A null Mob object was passed to Mob::TryWeaponProc for evaluation!");
+		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TryWeaponProc for evaluation!");
 		return;
 	}
 
@@ -4202,7 +4202,7 @@ void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, ui
 
 	if (!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEMuLog::Error, "A null Mob object was passed to Mob::TrySkillProc for evaluation!");
+		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TrySkillProc for evaluation!");
 		return;
 	}
 

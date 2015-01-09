@@ -84,12 +84,12 @@ bool Database::Connect(const char* host, const char* user, const char* passwd, c
 	uint32 errnum= 0;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	if (!Open(host, user, passwd, database, port, &errnum, errbuf)) {
-		LogFile->write(EQEMuLog::Error, "Failed to connect to database: Error: %s", errbuf);
+		LogFile->write(EQEmuLog::Error, "Failed to connect to database: Error: %s", errbuf);
 
 		return false; 
 	}
 	else {
-		LogFile->write(EQEMuLog::Status, "Using database '%s' at %s:%d",database,host,port);
+		LogFile->write(EQEmuLog::Status, "Using database '%s' at %s:%d",database,host,port);
 		return true;
 	}
 }
@@ -669,7 +669,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 	charid = GetCharacterID(pp->name);
 
 	if(!charid) {
-		LogFile->write(EQEMuLog::Error, "StoreCharacter: no character id");
+		LogFile->write(EQEmuLog::Error, "StoreCharacter: no character id");
 		return false;
 	}
 
@@ -700,10 +700,10 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 			auto results = QueryDatabase(invquery); 
 
 			if (!results.RowsAffected())
-				LogFile->write(EQEMuLog::Error, "StoreCharacter inventory failed. Query '%s' %s", invquery.c_str(), results.ErrorMessage().c_str());
+				LogFile->write(EQEmuLog::Error, "StoreCharacter inventory failed. Query '%s' %s", invquery.c_str(), results.ErrorMessage().c_str());
 #if EQDEBUG >= 9
 			else
-				LogFile->write(EQEMuLog::Debug, "StoreCharacter inventory succeeded. Query '%s'", invquery.c_str());
+				LogFile->write(EQEmuLog::Debug, "StoreCharacter inventory succeeded. Query '%s'", invquery.c_str());
 #endif
 		}
 
@@ -766,7 +766,7 @@ uint32 Database::GetAccountIDByChar(uint32 char_id) {
 	std::string query = StringFormat("SELECT `account_id` FROM `character_data` WHERE `id` = %i LIMIT 1", char_id); 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error in GetAccountIDByChar query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in GetAccountIDByChar query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return 0;
 	}
 
@@ -1573,7 +1573,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 	_log(DATABASE__LOG, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
-		LogFile->write(EQEMuLog::Error, "Error updating character_data table from CharacterJoin.");
+		LogFile->write(EQEmuLog::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
 	return true;
@@ -1584,7 +1584,7 @@ bool Database::CharacterQuit(uint32 char_id) {
 	auto results = QueryDatabase(query);
 	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
-		LogFile->write(EQEMuLog::Debug, "Error updating character_data table from CharacterQuit.");
+		LogFile->write(EQEmuLog::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
 	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i...", char_id);
@@ -1613,7 +1613,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 	_log(DATABASE__LOG, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEMuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
+		LogFile->write(EQEmuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
 		return false;
 	}
 	return true;
@@ -1624,10 +1624,10 @@ bool Database::ZoneDisconnect(uint32 id) {
 	auto results = QueryDatabase(query);
 		_log(DATABASE__LOG, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
-		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
 	}
-	LogFile->write(EQEMuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
+	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
 	return true;
 }
 
@@ -1650,7 +1650,7 @@ bool Database::LSConnected(uint32 port) {
 	_log(DATABASE__LOG, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEMuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
+		LogFile->write(EQEmuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
 		return false;
 	}
 	return true;
@@ -1661,10 +1661,10 @@ bool Database::LSDisconnect() {
 	auto results = QueryDatabase(query);
 	_log(DATABASE__LOG, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
-		LogFile->write(EQEMuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
+		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
 	}
-	LogFile->write(EQEMuLog::Error, "Updated webdata_servers table from LSDisconnect.");
+	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from LSDisconnect.");
 	return true;
 }
 
@@ -1692,7 +1692,7 @@ void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) {
 	std::string query = StringFormat( "UPDATE `character_data` SET `firstlogon` = %i WHERE `id` = %i",firstlogon, CharID);
 	auto results = QueryDatabase(query); 
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
 }
 
 void Database::AddReport(std::string who, std::string against, std::string lines) { 
@@ -1704,7 +1704,7 @@ void Database::AddReport(std::string who, std::string against, std::string lines
 	safe_delete_array(escape_str);
 
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
 }
 
 void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
@@ -1716,7 +1716,7 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 		auto results = QueryDatabase(query);
 
 		if (!results.Success())
-			LogFile->write(EQEMuLog::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
+			LogFile->write(EQEmuLog::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
 
 		return;
 	}
@@ -1726,7 +1726,7 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error adding character to group id: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error adding character to group id: %s", results.ErrorMessage().c_str());
 }
 
 void Database::ClearAllGroups(void)
@@ -1765,13 +1765,13 @@ uint32 Database::GetGroupID(const char* name){
 
 	if (!results.Success())
 	{
-		LogFile->write(EQEMuLog::Error, "Error getting group id: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error getting group id: %s", results.ErrorMessage().c_str());
 		return 0;
 	}
 
 	if (results.RowCount() == 0)
 	{
-		LogFile->write(EQEMuLog::Debug, "Character not in a group: %s", name);
+		LogFile->write(EQEmuLog::Debug, "Character not in a group: %s", name);
 		return 0;
 	}
 
@@ -2406,7 +2406,7 @@ void Database::GetCharactersInInstance(uint16 instance_id, std::list<uint32> &ch
 
 	if (!results.Success())
 	{
-		LogFile->write(EQEMuLog::Error, "Error in GetCharactersInInstace query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in GetCharactersInInstace query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -2556,7 +2556,7 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 	Don't use this for the login server. It should never have access to the game database. */
 
 bool Database::DBSetup() {
-	LogFile->write(EQEMuLog::Debug, "Database setup started..");
+	LogFile->write(EQEmuLog::Debug, "Database setup started..");
 	DBSetup_webdata_character();
 	DBSetup_webdata_servers();
 	DBSetup_feedback();
@@ -2576,13 +2576,13 @@ bool Database::DBSetup_webdata_character() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;	"
 			);
-		LogFile->write(EQEMuLog::Debug, "Attepting to create table webdata_character..");
+		LogFile->write(EQEmuLog::Debug, "Attepting to create table webdata_character..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEMuLog::Error, "Error creating webdata_character table.");
+			LogFile->write(EQEmuLog::Error, "Error creating webdata_character table.");
 			return false;
 		}
-		LogFile->write(EQEMuLog::Debug, "webdata_character table created.");
+		LogFile->write(EQEmuLog::Debug, "webdata_character table created.");
 	}
 	return true;
 }
@@ -2599,13 +2599,13 @@ bool Database::DBSetup_webdata_servers() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEMuLog::Debug, "Attepting to create table webdata_servers..");
+		LogFile->write(EQEmuLog::Debug, "Attepting to create table webdata_servers..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEMuLog::Error, "Error creating webdata_servers table.");
+			LogFile->write(EQEmuLog::Error, "Error creating webdata_servers table.");
 			return false;
 		}
-		LogFile->write(EQEMuLog::Debug, "webdata_servers table created.");
+		LogFile->write(EQEmuLog::Debug, "webdata_servers table created.");
 	}
 	return true;
 }
@@ -2624,13 +2624,13 @@ bool Database::DBSetup_feedback() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEMuLog::Debug, "Attepting to create table feedback..");
+		LogFile->write(EQEmuLog::Debug, "Attepting to create table feedback..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEMuLog::Error, "Error creating feedback table.");
+			LogFile->write(EQEmuLog::Error, "Error creating feedback table.");
 			return false;
 		}
-		LogFile->write(EQEMuLog::Debug, "feedback table created.");
+		LogFile->write(EQEmuLog::Debug, "feedback table created.");
 	}
 	return true;
 }
