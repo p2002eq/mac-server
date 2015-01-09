@@ -3057,11 +3057,13 @@ void command_unlock(Client *c, const Seperator *sep){
 	safe_delete(outpack);
 }
 
-void command_motd(Client *c, const Seperator *sep){
+void command_motd(Client *c, const Seperator *sep)
+{
 	ServerPacket* outpack = new ServerPacket(ServerOP_Motd, sizeof(ServerMotd_Struct));
 	ServerMotd_Struct* mss = (ServerMotd_Struct*)outpack->pBuffer;
 	strn0cpy(mss->myname, c->GetName(), 64);
 	strn0cpy(mss->motd, sep->argplus[1], 512);
+	c->Message(0, "MoTD is set.");
 	worldserver.SendPacket(outpack);
 	safe_delete(outpack);
 }
@@ -10284,12 +10286,16 @@ void command_questerrors(Client *c, const Seperator *sep){
 	}
 }
 
-void command_questupdate(Client *c, const Seperator *sep){
+void command_questupdate(Client *c, const Seperator *sep)
+{
 	system("svn update quests");
+	c->Message(0, "Quests is updated.");
 }
 
-void command_coredump(Client *c, const Seperator *sep){
+void command_coredump(Client *c, const Seperator *sep)
+{
 	system("./dump");
+	c->Message(0, "core dumped.");
 }
 
 void command_enablerecipe(Client *c, const Seperator *sep){
