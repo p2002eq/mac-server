@@ -4299,12 +4299,15 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			else
 				resist_modifier += ((75 - charisma)/10) * 6; //Increase Resist Chance
 
-			int8 leveldiff = GetLevel() - caster->GetLevel();
-			if(leveldiff >= 1)
+			if(IsHarmonySpell(spell_id) || IsCharmSpell(spell_id))
 			{
-				resist_modifier += 20 * (leveldiff + leveldiff);
+				int8 leveldiff = GetLevel() - caster->GetLevel();
+				if(leveldiff >= 1)
+				{
+					resist_modifier += 20 * (leveldiff + leveldiff);
+				}
+				_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
 			}
-			_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  Charisma check and we're not a fear spell. resist_modifier is: %i", spell_id, resist_modifier);
 		}
 	}
 
@@ -4320,7 +4323,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		else
 			target_resist = 15;
 
-		_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  No Charisma check and we're a lull/pacify/harmony spell. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
+		_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  No Charisma check. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
 	}
 
 	//Add our level, resist and -spell resist modifier to our roll chance
