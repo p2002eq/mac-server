@@ -1,7 +1,3 @@
-/*
- * vim: set noexpandtab tabstop=4 shiftwidth=4 syntax=cpp:
-*/
-
 /*	EQEMu: Everquest Server Emulator
 	Copyright (C) 2001-2004 EQEMu Development Team (http://eqemu.org)
 
@@ -1736,7 +1732,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 					else {
 						Message_StringID(CC_Red, TARGET_NOT_FOUND);
-						LogFile->write(EQEmuLog::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
+						logger.Log(EQEmuLogSys::Error,"%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
 					}
 				}
 

@@ -1081,7 +1081,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 {
 	if (!other) {
 		SetTarget(nullptr);
-		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Client::Attack() for evaluation!");
+		logger.Log(EQEmuLogSys::Error,"A null Mob object was passed to Client::Attack() for evaluation!");
 		return false;
 	}
 
@@ -1604,7 +1604,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 {   
 	if (!other) {
 		SetTarget(nullptr);
-		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to NPC::Attack() for evaluation!");
+		logger.Log(EQEmuLogSys::Error,"A null Mob object was passed to NPC::Attack() for evaluation!");
 		return false;
 	}
 
@@ -3679,7 +3679,7 @@ void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
 
 	if (!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TryDefensiveProc for evaluation!");
+		logger.Log(EQEmuLogSys::Error,"A null Mob object was passed to Mob::TryDefensiveProc for evaluation!");
 		return;
 	}
 
@@ -3710,7 +3710,7 @@ void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
 void Mob::TryWeaponProc(const ItemInst* weapon_g, Mob *on, uint16 hand) {
 	if(!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TryWeaponProc for evaluation!");
+		logger.Log(EQEmuLogSys::Error,"A null Mob object was passed to Mob::TryWeaponProc for evaluation!");
 		return;
 	}
 
@@ -4217,7 +4217,7 @@ void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, ui
 
 	if (!on) {
 		SetTarget(nullptr);
-		LogFile->write(EQEmuLog::Error, "A null Mob object was passed to Mob::TrySkillProc for evaluation!");
+		logger.Log(EQEmuLogSys::Error,"A null Mob object was passed to Mob::TrySkillProc for evaluation!");
 		return;
 	}
 

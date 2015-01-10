@@ -236,7 +236,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	if(inst == nullptr) {
 		Message(CC_Red, "An unknown server error has occurred and your item was not created.");
 		// this goes to logfile since this is a major error
-		LogFile->write(EQEmuLog::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
+		logger.Log(EQEmuLogSys::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
 			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5);
 
 		return false;
@@ -1084,7 +1084,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			if(!SwapItem(move_in))
 			{
 
-				mlog(INVENTORY__ERROR, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
+				logger.Log(EQEmuLogSys::Error, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
 				return false;
 			}
 			else
@@ -1092,7 +1092,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		if(!recursive_si)
 		{
-			_log(INVENTORY__ERROR, "From slot is invalid and Recursive SwapItem call failed. (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id); 
+			logger.Log(EQEmuLogSys::Error, "From slot is invalid and Recursive SwapItem call failed. (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id); 
 			return false;
 		}
 	}

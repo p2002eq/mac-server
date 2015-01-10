@@ -869,7 +869,7 @@ bool Group::LearnMembers() {
         return false;
 
     if (results.RowCount() == 0) {
-        LogFile->write(EQEmuLog::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        logger.Log(EQEmuLogSys::Error,"Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
 			return false;
     }
 
