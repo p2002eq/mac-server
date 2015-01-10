@@ -10294,18 +10294,31 @@ void command_questerrors(Client *c, const Seperator *sep)
 
 void command_updatequests(Client *c, const Seperator *sep)
 {
+	FILE *fp;
 #ifdef _WINDOWS
-	FILE *fp = _popen("svn update quests", "rt");
-#else
-	FILE *fp = popen("svn update quests", "rt");
-#endif
 	char buf[1024];
+	fp = _popen("svn update quests", "r");
 
-	while (fgets(buf, 1024, fp)) {
+	while (fgets(buf, 1024, fp))
+	{
 		const char * output = (const char *)buf;
 		c->Message(0, "%s", output);
 	}
 	fclose(fp);
+#else
+	char* buf = NULL;
+	size_t len = 0;
+	fflush(NULL);
+	fp = popen("svn update quests", "r");
+
+	while (getline(&buf, &len, fp) != -1)
+	{
+		const char * output = (const char *)buf;
+		c->Message(0, "%s", output);
+	}
+	free(buf);
+	fflush(fp);
+#endif
 	c->Message(0, "Quests are updated.");
 }
 
