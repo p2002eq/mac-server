@@ -103,7 +103,7 @@ npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
 QueryServ *QServ = 0;
 QuestParserCollection *parse = 0;
-EQEmuLogSys log_sys;
+EQEmuLogSys logger;
 
 const SPDat_Spell_Struct* spells;
 void LoadSpells(EQEmu::MemoryMappedFile **mmf);
@@ -147,6 +147,8 @@ int main(int argc, char** argv) {
 		worldserver.SetLauncherName("NONE");
 	}
 
+	
+
 	_log(ZONE__INIT, "Loading server configuration..");
 	if (!ZoneConfig::LoadConfig()) {
 		_log(ZONE__INIT_ERR, "Loading server configuration failed.");
@@ -173,6 +175,8 @@ int main(int argc, char** argv) {
 	}
 	guild_mgr.SetDatabase(&database);
 
+
+	logger.LogDebug(EQEmuLogSys::DebugLevel::General, "This is a crazy test message, database is %s and username is %s", Config->DatabaseDB.c_str(), Config->DatabaseUsername.c_str());
 
 #ifdef _EQDEBUG
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
