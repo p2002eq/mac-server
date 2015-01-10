@@ -43,6 +43,8 @@
 #include "../common/eqemu_exception.h"
 #include "../common/spdat.h"
 
+#include "../common/eqemu_logsys.h"
+
 #include "zone_config.h"
 #include "masterentity.h"
 #include "worldserver.h"
@@ -70,6 +72,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <time.h>
+#include <ctime>
 
 #ifdef _CRTDBG_MAP_ALLOC
 	#undef new
@@ -100,6 +103,7 @@ npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
 QueryServ *QServ = 0;
 QuestParserCollection *parse = 0;
+EQEmuLogSys log_sys;
 
 const SPDat_Spell_Struct* spells;
 void LoadSpells(EQEmu::MemoryMappedFile **mmf);
@@ -345,6 +349,10 @@ int main(int argc, char** argv) {
 
 		if (!eqsf.IsOpen() && Config->ZonePort!=0) {
 			_log(ZONE__INIT, "Starting EQ Network server on port %d",Config->ZonePort);
+
+			// log_sys.CloseZoneLogs();
+			// log_sys.StartZoneLogs(StringFormat("%s_ver-%u_instid-%u_port-%u", zone->GetShortName(), zone->GetInstanceVersion(), zone->GetInstanceID(), ZoneConfig::get()->ZonePort));
+
 			if (!eqsf.Open(Config->ZonePort)) {
 				_log(ZONE__INIT_ERR, "Failed to open port %d",Config->ZonePort);
 				ZoneConfig::SetZonePort(0);
