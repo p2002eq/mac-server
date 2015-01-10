@@ -8509,7 +8509,7 @@ void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(LFG_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		LogFile->write(EQEmuLog::Debug, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
 		return;
 	}
 
