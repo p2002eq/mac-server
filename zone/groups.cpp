@@ -16,6 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "masterentity.h"
 #include "npc_ai.h"
 #include "../common/packet_functions.h"
@@ -897,7 +898,7 @@ void Group::VerifyGroup() {
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (membername[i][0] == '\0') {
 #if EQDEBUG >= 7
-_log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
+	logger.LogDebug(EQEmuLogSys::General, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 #endif
 			members[i] = nullptr;
 			continue;
@@ -908,7 +909,7 @@ _log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 		Mob *them = entity_list.GetMob(membername[i]);
 		if(them == nullptr && members[i] != nullptr) {	//they arnt here anymore....
 #if EQDEBUG >= 6
-		_log(_GROUP__LOG, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
+		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
 #endif
 			membername[i][0] = '\0';
 			members[i] = nullptr;
@@ -917,13 +918,13 @@ _log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 
 		if(them != nullptr && members[i] != them) {	//our pointer is out of date... not so good.
 #if EQDEBUG >= 5
-		_log(_GROUP__LOG, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
+		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
 #endif
 			members[i] = them;
 			continue;
 		}
 #if EQDEBUG >= 8
-		_log(_GROUP__LOG, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
+		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
 #endif
 	}
 }

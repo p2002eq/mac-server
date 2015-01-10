@@ -17,6 +17,7 @@
 */
 
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/logsys.h"
 #include "../common/string_util.h"
 #include "quest_parser_collection.h"
@@ -402,7 +403,7 @@ int32 Client::GetItemIDAt(int16 slot_id) {
 // Remove item from inventory
 void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) {
 	#if (EQDEBUG >= 5)
-		LogFile->write(EQEmuLog::Debug, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
+		logger.LogDebug(EQEmuLogSys::General, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
 	#endif
 
 	// Added 'IsSlotValid(slot_id)' check to both segments of client packet processing.

@@ -17,6 +17,7 @@
 */
 
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/logsys.h"
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
@@ -911,7 +912,7 @@ int32 Client::CalcMaxMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			logger.LogDebug(EQEmuLogSys::General, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_mana = 0;
 			break;
 		}
@@ -932,7 +933,7 @@ int32 Client::CalcMaxMana()
 	}
 
 #if EQDEBUG >= 11
-	LogFile->write(EQEmuLog::Debug, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	logger.LogDebug(EQEmuLogSys::General, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
 #endif
 	return max_mana;
 }
@@ -983,14 +984,14 @@ int32 Client::CalcBaseMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			logger.LogDebug(EQEmuLogSys::General, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_m = 0;
 			break;
 		}
 	}
 
 #if EQDEBUG >= 11
-	LogFile->write(EQEmuLog::Debug, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
+	logger.LogDebug(EQEmuLogSys::General, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
 #endif
 	return max_m;
 }
