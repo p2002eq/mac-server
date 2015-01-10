@@ -187,7 +187,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	PetRecord record;
 	if(!database.GetPoweredPetEntry(pettype, petpower, &record)) {
 		Message(CC_Red, "Unable to find data for pet %s", pettype);
-		logger.Log(EQEmuLogSys::Error,"Unable to find data for pet %s, check pets table.", pettype);
+		logger.Log(EQEmuLogSys::Error, "Unable to find data for pet %s, check pets table.", pettype);
 		return;
 	}
 
@@ -195,7 +195,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	const NPCType *base = database.GetNPCType(record.npc_type);
 	if(base == nullptr) {
 		Message(CC_Red, "Unable to load NPC data for pet %s", pettype);
-		logger.Log(EQEmuLogSys::Error,"Unable to load NPC data for pet %s (NPC ID %d), check pets and npc_types tables.", pettype, record.npc_type);
+		logger.Log(EQEmuLogSys::Error, "Unable to load NPC data for pet %s (NPC ID %d), check pets and npc_types tables.", pettype, record.npc_type);
 		return;
 	}
 
@@ -410,7 +410,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
         auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
             // if the database query failed
-			logger.Log(EQEmuLogSys::Error,"Error querying database for monster summoning pet in zone %s (%s)", zone->GetShortName(), results.ErrorMessage().c_str());
+			logger.Log(EQEmuLogSys::Error, "Error querying database for monster summoning pet in zone %s (%s)", zone->GetShortName(), results.ErrorMessage().c_str());
 		}
 
         if (results.RowCount() != 0) {
@@ -432,7 +432,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 			npc_type->luclinface = monster->luclinface;
 			npc_type->helmtexture = monster->helmtexture;
 		} else
-			logger.Log(EQEmuLogSys::Error,"Error loading NPC data for monster summoning pet (NPC ID %d)", monsterid);
+			logger.Log(EQEmuLogSys::Error, "Error loading NPC data for monster summoning pet (NPC ID %d)", monsterid);
 
 	}
 
@@ -493,7 +493,7 @@ bool ZoneDatabase::GetPoweredPetEntry(const char *pet_type, int16 petpower, PetR
                             pet_type, petpower);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        logger.Log(EQEmuLogSys::Error,"Error in GetPoweredPetEntry query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+        logger.Log(EQEmuLogSys::Error, "Error in GetPoweredPetEntry query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
         return false;
     }
 
@@ -709,13 +709,13 @@ bool ZoneDatabase::GetBasePetItems(int32 equipmentset, uint32 *items) {
         std::string  query = StringFormat("SELECT nested_set FROM pets_equipmentset WHERE set_id = '%s'", curset);
 		auto results = QueryDatabase(query);
 		if (!results.Success()) {
-            logger.Log(EQEmuLogSys::Error,"Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+            logger.Log(EQEmuLogSys::Error, "Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 			return false;
         }
 
         if (results.RowCount() != 1) {
             // invalid set reference, it doesn't exist
-            logger.Log(EQEmuLogSys::Error,"Error in GetBasePetItems equipment set '%d' does not exist", curset);
+            logger.Log(EQEmuLogSys::Error, "Error in GetBasePetItems equipment set '%d' does not exist", curset);
             return false;
         }
 
@@ -725,7 +725,7 @@ bool ZoneDatabase::GetBasePetItems(int32 equipmentset, uint32 *items) {
         query = StringFormat("SELECT slot, item_id FROM pets_equipmentset_entries WHERE set_id='%s'", curset);
         results = QueryDatabase(query);
         if (!results.Success())
-            logger.Log(EQEmuLogSys::Error,"Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+            logger.Log(EQEmuLogSys::Error, "Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
         else {
             for (row = results.begin(); row != results.end(); ++row)
             {

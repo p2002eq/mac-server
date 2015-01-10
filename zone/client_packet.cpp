@@ -819,7 +819,7 @@ void Client::CheatDetected(CheatTypes CheatType, float x, float y, float z)
 void Client::Handle_Connect_OP_ClientError(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(ClientError_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size on OP_ClientError: Expected %i, Got %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size on OP_ClientError: Expected %i, Got %i",
 			sizeof(ClientError_Struct), app->size);
 		return;
 	}
@@ -970,7 +970,7 @@ void Client::Handle_Connect_OP_SetDataRate(const EQApplicationPacket *app)
 void Client::Handle_Connect_OP_SetServerFilter(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(SetServerFilter_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Received invalid sized OP_SetServerFilter");
+		logger.Log(EQEmuLogSys::Error, "Received invalid sized OP_SetServerFilter");
 		DumpPacket(app);
 		return;
 	}
@@ -987,7 +987,7 @@ void Client::Handle_Connect_OP_SpawnAppearance(const EQApplicationPacket *app)
 void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(uint32)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size on OP_TGB: Expected %i, Got %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size on OP_TGB: Expected %i, Got %i",
 			sizeof(uint32), app->size);
 		return;
 	}
@@ -1023,7 +1023,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	*/
 	Client* client = entity_list.GetClientByName(cze->char_name);
 	if (!zone->GetAuth(ip, cze->char_name, &WID, &account_id, &character_id, &admin, lskey, &tellsoff, &versionbit)) {
-		logger.Log(EQEmuLogSys::Error,"GetAuth() returned false kicking client");
+		logger.Log(EQEmuLogSys::Error, "GetAuth() returned false kicking client");
 		if (client != 0) {
 			client->Save();
 			client->Kick();
@@ -1399,7 +1399,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	p_timers.SetCharID(CharacterID());
 	if (!p_timers.Load(&database)) {
-		logger.Log(EQEmuLogSys::Error,"Unable to load ability timers from the database for %s (%i)!", GetCleanName(), CharacterID());
+		logger.Log(EQEmuLogSys::Error, "Unable to load ability timers from the database for %s (%i)!", GetCleanName(), CharacterID());
 	}
 
 	/* Load Spell Slot Refresh from Currently Memoried Spells */
@@ -1648,7 +1648,7 @@ void Client::Handle_OP_Action(const EQApplicationPacket *app)
 void Client::Handle_OP_Animation(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Animation_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Received invalid sized "
+		logger.Log(EQEmuLogSys::Error, "Received invalid sized "
 			"OP_Animation: got %d, expected %d", app->size,
 			sizeof(Animation_Struct));
 		DumpPacket(app);
@@ -1672,7 +1672,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(ApplyPoison_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
 		DumpPacket(app);
 		return;
 	}
@@ -1756,7 +1756,7 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != 4) {
-		logger.Log(EQEmuLogSys::Error,"OP size error: OP_AutoAttack expected:4 got:%i", app->size);
+		logger.Log(EQEmuLogSys::Error, "OP size error: OP_AutoAttack expected:4 got:%i", app->size);
 		return;
 	}
 
@@ -1832,7 +1832,7 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 	}
 	else {
 		_log(TRADING__CLIENT, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
-		logger.Log(EQEmuLogSys::Error,"Malformed BazaarSearch_Struct packet received, ignoring...\n");
+		logger.Log(EQEmuLogSys::Error, "Malformed BazaarSearch_Struct packet received, ignoring...\n");
 	}
 
 	return;
@@ -1925,7 +1925,7 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 		return;
 
 	if (app->size != sizeof(BindWound_Struct)){
-		logger.Log(EQEmuLogSys::Error,"Size mismatch for Bind wound packet");
+		logger.Log(EQEmuLogSys::Error, "Size mismatch for Bind wound packet");
 		DumpPacket(app);
 	}
 
@@ -1940,7 +1940,7 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 
 	Mob* bindmob = entity_list.GetMob(bind_in->to);
 	if (!bindmob){
-		logger.Log(EQEmuLogSys::Error,"Bindwound on non-exsistant mob from %s", this->GetName());
+		logger.Log(EQEmuLogSys::Error, "Bindwound on non-exsistant mob from %s", this->GetName());
 	}
 	else {
 		logger.LogDebug(EQEmuLogSys::General, "BindWound in: to:\'%s\' from=\'%s\'", bindmob->GetName(), GetName());
@@ -1987,7 +1987,7 @@ void Client::Handle_OP_Buff(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(SpellBuffFade_Struct))
 	{
-		logger.Log(EQEmuLogSys::Error,"Size mismatch in OP_Buff. expected %i got %i", sizeof(SpellBuffFade_Struct), app->size);
+		logger.Log(EQEmuLogSys::Error, "Size mismatch in OP_Buff. expected %i got %i", sizeof(SpellBuffFade_Struct), app->size);
 		DumpPacket(app);
 		return;
 	}
@@ -2068,7 +2068,7 @@ void Client::Handle_OP_Camp(const EQApplicationPacket *app)
 void Client::Handle_OP_CancelTrade(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(CancelTrade_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_CancelTrade, size=%i, expected %i", app->size, sizeof(CancelTrade_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_CancelTrade, size=%i, expected %i", app->size, sizeof(CancelTrade_Struct));
 		return;
 	}
 	Mob* with = trade->With();
@@ -2340,7 +2340,7 @@ void Client::Handle_OP_ChannelMessage(const EQApplicationPacket *app)
 void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(ClickDoor_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_ClickDoor, size=%i, expected %i", app->size, sizeof(ClickDoor_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_ClickDoor, size=%i, expected %i", app->size, sizeof(ClickDoor_Struct));
 		return;
 	}
 	ClickDoor_Struct* cd = (ClickDoor_Struct*)app->pBuffer;
@@ -2365,7 +2365,7 @@ void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 void Client::Handle_OP_ClickObject(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(ClickObject_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size on ClickObject_Struct: Expected %i, Got %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size on ClickObject_Struct: Expected %i, Got %i",
 			sizeof(ClickObject_Struct), app->size);
 		return;
 	}
@@ -2425,8 +2425,8 @@ void Client::Handle_OP_ClickObjectAction(const EQApplicationPacket *app)
 void Client::Handle_OP_ClientError(const EQApplicationPacket *app)
 {
 	ClientError_Struct* error = (ClientError_Struct*)app->pBuffer;
-	logger.Log(EQEmuLogSys::Error,"Client error: %s", error->character_name);
-	logger.Log(EQEmuLogSys::Error,"Error message:%s", error->message);
+	logger.Log(EQEmuLogSys::Error, "Client error: %s", error->character_name);
+	logger.Log(EQEmuLogSys::Error, "Error message:%s", error->message);
 	return;
 }
 
@@ -2930,7 +2930,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Consume_Struct))
 	{
-		logger.Log(EQEmuLogSys::Error,"OP size error: OP_Consume expected:%i got:%i", sizeof(Consume_Struct), app->size);
+		logger.Log(EQEmuLogSys::Error, "OP size error: OP_Consume expected:%i got:%i", sizeof(Consume_Struct), app->size);
 		return;
 	}
 	Consume_Struct* pcs = (Consume_Struct*)app->pBuffer;
@@ -2972,7 +2972,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 
 	ItemInst *myitem = GetInv().GetItem(pcs->slot);
 	if (myitem == nullptr) {
-		logger.Log(EQEmuLogSys::Error,"Consuming from empty slot %d", pcs->slot);
+		logger.Log(EQEmuLogSys::Error, "Consuming from empty slot %d", pcs->slot);
 		return;
 	}
 
@@ -2984,7 +2984,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		Consume(eat_item, ItemTypeDrink, pcs->slot, (pcs->auto_consumed == 0xffffffff));
 	}
 	else {
-		logger.Log(EQEmuLogSys::Error,"OP_Consume: unknown type, type:%i", (int)pcs->type);
+		logger.Log(EQEmuLogSys::Error, "OP_Consume: unknown type, type:%i", (int)pcs->type);
 		return;
 	}
 
@@ -3442,7 +3442,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(EnvDamage2_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Received invalid sized OP_EnvDamage: got %d, expected %d", app->size,
+		logger.Log(EQEmuLogSys::Error, "Received invalid sized OP_EnvDamage: got %d, expected %d", app->size,
 			sizeof(EnvDamage2_Struct));
 		DumpPacket(app);
 		return;
@@ -3496,7 +3496,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 void Client::Handle_OP_FaceChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(FaceChange_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for OP_FaceChange: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for OP_FaceChange: Expected: %i, Got: %i",
 			sizeof(FaceChange_Struct), app->size);
 		return;
 	}
@@ -3641,7 +3641,7 @@ void Client::Handle_OP_GMBecomeNPC(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size != sizeof(BecomeNPC_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMBecomeNPC, size=%i, expected %i", app->size, sizeof(BecomeNPC_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMBecomeNPC, size=%i, expected %i", app->size, sizeof(BecomeNPC_Struct));
 		return;
 	}
 	//entity_list.QueueClients(this, app, false);
@@ -3693,7 +3693,7 @@ void Client::Handle_OP_GMEmoteZone(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size != sizeof(GMEmoteZone_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMEmoteZone, size=%i, expected %i", app->size, sizeof(GMEmoteZone_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMEmoteZone, size=%i, expected %i", app->size, sizeof(GMEmoteZone_Struct));
 		return;
 	}
 	GMEmoteZone_Struct* gmez = (GMEmoteZone_Struct*)app->pBuffer;
@@ -3726,7 +3726,7 @@ void Client::Handle_OP_GMFind(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size != sizeof(GMSummon_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMFind, size=%i, expected %i", app->size, sizeof(GMSummon_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMFind, size=%i, expected %i", app->size, sizeof(GMSummon_Struct));
 		return;
 	}
 	//Break down incoming
@@ -3791,7 +3791,7 @@ void Client::Handle_OP_GMHideMe(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size != sizeof(SpawnAppearance_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMHideMe, size=%i, expected %i", app->size, sizeof(SpawnAppearance_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMHideMe, size=%i, expected %i", app->size, sizeof(SpawnAppearance_Struct));
 		return;
 	}
 	SpawnAppearance_Struct* sa = (SpawnAppearance_Struct*)app->pBuffer;
@@ -3841,7 +3841,7 @@ void Client::Handle_OP_GMKill(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size != sizeof(GMKill_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMKill, size=%i, expected %i", app->size, sizeof(GMKill_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMKill, size=%i, expected %i", app->size, sizeof(GMKill_Struct));
 		return;
 	}
 	GMKill_Struct* gmk = (GMKill_Struct *)app->pBuffer;
@@ -3908,7 +3908,7 @@ void Client::Handle_OP_GMLastName(const EQApplicationPacket *app)
 void Client::Handle_OP_GMNameChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(GMName_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_GMNameChange, size=%i, expected %i", app->size, sizeof(GMName_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_GMNameChange, size=%i, expected %i", app->size, sizeof(GMName_Struct));
 		return;
 	}
 	const GMName_Struct* gmn = (const GMName_Struct *)app->pBuffer;
@@ -4161,7 +4161,7 @@ void Client::Handle_OP_GMZoneRequest2(const EQApplicationPacket *app)
 		return;
 	}
 	if (app->size < sizeof(uint32)) {
-		logger.Log(EQEmuLogSys::Error,"OP size error: OP_GMZoneRequest2 expected:%i got:%i", sizeof(uint32), app->size);
+		logger.Log(EQEmuLogSys::Error, "OP size error: OP_GMZoneRequest2 expected:%i got:%i", sizeof(uint32), app->size);
 		return;
 	}
 
@@ -4173,7 +4173,7 @@ void Client::Handle_OP_GMZoneRequest2(const EQApplicationPacket *app)
 void Client::Handle_OP_GroupCancelInvite(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(GroupCancel_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for OP_GroupCancelInvite: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for OP_GroupCancelInvite: Expected: %i, Got: %i",
 			sizeof(GroupCancel_Struct), app->size);
 		return;
 	}
@@ -4200,7 +4200,7 @@ void Client::Handle_OP_GroupCancelInvite(const EQApplicationPacket *app)
 void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(GroupGeneric_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for GroupGeneric_Struct: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for GroupGeneric_Struct: Expected: %i, Got: %i",
 			sizeof(GroupGeneric_Struct), app->size);
 		return;
 	}
@@ -4331,7 +4331,7 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 		}
 		else
 		{
-			logger.Log(EQEmuLogSys::Error,"Failed to remove player from group. Unable to find player named %s in player group", gd->name2);
+			logger.Log(EQEmuLogSys::Error, "Failed to remove player from group. Unable to find player named %s in player group", gd->name2);
 		}
 	}
 	return;
@@ -4340,7 +4340,7 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(GroupGeneric_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for OP_GroupFollow: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for OP_GroupFollow: Expected: %i, Got: %i",
 			sizeof(GroupGeneric_Struct), app->size);
 		return;
 	}
@@ -4479,7 +4479,7 @@ void Client::Handle_OP_GroupInvite(const EQApplicationPacket *app)
 void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(GroupInvite_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for OP_GroupInvite: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for OP_GroupInvite: Expected: %i, Got: %i",
 			sizeof(GroupInvite_Struct), app->size);
 		return;
 	}
@@ -4994,7 +4994,7 @@ void Client::Handle_OP_Ignore(const EQApplicationPacket *app)
 void Client::Handle_OP_Illusion(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Illusion_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Received invalid sized OP_Illusion: got %d, expected %d", app->size,
+		logger.Log(EQEmuLogSys::Error, "Received invalid sized OP_Illusion: got %d, expected %d", app->size,
 			sizeof(Illusion_Struct));
 		DumpPacket(app);
 		return;
@@ -5044,7 +5044,7 @@ void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app)
 {
 
 	if (app->size != sizeof(Inspect_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_InspectRequest, size=%i, expected %i", app->size, sizeof(Inspect_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_InspectRequest, size=%i, expected %i", app->size, sizeof(Inspect_Struct));
 		return;
 	}
 
@@ -5135,7 +5135,7 @@ void Client::Handle_OP_LootItem(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(LootingItem_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_LootItem, size=%i, expected %i", app->size, sizeof(LootingItem_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_LootItem, size=%i, expected %i", app->size, sizeof(LootingItem_Struct));
 		return;
 	}
 	/*
@@ -5318,7 +5318,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 void Client::Handle_OP_MoveCoin(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(MoveCoin_Struct)){
-		logger.Log(EQEmuLogSys::Error,"Wrong size on OP_MoveCoin. Got: %i, Expected: %i", app->size, sizeof(MoveCoin_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size on OP_MoveCoin. Got: %i, Expected: %i", app->size, sizeof(MoveCoin_Struct));
 		DumpPacket(app);
 		return;
 	}
@@ -5337,7 +5337,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(MoveItem_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_MoveItem, size=%i, expected %i", app->size, sizeof(MoveItem_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_MoveItem, size=%i, expected %i", app->size, sizeof(MoveItem_Struct));
 		return;
 	}
 
@@ -5411,7 +5411,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(PetCommand_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_PetCommands, size=%i, expected %i", app->size, sizeof(PetCommand_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_PetCommands, size=%i, expected %i", app->size, sizeof(PetCommand_Struct));
 		return;
 	}
 	char val1[20] = { 0 };
@@ -5738,7 +5738,7 @@ void Client::Handle_OP_Petition(const EQApplicationPacket *app)
 void Client::Handle_OP_PetitionCheckIn(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Petition_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_PetitionCheckIn, size=%i, expected %i", app->size, sizeof(Petition_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_PetitionCheckIn, size=%i, expected %i", app->size, sizeof(Petition_Struct));
 		return;
 	}
 	Petition_Struct* inpet = (Petition_Struct*)app->pBuffer;
@@ -5782,7 +5782,7 @@ void Client::Handle_OP_PetitionCheckout(const EQApplicationPacket *app)
 void Client::Handle_OP_PetitionDelete(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(PetitionUpdate_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_PetitionDelete, size=%i, expected %i", app->size, sizeof(PetitionUpdate_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_PetitionDelete, size=%i, expected %i", app->size, sizeof(PetitionUpdate_Struct));
 		return;
 	}
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PetitionRefresh, sizeof(PetitionUpdate_Struct));
@@ -5820,7 +5820,7 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 
 	if (app->size != sizeof(PickPocket_Struct))
 	{
-		logger.Log(EQEmuLogSys::Error,"Size mismatch for Pick Pocket packet");
+		logger.Log(EQEmuLogSys::Error, "Size mismatch for Pick Pocket packet");
 		DumpPacket(app);
 	}
 
@@ -5889,7 +5889,7 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 {
 	if (app->size < sizeof(RaidGeneral_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_RaidCommand, size=%i, expected at least %i", app->size, sizeof(RaidGeneral_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_RaidCommand, size=%i, expected at least %i", app->size, sizeof(RaidGeneral_Struct));
 		DumpPacket(app);
 		return;
 	}
@@ -6461,7 +6461,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 void Client::Handle_OP_RandomReq(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(RandomReq_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_RandomReq, size=%i, expected %i", app->size, sizeof(RandomReq_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_RandomReq, size=%i, expected %i", app->size, sizeof(RandomReq_Struct));
 		return;
 	}
 	const RandomReq_Struct* rndq = (const RandomReq_Struct*)app->pBuffer;
@@ -6490,7 +6490,7 @@ void Client::Handle_OP_RandomReq(const EQApplicationPacket *app)
 void Client::Handle_OP_ReadBook(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(BookRequest_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_ReadBook, size=%i, expected %i", app->size, sizeof(BookRequest_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_ReadBook, size=%i, expected %i", app->size, sizeof(BookRequest_Struct));
 		return;
 	}
 	BookRequest_Struct* book = (BookRequest_Struct*)app->pBuffer;
@@ -6632,7 +6632,7 @@ void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app)
 	Sacrifice_Struct *ss = (Sacrifice_Struct*)app->pBuffer;
 
 	if (!PendingSacrifice) {
-		logger.Log(EQEmuLogSys::Error,"Unexpected OP_Sacrifice reply");
+		logger.Log(EQEmuLogSys::Error, "Unexpected OP_Sacrifice reply");
 		DumpPacket(app);
 		return;
 	}
@@ -6791,7 +6791,7 @@ void Client::Handle_OP_SetServerFilter(const EQApplicationPacket *app)
 {
 
 	if (app->size != sizeof(SetServerFilter_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Received invalid sized "
+		logger.Log(EQEmuLogSys::Error, "Received invalid sized "
 			"OP_SetServerFilter: got %d, expected %d", app->size,
 			sizeof(SetServerFilter_Struct));
 		DumpPacket(app);
@@ -6831,7 +6831,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(Shielding_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
+		logger.Log(EQEmuLogSys::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
 
 	}
@@ -6928,7 +6928,7 @@ void Client::Handle_OP_ShopEnd(const EQApplicationPacket *app)
 void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(Merchant_Sell_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size on OP_ShopPlayerBuy: Expected %i, Got %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size on OP_ShopPlayerBuy: Expected %i, Got %i",
 			sizeof(Merchant_Sell_Struct), app->size);
 		return;
 	}
@@ -7110,7 +7110,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			SendItemPacket(freeslotid, inst, ItemPacketTrade);
 	}
 	else if (!stacked){
-		logger.Log(EQEmuLogSys::Error,"OP_ShopPlayerBuy: item->ItemClass Unknown! Type: %i", item->ItemClass);
+		logger.Log(EQEmuLogSys::Error, "OP_ShopPlayerBuy: item->ItemClass Unknown! Type: %i", item->ItemClass);
 	}
 
 	QueuePacket(outapp);
@@ -7195,7 +7195,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(Merchant_Purchase_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size on OP_ShopPlayerSell: Expected %i, Got %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size on OP_ShopPlayerSell: Expected %i, Got %i",
 			sizeof(Merchant_Purchase_Struct), app->size);
 		return;
 	}
@@ -7338,7 +7338,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app) 
 {
 	if (app->size != sizeof(Merchant_Click_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_ShopRequest, size=%i, expected %i", app->size, sizeof(Merchant_Click_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_ShopRequest, size=%i, expected %i", app->size, sizeof(Merchant_Click_Struct));
 		return;
 	}
 
@@ -7635,7 +7635,7 @@ void Client::Handle_OP_Split(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(Split_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_Split, size=%i, expected %i", app->size, sizeof(Split_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_Split, size=%i, expected %i", app->size, sizeof(Split_Struct));
 		return;
 	}
 	// The client removes the money on its own, but we have to
@@ -7758,7 +7758,7 @@ void Client::Handle_OP_SwapSpell(const EQApplicationPacket *app)
 void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(ClientTarget_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"OP size error: OP_TargetMouse expected:%i got:%i", sizeof(ClientTarget_Struct), app->size);
+		logger.Log(EQEmuLogSys::Error, "OP size error: OP_TargetMouse expected:%i got:%i", sizeof(ClientTarget_Struct), app->size);
 		return;
 	}
 
@@ -8221,7 +8221,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			_log(TRADING__CLIENT, "Client::Handle_OP_Trader: Unknown TraderStruct code of: %i\n",
 				ints->Code);
 
-			logger.Log(EQEmuLogSys::Error,"Unknown TraderStruct code of: %i\n", ints->Code);
+			logger.Log(EQEmuLogSys::Error, "Unknown TraderStruct code of: %i\n", ints->Code);
 		}
 	}
 
@@ -8231,7 +8231,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 	}
 	else {
 		_log(TRADING__CLIENT, "Unknown size for OP_Trader: %i\n", app->size);
-		logger.Log(EQEmuLogSys::Error,"Unknown size for OP_Trader: %i\n", app->size);
+		logger.Log(EQEmuLogSys::Error, "Unknown size for OP_Trader: %i\n", app->size);
 		DumpPacket(app);
 		return;
 	}
@@ -8276,7 +8276,7 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(TradeRequest_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_TradeRequest, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_TradeRequest, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
 		return;
 	}
 	// Client requesting a trade session from an npc/client
@@ -8317,7 +8317,7 @@ void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(TradeRequest_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Wrong size: OP_TradeRequestAck, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
+		logger.Log(EQEmuLogSys::Error, "Wrong size: OP_TradeRequestAck, size=%i, expected %i", app->size, sizeof(TradeRequest_Struct));
 		return;
 	}
 	// Trade request recipient is acknowledging they are able to trade
@@ -8392,7 +8392,7 @@ void Client::Handle_OP_TradeSkillCombine(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(NewCombine_Struct)) {
-		logger.Log(EQEmuLogSys::Error,"Invalid size for NewCombine_Struct: Expected: %i, Got: %i",
+		logger.Log(EQEmuLogSys::Error, "Invalid size for NewCombine_Struct: Expected: %i, Got: %i",
 			sizeof(NewCombine_Struct), app->size);
 		return;
 	}

@@ -308,7 +308,7 @@ const ItemInst* Object::GetItem(uint8 index) {
 void Object::PutItem(uint8 index, const ItemInst* inst)
 {
 	if (index > 9) {
-		logger.Log(EQEmuLogSys::Error,"Object::PutItem: Invalid index specified (%i)", index);
+		logger.Log(EQEmuLogSys::Error, "Object::PutItem: Invalid index specified (%i)", index);
 		return;
 	}
 
@@ -591,7 +591,7 @@ uint32 ZoneDatabase::AddObject(uint32 type, uint32 icon, const Object_Struct& ob
     safe_delete_array(object_name);
 	results = QueryDatabase(query);
 	if (!results.Success()) {
-		logger.Log(EQEmuLogSys::Error,"Unable to insert object: %s", results.ErrorMessage().c_str());
+		logger.Log(EQEmuLogSys::Error, "Unable to insert object: %s", results.ErrorMessage().c_str());
 		return 0;
 	}
 
@@ -628,7 +628,7 @@ void ZoneDatabase::UpdateObject(uint32 id, uint32 type, uint32 icon, const Objec
     safe_delete_array(object_name);
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		logger.Log(EQEmuLogSys::Error,"Unable to update object: %s", results.ErrorMessage().c_str());
+		logger.Log(EQEmuLogSys::Error, "Unable to update object: %s", results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -673,7 +673,7 @@ void ZoneDatabase::DeleteObject(uint32 id)
 	std::string query = StringFormat("DELETE FROM object WHERE id = %i", id);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		logger.Log(EQEmuLogSys::Error,"Unable to delete object: %s", results.ErrorMessage().c_str());
+		logger.Log(EQEmuLogSys::Error, "Unable to delete object: %s", results.ErrorMessage().c_str());
 	}
 	else
 	{
