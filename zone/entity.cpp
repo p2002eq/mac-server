@@ -4320,3 +4320,10 @@ void EntityList::SendLFG(Client* client, bool lfg)
 		++it;
 	}
 }
+void EntityList::StopMobAI()
+{
+	for (auto &mob : mob_list) {
+		mob.second->AI_Stop();
+		mob.second->AI_ShutDown();
+	}
+}
