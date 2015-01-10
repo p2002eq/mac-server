@@ -600,7 +600,7 @@ void EntityList::AddGroup(Group *group)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		LogFile->write(EQEmuLog::Error,
+		logger.Log(EQEmuLogSys::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
@@ -629,7 +629,7 @@ void EntityList::AddRaid(Raid *raid)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		LogFile->write(EQEmuLog::Error,
+		logger.Log(EQEmuLogSys::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
