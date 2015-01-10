@@ -1053,7 +1053,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		struct in_addr ghost_addr;
 		ghost_addr.s_addr = eqs->GetRemoteIP();
 
-		LogFile->write(EQEmuLog::Error, "Ghosting client: Account ID:%i Name:%s Character:%s IP:%s",
+		logger.Log(EQEmuLogSys::Error, "Ghosting client: Account ID:%i Name:%s Character:%s IP:%s",
 			client->AccountID(), client->AccountName(), client->GetName(), inet_ntoa(ghost_addr));
 		client->Save();
 		client->Disconnect();
@@ -3918,7 +3918,7 @@ void Client::Handle_OP_GMNameChange(const EQApplicationPacket *app)
 		return;
 	}
 	Client* client = entity_list.GetClientByName(gmn->oldname);
-	LogFile->write(EQEmuLog::Status, "GM(%s) changeing players name. Old:%s New:%s", GetName(), gmn->oldname, gmn->newname);
+	logger.Log(EQEmuLogSys::Status, "GM(%s) changeing players name. Old:%s New:%s", GetName(), gmn->oldname, gmn->newname);
 	bool usedname = database.CheckUsedName((const char*)gmn->newname);
 	if (client == 0) {
 		Message(CC_Red, "%s not found for name change. Operation failed!", gmn->oldname);
@@ -5117,7 +5117,7 @@ void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Logout(const EQApplicationPacket *app)
 {
-	//LogFile->write(EQEmuLog::Debug, "%s sent a logout packet.", GetName());
+	//logger.LogDebug(EQEmuLogSys:EQEmuLogSys::Detail, "%s sent a logout packet.", GetName());
 	//we will save when we get destroyed soon anyhow
 	//Save();
 
