@@ -2167,7 +2167,7 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 	}
 
 	if (log) {
-		_log(INVENTORY__ERROR, "Target interrogate inventory flag: %s", (GetInterrogateInvState() ? "TRUE" : "FALSE"));
+		logger.Log(EQEmuLogSys::Error, "Target interrogate inventory flag: %s", (GetInterrogateInvState() ? "TRUE" : "FALSE"));
 		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Client::InterrogateInventory() -- End");
 	}
 	if (!silent) {
@@ -2212,7 +2212,7 @@ void Client::InterrogateInventory_(bool errorcheck, Client* requester, int16 hea
 		else { e = ""; }
 
 		if (log)
-			_log(INVENTORY__ERROR, "Head: %i, Depth: %i, Instance: %s, Parent: %s%s",
+			logger.Log(EQEmuLogSys::Error, "Head: %i, Depth: %i, Instance: %s, Parent: %s%s",
 			head, depth, i.c_str(), p.c_str(), e.c_str());
 		if (!silent)
 			requester->Message(1, "%i:%i - inst: %s - parent: %s%s",

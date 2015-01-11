@@ -257,7 +257,7 @@ void ZoneGuildManager::ProcessWorldPacket(ServerPacket *pack) {
 	switch(pack->opcode) {
 	case ServerOP_RefreshGuild: {
 		if(pack->size != sizeof(ServerGuildRefresh_Struct)) {
-			_log(GUILDS__ERROR, "Received ServerOP_RefreshGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildRefresh_Struct));
+			logger.Log(EQEmuLogSys::Error, "Received ServerOP_RefreshGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildRefresh_Struct));
 			return;
 		}
 		ServerGuildRefresh_Struct *s = (ServerGuildRefresh_Struct *) pack->pBuffer;
@@ -291,7 +291,7 @@ void ZoneGuildManager::ProcessWorldPacket(ServerPacket *pack) {
 
 	case ServerOP_GuildCharRefresh: {
 		if(pack->size != sizeof(ServerGuildCharRefresh_Struct)) {
-			_log(GUILDS__ERROR, "Received ServerOP_RefreshGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildCharRefresh_Struct));
+			logger.Log(EQEmuLogSys::Error, "Received ServerOP_RefreshGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildCharRefresh_Struct));
 			return;
 		}
 		ServerGuildCharRefresh_Struct *s = (ServerGuildCharRefresh_Struct *) pack->pBuffer;
@@ -314,7 +314,7 @@ void ZoneGuildManager::ProcessWorldPacket(ServerPacket *pack) {
 
 	case ServerOP_DeleteGuild: {
 		if(pack->size != sizeof(ServerGuildID_Struct)) {
-			_log(GUILDS__ERROR, "Received ServerOP_DeleteGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildID_Struct));
+			logger.Log(EQEmuLogSys::Error, "Received ServerOP_DeleteGuild of incorrect size %d, expected %d", pack->size, sizeof(ServerGuildID_Struct));
 			return;
 		}
 		ServerGuildID_Struct *s = (ServerGuildID_Struct *) pack->pBuffer;
