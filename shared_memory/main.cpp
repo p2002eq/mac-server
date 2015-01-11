@@ -17,6 +17,8 @@
 */
 
 #include <stdio.h>
+
+#include "../common/eqemu_logsys.h"
 #include "../common/debug.h"
 #include "../common/eqemu_logsys.h"
 #include "../common/shareddb.h"

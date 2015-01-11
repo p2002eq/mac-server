@@ -31,8 +31,6 @@
 #include <list>
 #include <signal.h>
 
-EQEmuLogSys logger;
-
 volatile bool RunLoops = true;
 
 TimeoutManager timeout_manager;
@@ -40,6 +38,7 @@ Database database;
 std::string WorldShortName;
 const queryservconfig *Config;
 WorldServer *worldserver = 0;
+EQEmuLogSys logger;
 
 void CatchSignal(int sig_num) { 
 	RunLoops = false; 

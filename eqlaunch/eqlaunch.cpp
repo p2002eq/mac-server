@@ -17,7 +17,7 @@
 */
 
 #include "../common/debug.h"
-#include "../../common/eqemu_logsys.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/proc_launcher.h"
 #include "../common/eqemu_config.h"
 #include "../common/servertalk.h"
