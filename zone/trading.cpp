@@ -367,7 +367,7 @@ void Client::ResetTrade() {
 					break;
 
 				if (partial_inst->GetID() != inst->GetID()) {
-					_log(TRADING__ERROR, "Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
+					logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
 
 					break;
 				}
@@ -629,7 +629,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 							break;
 
 						if (partial_inst->GetID() != inst->GetID()) {
-							_log(TRADING__ERROR, "Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
+							logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Client::ResetTrade() - an incompatible location reference was returned by Inventory::FindFreeSlotForTradeItem()");
 							break;
 						}
 
@@ -1555,7 +1555,7 @@ static void BazaarAuditTrail(const char *seller, const char *buyer, const char *
                                     seller, buyer, itemName, quantity, totalCost, tranType);
     auto results = database.QueryDatabase(query);
 	if(!results.Success())
-		_log(TRADING__CLIENT, "Audit write error: %s : %s", query.c_str(), results.ErrorMessage().c_str());
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Audit write error: %s : %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 
@@ -1889,7 +1889,7 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
                                     searchValues.c_str(), searchCriteria.c_str(), RuleI(Bazaar, MaxSearchResults));
     auto results = database.QueryDatabase(query);
     if (!results.Success()) {
-        _log(TRADING__CLIENT, "Failed to retrieve Bazaar Search!! %s %s\n", query.c_str(), results.ErrorMessage().c_str());
+        logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to retrieve Bazaar Search!! %s %s\n", query.c_str(), results.ErrorMessage().c_str());
 		return;
     }
 
@@ -2110,7 +2110,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 	TraderCharges_Struct* gis = database.LoadTraderItemWithCharges(CharacterID());
 
 	if(!gis) {
-		_log(TRADING__CLIENT, "Error retrieving Trader items details to update price.");
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Error retrieving Trader items details to update price.");
 		return;
 	}
 

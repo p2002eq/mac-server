@@ -641,7 +641,7 @@ void ZoneDatabase::SaveTraderItem(uint32 CharID, uint32 ItemID, uint32 SerialNum
                                     CharID, ItemID, SerialNumber, Charges, ItemCost, Slot);
     auto results = QueryDatabase(query);
     if (!results.Success())
-        _log(TRADING__CLIENT, "Failed to save trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
+        logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to save trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
 
 }
 
@@ -652,7 +652,7 @@ void ZoneDatabase::UpdateTraderItemCharges(int CharID, uint32 SerialNumber, int3
                                     Charges, CharID, SerialNumber);
     auto results = QueryDatabase(query);
     if (!results.Success())
-		_log(TRADING__CLIENT, "Failed to update charges for trader item: %i for char_id: %i, the error was: %s\n",
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to update charges for trader item: %i for char_id: %i, the error was: %s\n",
                                 SerialNumber, CharID, results.ErrorMessage().c_str());
 
 }
@@ -672,7 +672,7 @@ void ZoneDatabase::UpdateTraderItemPrice(int CharID, uint32 ItemID, uint32 Charg
         std::string query = StringFormat("DELETE FROM trader WHERE char_id = %i AND item_id = %i",CharID, ItemID);
         auto results = QueryDatabase(query);
         if (!results.Success())
-			_log(TRADING__CLIENT, "Failed to remove trader item(s): %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
+			logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to remove trader item(s): %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
 
 		return;
 	}
@@ -683,7 +683,7 @@ void ZoneDatabase::UpdateTraderItemPrice(int CharID, uint32 ItemID, uint32 Charg
                                         NewPrice, CharID, ItemID, Charges);
         auto results = QueryDatabase(query);
         if (!results.Success())
-            _log(TRADING__CLIENT, "Failed to update price for trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
+            logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to update price for trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
 
         return;
     }
@@ -693,7 +693,7 @@ void ZoneDatabase::UpdateTraderItemPrice(int CharID, uint32 ItemID, uint32 Charg
                                     NewPrice, CharID, ItemID);
     auto results = QueryDatabase(query);
     if (!results.Success())
-            _log(TRADING__CLIENT, "Failed to update price for trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
+            logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to update price for trader item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
 }
 
 void ZoneDatabase::DeleteTraderItem(uint32 char_id){
@@ -702,7 +702,7 @@ void ZoneDatabase::DeleteTraderItem(uint32 char_id){
         const std::string query = "DELETE FROM trader";
         auto results = QueryDatabase(query);
 		if (!results.Success())
-			_log(TRADING__CLIENT, "Failed to delete all trader items data, the error was: %s\n", results.ErrorMessage().c_str());
+			logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete all trader items data, the error was: %s\n", results.ErrorMessage().c_str());
 
         return;
 	}
@@ -710,7 +710,7 @@ void ZoneDatabase::DeleteTraderItem(uint32 char_id){
 	std::string query = StringFormat("DELETE FROM trader WHERE char_id = %i", char_id);
 	auto results = QueryDatabase(query);
     if (!results.Success())
-        _log(TRADING__CLIENT, "Failed to delete trader item data for char_id: %i, the error was: %s\n", char_id, results.ErrorMessage().c_str());
+        logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete trader item data for char_id: %i, the error was: %s\n", char_id, results.ErrorMessage().c_str());
 
 }
 void ZoneDatabase::DeleteTraderItem(uint32 CharID,uint16 SlotID) {
@@ -718,7 +718,7 @@ void ZoneDatabase::DeleteTraderItem(uint32 CharID,uint16 SlotID) {
 	std::string query = StringFormat("DELETE FROM trader WHERE char_id = %i And slot_id = %i", CharID, SlotID);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		_log(TRADING__CLIENT, "Failed to delete trader item data for char_id: %i, the error was: %s\n",CharID, results.ErrorMessage().c_str());
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete trader item data for char_id: %i, the error was: %s\n",CharID, results.ErrorMessage().c_str());
 }
 
 void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
@@ -727,7 +727,7 @@ void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
         const std::string query = "DELETE FROM buyer";
 		auto results = QueryDatabase(query);
         if (!results.Success())
-			_log(TRADING__CLIENT, "Failed to delete all buyer items data, the error was: %s\n",results.ErrorMessage().c_str());
+			logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete all buyer items data, the error was: %s\n",results.ErrorMessage().c_str());
 
         return;
 	}
@@ -735,7 +735,7 @@ void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
     std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i", CharID);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-			_log(TRADING__CLIENT, "Failed to delete buyer item data for charid: %i, the error was: %s\n",CharID,results.ErrorMessage().c_str());
+			logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete buyer item data for charid: %i, the error was: %s\n",CharID,results.ErrorMessage().c_str());
 
 }
 
@@ -744,7 +744,7 @@ void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, cons
                                     CharID, BuySlot, ItemID, ItemName, Quantity, Price);
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		_log(TRADING__CLIENT, "Failed to save buline item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to save buline item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
 
 }
 
@@ -752,7 +752,7 @@ void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
 	std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i AND buyslot = %i", CharID, BuySlot);
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		_log(TRADING__CLIENT, "Failed to delete buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to delete buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
 
 }
 
@@ -765,7 +765,7 @@ void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity)
 	std::string query = StringFormat("UPDATE buyer SET quantity = %i WHERE charid = %i AND buyslot = %i", Quantity, CharID, BuySlot);
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		_log(TRADING__CLIENT, "Failed to update quantity in buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Failed to update quantity in buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
 
 }
 

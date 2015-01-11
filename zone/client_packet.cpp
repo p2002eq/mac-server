@@ -620,7 +620,7 @@ void Client::CompleteConnect()
 
 	//enforce some rules..
 	if (!CanBeInZone()) {
-		_log(CLIENT__ERROR, "Kicking char from zone, not allowed here");
+		logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] Kicking char from zone, not allowed here");
 		GoToSafeCoords(database.GetZoneID("arena"), 0);
 		return;
 	}
