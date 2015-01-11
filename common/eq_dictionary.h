@@ -131,10 +131,6 @@ public:
 	//static const uint32 CLASS_BITMASK = 0;	// needs value
 	//static const uint32 RACE_BITMASK = 0;	// needs value
 
-	// BANDOLIERS_COUNT sets maximum limit..active limit will need to be handled by the appropriate AA
-	static const uint32 BANDOLIERS_COUNT = MAC::consts::BANDOLIERS_COUNT;	// count = number of bandolier instances
-	static const uint32 BANDOLIER_SIZE = MAC::consts::BANDOLIER_SIZE;		// size = number of equipment slots in bandolier instance
-	static const uint32 POTION_BELT_SIZE = MAC::consts::POTION_BELT_SIZE;
 
 	// legacy-related functions
 	//static int ServerToPerlSlot(int slot);	// encode
@@ -179,10 +175,6 @@ public:
 	// player profile
 	static bool	CoinHasWeight(uint32 version);
 
-	static uint32	BandoliersCount(uint32 version);
-	static uint32	BandolierSize(uint32 version);
-
-	static uint32	PotionBeltSize(uint32 version);
 };
 
 #endif /* EQ_LIMITS_H */

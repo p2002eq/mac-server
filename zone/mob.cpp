@@ -3316,8 +3316,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Attuneable);
 	if (id == "nopet")
 		stat = int32(item->NoPet);
-	if (id == "potionbelt")
-		stat = int32(item->PotionBelt);
 	if (id == "stackable")
 		stat = int32(item->Stackable);
 	if (id == "notransfer")
@@ -3326,8 +3324,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->QuestItemFlag);
 	if (id == "stacksize")
 		stat = int32(item->StackSize);
-	if (id == "potionbeltslots")
-		stat = int32(item->PotionBeltSlots);
 	if (id == "book")
 		stat = int32(item->Book);
 	if (id == "booktype")

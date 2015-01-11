@@ -193,8 +193,6 @@ public:
 	bool	LoadCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterMaterialColor(uint32 character_id, PlayerProfile_Struct* pp);
-	bool	LoadCharacterBandolier(uint32 character_id, PlayerProfile_Struct* pp);
-	bool	LoadCharacterPotions(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
 
 	/* Character Data Saves  */
@@ -208,15 +206,12 @@ public:
 	bool	SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value);
 	bool	SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value);
 	bool	SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id);
-	bool	SaveCharacterBandolier(uint32 character_id, uint8 bandolier_id, uint8 bandolier_slot, uint32 item_id, uint32 icon, const char* bandolier_name);
-	bool	SaveCharacterPotionBelt(uint32 character_id, uint8 potion_id, uint32 item_id, uint32 icon);
 	bool	SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
 
 	/* Character Data Deletes   */
 	bool	DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterDisc(uint32 character_id, uint32 slot_id);
-	bool	DeleteCharacterBandolier(uint32 character_id, uint32 band_id);
 	bool	DeleteCharacterLeadershipAAs(uint32 character_id);
 	bool	DeleteCharacterAAs(uint32 character_id);
 	bool	DeleteCharacterDye(uint32 character_id);

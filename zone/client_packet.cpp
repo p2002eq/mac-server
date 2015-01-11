@@ -2128,7 +2128,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
 	}
 	/* Item Spell Slot or Potion Belt Slot */
-	else if ((castspell->slot == USE_ITEM_SPELL_SLOT) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// ITEM or POTION cast
+	else if ((castspell->slot == USE_ITEM_SPELL_SLOT))	// ITEM or POTION cast
 	{
 		//discipline, using the item spell slot
 		if (castspell->inventoryslot == INVALID_INDEX) {
@@ -2138,7 +2138,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			}
 			return;
 		}
-		else if (m_inv.SupportsClickCasting(castspell->inventoryslot) || (castspell->slot == POTION_BELT_SPELL_SLOT))	// sanity check
+		else if (m_inv.SupportsClickCasting(castspell->inventoryslot))	// sanity check
 		{
 			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
 				int guideClicks[] = { 30, 35, 36, 84, 119, 206, 214, 354, 595, 722, 778, 810, 811, 813, 814, 815, 816, 817, 818, 
