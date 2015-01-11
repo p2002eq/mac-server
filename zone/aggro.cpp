@@ -82,8 +82,8 @@ void EntityList::DescribeAggro(Client *towho, NPC *from_who, float d, bool verbo
 
 	for (auto it = mob_list.begin(); it != mob_list.end(); ++it) {
 		Mob *mob = it->second;
-		if (mob->IsClient())	//also ensures that mob != around
-			continue;
+	//	if (mob->IsClient())	//also ensures that mob != around
+	//		continue;
 
 		if (mob->DistNoRoot(*from_who) > d2)
 			continue;
@@ -96,9 +96,9 @@ void EntityList::DescribeAggro(Client *towho, NPC *from_who, float d, bool verbo
 				towho->Message(0, "... %s is on my hate list with value %lu", mob->GetName(), (unsigned long)amm);
 		} else if (!check_npcs && mob->IsNPC()) {
 				towho->Message(0, "... %s is an NPC and my npc_aggro is disabled.", mob->GetName());
-		} else {
-			from_who->DescribeAggro(towho, mob, verbose);
-		}
+		} 
+			
+		from_who->DescribeAggro(towho, mob, verbose);
 	}
 }
 
@@ -137,13 +137,25 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		)
 		))
 	{
-		towho->Message(0, "...%s is my owner. ", mob->GetName());
+		towho->Message(0, "...%s a GM or is not connected. ", mob->GetName());
 		return;
 	}
 
 
 	if(mob == GetOwner()) {
-		towho->Message(0, "...%s a GM or is not connected. ", mob->GetName());
+		towho->Message(0, "...%s is my owner. ", mob->GetName());
+		return;
+	}
+
+	if(IsEngaged() && !GetSpecialAbility(PROX_AGGRO))
+	{
+		towho->Message(0, "...%s is a new client and I am already in combat. ", mob->GetName());
+		return;
+	}
+
+	if(mob->IsPet() && !mob->IsCharmed())
+	{
+		towho->Message(0, "...%s is a summoned pet. ", mob->GetName());
 		return;
 	}
 
@@ -284,11 +296,20 @@ bool Mob::CheckWillAggro(Mob *mob) {
 		return(false);
 	}
 
-	//im not sure I understand this..
-	//if I have an owner and it is not this mob, then I cannot
-	//aggro this mob...???
-	//changed to be 'if I have an owner and this is it'
+	// Don't aggro new clients if we are already engaged unless PROX_AGGRO is set
+	if(IsEngaged() && !GetSpecialAbility(PROX_AGGRO))
+	{
+		return(false);
+	}
+
+	// Skip the owner if this is a pet.
 	if(mob == GetOwner()) {
+		return(false);
+	}
+
+	// Summoned pets are indifferent
+	if(mob->IsPet() && !mob->IsCharmed())
+	{
 		return(false);
 	}
 
@@ -361,14 +382,10 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 	if (!sender || !sender->IsNPC())
 		return(nullptr);
 
-#ifdef REVERSE_AGGRO
-	//with reverse aggro, npc->client is checked elsewhere, no need to check again
+
+	//npc->client is checked elsewhere, no need to check again
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
-#else
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-#endif
 		Mob *mob = it->second;
 
 		if (sender->CheckWillAggro(mob))

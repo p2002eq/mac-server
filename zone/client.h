@@ -1109,9 +1109,7 @@ private:
 	Timer endupkeep_timer;
 	Timer forget_timer; // our 2 min everybody forgets you timer
 	Timer autosave_timer;
-#ifdef REVERSE_AGGRO
 	Timer scanarea_timer;
-#endif
 	Timer	proximity_timer;
 	Timer	charm_update_timer;
 	Timer	rest_timer;

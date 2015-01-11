@@ -1820,7 +1820,7 @@ uint32 Mob::GetInstrumentMod(uint16 spell_id) const
 	if (effectmod > effectmodcap)
 		effectmod = effectmodcap;
 
-	_log(SPELLS__BARDS, "%s::GetInstrumentMod() spell=%d mod=%d modcap=%d\n",
+	_log(SPELLS__BARDS, "%s::GetInstrumentMod() spell=%d mod=%d modcap=%d",
 			GetName(), spell_id, effectmod, effectmodcap);
 
 	return effectmod;

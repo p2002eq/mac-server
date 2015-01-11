@@ -91,7 +91,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 		{
 			buffslot = AddBuff(caster, spell_id, durat, caster_level);
 			if(buffslot == -1)	// stacking failure
+			{
+				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error from item click.", spell_id);
 				return false;
+			}
 		}
 		else
 		{
@@ -115,7 +118,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				buffslot = AddBuff(caster, spell_id);
 			}
 			if(buffslot == -1)	// stacking failure
+			{
+				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error.", spell_id);
 				return false;
+			}
 		} else {
 			buffslot = -2;	//represents not a buff I guess
 		}
@@ -1930,10 +1936,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(toss_amt < 0)
 					toss_amt = -toss_amt;
 
-				if(IsNPC())
-				{
-					Stun(static_cast<int>(toss_amt), caster);
-				}
 				toss_amt = sqrt(toss_amt)-2.0;
 
 				if(toss_amt < 0.0)
@@ -1942,10 +1944,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(toss_amt > 20.0)
 					toss_amt = 20.0;
 
-				if(IsClient())
-				{
-					DoKnockback(caster, spells[spell_id].pushback, toss_amt);
-				}
+				_log(SPELLS__CASTING, "TossUp Spell: %d has a pushback (%0.1f) pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, toss_amt);
+				DoKnockback(caster, spells[spell_id].pushback, toss_amt);
 
 				break;
 			}
@@ -3601,6 +3601,52 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 		}
 	}
+
+	// Send Bards the spell message so they know their song is still applied.
+	if(IsBardSong(spell_id) && !IsBeneficialSpell(spell_id))
+	{
+		if(caster->IsClient()) {
+
+			EQApplicationPacket *packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
+
+			Action_Struct* action = (Action_Struct*) packet->pBuffer;
+			action->source = caster->GetID();
+			action->target = GetID();
+			action->spell = spell_id;
+			action->sequence = (uint32) (GetHeading() * 2);	// just some random number
+			action->instrument_mod = caster->GetInstrumentMod(spell_id);
+			action->buff_unknown = 0;
+			action->level = buffs[slot].casterlevel;
+			action->type = DamageTypeSpell;
+			entity_list.QueueCloseClients(this, packet, false, 200, 0, true, FilterBardSongs);
+			mlog(SPELLS__BARDS, "DoBuffTic: Bard Pulse for %d: Sent action", spell_id);
+
+			action->buff_unknown = 4;
+
+			if(IsEffectInSpell(spell_id, SE_TossUp))
+			{
+				action->buff_unknown = 0;
+			}
+			else if(spells[spell_id].pushback > 0 || spells[spell_id].pushup > 0)
+			{
+				action->buff_unknown = 0;
+			}
+			EQApplicationPacket *message_packet = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
+			CombatDamage_Struct *cd = (CombatDamage_Struct *)message_packet->pBuffer;
+			cd->target = action->target;
+			cd->source = action->source;
+			cd->type = DamageTypeSpell;
+			cd->spellid = action->spell;
+			cd->sequence = action->sequence;
+			cd->damage = 0;
+			if(!IsEffectInSpell(spell_id, SE_BindAffinity))
+			{
+				entity_list.QueueCloseClients(this, message_packet, false, 200, 0, true, FilterBardSongs);
+			}
+			safe_delete(message_packet);
+			safe_delete(packet);
+		}
+	}
 }
 
 // removes the buff in the buff slot 'slot'
@@ -3973,17 +4019,17 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 
 	// notify caster (or their master) of buff that it's worn off
 	Mob *p = entity_list.GetMob(buffs[slot].casterid);
-	if (p && p != this && !IsBardSong(buffs[slot].spellid))
+	if (p && p != this && !death
+		&& ((IsBardSong(buffs[slot].spellid) && !IsBeneficialSpell(buffs[slot].spellid)) 
+		|| !IsBardSong(buffs[slot].spellid)))
 	{
 		Mob *notify = p;
 		if(p->IsPet())
 			notify = p->GetOwner();
-		if(p) {
-			if(RuleB(Spell,ShowWornOffMessages) || !death)
-			{
-				notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
-					spells[buffs[slot].spellid].name, GetCleanName());
-			}
+		if(p)
+		{
+			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
+				spells[buffs[slot].spellid].name, GetCleanName());
 		}
 	}
 

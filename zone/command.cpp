@@ -171,7 +171,10 @@ int command_init(void){
 		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
 		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
 		command_add("connectworldserver", "- Make zone attempt to connect to worldserver", 85, command_connectworldserver) ||
+#ifdef WIN32
+#else
 		command_add("coredump", "Dumps a core log of any existing cores to view on web page.", 250, command_coredump) ||
+#endif
 		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 90, command_corpse) ||
 		command_add("crashtest", "- Crash the zoneserver", 200, command_crashtest) ||
 		command_add("cvs", "- Summary of client versions currently online.", 180, command_cvs) ||
@@ -334,7 +337,6 @@ int command_init(void){
 		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 250, command_qglobal) ||
 		command_add("qtest", "- QueryServ testing command.", 85, command_qtest) ||
 		command_add("questerrors", "Shows quest errors.", 0, command_questerrors) ||
-		command_add("questupdate", "Updates the quest folder if it is tied to an svn.", 250, command_questupdate) ||
 
 		command_add("race", "[racenum] - Change your or your target's race. Use racenum 0 to return to normal", 160, command_race) ||
 		command_add("raidloot", "LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.", 1, command_raidloot) ||
@@ -427,6 +429,8 @@ int command_init(void){
 		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 150, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 150, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 150, command_unscribespells) ||
+		command_add("updatequests", "Updates the quest folder if it is tied to an svn.", 250, command_updatequests) ||
+		command_add("updatesource", "Updates the source and builds.", 250, command_updatesource) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 95, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server", 180, command_version) ||
@@ -10267,14 +10271,16 @@ void command_zopp(Client *c, const Seperator *sep){
 	}
 }
 
-void command_questerrors(Client *c, const Seperator *sep){
+void command_questerrors(Client *c, const Seperator *sep)
+{
 	std::list<std::string> err;
 	parse->GetErrors(err);
 	c->Message(0, "Current Quest Errors:");
 
 	auto iter = err.begin();
 	int i = 0;
-	while (iter != err.end()) {
+	while (iter != err.end())
+	{
 		if (i >= 30) {
 			c->Message(0, "Maximum of 30 Errors shown...");
 			break;
@@ -10286,16 +10292,57 @@ void command_questerrors(Client *c, const Seperator *sep){
 	}
 }
 
-void command_questupdate(Client *c, const Seperator *sep)
+void command_updatequests(Client *c, const Seperator *sep)
 {
-	system("svn update quests");
-	c->Message(0, "Quests is updated.");
+	FILE *fp;
+#ifdef _WINDOWS
+	char buf[1024];
+	fp = _popen("svn update quests", "r");
+
+	while (fgets(buf, 1024, fp))
+	{
+		const char * output = (const char *)buf;
+		c->Message(0, "%s", output);
+	}
+	fclose(fp);
+#else
+	char* buf = NULL;
+	size_t len = 0;
+	fflush(NULL);
+	fp = popen("svn update quests", "r");
+
+	while (getline(&buf, &len, fp) != -1)
+	{
+		const char * output = (const char *)buf;
+		c->Message(0, "%s", output);
+	}
+	free(buf);
+	fflush(fp);
+#endif
+	c->Message(0, "Quests are updated.");
+}
+
+void command_updatesource(Client *c, const Seperator *sep)
+{
+#ifdef _WINDOWS
+	// TODO: Add same functionality for windows from the following command.
+	c->Message(0, "Not yet implemented for windows.");
+#else
+	system("./tak_checkout");
+	c->Message(0, "Server will be going down and building, 10 min warning issued.");
+#endif
 }
 
 void command_coredump(Client *c, const Seperator *sep)
 {
+#ifdef _WINDOWS
+	// TODO: Add same functionality for windows from the following command.
+	// Maybe have a batch file spit logs to a web folder?
+	c->Message(0, "Not yet implemented for windows.");
+#else
 	system("./dump");
 	c->Message(0, "core dumped.");
+#endif
 }
 
 void command_enablerecipe(Client *c, const Seperator *sep){
@@ -10447,11 +10494,11 @@ void command_push(Client *c, const Seperator *sep){
 	else
 	{
 		bool success = false;
-		uint32 pushback = atoi(sep->arg[1]);
+		float pushback = atof(sep->arg[1]);
 		t = c->GetTarget();
 		if(sep->IsNumber(2))
 		{
-			uint32 pushup = atoi(sep->arg[2]);
+			float pushup = atof(sep->arg[2]);
 			if(t->DoKnockback(c, pushback, pushup))
 			{
 				success = true;
@@ -10467,7 +10514,7 @@ void command_push(Client *c, const Seperator *sep){
 
 		if(success)
 		{
-			c->Message(0, "%s was pushed for %i!", t->GetCleanName(), pushback);
+			c->Message(0, "%s was pushed for %0.1f!", t->GetCleanName(), pushback);
 			return;
 		}
 		else

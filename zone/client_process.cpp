@@ -163,7 +163,8 @@ bool Client::Process() {
 				song_target = entity_list.GetMob(bardsong_target_id);
 			}
 
-			if (song_target == nullptr) {
+			if (song_target == nullptr || (IsCharmSpell(bardsong) && song_target->IsCharmed()))
+			{
 				InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
 			} else {
 				if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
@@ -576,14 +577,12 @@ bool Client::Process() {
 		}
 	}
 
-#ifdef REVERSE_AGGRO
 	//At this point, we are still connected, everything important has taken
 	//place, now check to see if anybody wants to aggro us.
 	// only if client is not feigned
 	if(ret && !GetFeigned() && scanarea_timer.Check()) {
 		entity_list.CheckClientAggro(this);
 	}
-#endif
 
 	if (client_state != CLIENT_LINKDEAD && (client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED)))
 	{
