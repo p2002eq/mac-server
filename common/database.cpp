@@ -1820,7 +1820,7 @@ void Database::SetGroupLeaderName(uint32 gid, const char* name) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-		logger.Log(EQEmuLogSys::Debug, "Error in Database::SetGroupLeaderName: %s", result.ErrorMessage().c_str());
+		logger.Log(EQEmuLogSys::Debug, "Unable to set group leader:", results.ErrorMessage().c_str());
 }
 
 char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 

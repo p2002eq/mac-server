@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <algorithm>
+#include <ctime>
 
 #ifdef _WINDOWS
 #define strcasecmp _stricmp
@@ -266,6 +267,7 @@ int command_init(void){
 		command_add("log", "- Search character event log", 95, command_log) ||
 		command_add("logs", "[status|normal|error|debug|quest|all] - Subscribe to a log type", 180, command_logs) ||
 		command_add("logsql", "- enable SQL logging", 250, command_logsql) ||
+		command_add("logtest", "Performs log performance testing.", 250, command_logtest) ||
 		command_add("los", nullptr, 80, command_checklos) ||
 
 		command_add("makepet", "[level] [class] [race] [texture] - Make a pet", 150, command_makepet) ||
@@ -11148,4 +11150,14 @@ void command_tune(Client *c, const Seperator *sep)
 
 
 	return;
+}
+
+void command_logtest(Client *c, const Seperator *sep){
+	clock_t t = std::clock(); /* Function timer start */
+	if (sep->IsNumber(1)){
+		uint32 i = 0;
+		for (i = 0; i < atoi(sep->arg[1]); i++){
+			logger.LogDebug(EQEmuLogSys::General, "[%u] Test... Took %f seconds", i, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
+		}
+	}
 }
