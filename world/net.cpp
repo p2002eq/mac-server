@@ -97,13 +97,12 @@ EQWHTTPServer http_server;
 UCSConnection UCSLink;
 QueryServConnection QSLink;
 WebInterfaceConnection WILink;
-LauncherList launcher_list;
+LauncherList launcher_list; 
 EQEmu::Random emu_random;
 volatile bool RunLoops = true;
 uint32 numclients = 0;
 uint32 numzones = 0;
 bool holdzones = false;
-EQEmuLogSys logger;
 
 EQEmuLogSys logger;
 
