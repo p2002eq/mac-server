@@ -105,12 +105,15 @@ uint32 numzones = 0;
 bool holdzones = false;
 EQEmuLogSys logger;
 
+EQEmuLogSys logger;
+
 extern ConsoleList console_list;
 
 void CatchSignal(int sig_num);
 
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
+	logger.LoadLogSettings();
 	set_exception_handler();
 //	register_remote_call_handlers();
 
