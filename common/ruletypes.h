@@ -538,18 +538,6 @@ RULE_INT ( Groundspawns, FullInvDecayTime, 300000 )	// Decay time of items dropp
 RULE_BOOL ( Groundspawns, RandomSpawn, true )	// Determines if groundspawns with random spanw locs will periodically despawn and respawn elsewhere.
 RULE_CATEGORY_END()
 
-RULE_CATEGORY(Logging)
-RULE_BOOL(Logging, ConsoleLogCommands, false)  /* Turns on or off console logs */
-RULE_BOOL(Logging, LogFileCommands, false)
-
-RULE_INT(Logging, DebugLogLevel, 0) /* Sets Debug Level, -1 = OFF, 0 = Low Level, 1 = Info, 2 = Extreme */
-
-RULE_BOOL(Logging, EnableConsoleLogging, true)  /* Turns on or off ALL logging to console */
-RULE_BOOL(Logging, EnableFileLogging, true)	/* Turns on or off ALL forms of file logging */
-
-RULE_CATEGORY_END()
-
-
 #undef RULE_CATEGORY
 #undef RULE_INT
 #undef RULE_REAL
