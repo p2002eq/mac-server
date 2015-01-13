@@ -50,6 +50,9 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	uint16 target_instance_id = 0;
 	ZonePoint* zone_point = nullptr;
 	//figure out where they are going.
+	//we should never trust the client's logic, however, the client's information coupled with the server's information can help us determine locations they should be going to.
+	//try to figure it out for them.
+
 	if(zc->zoneID == 0) {
 		//client dosent know where they are going...
 		//try to figure it out for them.
@@ -284,7 +287,7 @@ void Client::SendZoneCancel(ZoneChange_Struct *zc) {
 	ZoneChange_Struct *zc2 = (ZoneChange_Struct*)outapp->pBuffer;
 	strcpy(zc2->char_name, zc->char_name);
 	zc2->zoneID = zone->GetZoneID();
-	zc2->success = 1;
+	zc2->success = ZONE_ERROR_NOTREADY;
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
 
@@ -344,36 +347,22 @@ void Client::DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instanc
 	//Force a save so its waiting for them when they zone
 	Save(2); 
 
-	if (zone_id == zone->GetZoneID() && instance_id == zone->GetInstanceID()) {
-		// No need to ask worldserver if we're zoning to ourselves (most
-		// likely to a bind point), also fixes a bug since the default response was failure
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ZoneChange,sizeof(ZoneChange_Struct));
-		ZoneChange_Struct* zc2 = (ZoneChange_Struct*) outapp->pBuffer;
-		strcpy(zc2->char_name, GetName());
-		zc2->zoneID = zone_id;
-		zc2->instanceID = instance_id;
-		zc2->success = 1;
-		outapp->priority = 6;
-		FastQueuePacket(&outapp);
-
-		zone->StartShutdownTimer(AUTHENTICATION_TIMEOUT * 1000);
-	} else {
 	// vesuvias - zoneing to another zone so we need to the let the world server
 	//handle things with the client for a while
-		ServerPacket* pack = new ServerPacket(ServerOP_ZoneToZoneRequest, sizeof(ZoneToZone_Struct));
-		ZoneToZone_Struct* ztz = (ZoneToZone_Struct*) pack->pBuffer;
-		ztz->response = 0;
-		ztz->current_zone_id = zone->GetZoneID();
-		ztz->current_instance_id = zone->GetInstanceID();
-		ztz->requested_zone_id = zone_id;
-		ztz->requested_instance_id = instance_id;
-		ztz->admin = admin;
-		ztz->ignorerestrictions = ignore_r;
-		strcpy(ztz->name, GetName());
-		ztz->guild_id = GuildID();
-		worldserver.SendPacket(pack);
-		safe_delete(pack);
-	}
+	PreDisconnect();
+	ServerPacket* pack = new ServerPacket(ServerOP_ZoneToZoneRequest, sizeof(ZoneToZone_Struct));
+	ZoneToZone_Struct* ztz = (ZoneToZone_Struct*) pack->pBuffer;
+	ztz->response = 0;
+	ztz->current_zone_id = zone->GetZoneID();
+	ztz->current_instance_id = zone->GetInstanceID();
+	ztz->requested_zone_id = zone_id;
+	ztz->requested_instance_id = instance_id;
+	ztz->admin = admin;
+	ztz->ignorerestrictions = ignore_r;
+	strcpy(ztz->name, GetName());
+	ztz->guild_id = GuildID();
+	worldserver.SendPacket(pack);
+	safe_delete(pack);
 
 	//reset to unsolicited.
 	zone_mode = ZoneUnsolicited;
@@ -563,25 +552,9 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		}
 
 		zone_mode = zm;
-		if (zm == ZoneToBindPoint) {
-			//TODO: Find a better packet that works with EQMac on death.
-			_log(EQMAC__LOG, "Zoning packet about to be sent (ZTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMGoto, sizeof(GMGoto_Struct));
-			GMGoto_Struct* gmg = (GMGoto_Struct*) outapp->pBuffer;
 
-			strcpy(gmg->charname,this->name);
-			strcpy(gmg->gmname,this->name);
-			gmg->zoneID = zoneID;
-			gmg->x = x;
-			gmg->y = y;
-			gmg->z = z;
-
-			outapp->priority = 6;
-			FastQueuePacket(&outapp);
-			safe_delete(outapp);
-		}
-		else if(zm == ZoneSolicited || zm == ZoneToSafeCoords) {
-			_log(EQMAC__LOG, "Zoning packet about to be sent (ZS/ZTSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+		if(zm == ZoneSolicited || zm == ZoneToBindPoint) {
+			_log(EQMAC__LOG, "Zoning packet about to be sent. We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -598,8 +571,44 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			FastQueuePacket(&outapp);
 			safe_delete(outapp);
 		}
-		else if (zm == EvacToSafeCoords || zm == GateToBindPoint) {
-			_log(EQMAC__LOG, "Zoning packet about to be sent (ETSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+		else if (zm == GateToBindPoint) {
+			// we hide the real zoneid we want to evac/succor to here
+			zonesummon_id = zoneID;
+			zone_mode = zm;
+
+			if(zoneID == GetZoneID()) {
+				//Not doing inter-zone for same zone gates. Client is supposed to handle these, based on PP info it is fed.
+				//properly handle proximities
+				entity_list.ProcessMove(this, x_pos, y_pos, z_pos);
+				proximity_x = x_pos;
+				proximity_y = y_pos;
+				proximity_z = z_pos;
+
+				SendPosition();
+			}
+			else
+			{
+				zone_mode = zm;
+				_log(EQMAC__LOG, "Zoning packet about to be sent (GOTO). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
+				RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
+
+				gmg->zone_id = zoneID;
+				gmg->x = x;
+				gmg->y = y;
+				gmg->z = z;
+				gmg->heading = heading;
+				gmg->instance_id = instance_id;
+				gmg->type = 0x01;	//an observed value, not sure of meaning
+				outapp->priority = 6;
+				FastQueuePacket(&outapp);
+				safe_delete(outapp);
+			}
+		}
+		else if(zm == ZoneToSafeCoords || zm == EvacToSafeCoords)
+		{
+			zone_mode = zm;
+
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -731,6 +740,8 @@ void Client::GoToBind(uint8 bindnum) {
 }
 
 void Client::GoToDeath() {
+	//Client will request a zone in EQMac era clients, but let's make sure they get there:
+	zone_mode = ZoneToBindPoint;
 	MovePC(m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, 0.0f, 0.0f, 0.0f, 0.0f, 1, ZoneToBindPoint);
 }
 

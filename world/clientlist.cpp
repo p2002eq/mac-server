@@ -430,7 +430,7 @@ ClientListEntry* ClientList::CheckAuth(const char* iName, const char* iPassword)
 	if (accid) {
 		uint32 lsid = 0;
 		database.GetAccountIDByName(iName, &tmpadmin, &lsid);
-		ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), lsid, iName, tmpMD5, tmpadmin, 0, 0);
+		ClientListEntry* tmp = new ClientListEntry(GetNextCLEID(), lsid, iName, iPassword, tmpadmin, 0, 0, 2);
 		clientlist.Append(tmp);
 		return tmp;
 	}

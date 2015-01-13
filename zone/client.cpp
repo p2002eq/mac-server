@@ -575,6 +575,15 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req, CLIENT_CO
 			return; //Client has this filter on, no need to send packet
 	}
 	if(client_state != CLIENT_CONNECTED && required_state == CLIENT_CONNECTED){
+		// save packets during connection state
+		AddPacket(app, ack_req);
+		return;
+	}
+
+	//Wait for the queue to catch up - THEN send the first available predisconnected (zonechange) packet!
+	if (client_state == PREDISCONNECTED && required_state != PREDISCONNECTED)
+	{
+		// save packets in case this fails
 		AddPacket(app, ack_req);
 		return;
 	}
@@ -592,6 +601,16 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req, CLIENT_CO
 
 void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CONN_STATUS required_state) {
 	// if the program doesnt care about the status or if the status isnt what we requested
+
+
+		//Wait for the queue to catch up - THEN send the first available predisconnected (zonechange) packet!
+	if (client_state == PREDISCONNECTED && required_state != PREDISCONNECTED)
+	{
+		// save packets in case this fails
+		AddPacket(app, ack_req);
+		return;
+	}
+
 	if (required_state != CLIENT_CONNECTINGALL && client_state != required_state) {
 		// todo: save packets for later use
 		AddPacket(app, ack_req);
@@ -2867,48 +2886,48 @@ void Client::SacrificeConfirm(Client *caster) {
 //Essentially a special case death function
 void Client::Sacrifice(Client *caster)
 {
-				if(GetLevel() >= RuleI(Spells, SacrificeMinLevel) && GetLevel() <= RuleI(Spells, SacrificeMaxLevel)){
-					int exploss = (int)(GetLevel() * (GetLevel() / 18.0) * 12000);
-					if(exploss < GetEXP()){
-						SetEXP(GetEXP()-exploss, GetAAXP());
-						SendLogoutPackets();
+	if(GetLevel() >= RuleI(Spells, SacrificeMinLevel) && GetLevel() <= RuleI(Spells, SacrificeMaxLevel)){
+		int exploss = (int)(GetLevel() * (GetLevel() / 18.0) * 12000);
+		if(exploss < GetEXP()){
+			SetEXP(GetEXP()-exploss, GetAAXP());
+			SendLogoutPackets();
 
-						// make death packet
-						EQApplicationPacket app(OP_Death, sizeof(Death_Struct));
-						Death_Struct* d = (Death_Struct*)app.pBuffer;
-						d->spawn_id = GetID();
-						d->killer_id = caster ? caster->GetID() : 0;
-						d->bindzoneid = GetPP().binds[0].zoneId;
-						d->spell_id = SPELL_UNKNOWN;
-						d->attack_skill = 0xe7;
-						d->damage = 0;
-						app.priority = 6;
-						entity_list.QueueClients(this, &app);
+			// make death packet
+			EQApplicationPacket app(OP_Death, sizeof(Death_Struct));
+			Death_Struct* d = (Death_Struct*)app.pBuffer;
+			d->spawn_id = GetID();
+			d->killer_id = caster ? caster->GetID() : 0;
+			d->bindzoneid = GetPP().binds[0].zoneId;
+			d->spell_id = SPELL_UNKNOWN;
+			d->attack_skill = 0xe7;
+			d->damage = 0;
+			app.priority = 6;
+			entity_list.QueueClients(this, &app);
 
-						BuffFadeAll(true);
-						UnmemSpellAll();
-						Group *g = GetGroup();
-						if(g){
-							g->MemberZoned(this);
-						}
-						Raid *r = entity_list.GetRaidByClient(this);
-						if(r){
-							r->MemberZoned(this);
-						}
-						ClearAllProximities();
-						if(RuleB(Character, LeaveCorpses)){
-							Corpse *new_corpse = new Corpse(this, 0);
-							entity_list.AddCorpse(new_corpse, GetID());
-							SetID(0);
-						}
-						Save();
-						GoToDeath();
-						caster->SummonItem(RuleI(Spells, SacrificeItemID));
-					}
-				}
-				else{
-					caster->Message_StringID(CC_Red, SAC_TOO_LOW);	//This being is not a worthy sacrifice.
-				}
+			BuffFadeAll(true);
+			UnmemSpellAll();
+			Group *g = GetGroup();
+			if(g){
+				g->MemberZoned(this);
+			}
+			Raid *r = entity_list.GetRaidByClient(this);
+			if(r){
+				r->MemberZoned(this);
+			}
+			ClearAllProximities();
+			if(RuleB(Character, LeaveCorpses)){
+				Corpse *new_corpse = new Corpse(this, 0);
+				entity_list.AddCorpse(new_corpse, GetID());
+				SetID(0);
+			}
+			Save();
+			GoToDeath();
+			caster->SummonItem(RuleI(Spells, SacrificeItemID));
+		}
+	}
+	else{
+		caster->Message_StringID(CC_Red, SAC_TOO_LOW);	//This being is not a worthy sacrifice.
+	}
 }
 
 void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
