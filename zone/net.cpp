@@ -116,7 +116,7 @@ extern void MapOpcodes();
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformZone);
 	logger.LoadLogSettings();
-	logger.OnLog(&ClientLogs::ClientMessage);
+	logger.OnLogHookCallBackZone(&ClientLogs::ClientMessage);
 	set_exception_handler();
 	//register_remote_call_handlers();
 
