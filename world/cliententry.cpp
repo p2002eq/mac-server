@@ -63,6 +63,7 @@ ClientListEntry::ClientListEntry(uint32 in_id, ZoneServer* iZS, ServerClientList
 	paccountid = scl->AccountID;
 	strn0cpy(paccountname, scl->AccountName, sizeof(paccountname));
 	padmin = scl->Admin;
+	//THIS IS FOR AN ALTERNATE LOGIN METHOD FOR RAPID TESTING. Hardcoded to the PC client because only PCs should be using this 'hackish' login method. Requires password field set in the database.
 	pversion = 2;
 	pinstance = 0;
 
