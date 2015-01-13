@@ -1985,7 +1985,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 
 	if(!ItemToReturn) return false;
 
-	_log(INVENTORY__SLOTS,"Char: %s Returning %s to inventory", GetName(), ItemToReturn->GetItem()->Name);
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Inventory,"Char: %s Returning %s to inventory", GetName(), ItemToReturn->GetItem()->Name);
 
 	uint32 ItemID = ItemToReturn->GetItem()->ID;
 
@@ -2069,7 +2069,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 
 			database.SaveInventory(character_id, m_inv.GetItem(i), i);
 
-			_log(INVENTORY__SLOTS, "Char: %s Storing in main inventory slot %i", GetName(), i);
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Char: %s Storing in main inventory slot %i", GetName(), i);
 
 			return true;
 		}
@@ -2092,7 +2092,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 
 					database.SaveInventory(character_id, m_inv.GetItem(BaseSlotID + BagSlot), BaseSlotID + BagSlot);
 
-					_log(INVENTORY__SLOTS, "Char: %s Storing in bag slot %i", GetName(), BaseSlotID + BagSlot);
+					logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Char: %s Storing in bag slot %i", GetName(), BaseSlotID + BagSlot);
 
 					return true;
 				}
@@ -2102,7 +2102,7 @@ bool Client::MoveItemToInventory(ItemInst *ItemToReturn, bool UpdateClient) {
 
 	// Store on the cursor
 	//
-	_log(INVENTORY__SLOTS, "Char: %s No space, putting on the cursor", GetName());
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Char: %s No space, putting on the cursor", GetName());
 
 	PushItemOnCursor(*ItemToReturn, UpdateClient);
 
