@@ -241,7 +241,6 @@ void WorldServer::Process() {
 				EQApplicationPacket *outapp;
 				outapp = new EQApplicationPacket(OP_ZoneChange,sizeof(ZoneChange_Struct));
 				ZoneChange_Struct* zc2=(ZoneChange_Struct*)outapp->pBuffer;
-
 				if(ztz->response <= 0) {
 					zc2->success = ZONE_ERROR_NOTREADY;
 					entity->CastToMob()->SetZone(ztz->current_zone_id, ztz->current_instance_id);
@@ -259,9 +258,11 @@ void WorldServer::Process() {
 						entity->CastToClient()->GoToSafeCoords(ztz->requested_zone_id, ztz->requested_instance_id);
 				}
 				outapp->priority = 6;
-				entity->CastToClient()->QueuePacket(outapp);
+				entity->CastToClient()->QueuePacket(outapp, true, Mob::PREDISCONNECTED);
 				safe_delete(outapp);
-
+				entity->CastToClient()->Reconnect();
+				if(ztz->response > 0)
+					entity->CastToClient()->Disconnect();
 				switch(ztz->response)
 				{
 				case -2: {

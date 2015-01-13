@@ -22,7 +22,6 @@ struct ServerClientList_Struct;
 class ClientListEntry {
 public:
 	ClientListEntry(uint32 id, uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin = 0, uint32 ip = 0, uint8 local=0, uint8 version=0);
-	ClientListEntry(uint32 id, uint32 iAccID, const char* iAccName, MD5& iMD5Pass, int16 iAdmin = 0);
 	ClientListEntry(uint32 id, ZoneServer* iZS, ServerClientList_Struct* scl, int8 iOnline);
 	~ClientListEntry();
 	bool	CheckStale();

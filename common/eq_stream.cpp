@@ -1995,7 +1995,7 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 	int16 restore_op = 0x0000;
 
 	/************ PM STATE = NOT ACTIVE ************/
-	if(CheckState(CLOSED) || !app || app && app->GetRawOpcode() == 0)
+	if(CheckState(CLOSED) || CheckState(CLOSING) || CheckState(DISCONNECTING) || !app || app && app->GetRawOpcode() == 0)
 	{
 		return;
 	}

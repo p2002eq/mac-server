@@ -49,23 +49,6 @@ ClientListEntry::ClientListEntry(uint32 in_id, uint32 iLSID, const char* iLoginN
 	pinstance = 0;
 }
 
-ClientListEntry::ClientListEntry(uint32 in_id, uint32 iAccID, const char* iAccName, MD5& iMD5Pass, int16 iAdmin)
-: id(in_id)
-{
-	ClearVars(true);
-
-	pIP = 0;
-	pLSID = 0;
-	pworldadmin = 0;
-
-	paccountid = iAccID;
-	strn0cpy(paccountname, iAccName, sizeof(paccountname));
-	pMD5Pass = iMD5Pass;
-	padmin = iAdmin;
-
-	pinstance = 0;
-}
-
 ClientListEntry::ClientListEntry(uint32 in_id, ZoneServer* iZS, ServerClientList_Struct* scl, int8 iOnline)
 : id(in_id)
 {
@@ -80,7 +63,8 @@ ClientListEntry::ClientListEntry(uint32 in_id, ZoneServer* iZS, ServerClientList
 	paccountid = scl->AccountID;
 	strn0cpy(paccountname, scl->AccountName, sizeof(paccountname));
 	padmin = scl->Admin;
-
+	//THIS IS FOR AN ALTERNATE LOGIN METHOD FOR RAPID TESTING. Hardcoded to the PC client because only PCs should be using this 'hackish' login method. Requires password field set in the database.
+	pversion = 2;
 	pinstance = 0;
 
 	if (iOnline >= CLE_Status_Zoning)

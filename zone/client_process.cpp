@@ -568,7 +568,9 @@ bool Client::Process() {
 
 	/************ Get all packets from packet manager out queue and process them ************/
 	EQApplicationPacket *app = nullptr;
-	if(!eqs->CheckState(CLOSING))
+
+	//Predisconnecting is a state where we expect a zone change packet, and the next packet HAS to be a zone change packet once you request to zone. Otherwise, bad things happen!
+	if(!eqs->CheckState(CLOSING) && client_state != PREDISCONNECTED)
 	{
 		while(ret && (app = (EQApplicationPacket *)eqs->PopPacket())) {
 			if(app)
