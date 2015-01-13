@@ -1150,7 +1150,7 @@ bool CheckCharCreateInfo(CharCreate_Struct *cc)
 	if (!cc)
 		return false;
 
-	_log(WORLD__CLIENT, "Validating char creation info...");
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Validating char creation info...");
 
 	RaceClassCombos class_combo;
 	bool found = false;
@@ -1167,7 +1167,7 @@ bool CheckCharCreateInfo(CharCreate_Struct *cc)
 	}
 
 	if (!found) {
-		_log(WORLD__CLIENT_ERR, "Could not find class/race/deity/start_zone combination");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not find class/race/deity/start_zone combination");
 		return false;
 	}
 
@@ -1184,7 +1184,7 @@ bool CheckCharCreateInfo(CharCreate_Struct *cc)
 	}
 
 	if (!found) {
-		_log(WORLD__CLIENT_ERR, "Could not find starting stats for selected character combo, cannot verify stats");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not find starting stats for selected character combo, cannot verify stats");
 		return false;
 	}
 
@@ -1197,37 +1197,37 @@ bool CheckCharCreateInfo(CharCreate_Struct *cc)
 		allocation.DefaultPointAllocation[6];
 
 	if (cc->STR > allocation.BaseStats[0] + max_stats || cc->STR < allocation.BaseStats[0]) {
-		_log(WORLD__CLIENT_ERR, "Strength out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Strength out of range");
 		return false;
 	}
 
 	if (cc->DEX > allocation.BaseStats[1] + max_stats || cc->DEX < allocation.BaseStats[1]) {
-		_log(WORLD__CLIENT_ERR, "Dexterity out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Dexterity out of range");
 		return false;
 	}
 
 	if (cc->AGI > allocation.BaseStats[2] + max_stats || cc->AGI < allocation.BaseStats[2]) {
-		_log(WORLD__CLIENT_ERR, "Agility out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Agility out of range");
 		return false;
 	}
 
 	if (cc->STA > allocation.BaseStats[3] + max_stats || cc->STA < allocation.BaseStats[3]) {
-		_log(WORLD__CLIENT_ERR, "Stamina out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Stamina out of range");
 		return false;
 	}
 
 	if (cc->INT > allocation.BaseStats[4] + max_stats || cc->INT < allocation.BaseStats[4]) {
-		_log(WORLD__CLIENT_ERR, "Intelligence out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Intelligence out of range");
 		return false;
 	}
 
 	if (cc->WIS > allocation.BaseStats[5] + max_stats || cc->WIS < allocation.BaseStats[5]) {
-		_log(WORLD__CLIENT_ERR, "Wisdom out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Wisdom out of range");
 		return false;
 	}
 
 	if (cc->CHA > allocation.BaseStats[6] + max_stats || cc->CHA < allocation.BaseStats[6]) {
-		_log(WORLD__CLIENT_ERR, "Charisma out of range");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Charisma out of range");
 		return false;
 	}
 
@@ -1240,7 +1240,7 @@ bool CheckCharCreateInfo(CharCreate_Struct *cc)
 	current_stats += cc->WIS - allocation.BaseStats[5];
 	current_stats += cc->CHA - allocation.BaseStats[6];
 	if (current_stats > max_stats) {
-		_log(WORLD__CLIENT_ERR, "Current Stats > Maximum Stats");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Current Stats > Maximum Stats");
 		return false;
 	}
 
