@@ -368,8 +368,6 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); results = QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_bandolier` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_potionbelt` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); results = QueryDatabase(query);	  
 	query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", charid); results = QueryDatabase(query); 
 	query = StringFormat("DELETE FROM `character_alt_currency` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);  

@@ -143,10 +143,6 @@ namespace MAC {
 
 		static const uint16 ITEM_COMMON_SIZE = 5;
 		static const uint16 ITEM_CONTAINER_SIZE = 10;
-
-		static const uint32 BANDOLIERS_COUNT = 4;	// count = number of bandolier instances
-		static const uint32 BANDOLIER_SIZE = 4;		// size = number of equipment slots in bandolier instance
-		static const uint32 POTION_BELT_SIZE = 4;
 	}
 
 	namespace limits {

@@ -716,7 +716,7 @@ int16 Inventory::FindFreeSlotForTradeItem(const ItemInst* inst) {
 		for (int16 free_slot = EmuConstants::GENERAL_BEGIN; free_slot <= EmuConstants::GENERAL_END; ++free_slot) {
 			const ItemInst* main_inst = m_inv[free_slot];
 
-			if (!main_inst || (main_inst->GetItem()->BagType != BagTypeBandolier) || !main_inst->IsType(ItemClassContainer))
+			if (!main_inst || !main_inst->IsType(ItemClassContainer))
 				continue;
 
 			for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot)
@@ -737,7 +737,7 @@ int16 Inventory::FindFreeSlotForTradeItem(const ItemInst* inst) {
 		const ItemInst* main_inst = m_inv[free_slot];
 
 		if (main_inst && main_inst->IsType(ItemClassContainer)) {
-			if ((main_inst->GetItem()->BagSize < inst->GetItem()->Size) || (main_inst->GetItem()->BagType == BagTypeBandolier) || (main_inst->GetItem()->BagType == BagTypeQuiver))
+			if ((main_inst->GetItem()->BagSize < inst->GetItem()->Size) || (main_inst->GetItem()->BagType == BagTypeQuiver))
 				continue;
 
 			for (uint8 free_bag_slot = SUB_BEGIN; (free_bag_slot < main_inst->GetItem()->BagSlots) && (free_bag_slot < EmuConstants::ITEM_CONTAINER_SIZE); ++free_bag_slot)
@@ -903,14 +903,6 @@ bool Inventory::SupportsClickCasting(int16 slot_id)
 		if (EQLimits::AllowsClickCastFromBag(m_version))
 			return true;
 	}
-
-	return false;
-}
-
-bool Inventory::SupportsPotionBeltCasting(int16 slot_id)
-{
-	if ((uint16)slot_id <= EmuConstants::GENERAL_END || slot_id == MainPowerSource || (slot_id >= EmuConstants::GENERAL_BAGS_BEGIN && slot_id <= EmuConstants::GENERAL_BAGS_END))
-		return true;
 
 	return false;
 }

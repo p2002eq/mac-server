@@ -665,29 +665,6 @@ struct ClientDiscipline_Struct {
     uint8	unknown3[3];	// Which leaves room for ??
 };
 
-//len = 72
-struct BandolierItem_Struct {
-	uint32 item_id;
-	uint32 icon;
-	char item_name[64];
-};
-
-//len = 320
-enum { //bandolier item positions
-	bandolierMainHand = 0,
-	bandolierOffHand,
-	bandolierRange,
-	bandolierAmmo
-};
-
-struct Bandolier_Struct {
-	char name[32];
-	BandolierItem_Struct items[EmuConstants::BANDOLIER_SIZE];
-};
-struct PotionBelt_Struct {
-	BandolierItem_Struct items[EmuConstants::POTION_BELT_SIZE];
-};
-
 struct MovePotionToBelt_Struct {
 	uint32	Action;
 	uint32	SlotNumber;
@@ -770,7 +747,6 @@ sed -e 's/_t//g' -e 's/MAX_AA/MAX_PP_AA_ARRAY/g' \
 	-e 's/uint32[ \t]*disciplines\[MAX_DISCIPLINES\]/Disciplines_Struct disciplines/g' \
 	-e 's/aa_unspent/aapoints/g' \
 	-e 's/aa_spent/aapoints_spent/g' \
-	-e 's/InlineItem[ \t]*potionBelt\[MAX_POTIONS_IN_BELT\]/PotionBelt_Struct potionbelt/g' \
 	-e 's/ldon_guk_points/ldon_points_guk/g' \
 	-e 's/ldon_mir_points/ldon_points_mir/g' \
 	-e 's/ldon_mmc_points/ldon_points_mmc/g' \
@@ -782,8 +758,6 @@ sed -e 's/_t//g' -e 's/MAX_AA/MAX_PP_AA_ARRAY/g' \
 	-e 's/groupLeadAAUnspent/group_leadership_points/g' \
 	-e 's/raidLeadAAUnspent/raid_leadership_points/g' \
 	-e 's/uint32[ \t]*leadershipAAs\[MAX_LEAD_AA\]/LeadershipAA_Struct leader_abilities/g' \
-	-e 's/BandolierStruct/Bandolier_Struct/g' \
-	-e 's/MAX_BANDOLIERS/MAX_PLAYER_BANDOLIER/g' \
 	-e 's/birthdayTime/birthday/g' \
 	-e 's/lastSaveTime/lastlogin/g' \
 	-e 's/zoneId/zone_id/g' \
@@ -939,14 +913,12 @@ struct PlayerProfile_Struct
 /*12804*/	uint32				aapoints;			//avaliable, unspent
 /*12808*/	uint8				perAA;				//For Mac
 /*12809*/	uint8				unknown12844[35];
-/*12844*/	Bandolier_Struct	bandoliers[EmuConstants::BANDOLIERS_COUNT];
 /*14124*/	uint32				ATR_PET_LOH_timer;
 			uint32				UnknownTimer;
 			uint32				HarmTouchTimer;
 /*14128*/	uint8				unknown14160[4494];
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
-/*19244*/	PotionBelt_Struct	potionbelt;			//there should be 3 more of these
 /*19532*/	uint8				unknown19568[8];
 /*19556*/	uint8				groupAutoconsent;	// 0=off, 1=on
 /*19557*/	uint8				raidAutoconsent;	// 0=off, 1=on
@@ -2975,12 +2947,6 @@ struct RaidMembers_Struct {
 /*358*/	uint32					member_count;		//including leader
 /*362*/	RaidMemberInfo_Struct	members[1];
 /*...*/	RaidMemberInfo_Struct	empty;	//seem to have an extra member with a 0 length name on the end
-};
-
-enum {	//bandolier actions
-	BandolierCreate = 0,
-	BandolierRemove = 1,
-	BandolierSet = 2
 };
 
 struct Arrow_Struct {

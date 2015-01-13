@@ -806,8 +806,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Attuneable = (atoi(row[ItemField::attuneable]) == 0) ? false : true;
 		item.NoPet = (atoi(row[ItemField::nopet]) == 0) ? false : true;
 		item.PointType = (uint32)atoul(row[ItemField::pointtype]);
-		item.PotionBelt = (atoi(row[ItemField::potionbelt]) == 0) ? false : true;
-		item.PotionBeltSlots = (atoi(row[ItemField::potionbeltslots]) == 0) ? false : true;
 		item.StackSize = (uint16)atoi(row[ItemField::stacksize]);
 		item.NoTransfer = disableNoTransfer ? false : (atoi(row[ItemField::notransfer]) == 0) ? false : true;
 		item.Stackable = (atoi(row[ItemField::stackable]) == 3) ? false : true;

@@ -206,18 +206,7 @@ namespace Convert {
 		/*84*/ uint32 Points;
 		/*88*/
 	} PVPStatsEntry_Struct;
-	struct BandolierItem_Struct {
-		uint32 item_id;
-		uint32 icon;
-		char item_name[64];
-	};
-	struct Bandolier_Struct {
-		char name[32];
-		Convert::BandolierItem_Struct items[EmuConstants::BANDOLIER_SIZE];
-	};
-	struct PotionBelt_Struct {
-		Convert::BandolierItem_Struct items[EmuConstants::POTION_BELT_SIZE];
-	};
+
 	struct SuspendedMinion_Struct
 	{
 		/*000*/	uint16 SpellID;
@@ -373,11 +362,9 @@ namespace Convert {
 		/*12800*/	uint32							expAA;
 		/*12804*/	uint32							aapoints;			//avaliable, unspent
 		/*12808*/	uint8							unknown12844[36];
-		/*12844*/	Convert::Bandolier_Struct		bandoliers[EmuConstants::BANDOLIERS_COUNT];
 		/*14124*/	uint8							unknown14160[4506];
 		/*18630*/	Convert::SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 		/*19240*/	uint32							timeentitledonaccount;
-		/*19244*/	Convert::PotionBelt_Struct		potionbelt;			//there should be 3 more of these
 		/*19532*/	uint8							unknown19568[8];
 		/*19556*/	uint8							groupAutoconsent;	// 0=off, 1=on
 		/*19557*/	uint8							raidAutoconsent;	// 0=off, 1=on
