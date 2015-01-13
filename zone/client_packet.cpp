@@ -1831,7 +1831,7 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 		return;
 	}
 	else {
-		_log(TRADING__CLIENT, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
 		logger.Log(EQEmuLogSys::Error, "Malformed BazaarSearch_Struct packet received, ignoring...\n");
 	}
 
@@ -8116,7 +8116,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			if (c)
 				c->WithCustomer(0);
 			else
-				_log(TRADING__CLIENT, "Client::Handle_OP_Trader: Null Client Pointer");
+				logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_Trader: Null Client Pointer");
 
 			break;
 		}
@@ -8125,7 +8125,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			break;
 		}
 		default: {
-			_log(TRADING__CLIENT, "Unhandled action code in OP_Trader ShowItems_Struct");
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Unhandled action code in OP_Trader ShowItems_Struct");
 			break;
 		}
 		}
@@ -8218,7 +8218,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			}
 		}
 		else {
-			_log(TRADING__CLIENT, "Client::Handle_OP_Trader: Unknown TraderStruct code of: %i\n",
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_Trader: Unknown TraderStruct code of: %i\n",
 				ints->Code);
 
 			logger.Log(EQEmuLogSys::Error, "Unknown TraderStruct code of: %i\n", ints->Code);
@@ -8230,7 +8230,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 		HandleTraderPriceUpdate(app);
 	}
 	else {
-		_log(TRADING__CLIENT, "Unknown size for OP_Trader: %i\n", app->size);
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Unknown size for OP_Trader: %i\n", app->size);
 		logger.Log(EQEmuLogSys::Error, "Unknown size for OP_Trader: %i\n", app->size);
 		DumpPacket(app);
 		return;
@@ -8258,11 +8258,11 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 			BuyTraderItem(tbs, Trader, app);
 		}
 		else {
-			_log(TRADING__CLIENT, "Client::Handle_OP_TraderBuy: Null Client Pointer");
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_TraderBuy: Null Client Pointer");
 		}
 	}
 	else {
-		_log(TRADING__CLIENT, "Client::Handle_OP_TraderBuy: Struct size mismatch");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_TraderBuy: Struct size mismatch");
 
 	}
 	return;
@@ -8348,7 +8348,7 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 
 	if (app->size != sizeof(TraderClick_Struct)) {
 
-		_log(TRADING__CLIENT, "Client::Handle_OP_TraderShop: Returning due to struct size mismatch");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_TraderShop: Returning due to struct size mismatch");
 
 		return;
 	}
@@ -8362,7 +8362,7 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 	if (Trader)
 		outtcs->Approval = Trader->WithCustomer(GetID());
 	else {
-		_log(TRADING__CLIENT, "Client::Handle_OP_TraderShop: entity_list.GetClientByID(tcs->traderid)"
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_TraderShop: entity_list.GetClientByID(tcs->traderid)"
 			" returned a nullptr pointer");
 		return;
 	}

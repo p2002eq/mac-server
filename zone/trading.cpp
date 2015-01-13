@@ -126,7 +126,7 @@ void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
 			inst2->SetCharges(stack_size + inst2->GetCharges());
 		}
 
-		_log(TRADING__HOLDER, "%s added partial item '%s' stack (qty: %i) to trade slot %i", owner->GetName(), inst->GetItem()->Name, stack_size, trade_slot_id);
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "%s added partial item '%s' stack (qty: %i) to trade slot %i", owner->GetName(), inst->GetItem()->Name, stack_size, trade_slot_id);
 
 		if (_stack_size > 0)
 			inst->SetCharges(_stack_size);
@@ -143,7 +143,7 @@ void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
 
 		SendItemData(inst, trade_slot_id);
 
-		_log(TRADING__HOLDER, "%s added item '%s' to trade slot %i", owner->GetName(), inst->GetItem()->Name, trade_slot_id);
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "%s added item '%s' to trade slot %i", owner->GetName(), inst->GetItem()->Name, trade_slot_id);
 
 		client->PutItemInInventory(trade_slot_id, *inst);
 		client->DeleteItemInInventory(MainCursor);
@@ -1189,7 +1189,7 @@ void Client::SendTraderItem(uint32 ItemID, uint16 Quantity) {
 	const Item_Struct* item = database.GetItem(ItemID);
 
 	if(!item){
-		_log(TRADING__CLIENT, "Bogus item deleted in Client::SendTraderItem!\n");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Bogus item deleted in Client::SendTraderItem!\n");
 		return;
 	}
 
@@ -1248,10 +1248,10 @@ void Client::BulkSendTraderInventory(uint32 char_id) {
 					size += packet.length();
 			}
 			else
-				_log(TRADING__CLIENT, "Client::BulkSendTraderInventory nullptr inst pointer");
+				logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::BulkSendTraderInventory nullptr inst pointer");
 		}
 		else
-			_log(TRADING__CLIENT, "Client::BulkSendTraderInventory nullptr item pointer or item is NODROP %8X",item);
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::BulkSendTraderInventory nullptr item pointer or item is NODROP %8X",item);
 	}
 		int8 count = 0;
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopInventoryPacket, size);
@@ -1290,7 +1290,7 @@ ItemInst* Client::FindTraderItemBySerialNumber(int32 SerialNumber){
 			}
 		}
 	}
-	_log(TRADING__CLIENT, "Client::FindTraderItemBySerialNumber Couldn't find item! Serial No. was %i", SerialNumber);
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::FindTraderItemBySerialNumber Couldn't find item! Serial No. was %i", SerialNumber);
 
 	return nullptr;
 }
@@ -1366,7 +1366,7 @@ uint16 Client::FindTraderItem(int32 ItemID, uint16 Quantity){
 			}
 		}
 	}
-	_log(TRADING__CLIENT, "Could NOT find a match for Item: %i with a quantity of: %i on Trader: %s\n",
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Could NOT find a match for Item: %i with a quantity of: %i on Trader: %s\n",
 					ItemID , Quantity, this->GetName());
 
 	return 0;
@@ -1378,7 +1378,7 @@ void Client::NukeTraderItem(uint16 Slot,int16 Charges,uint16 Quantity,Client* Cu
 	TraderCharges_Struct* gis = database.LoadTraderItemWithCharges(Seller->CharacterID());
 
 	if(!Customer) return;
-	_log(TRADING__CLIENT, "NukeTraderItem(Slot %i, Charges %i, Quantity %i TraderSlot %i", Slot, Charges, Quantity, TraderSlot);
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "NukeTraderItem(Slot %i, Charges %i, Quantity %i TraderSlot %i", Slot, Charges, Quantity, TraderSlot);
 	if(Quantity < Charges) {
 		Customer->SendSingleTraderItem(this->CharacterID(), SerialNumber);
 		m_inv.DeleteItem(Slot, Quantity);
@@ -1461,7 +1461,7 @@ void Client::FindAndNukeTraderItem(int32 ItemID, uint16 Quantity, Client* Custom
 			if(!Stackable)
 				Quantity = (Charges > 0) ? Charges : 1;
 
-			_log(TRADING__CLIENT, "FindAndNuke %s, Charges %i, Quantity %i", item->GetItem()->Name, Charges, Quantity);
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "FindAndNuke %s, Charges %i, Quantity %i", item->GetItem()->Name, Charges, Quantity);
 		}
 		if(item && (Charges <= Quantity || (Charges <= 0 && Quantity==1) || !Stackable)){
 			this->DeleteItemInInventory(SlotID, Quantity);
@@ -1500,7 +1500,7 @@ void Client::FindAndNukeTraderItem(int32 ItemID, uint16 Quantity, Client* Custom
 			}
 		}
 	}
-	_log(TRADING__CLIENT, "Could NOT find a match for Item: %i with a quantity of: %i on Trader: %s\n",ItemID,
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Could NOT find a match for Item: %i with a quantity of: %i on Trader: %s\n",ItemID,
 					Quantity,this->GetName());
 }
 
@@ -1580,7 +1580,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	BuyItem = Trader->FindTraderItemByID(tbs->ItemID);
 
 	if(!BuyItem) {
-		_log(TRADING__CLIENT, "Unable to find item on trader.");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Unable to find item on trader.");
 		TradeRequestFailed(app);
 		safe_delete(outapp);
 		return;
@@ -1588,7 +1588,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 
 	uint32 priceper = tbs->Price / tbs->Quantity;
 	outtbs->Price = tbs->Price;
-	_log(TRADING__CLIENT, "Buyitem: Name: %s, IsStackable: %i, Requested Quantity: %i, Charges on Item %i Price: %i Slot: %i Price per item: %i",
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Buyitem: Name: %s, IsStackable: %i, Requested Quantity: %i, Charges on Item %i Price: %i Slot: %i Price per item: %i",
 					BuyItem->GetItem()->Name, BuyItem->IsStackable(), tbs->Quantity, BuyItem->GetCharges(), tbs->Price, tbs->AlreadySold, priceper);
 	// If the item is not stackable, then we can only be buying one of them.
 	if(!BuyItem->IsStackable())
@@ -1610,7 +1610,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 			outtbs->Quantity = tbs->Quantity;
 	}
 
-	_log(TRADING__CLIENT, "Actual quantity that will be traded is %i for cost: %i", outtbs->Quantity, outtbs->Price);
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Actual quantity that will be traded is %i for cost: %i", outtbs->Quantity, outtbs->Price);
 
 	if(outtbs->Price <= 0) {
 		Message(CC_Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
@@ -1893,7 +1893,7 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 		return;
     }
 
-    _log(TRADING__CLIENT, "SRCH: %s", query.c_str());
+    logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "SRCH: %s", query.c_str());
 
     int Size = 0;
     uint32 ID = 0;
@@ -1933,7 +1933,7 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 		}
 		else
 		{
-			_log(TRADING__CLIENT, "Unable to find trader: %i\n",atoi(row[1]));
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Unable to find trader: %i\n",atoi(row[1]));
 		}
 		bsrs->ItemID = atoi(row[2]);
 		//SerialNumber is atoi(Row[3]);
@@ -2005,7 +2005,7 @@ static void UpdateTraderCustomerItemsAdded(uint32 SellerID, uint32 CustomerID, T
 			if(inst->IsStackable())
 				inst->SetMerchantCount(gis->Charges[i]);
 
-			_log(TRADING__CLIENT, "Sending price update for %s, Serial No. %i with %i charges",
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Sending price update for %s, Serial No. %i with %i charges",
 							item->Name, gis->SerialNumber[i], gis->Charges[i]);
 
 			Customer->SendItemPacket(30, inst, ItemPacketMerchant); // MainCursor?
@@ -2054,7 +2054,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 			return;
 
 	}
-	_log(TRADING__CLIENT, "Sending price updates to customer %s", Customer->GetName());
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Sending price updates to customer %s", Customer->GetName());
 
 	ItemInst* inst = database.CreateItem(item);
 
@@ -2080,7 +2080,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 
 		inst->SetMerchantSlot(gis->SerialNumber[i]);
 
-		_log(TRADING__CLIENT, "Sending price update for %s, Serial No. %i with %i charges",
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Sending price update for %s, Serial No. %i with %i charges",
 						item->Name, gis->SerialNumber[i], gis->Charges[i]);
 
 		Customer->SendItemPacket(30, inst, ItemPacketMerchant); // MainCursor??
@@ -2102,7 +2102,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 	tsis->TraderID = this->GetID();
 	tsis->Code = tpus->Action;
 
-	_log(TRADING__CLIENT, "Received Price Update for %s, Item Serial No. %i, New Price %i",
+	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Received Price Update for %s, Item Serial No. %i, New Price %i",
 					GetName(), tpus->SerialNumber, tpus->NewPrice);
 
 	// Pull the items this Trader currently has for sale from the trader table.
@@ -2132,7 +2132,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 		if((gis->ItemID[i] > 0) && (gis->ItemID[i] == tpus->SerialNumber)) {
 			// We found the item that the Trader wants to change the price of (or add back up for sale).
 			//
-			_log(TRADING__CLIENT, "ItemID is %i, Charges is %i", gis->ItemID[i], gis->Charges[i]);
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "ItemID is %i, Charges is %i", gis->ItemID[i], gis->Charges[i]);
 
 			IDOfItemToUpdate = gis->ItemID[i];
 
@@ -2159,7 +2159,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 			return ;
 		}
 
-		_log(TRADING__CLIENT, "Unable to find item to update price for. Rechecking trader satchels. If you removed an item while in trader mode, this message can be ignored!");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Unable to find item to update price for. Rechecking trader satchels. If you removed an item while in trader mode, this message can be ignored!");
 
 		// Find what is in their Trader Satchels
 		GetItems_Struct* newgis=GetTraderItems();
@@ -2172,7 +2172,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 
 			if((newgis->Items[i] > 0) && (newgis->Items[i] == tpus->SerialNumber)) {
 
-				_log(TRADING__CLIENT, "Found new Item to Add, ItemID is %i, Charges is %i", newgis->Items[i],
+				logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Found new Item to Add, ItemID is %i, Charges is %i", newgis->Items[i],
 								newgis->Charges[i]);
 
 				IDOfItemToAdd = newgis->Items[i];
@@ -2190,7 +2190,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 
 		if(!IDOfItemToAdd || !item) {
 
-			_log(TRADING__CLIENT, "Item not found in Trader Satchels either.");
+			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Item not found in Trader Satchels either.");
 			tsis->SubAction = BazaarPriceChange_Fail;
 			_pkt(TRADING__PACKETS, outapp);
 			QueuePacket(outapp);
@@ -2236,7 +2236,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 				gis->SerialNumber[i] = newgis->SerialNumber[i];
 				gis->ItemCost[i] = tpus->NewPrice;
 
-				_log(TRADING__CLIENT, "Adding new item for %s. ItemID %i, SerialNumber %i, Charges %i, Price: %i, Slot %i",
+				logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Adding new item for %s. ItemID %i, SerialNumber %i, Charges %i, Price: %i, Slot %i",
 							GetName(), newgis->Items[i], newgis->SerialNumber[i], newgis->Charges[i],
 							tpus->NewPrice, i);
 			}
@@ -2284,7 +2284,7 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 	QueuePacket(outapp);
 
 	if(OldPrice == tpus->NewPrice) {
-		_log(TRADING__CLIENT, "The new price is the same as the old one.");
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "The new price is the same as the old one.");
 		safe_delete(gis);
 		return;
 	}
