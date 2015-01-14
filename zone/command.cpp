@@ -429,8 +429,7 @@ int command_init(void){
 		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 150, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 150, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 150, command_unscribespells) ||
-		command_add("updatequests", "Updates the quest folder if it is tied to an svn.", 250, command_updatequests) ||
-		command_add("updatesource", "Updates the source and builds.", 250, command_updatesource) ||
+		command_add("update", "Updates the source and builds.", 200, command_update) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 95, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server", 180, command_version) ||
@@ -10293,45 +10292,108 @@ void command_questerrors(Client *c, const Seperator *sep)
 	}
 }
 
-void command_updatequests(Client *c, const Seperator *sep)
+void command_update(Client *c, const Seperator *sep)
 {
-	FILE *fp;
-#ifdef _WINDOWS
-	char buf[1024];
-	fp = _popen("svn update quests", "r");
+	int admin = c->Admin();
+	std::string help0 = "Update commands usage:";
+	std::string help1 = "  #update quests - Updates all zone quests on the server from svn - Does not reload quests.";
+	std::string help2 = "  #update source - Fires off a 10 min shutdown warning, takes down server,";
+	std::string help3 = "					downloads current git and compiles then restarts the server.";
+	std::string help4 = "  #update reboot - Fires off a 10 min shutdown warning and restarts the server without updates.";
+	std::string help5 = "  #update rebootNOW - Restarts the server without updates immediately.";
 
-	while (fgets(buf, 1024, fp))
+	std::string help[] = { help0, help1, help2, help3, help4, help5 };
+
+	if (strcasecmp(sep->arg[1], "help") == 0)
 	{
-		const char * output = (const char *)buf;
-		c->Message(0, "%s", output);
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
 	}
-	fclose(fp);
-#else
-	char* buf = NULL;
-	size_t len = 0;
-	fflush(NULL);
-	fp = popen("svn update quests", "r");
-
-	while (getline(&buf, &len, fp) != -1)
+	else if (strcasecmp(sep->arg[1], "quests") == 0)
 	{
-		const char * output = (const char *)buf;
-		c->Message(0, "%s", output);
-	}
-	free(buf);
-	fflush(fp);
-#endif
-	c->Message(0, "Quests are updated.");
-}
-
-void command_updatesource(Client *c, const Seperator *sep)
-{
+		FILE *fp;
 #ifdef _WINDOWS
-	// TODO: Add same functionality for windows from the following command.
-	c->Message(0, "Not yet implemented for windows.");
+		char buf[1024];
+		fp = _popen("svn update quests", "r");
+
+		while (fgets(buf, 1024, fp))
+		{
+			const char * output = (const char *)buf;
+			c->Message(0, "%s", output);
+		}
+		fclose(fp);
 #else
-	system("./tak_checkout");
-	c->Message(0, "Server will be going down and building, 10 min warning issued.");
+		char* buf = NULL;
+		size_t len = 0;
+		fflush(NULL);
+		fp = popen("svn update quests", "r");
+
+		while (getline(&buf, &len, fp) != -1)
+		{
+			const char * output = (const char *)buf;
+			c->Message(0, "%s", output);
+		}
+		free(buf);
+		fflush(fp);
 #endif
+		c->Message(0, "Quests are updated.");
+	}
+	else if (strcasecmp(sep->arg[1], "source") == 0)
+	{
+		if (admin >= 205)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down and building, 10 min warning issued.");
+			system("./tak_checkout");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else if (strcasecmp(sep->arg[1], "reboot") == 0)
+	{
+		if (admin >= 205)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down for reboot, 10 min warning issued.");
+			system("./tak_reboot");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else if (strcasecmp(sep->arg[1], "rebootNOW") == 0)
+	{
+		if (admin >= 250)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down for reboot.");
+			system("./tak_rebootNOW");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
+	}
 }
 
 void command_coredump(Client *c, const Seperator *sep)
