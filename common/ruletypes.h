@@ -35,16 +35,10 @@ RULE_BOOL( Character, LeaveCorpses, true )
 RULE_BOOL( Character, LeaveNakedCorpses, true )
 RULE_INT ( Character, MaxDraggedCorpses, 2 )
 RULE_REAL( Character, DragCorpseDistance, 400) // If the corpse is <= this distance from the player, it won't move
-RULE_REAL( Character, ExpMultiplier, 0.5 )
-RULE_REAL( Character, AAExpMultiplier, 0.5 )
-RULE_REAL( Character, GroupExpMultiplier, 0.5 )
+RULE_REAL( Character, ExpMultiplier, 1.0 )
+RULE_REAL( Character, AAExpMultiplier, 1.0 )
+RULE_REAL( Character, GroupExpMultiplier, 1.0 )
 RULE_REAL( Character, RaidExpMultiplier, 0.2 )
-RULE_BOOL( Character, UseXPConScaling, true )
-RULE_INT ( Character, LightBlueModifier, 40 )
-RULE_INT ( Character, BlueModifier, 90 )
-RULE_INT ( Character, WhiteModifier, 100 )
-RULE_INT ( Character, YellowModifier, 125 )
-RULE_INT ( Character, RedModifier, 150 )
 RULE_INT ( Character, AutosaveIntervalS, 240 )	//0=disabled
 RULE_INT ( Character, HPRegenMultiplier, 100)
 RULE_INT ( Character, ManaRegenMultiplier, 100)
@@ -86,7 +80,6 @@ RULE_INT ( Character, KillsPerRaidLeadershipAA, 250) // Number of dark blues or 
 RULE_INT ( Character, MaxFearDurationForPlayerCharacter, 4) //4 tics, each tic calculates every 6 seconds.
 RULE_INT ( Character, MaxCharmDurationForPlayerCharacter, 15)
 RULE_INT ( Character, BaseHPRegenBonusRaces, 4352)	//a bitmask of race(s) that receive the regen bonus. Iksar (4096) & Troll (256) = 4352. see common/races.h for the bitmask values
-RULE_BOOL ( Character, UseRaceClassExpBonuses, true)	// Setting this to true will enable Class and Racial experience rate bonuses
 RULE_BOOL ( Character, UseNewStatsWindow, false)		// New stats window shows everything
 RULE_BOOL ( Character, ItemCastsUseFocus, false) // If true, this allows item clickies to use focuses that have limited max levels on them
 RULE_INT ( Character, MinStatusForNoDropExemptions, 80) // This allows status x and higher to trade no drop items.
@@ -180,7 +173,7 @@ RULE_INT ( Zone, PEQZoneReuseTime, 900 )	//How long, in seconds, until you can r
 RULE_INT ( Zone, PEQZoneDebuff1, 4454 )		//First debuff casted by #peqzone Default is Cursed Keeper's Blight.
 RULE_INT ( Zone, PEQZoneDebuff2, 2209 )		//Second debuff casted by #peqzone Default is Tendrils of Apathy.
 RULE_BOOL ( Zone, UsePEQZoneDebuffs, true )	//Will determine if #peqzone will debuff players or not when used.
-RULE_REAL ( Zone, HotZoneBonus, 0.75 )
+RULE_REAL ( Zone, HotZoneBonus, 0.5 )
 RULE_INT ( Zone, ReservedInstances, 30 ) //Will reserve this many instance ids for globals... probably not a good idea to change this while a server is running.
 RULE_BOOL ( Zone, LevelBasedEXPMods, false) // Allows you to use the level_exp_mods table in consideration to your players EXP hits
 RULE_INT ( Zone, WeatherTimer, 600) // Weather timer when no duration is available
@@ -490,10 +483,6 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
-RULE_CATEGORY_END()
-
-RULE_CATEGORY ( AA )
-RULE_INT ( AA, ExpPerPoint, 23976503)	//Amount of exp per AA. Is the same as the amount of exp to go from level 51 to level 52.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Console )

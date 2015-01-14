@@ -688,6 +688,20 @@ void Client::CompleteConnect()
 			mlog(EQMAC__LOG, "Client version is: %s.", string.c_str());
 	}
 
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+		SetEXP(totalrequiredxp, currentaa);
+		Save();
+		//SetLevel(level+1);
+		Kick();
+	}
+
 	worldserver.RequestTellQueue(GetName());
 }
 
@@ -1143,7 +1157,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
-	max_AAXP = RuleI(AA, ExpPerPoint);
+	max_AAXP = GetEXPForLevel(0, true);
 	/* If we can maintain intoxication across zones, check for it */
 	if (!RuleB(Character, MaintainIntoxicationAcrossZones))
 		m_pp.intoxication = 0;
@@ -1922,15 +1936,18 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app) 
 {
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
-		DumpPacket(app);
+	if(!app)
 		return;
-	}
 
 	if (app->size != sizeof(BindWound_Struct)){
 		LogFile->write(EQEMuLog::Error, "Size mismatch for Bind wound packet");
 		DumpPacket(app);
 	}
+
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		return;
+	}
+
 	BindWound_Struct* bind_in = (BindWound_Struct*)app->pBuffer;
 
 	if(!bind_in)
