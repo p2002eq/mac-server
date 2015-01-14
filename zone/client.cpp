@@ -2426,6 +2426,8 @@ void Client::Message_StringID(uint32 type, uint32 string_id, const char* message
 	fm->type = type;
 	bufptr = fm->message;
 
+	// since we're moving the pointer the 0 offset is correct
+	bufptr[0] = '\0';
 
     for(i = 0; i < argcount; i++)
     {
@@ -2547,6 +2549,9 @@ void Client::FilteredMessage_StringID(Mob *sender, uint32 type, eqFilterType fil
 		strcpy(bufptr, message_arg[i]);
 		bufptr += strlen(message_arg[i]) + 1;
 	}
+
+	// since we're moving the pointer the 0 offset is correct
+	bufptr[0] = '\0';
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
