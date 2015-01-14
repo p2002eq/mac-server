@@ -1224,10 +1224,7 @@ void Mob::ShowBuffList(Client* client) {
 	uint32 buff_count = GetMaxTotalSlots();
 	for (i=0; i < buff_count; i++) {
 		if (buffs[i].spellid != SPELL_UNKNOWN) {
-			if (spells[buffs[i].spellid].buffdurationformula == DF_Permanent)
-				client->Message(0, "  %i: %s: Permanent", i, spells[buffs[i].spellid].name);
-			else
-				client->Message(0, "  %i: %s: %i tics left", i, spells[buffs[i].spellid].name, buffs[i].ticsremaining);
+			client->Message(0, "  %i: %s", i, spells[buffs[i].spellid].name);
 		}
 	}
 }

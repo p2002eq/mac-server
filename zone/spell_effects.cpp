@@ -743,6 +743,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if (!caster)	// can't be someone's pet unless we know who that someone is
 					break;
 
+				caster->SetTarget(nullptr);
+
 				if(IsNPC())
 				{
 					CastToNPC()->SaveGuardSpotCharm();
@@ -801,6 +803,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					if(buffs[buffslot].ticsremaining > RuleI(Character, MaxCharmDurationForPlayerCharacter))
 						buffs[buffslot].ticsremaining = RuleI(Character, MaxCharmDurationForPlayerCharacter);
 				}
+
+				caster->SetTarget(this);
 
 				break;
 			}
@@ -3855,6 +3859,9 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 				SetOwnerID(0);
 				if(tempmob)
 				{
+					if(tempmob->GetTarget() && tempmob->GetTarget() == this)
+						tempmob->SetTarget(nullptr);
+
 					tempmob->SetPet(0);
 				}
 				if (IsAIControlled())
@@ -3875,6 +3882,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					ps->command = 0;
 					entity_list.QueueClients(this, app);
 					safe_delete(app);
+					tempmob->SetTarget(this);
 				}
 				if(IsClient())
 				{
@@ -4019,17 +4027,22 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 
 	// notify caster (or their master) of buff that it's worn off
 	Mob *p = entity_list.GetMob(buffs[slot].casterid);
-	if (p && p != this && !death
-		&& ((IsBardSong(buffs[slot].spellid) && !IsBeneficialSpell(buffs[slot].spellid)) 
-		|| !IsBardSong(buffs[slot].spellid)))
+	if (p && p != this && !death && !IsBeneficialSpell(buffs[slot].spellid))
 	{
 		Mob *notify = p;
 		if(p->IsPet())
 			notify = p->GetOwner();
 		if(p)
 		{
-			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF_OF,
-				spells[buffs[slot].spellid].name, GetCleanName());
+			char spellname[32];
+			if(IsCharmSpell(buffs[slot].spellid))
+				strcpy(spellname, "charm");
+			else if(IsFearSpell(buffs[slot].spellid))
+				strcpy(spellname, "fear");
+			else
+				strcpy(spellname, spells[buffs[slot].spellid].name);
+
+			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
 	}
 
