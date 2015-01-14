@@ -373,6 +373,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	case CLIENT_KICKED:
 	case DISCONNECTED:
 	case CLIENT_LINKDEAD:
+	case PREDISCONNECTED:
 		break;
 	default:
 		LogFile->write(EQEMuLog::Debug, "Unknown client_state: %d\n", client_state);
@@ -2937,7 +2938,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 			sta->fatigue=GetFatiguePercent();
 
-			QueuePacket(outapp);
+			QueuePacket(outapp, false);
 			safe_delete(outapp);
 			return;
 		}
@@ -2953,7 +2954,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			sta->water = value;
 			sta->fatigue=GetFatiguePercent();
 
-			QueuePacket(outapp);
+			QueuePacket(outapp, false);
 			safe_delete(outapp);
 			return;
 		}
@@ -2984,7 +2985,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 	sta->fatigue=GetFatiguePercent();
 
-	QueuePacket(outapp);
+	QueuePacket(outapp, false);
 	safe_delete(outapp);
 	return;
 }

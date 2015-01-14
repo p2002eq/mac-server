@@ -987,7 +987,7 @@ void Mob::SendHPUpdate()
 	CreateHPPacket(&hp_app);
 
 	// send to people who have us targeted
-	entity_list.QueueClientsByTarget(this, &hp_app, false, 0, true, true, BIT_AllClients);
+	entity_list.QueueClientsByTarget(this, &hp_app, false, 0, false, true, BIT_AllClients);
 
 	// send to group
 	if(IsGrouped())
@@ -1019,7 +1019,7 @@ void Mob::SendHPUpdate()
 	// send to pet
 	if(GetPet() && GetPet()->IsClient())
 	{
-		GetPet()->CastToClient()->QueuePacket(&hp_app, true);
+		GetPet()->CastToClient()->QueuePacket(&hp_app, false);
 	}
 
 	// send to self - we need the actual hps here
@@ -1030,7 +1030,7 @@ void Mob::SendHPUpdate()
 		ds->cur_hp = CastToClient()->GetHP() - itembonuses.HP;
 		ds->spawn_id = GetID();
 		ds->max_hp = CastToClient()->GetMaxHP() - itembonuses.HP;
-		CastToClient()->QueuePacket(hp_app2);
+		CastToClient()->QueuePacket(hp_app2, false);
 		safe_delete(hp_app2);
 	}
 }
@@ -1485,9 +1485,9 @@ void Mob::SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay,
 	if(c)
 		c->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 	else if(zone_wide)
-		entity_list.QueueClients(this, outapp);
+		entity_list.QueueClients(this, outapp, false, false);
 	else
-		entity_list.QueueCloseClients(this, outapp);
+		entity_list.QueueCloseClients(this, outapp, false, 200.0f, 0, false);
 
 	safe_delete(outapp);
 
@@ -3681,7 +3681,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 			spu->delta_heading = NewFloatToEQ13(0);
 			outapp_push->priority = 6;
 			entity_list.QueueClients(this, outapp_push, true);
-			CastToClient()->FastQueuePacket(&outapp_push);
+			CastToClient()->FastQueuePacket(&outapp_push, false);
 		}
 		return true;
 	}

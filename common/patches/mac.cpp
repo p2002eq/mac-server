@@ -552,7 +552,7 @@ namespace Mac {
 		spu->spawn_update[0].z_pos = (int16)emu->z_pos*10;
 		spu->spawn_update[0].heading = (int8)emu->heading;
 		spu->spawn_update[0].anim_type = anim_type * 7;
-		dest->FastQueuePacket(&app);
+		dest->FastQueuePacket(&app, ack_req);
 
 		delete[] __emu_buffer;
 	}

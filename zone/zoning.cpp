@@ -697,8 +697,6 @@ void Mob::Gate() {
 
 void Client::Gate() 
 {
-	ZoneChange_Struct *zc = new struct ZoneChange_Struct;
-	SendZoneCancel(zc);
 	Mob::Gate();
 }
 
