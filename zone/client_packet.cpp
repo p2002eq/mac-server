@@ -2161,11 +2161,13 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		}
 		else if (m_inv.SupportsClickCasting(castspell->inventoryslot))	// sanity check
 		{
-			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
+			{
 				int guideClicks[] = { 30, 35, 36, 84, 119, 206, 214, 354, 595, 722, 778, 810, 811, 813, 814, 815, 816, 817, 818, 
 										959, 970, 994, 1209, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1355, 3921 };
 				int* found = std::find(guideClicks, std::end(guideClicks), castspell->spell_id);
-				if (found == std::end(guideClicks)) {
+				if (found == std::end(guideClicks))
+				{
 					InterruptSpell(castspell->spell_id);
 					return;
 				}
