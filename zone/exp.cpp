@@ -27,7 +27,7 @@
 extern QueryServ* QServ;
 
 
-void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp, uint8 moblevel) {
+void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 
 	this->EVENT_ITEM_ScriptStopReturn();
 
@@ -70,15 +70,14 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp, uint8 moblev
 		// AK had a permanent 20% XP increase.
 		totalmod += 0.20;
 
-		int8 leveldiff = GetLevel() - moblevel;
-		uint32 preadd = add_exp;
 		add_exp = uint32(float(add_exp) * totalmod * zemmod);
-
-		uint32 xpshouldbe = GetLevel() * GetLevel() * totalmod * zemmod;
-		//Message(CC_Yellow, "AddExp: XP old style was: %i (base is: %i) but is currently calculated as: %i (base %i) leveldiff is: %i", xpshouldbe, GetLevel() * GetLevel(), add_exp, preadd, leveldiff);
-	}	//end !resexp
+	}
 
 	float aatotalmod = 1.0;
+
+	// AK had a permanent 20% XP increase.
+	aatotalmod += 0.20;
+
 	if(zone->newzone_data.zone_exp_multiplier >= 0){
 		aatotalmod *= zone->newzone_data.zone_exp_multiplier * 100;
 	}
@@ -538,7 +537,7 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 			if(cmember->IsInRange(other))
 			{
 				//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i", finalgroupxp, groupexp, close_membercount, membercount);
-				cmember->AddEXP(finalgroupxp, conlevel, false, other->GetLevel());
+				cmember->AddEXP(finalgroupxp, conlevel);
 			}
 			else
 				_log(CLIENT__EXP, "%s is out of range for group XP!", cmember->GetName());
@@ -587,7 +586,7 @@ void Raid::SplitExp(uint32 exp, Mob* other) {
 			if (diff >= (maxdiff)) { /*Instead of person who killed the mob, the person who has the highest level in the group*/
 				uint32 tmp = (cmember->GetLevel()+3) * (cmember->GetLevel()+3) * 75 * 35 / 10;
 				uint32 tmp2 = (groupexp / membercount) + 1;
-				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel, false, other->GetLevel() );
+				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel);
 			}
 		}
 	}

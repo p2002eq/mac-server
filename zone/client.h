@@ -488,7 +488,7 @@ public:
 
 	inline uint32 GetEXP() const { return m_pp.exp; }
 
-	void	AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false, uint8 moblevel = 0);
+	void	AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
 	void	SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp=false);
 	void	AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void	InspectBuffs(Client* Inspector, int Rank);
