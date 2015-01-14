@@ -323,6 +323,7 @@ void command_updatequests(Client *c, const Seperator *sep);
 void command_updatesource(Client *c, const Seperator *sep);
 void command_coredump(Client *c, const Seperator *sep);
 void command_push(Client *c, const Seperator *sep);
+void command_xpinfo(Client *c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);

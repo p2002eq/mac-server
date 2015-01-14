@@ -5386,6 +5386,7 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
 		m_pp.hunger_level += food;
 		DeleteItemInInventory(slot, 1, false);
 
+		//Message(CC_Yellow, "%s consumed. Added %i to hunger (%i)", item->Name, food, m_pp.hunger_level);
 		if(!auto_consume) //no message if the client consumed for us
 			entity_list.MessageClose_StringID(this, true, 50, 0, EATING_MESSAGE, GetName(), item->Name);
 
@@ -5403,6 +5404,7 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
 		m_pp.thirst_level += drink;
 		DeleteItemInInventory(slot, 1, false);
 
+		//Message(CC_Yellow, "%s consumed. Added %i to thirst (%i)", item->Name, drink, m_pp.thirst_level);
         if(!auto_consume) //no message if the client consumed for us
 			entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), item->Name);
 
@@ -5570,61 +5572,4 @@ bool Client::Disarm(Client* client)
 		}
 	}
 	return false;
-}
-
-void Client::GetExpLoss(Mob* killerMob, uint16 spell, int &exploss)
-{
-	float GetNum [] = {0.16f, 0.08f, 0.15f, 0.075f, 0.14f, 0.07f, 0.13f, 0.065f, 0.12f, 0.06f};
-	float loss;
-	if(GetLevel() >= 1 && GetLevel() <= 29)
-		loss = GetNum[0];
-	if(GetLevel() == 30)
-		loss = GetNum[1];
-	if(GetLevel() >= 31 && GetLevel() <= 34)
-		loss = GetNum[2];
-	if(GetLevel() == 35)
-		loss = GetNum[3];
-	if(GetLevel() >= 36 && GetLevel() <= 39)
-		loss = GetNum[4];
-	if(GetLevel() == 40)
-		loss = GetNum[5];
-	if(GetLevel() >= 41 && GetLevel() <= 44)
-		loss = GetNum[6];
-	if(GetLevel() == 45)
-		loss = GetNum[7];
-	if(GetLevel() >= 46 && GetLevel() <= 50)
-		loss = GetNum[8];
-	if(GetLevel() >= 51)
-		loss = GetNum[9];
-	int requiredxp = GetEXPForLevel(GetLevel() + 1) - GetEXPForLevel(GetLevel());
-	exploss=(int)((float)requiredxp * (loss));
-
-	if( (GetLevel() < RuleI(Character, DeathExpLossLevel)) || (GetLevel() > RuleI(Character, DeathExpLossMaxLevel)) || IsBecomeNPC() )
-	{
-		exploss = 0;
-	}
-	else if( killerMob )
-	{
-		if( killerMob->IsClient() )
-		{
-			exploss = 0;
-		}
-		else if( killerMob->GetOwner() && killerMob->GetOwner()->IsClient() )
-		{
-			exploss = 0;
-		}
-	}
-
-	if(spell != SPELL_UNKNOWN)
-	{
-		uint32 buff_count = GetMaxTotalSlots();
-		for(uint16 buffIt = 0; buffIt < buff_count; buffIt++)
-		{
-			if(buffs[buffIt].spellid == spell && buffs[buffIt].client)
-			{
-				exploss = 0;	// no exp loss for pvp dot
-				break;
-			}
-		}
-	}
 }

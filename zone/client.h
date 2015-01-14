@@ -488,7 +488,7 @@ public:
 
 	inline uint32 GetEXP() const { return m_pp.exp; }
 
-	void	AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
+	void	AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false, uint8 moblevel = 0);
 	void	SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp=false);
 	void	AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void	InspectBuffs(Client* Inspector, int Rank);
@@ -498,7 +498,8 @@ public:
 	uint32	GetGroupEXP() { return(m_pp.group_leadership_exp); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
-	uint32  GetEXPForLevel(uint16 level);
+	uint32  GetEXPForLevel(uint16 level, bool aa = false);
+	bool	IsInRange(Mob* defender);
 
 	void GoToBind(uint8 bindnum = 0);
 	void GoToSafeCoords(uint16 zone_id, uint16 instance_id);

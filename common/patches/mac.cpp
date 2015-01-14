@@ -237,11 +237,13 @@ namespace Mac {
 		OUT(race);
 		OUT(class_);
 		OUT(level);
-		eq->bind_point_zone = emu->binds[0].zoneId;
-		eq->bind_x = emu->binds[0].x;
-		eq->bind_y = emu->binds[0].y;
-		eq->bind_z = emu->binds[0].z;
-		eq->bind_heading = emu->binds[0].heading;
+		for(r = 0; r < 5; r++) {
+			eq->bind_point_zone[r] = emu->binds[r].zoneId;
+			eq->bind_x[r] = emu->binds[r].x;
+			eq->bind_y[r] = emu->binds[r].y;
+			eq->bind_z[r] = emu->binds[r].z;
+			eq->bind_heading[r] = emu->binds[r].heading;
+		}
 		OUT(deity);
 		OUT(intoxication);
 		OUT(haircolor);

@@ -1802,6 +1802,9 @@ void Client::DoStaminaUpdate() {
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 
+	bool desert = false;
+	bool horse = false;
+	bool aamod = false;
 	//This is our stomach size. It probably shouldn't be changed from 6000. 
 	int value = RuleI(Character,ConsumptionValue);
 	if(zone->GetZoneID() != bazaar && !GetGM()) {
@@ -1811,9 +1814,15 @@ void Client::DoStaminaUpdate() {
 		//Horse and desert penalities.
 		float waterloss = 0.0f;
 		if(GetHorseId() != 0)
+		{
 			loss += loss*2.0; 
+			horse = true;
+		}
 		if(zone->IsDesertZone())
+		{
 			waterloss = loss*2.0;
+			desert = true;
+		}
 
 		//AA bonus.
 		float cons_mod = 0.0f;
@@ -1831,6 +1840,8 @@ void Client::DoStaminaUpdate() {
 				cons_mod = 0;
 				break;
 		}
+		if(cons_mod > 0)
+			aamod = true;
 		loss -= loss*cons_mod;
 
 		if (m_pp.hunger_level > 0)
@@ -1866,7 +1877,7 @@ void Client::DoStaminaUpdate() {
 			}
 		}
 
-		//Message(0, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent());
+		//Message(CC_Yellow, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
 
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
