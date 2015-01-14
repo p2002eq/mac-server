@@ -1,6 +1,3 @@
 #!/bin/bash
-
-# This file goes in the root of your game server dir
-
 cd /cores
-./dump
+./dump &
