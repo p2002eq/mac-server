@@ -2539,8 +2539,14 @@ struct PlayerProfile_Struct
 	/*3448*/	uint8	unknown3448[336];	// Lots of data on fake PP struct, none in normal decoded packet.
 	/*3784*/	uint32	bind_point_zone;	// Lyenu: Bind zone is saved as a int32 now
 	/*3788*/	uint32	start_point_zone[4];	// Lyenu: Start Point Zones are saved as int32s now
-	/*3804*/	OldBindStruct	bind_location[5];	// Player Bind Location (5 different X,Y,Z - Multiple bind points?)
-	/*3864*/	uint8	unknown3656[20];	// ***Placeholder
+	/*3804*/	float	bind_y;
+	/*3808*/    uint32	unknown3808[4];
+	/*3824*/	float	bind_x;
+	/*3828*/    uint32	unknown3828[4];
+	/*3844*/	float	bind_z;
+	/*3848*/    uint32	unknown3848[4];
+	/*3864*/	float	bind_heading;
+	/*3868*/    uint32	unknown3868[4];
 	/*3884*/	OldItemProperties_Struct	bankinvitemproperties[8];
 	/*3964*/	OldItemProperties_Struct	bankbagitemproperties[80];
 	/*4764*/	uint32	login_time;
@@ -2566,9 +2572,10 @@ struct PlayerProfile_Struct
 	/*5004*/	uint32	unknown5003;
 	/*5008*/	uint32	abilitySlotRefresh;
 	/*5012*/	char	groupMembers[6][64];	// Group Members
-	/*5396*/	uint8	unknown5124[24];	// ***Placeholder 
-	/*5420*/	uint32	expAA;			
-	/*5424*/    uint8	unknown5424;
+	/*5396*/	uint8	unknown5396[20];	
+	/*5416*/	uint32	groupdat;
+	/*5420*/	uint32	expAA;				// Not working? client has this as Post60Exp
+	/*5424*/    uint8	title;
 	/*5425*/	uint8	perAA;			    // Player AA Percent
 	/*5426*/	uint8	haircolor;			// Player Hair Color
 	/*5427*/	uint8	beardcolor;			// Player Beard Color

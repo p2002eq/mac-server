@@ -553,7 +553,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 		zone_mode = zm;
 
-		if(zm == ZoneSolicited || zm == ZoneToBindPoint) {
+		if(zm == ZoneSolicited || zm == ZoneToBindPoint || zm == ZoneToSafeCoords) {
 			_log(EQMAC__LOG, "Zoning packet about to be sent. We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
@@ -605,7 +605,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 				safe_delete(outapp);
 			}
 		}
-		else if(zm == ZoneToSafeCoords || zm == EvacToSafeCoords)
+		else if(zm == EvacToSafeCoords)
 		{
 			zone_mode = zm;
 

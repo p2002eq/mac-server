@@ -238,10 +238,10 @@ namespace Mac {
 		OUT(class_);
 		OUT(level);
 		eq->bind_point_zone = emu->binds[0].zoneId;
-		//X/Y reversed internally in the client.
-		eq->bind_location[0].x = emu->binds[0].y;
-		eq->bind_location[0].y = emu->binds[0].x;
-		eq->bind_location[0].z = emu->binds[0].z;
+		eq->bind_x = emu->binds[0].x;
+		eq->bind_y = emu->binds[0].y;
+		eq->bind_z = emu->binds[0].z;
+		eq->bind_heading = emu->binds[0].heading;
 		OUT(deity);
 		OUT(intoxication);
 		OUT(haircolor);
