@@ -1931,6 +1931,10 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 		DumpPacket(app);
 	}
 	BindWound_Struct* bind_in = (BindWound_Struct*)app->pBuffer;
+
+	if(!bind_in)
+		return;
+
 	Mob* bindmob = entity_list.GetMob(bind_in->to);
 	if (!bindmob){
 		LogFile->write(EQEMuLog::Error, "Bindwound on non-exsistant mob from %s", this->GetName());
