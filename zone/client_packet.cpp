@@ -695,11 +695,17 @@ void Client::CompleteConnect()
 
 	if(currentxp < totalrequiredxp)
 	{
-		Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
-		SetEXP(totalrequiredxp, currentaa);
-		Save();
-		//SetLevel(level+1);
-		Kick();
+		if(Admin() == 0 && level > 1)
+		{
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+			SetEXP(totalrequiredxp, currentaa);
+			Save();
+			//SetLevel(level+1);
+			Kick();
+		}
+		else if(Admin() > 0 && level > 1)
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+
 	}
 
 	worldserver.RequestTellQueue(GetName());

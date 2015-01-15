@@ -106,7 +106,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	if(aaexp < had_aaexp)
 		aaexp = had_aaexp;	//watch for wrap
 
-	//Message(CC_Yellow, "AddExp: XP awarded: %i (%i) AAXP awarded: %i Required XP is: %i XP cap is: %0.2f", add_exp, GetEXP() + add_exp, aaexp, requiredxp, xp_cap);
+	Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
 	SetEXP(exp, aaexp, resexp);
 }
 
