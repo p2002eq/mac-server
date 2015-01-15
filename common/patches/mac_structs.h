@@ -2537,16 +2537,11 @@ struct PlayerProfile_Struct
 	/*3393*/	uint8	unknown3393[51];
 	/*3444*/	uint32	current_zone;		// 
 	/*3448*/	uint8	unknown3448[336];	// Lots of data on fake PP struct, none in normal decoded packet.
-	/*3784*/	uint32	bind_point_zone;	// Lyenu: Bind zone is saved as a int32 now
-	/*3788*/	uint32	start_point_zone[4];	// Lyenu: Start Point Zones are saved as int32s now
-	/*3804*/	float	bind_y;
-	/*3808*/    uint32	unknown3808[4];
-	/*3824*/	float	bind_x;
-	/*3828*/    uint32	unknown3828[4];
-	/*3844*/	float	bind_z;
-	/*3848*/    uint32	unknown3848[4];
-	/*3864*/	float	bind_heading;
-	/*3868*/    uint32	unknown3868[4];
+	/*3784*/	uint32	bind_point_zone[5];	
+	/*3804*/	float	bind_y[5];
+	/*3824*/	float	bind_x[5];
+	/*3844*/	float	bind_z[5];
+	/*3864*/	float	bind_heading[5];
 	/*3884*/	OldItemProperties_Struct	bankinvitemproperties[8];
 	/*3964*/	OldItemProperties_Struct	bankbagitemproperties[80];
 	/*4764*/	uint32	login_time;

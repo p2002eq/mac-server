@@ -429,8 +429,7 @@ int command_init(void){
 		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 150, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 150, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 150, command_unscribespells) ||
-		command_add("updatequests", "Updates the quest folder if it is tied to an svn.", 250, command_updatequests) ||
-		command_add("updatesource", "Updates the source and builds.", 250, command_updatesource) ||
+		command_add("update", "Updates the source and builds.", 200, command_update) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 95, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server", 180, command_version) ||
@@ -443,7 +442,7 @@ int command_init(void){
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 250, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 250, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 250, command_wpinfo) ||
-
+		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 250, command_zclip) ||
 		command_add("zcolor", "[red] [green] [blue] - Change sky color", 250, command_zcolor) ||
 		command_add("zhdr", nullptr, 250, command_zheader) ||
@@ -3948,6 +3947,7 @@ void command_setxp(Client *c, const Seperator *sep){
 		int exploss;
 		t->GetExpLoss(nullptr,0,exploss);
 		uint32 currentXP = t->GetEXP();
+		uint32 currentaaXP = t->GetAAXP();
 		int input = atoi(sep->arg[1]);
 
 		if (input > 9999999)
@@ -3957,12 +3957,12 @@ void command_setxp(Client *c, const Seperator *sep){
 			uint32 newxp = currentXP - exploss;
 			if(newxp < 1000)
 				newxp = 1000;
-			t->SetEXP(newxp, 0);
+			t->SetEXP(newxp, currentaaXP);
 		}
 		else if(input == 0)
 		{
 			uint32 newxp = currentXP + exploss;
-			t->SetEXP(newxp, 0);
+			t->SetEXP(newxp, currentaaXP);
 		}
 		else if(input <= 100)
 		{
@@ -3970,12 +3970,12 @@ void command_setxp(Client *c, const Seperator *sep){
 			uint32 requiredxp = t->GetEXPForLevel(t->GetLevel()+1) - t->GetEXPForLevel(t->GetLevel());
 			float final_ = requiredxp*percent;
 			uint32 newxp = (uint32)final_ + currentXP;
-			t->SetEXP(newxp, 0);
+			t->SetEXP(newxp, currentaaXP);
 		}
 		else
 		{
 			uint32 newxp = currentXP + input;
-			t->SetEXP(newxp, 0);
+			t->SetEXP(newxp, currentaaXP);
 		}
 	}
 	else
@@ -10292,45 +10292,108 @@ void command_questerrors(Client *c, const Seperator *sep)
 	}
 }
 
-void command_updatequests(Client *c, const Seperator *sep)
+void command_update(Client *c, const Seperator *sep)
 {
-	FILE *fp;
-#ifdef _WINDOWS
-	char buf[1024];
-	fp = _popen("svn update quests", "r");
+	int admin = c->Admin();
+	std::string help0 = "Update commands usage:";
+	std::string help1 = "  #update quests - Updates all zone quests on the server from svn - Does not reload quests.";
+	std::string help2 = "  #update source - Fires off a 10 min shutdown warning, takes down server,";
+	std::string help3 = "					downloads current git and compiles then restarts the server.";
+	std::string help4 = "  #update reboot - Fires off a 10 min shutdown warning and restarts the server without updates.";
+	std::string help5 = "  #update rebootNOW - Restarts the server without updates immediately.";
 
-	while (fgets(buf, 1024, fp))
+	std::string help[] = { help0, help1, help2, help3, help4, help5 };
+
+	if (strcasecmp(sep->arg[1], "help") == 0)
 	{
-		const char * output = (const char *)buf;
-		c->Message(0, "%s", output);
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
 	}
-	fclose(fp);
-#else
-	char* buf = NULL;
-	size_t len = 0;
-	fflush(NULL);
-	fp = popen("svn update quests", "r");
-
-	while (getline(&buf, &len, fp) != -1)
+	else if (strcasecmp(sep->arg[1], "quests") == 0)
 	{
-		const char * output = (const char *)buf;
-		c->Message(0, "%s", output);
-	}
-	free(buf);
-	fflush(fp);
-#endif
-	c->Message(0, "Quests are updated.");
-}
-
-void command_updatesource(Client *c, const Seperator *sep)
-{
+		FILE *fp;
 #ifdef _WINDOWS
-	// TODO: Add same functionality for windows from the following command.
-	c->Message(0, "Not yet implemented for windows.");
+		char buf[1024];
+		fp = _popen("svn update quests", "r");
+
+		while (fgets(buf, 1024, fp))
+		{
+			const char * output = (const char *)buf;
+			c->Message(0, "%s", output);
+		}
+		fclose(fp);
 #else
-	system("./tak_checkout");
-	c->Message(0, "Server will be going down and building, 10 min warning issued.");
+		char* buf = NULL;
+		size_t len = 0;
+		fflush(NULL);
+		fp = popen("svn update quests", "r");
+
+		while (getline(&buf, &len, fp) != -1)
+		{
+			const char * output = (const char *)buf;
+			c->Message(0, "%s", output);
+		}
+		free(buf);
+		fflush(fp);
 #endif
+		c->Message(0, "Quests are updated.");
+	}
+	else if (strcasecmp(sep->arg[1], "source") == 0)
+	{
+		if (admin >= 205)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down and building, 10 min warning issued.");
+			system("./tak_checkout");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else if (strcasecmp(sep->arg[1], "reboot") == 0)
+	{
+		if (admin >= 205)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down for reboot, 10 min warning issued.");
+			system("./tak_reboot");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else if (strcasecmp(sep->arg[1], "rebootNOW") == 0)
+	{
+		if (admin >= 250)
+		{
+#ifdef _WINDOWS
+			// TODO: Add same functionality for windows from the following command.
+			c->Message(0, "Not yet implemented for windows.");
+#else
+			c->Message(0, "Server will be going down for reboot.");
+			system("./tak_rebootNOW");
+#endif
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
+	}
 }
 
 void command_coredump(Client *c, const Seperator *sep)
@@ -10524,3 +10587,34 @@ void command_push(Client *c, const Seperator *sep){
 		}
 	}
 }
+
+void command_xpinfo(Client *c, const Seperator *sep){
+
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	uint16 level = t->GetLevel();
+	uint32 totalrequiredxp = t->GetEXPForLevel(level + 1);
+	uint32 currentxp = t->GetEXP();
+	float xpforlevel = totalrequiredxp - currentxp;
+	float totalxpforlevel = totalrequiredxp - t->GetEXPForLevel(level);
+	float xp_percent = 100.0 - ((xpforlevel/totalxpforlevel) * 100.0);
+
+	int exploss;
+	t->GetExpLoss(nullptr, 0, exploss);
+	float loss_percent = (exploss/totalxpforlevel) * 100.0;
+
+	float maxaa = t->GetEXPForLevel(0, true);
+	uint32 currentaaxp = t->GetAAXP();
+	float aa_percent = (currentaaxp/maxaa) * 100.0;
+
+	c->Message(CC_Yellow, "%s has %d of %d required XP.", t->GetName(), currentxp, totalrequiredxp);
+	c->Message(CC_Yellow, "They need %0.1f more to get to %d. They are %0.2f percent towards this level.", xpforlevel, level+1, xp_percent);
+	c->Message(CC_Yellow, "Their XP loss at this level is %d which is %0.2f percent of their current level.", exploss, loss_percent);
+	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
+}
+

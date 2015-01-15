@@ -498,7 +498,8 @@ public:
 	uint32	GetGroupEXP() { return(m_pp.group_leadership_exp); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
-	uint32  GetEXPForLevel(uint16 level);
+	uint32  GetEXPForLevel(uint16 level, bool aa = false);
+	bool	IsInRange(Mob* defender);
 
 	void GoToBind(uint8 bindnum = 0);
 	void GoToSafeCoords(uint16 zone_id, uint16 instance_id);

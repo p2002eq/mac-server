@@ -437,16 +437,6 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		}
 	}
 
-	//We have to check for Gate failure before its cast, because the client resolves on its own.
-	if(spell_id == 36)
-	{
-		if (zone->random.Int(0, 99) > 98)
-		{
-			InterruptSpell(GATE_FAIL,CC_Red,spell_id);
-			return (false);
-		}
-	}
-
 	mlog(SPELLS__CASTING, "Spell %d: Casting time %d (orig %d), mana cost %d",
 			spell_id, cast_time, orgcasttime, mana_cost);
 
@@ -3187,6 +3177,16 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				return false;
 			}
+		}
+	}
+
+	//We have to check for Gate failure before its cast, because the client resolves on its own.
+	if(IsGateSpell(spell_id))
+	{
+		if (zone->random.Roll(5))
+		{
+			InterruptSpell(GATE_FAIL,CC_Red,spell_id);
+			return false;
 		}
 	}
 

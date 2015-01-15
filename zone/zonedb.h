@@ -393,7 +393,7 @@ public:
 	void	UpdateKarma(uint32 acct_id, uint32 amount);
 
 	/* Things which really dont belong here... */
-	int16	CommandRequirement(const char* commandname);
+	//int16	CommandRequirement(const char* commandname); //Orphaned code?
 
 protected:
 	void ZDBInitVars();

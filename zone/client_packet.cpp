@@ -373,6 +373,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	case CLIENT_KICKED:
 	case DISCONNECTED:
 	case CLIENT_LINKDEAD:
+	case PREDISCONNECTED:
 		break;
 	default:
 		LogFile->write(EQEMuLog::Debug, "Unknown client_state: %d\n", client_state);
@@ -685,6 +686,26 @@ void Client::CompleteConnect()
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
 			mlog(EQMAC__LOG, "Client version is: %s.", string.c_str());
+	}
+
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		if(Admin() == 0 && level > 1)
+		{
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+			SetEXP(totalrequiredxp, currentaa);
+			Save();
+			//SetLevel(level+1);
+			Kick();
+		}
+		else if(Admin() > 0 && level > 1)
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+
 	}
 
 	worldserver.RequestTellQueue(GetName());
@@ -1142,7 +1163,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
-	max_AAXP = RuleI(AA, ExpPerPoint);
+	max_AAXP = GetEXPForLevel(0, true);
 	/* If we can maintain intoxication across zones, check for it */
 	if (!RuleB(Character, MaintainIntoxicationAcrossZones))
 		m_pp.intoxication = 0;
@@ -1921,15 +1942,18 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app) 
 {
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
-		DumpPacket(app);
+	if(!app)
 		return;
-	}
 
 	if (app->size != sizeof(BindWound_Struct)){
 		LogFile->write(EQEMuLog::Error, "Size mismatch for Bind wound packet");
 		DumpPacket(app);
 	}
+
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+		return;
+	}
+
 	BindWound_Struct* bind_in = (BindWound_Struct*)app->pBuffer;
 
 	if(!bind_in)
@@ -2144,11 +2168,13 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		}
 		else if (m_inv.SupportsClickCasting(castspell->inventoryslot))	// sanity check
 		{
-			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
+			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
+			{
 				int guideClicks[] = { 30, 35, 36, 84, 119, 206, 214, 354, 595, 722, 778, 810, 811, 813, 814, 815, 816, 817, 818, 
 										959, 970, 994, 1209, 1211, 1212, 1213, 1214, 1215, 1216, 1217, 1218, 1219, 1220, 1355, 3921 };
 				int* found = std::find(guideClicks, std::end(guideClicks), castspell->spell_id);
-				if (found == std::end(guideClicks)) {
+				if (found == std::end(guideClicks))
+				{
 					InterruptSpell(castspell->spell_id);
 					return;
 				}
@@ -2937,7 +2963,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 			sta->fatigue=GetFatiguePercent();
 
-			QueuePacket(outapp);
+			QueuePacket(outapp, false);
 			safe_delete(outapp);
 			return;
 		}
@@ -2953,7 +2979,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			sta->water = value;
 			sta->fatigue=GetFatiguePercent();
 
-			QueuePacket(outapp);
+			QueuePacket(outapp, false);
 			safe_delete(outapp);
 			return;
 		}
@@ -2984,7 +3010,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
 	sta->fatigue=GetFatiguePercent();
 
-	QueuePacket(outapp);
+	QueuePacket(outapp, false);
 	safe_delete(outapp);
 	return;
 }
