@@ -402,7 +402,8 @@ uint32 Client::GetEXPForLevel(uint16 check_level, bool aa)
 	if(aa)
 		check_level = 52;
 
-	float base = (check_level-1)*(check_level-1)*(check_level-1);
+	check_level -= 1;
+	float base = (check_level)*(check_level)*(check_level);
 
 	// Classes: In the XP formula AK used, they WERE calculated in. This was due to Sony not being able to change their XP
 	// formula drastically (see above comment.) Instead, they gave the penalized classes a bonus on gain. We've decided to go
@@ -459,11 +460,11 @@ uint32 Client::GetEXPForLevel(uint16 check_level, bool aa)
 	else if (check_level == 62)
 		mod = 3.3;
 	else if (check_level == 63)
-		mod = 3.35;
-	else if (check_level == 64)
 		mod = 3.4;
-	else
+	else if (check_level == 64)
 		mod = 3.5;
+	else
+		mod = 3.6;
 
 	uint32 finalxp = uint32(base * playermod * mod);
 	if(aa)
@@ -632,16 +633,14 @@ bool Client::IsInRange(Mob* defender)
 	float t1, t2, t3;
 	t1 = defender->GetX() - GetX();
 	t2 = defender->GetY() - GetY();
-	t3 = defender->GetZ() - GetZ();
+	//t3 = defender->GetZ() - GetZ();
 	if(t1 < 0)
 		abs(t1);
 	if(t2 < 0)
 		abs(t2);
-	if(t3 < 0)
-		abs(t3);
-	if(( t1 > exprange)
-		|| ( t2 > exprange)
-		|| ( t3 > exprange) ) {
+	//if(t3 < 0)
+	//	abs(t3);
+	if(( t1 > exprange) || ( t2 > exprange)) { //	|| ( t3 > 40) ) {
 		_log(CLIENT__EXP, "%s is out of range. distances (%.3f,%.3f,%.3f), range %.3f No XP will be awarded.", defender->GetName(), t1, t2, t3, exprange);
 		return false;
 	}
