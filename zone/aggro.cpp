@@ -519,10 +519,10 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 			//then jump in if they are our friend
 			if(attacker->GetLevelCon(mob->GetLevel()) != CON_GREEN)
 			{
-				// AK Style pet pulling.
-				if(attacker->IsPet() && mob->GetLevelCon(attacker->GetLevel()) == CON_GREEN)
+				if (RuleB(AlKabor, AllowPetPull))
 				{
-					return;
+					if (attacker->IsPet() && mob->GetLevelCon(attacker->GetLevel()) == CON_GREEN)
+						return;
 				}
 
 				bool useprimfaction = false;

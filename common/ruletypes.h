@@ -180,6 +180,11 @@ RULE_INT ( Zone, WeatherTimer, 600) // Weather timer when no duration is availab
 RULE_INT (Zone, SpawnEventMin, 5) // When strict is set in spawn_events, specifies the max EQ minutes into the trigger hour a spawn_event will fire.
 RULE_CATEGORY_END()
 
+RULE_CATEGORY( AlKabor )
+RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
+RULE_CATEGORY_END()
+
+
 RULE_CATEGORY( Map )
 //enable these to help prevent mob hopping when they are pathing
 RULE_BOOL ( Map, FixPathingZWhenLoading, true )		//increases zone boot times a bit to reduce hopping.
