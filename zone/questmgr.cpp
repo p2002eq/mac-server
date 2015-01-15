@@ -745,7 +745,7 @@ void QuestManager::changedeity(int diety_id) {
 void QuestManager::exp(int amt) {
 	QuestManagerCurrentQuestVars();
 	if (initiator && initiator->IsClient())
-		initiator->AddEXP(amt);
+		initiator->AddQuestEXP(amt);
 }
 
 void QuestManager::level(int newlevel) {

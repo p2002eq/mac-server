@@ -110,6 +110,49 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	SetEXP(exp, aaexp, resexp);
 }
 
+void Client::AddEXPPercent(uint8 percent, uint8 level) {
+
+	if(percent < 0)
+		percent = 1;
+	if(percent > 100)
+		percent = 100;
+
+	uint32 requiredxp = GetEXPForLevel(level+1) - GetEXPForLevel(level);
+	float tmpxp = requiredxp * (percent/100.0);
+	uint32 newxp = (uint32)tmpxp;
+	AddQuestEXP(newxp);
+}
+
+void Client::AddQuestEXP(uint32 in_add_exp) {
+
+	// Quest handle method. This divides up AA XP, but does not apply bonuses/modifiers. The quest writer will do that.
+
+	this->EVENT_ITEM_ScriptStopReturn();
+
+	uint32 add_exp = in_add_exp;
+
+	if (m_epp.perAA<0 || m_epp.perAA>100)
+		m_epp.perAA=0;	// stop exploit with sanity check
+
+	uint32 add_aaxp;
+
+	//figure out how much of this goes to AAs
+	add_aaxp = add_exp * m_epp.perAA / 100;
+	//take that ammount away from regular exp
+	add_exp -= add_aaxp;
+
+	uint32 exp = GetEXP() + add_exp;
+	uint32 aaexp = add_aaxp;
+	uint32 had_aaexp = GetAAXP();
+	aaexp += had_aaexp;
+	if(aaexp < had_aaexp)
+		aaexp = had_aaexp;	//watch for wrap
+
+	SetEXP(exp, aaexp, false);
+
+}
+
+
 void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	_log(CLIENT__EXP, "Attempting to Set Exp for %s (XP: %u, AAXP: %u, Rez: %s)", this->GetCleanName(), set_exp, set_aaxp, isrezzexp ? "true" : "false");
 	//max_AAXP = GetEXPForLevel(52) - GetEXPForLevel(51);	//GetEXPForLevel() doesn't depend on class/race, just level, so it shouldn't change between Clients
@@ -516,7 +559,7 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if (membercount == 0 || close_membercount == 0)
 		return;
 
-	if(!RuleB(AlKabor, OutOfRangeGroupXPSplit))
+	if(!RuleB(AlKabor, OutOfRangeGroupXPBonus))
 		membercount = close_membercount;
 
 	float groupmod = 1.0;

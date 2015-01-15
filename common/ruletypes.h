@@ -183,7 +183,7 @@ RULE_CATEGORY_END()
 RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
 RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPSplit, true)
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
 RULE_CATEGORY_END()
 
 

@@ -872,13 +872,11 @@ XS(XS_Client_AddEXP); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Client_AddEXP)
 {
 	dXSARGS;
-	if (items < 2 || items > 4)
-		Perl_croak(aTHX_ "Usage: Client::AddEXP(THIS, add_exp, conlevel= 0xFF, resexp= false)");
+	if (items < 2)
+		Perl_croak(aTHX_ "Usage: Client::AddEXP(THIS, add_exp)");
 	{
 		Client *		THIS;
 		uint32		add_exp = (uint32)SvUV(ST(1));
-		uint8		conlevel;
-		bool		resexp;
 
 		if (sv_derived_from(ST(0), "Client")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -889,19 +887,7 @@ XS(XS_Client_AddEXP)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		if (items < 3)
-			conlevel = 0xFF;
-		else {
-			conlevel = (uint8)SvUV(ST(2));
-		}
-
-		if (items < 4)
-			resexp = false;
-		else {
-			resexp = (bool)SvTRUE(ST(3));
-		}
-
-		THIS->AddEXP(add_exp, conlevel, resexp);
+		THIS->AddQuestEXP(add_exp);
 	}
 	XSRETURN_EMPTY;
 }
