@@ -402,7 +402,7 @@ uint32 Client::GetEXPForLevel(uint16 check_level, bool aa)
 	if(aa)
 		check_level = 52;
 
-	float base = (check_level)*(check_level)*(check_level);
+	float base = (check_level-1)*(check_level-1)*(check_level-1);
 
 	// Classes: In the XP formula AK used, they WERE calculated in. This was due to Sony not being able to change their XP
 	// formula drastically (see above comment.) Instead, they gave the penalized classes a bonus on gain. We've decided to go
@@ -503,14 +503,20 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr  && members[i]->IsClient()) {
 			Client *cmember = members[i]->CastToClient();
-			++membercount;
-			if(cmember->CastToClient()->IsInRange(other))
-				++close_membercount;
+			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
+			{
+				++membercount;
+				if(cmember->CastToClient()->IsInRange(other))
+					++close_membercount;
+			}
 		}
 	}
 
 	if (membercount == 0 || close_membercount == 0)
 		return;
+
+	if(!RuleB(AlKabor, OutOfRangeGroupXPSplit))
+		membercount = close_membercount;
 
 	float groupmod = 1.0;
 	if (membercount == 2)
@@ -534,10 +540,13 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 		{
 			Client *cmember = members[i]->CastToClient();
 			uint32 finalgroupxp = groupexp / close_membercount;
-			if(cmember->IsInRange(other))
+			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
 			{
-				//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i", finalgroupxp, groupexp, close_membercount, membercount);
-				cmember->AddEXP(finalgroupxp, conlevel);
+				if(cmember->IsInRange(other))
+				{
+					//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i", finalgroupxp, groupexp, close_membercount, membercount);
+					cmember->AddEXP(finalgroupxp, conlevel);
+				}
 			}
 			else
 				_log(CLIENT__EXP, "%s is out of range for group XP!", cmember->GetName());
@@ -618,19 +627,18 @@ uint32 Client::GetCharMaxLevelFromQGlobal() {
 
 bool Client::IsInRange(Mob* defender)
 {
-	float exprange = 100;
+	float exprange = RuleR(Zone, GroupEXPRange);
 
 	float t1, t2, t3;
 	t1 = defender->GetX() - GetX();
 	t2 = defender->GetY() - GetY();
 	t3 = defender->GetZ() - GetZ();
-	//Cheap ABS()
 	if(t1 < 0)
-		t1 = 0 - t1;
+		abs(t1);
 	if(t2 < 0)
-		t2 = 0 - t2;
+		abs(t2);
 	if(t3 < 0)
-		t3 = 0 - t3;
+		abs(t3);
 	if(( t1 > exprange)
 		|| ( t2 > exprange)
 		|| ( t3 > exprange) ) {
@@ -646,25 +654,25 @@ void Client::GetExpLoss(Mob* killerMob, uint16 spell, int &exploss)
 	float GetNum [] = {0.16f, 0.08f, 0.15f, 0.075f, 0.14f, 0.07f, 0.13f, 0.065f, 0.12f, 0.06f};
 	float loss;
 	uint8 level = GetLevel();
-	if(level >= 1 && level <= 28)
+	if(level >= 1 && level <= 29)
 		loss = GetNum[0];
-	if(level == 29)
+	if(level == 30)
 		loss = GetNum[1];
-	if(level >= 30 && level <= 33)
+	if(level >= 31 && level <= 34)
 		loss = GetNum[2];
-	if(level == 34)
+	if(level == 35)
 		loss = GetNum[3];
-	if(level >= 35 && level <= 38)
+	if(level >= 36 && level <= 39)
 		loss = GetNum[4];
-	if(level == 39)
+	if(level == 40)
 		loss = GetNum[5];
-	if(level >= 40 && level <= 43)
+	if(level >= 41 && level <= 44)
 		loss = GetNum[6];
-	if(level == 44)
+	if(level == 45)
 		loss = GetNum[7];
-	if(level >= 45 && level <= 49)
+	if(level >= 46 && level <= 50)
 		loss = GetNum[8];
-	if(level >= 50)
+	if(level >= 51)
 		loss = GetNum[9];
 	int requiredxp = GetEXPForLevel(level + 1) - GetEXPForLevel(level);
 	exploss=(int)((float)requiredxp * (loss));
