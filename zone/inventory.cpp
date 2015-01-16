@@ -325,7 +325,7 @@ void Client::DropItem(int16 slot_id)
 
 	// Save client inventory change to database
 	if (slot_id == MainCursor) {
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(CharacterID(), s, e);
 	} else {
 		database.SaveInventory(CharacterID(), nullptr, slot_id);
@@ -464,8 +464,8 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 
 	const ItemInst* inst=nullptr;
 	if (slot_id == MainCursor) {
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
-		if(update_db)
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
+		if (update_db)
 			database.SaveCursor(character_id, s, e);
 	}
 	else {
@@ -552,7 +552,7 @@ bool Client::PushItemOnCursor(const ItemInst& inst, bool client_update)
 		SendItemPacket(MainCursor, &inst, ItemPacketSummonItem);
 	}
 
-	std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+	auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 	return database.SaveCursor(CharacterID(), s, e);
 }
 
@@ -576,7 +576,7 @@ bool Client::PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client
 		SendItemPacket(slot_id, &inst, ((slot_id == MainCursor) ? ItemPacketSummonItem : ItemPacketTrade));
 
 	if (slot_id == MainCursor) {
-		std::list<ItemInst*>::const_iterator s = m_inv.cursor_begin(), e = m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		return database.SaveCursor(this->CharacterID(), s, e);
 	}
 	else {
@@ -594,7 +594,7 @@ void Client::PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootI
 	SendLootItemInPacket(&inst, slot_id);
 
 	if (slot_id == MainCursor) {
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(this->CharacterID(), s, e);
 	} else
 		database.SaveInventory(this->CharacterID(), &inst, slot_id);
@@ -807,7 +807,7 @@ void Client::MoveItemCharges(ItemInst &from, int16 to_slot, uint8 type)
 		from.SetCharges(from.GetCharges() - charges_to_move);
 		SendLootItemInPacket(tmp_inst, to_slot);
 		if (to_slot == MainCursor){
-			std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+			auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 			database.SaveCursor(this->CharacterID(), s, e);
 		} else
 			database.SaveInventory(this->CharacterID(), tmp_inst, to_slot);
@@ -1201,7 +1201,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 			safe_delete(world_inst);
 			if (src_slot_id == MainCursor) {
-				std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+				auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 				database.SaveCursor(character_id, s, e);
 			} else
 				database.SaveInventory(character_id, m_inv[src_slot_id], src_slot_id);
@@ -1350,13 +1350,13 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 	// Step 7: Save change to the database
 	if (src_slot_id == MainCursor){
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(character_id, s, e);
 	} else
 		database.SaveInventory(character_id, m_inv.GetItem(src_slot_id), src_slot_id);
 
 	if (dst_slot_id == MainCursor) {
-		std::list<ItemInst*>::const_iterator s=m_inv.cursor_begin(),e=m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(character_id, s, e);
 
 	} 
@@ -1601,15 +1601,15 @@ void Client::DyeArmor(DyeStruct* dye){
 }
 
 bool Client::DecreaseByID(uint32 type, uint8 amt) {
-	const Item_Struct* TempItem = 0;
-	ItemInst* ins = nullptr;
+	const Item_Struct* TempItem = nullptr;
+	ItemInst* ins;
 	int x;
 	int num = 0;
 	for(x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::GENERAL_BAGS_END; x++)
 	{
 		if (x == MainCursor + 31)
 			x = EmuConstants::GENERAL_BAGS_BEGIN;
-		TempItem = 0;
+		TempItem = nullptr;
 		ins = GetInv().GetItem(x);
 		if (ins)
 			TempItem = ins->GetItem();
@@ -1626,7 +1626,7 @@ bool Client::DecreaseByID(uint32 type, uint8 amt) {
 	{
 		if (x == MainCursor + 31)
 			x = EmuConstants::GENERAL_BAGS_BEGIN;
-		TempItem = 0;
+		TempItem = nullptr;
 		ins = GetInv().GetItem(x);
 		if (ins)
 			TempItem = ins->GetItem();
@@ -1649,12 +1649,10 @@ bool Client::DecreaseByID(uint32 type, uint8 amt) {
 	return true;
 }
 
-void Client::RemoveNoRent(bool client_update) {
-	int16 slot_id = 0;
-
-	// equipment
-	for(slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+void Client::RemoveNoRent(bool client_update)
+{
+	for (auto slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; ++slot_id) {
+		auto inst = m_inv[slot_id];
 		if(inst && !inst->GetItem()->NoRent) {
 			Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
 			DeleteItemInInventory(slot_id, 0, client_update);
@@ -1662,16 +1660,16 @@ void Client::RemoveNoRent(bool client_update) {
 	}
 
 	// general
-	for (slot_id = EmuConstants::GENERAL_BEGIN; slot_id <= EmuConstants::GENERAL_END; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+	for (auto slot_id = EmuConstants::GENERAL_BEGIN; slot_id <= EmuConstants::GENERAL_END; ++slot_id) {
+		auto inst = m_inv[slot_id];
 		if (inst && !inst->GetItem()->NoRent) {
 			Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
 			DeleteItemInInventory(slot_id, 0, client_update);
 		}
 	}
 	// containers
-	for(slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+	for(auto slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; ++slot_id) {
+		auto inst = m_inv[slot_id];
 		if(inst && !inst->GetItem()->NoRent) {
 			Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
 			DeleteItemInInventory(slot_id, 0, client_update);
@@ -1679,8 +1677,8 @@ void Client::RemoveNoRent(bool client_update) {
 	}
 
 	// bank
-	for(slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+	for(auto slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; ++slot_id) {
+		auto inst = m_inv[slot_id];
 		if(inst && !inst->GetItem()->NoRent) {
 			Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
 			DeleteItemInInventory(slot_id, 0, false); // Can't delete from client Bank slots
@@ -1688,8 +1686,8 @@ void Client::RemoveNoRent(bool client_update) {
 	}
 
 	// bank containers
-	for(slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; slot_id++) {
-		const ItemInst* inst = m_inv[slot_id];
+	for(auto slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; ++slot_id) {
+		auto inst = m_inv[slot_id];
 		if(inst && !inst->GetItem()->NoRent) {
 			Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
 			DeleteItemInInventory(slot_id, 0, false); // Can't delete from client Bank Container slots
@@ -1699,28 +1697,26 @@ void Client::RemoveNoRent(bool client_update) {
 	// cursor & limbo
 	if (!m_inv.CursorEmpty()) {
 		std::list<ItemInst*> local;
-		ItemInst* inst = nullptr;
 
 		while (!m_inv.CursorEmpty()) {
-			inst = m_inv.PopItem(MainCursor);
-			if (inst)
+			auto inst = m_inv.PopItem(MainCursor);
+			if (inst == nullptr) { continue; }
 				local.push_back(inst);
 		}
 
-		std::list<ItemInst*>::iterator iter = local.begin();
-		while (iter != local.end()) {
-			inst = *iter;
-			// should probably put a check here for valid pointer..but, that was checked when the item was put into inventory -U
+		for (auto iter = local.begin(); iter != local.end(); ++iter) {
+			auto inst = *iter;
+			if (inst == nullptr) { continue; }
 			if (!inst->GetItem()->NoRent)
 				Log.Out(Logs::Detail, Logs::Inventory, "NoRent Timer Lapse: Deleting %s from `Limbo`", inst->GetItem()->Name);
 			else
-				m_inv.PushCursor(**iter);
+				m_inv.PushCursor(*inst);
 
-			safe_delete(*iter);
-			iter = local.erase(iter);
+			safe_delete(inst);
 		}
+		local.clear();
 
-		std::list<ItemInst*>::const_iterator s = m_inv.cursor_begin(), e = m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(this->CharacterID(), s, e);
 		local.clear();
 	}
@@ -1731,41 +1727,39 @@ void Client::RemoveDuplicateLore(bool client_update) {
 	int16 slot_id = 0;
 
 	// equipment
-	for(slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; slot_id++) {
-		ItemInst* inst = m_inv.PopItem(slot_id);
-		if(inst) {
-			if(CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
-				database.SaveInventory(character_id, nullptr, slot_id);
-			}
-			else {
-				m_inv.PutItem(slot_id, *inst);
-			}
-			safe_delete(inst);
+	for(auto slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; ++slot_id) {
+		auto inst = m_inv.PopItem(slot_id);
+		if (inst == nullptr) { continue;}
+		if(CheckLoreConflict(inst->GetItem())) {
+			Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+			database.SaveInventory(character_id, nullptr, slot_id);
 		}
+		else {
+			m_inv.PutItem(slot_id, *inst);
+		}
+		safe_delete(inst);
 	}
 
 	// general
-	for (slot_id = EmuConstants::GENERAL_BEGIN; slot_id <= EmuConstants::GENERAL_END; slot_id++) {
-		ItemInst* inst = m_inv.PopItem(slot_id);
-		if (inst) {
-			if (CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
-				database.SaveInventory(character_id, nullptr, slot_id);
-			}
-			else {
-				m_inv.PutItem(slot_id, *inst);
-			}
-			safe_delete(inst);
+	for (auto slot_id = EmuConstants::GENERAL_BEGIN; slot_id <= EmuConstants::GENERAL_END; ++slot_id) {
+		auto inst = m_inv.PopItem(slot_id);
+		if (inst == nullptr) { continue; }
+		if (CheckLoreConflict(inst->GetItem())) {
+			Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+			database.SaveInventory(character_id, nullptr, slot_id);
 		}
+		else {
+			m_inv.PutItem(slot_id, *inst);
+		}
+		safe_delete(inst);
 	}
 
 	// power source
 	if (m_inv[MainPowerSource]) {
-		ItemInst* inst = m_inv.PopItem(MainPowerSource);
+		auto inst = m_inv.PopItem(MainPowerSource);
 		if (inst) {
 			if (CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, MainPowerSource);
 				database.SaveInventory(character_id, nullptr, MainPowerSource);
 			}
 			else {
@@ -1776,105 +1770,99 @@ void Client::RemoveDuplicateLore(bool client_update) {
 	}
 
 	// containers
-	for(slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
-		ItemInst* inst = m_inv.PopItem(slot_id);
-		if(inst) {
-			if(CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
-				database.SaveInventory(character_id, nullptr, slot_id);
-			}
-			else {
-				m_inv.PutItem(slot_id, *inst);
-			}
-			safe_delete(inst);
+	for(auto slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; ++slot_id) {
+		auto inst = m_inv.PopItem(slot_id);
+		if (inst == nullptr) { continue; }
+		if(CheckLoreConflict(inst->GetItem())) {
+			Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+			database.SaveInventory(character_id, nullptr, slot_id);
 		}
+		else {
+			m_inv.PutItem(slot_id, *inst);
+		}
+		safe_delete(inst);
 	}
 
 	// bank
-	for(slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; slot_id++) {
-		ItemInst* inst = m_inv.PopItem(slot_id);
-		if(inst) {
-			if(CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
-				database.SaveInventory(character_id, nullptr, slot_id);
-			}
-			else {
-				m_inv.PutItem(slot_id, *inst);
-			}
-			safe_delete(inst);
+	for(auto slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; ++slot_id) {
+		auto inst = m_inv.PopItem(slot_id);
+		if (inst == nullptr) { continue; }
+		if(CheckLoreConflict(inst->GetItem())) {
+			Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+			database.SaveInventory(character_id, nullptr, slot_id);
 		}
+		else {
+			m_inv.PutItem(slot_id, *inst);
+		}
+		safe_delete(inst);
 	}
 
 	// bank containers
-	for(slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; slot_id++) {
-		ItemInst* inst = m_inv.PopItem(slot_id);
-		if(inst) {
-			if(CheckLoreConflict(inst->GetItem())) {
-				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
-				database.SaveInventory(character_id, nullptr, slot_id);
-			}
-			else {
-				m_inv.PutItem(slot_id, *inst);
-			}
-			safe_delete(inst);
+	for(auto slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; ++slot_id) {
+		auto inst = m_inv.PopItem(slot_id);
+		if (inst == nullptr) { continue; }
+		if(CheckLoreConflict(inst->GetItem())) {
+			Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from slot %i", inst->GetItem()->Name, slot_id);
+			database.SaveInventory(character_id, nullptr, slot_id);
 		}
+		else {
+			m_inv.PutItem(slot_id, *inst);
+		}
+		safe_delete(inst);
 	}
 
 	// cursor & limbo
 	if (!m_inv.CursorEmpty()) {
-		std::list<ItemInst*> local;
-		ItemInst* inst = nullptr;
+		std::list<ItemInst*> local_1;
+		std::list<ItemInst*> local_2;
 
 		while (!m_inv.CursorEmpty()) {
-			inst = m_inv.PopItem(MainCursor);
-			if (inst)
-				local.push_back(inst);
+			auto inst = m_inv.PopItem(MainCursor);
+			if (inst == nullptr) { continue; }
+			local_1.push_back(inst);
 		}
 
-		std::list<ItemInst*>::iterator iter = local.begin();
-		while (iter != local.end()) {
-			inst = *iter;
-			// probably needs a valid pointer check -U
+		for (auto iter = local_1.begin(); iter != local_1.end(); ++iter) {
+			auto inst = *iter;
+			if (inst == nullptr) { continue; }
 			if (CheckLoreConflict(inst->GetItem())) {
 				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from `Limbo`", inst->GetItem()->Name);
-				safe_delete(*iter);
-				iter = local.erase(iter);
+				safe_delete(inst);
 			}
 			else {
-				++iter;
+				local_2.push_back(inst);
 			}
 		}
+		local_1.clear();
 
-		iter = local.begin();
-		while (iter != local.end()) {
-			inst = *iter;
+		for (auto iter = local_2.begin(); iter != local_2.end(); ++iter) {
+			auto inst = *iter;
 			if (!inst->GetItem()->LoreFlag ||
 				((inst->GetItem()->LoreGroup == -1) && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX)) ||
-				(inst->GetItem()->LoreGroup && ~inst->GetItem()->LoreGroup && (m_inv.HasItemByLoreGroup(inst->GetItem()->LoreGroup, invWhereCursor) == INVALID_INDEX))) {
+				(inst->GetItem()->LoreGroup && (~inst->GetItem()->LoreGroup) && (m_inv.HasItemByLoreGroup(inst->GetItem()->LoreGroup, invWhereCursor) == INVALID_INDEX))) {
 				
-				m_inv.PushCursor(**iter);
+				m_inv.PushCursor(*inst);
 			}
 			else {
 				Log.Out(Logs::Detail, Logs::Inventory, "Lore Duplication Error: Deleting %s from `Limbo`", inst->GetItem()->Name);
 			}
 
-			safe_delete(*iter);
-			iter = local.erase(iter);
+			safe_delete(inst);
 		}
+		local_2.clear();
 
-		std::list<ItemInst*>::const_iterator s = m_inv.cursor_begin(), e = m_inv.cursor_end();
+		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(this->CharacterID(), s, e);
-		local.clear();
+		
 	}
 }
 
-void Client::MoveSlotNotAllowed(bool client_update) {
-	int16 slot_id = 0;
-
+void Client::MoveSlotNotAllowed(bool client_update)
+{
 	// equipment
-	for(slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; slot_id++) {
+	for(auto slot_id = EmuConstants::EQUIPMENT_BEGIN; slot_id <= EmuConstants::EQUIPMENT_END; ++slot_id) {
 		if(m_inv[slot_id] && !m_inv[slot_id]->IsSlotAllowed(slot_id)) {
-			ItemInst* inst = m_inv.PopItem(slot_id);
+			auto inst = m_inv.PopItem(slot_id);
 			bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
 			int16 free_slot_id = m_inv.FindFreeSlot(inst->IsType(ItemClassContainer), true, inst->GetItem()->Size, is_arrow);
 			Log.Out(Logs::Detail, Logs::Inventory, "Slot Assignment Error: Moving %s from slot %i to %i", inst->GetItem()->Name, slot_id, free_slot_id);
@@ -1971,7 +1959,7 @@ void Client::SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType 
 EQApplicationPacket* Client::ReturnItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type)
 {
 	if (!inst)
-		return 0;
+		return nullptr;
 
 	// Serialize item into |-delimited string
 	std::string packet = inst->Serialize(slot_id);
@@ -2146,23 +2134,39 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 
 	// build reference map
 	for (int16 index = MAIN_BEGIN; index < EmuConstants::MAP_POSSESSIONS_SIZE; ++index)
-		if (m_inv[index])
-			instmap[index] = m_inv[index];
+	{
+		auto inst = m_inv[index];
+		if (inst == nullptr) { continue; }
+		instmap[index] = inst;
+	}
 	for (int16 index = EmuConstants::BANK_BEGIN; index <= EmuConstants::BANK_END; ++index)
-		if (m_inv[index])
-			instmap[index] = m_inv[index];
+	{
+		auto inst = m_inv[index];
+		if (inst == nullptr) { continue; }
+		instmap[index] = inst;
+	}
 	for (int16 index = EmuConstants::TRADE_BEGIN; index <= EmuConstants::TRADE_END; ++index)
-		if (m_inv[index])
-			instmap[index] = m_inv[index];
+	{
+		auto inst = m_inv[index];
+		if (inst == nullptr) { continue; }
+		instmap[index] = inst;
+	}
 
-	if (Object* tsobject = GetTradeskillObject())
+	auto tsobject = GetTradeskillObject();
+	if (tsobject != nullptr)
+	{
 		for (int16 index = MAIN_BEGIN; index < EmuConstants::MAP_WORLD_SIZE; ++index)
-			if (tsobject->GetItem(index))
-				instmap[EmuConstants::WORLD_BEGIN + index] = tsobject->GetItem(index);
+		{
+			auto inst = tsobject->GetItem(index);
+			if (inst == nullptr) { continue; }
+			instmap[EmuConstants::WORLD_BEGIN + index] = inst;
+		}
+	}
 
 	int limbo = 0;
-	for (iter_queue cursor_itr = m_inv.cursor_begin(); cursor_itr != m_inv.cursor_end(); ++cursor_itr, ++limbo) {
-		if (cursor_itr == m_inv.cursor_begin()) // m_inv.cursor_begin() is referenced as MainCursor in MapPossessions above
+	for (auto cursor_itr = m_inv.cursor_cbegin(); cursor_itr != m_inv.cursor_cend(); ++cursor_itr, ++limbo) {
+		// m_inv.cursor_begin() is referenced as MainCursor in MapPossessions above
+		if (cursor_itr == m_inv.cursor_cbegin())
 			continue;
 
 		instmap[8000 + limbo] = *cursor_itr;

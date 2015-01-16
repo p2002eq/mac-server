@@ -2889,7 +2889,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 		if (client->GetInv().CursorEmpty()) { // Display 'front' cursor slot even if 'empty' (item(30[0]) == null)
 		}
 		else {
-			for (it = client->GetInv().cursor_begin(); it != client->GetInv().cursor_end(); ++it, i++) {
+			for (auto it = client->GetInv().cursor_cbegin(); it != client->GetInv().cursor_cend(); ++it, i++) {
 				const ItemInst* inst = *it;
 				item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];

@@ -111,8 +111,10 @@ bool SharedDatabase::SaveCursor(uint32 char_id, std::list<ItemInst*>::const_iter
     int i = 8000;
     for(auto it = start; it != end; ++it, i++) {
         ItemInst *inst = *it;
-        if (!SaveInventory(char_id,inst,(i == 8000) ? MainCursor : i))
-            return false;
+		int16 use_slot = (i == 8000) ? MainCursor : i;
+		if (!SaveInventory(char_id, inst, use_slot)) {
+			return false;
+		}
     }
 	return true;
 }
@@ -209,11 +211,12 @@ bool SharedDatabase::UpdateSharedBankSlot(uint32 char_id, const ItemInst* inst, 
     auto results = QueryDatabase(query);
 
     // Save bag contents, if slot supports bag contents
-	if (inst && inst->IsType(ItemClassContainer) && Inventory::SupportsContainers(slot_id))
+	if (inst->IsType(ItemClassContainer) && Inventory::SupportsContainers(slot_id)) {
 		for (uint8 idx = SUB_BEGIN; idx < EmuConstants::ITEM_CONTAINER_SIZE; idx++) {
 			const ItemInst* baginst = inst->GetItem(idx);
 			SaveInventory(char_id, baginst, Inventory::CalcSlotId(slot_id, idx));
 		}
+	}
 
     if (!results.Success()) {
         return false;

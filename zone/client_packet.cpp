@@ -1550,12 +1550,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		BulkSendItems();
 		BulkSendInventoryItems();
 		/* Send stuff on the cursor which isnt sent in bulk */
-		iter_queue it;
-		for (it = m_inv.cursor_begin(); it != m_inv.cursor_end(); ++it) {
+		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
 			/* First item cursor is sent in bulk inventory packet */
-			if (it == m_inv.cursor_begin())
+			if (iter == m_inv.cursor_cbegin())
 				continue;
-			const ItemInst *inst = *it;
+			const ItemInst *inst = *iter;
 			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
 
@@ -7349,31 +7348,23 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	int freeslot = 0;
 	if (charges > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, charges, true)) > 0){
 		ItemInst* inst2 = inst->Clone();
-		
-		while (true) {
-			if (inst2 == nullptr)
-				break;
-
-			if (RuleB(Merchant, UsePriceMod)){
-				inst2->SetPrice(item->Price*(RuleR(Merchant, SellCostMod))*item->SellRate*Client::CalcPriceMod(vendor, false));
-			}
-			else
-				inst2->SetPrice(item->Price*(RuleR(Merchant, SellCostMod))*item->SellRate);
-			inst2->SetMerchantSlot(freeslot);
-
-			uint32 MerchantQuantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
-
-			if (inst2->IsStackable()) {
-				inst2->SetCharges(MerchantQuantity);
-			}
-			inst2->SetMerchantCount(MerchantQuantity);
-
-			BulkSendMerchantInventory(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID());
-
-			safe_delete(inst2);
-
-			break;
+		if (RuleB(Merchant, UsePriceMod)){
+			inst2->SetPrice(item->Price*(RuleR(Merchant, SellCostMod))*item->SellRate*Client::CalcPriceMod(vendor, false));
 		}
+		else
+			inst2->SetPrice(item->Price*(RuleR(Merchant, SellCostMod))*item->SellRate);
+		inst2->SetMerchantSlot(freeslot);
+
+		uint32 MerchantQuantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
+
+		if (inst2->IsStackable()) {
+			inst2->SetCharges(MerchantQuantity);
+		}
+		inst2->SetMerchantCount(MerchantQuantity);
+
+		BulkSendMerchantInventory(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID());
+
+		safe_delete(inst2);
 	}
 
 	// start QS code
