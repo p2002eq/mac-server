@@ -70,7 +70,7 @@ std::string GetMailPrefix() {
 
 int main() {
 	RegisterExecutablePlatform(ExePlatformUCS);
-	logger.LoadLogSettings();
+	logger.LoadLogSettingsDefaults();
 	set_exception_handler();
 
 	// Check every minute for unused channels we can delete

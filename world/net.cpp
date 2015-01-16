@@ -112,7 +112,7 @@ void CatchSignal(int sig_num);
 
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
-	logger.LoadLogSettings();
+	logger.LoadLogSettingsDefaults();
 	set_exception_handler();
 //	register_remote_call_handlers();
 
