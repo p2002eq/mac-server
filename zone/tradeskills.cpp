@@ -414,10 +414,13 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	int16 over_trivial = (int16)GetRawSkill(spec->tradeskill) - (int16)spec->trivial;
 
 	//handle caps
-	if(spec->nofail) {
+	if(spec->nofail) 
+	{
 		chance = 100;	//cannot fail.
 		_log(TRADESKILLS__TRACE, "...This combine cannot fail.");
-	} else if(over_trivial >= 0) {
+	} 
+	else if(over_trivial >= 0) 
+	{
 		// At reaching trivial the chance goes to 95% going up an additional
 		// percent for every 40 skillpoints above the trivial.
 		// The success rate is not modified through stats.
@@ -427,11 +430,14 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		// above critical still stands.
 		// Mastery modifier is: 10%/25%/50% for rank one/two/three
 		chance = 95.0f + (float(user_skill - spec->trivial) / 40.0f);
-		Message_StringID(MT_Emote, TRADESKILL_TRIVIAL);
-	} else if(chance < 5) {
+	}
+	else if(chance < 5) 
+	{
 		// Minimum chance is always 5
 		chance = 5;
-	} else if(chance > 95) {
+	}
+	else if(chance > 95)
+	{
 		//cap is 95, shouldent reach this before trivial, but just in case.
 		chance = 95;
 	}
@@ -572,6 +578,9 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 	chance = mod_tradeskill_chance(chance, spec);
 
+	if (over_trivial >= 0)
+		Message_StringID(4, TRADESKILL_TRIVIAL);
+
 	if (((spec->tradeskill==75) || GetGM() || (chance > res)) || zone->random.Roll(aa_chance)) {
 		if(over_trivial < 0)
 			CheckIncreaseTradeskill(1, spec->tradeskill);
@@ -590,14 +599,16 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 			}
 			++itr;
 		}
+
 		return(true);
 	}
 	/* Tradeskill Fail */
-	else {
+	else 
+	{
 		if(over_trivial < 0)
 			CheckIncreaseTradeskill(2, spec->tradeskill);
 
-		Message_StringID(MT_Emote,TRADESKILL_FAILED);
+		Message_StringID(4,TRADESKILL_FAILED);
 
 		_log(TRADESKILLS__TRACE, "Tradeskill failed");
 			if (this->GetGroup())
