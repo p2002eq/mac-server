@@ -187,7 +187,7 @@ void Lua_Client::SetDeity(int v) {
 
 void Lua_Client::AddEXP(uint32 add_exp) {
 	Lua_Safe_Call_Void();
-	self->AddEXP(add_exp);
+	self->AddQuestEXP(add_exp);
 }
 
 void Lua_Client::AddEXP(uint32 add_exp, int conlevel) {
@@ -208,6 +208,11 @@ void Lua_Client::SetEXP(uint32 set_exp, uint32 set_aaxp) {
 void Lua_Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp) {
 	Lua_Safe_Call_Void();
 	self->SetEXP(set_exp, set_aaxp, resexp);
+}
+
+void Lua_Client::AddEXPPercent(uint8 percent, uint8 level) {
+	Lua_Safe_Call_Void();
+	self->AddEXPPercent(percent, level);
 }
 
 void Lua_Client::SetBindPoint() {
@@ -1195,6 +1200,7 @@ luabind::scope lua_register_client() {
 		.def("AddEXP", (void(Lua_Client::*)(uint32,int,bool))&Lua_Client::AddEXP)
 		.def("SetEXP", (void(Lua_Client::*)(uint32,uint32))&Lua_Client::SetEXP)
 		.def("SetEXP", (void(Lua_Client::*)(uint32,uint32,bool))&Lua_Client::SetEXP)
+		.def("AddEXPPercent", (void(Lua_Client::*)(uint8,uint8))&Lua_Client::AddEXPPercent)
 		.def("SetBindPoint", (void(Lua_Client::*)(void))&Lua_Client::SetBindPoint)
 		.def("SetBindPoint", (void(Lua_Client::*)(int))&Lua_Client::SetBindPoint)
 		.def("SetBindPoint", (void(Lua_Client::*)(int,int))&Lua_Client::SetBindPoint)

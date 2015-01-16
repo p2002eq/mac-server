@@ -68,6 +68,7 @@ public:
 	void AddEXP(uint32 add_exp, int conlevel, bool resexp);
 	void SetEXP(uint32 set_exp, uint32 set_aaxp);
 	void SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp);
+	void AddEXPPercent(uint8 percent, uint8 level);
 	void SetBindPoint();
 	void SetBindPoint(int to_zone);
 	void SetBindPoint(int to_zone, int to_instance);

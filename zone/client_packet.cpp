@@ -1356,7 +1356,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	for (int i = 0; i < max_slots; i++) 
 	{
 		if (buffs[i].spellid != SPELL_UNKNOWN) {
-			if (!RuleB(Character, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
+			if (!RuleB(AlKabor, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
 			{
 				m_pp.buffs[i].spellid = buffs[i].spellid;
 				m_pp.buffs[i].bard_modifier = 10;

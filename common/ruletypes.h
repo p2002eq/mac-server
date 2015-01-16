@@ -92,7 +92,6 @@ RULE_BOOL ( Character, KeepLevelOverMax, false) // Don't delevel a character tha
 RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
 RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods, 36 commonly referred to as "3.6" as well.
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
-RULE_BOOL (Character, StripBuffsOnLowHP, true)
 RULE_REAL (Character, BaseRunSpeed, 0.7)
 RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_CATEGORY_END()
@@ -178,10 +177,15 @@ RULE_INT ( Zone, ReservedInstances, 30 ) //Will reserve this many instance ids f
 RULE_BOOL ( Zone, LevelBasedEXPMods, false) // Allows you to use the level_exp_mods table in consideration to your players EXP hits
 RULE_INT ( Zone, WeatherTimer, 600) // Weather timer when no duration is available
 RULE_INT (Zone, SpawnEventMin, 5) // When strict is set in spawn_events, specifies the max EQ minutes into the trigger hour a spawn_event will fire.
+RULE_REAL ( Zone, GroupEXPRange, 500 )
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
+RULE_BOOL ( AlKabor, Count6thGroupMember, false)
 RULE_CATEGORY_END()
 
 
@@ -488,6 +492,10 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
+RULE_CATEGORY_END()
+
+RULE_CATEGORY ( AA )
+RULE_INT ( AA, ExpPerPoint, 23976496) //Amount of exp per AA, if AAPercent is 100%. Otherwise, we use the standard XP formula for 52.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Console )
