@@ -264,7 +264,6 @@ int command_init(void){
 		command_add("listnpcs", "[name/range] - Search NPCs", 90, command_listnpcs) ||
 		command_add("loc", "- Print out your or your target's current location and heading", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver", 250, command_lock) ||
-		command_add("logs", "[status|normal|error|debug|quest|all] - Subscribe to a log type", 180, command_logs) ||
 		command_add("logsql", "- enable SQL logging", 250, command_logsql) ||
 		command_add("logtest", "Performs log performance testing.", 250, command_logtest) ||
 		command_add("los", nullptr, 80, command_checklos) ||
@@ -7047,37 +7046,6 @@ void command_logsql(Client *c, const Seperator *sep){
 	else {
 		c->Message(0, "Usage: #logsql (file name)");
 	}
-}
-
-void command_logs(Client *c, const Seperator *sep){
-#ifdef CLIENT_LOGS
-	Client *t = c;
-	if (c->GetTarget() && c->GetTarget()->IsClient()) {
-		t = c->GetTarget()->CastToClient();
-	}
-
-	if (!strcasecmp(sep->arg[1], "status"))
-		client_logs.subscribe(EQEmuLog::Status, t);
-	else if (!strcasecmp(sep->arg[1], "normal"))
-		client_logs.subscribe(EQEmuLog::Normal, t);
-	else if (!strcasecmp(sep->arg[1], "error"))
-		client_logs.subscribe(EQEmuLog::Error, t);
-	else if (!strcasecmp(sep->arg[1], "debug"))
-		client_logs.subscribe(EQEmuLog::Debug, t);
-	else if (!strcasecmp(sep->arg[1], "quest"))
-		client_logs.subscribe(EQEmuLog::Quest, t);
-	else if (!strcasecmp(sep->arg[1], "all"))
-		client_logs.subscribeAll(t);
-	else {
-		c->Message(0, "Usage: #logs [status|normal|error|debug|quest|all]");
-		return;
-	}
-	if (c != t)
-		c->Message(0, "%s have been subscribed to %s logs.", t->GetName(), sep->arg[1]);
-	t->Message(0, "You have been subscribed to %s logs.", sep->arg[1]);
-#else
-	c->Message(0, "Client logs are disabled in this server's build.");
-#endif
 }
 
 void command_qglobal(Client *c, const Seperator *sep)
