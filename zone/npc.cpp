@@ -1251,7 +1251,14 @@ void NPC::PickPocket(Client* thief) {
 
 	//make sure were allowed to targte them:
 	int olevel = GetLevel();
-	if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
+	if(thief->GetLevel() < 50) {
+		if(olevel > 45) {
+			thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
+			thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+			//should we check aggro
+			return;
+		}
+	} else if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
 		thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		//should we check aggro
