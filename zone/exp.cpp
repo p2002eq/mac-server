@@ -535,14 +535,10 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if(other->GetOwner() && other->GetOwner()->IsClient()) // Ensure owner isn't pc
 		return;
 
-	uint8 maxlevel = 1;
-	int conlevel = Mob::GetLevelCon(maxlevel, other->GetLevel());
-	if(conlevel == CON_GREEN)
-		return;	//no exp for greenies...
-
 	unsigned int i;
 	uint8 membercount = 0;
 	uint8 close_membercount = 0;
+	uint8 maxlevel = 1;
 
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr  && members[i]->IsClient()) {
@@ -550,11 +546,17 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
 			{
 				++membercount;
+				if(members[i]->GetLevel() > maxlevel)
+					maxlevel = members[i]->GetLevel();
 				if(cmember->CastToClient()->IsInRange(other))
 					++close_membercount;
 			}
 		}
 	}
+
+	int conlevel = Mob::GetLevelCon(maxlevel, other->GetLevel());
+	if(conlevel == CON_GREEN)
+		return;	//no exp for greenies...
 
 	if (membercount == 0 || close_membercount == 0)
 		return;
@@ -584,12 +586,23 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 		{
 			Client *cmember = members[i]->CastToClient();
 			uint32 finalgroupxp = groupexp / close_membercount;
+			if(finalgroupxp < 1)
+				finalgroupxp = 1;
 			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
 			{
 				if(cmember->IsInRange(other))
 				{
-					//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i", finalgroupxp, groupexp, close_membercount, membercount);
-					cmember->AddEXP(finalgroupxp, conlevel);
+					int16 diff = cmember->GetLevel() - maxlevel;
+					int16 maxdiff = -(cmember->GetLevel()*15/10 - cmember->GetLevel());
+
+					if(maxdiff > -5)
+						maxdiff = -5;
+
+					if (diff >= (maxdiff)) 
+					{
+						//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i diff: %i maxdiff: %i in_exp is: %i", finalgroupxp, groupexp, close_membercount, membercount, diff, maxdiff, exp);
+						cmember->AddEXP(finalgroupxp, conlevel);
+					}
 				}
 			}
 			else
