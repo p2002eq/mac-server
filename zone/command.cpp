@@ -2883,7 +2883,7 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "cursor") == 0)) {
 		// Personal inventory items
 		bFound = true;
-		iter_queue it;
+		std::list<ItemInst*>::const_iterator it;
 		int i = 0;
 
 		if (client->GetInv().CursorEmpty()) { // Display 'front' cursor slot even if 'empty' (item(30[0]) == null)

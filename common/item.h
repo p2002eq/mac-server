@@ -38,11 +38,6 @@ class EvolveInfo;			// Stores information about an evolving item family
 #include "../common/item_struct.h"
 #include "../common/timer.h"
 
-// Helper typedefs
-typedef std::list<ItemInst*>::const_iterator				iter_queue;
-typedef std::map<int16, ItemInst*>::const_iterator			iter_inst;
-typedef std::map<uint8, ItemInst*>::const_iterator			iter_contents;
-
 namespace ItemField
 {
 	enum
@@ -242,7 +237,7 @@ protected:
 
 	int GetSlotByItemInstCollection(const std::map<int16, ItemInst*> &collection, ItemInst *inst);
 	void dumpItemCollection(const std::map<int16, ItemInst*> &collection);
-	void dumpBagContents(ItemInst *inst, iter_inst *it);
+	void dumpBagContents(ItemInst *inst, std::map<int16, ItemInst*>::const_iterator *it);
 
 	// Retrieves item within an inventory bucket
 	ItemInst* _GetItem(const std::map<int16, ItemInst*>& bucket, int16 slot_id) const;
