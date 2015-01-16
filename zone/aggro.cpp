@@ -368,7 +368,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 
 			// Aggro
 			#if EQDEBUG>=11
-				logger.LogDebug(EQEmuLogSys::General, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
 			#endif
 			return( mod_will_aggro(mob, this) );
 		}
