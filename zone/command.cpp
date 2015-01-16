@@ -287,7 +287,6 @@ int command_init(void){
 
 		command_add("name", "[newname] - Rename your player target", 81, command_name) ||
 		command_add("netstats", "- Gets the network stats for a stream.", 180, command_netstats) ||
-		command_add("nologs", "[status|normal|error|debug|quest|all] - Unsubscribe to a log type", 95, command_nologs) ||
 		command_add("npccast", "[targetname/entityid] [spellid] - Causes NPC target to cast spellid on targetname/entityid", 150, command_npccast) ||
 		command_add("npcedit", "[column] [value] - Mega NPC editing command", 250, command_npcedit) ||
 		command_add("npcemote", "[message] - Make your NPC target emote a message.", 100, command_npcemote) ||
@@ -7076,36 +7075,6 @@ void command_logs(Client *c, const Seperator *sep){
 	if (c != t)
 		c->Message(0, "%s have been subscribed to %s logs.", t->GetName(), sep->arg[1]);
 	t->Message(0, "You have been subscribed to %s logs.", sep->arg[1]);
-#else
-	c->Message(0, "Client logs are disabled in this server's build.");
-#endif
-}
-
-void command_nologs(Client *c, const Seperator *sep){
-#ifdef CLIENT_LOGS
-	Client *t = c;
-	if (c->GetTarget() && c->GetTarget()->IsClient()) {
-		t = c;
-	}
-
-	if (!strcasecmp(sep->arg[1], "status"))
-		client_logs.unsubscribe(EQEmuLog::Status, t);
-	else if (!strcasecmp(sep->arg[1], "normal"))
-		client_logs.unsubscribe(EQEmuLog::Normal, t);
-	else if (!strcasecmp(sep->arg[1], "error"))
-		client_logs.unsubscribe(EQEmuLog::Error, t);
-	else if (!strcasecmp(sep->arg[1], "debug"))
-		client_logs.unsubscribe(EQEmuLog::Debug, t);
-	else if (!strcasecmp(sep->arg[1], "quest"))
-		client_logs.unsubscribe(EQEmuLog::Quest, t);
-	else if (!strcasecmp(sep->arg[1], "all"))
-		client_logs.unsubscribeAll(t);
-	else {
-		c->Message(0, "Usage: #logs [status|normal|error|debug|quest|all]");
-		return;
-	}
-
-	c->Message(0, "You have been unsubscribed from %s logs.", sep->arg[1]);
 #else
 	c->Message(0, "Client logs are disabled in this server's build.");
 #endif
