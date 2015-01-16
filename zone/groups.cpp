@@ -510,6 +510,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 			}
 		}
 	}
+			if((IsBardSong(spell_id) && IsBeneficialSpell(spell_id)) || (distance <= range2 && distance >= min_range2)) {
 
 	ServerPacket* pack = new ServerPacket(ServerOP_GroupLeave, sizeof(ServerGroupLeave_Struct));
 	ServerGroupLeave_Struct* gl = (ServerGroupLeave_Struct*)pack->pBuffer;
@@ -590,7 +591,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 		else if(members[z] != nullptr)
 		{
 			distance = caster->DistNoRoot(*members[z]);
-			if((IsBardSong(spell_id) && IsBeneficialSpell(spell_id)) || (distance <= range2 && distance >= min_range2)) {
+			if((IsBardSong(spell_id) && IsBeneficialSpell(spell_id)) && (distance <= range2 && distance >= min_range2)) {
 				members[z]->CalcSpellPowerDistanceMod(spell_id, distance);
 				caster->SpellOnTarget(spell_id, members[z]);
 #ifdef GROUP_BUFF_PETS
