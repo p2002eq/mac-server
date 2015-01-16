@@ -43,7 +43,7 @@ namespace Mac {
 			opcodes = new RegularOpcodeManager();
 			if(!opcodes->LoadOpcodes(opfile.c_str())) 
 			{
-				logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
+				logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
 				return;
 			}
 		}
@@ -65,7 +65,7 @@ namespace Mac {
 		signature.first_eq_opcode = opcodes->EmuToEQ(OP_DataRate);
 		into.RegisterOldPatch(signature, pname.c_str(), &opcodes, &struct_strategy);
 		
-		logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
 	}
 
 	void Reload() 
@@ -83,10 +83,10 @@ namespace Mac {
 			opfile += ".conf";
 			if(!opcodes->ReloadOpcodes(opfile.c_str()))
 			{
-				logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
+				logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
 				return;
 			}
-			logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
+			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
 		}
 	}
 
@@ -350,7 +350,7 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 
-		//logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
+		//logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
 		CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::PlayerProfile_Struct)-4);
 		EQApplicationPacket* outapp = new EQApplicationPacket();
@@ -358,7 +358,7 @@ namespace Mac {
 		outapp->pBuffer = new uchar[10000];
 		outapp->size = DeflatePacket((unsigned char*)__packet->pBuffer, sizeof(structs::PlayerProfile_Struct), outapp->pBuffer, 10000);
 		EncryptProfilePacket(outapp->pBuffer, outapp->size);
-		//logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes compressed", outapp->size);
+		//logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes compressed", outapp->size);
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
 		delete __packet;
@@ -646,7 +646,7 @@ namespace Mac {
 		int entrycount = in->size / sizeof(Spawn_Struct);
 		if(entrycount == 0 || (in->size % sizeof(Spawn_Struct)) != 0) 
 		{
-			logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(Spawn_Struct));
+			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(Spawn_Struct));
 			delete in;
 			return;
 		}
@@ -1021,7 +1021,7 @@ namespace Mac {
 		int16 itemcount = in->size / sizeof(InternalSerializedItem_Struct);
 		if(itemcount == 0 || (in->size % sizeof(InternalSerializedItem_Struct)) != 0)
 		{
-			logger.LogDebugType(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
+			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
 			delete in;
 			return;
 		}

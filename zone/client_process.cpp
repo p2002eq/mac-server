@@ -989,7 +989,7 @@ uint8 Client::WithCustomer(uint16 NewCustomer){
 	Client* c = entity_list.GetClientByID(CustomerID);
 
 	if(!c) {
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Previous customer has gone away.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Previous customer has gone away.");
 		CustomerID = NewCustomer;
 		return 1;
 	}
@@ -1001,7 +1001,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 {
 	if(PendingRezzXP < 0) {
 		// pendingrezexp is set to -1 if we are not expecting an OP_RezzAnswer
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Unexpected OP_RezzAnswer. Ignoring it.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Unexpected OP_RezzAnswer. Ignoring it.");
 		Message(CC_Red, "You have already been resurrected.\n");
 		return;
 	}
@@ -1011,7 +1011,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 		// Mark the corpse as rezzed in the database, just in case the corpse has buried, or the zone the
 		// corpse is in has shutdown since the rez spell was cast.
 		database.MarkCorpseAsRezzed(PendingRezzDBID);
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Player %s got a %i Rezz, spellid %i in zone%i, instance id %i",
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Player %s got a %i Rezz, spellid %i in zone%i, instance id %i",
 				this->name, (uint16)spells[SpellID].base[0],
 				SpellID, ZoneID, InstanceID);
 

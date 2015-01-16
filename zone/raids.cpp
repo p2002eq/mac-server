@@ -411,7 +411,7 @@ void Raid::CastGroupSpell(Mob* caster, uint16 spellid, uint32 gid)
 #endif
 				}
 				else{
-					logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Raid spell: %s is out of range %f at distance %f from %s", members[x].member->GetName(), range, distance, caster->GetName());
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Raid spell: %s is out of range %f at distance %f from %s", members[x].member->GetName(), range, distance, caster->GetName());
 				}
 			}
 		}

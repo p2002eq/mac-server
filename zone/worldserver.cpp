@@ -129,7 +129,7 @@ void WorldServer::Process() {
 
 	ServerPacket *pack = 0;
 	while((pack = tcpc.PopPacket())) {
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Got 0x%04x from world:", pack->opcode);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Got 0x%04x from world:", pack->opcode);
 		_hex(ZONE__WORLD_TRACE,pack->pBuffer,pack->size);
 		switch(pack->opcode) {
 		case 0: {
@@ -144,12 +144,12 @@ void WorldServer::Process() {
 			if (pack->size != sizeof(ServerConnectInfo))
 				break;
 			ServerConnectInfo* sci = (ServerConnectInfo*) pack->pBuffer;
-			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "World assigned Port: %d for this zone.", sci->port);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "World assigned Port: %d for this zone.", sci->port);
 			ZoneConfig::SetZonePort(sci->port);
 			break;
 		}
 		case ServerOP_ZAAuthFailed: {
-			logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "World server responded 'Not Authorized', disabling reconnect");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "World server responded 'Not Authorized', disabling reconnect");
 			pTryReconnect = false;
 			Disconnect();
 			break;
@@ -609,7 +609,7 @@ void WorldServer::Process() {
 					//pendingrezexp is the amount of XP on the corpse. Setting it to a value >= 0
 					//also serves to inform Client::OPRezzAnswer to expect a packet.
 					client->SetPendingRezzData(srs->exp, srs->dbid, srs->rez.spellid, srs->rez.corpse_name);
-							logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "OP_RezzRequest in zone %s for %s, spellid:%i",
+							logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "OP_RezzRequest in zone %s for %s, spellid:%i",
 							zone->GetShortName(), client->GetName(), srs->rez.spellid);
 					EQApplicationPacket* outapp = new EQApplicationPacket(OP_RezzRequest,
 												sizeof(Resurrect_Struct));
@@ -625,10 +625,10 @@ void WorldServer::Process() {
 				// to the zone that the corpse is in.
 				Corpse* corpse = entity_list.GetCorpseByName(srs->rez.corpse_name);
 				if (corpse && corpse->IsCorpse()) {
-					logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "OP_RezzComplete received in zone %s for corpse %s",
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "OP_RezzComplete received in zone %s for corpse %s",
 								zone->GetShortName(), srs->rez.corpse_name);
 
-					logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Found corpse. Marking corpse as rezzed.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Found corpse. Marking corpse as rezzed.");
 					// I don't know why Rezzed is not set to true in CompleteRezz().
 					corpse->IsRezzed(true);
 					corpse->CompleteResurrection();
@@ -679,7 +679,7 @@ void WorldServer::Process() {
 		}
 		case ServerOP_SyncWorldTime: {
 			if(zone!=0) {
-				logger.LogDebugType(EQEmuLogSys::Moderate, EQEmuLogSys::Zone_Server, __FUNCTION__ "Received Message SyncWorldTime");
+				logger.DebugCategory(EQEmuLogSys::Moderate, EQEmuLogSys::Zone_Server, __FUNCTION__ "Received Message SyncWorldTime");
 				eqTimeOfDay* newtime = (eqTimeOfDay*) pack->pBuffer;
 				zone->zone_time.setEQTimeOfDay(newtime->start_eqtime, newtime->start_realtime);
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_TimeOfDay, sizeof(TimeOfDay_Struct));
@@ -1740,7 +1740,7 @@ bool WorldServer::SendVoiceMacro(Client* From, uint32 Type, char* Target, uint32
 
 bool WorldServer::RezzPlayer(EQApplicationPacket* rpack, uint32 rezzexp, uint32 dbid, uint16 opcode)
 {
-	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "WorldServer::RezzPlayer rezzexp is %i (0 is normal for RezzComplete", rezzexp);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "WorldServer::RezzPlayer rezzexp is %i (0 is normal for RezzComplete", rezzexp);
 	ServerPacket* pack = new ServerPacket(ServerOP_RezzPlayer, sizeof(RezzPlayer_Struct));
 	RezzPlayer_Struct* sem = (RezzPlayer_Struct*) pack->pBuffer;
 	sem->rezzopcode = opcode;
@@ -1749,9 +1749,9 @@ bool WorldServer::RezzPlayer(EQApplicationPacket* rpack, uint32 rezzexp, uint32 
 	sem->dbid = dbid;
 	bool ret = SendPacket(pack);
 	if (ret)
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Sending player rezz packet to world spellid:%i", sem->rez.spellid);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Sending player rezz packet to world spellid:%i", sem->rez.spellid);
 	else
-		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "NOT Sending player rezz packet to world");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "NOT Sending player rezz packet to world");
 
 	safe_delete(pack);
 	return ret;
