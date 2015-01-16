@@ -711,6 +711,13 @@ bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_curs
 							continue; // Can't auto-equip
 						}
 					}
+					uint8 itemtype_2ndItem = m_inv[MainSecondary]->GetItem()->ItemType;
+					if( 
+						itemtype_2ndItem == ItemTypeWindInstrument ||
+						itemtype_2ndItem == ItemTypeStringedInstrument ||
+						itemtype_2ndItem == ItemTypeBrassInstrument ||
+						itemtype_2ndItem == ItemTypePercussionInstrument
+					) continue; // Do not auto-equip Primary when Bard Equipment is in Secondary
 				}
 				if( i== MainSecondary && m_inv[MainPrimary]) // check to see if primary slot is a two hander
 				{
