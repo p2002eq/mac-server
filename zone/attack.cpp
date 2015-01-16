@@ -2012,7 +2012,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
         int32 finalxp = EXP_FORMULA;
         finalxp = give_exp_client->mod_client_xp(finalxp, this);
-		_//log(EQMAC__LOG, "Death: finalxp: %i", finalxp);
+		//log(EQMAC__LOG, "Death: finalxp: %i", finalxp);
 
 		if(kr)
 		{
