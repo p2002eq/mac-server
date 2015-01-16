@@ -52,9 +52,9 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 	Animation type = Animation::None;
 	if (weapon && weapon->IsType(ItemClassCommon)) {
 		const Item_Struct* item = weapon->GetItem();
-#if EQDEBUG >= 11
-			logger.LogDebug(EQEmuLogSys::General, "Weapon skill:%i", item->ItemType);
-#endif
+
+		logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Attack, "Weapon skill : %i", item->ItemType);
+
 		switch (item->ItemType)
 		{
 			case ItemType1HSlash: // 1H Slashing
