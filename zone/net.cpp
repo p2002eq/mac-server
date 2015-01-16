@@ -115,8 +115,7 @@ extern void MapOpcodes();
 
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformZone);
-	logger.LoadLogSettings();
-	logger.OnLogHookCallBackZone(&ClientLogs::ClientMessage);
+
 	set_exception_handler();
 	//register_remote_call_handlers();
 
@@ -150,8 +149,6 @@ int main(int argc, char** argv) {
 		worldserver.SetLauncherName("NONE");
 	}
 
-	
-
 	logger.LogDebugType(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Loading server configuration..");
 	if (!ZoneConfig::LoadConfig()) {
 		logger.Log(EQEmuLogSys::Error, "Loading server configuration failed.");
@@ -176,6 +173,12 @@ int main(int argc, char** argv) {
 		logger.Log(EQEmuLogSys::Error, "Cannot continue without a database connection.");
 		return 1;
 	}
+
+	/* Register Log System and Settings */
+	logger.LoadLogSettings();
+	logger.OnLogHookCallBackZone(&ClientLogs::ClientMessage);
+	database.LoadLogSysSettings(logger.log_settings);
+
 	guild_mgr.SetDatabase(&database);
 
 
