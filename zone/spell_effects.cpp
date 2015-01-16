@@ -3606,10 +3606,10 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 		}
 	}
 
-	// Send Bards the spell message so they know their song is still applied.
-	if(IsBardSong(spell_id) && !IsBeneficialSpell(spell_id) && !IsCharmSpell(spell_id) && !IsFearSpell(spell_id))
+	if(caster)
 	{
-		if(caster->IsClient()) {
+		// Send Bards the spell message so they know their song is still applied.
+		if(IsBardSong(spell_id) && !IsBeneficialSpell(spell_id) && !IsCharmSpell(spell_id) && !IsFearSpell(spell_id) && caster->IsClient()) {
 
 			EQApplicationPacket *packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
 

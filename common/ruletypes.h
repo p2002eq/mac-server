@@ -184,6 +184,8 @@ RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
 RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
 RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
+RULE_BOOL ( AlKabor, Count6thGroupMember, false)
 RULE_CATEGORY_END()
 
 
@@ -490,6 +492,10 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
+RULE_CATEGORY_END()
+
+RULE_CATEGORY ( AA )
+RULE_INT ( AA, ExpPerPoint, 23976496) //Amount of exp per AA, if AAPercent is 100%. Otherwise, we use the standard XP formula for 52.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Console )

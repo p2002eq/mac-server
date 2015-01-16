@@ -502,6 +502,7 @@ public:
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
 	uint32  GetEXPForLevel(uint16 level, bool aa = false);
 	bool	IsInRange(Mob* defender);
+	bool	IsInLevelRange(uint8 maxlevel);
 
 	void GoToBind(uint8 bindnum = 0);
 	void GoToSafeCoords(uint16 zone_id, uint16 instance_id);

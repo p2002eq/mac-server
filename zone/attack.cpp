@@ -817,7 +817,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 
 	//check to see if our weapons or fists are magical.
 	if(against->GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL)){
-		if(weapon_item){
+		if(weapon_item && !GetSpecialAbility(SPECATK_MAGICAL)){
 			if(weapon_item->Magic){
 				dmg = weapon_item->Damage;
 
@@ -938,7 +938,7 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 	}
 
 	if(against->GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL)){
-		if(weapon_item){
+		if(weapon_item && !GetSpecialAbility(SPECATK_MAGICAL)){
 			// check to see if the weapon is magic
 			bool MagicWeapon = false;
 			if(weapon_item->GetItem() && weapon_item->GetItem()->Magic)
