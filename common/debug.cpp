@@ -198,56 +198,6 @@ bool EQEmuLog::writePVA(LogIDs id, const char *prefix, const char *fmt, va_list 
 	return true;
 }
 
-bool EQEmuLog::writebuf(LogIDs id, const char *buf, uint8 size, uint32 count)
-{
-	if (!logFileValid) {
-		return false;
-	}
-	if (id >= MaxLogID) {
-		return false;
-	}
-	bool dofile = false;
-	if (pLogStatus[id] & 1) {
-		dofile = open(id);
-	}
-	if (!(dofile || pLogStatus[id] & 2)) {
-		return false;
-	}
-	LockMutex lock(&MLog[id]);
-	if (!logFileValid) {
-		return false;    //check again for threading race reasons (to avoid two mutexes)
-	}
-	time_t aclock;
-	struct tm *newtime;
-	time( &aclock ); /* Get time in seconds */
-	newtime = localtime( &aclock ); /* Convert time to struct */
-	if (dofile)
-	#ifndef NO_PIDLOG
-		fprintf(fp[id], "[%02d.%02d. - %02d:%02d:%02d] ", newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
-	#else
-		fprintf(fp[id], "%04i [%02d.%02d. - %02d:%02d:%02d] ", getpid(), newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
-	#endif
-	if (dofile) {
-		fwrite(buf, size, count, fp[id]);
-		fprintf(fp[id], "\n");
-	}
-	if (pLogStatus[id] & 2) {
-		if (pLogStatus[id] & 8) {
-			fprintf(stderr, "[%s] ", LogNames[id]);
-			fwrite(buf, size, count, stderr);
-			fprintf(stderr, "\n");
-		} else {
-			fprintf(stdout, "[%s] ", LogNames[id]);
-			fwrite(buf, size, count, stdout);
-			fprintf(stdout, "\n");
-		}
-	}
-	if (dofile) {
-		fflush(fp[id]);
-	}
-	return true;
-}
-
 bool EQEmuLog::writeNTS(LogIDs id, bool dofile, const char *fmt, ...)
 {
 	va_list argptr, tmpargptr;
