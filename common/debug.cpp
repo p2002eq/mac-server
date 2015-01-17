@@ -177,7 +177,7 @@ bool EQEmuLog::writePVA(LogIDs id, const char *prefix, const char *fmt, va_list 
 			fprintf(stderr, "[%s] %s", LogNames[id], prefix);
 			vfprintf( stderr, fmt, argptr );
 		} else {
-			fprintf(stdout, "[%s] %s", LogNames[id], prefix);
+			fprintf(stdout, "[%s]  %s", LogNames[id], prefix);
 			vfprintf( stdout, fmt, argptr );
 		}
 	}
