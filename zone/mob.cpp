@@ -1153,6 +1153,7 @@ void Mob::ShowStats(Client* client)
 			if(n->respawn2 != 0)
 				spawngroupid = n->respawn2->SpawnGroupID();
 			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i FactionID: %i PreCharmFactionID: %i PrimaryFaction: %i", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetNPCFactionID(), n->GetPreCharmNPCFactionID(), GetPrimaryFaction());
+			client->Message(0, "  HP Regen: %i Mana Regen: %i Magic Atk: %i Immune to Melee: %i", n->GetHPRegen(), n->GetManaRegen(), GetSpecialAbility(SPECATK_MAGICAL), GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL));
 			client->Message(0, "  Attack Speed: %i Accuracy: %i LootTable: %u SpellsID: %u MerchantID: %i", n->GetAttackTimer(), n->GetAccuracyRating(), n->GetLoottableID(), n->GetNPCSpellsID(), n->MerchantType);
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
