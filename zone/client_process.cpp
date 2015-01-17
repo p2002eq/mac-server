@@ -1579,12 +1579,12 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		SkillUseTypes skill = (SkillUseTypes) gmskill->skill_id;
 
 		if(!CanHaveSkill(skill)) {
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Tried to train skill %d, which is not allowed.", skill);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Skills, "Tried to train skill %d, which is not allowed.", skill);
 			return;
 		}
 
 		if(MaxSkill(skill) == 0) {
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Tried to train skill %d, but training is not allowed at this level.", skill);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Skills, "Tried to train skill %d, but training is not allowed at this level.", skill);
 			return;
 		}
 
