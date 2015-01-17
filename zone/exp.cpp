@@ -541,8 +541,8 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 		return;
 
 	unsigned int i;
-	uint8 membercount = 0;
-	uint8 close_membercount = 0;
+	int8 membercount = 0;
+	int8 close_membercount = 0;
 	uint8 maxlevel = 1;
 
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
@@ -564,7 +564,7 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	}
 
 	// If the NPC is green to the whole group or they are all out of the kill zone (wipe?) this will return.
-	if (membercount == 0 || close_membercount == 0)
+	if (membercount <= 0 || close_membercount <= 0)
 		return;
 
 	bool isgreen = false;
@@ -589,6 +589,9 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 			}	
 		}
 	}
+
+	if (membercount <= 0 || close_membercount <= 0)
+		return;
 
 	if(!RuleB(AlKabor, OutOfRangeGroupXPBonus))
 		membercount = close_membercount;
