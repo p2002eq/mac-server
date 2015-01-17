@@ -3628,7 +3628,6 @@ void Client::Handle_OP_FriendsWho(const EQApplicationPacket *app)
 void Client::Handle_OP_GetGuildsList(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GetGuildsList");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 	SendPlayerGuild();
 }
 
@@ -4569,7 +4568,6 @@ void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildDelete(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildDelete");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);s
 
 	if (!IsInAGuild() || !guild_mgr.IsGuildLeader(GuildID(), CharacterID()))
 		Message(0, "You are not a guild leader or not in a guild.");
@@ -4586,7 +4584,6 @@ void Client::Handle_OP_GuildDelete(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildInvite");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 
 	if (app->size != sizeof(GuildCommand_Struct)) {
 		std::cout << "Wrong size: OP_GuildInvite, size=" << app->size << ", expected " << sizeof(GuildCommand_Struct) << std::endl;
@@ -4659,7 +4656,6 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 						gc->guildeqid = GuildID();
 
 					mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildInvite for promotion to %s, length %d", client->GetName(), app->size);
-					mpkt(GUILDS__OUT_PACKET_TRACE, app);
 					client->QueuePacket(app);
 
 				}
@@ -4693,7 +4689,6 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 					gc->guildeqid = GuildID();
 
 				mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildInvite for invite to %s, length %d", client->GetName(), app->size);
-				mpkt(GUILDS__OUT_PACKET_TRACE, app);
 				client->SetPendingGuildInvitation(true);
 				client->QueuePacket(app);
 
@@ -4710,7 +4705,6 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildInviteAccept");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 
 	SetPendingGuildInvitation(false);
 
@@ -4783,7 +4777,6 @@ void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildLeader");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 
 	if (app->size < 2) {
 		mlog(GUILDS__ERROR, "Invalid length %d on OP_GuildLeader", app->size);
@@ -4827,14 +4820,12 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildPeace(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Got OP_GuildPeace of len %d", app->size);
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 	return;
 }
 
 void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildRemove");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 
 	if (app->size != sizeof(GuildCommand_Struct)) {
 		std::cout << "Wrong size: OP_GuildRemove, size=" << app->size << ", expected " << sizeof(GuildCommand_Struct) << std::endl;
@@ -4913,7 +4904,6 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildWar(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Got OP_GuildWar of len %d", app->size);
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 	return;
 }
 
@@ -6744,7 +6734,6 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_SetGuildMOTD");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
 
 	if (app->size != sizeof(GuildMOTD_Struct)) {
 		// client calls for a motd on login even if they arent in a guild

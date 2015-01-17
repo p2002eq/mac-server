@@ -50,7 +50,6 @@ void Client::SendGuildMOTD(bool GetGuildMOTDReply) {
 	}
 
 	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildMOTD of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
 
 	FastQueuePacket(&outapp);
 }
@@ -83,7 +82,6 @@ void Client::SendGuildList() {
 	}
 
 	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildsList of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
 
 	FastQueuePacket(&outapp);
 }
@@ -114,7 +112,6 @@ void Client::SendPlayerGuild() {
 	gle->unknown3=0xFFFFFFFF;
 
 	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildAdded of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
 
 	FastQueuePacket(&outapp);
 }
