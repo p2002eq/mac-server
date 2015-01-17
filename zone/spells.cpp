@@ -4745,7 +4745,7 @@ void Client::MemSpell(uint16 spell_id, int slot, bool update_client)
 	m_pp.mem_spells[slot] = spell_id;
 	uint32 recast = spells[spell_id].recast_time/1000;
 	CastToClient()->GetPTimers().Start(pTimerSpellStart + spell_id, recast); // This is for the benefit of spells like Spirit of Cheetah, so the player can't cast the newly memmed spell right after zoning.
-	mlog(CLIENT__SPELLS, "Spell %d memorized into slot %d", spell_id, slot);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d memorized into slot %d", spell_id, slot);
 
 	database.SaveCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);
 
@@ -4760,7 +4760,7 @@ void Client::UnmemSpell(int slot, bool update_client)
 	if(slot > MAX_PP_MEMSPELL || slot < 0)
 		return;
 
-	mlog(CLIENT__SPELLS, "Spell %d forgotten from slot %d", m_pp.mem_spells[slot], slot);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d forgotten from slot %d", m_pp.mem_spells[slot], slot);
 	m_pp.mem_spells[slot] = 0xFFFFFFFF;
 
 	database.DeleteCharacterMemorizedSpell(this->CharacterID(), m_pp.mem_spells[slot], slot);
@@ -4793,7 +4793,7 @@ void Client::ScribeSpell(uint16 spell_id, int slot, bool update_client)
 
 	m_pp.spell_book[slot] = spell_id;
 	database.SaveCharacterSpell(this->CharacterID(), spell_id, slot);
-	mlog(CLIENT__SPELLS, "Spell %d scribed into spell book slot %d", spell_id, slot);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d scribed into spell book slot %d", spell_id, slot);
 
 	if(update_client)
 	{
@@ -4806,7 +4806,7 @@ void Client::UnscribeSpell(int slot, bool update_client)
 	if(slot >= MAX_PP_SPELLBOOK || slot < 0)
 		return;
 
-	mlog(CLIENT__SPELLS, "Spell %d erased from spell book slot %d", m_pp.spell_book[slot], slot);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d erased from spell book slot %d", m_pp.spell_book[slot], slot);
 	m_pp.spell_book[slot] = 0xFFFFFFFF;
 
 	database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[slot], slot);
@@ -4837,7 +4837,7 @@ void Client::UntrainDisc(int slot, bool update_client)
 	if(slot >= MAX_PP_DISCIPLINES || slot < 0)
 		return;
 
-	mlog(CLIENT__SPELLS, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
 	m_pp.disciplines.values[slot] = 0;
 	database.DeleteCharacterDisc(this->CharacterID(), slot);
 
