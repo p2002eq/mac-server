@@ -5303,11 +5303,11 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 		if (zone->random.Int(0, 99) < criticalchance){
 			mendhp *= 2;
-			Message_StringID(4, MEND_CRITICAL);
+			Message_StringID(CC_Purple, MEND_CRITICAL);
 		}
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
-		Message_StringID(4, MEND_SUCCESS);
+		Message_StringID(CC_Purple, MEND_SUCCESS);
 	}
 	else {
 		/* the purpose of the following is to make the chance to worsen wounds much less common,
@@ -5320,10 +5320,10 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		{
 			SetHP(currenthp > mendhp ? (GetHP() - mendhp) : 1);
 			SendHPUpdate();
-			Message_StringID(4, MEND_WORSEN);
+			Message_StringID(CC_Purple, MEND_WORSEN);
 		}
 		else
-			Message_StringID(4, MEND_FAIL);
+			Message_StringID(CC_Purple, MEND_FAIL);
 	}
 
 	CheckIncreaseSkill(SkillMend, nullptr, 10);

@@ -1943,7 +1943,7 @@ void Mob::InstillDoubt(Mob *who) {
 		SpellOnTarget(229, who, false, true, -2000);
 		//is there a success message?
 	} else {
-		Message_StringID(4,NOT_SCARING);
+		Message_StringID(CC_Purple,NOT_SCARING);
 		//Idea from WR:
 		/* if (target->IsNPC() && zone->random.Int(0,99) < 10 ) {
 			entity_list.MessageClose(target, false, 50, MT_NPCRampage, "%s lashes out in anger!",target->GetName());

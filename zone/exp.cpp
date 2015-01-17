@@ -770,31 +770,37 @@ bool Client::IsInLevelRange(uint8 maxlevel)
 
 void Client::GetExpLoss(Mob* killerMob, uint16 spell, int &exploss)
 {
-	float GetNum [] = {0.16f, 0.08f, 0.15f, 0.075f, 0.14f, 0.07f, 0.13f, 0.065f, 0.12f, 0.06f};
 	float loss;
 	uint8 level = GetLevel();
 	if(level >= 1 && level <= 29)
-		loss = GetNum[0];
+		loss = 0.16f;
 	if(level == 30)
-		loss = GetNum[1];
+		loss = 0.08f;
 	if(level >= 31 && level <= 34)
-		loss = GetNum[2];
+		loss = 0.15f;
 	if(level == 35)
-		loss = GetNum[3];
+		loss = 0.075f;
 	if(level >= 36 && level <= 39)
-		loss = GetNum[4];
+		loss = 0.14f;
 	if(level == 40)
-		loss = GetNum[5];
+		loss = 0.07f;
 	if(level >= 41 && level <= 44)
-		loss = GetNum[6];
+		loss = 0.13f;
 	if(level == 45)
-		loss = GetNum[7];
+		loss = 0.065f;
 	if(level >= 46 && level <= 50)
-		loss = GetNum[8];
+		loss = 0.12f;
 	if(level >= 51)
-		loss = GetNum[9];
+		loss = 0.06f;
+
+	if(RuleB(Character, SmoothEXPLoss))
+	{
+		if(loss >= 0.12)
+			loss /= 2;
+	}
+
 	int requiredxp = GetEXPForLevel(level + 1) - GetEXPForLevel(level);
-	exploss=(int)((float)requiredxp * (loss));
+	exploss=(int)((float)requiredxp * (loss * RuleR(Character, EXPLossMultiplier)));
 
 	if( (level < RuleI(Character, DeathExpLossLevel)) || (level > RuleI(Character, DeathExpLossMaxLevel)) || IsBecomeNPC() )
 	{

@@ -4765,7 +4765,7 @@ void command_manaburn(Client *c, const Seperator *sep){
 					if (nukedmg>0)
 					{
 						target->Damage(c, nukedmg, 2751, SkillAbjuration/*hackish*/);
-						c->Message(4, "You unleash an enormous blast of magical energies.");
+						c->Message(CC_Purple, "You unleash an enormous blast of magical energies.");
 					}
 					LogFile->write(EQEMuLog::Normal, "Manaburn request from %s, damage: %d", c->GetName(), nukedmg);
 				}

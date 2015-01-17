@@ -121,6 +121,8 @@ struct NPCType
 	bool	no_target_hotkey;
 	bool	raid_target;
 	uint8 	probability;
+	uint32  combat_hp_regen;
+	uint32  combat_mana_regen;
 };
 
 namespace player_lootitem {

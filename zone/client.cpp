@@ -3020,14 +3020,14 @@ bool Client::KeyRingCheck(uint32 item_id)
 
 void Client::KeyRingList()
 {
-	Message(4,"Keys on Keyring:");
+	Message(CC_Purple,"Keys on Keyring:");
 	const Item_Struct *item = 0;
 	for(std::list<uint32>::iterator iter = keyring.begin();
 		iter != keyring.end();
 		++iter)
 	{
 		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(4,item->Name);
+			Message(CC_Purple,item->Name);
 		}
 	}
 }
