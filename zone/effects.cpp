@@ -26,6 +26,7 @@
 #include "string_ids.h"
 #include "worldserver.h"
 #include "zonedb.h"
+#include "position.h"
 
 float Client::GetActSpellRange(uint16 spell_id, float range, bool IsBard)
 {
