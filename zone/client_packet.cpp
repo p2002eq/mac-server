@@ -286,7 +286,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	if(is_log_enabled(CLIENT__NET_IN_TRACE)) {
 		char buffer[64];
 		app->build_header_dump(buffer);
-		mlog(CLIENT__NET_IN_TRACE, "Dispatch opcode: %s", buffer);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Dispatch opcode: %s", buffer);
 	}
 
 	EmuOpcode opcode = app->GetOpcode();
