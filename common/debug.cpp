@@ -36,12 +36,6 @@ static const char* LogNames[EQEmuLog::MaxLogID] = { "Status", "Normal", "Error",
 
 EQEmuLog::EQEmuLog()
 {
-	for (int i = 0; i < MaxLogID; i++) {
-		fp[i] = 0;
-		logCallbackFmt[i] = nullptr;
-		logCallbackBuf[i] = nullptr;
-		logCallbackPva[i] = nullptr;
-	}
 	pLogStatus[EQEmuLog::LogIDs::Status] = LOG_LEVEL_STATUS;
 	pLogStatus[EQEmuLog::LogIDs::Normal] = LOG_LEVEL_NORMAL;
 	pLogStatus[EQEmuLog::LogIDs::Error] = LOG_LEVEL_ERROR;
@@ -141,11 +135,6 @@ bool EQEmuLog::write(LogIDs id, const char *fmt, ...)
 
 	logger.Log(id, vStringFormat(fmt, argptr).c_str());
 
-	if (logCallbackFmt[id]) {
-		msgCallbackFmt p = logCallbackFmt[id];
-		va_copy(tmpargptr, argptr);
-		p(id, fmt, tmpargptr );
-	}
 	return true;
 }
 
@@ -182,11 +171,6 @@ bool EQEmuLog::writePVA(LogIDs id, const char *prefix, const char *fmt, va_list 
 		#endif
 		va_copy(tmpargptr, argptr);
 		vfprintf( fp[id], fmt, tmpargptr );
-	}
-	if (logCallbackPva[id]) {
-		msgCallbackPva p = logCallbackPva[id];
-		va_copy(tmpargptr, argptr);
-		p(id, prefix, fmt, tmpargptr );
 	}
 	if (pLogStatus[id] & 2) {
 		if (pLogStatus[id] & 8) {
@@ -246,10 +230,6 @@ bool EQEmuLog::writebuf(LogIDs id, const char *buf, uint8 size, uint32 count)
 	if (dofile) {
 		fwrite(buf, size, count, fp[id]);
 		fprintf(fp[id], "\n");
-	}
-	if (logCallbackBuf[id]) {
-		msgCallbackBuf p = logCallbackBuf[id];
-		p(id, buf, size, count);
 	}
 	if (pLogStatus[id] & 2) {
 		if (pLogStatus[id] & 8) {
@@ -361,7 +341,6 @@ void EQEmuLog::SetCallback(LogIDs id, msgCallbackFmt proc)
 	if (id >= MaxLogID) {
 		return;
 	}
-	logCallbackFmt[id] = proc;
 }
 
 void EQEmuLog::SetCallback(LogIDs id, msgCallbackBuf proc)
@@ -372,7 +351,6 @@ void EQEmuLog::SetCallback(LogIDs id, msgCallbackBuf proc)
 	if (id >= MaxLogID) {
 		return;
 	}
-	logCallbackBuf[id] = proc;
 }
 
 void EQEmuLog::SetCallback(LogIDs id, msgCallbackPva proc)
@@ -383,7 +361,6 @@ void EQEmuLog::SetCallback(LogIDs id, msgCallbackPva proc)
 	if (id >= MaxLogID) {
 		return;
 	}
-	logCallbackPva[id] = proc;
 }
 
 void EQEmuLog::SetAllCallbacks(msgCallbackFmt proc)
