@@ -287,7 +287,6 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 		char buffer[64];
 		app->build_header_dump(buffer);
 		mlog(CLIENT__NET_IN_TRACE, "Dispatch opcode: %s", buffer);
-		mpkt(CLIENT__NET_IN_TRACE, app);
 	}
 
 	EmuOpcode opcode = app->GetOpcode();
@@ -4570,7 +4569,7 @@ void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 void Client::Handle_OP_GuildDelete(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildDelete");
-	mpkt(GUILDS__IN_PACKET_TRACE, app);
+	mpkt(GUILDS__IN_PACKET_TRACE, app);s
 
 	if (!IsInAGuild() || !guild_mgr.IsGuildLeader(GuildID(), CharacterID()))
 		Message(0, "You are not a guild leader or not in a guild.");
