@@ -1158,7 +1158,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
 			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture());
-			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i Running: %i MovementSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), IsCurrentlyRunning(), GetMovespeed());
+			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i Running: %i MovementSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), IsCurrentlyRunning(), GetSpeed());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
