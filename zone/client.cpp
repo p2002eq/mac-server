@@ -40,6 +40,7 @@ extern volatile bool RunLoops;
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
 #include "../common/data_verification.h"
+#include "position.h"
 #include "net.h"
 #include "worldserver.h"
 #include "zonedb.h"
