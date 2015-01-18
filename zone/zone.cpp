@@ -139,7 +139,7 @@ bool Zone::Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 
 	worldserver.SetZone(iZoneID, iInstanceID);
 
-	Log.Log(EQEmuLogSys::Normal, "---- Zone server %s, listening on port:%i ----", zonename, ZoneConfig::get()->ZonePort);
+	Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Normal, "---- Zone server %s, listening on port:%i ----", zonename, ZoneConfig::get()->ZonePort);
 	Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Status, "Zone Bootup: %s (%i: %i)", zonename, iZoneID, iInstanceID);
 	parse->Init();
 	UpdateWindowTitle();
@@ -567,7 +567,7 @@ void Zone::Shutdown(bool quite)
 	petition_list.ClearPetitions();
 	zone->GotCurTime(false);
 	if (!quite)
-		Log.Log(EQEmuLogSys::Normal, "Zone shutdown: going to sleep");
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Normal, "Zone shutdown: going to sleep");
 	ZoneLoaded = false;
 
 //	RemoteCallSubscriptionHandler::Instance()->ClearAllConnections();
