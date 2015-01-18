@@ -603,7 +603,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 		}
 		else if(members[z] != nullptr)
 		{
-			distance = caster->DistNoRoot(*members[z]);
+			distance = ComparativeDistance(caster->GetPosition(), members[z]->GetPosition());
 			if(distance <= range2 && distance >= min_range2) {
 				members[z]->CalcSpellPowerDistanceMod(spell_id, distance);
 				caster->SpellOnTarget(spell_id, members[z]);
@@ -643,7 +643,7 @@ void Group::GroupBardPulse(Mob* caster, uint16 spell_id) {
 		}
 		else if(members[z] != nullptr)
 		{
-			distance = caster->DistNoRoot(*members[z]);
+			distance = ComparativeDistance(caster->GetPosition(), members[z]->GetPosition());
 			members[z]->BardPulse(spell_id, caster);
 #ifdef GROUP_BUFF_PETS
 			if(members[z]->GetPet() && members[z]->HasPetAffinity() && !members[z]->GetPet()->IsCharmed())
