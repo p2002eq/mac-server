@@ -15,13 +15,17 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
-#include "masterentity.h"
-#include "npc_ai.h"
-#include "../common/packet_functions.h"
-#include "../common/packet_dump.h"
+
 #include "../common/string_util.h"
+
+#include "client.h"
+#include "entity.h"
+#include "groups.h"
+#include "mob.h"
+#include "raids.h"
+
 #include "worldserver.h"
+
 extern EntityList entity_list;
 extern WorldServer worldserver;
 
@@ -83,7 +87,7 @@ void Raid::AddMember(Client *c, uint32 group, bool rleader, bool groupleader, bo
     auto results = database.QueryDatabase(query);
 
 	if(!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error inserting into raid members: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error inserting into raid members: %s", results.ErrorMessage().c_str());
 	}
 
 	LearnMembers();
@@ -194,12 +198,12 @@ void Raid::SetRaidLeader(const char *wasLead, const char *name)
 	std::string query = StringFormat("UPDATE raid_members SET israidleader = 0 WHERE name = '%s'", wasLead);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Set Raid Leader error: %s\n", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Set Raid Leader error: %s\n", results.ErrorMessage().c_str());
 
 	query = StringFormat("UPDATE raid_members SET israidleader = 1 WHERE name = '%s'", name);
 	results = database.QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Set Raid Leader error: %s\n", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Set Raid Leader error: %s\n", results.ErrorMessage().c_str());
 
 	strn0cpy(leadername, name, 64);
 
@@ -1244,7 +1248,7 @@ void Raid::GetRaidDetails()
         return;
 
     if (results.RowCount() == 0) {
-        LogFile->write(EQEMuLog::Error, "Error getting raid details for raid %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Error, "Error getting raid details for raid %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
         return;
     }
 
@@ -1267,7 +1271,7 @@ bool Raid::LearnMembers()
         return false;
 
 	if(results.RowCount() == 0) {
-        LogFile->write(EQEMuLog::Error, "Error getting raid members for raid %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Error, "Error getting raid members for raid %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
         disbandCheck = true;
         return false;
     }

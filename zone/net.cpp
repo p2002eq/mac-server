@@ -53,6 +53,7 @@
 #include "zone_config.h"
 #include "titles.h"
 #include "guild_mgr.h"
+
 #include "quest_parser_collection.h"
 #include "embparser.h"
 #include "lua_parser.h"
@@ -97,7 +98,7 @@ extern Zone* zone;
 EQStreamFactory eqsf(ZoneStream);
 npcDecayTimes_Struct npcCorpseDecayTimes[100];
 TitleManager title_manager;
-QueryServ *QServ = 0; 
+QueryServ *QServ = 0;
 QuestParserCollection *parse = 0;
 
 const SPDat_Spell_Struct* spells;
@@ -615,7 +616,7 @@ void LoadSpells(EQEmu::MemoryMappedFile **mmf) {
 		spells = reinterpret_cast<SPDat_Spell_Struct*>((*mmf)->Get());
 		mutex.Unlock();
 	} catch(std::exception &ex) {
-		LogFile->write(EQEMuLog::Error, "Error loading spells: %s", ex.what());
+		LogFile->write(EQEmuLog::Error, "Error loading spells: %s", ex.what());
 		return;
 	}
 
@@ -648,4 +649,3 @@ void UpdateWindowTitle(char* iNewTitle) {
 	SetConsoleTitle(tmp);
 #endif
 }
-

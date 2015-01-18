@@ -22,6 +22,7 @@
 #include "../common/packet_dump.h"
 #include "../common/string_util.h"
 #include "worldserver.h"
+
 extern EntityList entity_list;
 extern WorldServer worldserver;
 
@@ -529,7 +530,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] == nullptr) {
-			//if (DEBUG>=5) LogFile->write(EQEMuLog::Debug, "Group::DelMember() null member at slot %i", i);
+			//if (DEBUG>=5) LogFile->write(EQEmuLog::Debug, "Group::DelMember() null member at slot %i", i);
 			continue;
 		}
 		if (members[i] != oldmember) {
@@ -846,7 +847,7 @@ bool Group::LearnMembers() {
         return false;
 
     if (results.RowCount() == 0) {
-        LogFile->write(EQEMuLog::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
 			return false;
     }
 

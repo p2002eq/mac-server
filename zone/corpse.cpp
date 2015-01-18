@@ -1,47 +1,54 @@
 /*	EQEMu: Everquest Server Emulator
-Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
+	Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; version 2 of the License.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY except by those people which sell it, which
-are required to give you total support for your newly bought product;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY except by those people which sell it, which
+	are required to give you total support for your newly bought product;
+	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+	A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 /*
 New class for handeling corpses and everything associated with them.
 Child of the Mob class.
 -Quagmire
 */
-#include "../common/debug.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <iostream>
-#include <sstream>
+
 #ifdef _WINDOWS
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
-#define strncasecmp	_strnicmp
-#define strcasecmp	_stricmp
+    #define snprintf	_snprintf
+	#define vsnprintf	_vsnprintf
+    #define strncasecmp	_strnicmp
+    #define strcasecmp	_stricmp
 #endif
 
-#include "masterentity.h"
-#include "../common/packet_functions.h"
+#include "../common/debug.h"
+#include "../common/rulesys.h"
 #include "../common/string_util.h"
-#include "../common/crc32.h"
+
+#include "client.h"
+#include "corpse.h"
+#include "entity.h"
+#include "groups.h"
+#include "mob.h"
+#include "raids.h"
+
+#ifdef BOTS
+#include "bot.h"
+#endif
+
+#include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "worldserver.h"
-#include "../common/rulesys.h"
-#include "quest_parser_collection.h"
+#include <iostream>
 #include "remote_call_subscribe.h"
+
 
 extern EntityList entity_list;
 extern Zone* zone;
@@ -824,7 +831,7 @@ bool Corpse::Process() {
 			spc->zone_id = zone->graveyard_zoneid();
 			worldserver.SendPacket(pack);
 			safe_delete(pack);
-			LogFile->write(EQEMuLog::Debug, "Moved %s player corpse to the designated graveyard in zone %s.", this->GetName(), database.GetZoneName(zone->graveyard_zoneid()));
+			LogFile->write(EQEmuLog::Debug, "Moved %s player corpse to the designated graveyard in zone %s.", this->GetName(), database.GetZoneName(zone->graveyard_zoneid()));
 			corpse_db_id = 0;
 		}
 
@@ -858,10 +865,10 @@ bool Corpse::Process() {
 				Save();
 				player_corpse_depop = true;
 				corpse_db_id = 0;
-				LogFile->write(EQEMuLog::Debug, "Tagged %s player corpse has burried.", this->GetName());
+				LogFile->write(EQEmuLog::Debug, "Tagged %s player corpse has burried.", this->GetName());
 			}
 			else {
-				LogFile->write(EQEMuLog::Error, "Unable to bury %s player corpse.", this->GetName());
+				LogFile->write(EQEmuLog::Error, "Unable to bury %s player corpse.", this->GetName());
 				return true;
 			}
 		}
@@ -1068,7 +1075,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 				for (; cur != end; ++cur) {
 					ServerLootItem_Struct* item_data = *cur;
 					item = database.GetItem(item_data->item_id);
-					LogFile->write(EQEMuLog::Debug, "Corpse Looting: %s was not sent to client loot window (corpse_dbid: %i, charname: %s(%s))", item->Name, GetCorpseDBID(), client->GetName(), client->GetGM() ? "GM" : "Owner");
+					LogFile->write(EQEmuLog::Debug, "Corpse Looting: %s was not sent to client loot window (corpse_dbid: %i, charname: %s(%s))", item->Name, GetCorpseDBID(), client->GetName(), client->GetGM() ? "GM" : "Owner");
 					client->Message(0, "Inaccessable Corpse Item: %s", item->Name);
 				}
 			}

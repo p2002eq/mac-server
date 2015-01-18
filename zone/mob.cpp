@@ -15,19 +15,19 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
-#include "masterentity.h"
+
 #include "../common/spdat.h"
+#include "../common/string_util.h"
+
+#include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "remote_call_subscribe.h"
 #include "worldserver.h"
-#include "quest_parser_collection.h"
-#include "../common/string_util.h"
 #include "remote_call_subscribe.h"
 
-#include <sstream>
-#include <math.h>
 #include <limits.h>
+#include <math.h>
+#include <sstream>
 
 extern EntityList entity_list;
 
@@ -1511,7 +1511,7 @@ const int32& Mob::SetMana(int32 amount)
 	cur_mana = amount < 0 ? 0 : (amount > mmana ? mmana : amount);
 /*
 	if(IsClient())
-		LogFile->write(EQEMuLog::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
+		LogFile->write(EQEmuLog::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
 */
 
 	return cur_mana;

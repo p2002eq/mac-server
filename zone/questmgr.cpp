@@ -16,74 +16,34 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-/*
-
-Assuming you want to add a new perl quest function named joe
-that takes 1 integer argument....
-
-1. Add the prototype to the quest manager:
-questmgr.h: add (~line 50)
-	void joe(int arg);
-
-2. Define the actual function in questmgr.cpp:
-void QuestManager::joe(int arg) {
-	//... do something
-}
-
-3. Copy one of the XS routines in perlparser.cpp, preferably
- one with the same number of arguments as your routine. Rename
- as needed.
- Finally, add your routine to the list at the bottom of perlparser.cpp
-
-
-4.
-If you want it to work in old mode perl and .qst, edit parser.cpp
-Parser::ExCommands (~line 777)
-	else if (!strcmp(command,"joe")) {
-		quest_manager.joe(atoi(arglist[0]));
-	}
-
-And then at then end of embparser.cpp, add:
-"sub joe{push(@cmd_queue,{func=>'joe',args=>join(',',@_)});}"
-
-
-
-*/
-
-#include "../common/debug.h"
-#include "entity.h"
-#include "masterentity.h"
-#include <limits.h>
-
-#include <sstream>
-#include <iostream>
-#include <list>
-
-#include "worldserver.h"
-#include "net.h"
-#include "../common/skills.h"
 #include "../common/classes.h"
-#include "../common/races.h"
-#include "zonedb.h"
+#include "../common/debug.h"
+#include "../common/rulesys.h"
+#include "../common/skills.h"
 #include "../common/spdat.h"
-#include "../common/packet_functions.h"
 #include "../common/string_util.h"
-#include "spawn2.h"
-#include "zone.h"
+
+#include "entity.h"
 #include "event_codes.h"
 #include "guild_mgr.h"
-#include "../common/rulesys.h"
 #include "qglobals.h"
-#include "quest_parser_collection.h"
 #include "queryserv.h"
+#include "quest_parser_collection.h"
+#include "questmgr.h"
+#include "spawn2.h"
+#include "worldserver.h"
+#include "zone.h"
+#include "zonedb.h"
+
+#include <iostream>
+#include <limits.h>
+#include <list>
+
 extern QueryServ* QServ;
 extern Zone* zone;
 extern WorldServer worldserver;
 extern EntityList entity_list;
 
-#include "questmgr.h"
-
-//declare our global instance
 QuestManager quest_manager;
 
 #define QuestManagerCurrentQuestVars() \
@@ -190,7 +150,7 @@ void QuestManager::echo(int colour, const char *str) {
 void QuestManager::say(const char *str) {
 	QuestManagerCurrentQuestVars();
 	if (!owner) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::say called with nullptr owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::say called with nullptr owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -206,7 +166,7 @@ void QuestManager::say(const char *str) {
 void QuestManager::say(const char *str, uint8 language) {
 	QuestManagerCurrentQuestVars();
 	if (!owner) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::say called with nullptr owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::say called with nullptr owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -572,7 +532,7 @@ void QuestManager::stopalltimers(Mob *mob) {
 void QuestManager::emote(const char *str) {
 	QuestManagerCurrentQuestVars();
 	if (!owner) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::emote called with nullptr owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::emote called with nullptr owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -583,7 +543,7 @@ void QuestManager::emote(const char *str) {
 void QuestManager::shout(const char *str) {
 	QuestManagerCurrentQuestVars();
 	if (!owner) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::shout called with nullptr owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::shout called with nullptr owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -594,7 +554,7 @@ void QuestManager::shout(const char *str) {
 void QuestManager::shout2(const char *str) {
 	QuestManagerCurrentQuestVars();
 	if (!owner) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::shout2 called with nullptr owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::shout2 called with nullptr owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -613,7 +573,7 @@ void QuestManager::gmsay(const char *str, uint32 color, bool send_to_world, uint
 void QuestManager::depop(int npc_type) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC()) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::depop called with nullptr owner or non-NPC owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::depop called with nullptr owner or non-NPC owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -643,7 +603,7 @@ void QuestManager::depop(int npc_type) {
 void QuestManager::depop_withtimer(int npc_type) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC()) {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::depop_withtimer called with nullptr owner or non-NPC owner. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::depop_withtimer called with nullptr owner or non-NPC owner. Probably syntax error in quest file.");
 		return;
 	}
 	else {
@@ -670,7 +630,7 @@ void QuestManager::depopall(int npc_type) {
 		entity_list.DepopAll(npc_type);
 	}
 	else {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::depopall called with nullptr owner, non-NPC owner, or invalid NPC Type ID. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::depopall called with nullptr owner, non-NPC owner, or invalid NPC Type ID. Probably syntax error in quest file.");
 	}
 }
 
@@ -679,7 +639,7 @@ void QuestManager::depopzone(bool StartSpawnTimer) {
 		zone->Depop(StartSpawnTimer);
 	}
 	else {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::depopzone called with nullptr zone. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::depopzone called with nullptr zone. Probably syntax error in quest file.");
 	}
 }
 
@@ -688,7 +648,7 @@ void QuestManager::repopzone() {
 		zone->Repop();
 	}
 	else {
-		LogFile->write(EQEMuLog::Quest, "QuestManager::repopzone called with nullptr zone. Probably syntax error in quest file.");
+		LogFile->write(EQEmuLog::Quest, "QuestManager::repopzone called with nullptr zone. Probably syntax error in quest file.");
 	}
 }
 
@@ -1654,7 +1614,7 @@ void QuestManager::showgrid(int grid) {
                                     "ORDER BY `number`", grid, zone->GetZoneID());
     auto results = database.QueryDatabase(query);
     if (!results.Success()) {
-        LogFile->write(EQEMuLog::Quest, "Error loading grid %d for showgrid(): %s", grid, results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Quest, "Error loading grid %d for showgrid(): %s", grid, results.ErrorMessage().c_str());
 		return;
     }
 
@@ -2347,7 +2307,7 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 			std::string insert_query = StringFormat("INSERT INTO `saylink` (`phrase`) VALUES ('%s')", escaped_string);
 			results = database.QueryDatabase(insert_query);
 			if (!results.Success()) {
-				LogFile->write(EQEMuLog::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
+				LogFile->write(EQEmuLog::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
 			} else {
 				results = database.QueryDatabase(query);
 				if (results.Success()) {
@@ -2355,7 +2315,7 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 						for(auto row = results.begin(); row != results.end(); ++row)
 							sayid = atoi(row[0]);
 				} else {
-					LogFile->write(EQEMuLog::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
+					LogFile->write(EQEmuLog::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
 				}
 			}
 		}

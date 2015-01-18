@@ -15,11 +15,15 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+
 #include "../common/eq_packet_structs.h"
-#include "masterentity.h"
-#include "titles.h"
 #include "../common/string_util.h"
+
+#include "client.h"
+#include "entity.h"
+#include "mob.h"
+
+#include "titles.h"
 #include "worldserver.h"
 
 extern WorldServer worldserver;
@@ -36,7 +40,7 @@ bool TitleManager::LoadTitles()
                         "`status`, `item_id`, `prefix`, `suffix`, `title_set` FROM titles";
     auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Unable to load titles: %s : %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Unable to load titles: %s : %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -212,7 +216,7 @@ void TitleManager::CreateNewPlayerTitle(Client *client, const char *title)
     safe_delete_array(escTitle);
     results = database.QueryDatabase(query);
 	if(!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error adding title: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error adding title: %s %s", query.c_str(), results.ErrorMessage().c_str());
         return;
     }
 
@@ -245,7 +249,7 @@ void TitleManager::CreateNewPlayerSuffix(Client *client, const char *suffix)
     safe_delete_array(escSuffix);
     results = database.QueryDatabase(query);
 	if(!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error adding title suffix: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error adding title suffix: %s %s", query.c_str(), results.ErrorMessage().c_str());
         return;
     }
 
@@ -294,7 +298,7 @@ void Client::EnableTitle(int titleSet) {
                                     CharacterID(), titleSet);
     auto results = database.QueryDatabase(query);
 	if(!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error in EnableTitle query for titleset %i and charid %i", titleSet, CharacterID());
+		LogFile->write(EQEmuLog::Error, "Error in EnableTitle query for titleset %i and charid %i", titleSet, CharacterID());
 
 }
 
@@ -305,7 +309,7 @@ bool Client::CheckTitle(int titleSet) {
                                     titleSet, CharacterID());
     auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
-        LogFile->write(EQEMuLog::Error, "Error in CheckTitle query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Error, "Error in CheckTitle query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
         return false;
 	}
 
@@ -325,7 +329,7 @@ void Client::RemoveTitle(int titleSet) {
                                     titleSet, CharacterID());
     auto results = database.QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error in RemoveTitle query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in RemoveTitle query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 void TitleManager::ClearTitles() {

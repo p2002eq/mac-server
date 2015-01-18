@@ -15,14 +15,20 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #include "../common/debug.h"
-#include "masterentity.h"
-#include "string_ids.h"
-#include "../common/string_util.h"
 #include "../common/rulesys.h"
+#include "../common/string_util.h"
+
+#include "client.h"
+#include "entity.h"
+#include "mob.h"
+
 #include "quest_parser_collection.h"
+#include "string_ids.h"
 #include "worldserver.h"
-#include "queryserv.h"
+
+class QueryServ;
 
 extern WorldServer worldserver;
 extern QueryServ* QServ;
@@ -79,7 +85,7 @@ void Trade::AddEntity(uint16 trade_slot_id, uint32 stack_size) {
 
 	if (!owner || !owner->IsClient()) {
 		// This should never happen
-		LogFile->write(EQEMuLog::Debug, "Programming error: NPC's should not call Trade::AddEntity()");
+		LogFile->write(EQEmuLog::Debug, "Programming error: NPC's should not call Trade::AddEntity()");
 		return;
 	}
 
@@ -288,7 +294,7 @@ void Trade::LogTrade()
 void Trade::DumpTrade()
 {
 	Mob* with = With();
-	LogFile->write(EQEMuLog::Debug, "Dumping trade data: '%s' in TradeState %i with '%s'",
+	LogFile->write(EQEmuLog::Debug, "Dumping trade data: '%s' in TradeState %i with '%s'",
 		this->owner->GetName(), state, ((with==nullptr)?"(null)":with->GetName()));
 
 	if (!owner->IsClient())
@@ -299,7 +305,7 @@ void Trade::DumpTrade()
 		const ItemInst* inst = trader->GetInv().GetItem(i);
 
 		if (inst) {
-			LogFile->write(EQEMuLog::Debug, "Item %i (Charges=%i, Slot=%i, IsBag=%s)",
+			LogFile->write(EQEmuLog::Debug, "Item %i (Charges=%i, Slot=%i, IsBag=%s)",
 				inst->GetItem()->ID, inst->GetCharges(),
 				i, ((inst->IsType(ItemClassContainer)) ? "True" : "False"));
 
@@ -307,7 +313,7 @@ void Trade::DumpTrade()
 				for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
 					inst = trader->GetInv().GetItem(i, j);
 					if (inst) {
-						LogFile->write(EQEMuLog::Debug, "\tBagItem %i (Charges=%i, Slot=%i)",
+						LogFile->write(EQEmuLog::Debug, "\tBagItem %i (Charges=%i, Slot=%i)",
 							inst->GetItem()->ID, inst->GetCharges(),
 							Inventory::CalcSlotId(i, j));
 					}
@@ -316,7 +322,7 @@ void Trade::DumpTrade()
 		}
 	}
 
-	LogFile->write(EQEMuLog::Debug, "\tpp:%i, gp:%i, sp:%i, cp:%i", pp, gp, sp, cp);
+	LogFile->write(EQEmuLog::Debug, "\tpp:%i, gp:%i, sp:%i, cp:%i", pp, gp, sp, cp);
 }
 #endif
 
@@ -1608,7 +1614,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	if(outtbs->Price <= 0) {
 		Message(CC_Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
 		Trader->Message(CC_Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
-		LogFile->write(EQEMuLog::Error, "Bazaar: Zero price transaction between %s and %s aborted."
+		LogFile->write(EQEmuLog::Error, "Bazaar: Zero price transaction between %s and %s aborted."
 						"Item: %s, Charges: %i, TBS: Qty %i, Price: %i",
 						GetName(), Trader->GetName(),
 						BuyItem->GetItem()->Name, BuyItem->GetCharges(), outtbs->Quantity, outtbs->Price);

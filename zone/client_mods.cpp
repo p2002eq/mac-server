@@ -15,26 +15,22 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include <algorithm>
 
 #include "../common/debug.h"
-#include "../common/spdat.h"
-#include "../common/packet_dump.h"
-#include "../common/packet_functions.h"
-#include "../common/serverinfo.h"
-#include "../common/zone_numbers.h"
-#include "../common/moremath.h"
-#include "../common/guilds.h"
 #include "../common/logsys.h"
-#include "masterentity.h"
-#include "worldserver.h"
-#include "zonedb.h"
-#include "petitions.h"
-#include "string_ids.h"
-#include "npc_ai.h"
+#include "../common/rulesys.h"
+#include "../common/spdat.h"
+
+#include "client.h"
+#include "mob.h"
+
+#ifdef BOTS
+#include "bot.h"
+#endif
+
+#include <algorithm>
 
 
-// Return max stat value for level
 int32 Client::GetMaxStat() const {
 
 	if((RuleI(Character, StatCap)) > 0)
@@ -806,7 +802,7 @@ int32 Client::acmod() {
 	return (65 + ((agility-300) / 21));
 	}
 #if EQDEBUG >= 11
-	LogFile->write(EQEMuLog::Error, "Error in Client::acmod(): Agility: %i, Level: %i",agility,level);
+	LogFile->write(EQEmuLog::Error, "Error in Client::acmod(): Agility: %i, Level: %i",agility,level);
 #endif
 	return 0;
 };
@@ -915,7 +911,7 @@ int32 Client::CalcMaxMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEMuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_mana = 0;
 			break;
 		}
@@ -936,7 +932,7 @@ int32 Client::CalcMaxMana()
 	}
 
 #if EQDEBUG >= 11
-	LogFile->write(EQEMuLog::Debug, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	LogFile->write(EQEmuLog::Debug, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
 #endif
 	return max_mana;
 }
@@ -987,14 +983,14 @@ int32 Client::CalcBaseMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEMuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_m = 0;
 			break;
 		}
 	}
 
 #if EQDEBUG >= 11
-	LogFile->write(EQEMuLog::Debug, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
+	LogFile->write(EQEmuLog::Debug, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
 #endif
 	return max_m;
 }

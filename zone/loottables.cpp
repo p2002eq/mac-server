@@ -15,14 +15,20 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #include "../common/debug.h"
-#include <stdio.h>
+#include "../common/loottable.h"
+#include "../common/misc_functions.h"
+
+#include "client.h"
+#include "entity.h"
+#include "mob.h"
+#include "npc.h"
+#include "zonedb.h"
+
 #include <iostream>
 #include <stdlib.h>
-#include "npc.h"
-#include "masterentity.h"
-#include "zonedb.h"
-#include "../common/misc_functions.h"
+
 #ifdef _WINDOWS
 #define snprintf	_snprintf
 #endif
@@ -139,7 +145,7 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 				drop_chance = zone->random.Real(0.0, 100.0);
 
 #if EQDEBUG>=11
-			LogFile->write(EQEMuLog::Debug, "Drop chance for npc: %s, this chance:%f, drop roll:%f", npc->GetName(), thischance, drop_chance);
+			LogFile->write(EQEmuLog::Debug, "Drop chance for npc: %s, this chance:%f, drop roll:%f", npc->GetName(), thischance, drop_chance);
 #endif
 			if (thischance == 100.0 || drop_chance < thischance)
 			{
@@ -188,7 +194,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 
 	ServerLootItem_Struct* item = new ServerLootItem_Struct;
 #if EQDEBUG>=11
-		LogFile->write(EQEMuLog::Debug, "Adding drop to npc: %s, Item: %i", GetName(), item2->ID);
+		LogFile->write(EQEmuLog::Debug, "Adding drop to npc: %s, Item: %i", GetName(), item2->ID);
 #endif
 
 	EQApplicationPacket* outapp = nullptr;

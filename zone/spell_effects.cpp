@@ -20,26 +20,25 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
-#include "../common/spdat.h"
-#include "masterentity.h"
-#include "../common/packet_dump.h"
-#include "../common/moremath.h"
-#include "../common/item.h"
-#include "worldserver.h"
-#include "../common/skills.h"
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
+#include "../common/debug.h"
+#include "../common/item.h"
 #include "../common/rulesys.h"
+#include "../common/skills.h"
+#include "../common/spdat.h"
+
+#include "quest_parser_collection.h"
+#include "string_ids.h"
+#include "worldserver.h"
+
 #include <math.h>
-#include <assert.h>
+
 #ifndef WIN32
 #include <stdlib.h>
 #include "../common/unix.h"
 #endif
 
-#include "string_ids.h"
-#include "quest_parser_collection.h"
 
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
@@ -481,7 +480,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 					if(!target_zone) {
 #ifdef SPELL_EFFECT_SPAM
-						LogFile->write(EQEMuLog::Debug, "Succor/Evacuation Spell In Same Zone.");
+						LogFile->write(EQEmuLog::Debug, "Succor/Evacuation Spell In Same Zone.");
 #endif
 							if(IsClient())
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
@@ -490,7 +489,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
-						LogFile->write(EQEMuLog::Debug, "Succor/Evacuation Spell To Another Zone.");
+						LogFile->write(EQEmuLog::Debug, "Succor/Evacuation Spell To Another Zone.");
 #endif
 						if(IsClient())
 							CastToClient()->MovePC(target_zone, x, y, z, heading);
@@ -1743,7 +1742,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 					else {
 						Message_StringID(CC_Red, TARGET_NOT_FOUND);
-						LogFile->write(EQEMuLog::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
+						LogFile->write(EQEmuLog::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
 					}
 				}
 
@@ -3180,7 +3179,7 @@ snare has both of them negative, yet their range should work the same:
 				result = ubase * (caster_level * (formula - 2000) + 1);
 			}
 			else
-				LogFile->write(EQEMuLog::Debug, "Unknown spell effect value forumula %d", formula);
+				LogFile->write(EQEmuLog::Debug, "Unknown spell effect value forumula %d", formula);
 		}
 	}
 
@@ -4704,7 +4703,7 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 						return 0;
 					break;
 				default:
-					LogFile->write(EQEMuLog::Normal, "CalcFocusEffect: unknown limit spelltype %d", focus_spell.base[i]);
+					LogFile->write(EQEmuLog::Normal, "CalcFocusEffect: unknown limit spelltype %d", focus_spell.base[i]);
 			}
 			break;
 
@@ -5043,7 +5042,7 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 		//this spits up a lot of garbage when calculating spell focuses
 		//since they have all kinds of extra effects on them.
 		default:
-			LogFile->write(EQEMuLog::Normal, "CalcFocusEffect: unknown effectid %d", focus_spell.effectid[i]);
+			LogFile->write(EQEmuLog::Normal, "CalcFocusEffect: unknown effectid %d", focus_spell.effectid[i]);
 #endif
 		}
 		

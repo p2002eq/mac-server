@@ -19,8 +19,6 @@
 #define _EQPACKET_H
 
 #include "base_packet.h"
-#include "eq_stream_type.h"
-#include "op_codes.h"
 #include "platform.h"
 
 #ifdef STATIC_OPCODE
@@ -57,10 +55,6 @@ struct FRAGMENT_INFO
 	uint16 dwCurr;	//TODO: What is this one?
 	uint16 dwTotal;	//TODO: What is this one?
 };
-
-class EQStream;
-class EQOldStream;
-class EQStreamPair;
 
 class EQPacket : public BasePacket {
 	friend class EQStream;

@@ -15,14 +15,20 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #include "../common/debug.h"
 #include "../common/features.h"
-#include "masterentity.h"
-#include "string_ids.h"
-#include "../common/string_util.h"
 #include "../common/rulesys.h"
-#include "quest_parser_collection.h"
+#include "../common/string_util.h"
+
+#include "client.h"
+#include "groups.h"
+#include "mob.h"
+#include "raids.h"
+
 #include "queryserv.h"
+#include "quest_parser_collection.h"
+#include "string_ids.h"
 
 extern QueryServ* QServ;
 
@@ -349,7 +355,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 void Client::SetLevel(uint8 set_level, bool command)
 {
 	if (GetEXPForLevel(set_level) == 0xFFFFFFFF) {
-		LogFile->write(EQEMuLog::Error,"Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
+		LogFile->write(EQEmuLog::Error,"Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
 		return;
 	}
 
@@ -407,7 +413,7 @@ void Client::SetLevel(uint8 set_level, bool command)
 	safe_delete(outapp);
 	this->SendAppearancePacket(AT_WhoLevel, set_level); // who level change
 
-	LogFile->write(EQEMuLog::Normal,"Setting Level for %s to %i", GetName(), set_level);
+	LogFile->write(EQEmuLog::Normal,"Setting Level for %s to %i", GetName(), set_level);
 
 	CalcBonuses();
 

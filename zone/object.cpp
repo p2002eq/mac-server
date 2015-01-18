@@ -17,20 +17,17 @@
 */
 
 #include "../common/debug.h"
-#include <iostream>
-#include <stdlib.h>
-
-#include "masterentity.h"
-#include "zonedb.h"
-#include "../common/packet_functions.h"
-#include "../common/packet_dump_file.h"
-#include "../common/packet_dump.h"
-#include "../common/misc_functions.h"
 #include "../common/string_util.h"
-#include "../common/features.h"
-#include "string_ids.h"
+
+#include "client.h"
+#include "entity.h"
+#include "mob.h"
+#include "object.h"
 
 #include "quest_parser_collection.h"
+#include "zonedb.h"
+
+#include <iostream>
 
 const char DEFAULT_OBJECT_NAME[] = "IT63_ACTORDEF";
 const char DEFAULT_OBJECT_NAME_SUFFIX[] = "_ACTORDEF";
@@ -311,7 +308,7 @@ const ItemInst* Object::GetItem(uint8 index) {
 void Object::PutItem(uint8 index, const ItemInst* inst)
 {
 	if (index > 9) {
-		LogFile->write(EQEMuLog::Error, "Object::PutItem: Invalid index specified (%i)", index);
+		LogFile->write(EQEmuLog::Error, "Object::PutItem: Invalid index specified (%i)", index);
 		return;
 	}
 
@@ -578,7 +575,7 @@ uint32 ZoneDatabase::AddObject(uint32 type, uint32 icon, const Object_Struct& ob
 		}
         else
 		{
-			LogFile->write(EQEMuLog::Error, "Unable to get new object id: %s", results.ErrorMessage().c_str());   
+			LogFile->write(EQEmuLog::Error, "Unable to get new object id: %s", results.ErrorMessage().c_str());   
 			return 0;
         }
 	}
@@ -594,7 +591,7 @@ uint32 ZoneDatabase::AddObject(uint32 type, uint32 icon, const Object_Struct& ob
     safe_delete_array(object_name);
 	results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Unable to insert object: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Unable to insert object: %s", results.ErrorMessage().c_str());
 		return 0;
 	}
 
@@ -631,7 +628,7 @@ void ZoneDatabase::UpdateObject(uint32 id, uint32 type, uint32 icon, const Objec
     safe_delete_array(object_name);
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Unable to update object: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Unable to update object: %s", results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -676,7 +673,7 @@ void ZoneDatabase::DeleteObject(uint32 id)
 	std::string query = StringFormat("DELETE FROM object WHERE id = %i", id);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Unable to delete object: %s", results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Unable to delete object: %s", results.ErrorMessage().c_str());
 	}
 	else
 	{

@@ -15,13 +15,15 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
-#include "../common/types.h"
-#include "entity.h"
-#include "masterentity.h"
+
 #include "../common/spdat.h"
-#include "../common/misc_functions.h"
 #include "../common/string_util.h"
+#include "../common/types.h"
+
+#include "client.h"
+#include "entity.h"
+#include "mob.h"
+#include "trap.h"
 
 /*
 
@@ -268,7 +270,7 @@ bool ZoneDatabase::LoadTraps(const char* zonename, int16 version) {
                                     "FROM traps WHERE zone='%s' AND version=%u", zonename, version);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        LogFile->write(EQEMuLog::Error, "Error in LoadTraps query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+        LogFile->write(EQEmuLog::Error, "Error in LoadTraps query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
     }
 

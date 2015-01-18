@@ -23,12 +23,13 @@
 
 #include "../common/debug.h"
 #include "../common/misc_functions.h"
+
 #include "embparser.h"
-#include "questmgr.h"
 #include "embxs.h"
 #include "entity.h"
-#include "zone.h"
 #include "queryserv.h"
+#include "questmgr.h"
+#include "zone.h"
 
 extern Zone* zone;
 extern QueryServ* QServ; 
@@ -2839,7 +2840,7 @@ EXTERN_C XS(boot_quest)
 	file[255] = '\0';
 
 	if(items != 1)
-		LogFile->write(EQEMuLog::Error, "boot_quest does not take any arguments.");
+		LogFile->write(EQEmuLog::Error, "boot_quest does not take any arguments.");
 
 	char buf[128];	//shouldent have any function names longer than this.
 

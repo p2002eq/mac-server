@@ -18,25 +18,14 @@
 #ifndef ZONE_H
 #define ZONE_H
 
-#include "../common/mutex.h"
-#include "../common/linked_list.h"
-#include "../common/types.h"
 #include "../common/eqtime.h"
-#include "../common/servertalk.h"
-#include "../common/rulesys.h"
-#include "../common/eq_packet_structs.h"
-#include "../common/features.h"
-#include "spawngroup.h"
-//#include "mob.h"
-#include "zonedump.h"
-#include "spawn2.h"
-#include "pathing.h"
+#include "../common/linked_list.h"
 #include "../common/random.h"
+#include "../common/rulesys.h"
+#include "../common/types.h"
 #include "qglobals.h"
-#include <unordered_map>
-
-class Map;
-class WaterMap;
+#include "spawn2.h"
+#include "spawngroup.h"
 
 struct ZonePoint
 {
@@ -79,12 +68,14 @@ struct item_tick_struct {
     std::string qglobal;
 };
 
-extern EntityList entity_list;
-class database;
+class Client;
+class Map;
+class Mob;
 class PathManager;
-struct SendAA_Struct;
-
-class database;
+class WaterMap;
+extern EntityList entity_list;
+struct NPCType;
+struct ServerZoneIncommingClient_Struct;
 
 class Zone
 {

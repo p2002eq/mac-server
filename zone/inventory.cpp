@@ -15,24 +15,14 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #include "../common/debug.h"
-#include "masterentity.h"
-#include "worldserver.h"
-#include "net.h"
-#include "zonedb.h"
-#include "../common/spdat.h"
-#include "../common/packet_dump.h"
-#include "../common/packet_functions.h"
-#include "petitions.h"
-#include "../common/serverinfo.h"
-#include "../common/zone_numbers.h"
-#include "../common/moremath.h"
-#include "../common/guilds.h"
 #include "../common/logsys.h"
 #include "../common/string_util.h"
-#include "string_ids.h"
-#include "npc_ai.h"
 #include "quest_parser_collection.h"
+#include "worldserver.h"
+#include "zonedb.h"
+
 extern WorldServer worldserver;
 
 // @merth: this needs to be touched up
@@ -245,7 +235,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	if(inst == nullptr) {
 		Message(CC_Red, "An unknown server error has occurred and your item was not created.");
 		// this goes to logfile since this is a major error
-		LogFile->write(EQEMuLog::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
+		LogFile->write(EQEmuLog::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
 			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5);
 
 		return false;
@@ -412,7 +402,7 @@ int32 Client::GetItemIDAt(int16 slot_id) {
 // Remove item from inventory
 void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) {
 	#if (EQDEBUG >= 5)
-		LogFile->write(EQEMuLog::Debug, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
+		LogFile->write(EQEmuLog::Debug, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
 	#endif
 
 	// Added 'IsSlotValid(slot_id)' check to both segments of client packet processing.

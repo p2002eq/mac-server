@@ -15,19 +15,23 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #include "../common/debug.h"
-#include <stdlib.h>
-#include <math.h>
-#include "masterentity.h"
 #include "../common/faction.h"
-#include "map.h"
-#include "water_map.h"
-#include "../common/spdat.h"
-#include "../common/skills.h"
-#include "../common/misc_functions.h"
 #include "../common/rulesys.h"
-#include "string_ids.h"
-#include <iostream>
+#include "../common/spdat.h"
+
+#include "client.h"
+#include "corpse.h"
+#include "entity.h"
+#include "mob.h"
+#include "water_map.h"
+
+#ifdef BOTS
+#include "bot.h"
+#endif
+
+#include "map.h"
 
 extern Zone* zone;
 //#define LOSDEBUG 6
@@ -362,7 +366,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 
 			// Aggro
 			#if EQDEBUG>=11
-				LogFile->write(EQEMuLog::Debug, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				LogFile->write(EQEmuLog::Debug, "Check aggro for %s target %s.", GetName(), mob->GetName());
 			#endif
 			return( mod_will_aggro(mob, this) );
 		}
@@ -392,7 +396,7 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 			return mob;
 		++it;
 	}
-	//LogFile->write(EQEMuLog::Debug, "Check aggro for %s no target.", sender->GetName());
+	//LogFile->write(EQEmuLog::Debug, "Check aggro for %s no target.", sender->GetName());
 	return nullptr;
 }
 
@@ -541,7 +545,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 					//Father Nitwit: make sure we can see them.
 					if(mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
-						LogFile->write(EQEMuLog::Debug, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
+						LogFile->write(EQEmuLog::Debug, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), mob->DistNoRoot(*sender), fabs(sender->GetZ()+mob->GetZ()));
 #endif
 						mob->AddToHateList(attacker, 1, 0, false);
@@ -761,7 +765,7 @@ type', in which case, the answer is yes.
 	}
 	while( reverse++ == 0 );
 
-	LogFile->write(EQEMuLog::Debug, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
+	LogFile->write(EQEmuLog::Debug, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -897,7 +901,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	}
 	while( reverse++ == 0 );
 
-	LogFile->write(EQEMuLog::Debug, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
+	LogFile->write(EQEmuLog::Debug, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -1031,7 +1035,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
 #if LOSDEBUG>=5
-	LogFile->write(EQEMuLog::Debug, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
+	LogFile->write(EQEmuLog::Debug, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 #endif
 	return zone->zonemap->CheckLoS(myloc, oloc);
 }

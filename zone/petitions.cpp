@@ -16,10 +16,6 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/debug.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <string.h>
 #ifdef _WINDOWS
 #include <process.h>
@@ -32,23 +28,19 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 	#define strncasecmp	_strnicmp
 	#define strcasecmp	_stricmp
 #endif
-#include "../common/string_util.h"
-#include "../common/packet_functions.h"
-#include "../common/packet_dump.h"
-#include "../common/packet_dump_file.h"
-#include "../common/emu_opcodes.h"
+
+
 #include "../common/eq_packet_structs.h"
 #include "../common/servertalk.h"
-#include "entity.h"
-#include "masterentity.h"
+#include "../common/string_util.h"
 
+#include "entity.h"
 #include "petitions.h"
 #include "worldserver.h"
 
 PetitionList petition_list;
 
 extern WorldServer worldserver;
-
 
 void Petition::SendPetitionToPlayer(Client* clientto) {
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PetitionCheckout,sizeof(Petition_Struct));
@@ -219,7 +211,7 @@ void ZoneDatabase::DeletePetitionFromDB(Petition* wpet) {
     std::string query = StringFormat("DELETE FROM petitions WHERE petid = %i", wpet->GetID());
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error in DeletePetitionFromDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in DeletePetitionFromDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 
@@ -233,7 +225,7 @@ void ZoneDatabase::UpdatePetitionToDB(Petition* wpet) {
                                     wpet->CheckedOut() ? 1: 0, wpet->GetID());
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEMuLog::Error, "Error in UpdatePetitionToDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in UpdatePetitionToDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 
@@ -260,12 +252,12 @@ void ZoneDatabase::InsertPetitionToDB(Petition* wpet)
     safe_delete_array(petitiontext);
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error in InsertPetitionToDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in InsertPetitionToDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
 #if EQDEBUG >= 5
-		LogFile->write(EQEMuLog::Debug, "New petition created");
+		LogFile->write(EQEmuLog::Debug, "New petition created");
 #endif
 
 }
@@ -279,7 +271,7 @@ void ZoneDatabase::RefreshPetitionsFromDB()
                         "FROM petitions ORDER BY petid";
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEMuLog::Error, "Error in RefreshPetitionsFromDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		LogFile->write(EQEmuLog::Error, "Error in RefreshPetitionsFromDB query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 

@@ -26,6 +26,8 @@
 #include "dbcore.h"
 #include "linked_list.h"
 #include "eq_packet_structs.h"
+
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
@@ -33,21 +35,9 @@
 //atoi is not uint32 or uint32 safe!!!!
 #define atoul(str) strtoul(str, nullptr, 10)
 
-//class Spawn;
-class Corpse;
-class Spawn2;
-class NPC;
-class SpawnGroupList;
-class Petition;
-class Client;
-struct Combine_Struct;
-//struct Faction;
-//struct FactionMods;
-//struct FactionValue;
-struct ZonePoint;
-struct NPCType;
 class Inventory;
-class ItemInst;
+class MySQLRequestResult;
+class Client;
 
 struct EventLogDetails_Struct {
 	uint32	id;
@@ -67,29 +57,18 @@ uint8	eventid;
 EventLogDetails_Struct eld[255];
 };
 
-
-// Added By Hogie
-// INSERT into variables (varname,value) values('decaytime [minlevel] [maxlevel]','[number of seconds]');
-// IE: decaytime 1 54 = Levels 1 through 54
-// decaytime 55 100 = Levels 55 through 100
-// It will always put the LAST time for the level (I think) from the Database
 struct npcDecayTimes_Struct {
 	uint16 minlvl;
 	uint16 maxlvl;
 	uint32 seconds;
 };
-// Added By Hogie -- End
+
 
 struct VarCache_Struct {
-	char varname[26];	// varname is char(25) in database
+	char varname[26];	
 	char value[0];
 };
 
-struct PlayerProfile_Struct;
-struct GuildRankLevel_Struct;
-struct GuildRanks_Struct;
-struct ExtendedProfile_Struct;
-struct GuildMember_Struct;
 class PTimerList;
 
 #pragma pack(1)
