@@ -176,7 +176,7 @@ int command_init(void){
 		command_add("coredump", "Dumps a core log of any existing cores to view on web page.", 250, command_coredump) ||
 #endif
 		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 90, command_corpse) ||
-		command_add("crashtest", "- Crash the zoneserver", 200, command_crashtest) ||
+		command_add("crashtest", "- Crash the zoneserver", 255, command_crashtest) ||
 		command_add("cvs", "- Summary of client versions currently online.", 180, command_cvs) ||
 
 		command_add("damage", "[amount] - Damage your target", 150, command_damage) ||
@@ -942,12 +942,6 @@ void command_serverinfo(Client *c, const Seperator *sep){
 	char buffer[255];
 	c->Message(0, "Operating system information: %s", GetOS(buffer));
 #endif
-}
-
-void command_crashtest(Client *c, const Seperator *sep){
-	c->Message(0, "Alright, now we get an GPF ;) ");
-	char* gpf = 0;
-	memcpy(gpf, "Ready to crash", 30);
 }
 
 void command_getvariable(Client *c, const Seperator *sep){
@@ -10887,4 +10881,11 @@ void command_logtest(Client *c, const Seperator *sep){
 			Log.Out(Logs::General, Logs::None, "[%u] Test... Took %f seconds", i, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
 		}
 	}
+}
+
+void command_crashtest(Client *c, const Seperator *sep)
+{
+	c->Message(0, "Alright, now we get an GPF ;) ");
+	char* gpf = 0;
+	memcpy(gpf, "Ready to crash", 30);
 }
