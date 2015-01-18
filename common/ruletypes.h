@@ -428,6 +428,7 @@ RULE_INT ( NPC, RunAnimRatio, 37 )	//This changes their animation based on their
 RULE_REAL ( NPC, WalkSpeedMultiplier, 30.0 ) //Same as above for walking.
 RULE_INT ( NPC, WalkAnimRatio, 37 ) //Same as above for walking. Probably okay to combine with the runspeed rule.
 RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
+RULE_INT ( NPC, NPCTemplateID, 153076)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Aggro )

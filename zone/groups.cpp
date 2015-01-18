@@ -451,6 +451,12 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 		}
 	}
 
+	if(GroupCount() < 2)
+	{
+		DisbandGroup();
+		return true;
+	}
+
 	if(checkleader)
 	{
 		_log(_GROUP__LOG, "DelMemberOOZ: Checking leader...");
@@ -492,6 +498,13 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 			break;
 		}
 	}
+
+	if(GroupCount() < 2)
+	{
+		DisbandGroup();
+		return true;
+	}
+
 	// If the leader has quit and we have 2 or more players left in group, we want to first check the zone the old leader was in for a new leader. 
 	// If a suitable replacement cannot be found, we need to go out of zone. If checkleader remains true after this method completes, another
 	// loop will be run in DelMemberOOZ.
@@ -1164,7 +1177,7 @@ void Group::ChangeLeader(Mob* newleader)
 	strcpy(fgu->leader_name, newleader->GetName());
 	strcpy(fgu->oldleader_name, GetOldLeaderName());
 	worldserver.SendPacket(pack);
-	safe_delete(pack);
+	//safe_delete(pack);
 
 	SetOldLeaderName(newleader->GetName());
 }

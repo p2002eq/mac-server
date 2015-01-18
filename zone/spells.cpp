@@ -3183,9 +3183,19 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	//We have to check for Gate failure before its cast, because the client resolves on its own.
 	if(IsGateSpell(spell_id))
 	{
-		if (zone->random.Roll(5))
+		if (zone->random.Roll(RuleI(Spells, SuccorFailChance)))
 		{
 			InterruptSpell(GATE_FAIL,CC_Red,spell_id);
+			return false;
+		}
+	}
+
+	if(IsSuccorSpell(spell_id))
+	{
+		//2% Fail chance by default
+		if(zone->random.Roll(RuleI(Spells, SuccorFailChance))) 
+		{ 
+			InterruptSpell(SUCCOR_FAIL,CC_Red,spell_id);
 			return false;
 		}
 	}

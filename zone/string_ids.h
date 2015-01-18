@@ -75,6 +75,7 @@
 #define CAST_OUTDOORS				234		//You can only cast this spell in the outdoors.
 #define SPELL_RECAST				236		//Spell recast time not yet met.
 #define SPELL_RECOVERY				237		//Spell recovery time not yet met.
+#define SUCCOR_FAIL					238		//Your Portal fails to open.
 #define CANNOT_MEZ					239		//Your target cannot be mesmerized.
 #define CANNOT_MEZ_WITH_SPELL		240		//Your target cannot be mesmerized (with this spell).
 #define IMMUNE_STUN					241		//Your target is immune to the stun portion of this effect.
@@ -285,7 +286,6 @@
 #define ALREADY_IN_RAID				5060	//%1 is already in a raid.
 #define GAIN_RAIDEXP				5085	//You gained raid experience!
 #define DUNGEON_SEALED				5141	//The gateway to the dungeon is sealed off to you.  Perhaps you would be able to enter if you needed to adventure there.
-#define SUCCOR_FAIL					5169	//The portal collapes before you can escape!
 #define PET_ATTACKING				5501	//%1 tells you, 'Attacking %2 Master.'
 #define FATAL_BOW_SHOT				5745	//%1 performs a FATAL BOW SHOT!!
 #define MELEE_SILENCE				5806	//You *CANNOT* use this melee ability, you are suffering from amnesia!
