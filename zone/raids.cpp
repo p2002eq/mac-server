@@ -704,7 +704,7 @@ void Raid::GroupBardPulse(Mob* caster, uint16 spellid, uint32 gid){
 		else if(members[z].member != nullptr)
 		{
 			if(members[z].GroupNumber == gid){
-				distance = caster->DistNoRoot(*members[z].member);
+				distance = ComparativeDistance(caster->GetPosition(), members[z].member->GetPosition());
 				members[z].member->BardPulse(spellid, caster);
 #ifdef GROUP_BUFF_PETS
 				if(members[z].member->GetPet() && members[z].member->HasPetAffinity() && !members[z].member->GetPet()->IsCharmed())
