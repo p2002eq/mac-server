@@ -208,7 +208,7 @@ glm::vec3 PathManager::GetPathNodeCoordinates(int NodeNumber, bool BestZ)
 
 std::deque<int> PathManager::FindRoute(int startID, int endID)
 { 
-	logger.LogDebug(EQEmuLogSys::Detail, "FindRoute from node %i to %i", startID, endID);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "FindRoute from node %i to %i", startID, endID);
 
 	memset(ClosedListFlag, 0, sizeof(int) * Head.PathNodeCount); 
 
@@ -331,7 +331,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 		}
 
 	}
-	logger.LogDebug(EQEmuLogSys::Detail, "Unable to find a route.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Unable to find a route.");
 	return Route;
 
 }
@@ -353,7 +353,7 @@ auto path_compare = [](const PathNodeSortStruct& a, const PathNodeSortStruct& b)
 
 std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 {
-	logger.LogDebug(EQEmuLogSys::Detail, "FindRoute(%8.3f, %8.3f, %8.3f, %8.3f, %8.3f, %8.3f)", Start.x, Start.y, Start.z, End.x, End.y, End.z);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "FindRoute(%8.3f, %8.3f, %8.3f, %8.3f, %8.3f, %8.3f)", Start.x, Start.y, Start.z, End.x, End.y, End.z);
 
 	std::deque<int> noderoute;
 
@@ -387,7 +387,7 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
 		if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Iterator).id].v, 1.0f, nullptr))
 		{
@@ -397,11 +397,11 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 	}
 
 	if(ClosestPathNodeToStart <0 ) {
-		logger.LogDebug(EQEmuLogSys::Detail, "No LOS to any starting Path Node within range.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "No LOS to any starting Path Node within range.");
 		return noderoute;
 	}
 
-	logger.LogDebug(EQEmuLogSys::Detail, "Closest Path Node To Start: %2d", ClosestPathNodeToStart);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Closest Path Node To Start: %2d", ClosestPathNodeToStart);
 
 	// Find the nearest PathNode the end point has LOS to
 
@@ -425,8 +425,8 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "Checking Reachability of Node %i from End Position.", PathNodes[(*Iterator).id].id);
-		logger.LogDebug(EQEmuLogSys::Detail, " (%8.3f, %8.3f, %8.3f) to (%8.3f, %8.3f, %8.3f)",
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Checking Reachability of Node %i from End Position.", PathNodes[(*Iterator).id].id);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, " (%8.3f, %8.3f, %8.3f) to (%8.3f, %8.3f, %8.3f)",
 			End.x, End.y, End.z,
 			PathNodes[(*Iterator).id].v.x, PathNodes[(*Iterator).id].v.y, PathNodes[(*Iterator).id].v.z);
 
@@ -438,11 +438,11 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 	}
 
 	if(ClosestPathNodeToEnd < 0) {
-		logger.LogDebug(EQEmuLogSys::Detail, "No LOS to any end Path Node within range.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "No LOS to any end Path Node within range.");
 		return noderoute;
 	}
 
-	logger.LogDebug(EQEmuLogSys::Detail, "Closest Path Node To End: %2d", ClosestPathNodeToEnd);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Closest Path Node To End: %2d", ClosestPathNodeToEnd);
 
 	if(ClosestPathNodeToStart == ClosestPathNodeToEnd)
 	{
@@ -676,7 +676,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	if(To == From)
 		return To;
 
-	logger.LogDebug(EQEmuLogSys::Detail, "UpdatePath. From(%8.3f, %8.3f, %8.3f) To(%8.3f, %8.3f, %8.3f)", From.x, From.y, From.z, To.x, To.y, To.z);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "UpdatePath. From(%8.3f, %8.3f, %8.3f) To(%8.3f, %8.3f, %8.3f)", From.x, From.y, From.z, To.x, To.y, To.z);
 
 	if(From == PathingLastPosition)
 	{
@@ -684,7 +684,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 		if((PathingLoopCount > 5) && !IsRooted())
 		{
-			logger.LogDebug(EQEmuLogSys::Detail, "appears to be stuck. Teleporting them to next position.", GetName());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "appears to be stuck. Teleporting them to next position.", GetName());
 
 			if(Route.size() == 0)
 			{
@@ -724,7 +724,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		// If we are already pathing, and the destination is the same as before ...
 		if(SameDestination)
 		{
-			logger.LogDebug(EQEmuLogSys::Detail, "  Still pathing to the same destination.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Still pathing to the same destination.");
 
 			// Get the coordinates of the first path node we are going to.
 			NextNode = Route.front();
@@ -735,7 +735,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			// We have reached the path node.
 			if(NodeLoc == From)
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "  Arrived at node %i", NextNode);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Arrived at node %i", NextNode);
 
 				NodeReached = true;
 
@@ -749,17 +749,17 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				// target, and we may run past the target if we don't check LOS at this point.
 				int RouteSize = Route.size();
 
-				logger.LogDebug(EQEmuLogSys::Detail, "Route size is %i", RouteSize);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Route size is %i", RouteSize);
 
 				if((RouteSize == 2)
 					|| ((PathingTraversedNodes >= RuleI(Pathing, MinNodesTraversedForLOSCheck))
 					&& (RouteSize <= RuleI(Pathing, MinNodesLeftForLOSCheck))
 					&& PathingLOSCheckTimer->Check()))
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "  Checking distance to target.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Checking distance to target.");
 					float Distance = VectorDistanceNoRoot(From, To);
 
-					logger.LogDebug(EQEmuLogSys::Detail, "  Distance between From and To (NoRoot) is %8.3f", Distance);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Distance between From and To (NoRoot) is %8.3f", Distance);
 
 					if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckShort))
 						&& (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
@@ -768,18 +768,18 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 							PathingLOSState = HaveLOS;
 						else
 							PathingLOSState = NoLOS;
-						logger.LogDebug(EQEmuLogSys::Detail, "NoLOS");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "NoLOS");
 
 						if((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 						{
-							logger.LogDebug(EQEmuLogSys::Detail, "  No hazards. Running directly to target.");
+							logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  No hazards. Running directly to target.");
 							Route.clear();
 
 							return To;
 						}
 						else
 						{
-							logger.LogDebug(EQEmuLogSys::Detail, "  Continuing on node path.");
+							logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Continuing on node path.");
 						}
 					}
 					else
@@ -805,7 +805,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 						if(Route.size() == 0)
 						{
-							logger.LogDebug(EQEmuLogSys::Detail, "Missing node after teleport.");
+							logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Missing node after teleport.");
 							return To;
 						}
 
@@ -815,7 +815,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 						Teleport(NodeLoc);
 
-						logger.LogDebug(EQEmuLogSys::Detail, "  TELEPORTED to %8.3f, %8.3f, %8.3f\n", NodeLoc.x, NodeLoc.y, NodeLoc.z);
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  TELEPORTED to %8.3f, %8.3f, %8.3f\n", NodeLoc.x, NodeLoc.y, NodeLoc.z);
 
 						Route.pop_front();
 
@@ -826,7 +826,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					}
 					zone->pathing->OpenDoors(PathingLastNodeVisited, NextNode, this);
 
-					logger.LogDebug(EQEmuLogSys::Detail, "  Now moving to node %i", NextNode);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Now moving to node %i", NextNode);
 
 					return zone->pathing->GetPathNodeCoordinates(NextNode);
 				}
@@ -834,7 +834,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				{
 					// we have run all the nodes, all that is left is the direct path from the last node
 					// to the destination
-					logger.LogDebug(EQEmuLogSys::Detail, "  Reached end of node path, running direct to target.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Reached end of node path, running direct to target.");
 
 					return To;
 				}
@@ -848,11 +848,11 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				&& (RouteSize <= RuleI(Pathing, MinNodesLeftForLOSCheck))
 				&& PathingLOSCheckTimer->Check())
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "  Checking distance to target.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Checking distance to target.");
 
 				float Distance = VectorDistanceNoRoot(From, To);
 
-				logger.LogDebug(EQEmuLogSys::Detail, "  Distance between From and To (NoRoot) is %8.3f", Distance);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Distance between From and To (NoRoot) is %8.3f", Distance);
 
 				if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckShort))
 					&& (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
@@ -861,18 +861,18 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 						PathingLOSState = HaveLOS;
 					else
 						PathingLOSState = NoLOS;
-					logger.LogDebug(EQEmuLogSys::Detail, "NoLOS");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "NoLOS");
 
 					if((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  No hazards. Running directly to target.");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  No hazards. Running directly to target.");
 						Route.clear();
 
 						return To;
 					}
 					else
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  Continuing on node path.");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Continuing on node path.");
 					}
 				}
 				else
@@ -884,7 +884,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		{
 			// We get here if we were already pathing, but our destination has now changed.
 			//
-			logger.LogDebug(EQEmuLogSys::Detail, "  Target has changed position.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Target has changed position.");
 			// Update our record of where we are going to.
 			PathingDestination = To;
 			// Check if we now have LOS etc to the new destination.
@@ -895,23 +895,23 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckShort))
 					&& (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "  Checking for short LOS at distance %8.3f.", Distance);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Checking for short LOS at distance %8.3f.", Distance);
 					if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr))
 						PathingLOSState = HaveLOS;
 					else
 						PathingLOSState = NoLOS;
 
-					logger.LogDebug(EQEmuLogSys::Detail, "NoLOS");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "NoLOS");
 
 					if((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  No hazards. Running directly to target.");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  No hazards. Running directly to target.");
 						Route.clear();
 						return To;
 					}
 					else
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  Continuing on node path.");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Continuing on node path.");
 					}
 				}
 			}
@@ -922,19 +922,19 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			{
 				if(!PathingRouteUpdateTimerShort->Check())
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "Short route update timer not yet expired.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Short route update timer not yet expired.");
 					return zone->pathing->GetPathNodeCoordinates(Route.front());
 				}
-				logger.LogDebug(EQEmuLogSys::Detail, "Short route update timer expired.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Short route update timer expired.");
 			}
 			else
 			{
 				if(!PathingRouteUpdateTimerLong->Check())
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "Long route update timer not yet expired.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Long route update timer not yet expired.");
 					return zone->pathing->GetPathNodeCoordinates(Route.front());
 				}
-				logger.LogDebug(EQEmuLogSys::Detail, "Long route update timer expired.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Long route update timer expired.");
 			}
 
 			// We are already pathing, destination changed, no LOS. Find the nearest node to our destination.
@@ -943,7 +943,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			// Destination unreachable via pathing, return direct route.
 			if(DestinationPathNode == -1)
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "  Unable to find path node for new destination. Running straight to target.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Unable to find path node for new destination. Running straight to target.");
 				Route.clear();
 				return To;
 			}
@@ -951,7 +951,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			// one, we will carry on on our path.
 			if(DestinationPathNode == Route.back())
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
 
 				NodeLoc = zone->pathing->GetPathNodeCoordinates(Route.front());
 
@@ -959,7 +959,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				// Check if we have reached a path node.
 				if(NodeLoc == From)
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "  Arrived at node %i, moving to next one.\n", Route.front());
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Arrived at node %i, moving to next one.\n", Route.front());
 
 					NodeReached = true;
 
@@ -982,7 +982,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 							if(Route.size() == 0)
 							{
-								logger.LogDebug(EQEmuLogSys::Detail, "Missing node after teleport.");
+								logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Missing node after teleport.");
 								return To;
 							}
 
@@ -992,7 +992,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 							Teleport(NodeLoc);
 
-							logger.LogDebug(EQEmuLogSys::Detail, "  TELEPORTED to %8.3f, %8.3f, %8.3f\n", NodeLoc.x, NodeLoc.y, NodeLoc.z);
+							logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  TELEPORTED to %8.3f, %8.3f, %8.3f\n", NodeLoc.x, NodeLoc.y, NodeLoc.z);
 
 							Route.pop_front();
 
@@ -1002,7 +1002,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 							NextNode = Route.front();
 						}
 						// Return the coords of our next path node on the route.
-						logger.LogDebug(EQEmuLogSys::Detail, "  Now moving to node %i", NextNode);
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Now moving to node %i", NextNode);
 
 						zone->pathing->OpenDoors(PathingLastNodeVisited, NextNode, this);
 
@@ -1010,7 +1010,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					}
 					else
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  Reached end of path grid. Running direct to target.");
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Reached end of path grid. Running direct to target.");
 						return To;
 					}
 				}
@@ -1018,7 +1018,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			}
 			else
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "  Target moved. End node is different. Clearing route.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Target moved. End node is different. Clearing route.");
 
 				Route.clear();
 				// We will now fall through to get a new route.
@@ -1028,11 +1028,11 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 
 	}
-	logger.LogDebug(EQEmuLogSys::Detail, "  Our route list is empty.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Our route list is empty.");
 
 	if((SameDestination) && !PathingLOSCheckTimer->Check())
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "  Destination same as before, LOS check timer not reached. Returning To.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Destination same as before, LOS check timer not reached. Returning To.");
 		return To;
 	}
 
@@ -1047,22 +1047,22 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckLong))
 		&& (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "  Checking for long LOS at distance %8.3f.", Distance);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Checking for long LOS at distance %8.3f.", Distance);
 
 		if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr))
 			PathingLOSState = HaveLOS;
 		else
 			PathingLOSState = NoLOS;
 
-		logger.LogDebug(EQEmuLogSys::Detail, "NoLOS");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "NoLOS");
 
 		if((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 		{
-			logger.LogDebug(EQEmuLogSys::Detail, "Target is reachable. Running directly there.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Target is reachable. Running directly there.");
 			return To;
 		}
 	}
-	logger.LogDebug(EQEmuLogSys::Detail, "  Calculating new route to target.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Calculating new route to target.");
 
 	Route = zone->pathing->FindRoute(From, To);
 
@@ -1070,14 +1070,14 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 	if(Route.size() == 0)
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "  No route available, running direct.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  No route available, running direct.");
 
 		return To;
 	}
 
 	if(SameDestination && (Route.front() == PathingLastNodeVisited))
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "  Probable loop detected. Same destination and Route.front() == PathingLastNodeVisited.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  Probable loop detected. Same destination and Route.front() == PathingLastNodeVisited.");
 
 		Route.clear();
 
@@ -1085,7 +1085,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	}
 	NodeLoc = zone->pathing->GetPathNodeCoordinates(Route.front());
 
-	logger.LogDebug(EQEmuLogSys::Detail, "  New route determined, heading for node %i", Route.front());
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  New route determined, heading for node %i", Route.front());
 
 	PathingLoopCount = 0;
 
@@ -1127,7 +1127,7 @@ int PathManager::FindNearestPathNode(glm::vec3 Position)
 
 	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
 		if(!zone->zonemap->LineIntersectsZone(Position, PathNodes[(*Iterator).id].v, 1.0f, nullptr))
 		{
@@ -1137,7 +1137,7 @@ int PathManager::FindNearestPathNode(glm::vec3 Position)
 	}
 
 	if(ClosestPathNodeToStart <0 ) {
-		logger.LogDebug(EQEmuLogSys::Detail, "No LOS to any starting Path Node within range.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "No LOS to any starting Path Node within range.");
 		return -1;
 	}
 	return ClosestPathNodeToStart;
@@ -1153,14 +1153,14 @@ bool PathManager::NoHazards(glm::vec3 From, glm::vec3 To)
 
 	if(ABS(NewZ - From.z) > RuleR(Pathing, ZDiffThreshold))
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Z Change is %8.3f",
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Z Change is %8.3f",
 			From.x, From.y, From.z, MidPoint.x, MidPoint.y, MidPoint.z, NewZ - From.z);
 
 		return false;
 	}
 	else
 	{
-		logger.LogDebug(EQEmuLogSys::Detail, "No HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Z Change is %8.3f",
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "No HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Z Change is %8.3f",
 			From.x, From.y, From.z, MidPoint.x, MidPoint.y, MidPoint.z, NewZ - From.z);
 	}
 
@@ -1192,7 +1192,7 @@ bool PathManager::NoHazardsAccurate(glm::vec3 From, glm::vec3 To)
 		float NewZ = zone->zonemap->FindBestZ(TestPoint, nullptr);
 		if (ABS(NewZ - last_z) > 5.0f)
 		{
-			logger.LogDebug(EQEmuLogSys::Detail, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
 				From.x, From.y, From.z, TestPoint.x, TestPoint.y, TestPoint.z, NewZ, NewZ - From.z);
 			return false;
 		}
@@ -1220,30 +1220,30 @@ bool PathManager::NoHazardsAccurate(glm::vec3 From, glm::vec3 To)
 				}
 				if (best_z2 == -999990)
 				{
-					logger.LogDebug(EQEmuLogSys::Detail, "  HAZARD DETECTED, really deep water/lava!");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  HAZARD DETECTED, really deep water/lava!");
 					return false;
 				}
 				else
 				{
 					if (ABS(NewZ - best_z2) > RuleR(Pathing, ZDiffThreshold))
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  HAZARD DETECTED, water is fairly deep at %8.3f units deep", ABS(NewZ - best_z2));
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  HAZARD DETECTED, water is fairly deep at %8.3f units deep", ABS(NewZ - best_z2));
 						return false;
 					}
 					else
 					{
-						logger.LogDebug(EQEmuLogSys::Detail, "  HAZARD NOT DETECTED, water is shallow at %8.3f units deep", ABS(NewZ - best_z2));
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "  HAZARD NOT DETECTED, water is shallow at %8.3f units deep", ABS(NewZ - best_z2));
 					}
 				}
 			}
 			else
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "Hazard point not in water or lava!");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Hazard point not in water or lava!");
 			}
 		}
 		else
 		{
-			logger.LogDebug(EQEmuLogSys::Detail, "No water map loaded for hazards!");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "No water map loaded for hazards!");
 		}
 
 		curx += stepx;
@@ -1295,7 +1295,7 @@ void PathManager::OpenDoors(int Node1, int Node2, Mob *ForWho)
 
 			if(d && !d->IsDoorOpen() )
 			{
-				logger.LogDebug(EQEmuLogSys::Detail, "Opening door %i for %s", PathNodes[Node1].Neighbours[i].DoorID, ForWho->GetName());
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "Opening door %i for %s", PathNodes[Node1].Neighbours[i].DoorID, ForWho->GetName());
 
 				d->ForceOpen(ForWho);
 			}

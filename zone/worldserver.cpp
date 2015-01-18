@@ -314,7 +314,7 @@ void WorldServer::Process() {
 					}
 				}
 				else {
-					logger.LogDebug(EQEmuLogSys::Detail, "[CLIENT] id=%i, playerineqstring=%i, playersinzonestring=%i. Dumping WhoAllReturnStruct:",
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] id=%i, playerineqstring=%i, playersinzonestring=%i. Dumping WhoAllReturnStruct:",
 						wars->id, wars->playerineqstring, wars->playersinzonestring);
 				}
 			}
