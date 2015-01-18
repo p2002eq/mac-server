@@ -578,8 +578,8 @@ void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_cent
 		tHateEntry *h = (*iterator);
 		if(range > 0)
 		{
-			dist_targ = center->DistNoRoot(*h->ent);
-			if(dist_targ <= range && dist_targ >= min_range2)
+			dist_targ = ComparativeDistance(center->GetPosition(), h->ent->GetPosition());
+			if (dist_targ <= range && dist_targ >= min_range2)
 			{
 				id_list.push_back(h->ent->GetID());
 				h->ent->CalcSpellPowerDistanceMod(spell_id, dist_targ);
