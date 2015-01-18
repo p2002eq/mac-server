@@ -19,7 +19,7 @@
 #include "debug.h"
 #include "guild_base.h"
 #include "database.h"
-#include "logsys.h"
+
 //#include "misc_functions.h"
 #include "string_util.h"
 #include <cstdlib>

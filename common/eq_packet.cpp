@@ -21,7 +21,6 @@
 #include "debug.h"
 #include "eq_packet.h"
 #include "eq_stream.h"
-#include "logsys.h"
 #include "misc.h"
 #include "op_codes.h"
 #include "platform.h"
