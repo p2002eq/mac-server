@@ -88,7 +88,7 @@ EQRawApplicationPacket *EQStream::MakeApplicationPacket(EQProtocolPacket *p)
 {
 	EQRawApplicationPacket *ap=nullptr;
 	Log.Out(Logs::Detail, Logs::Netcode, _L "Creating new application packet, length %d" __L, p->size);
-	_raw(NET__APP_CREATE_HEX, 0xFFFF, p);
+	// _raw(NET__APP_CREATE_HEX, 0xFFFF, p);
 	ap = p->MakeAppPacket();
 	return ap;
 }
@@ -97,7 +97,7 @@ EQRawApplicationPacket *EQStream::MakeApplicationPacket(const unsigned char *buf
 {
 	EQRawApplicationPacket *ap=nullptr;
 	Log.Out(Logs::Detail, Logs::Netcode, _L "Creating new application packet, length %d" __L, len);
-	_hex(NET__APP_CREATE_HEX, buf, len);
+	Log.Hex(Logs::Netcode, buf, len);
 	ap = new EQRawApplicationPacket(buf, len);
 	return ap;
 }
@@ -128,7 +128,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 	if (!Session && p->opcode!=OP_SessionRequest && p->opcode!=OP_SessionResponse) {
 		Log.Out(Logs::Detail, Logs::Netcode, _L "Session not initialized, packet ignored" __L);
-		_raw(NET__DEBUG, 0xFFFF, p);
+		// _raw(NET__DEBUG, 0xFFFF, p);
 		return;
 	}
 
@@ -139,7 +139,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				subpacket_length=*(p->pBuffer+processed);
 				EQProtocolPacket *subp=MakeProtocolPacket(p->pBuffer+processed+1,subpacket_length);
 				Log.Out(Logs::Detail, Logs::Netcode, _L "Extracting combined packet of length %d" __L, subpacket_length);
-				_raw(NET__NET_CREATE_HEX, 0xFFFF, subp);
+				// _raw(NET__NET_CREATE_HEX, 0xFFFF, subp);
 				subp->copyInfo(p);
 				ProcessPacket(subp);
 				delete subp;
@@ -180,7 +180,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			SeqOrder check=CompareSequence(NextInSeq,seq);
 			if (check == SeqFuture) {
 					Log.Out(Logs::Detail, Logs::Netcode, _L "Future OP_Packet: Expecting Seq=%d, but got Seq=%d" __L, NextInSeq, seq);
-					_raw(NET__DEBUG, seq, p);
+					// _raw(NET__DEBUG, seq, p);
 
 					PacketQueue[seq]=p->Copy();
 					Log.Out(Logs::Detail, Logs::Netcode, _L "OP_Packet Queue size=%d" __L, PacketQueue.size());
@@ -189,7 +189,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 			} else if (check == SeqPast) {
 				Log.Out(Logs::Detail, Logs::Netcode, _L "Duplicate OP_Packet: Expecting Seq=%d, but got Seq=%d" __L, NextInSeq, seq);
-				_raw(NET__DEBUG, seq, p);
+				// _raw(NET__DEBUG, seq, p);
 				SendOutOfOrderAck(seq); //we already got this packet but it was out of order
 			} else {
 				// In case we did queue one before as well.
@@ -205,7 +205,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				if (*(p->pBuffer+2)==0x00 && *(p->pBuffer+3)==0x19) {
 					EQProtocolPacket *subp=MakeProtocolPacket(p->pBuffer+2,p->size-2);
 					Log.Out(Logs::Detail, Logs::Netcode, _L "seq %d, Extracting combined packet of length %d" __L, seq, subp->size);
-					_raw(NET__NET_CREATE_HEX, seq, subp);
+					// _raw(NET__NET_CREATE_HEX, seq, subp);
 					subp->copyInfo(p);
 					ProcessPacket(subp);
 					delete subp;
@@ -230,7 +230,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 			SeqOrder check=CompareSequence(NextInSeq,seq);
 			if (check == SeqFuture) {
 				Log.Out(Logs::Detail, Logs::Netcode, _L "Future OP_Fragment: Expecting Seq=%d, but got Seq=%d" __L, NextInSeq, seq);
-				_raw(NET__DEBUG, seq, p);
+				// _raw(NET__DEBUG, seq, p);
 
 				PacketQueue[seq]=p->Copy();
 				Log.Out(Logs::Detail, Logs::Netcode, _L "OP_Fragment Queue size=%d" __L, PacketQueue.size());
@@ -239,7 +239,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 
 			} else if (check == SeqPast) {
 				Log.Out(Logs::Detail, Logs::Netcode, _L "Duplicate OP_Fragment: Expecting Seq=%d, but got Seq=%d" __L, NextInSeq, seq);
-				_raw(NET__DEBUG, seq, p);
+				// _raw(NET__DEBUG, seq, p);
 				SendOutOfOrderAck(seq);
 			} else {
 				// In case we did queue one before as well.
@@ -258,7 +258,7 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 						if (*(p->pBuffer+2)==0x00 && *(p->pBuffer+3)==0x19) {
 							EQProtocolPacket *subp=MakeProtocolPacket(oversize_buffer,oversize_offset);
 							Log.Out(Logs::Detail, Logs::Netcode, _L "seq %d, Extracting combined oversize packet of length %d" __L, seq, subp->size);
-							//_raw(NET__NET_CREATE_HEX, subp);
+							//// _raw(NET__NET_CREATE_HEX, subp);
 							subp->copyInfo(p);
 							ProcessPacket(subp);
 							delete subp;
