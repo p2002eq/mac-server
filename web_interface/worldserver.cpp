@@ -34,7 +34,7 @@
 #include "worldserver.h"
 #include "web_interface.h"
 
-EQEmuLogSys logger;
+EQEmuLogSys Log;
 
 extern std::map<std::string, per_session_data_eqemu*> sessions;
 
@@ -47,7 +47,7 @@ WorldServer::~WorldServer(){
 }
 
 void WorldServer::OnConnected(){
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connected to World.");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connected to World.");
 	WorldConnection::OnConnected();
 }
 
@@ -58,7 +58,7 @@ void WorldServer::Process(){
 
 	ServerPacket *pack = nullptr;
 	while((pack = tcpc.PopPacket())){
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Received Opcode: %4X", pack->opcode);
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Received Opcode: %4X", pack->opcode);
 		switch(pack->opcode) {
 			case 0: { break; }
 			case ServerOP_KeepAlive: { break; }

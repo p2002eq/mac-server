@@ -501,7 +501,7 @@ bool Client::TrainDiscipline(uint32 itemid) {
 	const Item_Struct *item = database.GetItem(itemid);
 	if(item == nullptr) {
 		Message(CC_Red, "Unable to find the tome you turned in!");
-		logger.Log(EQEmuLogSys::Error, "Unable to find turned in tome id %lu\n", (unsigned long)itemid);
+		Log.Log(EQEmuLogSys::Error, "Unable to find turned in tome id %lu\n", (unsigned long)itemid);
 		return(false);
 	}
 
@@ -765,7 +765,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		if (bad) {
 			if (!caster->IsAttackAllowed(curmob, true))
 			{
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
 				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
 			}
@@ -778,7 +778,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			// check may still be needed. Any changes here should also reflect in BardAEPulse() -U
 			if (caster->IsAttackAllowed(curmob, true))
 			{
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a beneficial AE spell/song on a NPC.");
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a beneficial AE spell/song on a NPC.");
 				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
 			}

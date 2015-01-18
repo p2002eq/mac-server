@@ -26,7 +26,7 @@ void WebInterfaceConnection::SetConnection(EmuTCPConnection *inStream)
 {
 	if(stream)
 	{
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Incoming WebInterface Connection while we were already connected to a WebInterface.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Incoming WebInterface Connection while we were already connected to a WebInterface.");
 		stream->Disconnect();
 	}
 
@@ -60,7 +60,7 @@ bool WebInterfaceConnection::Process()
 					{
 						struct in_addr in;
 						in.s_addr = GetIP();
-						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "WebInterface authorization failed.");
+						Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "WebInterface authorization failed.");
 						ServerPacket* pack = new ServerPacket(ServerOP_ZAAuthFailed);
 						SendPacket(pack);
 						delete pack;
@@ -72,7 +72,7 @@ bool WebInterfaceConnection::Process()
 				{
 					struct in_addr in;
 					in.s_addr = GetIP();
-					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "WebInterface authorization failed.");
+					Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "WebInterface authorization failed.");
 					ServerPacket* pack = new ServerPacket(ServerOP_ZAAuthFailed);
 					SendPacket(pack);
 					delete pack;
@@ -82,7 +82,7 @@ bool WebInterfaceConnection::Process()
 			}
 			else
 			{
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "**WARNING** You have not configured a world shared key in your config file. You should add a <key>STRING</key> element to your <world> element to prevent unauthorized zone access.");
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "**WARNING** You have not configured a world shared key in your config file. You should add a <key>STRING</key> element to your <world> element to prevent unauthorized zone access.");
 				authenticated = true;
 			}
 			delete pack;
@@ -100,7 +100,7 @@ bool WebInterfaceConnection::Process()
 			}
 			case ServerOP_ZAAuth:
 			{
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Got authentication from WebInterface when they are already authenticated.");
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Got authentication from WebInterface when they are already authenticated.");
 				break;
 			}
 			case ServerOP_WIRemoteCall:
@@ -160,7 +160,7 @@ bool WebInterfaceConnection::Process()
 			}
 			default:
 			{
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Unknown ServerOPcode from WebInterface 0x%04x, size %d", pack->opcode, pack->size);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Unknown ServerOPcode from WebInterface 0x%04x, size %d", pack->opcode, pack->size);
 				DumpPacket(pack->pBuffer, pack->size);
 				break;
 			}

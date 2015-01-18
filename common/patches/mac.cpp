@@ -43,7 +43,7 @@ namespace Mac {
 			opcodes = new RegularOpcodeManager();
 			if(!opcodes->LoadOpcodes(opfile.c_str())) 
 			{
-				logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
+				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
 				return;
 			}
 		}
@@ -65,7 +65,7 @@ namespace Mac {
 		signature.first_eq_opcode = opcodes->EmuToEQ(OP_DataRate);
 		into.RegisterOldPatch(signature, pname.c_str(), &opcodes, &struct_strategy);
 		
-		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
 	}
 
 	void Reload() 
@@ -83,10 +83,10 @@ namespace Mac {
 			opfile += ".conf";
 			if(!opcodes->ReloadOpcodes(opfile.c_str()))
 			{
-				logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
+				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
 				return;
 			}
-			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
+			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
 		}
 	}
 
@@ -350,7 +350,7 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 
-		//logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
+		//Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
 		CRC32::SetEQChecksum(__packet->pBuffer, sizeof(structs::PlayerProfile_Struct)-4);
 		EQApplicationPacket* outapp = new EQApplicationPacket();
@@ -358,7 +358,7 @@ namespace Mac {
 		outapp->pBuffer = new uchar[10000];
 		outapp->size = DeflatePacket((unsigned char*)__packet->pBuffer, sizeof(structs::PlayerProfile_Struct), outapp->pBuffer, 10000);
 		EncryptProfilePacket(outapp->pBuffer, outapp->size);
-		//logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes compressed", outapp->size);
+		//Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Player Profile Packet is %i bytes compressed", outapp->size);
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
 		delete __packet;
@@ -646,7 +646,7 @@ namespace Mac {
 		int entrycount = in->size / sizeof(Spawn_Struct);
 		if(entrycount == 0 || (in->size % sizeof(Spawn_Struct)) != 0) 
 		{
-			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(Spawn_Struct));
+			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(Spawn_Struct));
 			delete in;
 			return;
 		}
@@ -964,7 +964,7 @@ namespace Mac {
 				outapp->SetOpcode(OP_ItemPacket);
 
 			if(outapp->size != sizeof(structs::Item_Struct))
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_ItemPacket packet. Expected: %i, Got: %i", sizeof(structs::Item_Struct), outapp->size);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_ItemPacket packet. Expected: %i, Got: %i", sizeof(structs::Item_Struct), outapp->size);
 
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
@@ -1001,7 +1001,7 @@ namespace Mac {
 			memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
 		
 			if(outapp->size != sizeof(structs::TradeItemsPacket_Struct))
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
 
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
@@ -1021,7 +1021,7 @@ namespace Mac {
 		int16 itemcount = in->size / sizeof(InternalSerializedItem_Struct);
 		if(itemcount == 0 || (in->size % sizeof(InternalSerializedItem_Struct)) != 0)
 		{
-			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
+			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[STRUCTS] Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
 			delete in;
 			return;
 		}
@@ -1071,7 +1071,7 @@ namespace Mac {
 		int16 itemcount = in->size / sizeof(InternalSerializedItem_Struct);
 		if(itemcount == 0 || (in->size % sizeof(InternalSerializedItem_Struct)) != 0) 
 		{
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
 			delete in;
 			return;
 		}
@@ -1125,7 +1125,7 @@ namespace Mac {
 		emu->to_slot = MacToServerSlot(eq->to_slot);
 		IN(number_in_stack);
 
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC DECODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", emu->to_slot, emu->from_slot, emu->number_in_stack);
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC DECODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", emu->to_slot, emu->from_slot, emu->number_in_stack);
 		FINISH_DIRECT_DECODE();
 	}
 
@@ -1139,7 +1139,7 @@ namespace Mac {
 		eq->to_slot = ServerToMacSlot(emu->to_slot);
 		OUT(to_slot);
 		OUT(number_in_stack);
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC ENCODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", eq->to_slot, eq->from_slot, eq->number_in_stack);
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC ENCODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", eq->to_slot, eq->from_slot, eq->number_in_stack);
 
 		FINISH_ENCODE();
 	}
@@ -1401,7 +1401,7 @@ namespace Mac {
 			if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
 			else
 				eq->itemsinbag[g] = 0xFFFF;
@@ -2233,7 +2233,7 @@ namespace Mac {
 		EQApplicationPacket *in = *p;
 		*p = nullptr;
 
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Dropped an invalid packet: %s", opcodes->EmuToName(in->GetOpcode()));
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Dropped an invalid packet: %s", opcodes->EmuToName(in->GetOpcode()));
 
 		delete in;
 		return;

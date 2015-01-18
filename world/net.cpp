@@ -104,7 +104,7 @@ uint32 numclients = 0;
 uint32 numzones = 0;
 bool holdzones = false;
 
-EQEmuLogSys logger;
+EQEmuLogSys Log;
 
 extern ConsoleList console_list;
 
@@ -112,7 +112,7 @@ void CatchSignal(int sig_num);
 
 int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
-	logger.LoadLogSettingsDefaults();
+	Log.LoadLogSettingsDefaults();
 	set_exception_handler();
 //	register_remote_call_handlers();
 
@@ -126,36 +126,36 @@ int main(int argc, char** argv) {
 	}
 
 	// Load server configuration
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading server configuration..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading server configuration..");
 	if (!WorldConfig::LoadConfig()) {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading server configuration failed.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading server configuration failed.");
 		return 1;
 	}
 	const WorldConfig *Config=WorldConfig::get();
 
 	if(!load_log_settings(Config->LogSettingsFile.c_str()))
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Warning: Unable to read %s", Config->LogSettingsFile.c_str());
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Warning: Unable to read %s", Config->LogSettingsFile.c_str());
 	else
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Log settings loaded from %s", Config->LogSettingsFile.c_str());
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Log settings loaded from %s", Config->LogSettingsFile.c_str());
 
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "CURRENT_VERSION: %s", CURRENT_VERSION);
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "CURRENT_VERSION: %s", CURRENT_VERSION);
 
 	#ifdef _DEBUG
 		_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	#endif
 
 	if (signal(SIGINT, CatchSignal) == SIG_ERR)	{
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
 		return 1;
 	}
 	if (signal(SIGTERM, CatchSignal) == SIG_ERR)	{
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
 		return 1;
 	}
 	#ifndef WIN32
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)	{
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Could not set signal handler");
 		return 1;
 	}
 	#endif
@@ -164,7 +164,7 @@ int main(int argc, char** argv) {
 	if (Config->LoginCount == 0) {
 		if (Config->LoginHost.length()) {
 			loginserverlist.Add(Config->LoginHost.c_str(), Config->LoginPort, Config->LoginAccount.c_str(), Config->LoginPassword.c_str(), Config->LoginType);
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Added loginserver %s:%i", Config->LoginHost.c_str(), Config->LoginPort);
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Added loginserver %s:%i", Config->LoginHost.c_str(), Config->LoginPort);
 		}
 	} else {
 		LinkedList<LoginConfig*> loginlist=Config->loginlist;
@@ -172,19 +172,19 @@ int main(int argc, char** argv) {
 		iterator.Reset();
 		while(iterator.MoreElements()) {
 			loginserverlist.Add(iterator.GetData()->LoginHost.c_str(), iterator.GetData()->LoginPort, iterator.GetData()->LoginAccount.c_str(), iterator.GetData()->LoginPassword.c_str(), iterator.GetData()->LoginType);
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Added loginserver %s:%i", iterator.GetData()->LoginHost.c_str(), iterator.GetData()->LoginPort);
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Added loginserver %s:%i", iterator.GetData()->LoginHost.c_str(), iterator.GetData()->LoginPort);
 			iterator.Advance();
 		}
 	}
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connecting to MySQL...");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connecting to MySQL...");
 	if (!database.Connect(
 		Config->DatabaseHost.c_str(),
 		Config->DatabaseUsername.c_str(),
 		Config->DatabasePassword.c_str(),
 		Config->DatabaseDB.c_str(),
 		Config->DatabasePort)) {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Cannot continue without a database connection.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Cannot continue without a database connection.");
 		return 1;
 	}
 	guild_mgr.SetDatabase(&database);
@@ -280,58 +280,58 @@ int main(int argc, char** argv) {
 	}
 
 	if(Config->WorldHTTPEnabled) {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Starting HTTP world service...");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Starting HTTP world service...");
 		http_server.Start(Config->WorldHTTPPort, Config->WorldHTTPMimeFile.c_str());
 	} else {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "HTTP world service disabled.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "HTTP world service disabled.");
 	}
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Scanning Database setup for updates..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Scanning Database setup for updates..");
 	database.DBSetup();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading variables..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading variables..");
 	database.LoadVariables();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading zones..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading zones..");
 	database.LoadZoneNames();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing groups..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing groups..");
 	database.ClearGroup();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing raids..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing raids..");
 	database.ClearRaid();
 	database.ClearRaidDetails();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading items..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading items..");
 	if (!database.LoadItems())
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Error: Could not load item data. But ignoring");
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading skill caps..");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Error: Could not load item data. But ignoring");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading skill caps..");
 	if (!database.LoadSkillCaps())
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Error: Could not load skill cap data. But ignoring");
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading guilds..");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Error: Could not load skill cap data. But ignoring");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading guilds..");
 	guild_mgr.LoadGuilds();
 	//rules:
 	{
 		char tmp[64];
 		if (database.GetVariable("RuleSet", tmp, sizeof(tmp)-1)) {
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading rule set '%s'", tmp);
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading rule set '%s'", tmp);
 			if(!RuleManager::Instance()->LoadRules(&database, tmp)) {
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Failed to load ruleset '%s', falling back to defaults.", tmp);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Failed to load ruleset '%s', falling back to defaults.", tmp);
 			}
 		} else {
 			if(!RuleManager::Instance()->LoadRules(&database, "default")) {
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "No rule set configured, using default rules");
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "No rule set configured, using default rules");
 			} else {
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loaded default rule set 'default'", tmp);
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loaded default rule set 'default'", tmp);
 			}
 		}
 	}
 	if(RuleB(World, ClearTempMerchantlist)){
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing temporary merchant lists..");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Clearing temporary merchant lists..");
 		database.ClearMerchantTemp();
 	}
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading EQ time of day..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading EQ time of day..");
 	TimeOfDay_Struct eqTime;
 	time_t realtime;
 	eqTime = database.LoadTime(realtime);
 	zoneserver_list.worldclock.setEQTimeOfDay(eqTime,realtime);
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading launcher list..");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading launcher list..");
 	launcher_list.LoadList();
 
 	char tmp[20];
@@ -340,31 +340,31 @@ int main(int argc, char** argv) {
 	if ((strcasecmp(tmp, "1") == 0)) {
 		holdzones = true;
 	}
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Reboot zone modes %s",holdzones ? "ON" : "OFF");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Reboot zone modes %s",holdzones ? "ON" : "OFF");
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Deleted %i stale player corpses from database", database.DeleteStalePlayerCorpses());
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Deleted %i stale player corpses from database", database.DeleteStalePlayerCorpses());
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Purging expired instances");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Purging expired instances");
 	database.PurgeExpiredInstances();
 	Timer PurgeInstanceTimer(450000);
 	PurgeInstanceTimer.Start(450000);
 
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading char create info...");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading char create info...");
 	database.LoadCharacterCreateAllocations();
 	database.LoadCharacterCreateCombos();
 
 	char errbuf[TCPConnection_ErrorBufferSize];
 	if (tcps.Open(Config->WorldTCPPort, errbuf)) {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Zone (TCP) listener started.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Zone (TCP) listener started.");
 	} else {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Failed to start zone (TCP) listener on port %d:",Config->WorldTCPPort);
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"        %s",errbuf);
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Failed to start zone (TCP) listener on port %d:",Config->WorldTCPPort);
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"        %s",errbuf);
 		return 1;
 	}
 	if (eqsf.Open()) {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Client (UDP) listener started.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Client (UDP) listener started.");
 	} else {
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Failed to start client (UDP) listener (port 9000)");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Failed to start client (UDP) listener (port 9000)");
 		return 1;
 	}
 
@@ -393,7 +393,7 @@ int main(int argc, char** argv) {
 			//structures and opcodes for that patch.
 			struct in_addr	in;
 			in.s_addr = eqs->GetRemoteIP();
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d", inet_ntoa(in),ntohs(eqs->GetRemotePort()));
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d", inet_ntoa(in),ntohs(eqs->GetRemotePort()));
 			stream_identifier.AddStream(eqs);	//takes the stream
 		}
 
@@ -404,7 +404,7 @@ int main(int argc, char** argv) {
 			//structures and opcodes for that patch.
 			struct in_addr	in;
 			in.s_addr = eqos->GetRemoteIP();
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d", inet_ntoa(in), ntohs(eqos->GetRemotePort()));
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d", inet_ntoa(in), ntohs(eqos->GetRemotePort()));
 			stream_identifier.AddOldStream(eqos);	//takes the stream
 		}
 
@@ -417,19 +417,19 @@ int main(int argc, char** argv) {
 			struct in_addr	in;
 			in.s_addr = eqsi->GetRemoteIP();
 			if (RuleB(World, UseBannedIPsTable)){ //Lieka: Check to see if we have the responsibility for blocking IPs.
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Checking inbound connection %s against BannedIPs table", inet_ntoa(in));
+				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Checking inbound connection %s against BannedIPs table", inet_ntoa(in));
 				if (!database.CheckBannedIPs(inet_ntoa(in))){ //Lieka: Check inbound IP against banned IP table.
-					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connection %s PASSED banned IPs check. Processing connection.", inet_ntoa(in));
+					Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connection %s PASSED banned IPs check. Processing connection.", inet_ntoa(in));
 					auto client = new Client(eqsi);
 					// @merth: client->zoneattempt=0;
 					client_list.Add(client);
 				} else {
-					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connection from %s FAILED banned IPs check. Closing connection.", inet_ntoa(in));
+					Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Connection from %s FAILED banned IPs check. Closing connection.", inet_ntoa(in));
 					eqsi->Close(); //Lieka: If the inbound IP is on the banned table, close the EQStream.
 				}
 			}
 			if (!RuleB(World, UseBannedIPsTable)){
-					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d, processing connection", inet_ntoa(in), ntohs(eqsi->GetRemotePort()));
+					Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d, processing connection", inet_ntoa(in), ntohs(eqsi->GetRemotePort()));
 					auto client = new Client(eqsi);
 					// @merth: client->zoneattempt=0;
 					client_list.Add(client);
@@ -441,7 +441,7 @@ int main(int argc, char** argv) {
 		while ((tcpc = tcps.NewQueuePop())) {
 			struct in_addr in;
 			in.s_addr = tcpc->GetrIP();
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New TCP connection from %s:%d", inet_ntoa(in),tcpc->GetrPort());
+			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New TCP connection from %s:%d", inet_ntoa(in),tcpc->GetrPort());
 			console_list.Add(new Console(tcpc));
 		}
 
@@ -490,16 +490,16 @@ int main(int argc, char** argv) {
 		}
 		Sleep(20);
 	}
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"World main loop completed.");
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Shutting down console connections (if any).");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"World main loop completed.");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Shutting down console connections (if any).");
 	console_list.KillAll();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Shutting down zone connections (if any).");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Shutting down zone connections (if any).");
 	zoneserver_list.KillAll();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Zone (TCP) listener stopped.");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Zone (TCP) listener stopped.");
 	tcps.Close();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Client (UDP) listener stopped.");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Client (UDP) listener stopped.");
 	eqsf.Close();
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Signaling HTTP service to stop...");
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Signaling HTTP service to stop...");
 	http_server.Stop();
 
 	CheckEQEMuErrorAndPause();
@@ -507,11 +507,11 @@ int main(int argc, char** argv) {
 }
 
 void CatchSignal(int sig_num) {
-	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Caught signal %d",sig_num);
+	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Caught signal %d",sig_num);
 	TimeOfDay_Struct eqTime;
 	zoneserver_list.worldclock.getEQTimeOfDay(time(0), &eqTime);
 	if(!database.SaveTime(eqTime.minute,eqTime.hour,eqTime.day,eqTime.month,eqTime.year))
-		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Failed to save eqtime.");
+		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Failed to save eqtime.");
 	RunLoops = false;
 }
 

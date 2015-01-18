@@ -1098,7 +1098,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 	}
 
 	if (result == INVALID_INDEX) {
-		logger.Log(EQEmuLogSys::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
+		Log.Log(EQEmuLogSys::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
 		Inventory::MarkDirty(inst); // Slot not found, clean up
 	}
 
