@@ -36,12 +36,12 @@ extern Zone* zone;
 void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	zoning = true;
 	if (app->size != sizeof(ZoneChange_Struct)) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "Wrong size: OP_ZoneChange, size=%d, expected %d", app->size, sizeof(ZoneChange_Struct));
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "Wrong size: OP_ZoneChange, size=%d, expected %d", app->size, sizeof(ZoneChange_Struct));
 		return;
 	}
 
 #if EQDEBUG >= 11
-	Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "Zone request from %s", GetName());
+	Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "Zone request from %s", GetName());
 	DumpPacket(app);
 #endif
 	ZoneChange_Struct* zc=(ZoneChange_Struct*)app->pBuffer;
@@ -90,7 +90,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 				//that can be a valid un-zolicited zone request?
 
 				Message(CC_Red, "Invalid unsolicited zone request.");
-				Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
+				Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
 				SendZoneCancel(zc);
 				return;
 			}
@@ -117,7 +117,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 			//if we didnt get a zone point, or its to a different zone,
 			//then we assume this is invalid.
 			if(!zone_point || zone_point->target_zone_id != target_zone_id) {
-				Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
+				Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%d'.", GetName(), target_zone_id);
 				SendZoneCancel(zc);
 				return;
 			}
@@ -147,7 +147,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	if(target_zone_name == nullptr) {
 		//invalid zone...
 		Message(CC_Red, "Invalid target zone ID.");
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Unable to get zone name for zone id '%d'.", GetName(), target_zone_id);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Unable to get zone name for zone id '%d'.", GetName(), target_zone_id);
 		SendZoneCancel(zc);
 		return;
 	}
@@ -160,7 +160,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	if(!database.GetSafePoints(target_zone_name, database.GetInstanceVersion(target_instance_id), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed)) {
 		//invalid zone...
 		Message(CC_Red, "Invalid target zone while getting safe points.");
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Unable to get safe coordinates for zone '%s'.", GetName(), target_zone_name);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Unable to get safe coordinates for zone '%s'.", GetName(), target_zone_name);
 		SendZoneCancel(zc);
 		return;
 	}
@@ -180,7 +180,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	switch(zone_mode) {
 	case EvacToSafeCoords:
 	case ZoneToSafeCoords:
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "Zoning %s to safe coords (%f,%f,%f) in %s (%d)", GetName(), safe_x, safe_y, safe_z, target_zone_name, target_zone_id);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "Zoning %s to safe coords (%f,%f,%f) in %s (%d)", GetName(), safe_x, safe_y, safe_z, target_zone_name, target_zone_id);
 		dest_x = safe_x;
 		dest_y = safe_y;
 		dest_z = safe_z;
@@ -240,7 +240,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 
 		//could not find a valid reason for them to be zoning, stop it.
 		CheatDetected(MQZoneUnknownDest, 0.0, 0.0, 0.0);
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%s'. Not near a zone point.", GetName(), target_zone_name);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Invalid unsolicited zone request to zone id '%s'. Not near a zone point.", GetName(), target_zone_name);
 		SendZoneCancel(zc);
 		return;
 	default:
@@ -273,7 +273,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		//we have successfully zoned
 		DoZoneSuccess(zc, target_zone_id, target_instance_id, dest_x, dest_y, dest_z, dest_h, ignorerestrictions);
 	} else {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Rules prevent this char from zoning into '%s'", GetName(), target_zone_name);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zoning %s: Rules prevent this char from zoning into '%s'", GetName(), target_zone_name);
 		SendZoneError(zc, myerror);
 	}
 }
@@ -297,7 +297,7 @@ void Client::SendZoneCancel(ZoneChange_Struct *zc) {
 
 void Client::SendZoneError(ZoneChange_Struct *zc, int8 err)
 {
-	Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Zone %i is not available because target wasn't found or character insufficent level", zc->zoneID);
+	Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Zone %i is not available because target wasn't found or character insufficent level", zc->zoneID);
 
 	SetPortExemption(true);
 
@@ -332,7 +332,7 @@ void Client::DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instanc
 	if(this->GetPet())
 		entity_list.RemoveFromHateLists(this->GetPet());
 
-	Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Status, "Zoning '%s' to: %s (%i) - (%i) x=%f, y=%f, z=%f", m_pp.name, database.GetZoneName(zone_id), zone_id, instance_id, dest_x, dest_y, dest_z);
+	Log.Out(EQEmuLogSys::General, EQEmuLogSys::Status, "Zoning '%s' to: %s (%i) - (%i) x=%f, y=%f, z=%f", m_pp.name, database.GetZoneName(zone_id), zone_id, instance_id, dest_x, dest_y, dest_z);
 
 	//set the player's coordinates in the new zone so they have them
 	//when they zone into it
@@ -442,7 +442,7 @@ void Client::ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, 
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		default:
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::ProcessMovePC received a reguest to perform an unsupported client zone operation.");
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::ProcessMovePC received a reguest to perform an unsupported client zone operation.");
 			break;
 	}
 }
@@ -504,7 +504,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			heading = m_pp.binds[0].heading;
 
 			zonesummon_ignorerestrictions = 1;
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "Player %s has died and will be zoned to bind point in zone: %s at LOC x=%f, y=%f, z=%f, heading=%f", GetName(), pZoneName, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "Player %s has died and will be zoned to bind point in zone: %s at LOC x=%f, y=%f, z=%f, heading=%f", GetName(), pZoneName, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
 			break;
 		case SummonPC:
 			m_ZoneSummonLocation = glm::vec3(x, y, z);
@@ -512,13 +512,13 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			SetHeading(heading);
 			break;
 		case Rewind:
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "%s has requested a /rewind from %f, %f, %f, to %f, %f, %f in %s", GetName(), m_Position.x, m_Position.y, m_Position.z, m_RewindLocation.x, m_RewindLocation.y, m_RewindLocation.z, zone->GetShortName());
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "%s has requested a /rewind from %f, %f, %f, to %f, %f, %f in %s", GetName(), m_Position.x, m_Position.y, m_Position.z, m_RewindLocation.x, m_RewindLocation.y, m_RewindLocation.z, zone->GetShortName());
 			m_ZoneSummonLocation = glm::vec3(x, y, z);
 			m_Position = glm::vec4(m_ZoneSummonLocation, 0.0f);
 			SetHeading(heading);
 			break;
 		default:
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::ZonePC() received a reguest to perform an unsupported client zone operation.");
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::ZonePC() received a reguest to perform an unsupported client zone operation.");
 			ReadyToZone = false;
 			break;
 	}
@@ -671,7 +671,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			safe_delete(outapp);
 		}
 
-		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
+		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
 		//Clear zonesummon variables if we're zoning to our own zone
 		//Client wont generate a zone change packet to the server in this case so
 		//They aren't needed and it keeps behavior on next zone attempt from being undefined.
@@ -762,7 +762,7 @@ void Client::SetZoneFlag(uint32 zone_id) {
 	std::string query = StringFormat("INSERT INTO zone_flags (charID,zoneID) VALUES(%d,%d)", CharacterID(), zone_id);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to set zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to set zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
 }
 
 void Client::ClearZoneFlag(uint32 zone_id) {
@@ -775,7 +775,7 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 	std::string query = StringFormat("DELETE FROM zone_flags WHERE charID=%d AND zoneID=%d", CharacterID(), zone_id);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to clear zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to clear zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
 
 }
 
@@ -785,7 +785,7 @@ void Client::LoadZoneFlags() {
 	std::string query = StringFormat("SELECT zoneID from zone_flags WHERE charID=%d", CharacterID());
 	auto results = database.QueryDatabase(query);
     if (!results.Success()) {
-        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to load zone flags for %s: %s", GetName(), results.ErrorMessage().c_str());
+        Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "MySQL Error while trying to load zone flags for %s: %s", GetName(), results.ErrorMessage().c_str());
         return;
     }
 
@@ -848,23 +848,23 @@ bool Client::CanBeInZone() {
 	char flag_needed[128];
 	if(!database.GetSafePoints(zone->GetShortName(), zone->GetInstanceVersion(), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed)) {
 		//this should not happen...
-		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Unable to query zone info for ourself '%s'", zone->GetShortName());
+		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Unable to query zone info for ourself '%s'", zone->GetShortName());
 		return(false);
 	}
 
 	if(GetLevel() < minlevel) {
-		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not meet min level requirement (%d < %d)!", GetLevel(), minlevel);
+		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not meet min level requirement (%d < %d)!", GetLevel(), minlevel);
 		return(false);
 	}
 	if(Admin() < minstatus) {
-		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not meet min status requirement (%d < %d)!", Admin(), minstatus);
+		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not meet min status requirement (%d < %d)!", Admin(), minstatus);
 		return(false);
 	}
 
 	if(flag_needed[0] != '\0') {
 		//the flag needed string is not empty, meaning a flag is required.
 		if(Admin() < minStatusToIgnoreZoneFlags && !HasZoneFlag(zone->GetZoneID())) {
-			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not have the flag to be in this zone (%s)!", flag_needed);
+			Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Character does not have the flag to be in this zone (%s)!", flag_needed);
 			return(false);
 		}
 	}

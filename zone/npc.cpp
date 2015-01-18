@@ -425,7 +425,7 @@ void NPC::QueryLoot(Client* to) {
 			to->Message(0, "(%i:%i) minlvl: %i maxlvl: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->lootslot, (*cur)->min_level, (*cur)->max_level, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Database error, invalid item");
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Database error, invalid item");
 		x++;
 	}
 	to->Message(0, "%i items on %s.", x, GetName());
@@ -860,7 +860,7 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
                                         spawn->MerchantType, 0, spawn->GetRunspeed(), 28, 28);
         auto results = QueryDatabase(query);
 		if (!results.Success()) {
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 			return false;
 		}
 		npc_type_id = results.LastInsertedID();
@@ -877,7 +877,7 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
                                         spawn->MerchantType, 0, spawn->GetRunspeed(), 28, 28);
         auto results = QueryDatabase(query);
 		if (!results.Success()) {
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 			return false;
 		}
 		npc_type_id = results.LastInsertedID();
@@ -889,7 +889,7 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
 	query = StringFormat("INSERT INTO spawngroup (id, name) VALUES(%i, '%s-%s')", 0, zone, spawn->GetName());
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
     uint32 spawngroupid = results.LastInsertedID();
@@ -903,7 +903,7 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
                         spawn->GetHeading(), spawngroupid);
     results = QueryDatabase(query);
 	if (!results.Success()) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -914,7 +914,7 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
                         spawngroupid, npc_type_id, 100);
     results = QueryDatabase(query);
 	if (!results.Success()) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "NPCSpawnDB Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -931,7 +931,7 @@ uint32 ZoneDatabase::AddNewNPCSpawnGroupCommand(const char* zone, uint32 zone_ve
                                     zone, spawn->GetName(), Timer::GetCurrentTime());
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
 		return 0;
 	}
     last_insert_id = results.LastInsertedID();
@@ -954,7 +954,7 @@ uint32 ZoneDatabase::AddNewNPCSpawnGroupCommand(const char* zone, uint32 zone_ve
                         spawn->GetHeading(), last_insert_id);
     results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+        Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
         return 0;
     }
     spawnid = results.LastInsertedID();
@@ -966,7 +966,7 @@ uint32 ZoneDatabase::AddNewNPCSpawnGroupCommand(const char* zone, uint32 zone_ve
                         last_insert_id, spawn->GetNPCTypeID(), 100);
     results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
+        Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "CreateNewNPCSpawnGroupCommand Error: %s %s", query.c_str(), results.ErrorMessage().c_str());
         return 0;
     }
 
@@ -1531,7 +1531,7 @@ void Mob::NPCSpecialAttacks(const char* parse, int permtag, bool reset, bool rem
 	{
 		if(database.SetSpecialAttkFlag(this->GetNPCTypeID(), orig_parse))
 		{
-			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Normal, "NPCTypeID: %i flagged to '%s' for Special Attacks.\n",this->GetNPCTypeID(),orig_parse);
+			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Normal, "NPCTypeID: %i flagged to '%s' for Special Attacks.\n",this->GetNPCTypeID(),orig_parse);
 		}
 	}
 }

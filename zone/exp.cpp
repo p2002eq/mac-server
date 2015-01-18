@@ -160,7 +160,7 @@ void Client::AddQuestEXP(uint32 in_add_exp) {
 
 
 void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
-	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "Attempting to Set Exp for %s (XP: %u, AAXP: %u, Rez: %s)", this->GetCleanName(), set_exp, set_aaxp, isrezzexp ? "true" : "false");
+	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "Attempting to Set Exp for %s (XP: %u, AAXP: %u, Rez: %s)", this->GetCleanName(), set_exp, set_aaxp, isrezzexp ? "true" : "false");
 	//max_AAXP = GetEXPForLevel(52) - GetEXPForLevel(51);	//GetEXPForLevel() doesn't depend on class/race, just level, so it shouldn't change between Clients
 	max_AAXP = max_AAXP = GetEXPForLevel(0, true);	//this may be redundant since we're doing this in Client::FinishConnState2()
 	if (max_AAXP == 0 || GetEXPForLevel(GetLevel()) == 0xFFFFFFFF) {
@@ -233,7 +233,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 
 		//figure out how many AA points we get from the exp were setting
 		m_pp.aapoints = set_aaxp / max_AAXP;
-		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::None, "Calculating additional AA Points from AAXP for %s: %u / %u = %.1f points", this->GetCleanName(), set_aaxp, max_AAXP, (float)set_aaxp / (float)max_AAXP);
+		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "Calculating additional AA Points from AAXP for %s: %u / %u = %.1f points", this->GetCleanName(), set_aaxp, max_AAXP, (float)set_aaxp / (float)max_AAXP);
 
 		//get remainder exp points, set in PP below
 		set_aaxp = set_aaxp - (max_AAXP * m_pp.aapoints);
@@ -355,7 +355,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 void Client::SetLevel(uint8 set_level, bool command)
 {
 	if (GetEXPForLevel(set_level) == 0xFFFFFFFF) {
-		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
+		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
 		return;
 	}
 
@@ -413,7 +413,7 @@ void Client::SetLevel(uint8 set_level, bool command)
 	safe_delete(outapp);
 	this->SendAppearancePacket(AT_WhoLevel, set_level); // who level change
 
-	Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Normal, "Setting Level for %s to %i", GetName(), set_level);
+	Log.Out(EQEmuLogSys::General, EQEmuLogSys::Normal, "Setting Level for %s to %i", GetName(), set_level);
 
 	CalcBonuses();
 
@@ -668,10 +668,10 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					}
 				}
 				else
-					Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "%s is too low in level to gain XP from this group.", cmember->GetName());
+					Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::General, "%s is too low in level to gain XP from this group.", cmember->GetName());
 			}
 			else
-				Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
+				Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::General, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
 		}
 	}
 }
