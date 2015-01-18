@@ -380,6 +380,9 @@ Mob::Mob(const char* in_name,
 
 	emoteid = 0;
 	endur_upkeep = false;
+	walkspeed = 0;
+	combat_hp_regen = 0;
+	combat_mana_regen = 0;
 }
 
 Mob::~Mob()

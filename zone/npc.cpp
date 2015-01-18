@@ -772,8 +772,7 @@ NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z,
 		}
 
 		//Time to create the NPC!!
-		NPCType* npc_type = new NPCType;
-		memset(npc_type, 0, sizeof(NPCType));
+		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		strncpy(npc_type->name, sep.arg[0], 60);
 		npc_type->cur_hp = atoi(sep.arg[4]);
@@ -807,7 +806,7 @@ NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z,
 		npc_type->sec_melee_type = 28;
 
 		NPC* npc = new NPC(npc_type, 0, in_x, in_y, in_z, in_heading/8, FlyMode3);
-		npc->GiveNPCTypeData(npc_type);
+		//npc->GiveNPCTypeData(npc_type);
 
 		entity_list.AddNPC(npc);
 

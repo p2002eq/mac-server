@@ -934,7 +934,11 @@ namespace Mac {
 	
 		if(item)
 		{
-			structs::Item_Struct* mac_item = MacItem((ItemInst*)int_struct->inst,int_struct->slot_id);
+			uint8 type = 0;
+			if(old_item_pkt->PacketType == ItemPacketViewLink)
+				type = 2;
+
+			structs::Item_Struct* mac_item = MacItem((ItemInst*)int_struct->inst,int_struct->slot_id, type);
 
 			if(mac_item == 0)
 			{
@@ -1958,22 +1962,32 @@ namespace Mac {
 		structs::Item_Struct *mac_pop_item = new struct structs::Item_Struct;
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
+		// General items
   		if(type == 0)
   		{
-  			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
 			mac_pop_item->Charges = inst->GetCharges();
+  			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
 			if(item->NoDrop == 0)
 				mac_pop_item->Price = 0; 
 			else
 				mac_pop_item->Price = item->Price;
 			mac_pop_item->SellRate = item->SellRate;
   		}
-  		else
+		// Items on a merchant
+  		else if(type == 1)
   		{ 
   			mac_pop_item->Charges = 1;
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
 			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
 			mac_pop_item->SellRate = 1;
+		}
+		// Item links
+		else if(type == 2)
+		{
+			mac_pop_item->Charges = item->MaxCharges;
+			mac_pop_item->equipSlot = ServerToMacSlot(slot_id_in);
+			mac_pop_item->Price = item->Price;
+			mac_pop_item->SellRate = item->SellRate;
 		}
   
 			mac_pop_item->ItemClass = item->ItemClass;

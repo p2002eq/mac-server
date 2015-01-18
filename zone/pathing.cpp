@@ -550,8 +550,9 @@ void PathManager::SpawnPathNodes()
 
 	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
-		NPCType* npc_type = new NPCType;
-		memset(npc_type, 0, sizeof(NPCType));
+		//NPCType* npc_type = new NPCType;
+		//memset(npc_type, 0, sizeof(NPCType));
+		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if(PathNodes[i].id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(PathNodes[i].id));
@@ -574,9 +575,9 @@ void PathManager::SpawnPathNodes()
 		npc_type->texture = 1;
 		npc_type->light = 0;
 		npc_type->runspeed = 0;
-		npc_type->d_meele_texture1 = 1;
-		npc_type->d_meele_texture2 = 1;
-		npc_type->merchanttype = 1;
+		npc_type->d_meele_texture1 = 0;
+		npc_type->d_meele_texture2 = 0;
+		npc_type->merchanttype = 0;
 		npc_type->bodytype = 1;
 
 		npc_type->STR = 150;
@@ -588,11 +589,12 @@ void PathManager::SpawnPathNodes()
 		npc_type->CHA = 150;
 
 		npc_type->findable = 1;
+		strcpy(npc_type->special_abilities, "19,1^20,1^24,1^35,1");
+		
+		NPC* npc = new NPC(npc_type, 0, PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0, FlyMode3);
+		//npc->GiveNPCTypeData(npc_type);
 
-		NPC* npc = new NPC(npc_type, 0, PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0, FlyMode1);
-		npc->GiveNPCTypeData(npc_type);
-
-		entity_list.AddNPC(npc, true, true);
+		entity_list.AddNPC(npc);
 	}
 }
 

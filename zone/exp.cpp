@@ -582,10 +582,15 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 				cmember->CastToClient()->GetZoneID() == zone->GetZoneID() &&
 				cmember->GetLevelCon(other->GetLevel()) != CON_GREEN) 
 			{
-				--membercount;
+				if(membercount != 0 && close_membercount != 0)
+				{
+					--membercount;
 
-				if(cmember->CastToClient()->IsInRange(other))
-					--close_membercount;
+					if(cmember->CastToClient()->IsInRange(other))
+						--close_membercount;
+				}
+				else
+					return;
 			}	
 		}
 	}

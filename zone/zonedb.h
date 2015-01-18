@@ -324,6 +324,7 @@ public:
 	DBnpcspells_Struct*				GetNPCSpells(uint32 iDBSpellsID);
 	DBnpcspellseffects_Struct*		GetNPCSpellsEffects(uint32 iDBSpellsEffectsID);
 	const NPCType*					GetNPCType(uint32 id);
+	NPCType*					    GetNPCTypeTemp(uint32 id);
 
 	/* Petitions   */
 	void	UpdateBug(BugStruct* bug);

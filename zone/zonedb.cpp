@@ -1773,6 +1773,218 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 	return npc;
 }
 
+NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
+	NPCType *npc=nullptr;
+
+	// If NPC is already in tree, return it.
+	auto itr = zone->npctable.find(id);
+	if(itr != zone->npctable.end())
+		return itr->second;
+
+    // Otherwise, get NPCs from database.
+
+
+    // If id is 0, load all npc_types for the current zone,
+    // according to spawn2.
+    std::string query = StringFormat("SELECT npc_types.id, npc_types.name, npc_types.level, npc_types.race, "
+                        "npc_types.class, npc_types.hp, npc_types.mana, npc_types.gender, "
+                        "npc_types.texture, npc_types.helmtexture, npc_types.size, "
+                        "npc_types.loottable_id, npc_types.merchant_id, "
+                        "npc_types.trap_template, "
+                        "npc_types.STR, npc_types.STA, npc_types.DEX, npc_types.AGI, npc_types._INT, "
+                        "npc_types.WIS, npc_types.CHA, npc_types.MR, npc_types.CR, npc_types.DR, "
+                        "npc_types.FR, npc_types.PR, npc_types.Corrup, npc_types.PhR,"
+                        "npc_types.mindmg, npc_types.maxdmg, npc_types.attack_count, npc_types.special_abilities,"
+                        "npc_types.npc_spells_id, npc_types.npc_spells_effects_id, npc_types.d_meele_texture1,"
+                        "npc_types.d_meele_texture2, npc_types.ammo_idfile, npc_types.prim_melee_type,"
+                        "npc_types.sec_melee_type, npc_types.ranged_type, npc_types.runspeed, npc_types.findable,"
+                        "npc_types.trackable, npc_types.hp_regen_rate, npc_types.mana_regen_rate, "
+                        "npc_types.aggroradius, npc_types.assistradius, npc_types.bodytype, npc_types.npc_faction_id, "
+                        "npc_types.face, npc_types.luclin_hairstyle, npc_types.luclin_haircolor, "
+                        "npc_types.luclin_eyecolor, npc_types.luclin_eyecolor2, npc_types.luclin_beardcolor,"
+                        "npc_types.luclin_beard, npc_types.armortint_id, "
+                        "npc_types.armortint_red, npc_types.armortint_green, npc_types.armortint_blue, "
+                        "npc_types.see_invis, npc_types.see_invis_undead, npc_types.lastname, "
+                        "npc_types.qglobal, npc_types.AC, npc_types.npc_aggro, npc_types.spawn_limit, "
+                        "npc_types.see_hide, npc_types.see_improved_hide, npc_types.ATK, npc_types.Accuracy, "
+                        "npc_types.Avoidance, npc_types.slow_mitigation, npc_types.maxlevel, npc_types.scalerate, "
+                        "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
+                        "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
+                        "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
+						"npc_types.combat_mana_regen FROM npc_types WHERE id = %d", id);
+
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        std::cerr << "Error loading NPCs from database. Bad query: " << results.ErrorMessage() << std::endl;
+        return nullptr;
+    }
+
+
+    for (auto row = results.begin(); row != results.end(); ++row) {
+		NPCType *tmpNPCType;
+		tmpNPCType = new NPCType;
+		memset (tmpNPCType, 0, sizeof *tmpNPCType);
+
+		tmpNPCType->npc_id = atoi(row[0]);
+
+		strn0cpy(tmpNPCType->name, row[1], 50);
+
+		tmpNPCType->level = atoi(row[2]);
+		tmpNPCType->race = atoi(row[3]);
+		tmpNPCType->class_ = atoi(row[4]);
+		tmpNPCType->max_hp = atoi(row[5]);
+		tmpNPCType->cur_hp = tmpNPCType->max_hp;
+		tmpNPCType->Mana = atoi(row[6]);
+		tmpNPCType->gender = atoi(row[7]);
+		tmpNPCType->texture = atoi(row[8]);
+		tmpNPCType->helmtexture = atoi(row[9]);
+		tmpNPCType->size = atof(row[10]);
+        tmpNPCType->loottable_id = atoi(row[11]);
+		tmpNPCType->merchanttype = atoi(row[12]);
+		tmpNPCType->trap_template = atoi(row[13]);
+		tmpNPCType->STR = atoi(row[14]);
+		tmpNPCType->STA = atoi(row[15]);
+		tmpNPCType->DEX = atoi(row[16]);
+		tmpNPCType->AGI = atoi(row[17]);
+		tmpNPCType->INT = atoi(row[18]);
+		tmpNPCType->WIS = atoi(row[19]);
+		tmpNPCType->CHA = atoi(row[20]);
+		tmpNPCType->MR = atoi(row[21]);
+		tmpNPCType->CR = atoi(row[22]);
+		tmpNPCType->DR = atoi(row[23]);
+		tmpNPCType->FR = atoi(row[24]);
+		tmpNPCType->PR = atoi(row[25]);
+		tmpNPCType->Corrup = atoi(row[26]);
+		tmpNPCType->PhR = atoi(row[27]);
+		tmpNPCType->min_dmg = atoi(row[28]);
+		tmpNPCType->max_dmg = atoi(row[29]);
+		tmpNPCType->attack_count = atoi(row[30]);
+		if (row[31] != nullptr)
+			strn0cpy(tmpNPCType->special_abilities, row[31], 512);
+		else
+			tmpNPCType->special_abilities[0] = '\0';
+		tmpNPCType->npc_spells_id = atoi(row[32]);
+		tmpNPCType->npc_spells_effects_id = atoi(row[33]);
+		tmpNPCType->d_meele_texture1 = atoi(row[34]);
+		tmpNPCType->d_meele_texture2 = atoi(row[35]);
+		strn0cpy(tmpNPCType->ammo_idfile, row[36], 30);
+		tmpNPCType->prim_melee_type = atoi(row[37]);
+		tmpNPCType->sec_melee_type = atoi(row[38]);
+		tmpNPCType->ranged_type = atoi(row[39]);
+		tmpNPCType->runspeed= atof(row[40]);
+		tmpNPCType->findable = atoi(row[41]) == 0? false : true;
+		tmpNPCType->trackable = atoi(row[42]) == 0? false : true;
+		tmpNPCType->hp_regen = atoi(row[43]);
+		tmpNPCType->mana_regen = atoi(row[44]);
+
+		// set defaultvalue for aggroradius
+        tmpNPCType->aggroradius = (int32)atoi(row[45]);
+		if (tmpNPCType->aggroradius <= 0)
+			tmpNPCType->aggroradius = 70;
+
+		tmpNPCType->assistradius = (int32)atoi(row[46]);
+		if (tmpNPCType->assistradius <= 0)
+			tmpNPCType->assistradius = tmpNPCType->aggroradius;
+
+		if (row[47] && strlen(row[47]))
+            tmpNPCType->bodytype = (uint8)atoi(row[47]);
+        else
+            tmpNPCType->bodytype = 0;
+
+		tmpNPCType->npc_faction_id = atoi(row[48]);
+
+		tmpNPCType->luclinface = atoi(row[49]);
+		tmpNPCType->hairstyle = atoi(row[50]);
+		tmpNPCType->haircolor = atoi(row[51]);
+		tmpNPCType->eyecolor1 = atoi(row[52]);
+		tmpNPCType->eyecolor2 = atoi(row[53]);
+		tmpNPCType->beardcolor = atoi(row[54]);
+		tmpNPCType->beard = atoi(row[55]);
+
+		uint32 armor_tint_id = atoi(row[56]);
+
+		tmpNPCType->armor_tint[0] = (atoi(row[57]) & 0xFF) << 16;
+        tmpNPCType->armor_tint[0] |= (atoi(row[58]) & 0xFF) << 8;
+		tmpNPCType->armor_tint[0] |= (atoi(row[59]) & 0xFF);
+		tmpNPCType->armor_tint[0] |= (tmpNPCType->armor_tint[0]) ? (0xFF << 24) : 0;
+
+		if (armor_tint_id == 0)
+			for (int index = MaterialChest; index <= EmuConstants::MATERIAL_END; index++)
+				tmpNPCType->armor_tint[index] = tmpNPCType->armor_tint[0];
+		else if (tmpNPCType->armor_tint[0] == 0)
+        {
+			std::string armortint_query = StringFormat("SELECT red1h, grn1h, blu1h, "
+                                                    "red2c, grn2c, blu2c, "
+                                                    "red3a, grn3a, blu3a, "
+                                                    "red4b, grn4b, blu4b, "
+                                                    "red5g, grn5g, blu5g, "
+                                                    "red6l, grn6l, blu6l, "
+                                                    "red7f, grn7f, blu7f, "
+                                                    "red8x, grn8x, blu8x, "
+                                                    "red9x, grn9x, blu9x "
+                                                    "FROM npc_types_tint WHERE id = %d",
+                                                    armor_tint_id);
+            auto armortint_results = QueryDatabase(armortint_query);
+            if (!armortint_results.Success() || armortint_results.RowCount() == 0)
+                armor_tint_id = 0;
+            else {
+                auto armorTint_row = armortint_results.begin();
+
+                for (int index = EmuConstants::MATERIAL_BEGIN; index <= EmuConstants::MATERIAL_END; index++) {
+                    tmpNPCType->armor_tint[index] = atoi(armorTint_row[index * 3]) << 16;
+					tmpNPCType->armor_tint[index] |= atoi(armorTint_row[index * 3 + 1]) << 8;
+					tmpNPCType->armor_tint[index] |= atoi(armorTint_row[index * 3 + 2]);
+					tmpNPCType->armor_tint[index] |= (tmpNPCType->armor_tint[index]) ? (0xFF << 24) : 0;
+                }
+            }
+        } else
+            armor_tint_id = 0;
+
+		tmpNPCType->see_invis = atoi(row[60]);
+		tmpNPCType->see_invis_undead = atoi(row[61]) == 0? false: true;	// Set see_invis_undead flag
+		if (row[62] != nullptr)
+			strn0cpy(tmpNPCType->lastname, row[62], 32);
+
+		tmpNPCType->qglobal = atoi(row[63]) == 0? false: true;	// qglobal
+		tmpNPCType->AC = atoi(row[64]);
+		tmpNPCType->npc_aggro = atoi(row[65]) == 0? false: true;
+		tmpNPCType->spawn_limit = atoi(row[66]);
+		tmpNPCType->see_hide = atoi(row[67]) == 0? false: true;
+		tmpNPCType->see_improved_hide = atoi(row[68]) == 0? false: true;
+		tmpNPCType->ATK = atoi(row[69]);
+		tmpNPCType->accuracy_rating = atoi(row[70]);
+		tmpNPCType->avoidance_rating = atoi(row[71]);
+		tmpNPCType->slow_mitigation = atoi(row[72]);
+		tmpNPCType->maxlevel = atoi(row[73]);
+		tmpNPCType->scalerate = atoi(row[74]);
+		tmpNPCType->private_corpse = atoi(row[75]) == 1 ? true: false;
+		tmpNPCType->unique_spawn_by_name = atoi(row[76]) == 1 ? true: false;
+		tmpNPCType->underwater = atoi(row[77]) == 1 ? true: false;
+		tmpNPCType->emoteid = atoi(row[78]);
+		tmpNPCType->spellscale = atoi(row[79]);
+		tmpNPCType->healscale = atoi(row[80]);
+		tmpNPCType->no_target_hotkey = atoi(row[81]) == 1 ? true: false;
+		tmpNPCType->raid_target = atoi(row[82]) == 0 ? false: true;
+		tmpNPCType->attack_delay = atoi(row[83]);
+		tmpNPCType->walkspeed= atof(row[84]);
+		tmpNPCType->combat_hp_regen = atoi(row[85]);
+		tmpNPCType->combat_mana_regen = atoi(row[86]);
+
+		// If NPC with duplicate NPC id already in table,
+		// free item we attempted to add.
+		if (zone->npctable.find(tmpNPCType->npc_id) != zone->npctable.end()) {
+			std::cerr << "Error loading duplicate NPC " << tmpNPCType->npc_id << std::endl;
+			delete tmpNPCType;
+			return nullptr;
+		}
+
+        zone->npctable[tmpNPCType->npc_id]=tmpNPCType;
+        npc = tmpNPCType;
+    }
+
+	return npc;
+}
+
 uint8 ZoneDatabase::GetGridType(uint32 grid, uint32 zoneid) {
 
 	std::string query = StringFormat("SELECT type FROM grid WHERE id = %i AND zoneid = %i", grid, zoneid);
