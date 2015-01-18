@@ -347,7 +347,7 @@ void Client::DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instanc
 
 	// vesuvias - zoneing to another zone so we need to the let the world server
 	//handle things with the client for a while
-	PreDisconnect();
+	SetZoningState();
 	ServerPacket* pack = new ServerPacket(ServerOP_ZoneToZoneRequest, sizeof(ZoneToZone_Struct));
 	ZoneToZone_Struct* ztz = (ZoneToZone_Struct*) pack->pBuffer;
 	ztz->response = 0;

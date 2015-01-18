@@ -556,7 +556,7 @@ bool Client::Process() {
 	EQApplicationPacket *app = nullptr;
 
 	//Predisconnecting is a state where we expect a zone change packet, and the next packet HAS to be a zone change packet once you request to zone. Otherwise, bad things happen!
-	if(!eqs->CheckState(CLOSING) && client_state != PREDISCONNECTED)
+	if(!eqs->CheckState(CLOSING) && client_state != PREDISCONNECTED && client_state != ZONING)
 	{
 		while(ret && (app = (EQApplicationPacket *)eqs->PopPacket())) {
 			if(app)
@@ -572,7 +572,7 @@ bool Client::Process() {
 		entity_list.CheckClientAggro(this);
 	}
 
-	if (client_state != CLIENT_LINKDEAD && (client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED)))
+	if (client_state != CLIENT_LINKDEAD && (client_state == PREDISCONNECTED || client_state == CLIENT_ERROR || client_state == DISCONNECTED || client_state == CLIENT_KICKED || !eqs->CheckState(ESTABLISHED)))
 	{
 		//client logged out or errored out
 		//ResetTrade();
@@ -680,11 +680,7 @@ void Client::OnDisconnect(bool hard_disconnect) {
 	}
 	else
 	{
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMKick, sizeof(GMKick_Struct));
-		GMKick_Struct* gmk = (GMKick_Struct *)outapp->pBuffer;
-		strcpy(gmk->name,GetName());
-		QueuePacket(outapp);
-		safe_delete(outapp);
+		Disconnect();
 	}
 
 }

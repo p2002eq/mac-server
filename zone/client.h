@@ -275,6 +275,7 @@ public:
 	inline bool InZone() const { return (client_state == CLIENT_CONNECTED || client_state == CLIENT_LINKDEAD); }
 	inline void Kick() { client_state = CLIENT_KICKED; }
 	inline void Disconnect() { eqs->Close(); client_state = DISCONNECTED; }
+	inline void SetZoningState() { client_state = ZONING; }
 	inline void	PreDisconnect() { client_state = PREDISCONNECTED; }
 	inline void	Reconnect() { client_state = CLIENT_CONNECTED; }
 	inline bool IsLD() const { return (bool) (client_state == CLIENT_LINKDEAD); }
