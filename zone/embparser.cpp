@@ -132,7 +132,7 @@ void PerlembParser::ReloadQuests() {
 			perl = nullptr;
 		}
 
-		Log.Log(EQEmuLogSys::Status, "Error re-initializing perlembed: %s", e.what());
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Status, "Error re-initializing perlembed: %s", e.what());
 		throw e.what();
 	}
 
