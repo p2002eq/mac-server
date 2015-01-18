@@ -4052,7 +4052,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	PetRecord record;
 	if(!database.GetPetEntry(spells[spell_id].teleport_zone, &record))
 	{
-		Log.Log(EQEmuLogSys::Error, "Unknown doppelganger spell id: %d, check pets table", spell_id);
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Unknown doppelganger spell id: %d, check pets table", spell_id);
 		Message(CC_Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
 		return;
 	}
@@ -4066,7 +4066,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 	const NPCType *npc_type = database.GetNPCType(pet.npc_id);
 	if(npc_type == nullptr) {
-		Log.Log(EQEmuLogSys::Error, "Unknown npc type for doppelganger spell id: %d", spell_id);
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Unknown npc type for doppelganger spell id: %d", spell_id);
 		Message(0,"Unable to find pet!");
 		return;
 	}

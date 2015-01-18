@@ -236,7 +236,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	if(inst == nullptr) {
 		Message(CC_Red, "An unknown server error has occurred and your item was not created.");
 		// this goes to logfile since this is a major error
-		Log.Log(EQEmuLogSys::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
 			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5);
 
 		return false;
@@ -1084,7 +1084,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			if(!SwapItem(move_in))
 			{
 
-				Log.Log(EQEmuLogSys::Error, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
+				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Recursive SwapItem call failed due to non-existent destination item (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id);
 				return false;
 			}
 			else
@@ -1092,7 +1092,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 		}
 		if(!recursive_si)
 		{
-			Log.Log(EQEmuLogSys::Error, "From slot is invalid and Recursive SwapItem call failed. (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id); 
+			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "From slot is invalid and Recursive SwapItem call failed. (charid: %i, fromslot: %i, toslot: %i)", CharacterID(), src_slot_id, dst_slot_id); 
 			return false;
 		}
 	}
@@ -2167,7 +2167,7 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 	}
 
 	if (log) {
-		Log.Log(EQEmuLogSys::Error, "Target interrogate inventory flag: %s", (GetInterrogateInvState() ? "TRUE" : "FALSE"));
+		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Target interrogate inventory flag: %s", (GetInterrogateInvState() ? "TRUE" : "FALSE"));
 		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Client::InterrogateInventory() -- End");
 	}
 	if (!silent) {
@@ -2212,7 +2212,7 @@ void Client::InterrogateInventory_(bool errorcheck, Client* requester, int16 hea
 		else { e = ""; }
 
 		if (log)
-			Log.Log(EQEmuLogSys::Error, "Head: %i, Depth: %i, Instance: %s, Parent: %s%s",
+			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Head: %i, Depth: %i, Instance: %s, Parent: %s%s",
 			head, depth, i.c_str(), p.c_str(), e.c_str());
 		if (!silent)
 			requester->Message(1, "%i:%i - inst: %s - parent: %s%s",

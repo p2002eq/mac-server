@@ -864,7 +864,7 @@ bool Group::LearnMembers() {
         return false;
 
     if (results.RowCount() == 0) {
-        Log.Log(EQEmuLogSys::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
 			return false;
     }
 
