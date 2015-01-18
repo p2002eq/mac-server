@@ -138,15 +138,15 @@ int main() {
 	set_exception_handler();
 	register_methods();
 	Timer InterserverTimer(INTERSERVER_TIMER); // does auto-reconnect
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Starting EQEmu Web Server.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Starting EQEmu Web Server.");
 	
 	if (signal(SIGINT, CatchSignal) == SIG_ERR)	{
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not set signal handler");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not set signal handler");
 		return 1;
 	}
 	
 	if (signal(SIGTERM, CatchSignal) == SIG_ERR)	{
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not set signal handler");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not set signal handler");
 		return 1;
 	}
 
@@ -162,15 +162,15 @@ int main() {
 
 	context = libwebsocket_create_context(&info);
 	if (context == NULL) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not create websocket handler.");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Could not create websocket handler.");
 		return 1;
 	}
 
 	db = new SharedDatabase();
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connecting to database...");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connecting to database...");
 	if(!db->Connect(config->DatabaseHost.c_str(), config->DatabaseUsername.c_str(),
 		config->DatabasePassword.c_str(), config->DatabaseDB.c_str(), config->DatabasePort)) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Unable to connect to the database, cannot continue without a database connection");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Unable to connect to the database, cannot continue without a database connection");
 		return 1;
 	}
 

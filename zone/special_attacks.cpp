@@ -534,7 +534,7 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 			break;
 		}
 		default:
-			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Attack, "Invalid special attack type %d attempted", unchecked_type);
+			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Attack, "Invalid special attack type %d attempted", unchecked_type);
 			return(1000); /* nice long delay for them, the caller depends on this! */
 	}
 
@@ -744,7 +744,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	//make sure the attack and ranged timers are up
 	//if the ranged timer is disabled, then they have no ranged weapon and shouldent be attacking anyhow
 	if(!CanDoubleAttack && ((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
 		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
@@ -756,12 +756,12 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	const ItemInst* Ammo = m_inv[MainAmmo];
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
 		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
 		return;
 	}
 	if (!Ammo || !Ammo->IsType(ItemClassCommon)) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(MainAmmo), MainAmmo);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(MainAmmo), MainAmmo);
 		Message(0, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
 		return;
 	}
@@ -770,17 +770,17 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	const Item_Struct* AmmoItem = Ammo->GetItem();
 
 	if(RangeItem->ItemType != ItemTypeBow) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ranged item is not a bow. type %d.", RangeItem->ItemType);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ranged item is not a bow. type %d.", RangeItem->ItemType);
 		Message(0, "Error: Rangeweapon: Item %d is not a bow.", RangeWeapon->GetID());
 		return;
 	}
 	if(AmmoItem->ItemType != ItemTypeArrow) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ammo item is not an arrow. type %d.", AmmoItem->ItemType);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ammo item is not an arrow. type %d.", AmmoItem->ItemType);
 		Message(0, "Error: Ammo: type %d != %d, you have the wrong type of ammo!", AmmoItem->ItemType, ItemTypeArrow);
 		return;
 	}
 
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Shooting %s with bow %s (%d) and arrow %s (%d)", GetTarget()->GetName(), RangeItem->Name, RangeItem->ID, AmmoItem->Name, AmmoItem->ID);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Shooting %s with bow %s (%d) and arrow %s (%d)", GetTarget()->GetName(), RangeItem->Name, RangeItem->ID, AmmoItem->Name, AmmoItem->ID);
 
 	//look for ammo in inventory if we only have 1 left...
 	if(Ammo->GetCharges() == 1) {
@@ -807,7 +807,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 					Ammo = baginst;
 					ammo_slot = m_inv.CalcSlotId(r, i);
 					found = true;
-					Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from quiver stack at slot %d. %d in stack.", ammo_slot, Ammo->GetCharges());
+					Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from quiver stack at slot %d. %d in stack.", ammo_slot, Ammo->GetCharges());
 					break;
 				}
 			}
@@ -822,17 +822,17 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 			if (aslot != INVALID_INDEX) {
 				ammo_slot = aslot;
 				Ammo = m_inv[aslot];
-				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from inventory stack at slot %d. %d in stack.", ammo_slot, Ammo->GetCharges());
+				Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from inventory stack at slot %d. %d in stack.", ammo_slot, Ammo->GetCharges());
 			}
 		}
 	}
 
 	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
 		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
@@ -861,9 +861,9 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 
 	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && zone->random.Int(0,99) > ChanceAvoidConsume)){ 
 		DeleteItemInInventory(ammo_slot, 1, false);
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Consumed one arrow from slot %d", ammo_slot);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Consumed one arrow from slot %d", ammo_slot);
 	} else {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Endless Quiver prevented ammo consumption.");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Endless Quiver prevented ammo consumption.");
 	}
 
 	CheckIncreaseSkill(SkillArchery, GetTarget(), -15); 
@@ -875,10 +875,10 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 		return;
 
 	if (!other->CheckHitChance(this, SkillArchery, MainPrimary, chance_mod)) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
 		other->Damage(this, 0, SPELL_UNKNOWN, SkillArchery);
 	} else {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack hit %s.", other->GetName());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack hit %s.", other->GetName());
 
 
 			bool HeadShot = false;
@@ -914,7 +914,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 
 				MaxDmg += MaxDmg*bonusArcheryDamageModifier / 100;
 
-				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Bow DMG %d, Arrow DMG %d, Max Damage %d.", WDmg, ADmg, MaxDmg);
+			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Bow DMG %d, Arrow DMG %d, Max Damage %d.", WDmg, ADmg, MaxDmg);
 
 				bool dobonus = false;
 				if(GetClass() == RANGER && GetLevel() > 50)
@@ -943,8 +943,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 						MaxDmg *= 2;
 						hate *= 2;
 						MaxDmg = mod_archery_bonus_damage(MaxDmg, RangeWeapon);
-
-						Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranger. Double damage success roll, doubling damage to %d", MaxDmg);
+						Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranger. Double damage success roll, doubling damage to %d", MaxDmg);
 						Message_StringID(MT_CritMelee, BOW_DOUBLE_DAMAGE);
 					}
 				}
@@ -1026,7 +1025,7 @@ void NPC::RangedAttack(Mob* other)
 	//make sure the attack and ranged timers are up
 	//if the ranged timer is disabled, then they have no ranged weapon and shouldent be attacking anyhow
 	if((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check())){
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Archery canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Archery canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 
@@ -1058,7 +1057,7 @@ void NPC::RangedAttack(Mob* other)
 		if (sa_min_range)
 			min_range = static_cast<float>(sa_min_range);
 
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", max_range);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", max_range);
 		max_range *= max_range;
 		if (DistanceSquaredNoZ(m_Position, other->GetPosition()) > max_range)
 			return;
@@ -1090,7 +1089,7 @@ void NPC::RangedAttack(Mob* other)
 
 		if (!other->CheckHitChance(this, skillinuse, MainRange, GetSpecialAbilityParam(SPECATK_RANGED_ATK, 2)))
 		{
-			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
+			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
 			other->Damage(this, 0, SPELL_UNKNOWN, skillinuse);
 		}
 		else
@@ -1100,7 +1099,7 @@ void NPC::RangedAttack(Mob* other)
 			int32 TotalDmg = 0;
 			if(WDmg > 0 || ADmg > 0)
 			{
-				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack hit %s.", other->GetName());
+				Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack hit %s.", other->GetName());
 
 				int32 MaxDmg = max_dmg * RuleR(Combat, ArcheryNPCMultiplier); // should add a field to npc_types
 				int32 MinDmg = min_dmg * RuleR(Combat, ArcheryNPCMultiplier);
@@ -1175,7 +1174,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	//make sure the attack and ranged timers are up
 	//if the ranged timer is disabled, then they have no ranged weapon and shouldent be attacking anyhow
 	if((!CanDoubleAttack && (attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
 		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
@@ -1185,19 +1184,19 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	const ItemInst* RangeWeapon = m_inv[MainRange];
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
 		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	const Item_Struct* item = RangeWeapon->GetItem();
 	if(item->ItemType != ItemTypeLargeThrowing && item->ItemType != ItemTypeSmallThrowing) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
 		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing %s (%d) at %s", item->Name, item->ID, GetTarget()->GetName());
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing %s (%d) at %s", item->Name, item->ID, GetTarget()->GetName());
 
 	if(RangeWeapon->GetCharges() == 1) {
 		//first check ammo
@@ -1206,7 +1205,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 			//more in the ammo slot, use it
 			RangeWeapon = AmmoItem;
 			ammo_slot = MainAmmo;
-			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from ammo slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
+			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from ammo slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
 		} else {
 			//look through our inventory for more
 			int32 aslot = m_inv.HasItem(item->ID, 1, invWherePersonal);
@@ -1214,17 +1213,17 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 				//the item wont change, but the instance does, not that it matters
 				ammo_slot = aslot;
 				RangeWeapon = m_inv[aslot];
-				Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from inventory slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
+				Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Using ammo from inventory slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
 			}
 		}
 	}
 
 	int range = item->Range +50/*Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0*/;
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
 		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
@@ -1260,10 +1259,10 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 		return;
 
 	if (!other->CheckHitChance(this, SkillThrowing, MainPrimary, chance_mod)){
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
 		other->Damage(this, 0, SPELL_UNKNOWN, SkillThrowing);
 	} else {
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack hit %s.", other->GetName());
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack hit %s.", other->GetName());
 
 		int16 WDmg = 0;
 
@@ -1290,7 +1289,7 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 				entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, ASSASSINATES, GetName());
 			}
 
-			Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Item DMG %d. Max Damage %d. Hit for damage %d", WDmg, MaxDmg, TotalDmg);
+			Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Item DMG %d. Max Damage %d. Hit for damage %d", WDmg, MaxDmg, TotalDmg);
 			if (!Assassinate_Dmg)
 				other->AvoidDamage(this, TotalDmg, false); //CanRiposte=false - Can not riposte throw attacks.
 			

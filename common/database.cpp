@@ -84,12 +84,12 @@ bool Database::Connect(const char* host, const char* user, const char* passwd, c
 	uint32 errnum= 0;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	if (!Open(host, user, passwd, database, port, &errnum, errbuf)) {
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Failed to connect to database: Error: %s", errbuf);
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Failed to connect to database: Error: %s", errbuf);
 
 		return false; 
 	}
 	else {
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Status, "Using database '%s' at %s:%d",database,host,port);
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Status, "Using database '%s' at %s:%d",database,host,port);
 		return true;
 	}
 }
@@ -669,7 +669,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 	charid = GetCharacterID(pp->name);
 
 	if(!charid) {
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "StoreCharacter: no character id");
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "StoreCharacter: no character id");
 		return false;
 	}
 
@@ -700,10 +700,10 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 			auto results = QueryDatabase(invquery); 
 
 			if (!results.RowsAffected())
-				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "StoreCharacter inventory failed. Query '%s' %s", invquery.c_str(), results.ErrorMessage().c_str());
+				Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "StoreCharacter inventory failed. Query '%s' %s", invquery.c_str(), results.ErrorMessage().c_str());
 #if EQDEBUG >= 9
 			else
-				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None,, "StoreCharacter inventory succeeded. Query '%s'", invquery.c_str());
+				Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None,, "StoreCharacter inventory succeeded. Query '%s'", invquery.c_str());
 #endif
 		}
 
@@ -776,7 +776,7 @@ uint32 Database::GetAccountIDByChar(uint32 char_id) {
 	std::string query = StringFormat("SELECT `account_id` FROM `character_data` WHERE `id` = %i LIMIT 1", char_id); 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error in GetAccountIDByChar query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error in GetAccountIDByChar query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return 0;
 	}
 
@@ -1580,7 +1580,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating character_data table from CharacterJoin.");
@@ -1592,14 +1592,14 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i...", char_id);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -1622,8 +1622,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
@@ -1635,8 +1635,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
@@ -1661,8 +1661,8 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
@@ -1674,7 +1674,7 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
@@ -1707,7 +1707,7 @@ void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) {
 	std::string query = StringFormat( "UPDATE `character_data` SET `firstlogon` = %i WHERE `id` = %i",firstlogon, CharID);
 	auto results = QueryDatabase(query); 
 	if (!results.Success())
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
 }
 
 void Database::AddReport(std::string who, std::string against, std::string lines) { 
@@ -1719,7 +1719,7 @@ void Database::AddReport(std::string who, std::string against, std::string lines
 	safe_delete_array(escape_str);
 
 	if (!results.Success())
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
 }
 
 void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
@@ -1731,7 +1731,7 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 		auto results = QueryDatabase(query);
 
 		if (!results.Success())
-			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
+			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
 
 		return;
 	}
@@ -1741,7 +1741,7 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error adding character to group id: %s", results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error adding character to group id: %s", results.ErrorMessage().c_str());
 }
 
 void Database::ClearAllGroups(void)
@@ -1780,14 +1780,14 @@ uint32 Database::GetGroupID(const char* name){
 
 	if (!results.Success())
 	{
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error getting group id: %s", results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error getting group id: %s", results.ErrorMessage().c_str());
 		return 0;
 	}
 
 	if (results.RowCount() == 0)
 	{
 		// Commenting this out until logging levels can prevent this from going to console
-		//Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None,, "Character not in a group: %s", name);
+		//Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None,, "Character not in a group: %s", name);
 		return 0;
 	}
 
@@ -1826,7 +1826,7 @@ void Database::SetGroupLeaderName(uint32 gid, const char* name) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Unable to set group leader:", results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::None, "Unable to set group leader:", results.ErrorMessage().c_str());
 }
 
 char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 
@@ -2422,7 +2422,7 @@ void Database::GetCharactersInInstance(uint16 instance_id, std::list<uint32> &ch
 
 	if (!results.Success())
 	{
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error in GetCharactersInInstace query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error in GetCharactersInInstace query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -2537,7 +2537,7 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 
 	if (!results.Success() || results.RowCount() == 0)
 	{
-		Log.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading EQ time of day failed. Using defaults.");
+		Log.DoLog(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading EQ time of day failed. Using defaults.");
 		eqTime.minute = 0;
 		eqTime.hour = 9;
 		eqTime.day = 1;

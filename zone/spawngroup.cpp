@@ -164,7 +164,7 @@ bool ZoneDatabase::LoadSpawnGroups(const char* zone_name, uint16 version, SpawnG
                         "AND zone = '%s'", zone_name);
     results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error2 in PopulateZoneLists query '%'", query.c_str());
+        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error2 in PopulateZoneLists query '%'", query.c_str());
 		return false;
     }
 
@@ -192,7 +192,7 @@ bool ZoneDatabase::LoadSpawnGroupsByID(int spawngroupid, SpawnGroupList* spawn_g
                                     "FROM spawngroup WHERE spawngroup.ID = '%i'", spawngroupid);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error2 in PopulateZoneLists query %s", query.c_str());
+        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error2 in PopulateZoneLists query %s", query.c_str());
 		return false;
     }
 
@@ -207,7 +207,7 @@ bool ZoneDatabase::LoadSpawnGroupsByID(int spawngroupid, SpawnGroupList* spawn_g
                         "ORDER BY chance", spawngroupid);
     results = QueryDatabase(query);
 	if (!results.Success()) {
-        Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Error, "Error3 in PopulateZoneLists query '%s'", query.c_str());
+        Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Error, "Error3 in PopulateZoneLists query '%s'", query.c_str());
 		return false;
 	}
 

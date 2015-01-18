@@ -31,7 +31,7 @@ void Register(EQStreamIdentifier &into) {
 		//TODO: figure out how to support shared memory with multiple patches...
 		opcodes = new RegularOpcodeManager();
 		if(!opcodes->LoadOpcodes(opfile.c_str())) {
-			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
+			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error loading opcodes file %s. Not registering patch %s.", opfile.c_str(), name);
 			return;
 		}
 	}
@@ -53,7 +53,7 @@ void Register(EQStreamIdentifier &into) {
 	signature.first_eq_opcode = opcodes->EmuToEQ(OP_DataRate);
 	into.RegisterOldPatch(signature, pname.c_str(), &opcodes, &struct_strategy);
 		
-	Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
+	Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[IDENTIFY] Registered patch %s", name);
 }
 
 void Reload() {
@@ -68,10 +68,10 @@ void Reload() {
 		opfile += name;
 		opfile += ".conf";
 		if(!opcodes->ReloadOpcodes(opfile.c_str())) {
-			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
+			Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Error reloading opcodes file %s for patch %s.", opfile.c_str(), name);
 			return;
 		}
-		Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
+		Log.DoLog(EQEmuLogSys::General, EQEmuLogSys::Netcode, "[OPCODES] Reloaded opcodes for patch %s", name);
 	}
 }
 
