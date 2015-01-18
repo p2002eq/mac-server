@@ -1507,6 +1507,17 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 
 		if((RuleB(Character, LeaveCorpses) && GetLevel() >= RuleI(Character, DeathItemLossLevel)) || RuleB(Character, LeaveNakedCorpses))
 		{
+			// If we've died on a boat, make sure corpse falls overboard.
+			if(GetBoatNPCID() != 0)
+			{
+				if(zone->zonemap != nullptr)
+				{
+					z_pos -= 100;
+					Map::Vertex dest(x_pos, y_pos, z_pos);
+					z_pos = zone->zonemap->FindBestZ(dest, nullptr);
+				}
+			}
+
 			// creating the corpse takes the cash/items off the player too
 			Corpse *new_corpse = new Corpse(this, exploss, killedby);
 

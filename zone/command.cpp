@@ -3068,28 +3068,20 @@ void command_motd(Client *c, const Seperator *sep)
 
 void command_listpetition(Client *c, const Seperator *sep)
 {
-	if (sep->arg[1][0] == 0) {
-		c->Message(0, "Usage: #viewpetition (petition number) Type #listpetition for a list");
-		return;
-	}
-
-	c->Message(CC_Red, "	ID : Character Name , Petition Text");
 
 	std::string query = "SELECT petid, charname, petitiontext FROM petitions ORDER BY petid";
 	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		return;
 
-	LogFile->write(EQEmuLog::Normal, "View petition request from %s, petition number: %i", c->GetName(), atoi(sep->argplus[1]));
-
 	if (results.RowCount() == 0) {
-		c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
+		c->Message(CC_Red, "There was an error in your request: No petitions found!");
 		return;
 	}
 
+	c->Message(CC_Red, "	ID : Character Name , Petition Text");
 	for (auto row = results.begin(); row != results.end(); ++row)
-		if (strcasecmp(row[0], sep->argplus[1]) == 0)
-			c->Message(15, " %s:	%s , %s ", row[0], row[1], row[2]);
+		c->Message(CC_Yellow, " %s:	%s , %s ", row[0], row[1], row[2]);
 }
 
 void command_equipitem(Client *c, const Seperator *sep){

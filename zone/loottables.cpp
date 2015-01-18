@@ -296,10 +296,6 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 				else
 					can_equip_secondary = false;
 
-				// If we get disarmed, this will allow us to dual wield again when re-equipped.
-				if(GetEquipment(MaterialSecondary) != 0 && can_equip_secondary == true)
-					can_dual_wield = true;
-
 				if (item2->Proc.Effect != 0)
 					CastToMob()->AddProcToWeapon(item2->Proc.Effect, true);
 
