@@ -1018,7 +1018,6 @@ void Client::Trader_ShowItems(){
 	outints->Code = BazaarTrader_ShowItems;
 
 	QueuePacket(outapp);
-	_pkt(TRADING__PACKETS, outapp);
 	safe_delete(outapp);
 	safe_delete(TraderItems);
 }
@@ -1042,7 +1041,6 @@ void Client::SendTraderPacket(Client* Trader, uint32 Unknown72)
 
 	QueuePacket(outapp);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 }
@@ -1084,7 +1082,6 @@ void Client::Trader_StartTrader() {
 
 	QueuePacket(outapp);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 
@@ -1102,7 +1099,6 @@ void Client::Trader_StartTrader() {
 
 	entity_list.QueueClients(this, outapp, false);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 }
@@ -1158,7 +1154,6 @@ void Client::Trader_EndTrader() {
 
 	entity_list.QueueClients(this, outapp, false);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 
@@ -1172,7 +1167,6 @@ void Client::Trader_EndTrader() {
 
 	QueuePacket(outapp);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 
@@ -1419,7 +1413,6 @@ void Client::NukeTraderItem(uint16 Slot,int16 Charges,uint16 Quantity,Client* Cu
 		Quantity = 1;
 
 	for(int i = 0; i < Quantity; i++) {
-		_pkt(TRADING__PACKETS, outapp2);
 
 		this->QueuePacket(outapp2);
 	}
@@ -1679,7 +1672,6 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	Trader->Trader_CustomerBought(this,TotalCost,tbs->ItemID,outtbs->Quantity,BuyItem->GetItem()->Name);
 
 	Trader->QueuePacket(outapp);
-	_pkt(TRADING__PACKETS, outapp);
 
 	safe_delete(outapp);
 	safe_delete(outapp2);
@@ -1910,7 +1902,6 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 		brds->Unknown012 = 0xFFFFFFFF;
 		brds->Unknown016 = 0xFFFFFFFF;
 		this->QueuePacket(outapp2);
-		_pkt(TRADING__PACKETS,outapp2);
 		safe_delete(outapp2);
 		return;
 	}
@@ -1964,7 +1955,6 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 
 	this->QueuePacket(outapp2);
 
-	_pkt(TRADING__PACKETS,outapp2);
 	safe_delete(outapp2);
 }
 

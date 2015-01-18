@@ -1799,7 +1799,6 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 
 void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 {
-	_pkt(TRADING__PACKETS, app);
 
 	if (app->size == sizeof(BazaarSearch_Struct)) {
 
@@ -6585,7 +6584,6 @@ void Client::Handle_OP_RezzAnswer(const EQApplicationPacket *app)
 	Log.Out(Logs::Detail, Logs::Spells, "Received OP_RezzAnswer from client. Pendingrezzexp is %i, action is %s",
 		PendingRezzXP, ra->action ? "ACCEPT" : "DECLINE");
 
-	_pkt(SPELLS__REZ, app);
 
 	OPRezzAnswer(ra->action, ra->spellid, ra->zone_id, ra->instance_id, ra->x, ra->y, ra->z);
 
@@ -8078,7 +8076,6 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 	// SoF sends 1 or more unhandled OP_Trader packets of size 96 when a trade has completed.
 	// I don't know what they are for (yet), but it doesn't seem to matter that we ignore them.
 
-	_pkt(TRADING__PACKETS, app);
 
 	uint32 max_items = 80;
 
@@ -8230,7 +8227,6 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 	//
 	// Client has elected to buy an item from a Trader
 	//
-	_pkt(TRADING__PACKETS, app);
 
 	if (app->size == sizeof(TraderBuy_Struct)){
 
@@ -8325,7 +8321,6 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 	// This is when a potential purchaser right clicks on this client who is in Trader mode to
 	// browse their goods.
 	//
-	_pkt(TRADING__PACKETS, app);
 
 	TraderClick_Struct* tcs = (TraderClick_Struct*)app->pBuffer;
 
@@ -8356,7 +8351,6 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 
 	QueuePacket(outapp);
 
-	_pkt(TRADING__PACKETS, outapp);
 
 	if (outtcs->Approval) {
 		this->BulkSendTraderInventory(Trader->CharacterID());
