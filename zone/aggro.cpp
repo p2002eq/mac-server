@@ -432,7 +432,7 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude)
 
 		AggroRange *= AggroRange;
 
-		if (mob->DistNoRoot(*attacker) > AggroRange)
+		if (ComparativeDistance(mob->GetPosition(), attacker->GetPosition()) > AggroRange)
 			continue;
 
 		Count++;
