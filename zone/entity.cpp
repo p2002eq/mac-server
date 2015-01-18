@@ -353,7 +353,7 @@ void EntityList::CheckGroupList (const char *fname, const int fline)
 	{
 		if (*it == nullptr)
 		{
-			Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "nullptr group, %s:%i", fname, fline);
+			Log.Out(Logs::General, Logs::Error, "nullptr group, %s:%i", fname, fline);
 		}
 	}
 }
@@ -563,12 +563,12 @@ void EntityList::MobProcess()
 				zone->StartShutdownTimer();
 				Group *g = GetGroupByMob(mob);
 				if(g) {
-					Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "About to delete a client still in a group.");
+					Log.Out(Logs::General, Logs::Error, "About to delete a client still in a group.");
 					g->DelMember(mob);
 				}
 				Raid *r = entity_list.GetRaidByClient(mob->CastToClient());
 				if(r) {
-					Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "About to delete a client still in a raid.");
+					Log.Out(Logs::General, Logs::Error, "About to delete a client still in a raid.");
 					r->MemberZoned(mob->CastToClient());
 				}
 				entity_list.RemoveClient(id);
@@ -600,7 +600,7 @@ void EntityList::AddGroup(Group *group)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, 
+		Log.Out(Logs::General, Logs::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
@@ -629,7 +629,7 @@ void EntityList::AddRaid(Raid *raid)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, 
+		Log.Out(Logs::General, Logs::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
@@ -2454,7 +2454,7 @@ char *EntityList::MakeNameUnique(char *name)
 			return name;
 		}
 	}
-	Log.Out(EQEmuLogSys::General, EQEmuLogSys::Error, "Fatal error in EntityList::MakeNameUnique: Unable to find unique name for '%s'", name);
+	Log.Out(Logs::General, Logs::Error, "Fatal error in EntityList::MakeNameUnique: Unable to find unique name for '%s'", name);
 	char tmp[64] = "!";
 	strn0cpy(&tmp[1], name, sizeof(tmp) - 1);
 	strcpy(name, tmp);
@@ -3546,7 +3546,7 @@ void EntityList::SendGroupLeader(uint32 gid, const char *lname, const char *oldl
 					strcpy(gj->membername, lname);
 					strcpy(gj->yourname, oldlname);
 					it->second->QueuePacket(outapp);
-					Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::General, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
+					Log.Out(Logs::Detail, Logs::General, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
 					safe_delete(outapp);
 				}
 			}

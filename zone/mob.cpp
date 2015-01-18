@@ -1397,7 +1397,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 
 	entity_list.QueueClients(this, outapp);
 	safe_delete(outapp);
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
+	Log.Out(Logs::Detail, Logs::Spells, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
 		this->race, this->gender, this->texture, this->helmtexture, this->haircolor, this->beardcolor, this->eyecolor1, this->eyecolor2, this->hairstyle, this->luclinface, this->size);
 }
 
@@ -2348,7 +2348,7 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(!IsValidSpell(spell_id)) { // Check for a valid spell otherwise it will crash through the function
 		if(IsClient()){
 			Message(0, "Invalid spell proc %u", spell_id);
-			Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Player %s, Weapon Procced invalid spell %u", this->GetName(), spell_id);
+			Log.Out(Logs::Detail, Logs::Spells, "Player %s, Weapon Procced invalid spell %u", this->GetName(), spell_id);
 		}
 		return;
 	}
@@ -3577,7 +3577,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 {
 	// This method should only be used for spell effects.
 
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
+	Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
 	float new_x = GetX();
 	float new_y = GetY();
 	float new_z = GetZ() + pushup;
@@ -3585,7 +3585,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
+		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		m_Position.x = new_x;
 		m_Position.y = new_y;
 		m_Position.z = new_z;
@@ -3621,7 +3621,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	}
 	else
 	{
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "DoKnockback(): LOS check failed.");
+		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }
@@ -3954,7 +3954,7 @@ void Mob::MeleeLifeTap(int32 damage) {
 	if(lifetap_amt && damage > 0){
 
 		lifetap_amt = damage * lifetap_amt / 100;
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Melee lifetap healing for %d damage.", damage);
+		Log.Out(Logs::Detail, Logs::Combat, "Melee lifetap healing for %d damage.", damage);
 
 		if (lifetap_amt > 0)
 			HealDamage(lifetap_amt); //Heal self for modified damage amount.

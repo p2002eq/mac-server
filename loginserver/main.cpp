@@ -62,9 +62,9 @@ int main()
 
 	const char *log_ini_file = "./log.ini";
 	if(!load_log_settings(log_ini_file))
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Warning: Unable to read %s", log_ini_file);
+		Log.Out(Logs::Detail, Logs::Zone_Server, "Warning: Unable to read %s", log_ini_file);
 	else
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Log settings loaded from %s", log_ini_file);
+		Log.Out(Logs::Detail, Logs::Zone_Server, "Log settings loaded from %s", log_ini_file);
 
 	server_log = new ErrorLog(log_name.str().c_str());
 	server_log->Log(log_debug, "Logging System Init.");

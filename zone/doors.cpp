@@ -131,9 +131,9 @@ bool Doors::Process()
 void Doors::HandleClick(Client* sender, uint8 trigger)
 {
 	//door debugging info dump
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Doors, "%s clicked door %s (dbid %d, eqid %d) at %s", sender->GetName(), door_name, db_id, door_id, to_string(m_Position).c_str());
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Doors, "  incline %d, opentype %d, lockpick %d, key %d, nokeyring %d, trigger %d type %d, param %d", incline, opentype, lockpick, keyitem, nokeyring, trigger_door, trigger_type, door_param);
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::Doors, "  size %d, invert %d, dest: %s %s", size, invert_state, dest_zone, to_string(m_Destination).c_str());
+	Log.Out(Logs::Detail, Logs::Doors, "%s clicked door %s (dbid %d, eqid %d) at %s", sender->GetName(), door_name, db_id, door_id, to_string(m_Position).c_str());
+	Log.Out(Logs::Detail, Logs::Doors, "  incline %d, opentype %d, lockpick %d, key %d, nokeyring %d, trigger %d type %d, param %d", incline, opentype, lockpick, keyitem, nokeyring, trigger_door, trigger_type, door_param);
+	Log.Out(Logs::Detail, Logs::Doors, "  size %d, invert %d, dest: %s %s", size, invert_state, dest_zone, to_string(m_Destination).c_str());
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MoveDoor, sizeof(MoveDoor_Struct));
 	MoveDoor_Struct* md = (MoveDoor_Struct*)outapp->pBuffer;
@@ -247,7 +247,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 					
 
 #if EQDEBUG>=5
-					Log.Out(EQEmuLogSys::General, EQEmuLogSys::None, "Client has lockpicks: skill=%f", modskill);
+					Log.Out(Logs::General, Logs::None, "Client has lockpicks: skill=%f", modskill);
 #endif
 
 					if(GetLockpick() <= modskill)
@@ -505,13 +505,13 @@ void Doors::ToggleState(Mob *sender)
 }
 
 void Doors::DumpDoor(){
-	Log.Out(EQEmuLogSys::General, EQEmuLogSys::None,
+	Log.Out(Logs::General, Logs::None,
 		"db_id:%i door_id:%i zone_name:%s door_name:%s %s",
 		db_id, door_id, zone_name, door_name, to_string(m_Position).c_str());
-	Log.Out(EQEmuLogSys::General, EQEmuLogSys::None,
+	Log.Out(Logs::General, Logs::None,
 		"opentype:%i guild_id:%i lockpick:%i keyitem:%i nokeyring:%i trigger_door:%i trigger_type:%i door_param:%i open:%s",
 		opentype, guild_id, lockpick, keyitem, nokeyring, trigger_door, trigger_type, door_param, (isopen) ? "open":"closed");
-	Log.Out(EQEmuLogSys::General, EQEmuLogSys::None,
+	Log.Out(Logs::General, Logs::None,
 		"dest_zone:%s destination:%s ",
 		dest_zone, to_string(m_Destination).c_str());
 }
@@ -590,7 +590,7 @@ int32 ZoneDatabase::GetDoorsDBCountPlusOne(const char *zone_name, int16 version)
 }
 
 bool ZoneDatabase::LoadDoors(int32 iDoorCount, Door *into, const char *zone_name, int16 version) {
-	Log.Out(EQEmuLogSys::General, EQEmuLogSys::Status, "Loading Doors from database...");
+	Log.Out(Logs::General, Logs::Status, "Loading Doors from database...");
 
 
 //	Door tmpDoor;

@@ -47,7 +47,7 @@ WorldServer::~WorldServer(){
 }
 
 void WorldServer::OnConnected(){
-	Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connected to World.");
+	Log.Out(Logs::Detail, Logs::WebInterface_Server, "Connected to World.");
 	WorldConnection::OnConnected();
 }
 
@@ -58,7 +58,7 @@ void WorldServer::Process(){
 
 	ServerPacket *pack = nullptr;
 	while((pack = tcpc.PopPacket())){
-		Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Received Opcode: %4X", pack->opcode);
+		Log.Out(Logs::Detail, Logs::WebInterface_Server, "Received Opcode: %4X", pack->opcode);
 		switch(pack->opcode) {
 			case 0: { break; }
 			case ServerOP_KeepAlive: { break; }

@@ -1176,9 +1176,9 @@ XS(XS_Client_MovePC)
 		}
 		else {
 			if (THIS->IsNPC())
-				Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process a type NPC reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process a type NPC reference");
 			else
-				Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
 
 			Perl_croak(aTHX_ "THIS is not of type Client");
 		}
@@ -1216,9 +1216,9 @@ XS(XS_Client_MovePCInstance)
 		}
 		else {
 			if (THIS->IsNPC())
-				Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
 			else
-				Log.Out(EQEmuLogSys::Detail, EQEmuLogSys::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
 
 			Perl_croak(aTHX_ "THIS is not of type Client");
 
