@@ -39,12 +39,14 @@ RULE_REAL( Character, ExpMultiplier, 1.0 )
 RULE_REAL( Character, AAExpMultiplier, 1.0 )
 RULE_REAL( Character, GroupExpMultiplier, 1.0 )
 RULE_REAL( Character, RaidExpMultiplier, 0.2 )
+RULE_BOOL ( Character, SmoothEXPLoss, true)
+RULE_REAL ( Character, EXPLossMultiplier, 1.0)
 RULE_INT ( Character, AutosaveIntervalS, 240 )	//0=disabled
 RULE_INT ( Character, HPRegenMultiplier, 100)
 RULE_INT ( Character, ManaRegenMultiplier, 100)
 RULE_INT ( Character, EnduranceRegenMultiplier, 100)
-RULE_INT ( Character, ConsumptionMultiplier, 100) //item's hunger restored = this value * item's food level, 100 = normal, 50 = people eat 2x as fast, 200 = people eat 2x as slow
 RULE_INT ( Character, ConsumptionValue, 6000) //How "full" each consumption of food or drink will make the player. EQEmu default is 6000.
+RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
 RULE_BOOL( Character, HealOnLevel, false)
 RULE_BOOL( Character, ManaOnLevel, false)
 RULE_BOOL( Character, FeignKillsPet, false)
@@ -89,7 +91,6 @@ RULE_BOOL ( Character, CheckCursorEmptyWhenLooting, true ) // If true, a player 
 RULE_BOOL ( Character, MaintainIntoxicationAcrossZones, true ) // If true, alcohol effects are maintained across zoning and logging out/in.
 RULE_BOOL ( Character, EnableDiscoveredItems, false ) // If enabled, it enables EVENT_DISCOVER_ITEM and also saves character names and timestamps for the first time an item is discovered.
 RULE_BOOL ( Character, KeepLevelOverMax, false) // Don't delevel a character that has somehow gone over the level cap
-RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
 RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods, 36 commonly referred to as "3.6" as well.
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_REAL (Character, BaseRunSpeed, 0.7)
@@ -184,6 +185,8 @@ RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
 RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
 RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
+RULE_BOOL ( AlKabor, Count6thGroupMember, false)
 RULE_CATEGORY_END()
 
 
@@ -490,6 +493,10 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
+RULE_CATEGORY_END()
+
+RULE_CATEGORY ( AA )
+RULE_INT ( AA, ExpPerPoint, 23976496) //Amount of exp per AA, if AAPercent is 100%. Otherwise, we use the standard XP formula for 52.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Console )

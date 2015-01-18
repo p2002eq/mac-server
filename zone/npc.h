@@ -277,6 +277,9 @@ public:
 	void	CheckSignal();
 	inline bool IsTargetableWithHotkey() const { return no_target_hotkey; }
 	int32 GetNPCHPRegen() const { return hp_regen + itembonuses.HPRegen + spellbonuses.HPRegen; }
+	int32 GetNPCManaRegen() const { return mana_regen + itembonuses.ManaRegen + spellbonuses.ManaRegen; }
+	int32 GetHPRegen();
+	int32 GetManaRegen();
 	inline const char* GetAmmoIDfile() const { return ammo_idfile; }
 
 	//waypoint crap

@@ -91,7 +91,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	}
 
 	uint32 requiredxp = GetEXPForLevel(GetLevel() + 1) - GetEXPForLevel(GetLevel());
-	float xp_cap = (float)requiredxp * 0.125f; //12.5% of total XP is our cap
+	float xp_cap = (float)requiredxp * 0.13f; //13% of total XP is our cap
 
 	if(add_exp > xp_cap)
 		add_exp = xp_cap;
@@ -106,7 +106,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	if(aaexp < had_aaexp)
 		aaexp = had_aaexp;	//watch for wrap
 
-	Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
+	//Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
 	SetEXP(exp, aaexp, resexp);
 }
 
@@ -443,7 +443,12 @@ uint32 Client::GetEXPForLevel(uint16 check_level, bool aa)
 	// gains or loses XP. 
 
 	if(aa)
-		check_level = 52;
+	{
+		if(m_epp.perAA > 99)
+			return (RuleI(AA, ExpPerPoint));
+		else
+			check_level = 52;
+	}
 
 	check_level -= 1;
 	float base = (check_level)*(check_level)*(check_level);
@@ -535,28 +540,57 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if(other->GetOwner() && other->GetOwner()->IsClient()) // Ensure owner isn't pc
 		return;
 
-	uint8 maxlevel = 1;
-	int conlevel = Mob::GetLevelCon(maxlevel, other->GetLevel());
-	if(conlevel == CON_GREEN)
-		return;	//no exp for greenies...
-
 	unsigned int i;
-	uint8 membercount = 0;
-	uint8 close_membercount = 0;
+	int8 membercount = 0;
+	int8 close_membercount = 0;
+	uint8 maxlevel = 1;
 
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr  && members[i]->IsClient()) {
 			Client *cmember = members[i]->CastToClient();
 			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
 			{
-				++membercount;
-				if(cmember->CastToClient()->IsInRange(other))
-					++close_membercount;
+				if(members[i]->GetLevel() > maxlevel)
+					maxlevel = members[i]->GetLevel();
+
+				if(cmember->GetLevelCon(other->GetLevel()) != CON_GREEN)
+				{
+					++membercount;
+					if(cmember->CastToClient()->IsInRange(other))
+						++close_membercount;
+				}
 			}
 		}
 	}
 
-	if (membercount == 0 || close_membercount == 0)
+	// If the NPC is green to the whole group or they are all out of the kill zone (wipe?) this will return.
+	if (membercount <= 0 || close_membercount <= 0)
+		return;
+
+	bool isgreen = false;
+	int conlevel = Mob::GetLevelCon(maxlevel, other->GetLevel());
+	if(conlevel == CON_GREEN)
+		isgreen = true;
+
+	// The first loop grabs the maxlevel, so we need to adjust the count here checking for level range, 
+	// before applying xp in the third and final loop.
+	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
+		if (members[i] != nullptr && members[i]->IsClient()) // If Group Member is Client
+		{
+			Client *cmember = members[i]->CastToClient();
+			if (!cmember->IsInLevelRange(maxlevel) &&
+				cmember->CastToClient()->GetZoneID() == zone->GetZoneID() &&
+				cmember->GetLevelCon(other->GetLevel()) != CON_GREEN) 
+			{
+				--membercount;
+
+				if(cmember->CastToClient()->IsInRange(other))
+					--close_membercount;
+			}	
+		}
+	}
+
+	if (membercount <= 0 || close_membercount <= 0)
 		return;
 
 	if(!RuleB(AlKabor, OutOfRangeGroupXPBonus))
@@ -567,33 +601,65 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 		groupmod += 0.20;
 	else if(membercount == 3)
 		groupmod += 0.40;
-	else if(membercount == 4)
-		groupmod += 0.60;
-	else if(membercount > 4)
-		groupmod += 0.80;
+	if(RuleB(AlKabor, GroupEXPBonuses))
+	{
+		if(membercount == 4)
+			groupmod += 1.20;
+		else if(membercount > 4)
+			groupmod += 1.60;
+	}
+	else
+	{
+		if(membercount == 4)
+			groupmod += 0.60;
+		else if(membercount > 4)
+			groupmod += 0.80;
+	}
 
 	uint32 groupexp = (uint32)((float)exp * groupmod * (RuleR(Character, GroupExpMultiplier)));
 
 	// Give XP to all clients in the group who are close to the kill. 
-	// 6th member is free for division.
-	if(close_membercount == 6)
-		close_membercount = 5;
+	if(!RuleB(AlKabor, Count6thGroupMember))
+	{
+		// 6th member is free for division.
+		if(close_membercount == 6)
+			close_membercount = 5;
+	}
+
+	uint32 splitgroupxp = groupexp / close_membercount;
+	if(splitgroupxp < 1)
+		splitgroupxp = 1;
 
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] != nullptr && members[i]->IsClient()) // If Group Member is Client
 		{
 			Client *cmember = members[i]->CastToClient();
-			uint32 finalgroupxp = groupexp / close_membercount;
-			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID())
+			
+			if(cmember->CastToClient()->GetZoneID() == zone->GetZoneID() &&
+				cmember->GetLevelCon(other->GetLevel()) != CON_GREEN &&
+				cmember->IsInRange(other))
 			{
-				if(cmember->IsInRange(other))
+				if (cmember->IsInLevelRange(maxlevel)) 
 				{
-					//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i", finalgroupxp, groupexp, close_membercount, membercount);
-					cmember->AddEXP(finalgroupxp, conlevel);
+					if(isgreen)
+					{
+						// NPCs that are green to some of the group do not split XP.
+						cmember->AddEXP(groupexp, cmember->GetLevelCon(other->GetLevel()));
+						_log(_GROUP__LOG, "%s gets non-split green XP worth: %i. You lucky dog.", cmember->GetName(), groupexp);
+					}
+					else
+					{
+						cmember->AddEXP(splitgroupxp, conlevel);
+						_log(_GROUP__LOG, "%s splits %i with the rest of the group. Their share: %i", cmember->GetName(), groupexp, splitgroupxp);
+						//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i in_exp is: %i", splitgroupxp, groupexp, close_membercount, membercount, exp);
+
+					}
 				}
+				else
+					_log(_GROUP__LOG, "%s is too low in level to gain XP from this group.", cmember->GetName());
 			}
 			else
-				_log(CLIENT__EXP, "%s is out of range for group XP!", cmember->GetName());
+				_log(_GROUP__LOG, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
 		}
 	}
 }
@@ -691,33 +757,53 @@ bool Client::IsInRange(Mob* defender)
 		return true;
 }
 
+bool Client::IsInLevelRange(uint8 maxlevel)
+{
+	int16 diff = GetLevel() - maxlevel;
+	int16 maxdiff = -(GetLevel()*15/10 - GetLevel());
+
+	if(maxdiff > -5)
+		maxdiff = -5;
+
+	if (diff >= (maxdiff)) 
+		return true;
+	else
+		return false;
+}
+
 void Client::GetExpLoss(Mob* killerMob, uint16 spell, int &exploss)
 {
-	float GetNum [] = {0.16f, 0.08f, 0.15f, 0.075f, 0.14f, 0.07f, 0.13f, 0.065f, 0.12f, 0.06f};
 	float loss;
 	uint8 level = GetLevel();
 	if(level >= 1 && level <= 29)
-		loss = GetNum[0];
+		loss = 0.16f;
 	if(level == 30)
-		loss = GetNum[1];
+		loss = 0.08f;
 	if(level >= 31 && level <= 34)
-		loss = GetNum[2];
+		loss = 0.15f;
 	if(level == 35)
-		loss = GetNum[3];
+		loss = 0.075f;
 	if(level >= 36 && level <= 39)
-		loss = GetNum[4];
+		loss = 0.14f;
 	if(level == 40)
-		loss = GetNum[5];
+		loss = 0.07f;
 	if(level >= 41 && level <= 44)
-		loss = GetNum[6];
+		loss = 0.13f;
 	if(level == 45)
-		loss = GetNum[7];
+		loss = 0.065f;
 	if(level >= 46 && level <= 50)
-		loss = GetNum[8];
+		loss = 0.12f;
 	if(level >= 51)
-		loss = GetNum[9];
+		loss = 0.06f;
+
+	if(RuleB(Character, SmoothEXPLoss))
+	{
+		if(loss >= 0.12)
+			loss /= 2;
+	}
+
 	int requiredxp = GetEXPForLevel(level + 1) - GetEXPForLevel(level);
-	exploss=(int)((float)requiredxp * (loss));
+	exploss=(int)((float)requiredxp * (loss * RuleR(Character, EXPLossMultiplier)));
 
 	if( (level < RuleI(Character, DeathExpLossLevel)) || (level > RuleI(Character, DeathExpLossMaxLevel)) || IsBecomeNPC() )
 	{

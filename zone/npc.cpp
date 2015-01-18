@@ -277,6 +277,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	guard_heading_saved = 0;
 	SetEmoteID(d->emoteid);
 	SetWalkSpeed(d->walkspeed);
+	SetCombatHPRegen(d->combat_hp_regen);
+	SetCombatManaRegen(d->combat_mana_regen);
 
 	InitializeBuffSlots();
 	CalcBonuses();
@@ -506,35 +508,11 @@ bool NPC::Process()
 		if(curfp)
 			ProcessFlee();
 
-		uint32 bonus = 0;
+		if(GetHP() < GetMaxHP())
+			SetHP(GetHP() + GetHPRegen());
 
-		if(GetAppearance() == eaSitting)
-			bonus+=3;
-
-		int32 OOCRegen = 0;
-		if(oocregen > 0){ //should pull from Mob class
-			OOCRegen += GetMaxHP() * oocregen / 100;
-			}
-		//Lieka Edit:Fixing NPC regen.NPCs should regen to full during a set duration, not based on their HPs.Increase NPC's HPs by % of total HPs / tick.
-		if((GetHP() < GetMaxHP()) && !IsPet()) {
-			if(!IsEngaged()) {//NPC out of combat
-				if(GetNPCHPRegen() > OOCRegen)
-					SetHP(GetHP() + GetNPCHPRegen());
-				else
-					SetHP(GetHP() + OOCRegen);
-			} else
-				SetHP(GetHP()+GetNPCHPRegen());
-		} else if(GetHP() < GetMaxHP() && GetOwnerID() !=0) {
-			if(!IsEngaged()) //pet
-				SetHP(GetHP()+GetNPCHPRegen()+bonus+(GetLevel()/5));
-			else
-				SetHP(GetHP()+GetNPCHPRegen()+bonus);
-		} else
-			SetHP(GetHP()+GetNPCHPRegen());
-
-		if(GetMana() < GetMaxMana()) {
-			SetMana(GetMana()+mana_regen+bonus);
-		}
+		if(GetMana() < GetMaxMana())
+			SetMana(GetMana() + GetManaRegen());
 	}
 
 	if (sendhpupdate_timer.Check() && (IsTargeted() || (IsPet() && GetOwner() && GetOwner()->IsClient()))) {
@@ -1251,7 +1229,14 @@ void NPC::PickPocket(Client* thief) {
 
 	//make sure were allowed to targte them:
 	int olevel = GetLevel();
-	if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
+	if(thief->GetLevel() < 50) {
+		if(olevel > 45) {
+			thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
+			thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+			//should we check aggro
+			return;
+		}
+	} else if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) {
 		thief->Message(CC_Red, "You are too inexperienced to pick pocket this target");
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		//should we check aggro
@@ -2313,4 +2298,63 @@ void NPC::DepopSwarmPets()
 			}
 		}
 	}
+}
+
+int32 NPC::GetHPRegen() 
+{
+	uint32 bonus = 0;
+	if(GetAppearance() == eaSitting)
+			bonus+=3;
+
+	if((GetHP() < GetMaxHP()) && !IsPet()) 
+	{
+		// OOC
+		if(!IsEngaged()) 
+		{
+			return(GetNPCHPRegen() + bonus); // hp_regen + spell/item regen + sitting bonus
+		// In Combat
+		} 
+		else
+			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen)); // combat_regen + spell/item regen
+	} 
+	// Pet
+	else if(GetHP() < GetMaxHP() && GetOwnerID() !=0) 
+	{
+		if(!IsEngaged())
+			return(GetNPCHPRegen() + bonus + (GetLevel()/5));
+		else
+			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen));
+	}
+	else
+		return 0;
+}
+
+int32 NPC::GetManaRegen()
+{
+	uint32 bonus = 0;
+	if(GetAppearance() == eaSitting)
+	bonus+=3;
+
+	// Non-Pet
+	if((GetMana() < GetMaxMana()) && !IsPet()) 
+	{
+		// OOC
+		if(!IsEngaged()) 
+		{
+			return(GetNPCManaRegen() + bonus); // mana_regen + spell/item regen + sitting bonus
+		// In Combat
+		} 
+		else
+			return(GetCombatManaRegen() + (GetNPCManaRegen() - mana_regen)); // combat_regen + spell/item regen
+	} 
+	// Pet
+	else if(GetMana() < GetMaxMana() && GetOwnerID() !=0) 
+	{
+		if(!IsEngaged())
+			return(GetNPCManaRegen() + bonus + (GetLevel()/5));
+		else
+			return(GetCombatManaRegen() + (GetNPCManaRegen() - mana_regen));
+	}
+	else
+		return 0;
 }

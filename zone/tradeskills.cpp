@@ -99,7 +99,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 	// bit 6 (0x20): unlisted recipe flag
 	if ((spec.must_learn&0xF) == 1 && !spec.has_learnt) {
 		// Made up message for the client. Just giving a DNC is the other option.
-		user->Message(4, "You need to learn how to combine these first.");
+		user->Message(CC_Purple, "You need to learn how to combine these first.");
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_TradeSkillCombine, 0);
 		user->QueuePacket(outapp);
 		safe_delete(outapp);
@@ -108,7 +108,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 	// Character does not have the required skill.
 	if(spec.skill_needed > 0 && user->GetSkill(spec.tradeskill) < spec.skill_needed ) {
 		// Notify client.
-		user->Message(4, "You are not skilled enough.");
+		user->Message(CC_Purple, "You are not skilled enough.");
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_TradeSkillCombine, 0);
 		user->QueuePacket(outapp);
 		safe_delete(outapp);
@@ -414,10 +414,13 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	int16 over_trivial = (int16)GetRawSkill(spec->tradeskill) - (int16)spec->trivial;
 
 	//handle caps
-	if(spec->nofail) {
+	if(spec->nofail) 
+	{
 		chance = 100;	//cannot fail.
 		_log(TRADESKILLS__TRACE, "...This combine cannot fail.");
-	} else if(over_trivial >= 0) {
+	} 
+	else if(over_trivial >= 0) 
+	{
 		// At reaching trivial the chance goes to 95% going up an additional
 		// percent for every 40 skillpoints above the trivial.
 		// The success rate is not modified through stats.
@@ -427,11 +430,14 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		// above critical still stands.
 		// Mastery modifier is: 10%/25%/50% for rank one/two/three
 		chance = 95.0f + (float(user_skill - spec->trivial) / 40.0f);
-		Message_StringID(MT_Emote, TRADESKILL_TRIVIAL);
-	} else if(chance < 5) {
+	}
+	else if(chance < 5) 
+	{
 		// Minimum chance is always 5
 		chance = 5;
-	} else if(chance > 95) {
+	}
+	else if(chance > 95)
+	{
 		//cap is 95, shouldent reach this before trivial, but just in case.
 		chance = 95;
 	}
@@ -572,11 +578,14 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 	chance = mod_tradeskill_chance(chance, spec);
 
+	if (over_trivial >= 0)
+		Message_StringID(CC_Purple, TRADESKILL_TRIVIAL);
+
 	if (((spec->tradeskill==75) || GetGM() || (chance > res)) || zone->random.Roll(aa_chance)) {
 		if(over_trivial < 0)
 			CheckIncreaseTradeskill(1, spec->tradeskill);
 
-		Message_StringID(4, TRADESKILL_SUCCEED, spec->name.c_str());
+		Message_StringID(CC_Purple, TRADESKILL_SUCCEED, spec->name.c_str());
 
 		_log(TRADESKILLS__TRACE, "Tradeskill success");
 
@@ -590,14 +599,16 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 			}
 			++itr;
 		}
+
 		return(true);
 	}
 	/* Tradeskill Fail */
-	else {
+	else 
+	{
 		if(over_trivial < 0)
 			CheckIncreaseTradeskill(2, spec->tradeskill);
 
-		Message_StringID(MT_Emote,TRADESKILL_FAILED);
+		Message_StringID(CC_Purple,TRADESKILL_FAILED);
 
 		_log(TRADESKILLS__TRACE, "Tradeskill failed");
 			if (this->GetGroup())
@@ -1048,7 +1059,7 @@ void Client::LearnRecipe(uint32 recipeID)
     if (row[1] != nullptr)
         return;
 
-    Message_StringID(4, TRADESKILL_LEARN_RECIPE, row[0]);
+    Message_StringID(CC_Purple, TRADESKILL_LEARN_RECIPE, row[0]);
     // Actually learn the recipe now
 	query = StringFormat("INSERT INTO char_recipe_list "
                         "SET recipe_id = %u, char_id = %u, madecount = 0 "

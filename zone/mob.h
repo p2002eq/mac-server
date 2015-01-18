@@ -420,11 +420,12 @@ public:
 	void  SetWalkSpeed(float speed) { walkspeed = speed; }
 	float GetRunspeed() const { return(_GetMovementSpeed(0)); }
 	float GetBaseRunspeed() const { return runspeed; }
-	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); }
-	bool IsRunning() const { return m_is_running; }
-	void SetRunning(bool val) { m_is_running = val; }
+	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by grids roamboxes, and roamers to determine how fast the NPC *should* move.
+	float GetSpeed() const { return IsCurrentlyRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by #showstats to show how fast the NPC currently *is* moving.
+	bool IsRunning() const { return m_is_running; } 
+	void SetRunning(bool val) { m_is_running = val; } // Toggle to force the NPC to run or walk on their next update.
 	bool IsCurrentlyRunning() const { return m_running; }
-	void SetCurrentlyRunning(bool val) { m_running = val; }
+	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDeltas(float delta_x, float delta_y, float delta_z, float delta_h);
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
@@ -880,6 +881,10 @@ public:
 
 	inline void SetEmoteID(uint16 emote) { emoteid = emote; }
 	inline uint16 GetEmoteID() { return emoteid; }
+	inline void SetCombatHPRegen(uint32 regen) { combat_hp_regen = regen; }
+	inline uint16 GetCombatHPRegen() { return combat_hp_regen; }
+	inline void SetCombatManaRegen(uint32 regen) { combat_mana_regen = regen; }
+	inline uint16 GetCombatManaRegen() { return combat_mana_regen; }
 
 	bool 	HasSpellEffect(int effectid);
 	int 	mod_effect_value(int effect_value, uint16 spell_id, int effect_type, Mob* caster);
@@ -1248,6 +1253,8 @@ protected:
 	int QGVarDuration(const char *fmt);
 	void InsertQuestGlobal(int charid, int npcid, int zoneid, const char *name, const char *value, int expdate);
 	uint16 emoteid;
+	uint32 combat_hp_regen;
+	uint32 combat_mana_regen;
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;

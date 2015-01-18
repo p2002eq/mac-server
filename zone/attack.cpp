@@ -817,7 +817,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 
 	//check to see if our weapons or fists are magical.
 	if(against->GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL)){
-		if(weapon_item){
+		if(weapon_item && !GetSpecialAbility(SPECATK_MAGICAL)){
 			if(weapon_item->Magic){
 				dmg = weapon_item->Damage;
 
@@ -938,7 +938,7 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 	}
 
 	if(against->GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL)){
-		if(weapon_item){
+		if(weapon_item && !GetSpecialAbility(SPECATK_MAGICAL)){
 			// check to see if the weapon is magic
 			bool MagicWeapon = false;
 			if(weapon_item->GetItem() && weapon_item->GetItem()->Magic)
@@ -2012,6 +2012,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
         int32 finalxp = EXP_FORMULA;
         finalxp = give_exp_client->mod_client_xp(finalxp, this);
+		//log(EQMAC__LOG, "Death: finalxp: %i", finalxp);
 
 		if(kr)
 		{
@@ -2095,16 +2096,12 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		}
 		else
 		{
-			int conlevel = give_exp->GetLevelCon(GetLevel());
+			int conlevel = give_exp_client->GetLevelCon(GetLevel());
 			if (conlevel != CON_GREEN)
 			{
-				if(GetOwner() && GetOwner()->IsClient()){
-				}
-				else {
-					give_exp_client->AddEXP((finalxp), conlevel);
-					if(killerMob && (killerMob->GetID() == give_exp_client->GetID() || killerMob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
-						killerMob->TrySpellOnKill(killed_level,spell);
-				}
+				give_exp_client->AddEXP((finalxp), conlevel);
+				if(killerMob && (killerMob->GetID() == give_exp_client->GetID() || killerMob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
+					killerMob->TrySpellOnKill(killed_level,spell);
 			}
 			 /* Send the EVENT_KILLED_MERIT event */
 			parse->EventNPC(EVENT_KILLED_MERIT, this, give_exp_client, "killed", 0);
