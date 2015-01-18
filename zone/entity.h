@@ -244,6 +244,8 @@ public:
 	Entity *GetEntityMob(const char *name);
 	Entity *GetEntityCorpse(const char *name);
 
+	void	StopMobAI();
+
 	void DescribeAggro(Client *towho, NPC *from_who, float dist, bool verbose);
 
 	void	Message(uint32 to_guilddbid, uint32 type, const char* message, ...);

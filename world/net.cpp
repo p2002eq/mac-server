@@ -416,7 +416,7 @@ int main(int argc, char** argv) {
 				_log(WORLD__CLIENT, "Checking inbound connection %s against BannedIPs table", inet_ntoa(in));
 				if (!database.CheckBannedIPs(inet_ntoa(in))){ //Lieka: Check inbound IP against banned IP table.
 					_log(WORLD__CLIENT, "Connection %s PASSED banned IPs check. Processing connection.", inet_ntoa(in));
-					Client* client = new Client(eqsi);
+					auto client = new Client(eqsi);
 					// @merth: client->zoneattempt=0;
 					client_list.Add(client);
 				} else {
@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
 			}
 			if (!RuleB(World, UseBannedIPsTable)){
 					_log(WORLD__CLIENT, "New connection from %s:%d, processing connection", inet_ntoa(in), ntohs(eqsi->GetRemotePort()));
-					Client* client = new Client(eqsi);
+					auto client = new Client(eqsi);
 					// @merth: client->zoneattempt=0;
 					client_list.Add(client);
 			}

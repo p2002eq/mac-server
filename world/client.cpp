@@ -103,7 +103,7 @@ Client::~Client() {
 
 void Client::SendLogServer()
 {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
+	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
 	LogServer_Struct *l=(LogServer_Struct *)outapp->pBuffer;
 	const char *wsn=WorldConfig::get()->ShortName.c_str();
 	memcpy(l->worldshortname,wsn,strlen(wsn));
@@ -138,14 +138,14 @@ void Client::SendEnterWorld(std::string name)
 		}
 	}
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_EnterWorld, strlen(char_name)+1);
+	auto outapp = new EQApplicationPacket(OP_EnterWorld, strlen(char_name) + 1);
 	memcpy(outapp->pBuffer,char_name,strlen(char_name)+1);
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
 
 void Client::SendExpansionInfo() {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ExpansionInfo, sizeof(ExpansionInfo_Struct));
+	auto outapp = new EQApplicationPacket(OP_ExpansionInfo, sizeof(ExpansionInfo_Struct));
 	ExpansionInfo_Struct *eis = (ExpansionInfo_Struct*)outapp->pBuffer;
 	eis->Expansions = GetExpansion();
 	QueuePacket(outapp);
@@ -161,7 +161,7 @@ void Client::SendCharInfo() {
 
 
 	// Send OP_SendCharInfo
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
+	auto outapp = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
 	CharacterSelect_Struct* cs = (CharacterSelect_Struct*)outapp->pBuffer;
 
 	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
@@ -234,7 +234,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		const WorldConfig *Config=WorldConfig::get();
 
 		if(Config->UpdateStats){
-			ServerPacket* pack = new ServerPacket;
+			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerJoinWorld;
 			pack->size = sizeof(ServerLSPlayerJoinWorld_Struct);
 			pack->pBuffer = new uchar[pack->size];
@@ -420,7 +420,7 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 	CharCreate_Struct *cc = (CharCreate_Struct*)app->pBuffer;
 	if(OPCharCreate(char_name, cc) == false) {
 		database.DeleteCharacter(char_name);
-		EQApplicationPacket *outapp = new EQApplicationPacket(OP_ApproveName, 1);
+		auto outapp = new EQApplicationPacket(OP_ApproveName, 1);
 		outapp->pBuffer[0] = 0;
 		QueuePacket(outapp);
 		safe_delete(outapp);
@@ -503,7 +503,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 			char* leader = 0;
 			char leaderbuf[64] = {0};
 			if((leader = database.GetGroupLeaderForLogin(char_name, leaderbuf)) && strlen(leader)>1){
-				EQApplicationPacket* outapp3 = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupJoin_Struct));
+				auto outapp3 = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupJoin_Struct));
 				GroupJoin_Struct* gj=(GroupJoin_Struct*)outapp3->pBuffer;
 				gj->action=8;
 				strcpy(gj->yourname, char_name);
@@ -539,7 +539,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 
 	ConnectionType = 'C';
 
-	EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_SetChatServer);
+	auto outapp2 = new EQApplicationPacket(OP_SetChatServer);
 	char buffer[112];
 
 	const WorldConfig *Config = WorldConfig::get();
@@ -697,7 +697,7 @@ bool Client::Process() {
 
 	if (!eqs->CheckState(ESTABLISHED)) {
 		if(WorldConfig::get()->UpdateStats){
-			ServerPacket* pack = new ServerPacket;
+			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerLeftWorld;
 			pack->size = sizeof(ServerLSPlayerLeftWorld_Struct);
 			pack->pBuffer = new uchar[pack->size];
@@ -791,7 +791,7 @@ void Client::EnterWorld(bool TryBootup) {
 			return;
 		}
 
-		ServerPacket* pack = new ServerPacket;
+		auto pack = new ServerPacket;
 		pack->opcode = ServerOP_AcceptWorldEntrance;
 		pack->size = sizeof(WorldToZone_Struct);
 		pack->pBuffer = new uchar[pack->size];
@@ -889,7 +889,7 @@ void Client::Clearance(int8 response)
 }
 
 void Client::ZoneUnavail() {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ZoneUnavail, sizeof(ZoneUnavail_Struct));
+	auto outapp = new EQApplicationPacket(OP_ZoneUnavail, sizeof(ZoneUnavail_Struct));
 	ZoneUnavail_Struct* ua = (ZoneUnavail_Struct*)outapp->pBuffer;
 	const char* zonename = database.GetZoneName(zoneID);
 	if (zonename)

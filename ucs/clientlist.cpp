@@ -225,7 +225,7 @@ std::vector<std::string> ParseRecipients(std::string RecipientString) {
 
 	sort(RecipientList.begin(), RecipientList.end());
 
-	std::vector<std::string>::iterator new_end_pos = unique(RecipientList.begin(), RecipientList.end());
+	auto new_end_pos = unique(RecipientList.begin(), RecipientList.end());
 
 	RecipientList.erase(new_end_pos, RecipientList.end());
 
@@ -280,11 +280,11 @@ static void ProcessMailTo(Client *c, std::string MailMessage) {
 
 	int VisibleRecipients = 0;
 
-	for(unsigned int i = 0; i<Recipients.size(); i++) {
+	for (auto &Recipient : Recipients) {
 
-		if(Recipients[i][0] == '-') {
+		if (Recipient[0] == '-') {
 
-			Recipients[i] = Recipients[i].substr(1);
+			Recipient = Recipient.substr(1);
 
 		}
 		else {
@@ -294,29 +294,29 @@ static void ProcessMailTo(Client *c, std::string MailMessage) {
 
 			VisibleRecipients++;
 
-			RecipientsString = RecipientsString + GetMailPrefix() + Recipients[i];
+			RecipientsString = RecipientsString + GetMailPrefix() + Recipient;
 		}
 	}
 	if(VisibleRecipients == 0)
 		RecipientsString = "<UNDISCLOSED RECIPIENTS>";
 
-	for(unsigned int i=0; i<Recipients.size(); i++) {
+	for (auto &Recipient : Recipients) {
 
-		if(!database.SendMail(Recipients[i], c->MailBoxName(), Subject, Body, RecipientsString)) {
+		if (!database.SendMail(Recipient, c->MailBoxName(), Subject, Body, RecipientsString)) {
 
-			_log(UCS__ERROR, "Failed in SendMail(%s, %s, %s, %s)", Recipients[i].c_str(),
-						c->MailBoxName().c_str(), Subject.c_str(), RecipientsString.c_str());
+			_log(UCS__ERROR, "Failed in SendMail(%s, %s, %s, %s)", Recipient.c_str(),
+			     c->MailBoxName().c_str(), Subject.c_str(), RecipientsString.c_str());
 
-			int PacketLength = 10 + Recipients[i].length() + Subject.length();
+			int PacketLength = 10 + Recipient.length() + Subject.length();
 
 			// Failure
-			EQApplicationPacket *outapp = new EQApplicationPacket(OP_MailDeliveryStatus, PacketLength);
+			auto outapp = new EQApplicationPacket(OP_MailDeliveryStatus, PacketLength);
 
 			char *PacketBuffer = (char *)outapp->pBuffer;
 
 			VARSTRUCT_ENCODE_STRING(PacketBuffer, "1");
 			VARSTRUCT_ENCODE_TYPE(uint8, PacketBuffer, 0x20);
-			VARSTRUCT_ENCODE_STRING(PacketBuffer, Recipients[i].c_str());
+			VARSTRUCT_ENCODE_STRING(PacketBuffer, Recipient.c_str());
 			VARSTRUCT_ENCODE_STRING(PacketBuffer, Subject.c_str());
 			VARSTRUCT_ENCODE_STRING(PacketBuffer, "0");
 			VARSTRUCT_ENCODE_TYPE(uint16, PacketBuffer, 0x3237);
@@ -334,7 +334,7 @@ static void ProcessMailTo(Client *c, std::string MailMessage) {
 
 	if(Success) {
 		// Success
-		EQApplicationPacket *outapp = new EQApplicationPacket(OP_MailDeliveryStatus, 10);
+		auto outapp = new EQApplicationPacket(OP_MailDeliveryStatus, 10);
 
 		char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -407,7 +407,7 @@ static void ProcessCommandBuddy(Client *c, std::string Buddy) {
 	if(Buddy.substr(0, 1) == "-")
 		SubAction = 0;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Buddy, Buddy.length() + 2);
+	auto outapp = new EQApplicationPacket(OP_Buddy, Buddy.length() + 2);
 	char *PacketBuffer = (char *)outapp->pBuffer;
 	VARSTRUCT_ENCODE_TYPE(uint8, PacketBuffer, SubAction);
 
@@ -458,7 +458,7 @@ static void ProcessCommandIgnore(Client *c, std::string Ignoree) {
 		Ignoree = "SOE.EQ." + WorldShortName + "." + Ignoree;
 	}
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Ignore, Ignoree.length() + 2);
+	auto outapp = new EQApplicationPacket(OP_Ignore, Ignoree.length() + 2);
 	char *PacketBuffer = (char *)outapp->pBuffer;
 	VARSTRUCT_ENCODE_TYPE(uint8, PacketBuffer, SubAction);
 
@@ -505,8 +505,8 @@ Client::Client(EQStream *eqs) {
 	AllowInvites = true;
 	Revoked = false;
 
-	for(int i = 0; i < MAX_JOINED_CHANNELS ; i++)
-		JoinedChannels[i] = nullptr;
+	for (auto &elem : JoinedChannels)
+		elem = nullptr;
 
 	TotalKarma = 0;
 	AttemptedMessages = 0;
@@ -589,7 +589,7 @@ void Clientlist::Process() {
 
 		eqs->SetOpcodeManager(&ChatOpMgr);
 
-		Client *c = new Client(eqs);
+		auto c = new Client(eqs);
 
 		ClientChatConnections.push_back(c);
 	}
@@ -618,7 +618,7 @@ void Clientlist::Process() {
 			continue;
 		}
 
-		EQApplicationPacket *app = 0;
+		EQApplicationPacket *app = nullptr;
 
 		bool KeyValid = true;
 
@@ -931,7 +931,7 @@ void Client::SendMailBoxes() {
 
 	PacketLength += s.length() + 1;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_MailLogin, PacketLength);
+	auto outapp = new EQApplicationPacket(OP_MailLogin, PacketLength);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -995,8 +995,8 @@ int Client::ChannelCount() {
 
 	int NumberOfChannels = 0;
 
-	for(int i = 0; i < MAX_JOINED_CHANNELS; i++)
-		if(JoinedChannels[i])
+	for (auto &elem : JoinedChannels)
+		if (elem)
 			NumberOfChannels++;
 
 	return NumberOfChannels;
@@ -1005,11 +1005,9 @@ int Client::ChannelCount() {
 
 void Client::JoinChannels(std::string ChannelNameList) {
 
-	for(int x = 0; x < ChannelNameList.size(); ++x)
-	{
-		if(ChannelNameList[x] == '%')
-		{
-			ChannelNameList[x] = '/';
+	for (auto &elem : ChannelNameList) {
+		if (elem == '%') {
+			elem = '/';
 		}
 	}
 
@@ -1082,8 +1080,7 @@ void Client::JoinChannels(std::string ChannelNameList) {
 		}
 	}
 
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Mail, JoinedChannelsList.length() + 1);
+	auto outapp = new EQApplicationPacket(OP_Mail, JoinedChannelsList.length() + 1);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1170,8 +1167,7 @@ void Client::LeaveChannels(std::string ChannelNameList) {
 		}
 	}
 
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Mail, JoinedChannelsList.length() + 1);
+	auto outapp = new EQApplicationPacket(OP_Mail, JoinedChannelsList.length() + 1);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1203,13 +1199,13 @@ void Client::LeaveChannels(std::string ChannelNameList) {
 
 void Client::LeaveAllChannels(bool SendUpdatedChannelList) {
 
-	for(int i = 0; i < MAX_JOINED_CHANNELS; i++) {
+	for (auto &elem : JoinedChannels) {
 
-		if(JoinedChannels[i]) {
+		if (elem) {
 
-			ChannelList->RemoveClientFromChannel(JoinedChannels[i]->GetName(), this);
+			ChannelList->RemoveClientFromChannel(elem->GetName(), this);
 
-			JoinedChannels[i] = nullptr;
+			elem = nullptr;
 		}
 	}
 
@@ -1270,7 +1266,7 @@ void Client::SendChannelList() {
 	if(ChannelCount == 0)
 		ChannelMessage = "You are not on any channels.";
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ChannelMessage, ChannelMessage.length() + 3);
+	auto outapp = new EQApplicationPacket(OP_ChannelMessage, ChannelMessage.length() + 3);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1310,11 +1306,9 @@ void Client::SendChannelMessage(std::string Message)
 		if(GetKarma() < RuleI(Chat, KarmaGlobalChatLimit))
 		{
 			CharacterEntry *char_ent = nullptr;
-			for(int x = 0; x < Characters.size(); ++x)
-			{
-				if(Characters[x].Name.compare(GetName()) == 0)
-				{
-					char_ent = &Characters[x];
+			for (auto &elem : Characters) {
+				if (elem.Name.compare(GetName()) == 0) {
+					char_ent = &elem;
 					break;
 				}
 			}
@@ -1423,11 +1417,9 @@ void Client::SendChannelMessageByNumber(std::string Message) {
 		if(GetKarma() < RuleI(Chat, KarmaGlobalChatLimit))
 		{
 			CharacterEntry *char_ent = nullptr;
-			for(int x = 0; x < Characters.size(); ++x)
-			{
-				if(Characters[x].Name.compare(GetName()) == 0)
-				{
-					char_ent = &Characters[x];
+			for (auto &elem : Characters) {
+				if (elem.Name.compare(GetName()) == 0) {
+					char_ent = &elem;
 					break;
 				}
 			}
@@ -1512,7 +1504,7 @@ void Client::SendChannelMessage(std::string ChannelName, std::string Message, Cl
 	if(UnderfootOrLater)
 		PacketLength += 8;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ChannelMessage, PacketLength);
+	auto outapp = new EQApplicationPacket(OP_ChannelMessage, PacketLength);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1554,7 +1546,7 @@ void Client::AnnounceJoin(ChatChannel *Channel, Client *c) {
 
 	int PacketLength = Channel->GetName().length() + c->GetName().length() + 2;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ChannelAnnounceJoin, PacketLength);
+	auto outapp = new EQApplicationPacket(OP_ChannelAnnounceJoin, PacketLength);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1574,7 +1566,7 @@ void Client::AnnounceLeave(ChatChannel *Channel, Client *c) {
 
 	int PacketLength = Channel->GetName().length() + c->GetName().length() + 2;
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ChannelAnnounceLeave, PacketLength);
+	auto outapp = new EQApplicationPacket(OP_ChannelAnnounceLeave, PacketLength);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -1600,7 +1592,7 @@ void Client::GeneralChannelMessage(const char *Characters) {
 
 void Client::GeneralChannelMessage(std::string Message) {
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ChannelMessage, Message.length() + 3);
+	auto outapp = new EQApplicationPacket(OP_ChannelMessage, Message.length() + 3);
 	char *PacketBuffer = (char *)outapp->pBuffer;
 	VARSTRUCT_ENCODE_TYPE(uint8, PacketBuffer, 0x00);
 	VARSTRUCT_ENCODE_TYPE(uint8, PacketBuffer, 0x00);
@@ -2286,7 +2278,7 @@ void Client::SendNotification(int MailBoxNumber, std::string Subject, std::strin
 
 	int PacketLength = 8 + strlen(sMessageID) + strlen(TimeStamp)+ From.length() + Subject.length();
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_MailNew, PacketLength);
+	auto outapp = new EQApplicationPacket(OP_MailNew, PacketLength);
 
 	char *PacketBuffer = (char *)outapp->pBuffer;
 
@@ -2312,7 +2304,7 @@ void Client::ChangeMailBox(int NewMailBox) {
 
 	_log(UCS__TRACE, "New mailbox is %s", MailBoxName().c_str());
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_MailboxChange, 2);
+	auto outapp = new EQApplicationPacket(OP_MailboxChange, 2);
 
 	char *buf = (char *)outapp->pBuffer;
 

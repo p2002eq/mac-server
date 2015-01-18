@@ -62,7 +62,7 @@ void WorldServer::Process()
 	if (!Connected())
 		return;
 
-	ServerPacket *pack = 0;
+	ServerPacket *pack = nullptr;
 
 	while((pack = tcpc.PopPacket()))
 	{
@@ -81,7 +81,7 @@ void WorldServer::Process()
 			{
 				char *Buffer = (char *)pack->pBuffer;
 
-				char *From = new char[strlen(Buffer) + 1];
+				auto From = new char[strlen(Buffer) + 1];
 
 				VARSTRUCT_DECODE_STRING(From, Buffer);
 
