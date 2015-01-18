@@ -830,9 +830,10 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", range);
 	range *= range;
-	if(DistNoRootNoZ(*GetTarget()) > range) {
-		mlog(COMBAT__RANGED, "Ranged attack out of range... client should catch this. (%f > %f).\n", DistNoRootNoZ(*GetTarget()), range);
-		//target is out of range, client does a message
+	float dist = ComparativeDistance(m_Position, other->GetPosition());
+	if(dist > range) {
+		mlog(COMBAT__RANGED, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
+		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
 	else if(DistNoRootNoZ(*GetTarget()) < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
