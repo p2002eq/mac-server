@@ -1583,7 +1583,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 	Log.Out(Logs::Detail, Logs::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating character_data table from CharacterJoin.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
 	return true;
@@ -1595,7 +1595,7 @@ bool Database::CharacterQuit(uint32 char_id) {
 	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Debug, "Error updating character_data table from CharacterQuit.");
+		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
 	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
@@ -1626,7 +1626,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 	Log.Out(Logs::Detail, Logs::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
 		return false;
 	}
 	return true;
@@ -1638,10 +1638,10 @@ bool Database::ZoneDisconnect(uint32 id) {
 	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
 	}
-	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
+	Log.Out(Logs::Detail, Logs::Error, "Updated webdata_servers table from ZoneDisconnected.");
 	return true;
 }
 
@@ -1665,7 +1665,7 @@ bool Database::LSConnected(uint32 port) {
 	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
 		return false;
 	}
 	return true;
@@ -1676,10 +1676,10 @@ bool Database::LSDisconnect() {
 	auto results = QueryDatabase(query);
 	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
 	}
-	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from LSDisconnect.");
+	Log.Out(Logs::Detail, Logs::Error, "Updated webdata_servers table from LSDisconnect.");
 	return true;
 }
 
@@ -2572,7 +2572,7 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 	Don't use this for the login server. It should never have access to the game database. */
 
 bool Database::DBSetup() {
-	LogFile->write(EQEmuLog::Debug, "Database setup started..");
+	Log.Out(Logs::Detail, Logs::Debug, "Database setup started..");
 	DBSetup_webdata_character();
 	DBSetup_webdata_servers();
 	DBSetup_feedback();
@@ -2593,7 +2593,7 @@ bool Database::GITInfo()
 		auto results2 = QueryDatabase(check_query2);
 		if (!results2.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error creating git-HEAD-hash field.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating git-HEAD-hash field.");
 			return false;
 		}
 	}
@@ -2605,7 +2605,7 @@ bool Database::GITInfo()
 		auto results4 = QueryDatabase(check_query4);
 		if (!results4.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error creating git-BRANCH field.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating git-BRANCH field.");
 			return false;
 		}
 	}
@@ -2631,7 +2631,7 @@ bool Database::GITInfo()
 		auto resultshash = QueryDatabase(queryhash);
 		if (!resultshash.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
+			Log.Out(Logs::Detail, Logs::Error, "Error entering hash to variables.");
 			fclose(fhash);
 			return false;
 		}
@@ -2655,7 +2655,7 @@ bool Database::GITInfo()
 		auto resultsbranch = QueryDatabase(querybranch);
 		if (!resultsbranch.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
+			Log.Out(Logs::Detail, Logs::Error, "Error entering branch to variables.");
 			fclose(fbranch);
 			return false;
 		}
@@ -2683,7 +2683,7 @@ bool Database::GITInfo()
 		auto resultshash = QueryDatabase(queryhash);
 		if (!resultshash.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
+			Log.Out(Logs::Detail, Logs::Error, "Error entering hash to variables.");
 			free(buf);
 			fflush(fhash);
 			return false;
@@ -2710,7 +2710,7 @@ bool Database::GITInfo()
 		auto resultsbranch = QueryDatabase(querybranch);
 		if (!resultsbranch.Success())
 		{
-			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
+			Log.Out(Logs::Detail, Logs::Error, "Error entering branch to variables.");
 			free(buf2);
 			fflush(fbranch);
 			return false;
@@ -2735,13 +2735,13 @@ bool Database::DBSetup_webdata_character() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;	"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_character..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table webdata_character..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating webdata_character table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating webdata_character table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "webdata_character table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "webdata_character table created.");
 	}
 	return true;
 }
@@ -2758,13 +2758,13 @@ bool Database::DBSetup_webdata_servers() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_servers..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table webdata_servers..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating webdata_servers table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating webdata_servers table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "webdata_servers table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "webdata_servers table created.");
 	}
 	return true;
 }
@@ -2783,13 +2783,13 @@ bool Database::DBSetup_feedback() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table feedback..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table feedback..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating feedback table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating feedback table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "feedback table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "feedback table created.");
 	}
 	return true;
 }
@@ -2814,13 +2814,13 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 			"PRIMARY KEY(`corpse_id`, `equip_slot`)		  "
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;  "
 		);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_corpse_items_backup..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_corpse_items_backup..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_corpse_items_backup table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating character_corpse_items_backup table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "character_corpse_items_backup table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "character_corpse_items_backup table created.");
 	}
 
 	std::string cb_check_query = StringFormat("SHOW TABLES LIKE 'character_corpses_backup'");
@@ -2879,13 +2879,13 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		"PRIMARY KEY(`id`)		  "
 		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"
 		);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table character_corpses_backup..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attepting to create table character_corpses_backup..");
 		auto cb_create_results = QueryDatabase(cb_create_query);
 		if (!cb_create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_corpses_backup table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating character_corpses_backup table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "character_corpses_backup table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "character_corpses_backup table created.");
 	}
 
 	if(cb_check_results.RowCount() == 0 || check_results.RowCount() == 0)
@@ -2893,17 +2893,17 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		std::string cbp_query = StringFormat("INSERT INTO `character_corpses_backup` SELECT * from `character_corpses`");
 		auto cbp_results = QueryDatabase(cbp_query);
 		if (!cbp_results.Success()){ 
-			LogFile->write(EQEmuLog::Error, "Error populating character_corpses_backup table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error populating character_corpses_backup table.");
 			return false;
 		}
 		std::string cip_query = StringFormat("INSERT INTO `character_corpse_items_backup` SELECT * from `character_corpse_items`");
 		auto cip_results = QueryDatabase(cip_query);
 		if (!cip_results.Success()){ 
-			LogFile->write(EQEmuLog::Error, "Error populating character_corpse_items_backup table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error populating character_corpse_items_backup table.");
 			return false;
 		}
 
-		LogFile->write(EQEmuLog::Debug, "Corpse backup tables populated.");
+		Log.Out(Logs::Detail, Logs::Debug, "Corpse backup tables populated.");
 
 		std::string delcheck_query = StringFormat(
 			"SELECT id FROM `character_corpses_backup`");
@@ -2919,7 +2919,7 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 				return false;
 		}
 
-		LogFile->write(EQEmuLog::Debug, "Corpse backup tables cleaned of empty corpses.");
+		Log.Out(Logs::Detail, Logs::Debug, "Corpse backup tables cleaned of empty corpses.");
 	}
 
 	return true;
@@ -2943,13 +2943,13 @@ bool Database::DBSetup_CharacterSoulMarks() {
 			"PRIMARY KEY(`id`)													"
 			") ENGINE = InnoDB AUTO_INCREMENT = 263 DEFAULT CHARSET = latin1;	"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_soulmarks..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_soulmarks..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_soulmarks table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating character_soulmarks table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "character_soulmarks table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "character_soulmarks table created.");
 	}
 	return true;
 }
@@ -2972,13 +2972,13 @@ bool Database::DBSetup_MessageBoards() {
 			"PRIMARY KEY(`id`)																	"
 			") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;						"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table mb_messages..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table mb_messages..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating mb_messages table.");
+			Log.Out(Logs::Detail, Logs::Error, "Error creating mb_messages table.");
 			return false;
 		}
-		LogFile->write(EQEmuLog::Debug, "mb_messages table created.");
+		Log.Out(Logs::Detail, Logs::Debug, "mb_messages table created.");
 	}
 	return true;
 }

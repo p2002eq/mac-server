@@ -394,7 +394,7 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 			return mob;
 		++it;
 	}
-	//LogFile->write(EQEmuLog::Debug, "Check aggro for %s no target.", sender->GetName());
+	//Log.Out(Logs::Detail, Logs::Debug, "Check aggro for %s no target.", sender->GetName());
 	return nullptr;
 }
 

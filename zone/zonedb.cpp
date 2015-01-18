@@ -322,7 +322,7 @@ void ZoneDatabase::UpdateBug(BugStruct* bug, uint32 clienttype) {
 	safe_delete_array(targettext);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error in UpdateBug query %s: %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(Logs::Detail, Logs::Error, "Error in UpdateBug query %s: %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 
@@ -3056,7 +3056,7 @@ bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, con
 	);
 	auto results = QueryDatabase(query);
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "UpdateCharacterCorpseBackup query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
+		Log.Out(Logs::Detail, Logs::Error, "UpdateCharacterCorpseBackup query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -3285,7 +3285,7 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 	);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error inserting character_corpses_backup.");
+		Log.Out(Logs::Detail, Logs::Error, "Error inserting character_corpses_backup.");
 		return false;
 	}
 
@@ -3324,7 +3324,7 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 	}
 	auto sc_results = QueryDatabase(query); 
 	if (!sc_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error inserting character_corpse_items_backup.");
+		Log.Out(Logs::Detail, Logs::Error, "Error inserting character_corpse_items_backup.");
 		return false;
 	}
 	return true;
@@ -3533,7 +3533,7 @@ Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_z
 			corpse->SetDecayTimer(corpse_decay);
 			corpse->Spawn();
 			if (!UnburyCharacterCorpse(corpse->GetCorpseDBID(), dest_zone_id, dest_instance_id, position))
-				LogFile->write(EQEmuLog::Error, "Unable to unbury a summoned player corpse for character id %u.", char_id);
+				Log.Out(Logs::Detail, Logs::Error, "Unable to unbury a summoned player corpse for character id %u.", char_id);
 		}
 	}
 
@@ -3783,7 +3783,7 @@ bool ZoneDatabase::CopyBackupCorpse(uint32 corpse_id) {
 	std::string ci_query = StringFormat("INSERT INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
 	auto ci_results = QueryDatabase(ci_query);
 	if (!ci_results.Success()){ 
-		LogFile->write(EQEmuLog::Error, "CopyBackupCorpse() Error inserting items. They probably already exist, so continue on...");
+		Log.Out(Logs::Detail, Logs::Error, "CopyBackupCorpse() Error inserting items. They probably already exist, so continue on...");
 	}
 
 	return true;

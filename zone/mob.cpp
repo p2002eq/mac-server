@@ -1506,7 +1506,7 @@ const int32& Mob::SetMana(int32 amount)
 	cur_mana = amount < 0 ? 0 : (amount > mmana ? mmana : amount);
 /*
 	if(IsClient())
-		LogFile->write(EQEmuLog::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
+		Log.Out(Logs::Detail, Logs::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
 */
 
 	return cur_mana;

@@ -846,7 +846,7 @@ void Client::AI_Process()
 		}
 		else
 		{
-			LogFile->write(EQEmuLog::Error, "Preventing DivineAura() crash due to null this.");
+			Log.Out(Logs::Detail, Logs::Error, "Preventing DivineAura() crash due to null this.");
 			return;
 		}
 

@@ -575,7 +575,7 @@ uint32 ZoneDatabase::AddObject(uint32 type, uint32 icon, const Object_Struct& ob
 		}
         else
 		{
-			LogFile->write(EQEmuLog::Error, "Unable to get new object id: %s", results.ErrorMessage().c_str());   
+			Log.Out(Logs::Detail, Logs::Error, "Unable to get new object id: %s", results.ErrorMessage().c_str());   
 			return 0;
         }
 	}

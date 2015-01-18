@@ -1281,13 +1281,13 @@ uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 
 	if (!results.Success() || results.RowCount() == 0)
 	{
-		LogFile->write(EQEmuLog::Error, "Error in GetMacToEmuAA");
+		Log.Out(Logs::Detail, Logs::Error, "Error in GetMacToEmuAA");
 		return 0;
 	}
 
 	auto row = results.begin();
 
-	LogFile->write(EQEmuLog::Debug, "GetMacToEmuAA is returning: %i", atoi(row[0]));
+	Log.Out(Logs::Detail, Logs::Debug, "GetMacToEmuAA is returning: %i", atoi(row[0]));
 	return atoi(row[0]);
 }
 

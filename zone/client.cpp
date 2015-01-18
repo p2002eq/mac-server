@@ -1570,7 +1570,7 @@ void Client::SendClientMoneyUpdate(uint8 type,uint32 amount){
 	mus->amount=amount;
 	mus->trader=0;
 	mus->type=type;
-	LogFile->write(EQEmuLog::Debug, "Client::SendClientMoneyUpdate() %s added %i coin of type: %i.",
+	Log.Out(Logs::Detail, Logs::Debug, "Client::SendClientMoneyUpdate() %s added %i coin of type: %i.",
 			GetName(), amount, type);
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -2277,7 +2277,7 @@ void Client::ServerFilter(SetServerFilter_Struct* filter){
 	uint32 *n = (uint32 *) filter;
 	for(r = 0; r < (sizeof(SetServerFilter_Struct)/4); r++) {
 		if(*o != *n)
-			LogFile->write(EQEmuLog::Debug, "Filter %d changed from %d to %d", r, *o, *n);
+			Log.Out(Logs::Detail, Logs::Debug, "Filter %d changed from %d to %d", r, *o, *n);
 		o++; n++;
 	}
 	memcpy(&ssss, filter, sizeof(SetServerFilter_Struct));

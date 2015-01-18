@@ -539,7 +539,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] == nullptr) {
-			//if (DEBUG>=5) LogFile->write(EQEmuLog::Debug, "Group::DelMember() null member at slot %i", i);
+			//if (DEBUG>=5) Log.Out(Logs::Detail, Logs::Debug, "Group::DelMember() null member at slot %i", i);
 			continue;
 		}
 		if (members[i] != oldmember) {

@@ -1456,7 +1456,7 @@ void command_bug(Client *c, const Seperator *sep)
 			c->Message(0, "Usage: #bug view (bug number) Type #bug list for a list");
 			return;
 		}
-		LogFile->write(EQEmuLog::Normal, "Bug viewed by %s, bug number:", c->GetName(), atoi(sep->arg[2]));
+		Log.Out(Logs::Detail, Logs::Normal, "Bug viewed by %s, bug number:", c->GetName(), atoi(sep->arg[2]));
 		c->Message(CC_Red, "ID : Name , Zone , x , y , z , Type , Flag , Target , Status , Client, Time Sent , Bug");
 		std::string query = StringFormat("SELECT id, name, zone, x, y, z, type, flag, target, status, ui, date, bug FROM bugs WHERE id = %i", atoi(sep->arg[2]));
 		auto results = database.QueryDatabase(query);
@@ -1489,7 +1489,7 @@ void command_bug(Client *c, const Seperator *sep)
 				return;
 
 			petition_list.ReadDatabase();
-			LogFile->write(EQEmuLog::Normal, "Delete bug request from %s, bug number:", c->GetName(), atoi(sep->arg[2]));
+			Log.Out(Logs::Detail, Logs::Normal, "Delete bug request from %s, bug number:", c->GetName(), atoi(sep->arg[2]));
 		}
 		else
 			c->Message(0, "Your access level is not high enough to use this command.");
@@ -1555,7 +1555,7 @@ void command_petition(Client *c, const Seperator *sep)
 			c->Message(0, "Usage: #petition view (petition number) Type #petition list for a list");
 			return;
 		}
-		LogFile->write(EQEmuLog::Normal, "Petition viewed by %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+		Log.Out(Logs::Detail, Logs::Normal, "Petition viewed by %s, petition number:", c->GetName(), atoi(sep->arg[2]));
 		c->Message(CC_Red, "ID : Character , Account , Petition Text");
 		std::string query = StringFormat("SELECT petid, charname, accountname, petitiontext FROM petitions WHERE petid = %i", atoi(sep->arg[2]));
 		auto results = database.QueryDatabase(query);
@@ -1601,7 +1601,7 @@ void command_petition(Client *c, const Seperator *sep)
 				return;
 			}
 
-			LogFile->write(EQEmuLog::Normal, "Petition update request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+			Log.Out(Logs::Detail, Logs::Normal, "Petition update request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
 			std::string query = StringFormat("UPDATE `petitions` SET `lastgm` = '%s', `gmtext` = '%s' WHERE `petid` = %i;", c->GetName(), sep->arg[3], atoi(sep->arg[2]));
 			auto results = database.QueryDatabase(query);
 
@@ -1633,7 +1633,7 @@ void command_petition(Client *c, const Seperator *sep)
 				return;
 
 			petition_list.ReadDatabase();
-			LogFile->write(EQEmuLog::Normal, "Delete petition request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+			Log.Out(Logs::Detail, Logs::Normal, "Delete petition request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
 		}
 		else
 			c->Message(0, "Your access level is not high enough to use this command.");
@@ -5559,7 +5559,7 @@ void command_unmemspell(Client *c, const Seperator *sep){
 			if (t != c)
 				c->Message(0, "Unmemming spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
 
-			LogFile->write(EQEmuLog::Normal, "Unmem spell: %s (%i) request for %s from %s.", spells[spell_id].name, spell_id, t->GetName(), c->GetName());
+			Log.Out(Logs::Detail, Logs::Normal, "Unmem spell: %s (%i) request for %s from %s.", spells[spell_id].name, spell_id, t->GetName(), c->GetName());
 		}
 		else {
 			t->Message(CC_Red, "Unable to unmemspell spell: %s (%i) from your gembar. This spell is not memmed.", spells[spell_id].name, spell_id);

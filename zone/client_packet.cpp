@@ -1570,7 +1570,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 	//Action packet is always 256 bytes, but fields have varying positions.
 	if (app->size != 256)
 	{
-		LogFile->write(EQEmuLog::Error, "Caught an invalid AAAction packet. Size is: %d", app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Caught an invalid AAAction packet. Size is: %d", app->size);
 		return;
 	}
 
@@ -1600,7 +1600,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 
 		if (aa2 == nullptr)
 		{
-			LogFile->write(EQEmuLog::Error, "Handle_OP_AAAction dun goofed. EQMacAAID is: %i, but no valid EmuAAID could be found.", aa);
+			Log.Out(Logs::Detail, Logs::Error, "Handle_OP_AAAction dun goofed. EQMacAAID is: %i, but no valid EmuAAID could be found.", aa);
 			SendAATable(); // So client doesn't bug.
 			SendAAStats();
 			return;
@@ -2098,7 +2098,7 @@ void Client::Handle_OP_CancelTrade(const EQApplicationPacket *app)
 		//EQMac sends a second CancelTrade packet. Since "with" and the trade became invalid the first time around, this handles the second which prevents the client from bugging.
 		CancelTrade_Struct* msg = (CancelTrade_Struct*)app->pBuffer;
 		QueuePacket(app);
-		LogFile->write(EQEmuLog::Debug, "Cancelled second trade. from is: %i.", msg->fromid);
+		Log.Out(Logs::Detail, Logs::Debug, "Cancelled second trade. from is: %i.", msg->fromid);
 	}
 
 	return;
@@ -2389,7 +2389,7 @@ void Client::Handle_OP_ClickObjectAction(const EQApplicationPacket *app)
 {
 
 	if (app->size != sizeof(ClickObjectAction_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size on OP_ClickObjectAction: Expected %i, Got %i",
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size on OP_ClickObjectAction: Expected %i, Got %i",
 			sizeof(ClickObjectAction_Struct), app->size);
 		return;
 	}
@@ -2406,7 +2406,7 @@ void Client::Handle_OP_ClickObjectAction(const EQApplicationPacket *app)
 		}
 	}
 	else {
-		LogFile->write(EQEmuLog::Error, "Invalid object %d in OP_ClickObjectAction", oos->drop_id);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid object %d in OP_ClickObjectAction", oos->drop_id);
 	}
 
 
@@ -2930,7 +2930,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		return;
 	}
 	Consume_Struct* pcs = (Consume_Struct*)app->pBuffer;
-	LogFile->write(EQEmuLog::Debug, "Hit Consume! How consumed: %i. Slot: %i. Type: %i", pcs->auto_consumed, pcs->slot, pcs->type);
+	Log.Out(Logs::Detail, Logs::Debug, "Hit Consume! How consumed: %i. Slot: %i. Type: %i", pcs->auto_consumed, pcs->slot, pcs->type);
 	int value = RuleI(Character, ConsumptionValue);
 
 	if (pcs->type == 0x01)
@@ -3107,10 +3107,10 @@ void Client::Handle_OP_Damage(const EQApplicationPacket *app)
 void Client::Handle_OP_Death(const EQApplicationPacket *app)
 {
 	bool EnvDeath = false;
-	LogFile->write(EQEmuLog::Debug, "Client hit OP_Death");
+	Log.Out(Logs::Detail, Logs::Debug, "Client hit OP_Death");
 	if (app->size != sizeof(OldDeath_Struct))
 	{
-		LogFile->write(EQEmuLog::Debug, "Handle_OP_Death: Struct is incorrect, expected %i got %i", sizeof(OldDeath_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Debug, "Handle_OP_Death: Struct is incorrect, expected %i got %i", sizeof(OldDeath_Struct), app->size);
 		return;
 	}
 	OldDeath_Struct* ds = (OldDeath_Struct*)app->pBuffer;
@@ -8520,7 +8520,7 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
 	if (app->size != sizeof(Disarm_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for Disarm_Struct: Expected: %i, Got: %i", sizeof(Disarm_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for Disarm_Struct: Expected: %i, Got: %i", sizeof(Disarm_Struct), app->size);
 		return;
 	}
 
@@ -8599,7 +8599,7 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 void Client::Handle_OP_Feedback(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Feedback_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for Feedback_Struct: Expected: %i, Got: %i", sizeof(Feedback_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for Feedback_Struct: Expected: %i, Got: %i", sizeof(Feedback_Struct), app->size);
 		return;
 	}
 
@@ -8617,7 +8617,7 @@ void Client::Handle_OP_SoulMarkList(const EQApplicationPacket *app)
 		return;
 
 	if (app->size != sizeof(SoulMarkList_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkList_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for SoulMarkList_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
 		return;
 	}
 	SoulMarkList_Struct* in = (SoulMarkList_Struct*)app->pBuffer;
@@ -8649,7 +8649,7 @@ void Client::Handle_OP_SoulMarkAdd(const EQApplicationPacket *app)
 		return;
 
 	if (app->size != sizeof(SoulMarkEntry_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkEntry_Struct: Expected: %i, Got: %i", sizeof(SoulMarkEntry_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for SoulMarkEntry_Struct: Expected: %i, Got: %i", sizeof(SoulMarkEntry_Struct), app->size);
 		return;
 	}
 	SoulMarkEntry_Struct* in = (SoulMarkEntry_Struct*)app->pBuffer;
@@ -8673,7 +8673,7 @@ void Client::Handle_OP_SoulMarkUpdate(const EQApplicationPacket *app)
 		return;
 
 	if (app->size != sizeof(SoulMarkUpdate_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkUpdate_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for SoulMarkUpdate_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
 		return;
 	}
 	SoulMarkUpdate_Struct* in = (SoulMarkUpdate_Struct*)app->pBuffer;
@@ -8690,7 +8690,7 @@ void Client::Handle_OP_SoulMarkUpdate(const EQApplicationPacket *app)
 void Client::Handle_OP_MBRetrievalRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(MBRetrieveMessages_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBRetrieveMessages_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBRetrieveMessages_Struct), app->size);
 		return;
 	}
 	MBRetrieveMessages_Struct* in = (MBRetrieveMessages_Struct*)app->pBuffer;	
@@ -8716,7 +8716,7 @@ void Client::Handle_OP_MBRetrievalRequest(const EQApplicationPacket *app)
 void Client::Handle_OP_MBRetrievalDetailRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(MBModifyRequest_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for MBModifyRequest_Struct: Expected: %i, Got: %i", sizeof(MBModifyRequest_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for MBModifyRequest_Struct: Expected: %i, Got: %i", sizeof(MBModifyRequest_Struct), app->size);
 		return;
 	}
 	MBModifyRequest_Struct* in = (MBModifyRequest_Struct*)app->pBuffer;	
@@ -8748,7 +8748,7 @@ void Client::Handle_OP_MBRetrievalDetailRequest(const EQApplicationPacket *app)
 void Client::Handle_OP_MBRetrievalPostRequest(const EQApplicationPacket *app)
 {
 	if (app->size > sizeof(MBMessageRetrievalGen_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: at most %i, Got: %i", sizeof(MBMessageRetrievalGen_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: at most %i, Got: %i", sizeof(MBMessageRetrievalGen_Struct), app->size);
 		return;
 	}
 	MBMessageRetrievalGen_Struct* in = (MBMessageRetrievalGen_Struct*)app->pBuffer;
@@ -8763,7 +8763,7 @@ void Client::Handle_OP_MBRetrievalPostRequest(const EQApplicationPacket *app)
 void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(MBEraseRequest_Struct)) {
-		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBEraseRequest_Struct), app->size);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBEraseRequest_Struct), app->size);
 		return;
 	}
 	MBEraseRequest_Struct* in = (MBEraseRequest_Struct*)app->pBuffer;	

@@ -1939,7 +1939,6 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 		memcpy(outapp->pBuffer, buffer, Size);
 
 		this->QueuePacket(outapp);
-		_pkt(TRADING__PACKETS,outapp);
 		safe_delete(outapp);
 	}
 
@@ -2141,7 +2140,6 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 		// and do nothing.
 		if(tpus->NewPrice == 0) {
 			tsis->SubAction = BazaarPriceChange_RemoveItem;
-			_pkt(TRADING__PACKETS, outapp);
 			QueuePacket(outapp);
 			safe_delete(gis);
 			return ;
@@ -2180,7 +2178,6 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 
 			Log.Out(Logs::Detail, Logs::Trading, "Item not found in Trader Satchels either.");
 			tsis->SubAction = BazaarPriceChange_Fail;
-			_pkt(TRADING__PACKETS, outapp);
 			QueuePacket(outapp);
 			Trader_EndTrader();
 			safe_delete(gis);
@@ -2240,7 +2237,6 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 
 		// Acknowledge to the client.
 		tsis->SubAction = BazaarPriceChange_AddItem;
-		_pkt(TRADING__PACKETS, outapp);
 		QueuePacket(outapp);
 
 		return;
@@ -2268,7 +2264,6 @@ void Client::HandleTraderPriceUpdate(const EQApplicationPacket *app) {
 	else
 		tsis->SubAction = BazaarPriceChange_RemoveItem;
 
-	_pkt(TRADING__PACKETS, outapp);
 	QueuePacket(outapp);
 
 	if(OldPrice == tpus->NewPrice) {
