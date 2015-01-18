@@ -893,7 +893,7 @@ void Group::VerifyGroup() {
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (membername[i][0] == '\0') {
 #if EQDEBUG >= 7
-	logger.LogDebug(EQEmuLogSys::General, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
+	logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 #endif
 			members[i] = nullptr;
 			continue;
@@ -904,7 +904,7 @@ void Group::VerifyGroup() {
 		Mob *them = entity_list.GetMob(membername[i]);
 		if(them == nullptr && members[i] != nullptr) {	//they arnt here anymore....
 #if EQDEBUG >= 6
-		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
 #endif
 			membername[i][0] = '\0';
 			members[i] = nullptr;
@@ -913,13 +913,13 @@ void Group::VerifyGroup() {
 
 		if(them != nullptr && members[i] != them) {	//our pointer is out of date... not so good.
 #if EQDEBUG >= 5
-		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
 #endif
 			members[i] = them;
 			continue;
 		}
 #if EQDEBUG >= 8
-		logger.LogDebug(EQEmuLogSys::General, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
 #endif
 	}
 }

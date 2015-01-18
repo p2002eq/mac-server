@@ -485,7 +485,7 @@ void Zone::GetMerchantDataForZoneLoad() {
 	std::map<uint32, std::list<MerchantList> >::iterator cur;
 	uint32 npcid = 0;
 	if (results.RowCount() == 0) {
-		logger.LogDebug(EQEmuLogSys::General, "No Merchant Data found for %s.", GetShortName());
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "No Merchant Data found for %s.", GetShortName());
 		return;
 	}
 	for (auto row = results.begin(); row != results.end(); ++row) {
@@ -648,10 +648,10 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	database.GetZoneLongName(short_name, &long_name, file_name, &m_SafePoint.x, &m_SafePoint.y, &m_SafePoint.z, &pgraveyard_id, &pMaxClients);
 	if(graveyard_id() > 0)
 	{
-		logger.LogDebug(EQEmuLogSys::General, "Graveyard ID is %i.", graveyard_id());
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Graveyard ID is %i.", graveyard_id());
 		bool GraveYardLoaded = database.GetZoneGraveyard(graveyard_id(), &pgraveyard_zoneid, &m_Graveyard.x, &m_Graveyard.y, &m_Graveyard.z, &m_Graveyard.w);
 		if(GraveYardLoaded)
-			logger.LogDebug(EQEmuLogSys::General, "Loaded a graveyard for zone %s: graveyard zoneid is %u at %s.", short_name, graveyard_zoneid(), to_string(m_Graveyard).c_str());
+			logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Loaded a graveyard for zone %s: graveyard zoneid is %u at %s.", short_name, graveyard_zoneid(), to_string(m_Graveyard).c_str());
 		else
 			logger.Log(EQEmuLogSys::Error, "Unable to load the graveyard id %i for zone %s.", graveyard_id(), short_name);
 	}
@@ -661,7 +661,7 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	autoshutdown_timer.Start(AUTHENTICATION_TIMEOUT * 1000, false);
 	Weather_Timer = new Timer(60000);
 	Weather_Timer->Start();
-	logger.LogDebug(EQEmuLogSys::General, "The next weather check for zone: %s will be in %i seconds.", short_name, Weather_Timer->GetRemainingTime()/1000);
+	logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "The next weather check for zone: %s will be in %i seconds.", short_name, Weather_Timer->GetRemainingTime()/1000);
 	zone_weather = 0;
 	weather_intensity = 0;
 	blocked_spells = nullptr;
@@ -1201,11 +1201,11 @@ void Zone::ChangeWeather()
 			weathertimer = weatherTimerRule*1000;
 			Weather_Timer->Start(weathertimer);
 		}
-		logger.LogDebug(EQEmuLogSys::General, "The next weather check for zone: %s will be in %i seconds.", zone->GetShortName(), Weather_Timer->GetRemainingTime()/1000);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "The next weather check for zone: %s will be in %i seconds.", zone->GetShortName(), Weather_Timer->GetRemainingTime()/1000);
 	}
 	else
 	{
-		logger.LogDebug(EQEmuLogSys::General, "The weather for zone: %s has changed. Old weather was = %i. New weather is = %i The next check will be in %i seconds. Rain chance: %i, Rain duration: %i, Snow chance %i, Snow duration: %i", zone->GetShortName(), tmpOldWeather, zone_weather,Weather_Timer->GetRemainingTime()/1000,rainchance,rainduration,snowchance,snowduration);
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "The weather for zone: %s has changed. Old weather was = %i. New weather is = %i The next check will be in %i seconds. Rain chance: %i, Rain duration: %i, Snow chance %i, Snow duration: %i", zone->GetShortName(), tmpOldWeather, zone_weather,Weather_Timer->GetRemainingTime()/1000,rainchance,rainduration,snowchance,snowduration);
 		this->weatherSend();
 	}
 }
@@ -1290,7 +1290,7 @@ void Zone::Repop(uint32 delay) {
 	quest_manager.ClearAllTimers();
 
 	if (!database.PopulateZoneSpawnList(zoneid, spawn2_list, GetInstanceVersion(), delay))
-		logger.LogDebug(EQEmuLogSys::General, "Error in Zone::Repop: database.PopulateZoneSpawnList failed");
+		logger.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::None, "Error in Zone::Repop: database.PopulateZoneSpawnList failed");
 
 	initgrids_timer.Start();
 
