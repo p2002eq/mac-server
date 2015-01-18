@@ -1581,8 +1581,8 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.WIS, npc_types.CHA, npc_types.MR, npc_types.CR, npc_types.DR, "
                         "npc_types.FR, npc_types.PR, npc_types.Corrup, npc_types.PhR,"
                         "npc_types.mindmg, npc_types.maxdmg, npc_types.attack_count, npc_types.special_abilities,"
-                        "npc_types.npc_spells_id, npc_types.npc_spells_effects_id, npc_types.d_meele_texture1,"
-                        "npc_types.d_meele_texture2, npc_types.ammo_idfile, npc_types.prim_melee_type,"
+                        "npc_types.npc_spells_id, npc_types.npc_spells_effects_id, npc_types.d_melee_texture1,"
+                        "npc_types.d_melee_texture2, npc_types.ammo_idfile, npc_types.prim_melee_type,"
                         "npc_types.sec_melee_type, npc_types.ranged_type, npc_types.runspeed, npc_types.findable,"
                         "npc_types.trackable, npc_types.hp_regen_rate, npc_types.mana_regen_rate, "
                         "npc_types.aggroradius, npc_types.assistradius, npc_types.bodytype, npc_types.npc_faction_id, "
@@ -1651,8 +1651,8 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 			tmpNPCType->special_abilities[0] = '\0';
 		tmpNPCType->npc_spells_id = atoi(row[32]);
 		tmpNPCType->npc_spells_effects_id = atoi(row[33]);
-		tmpNPCType->d_meele_texture1 = atoi(row[34]);
-		tmpNPCType->d_meele_texture2 = atoi(row[35]);
+		tmpNPCType->d_melee_texture1 = atoi(row[34]);
+		tmpNPCType->d_melee_texture2 = atoi(row[35]);
 		strn0cpy(tmpNPCType->ammo_idfile, row[36], 30);
 		tmpNPCType->prim_melee_type = atoi(row[37]);
 		tmpNPCType->sec_melee_type = atoi(row[38]);
@@ -1793,8 +1793,8 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.WIS, npc_types.CHA, npc_types.MR, npc_types.CR, npc_types.DR, "
                         "npc_types.FR, npc_types.PR, npc_types.Corrup, npc_types.PhR,"
                         "npc_types.mindmg, npc_types.maxdmg, npc_types.attack_count, npc_types.special_abilities,"
-                        "npc_types.npc_spells_id, npc_types.npc_spells_effects_id, npc_types.d_meele_texture1,"
-                        "npc_types.d_meele_texture2, npc_types.ammo_idfile, npc_types.prim_melee_type,"
+                        "npc_types.npc_spells_id, npc_types.npc_spells_effects_id, npc_types.d_melee_texture1,"
+                        "npc_types.d_melee_texture2, npc_types.ammo_idfile, npc_types.prim_melee_type,"
                         "npc_types.sec_melee_type, npc_types.ranged_type, npc_types.runspeed, npc_types.findable,"
                         "npc_types.trackable, npc_types.hp_regen_rate, npc_types.mana_regen_rate, "
                         "npc_types.aggroradius, npc_types.assistradius, npc_types.bodytype, npc_types.npc_faction_id, "
@@ -1863,8 +1863,8 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 			tmpNPCType->special_abilities[0] = '\0';
 		tmpNPCType->npc_spells_id = atoi(row[32]);
 		tmpNPCType->npc_spells_effects_id = atoi(row[33]);
-		tmpNPCType->d_meele_texture1 = atoi(row[34]);
-		tmpNPCType->d_meele_texture2 = atoi(row[35]);
+		tmpNPCType->d_melee_texture1 = atoi(row[34]);
+		tmpNPCType->d_melee_texture2 = atoi(row[35]);
 		strn0cpy(tmpNPCType->ammo_idfile, row[36], 30);
 		tmpNPCType->prim_melee_type = atoi(row[37]);
 		tmpNPCType->sec_melee_type = atoi(row[38]);

@@ -250,8 +250,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 
 	AI_Start();
 
-	d_meele_texture1 = d->d_meele_texture1;
-	d_meele_texture2 = d->d_meele_texture2;
+	d_melee_texture1 = d->d_melee_texture1;
+	d_melee_texture2 = d->d_melee_texture2;
 	ammo_idfile = d->ammo_idfile;
 	memset(equipment, 0, sizeof(equipment));
 	prim_melee_type = d->prim_melee_type;
@@ -259,9 +259,9 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	ranged_type = d->ranged_type;
 
 	// If Melee Textures are not set, set attack type to Hand to Hand as default
-	if(!d_meele_texture1)
+	if(!d_melee_texture1)
 		prim_melee_type = 28;
-	if(!d_meele_texture2)
+	if(!d_melee_texture2)
 		sec_melee_type = 28;
 
 	//give NPCs skill values...
@@ -789,8 +789,8 @@ NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z,
 		npc_type->texture = atoi(sep.arg[3]);
 		npc_type->light = 0;
 		npc_type->runspeed = 1.25;
-		npc_type->d_meele_texture1 = atoi(sep.arg[7]);
-		npc_type->d_meele_texture2 = atoi(sep.arg[8]);
+		npc_type->d_melee_texture1 = atoi(sep.arg[7]);
+		npc_type->d_melee_texture2 = atoi(sep.arg[8]);
 		npc_type->merchanttype = atoi(sep.arg[9]);
 		npc_type->bodytype = atoi(sep.arg[10]);
 
@@ -822,7 +822,7 @@ NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z,
 			client->Message(0, "Current/Max HP: %i", npc->max_hp);
 			client->Message(0, "Gender: %u", npc->gender);
 			client->Message(0, "Class: %u", npc->class_);
-			client->Message(0, "Weapon Item Number: %u/%u", npc->d_meele_texture1, npc->d_meele_texture2);
+			client->Message(0, "Weapon Item Number: %u/%u", npc->d_melee_texture1, npc->d_melee_texture2);
 			client->Message(0, "MerchantID: %u", npc->MerchantType);
 			client->Message(0, "Bodytype: %u", npc->bodytype);
 		}
@@ -1197,9 +1197,9 @@ int32 NPC::GetEquipmentMaterial(uint8 material_slot) const
 		case MaterialChest:
 			return texture;
 		case MaterialPrimary:
-			return d_meele_texture1;
+			return d_melee_texture1;
 		case MaterialSecondary:
-			return d_meele_texture2;
+			return d_melee_texture2;
 		default:
 			//they have nothing in the slot, and its not a special slot... they get nothing.
 			return(0);
@@ -1981,10 +1981,10 @@ uint32 NPC::GetSpawnPointID() const
 void NPC::NPCSlotTexture(uint8 slot, uint16 texture)
 {
 	if (slot == 7) {
-		d_meele_texture1 = texture;
+		d_melee_texture1 = texture;
 	}
 	else if (slot == 8) {
-		d_meele_texture2 = texture;
+		d_melee_texture2 = texture;
 	}
 	else if (slot < 6) {
 		// Reserved for texturing individual armor slots

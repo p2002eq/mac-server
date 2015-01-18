@@ -379,8 +379,8 @@ public:
 
 	bool IsRaidTarget() const { return raid_target; };
 
-	uint16 GetPrimaryMeleeTexture() { return d_meele_texture1; }
-	uint16 GetSecondaryMeleeTexture() { return d_meele_texture2; }
+	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
+	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }
 
 protected:
 
@@ -468,8 +468,8 @@ protected:
 	uint16	skills[HIGHEST_SKILL+1];
 
 	uint32	equipment[EmuConstants::EQUIPMENT_SIZE];	//this is an array of item IDs
-	uint16	d_meele_texture1;			//this is an item Material value
-	uint16	d_meele_texture2;			//this is an item Material value (offhand)
+	uint16	d_melee_texture1;			//this is an item Material value
+	uint16	d_melee_texture2;			//this is an item Material value (offhand)
 	const char*	ammo_idfile;			//this determines projectile graphic "IT###" (see item field 'idfile')
 	uint8	prim_melee_type;			//Sets the Primary Weapon attack message and animation
 	uint8	sec_melee_type;				//Sets the Secondary Weapon attack message and animation

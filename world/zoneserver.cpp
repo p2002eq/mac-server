@@ -115,7 +115,7 @@ bool ZoneServer::SetZone(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 
 void ZoneServer::LSShutDownUpdate(uint32 zoneid){
 	if(WorldConfig::get()->UpdateStats){
-		ServerPacket* pack = new ServerPacket;
+		auto pack = new ServerPacket;
 		pack->opcode = ServerOP_LSZoneShutdown;
 		pack->size = sizeof(ZoneShutdown_Struct);
 		pack->pBuffer = new uchar[pack->size];
@@ -133,7 +133,7 @@ void ZoneServer::LSShutDownUpdate(uint32 zoneid){
 
 void ZoneServer::LSBootUpdate(uint32 zoneid, uint32 instanceid, bool startup){
 	if(WorldConfig::get()->UpdateStats){
-		ServerPacket* pack = new ServerPacket;
+		auto pack = new ServerPacket;
 		if(startup)
 			pack->opcode = ServerOP_LSZoneStart;
 		else
@@ -154,7 +154,7 @@ void ZoneServer::LSBootUpdate(uint32 zoneid, uint32 instanceid, bool startup){
 
 void ZoneServer::LSSleepUpdate(uint32 zoneid){
 	if(WorldConfig::get()->UpdateStats){
-		ServerPacket* pack = new ServerPacket;
+		auto pack = new ServerPacket;
 		pack->opcode = ServerOP_LSZoneSleep;
 		pack->size = sizeof(ServerLSZoneSleep_Struct);
 		pack->pBuffer = new uchar[pack->size];
@@ -188,7 +188,7 @@ bool ZoneServer::Process() {
 						struct in_addr in;
 						in.s_addr = GetIP();
 						zlog(WORLD__ZONE_ERR,"Zone authorization failed.");
-						ServerPacket* pack = new ServerPacket(ServerOP_ZAAuthFailed);
+						auto pack = new ServerPacket(ServerOP_ZAAuthFailed);
 						SendPacket(pack);
 						delete pack;
 						Disconnect();
@@ -199,7 +199,7 @@ bool ZoneServer::Process() {
 					struct in_addr in;
 					in.s_addr = GetIP();
 					zlog(WORLD__ZONE_ERR,"Zone authorization failed.");
-					ServerPacket* pack = new ServerPacket(ServerOP_ZAAuthFailed);
+					auto pack = new ServerPacket(ServerOP_ZAAuthFailed);
 					SendPacket(pack);
 					delete pack;
 					Disconnect();
@@ -771,7 +771,7 @@ bool ZoneServer::Process() {
 			}
 			case ServerOP_Who: {
 				ServerWhoAll_Struct* whoall = (ServerWhoAll_Struct*) pack->pBuffer;
-				Who_All_Struct* whom = new Who_All_Struct;
+				auto whom = new Who_All_Struct;
 				memset(whom,0,sizeof(Who_All_Struct));
 				whom->gmlookup = whoall->gmlookup;
 				whom->lvllow = whoall->lvllow;
@@ -926,7 +926,7 @@ bool ZoneServer::Process() {
 			}
 			case ServerOP_GetWorldTime: {
 				zlog(WORLD__ZONE,"Broadcasting a world time update");
-				ServerPacket* pack = new ServerPacket;
+				auto pack = new ServerPacket;
 
 				pack->opcode = ServerOP_SyncWorldTime;
 				pack->size = sizeof(eqTimeOfDay);
@@ -1257,7 +1257,7 @@ void ZoneServer::SendEmoteMessage(const char* to, uint32 to_guilddbid, int16 to_
 void ZoneServer::SendEmoteMessageRaw(const char* to, uint32 to_guilddbid, int16 to_minstatus, uint32 type, const char* message) {
 	if (!message)
 		return;
-	ServerPacket* pack = new ServerPacket;
+	auto pack = new ServerPacket;
 
 	pack->opcode = ServerOP_EmoteMessage;
 	pack->size = sizeof(ServerEmoteMessage_Struct)+strlen(message)+1;
@@ -1283,7 +1283,7 @@ void ZoneServer::SendEmoteMessageRaw(const char* to, uint32 to_guilddbid, int16 
 }
 
 void ZoneServer::SendGroupIDs() {
-	ServerPacket* pack = new ServerPacket(ServerOP_GroupIDReply, sizeof(ServerGroupIDReply_Struct));
+	auto pack = new ServerPacket(ServerOP_GroupIDReply, sizeof(ServerGroupIDReply_Struct));
 	ServerGroupIDReply_Struct* sgi = (ServerGroupIDReply_Struct*)pack->pBuffer;
 	zoneserver_list.NextGroupIDs(sgi->start, sgi->end);
 	SendPacket(pack);
@@ -1291,7 +1291,7 @@ void ZoneServer::SendGroupIDs() {
 }
 
 void ZoneServer::ChangeWID(uint32 iCharID, uint32 iWID) {
-	ServerPacket* pack = new ServerPacket(ServerOP_ChangeWID, sizeof(ServerChangeWID_Struct));
+	auto pack = new ServerPacket(ServerOP_ChangeWID, sizeof(ServerChangeWID_Struct));
 	ServerChangeWID_Struct* scw = (ServerChangeWID_Struct*) pack->pBuffer;
 	scw->charid = iCharID;
 	scw->newwid = iWID;
@@ -1304,7 +1304,7 @@ void ZoneServer::TriggerBootup(uint32 iZoneID, uint32 iInstanceID, const char* a
 	zoneID = iZoneID;
 	instanceID = iInstanceID;
 
-	ServerPacket* pack = new ServerPacket(ServerOP_ZoneBootup, sizeof(ServerZoneStateChange_struct));
+	auto pack = new ServerPacket(ServerOP_ZoneBootup, sizeof(ServerZoneStateChange_struct));
 	ServerZoneStateChange_struct* s = (ServerZoneStateChange_struct *) pack->pBuffer;
 	s->ZoneServerID = ID;
 	if (adminname != 0)
@@ -1324,7 +1324,7 @@ void ZoneServer::TriggerBootup(uint32 iZoneID, uint32 iInstanceID, const char* a
 
 void ZoneServer::IncommingClient(Client* client) {
 	BootingUp = true;
-	ServerPacket* pack = new ServerPacket(ServerOP_ZoneIncClient, sizeof(ServerZoneIncommingClient_Struct));
+	auto pack = new ServerPacket(ServerOP_ZoneIncClient, sizeof(ServerZoneIncommingClient_Struct));
 	ServerZoneIncommingClient_Struct* s = (ServerZoneIncommingClient_Struct*) pack->pBuffer;
 	s->zoneid = GetZoneID();
 	s->instanceid = GetInstanceID();
