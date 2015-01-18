@@ -460,13 +460,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if(IsClient())
 				{
-					if(zone->random.Roll(RuleI(Spells, SuccorFailChance))) { //2% Fail chance by default
-
-						if(IsClient()) {
-							CastToClient()->Message_StringID(MT_SpellFailure,SUCCOR_FAIL);
-						}
-						break;
-					}
 
 					// Below are the spellid's for known evac/succor spells that send player
 					// to the current zone's safe points.
