@@ -28,6 +28,8 @@
 #include "emu_opcodes.h"
 #endif
 
+class EQOldStream;
+
 /************ PACKETS ************/
 struct EQPACKET_HDR_INFO
 {
