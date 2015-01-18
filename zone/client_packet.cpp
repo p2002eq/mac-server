@@ -374,6 +374,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	case DISCONNECTED:
 	case CLIENT_LINKDEAD:
 	case PREDISCONNECTED:
+	case ZONING:
 		break;
 	default:
 		LogFile->write(EQEMuLog::Debug, "Unknown client_state: %d\n", client_state);
