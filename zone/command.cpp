@@ -3080,9 +3080,7 @@ void command_listpetition(Client *c, const Seperator *sep)
 	if (!results.Success())
 		return;
 
-	LogFile->write(EQEmuLog::Normal, "View petition request from %s, petition number: %i", c->GetName(), atoi(sep->argplus[1]));
-
-	if (results.RowCount() == 0) {
+if (results.RowCount() == 0) {
 		c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
 		return;
 	}
