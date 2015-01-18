@@ -1810,7 +1810,7 @@ char* Database::GetGroupLeaderForLogin(const char* name, char* leaderbuf) {
 }
 
 void Database::SetGroupLeaderName(uint32 gid, const char* name) { 
-	std::string query = StringFormat("REPLACE INTO `group_leaders` SET `gid` = %lu, `leadername` = '%s'",(unsigned long)gid,name);
+	std::string query = StringFormat("REPLACE INTO `group_leaders` SET `gid` = %lu, `leadername` = '%s', `leadershipaa` = ''",(unsigned long)gid,name);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())

@@ -615,10 +615,12 @@ void Client::CompleteConnect()
 
 	zoneinpacket_timer.Start();
 
-	if (GetGroup())
-		database.RefreshGroupFromDB(this);
-
 	conn_state = ClientConnectFinished;
+
+	if (GetGroup())
+	{
+		database.RefreshGroupFromDB(this);
+	}
 
 	//enforce some rules..
 	if (!CanBeInZone()) {

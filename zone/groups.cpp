@@ -1163,7 +1163,7 @@ void Group::ChangeLeader(Mob* newleader)
 	strcpy(fgu->leader_name, newleader->GetName());
 	strcpy(fgu->oldleader_name, GetOldLeaderName());
 	worldserver.SendPacket(pack);
-	safe_delete(pack);
+	//safe_delete(pack);
 
 	SetOldLeaderName(newleader->GetName());
 }
