@@ -342,20 +342,16 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 			args.push_back(const_cast<EQApplicationPacket*>(app));
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 0, &args);
 
-
-			char buffer[64];
-			app->build_header_dump(buffer);
-			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Unhandled incoming opcode: %s", buffer);
-
-			char* packet_dump = "unhandled_packets.txt";
-			FilePrintLine(packet_dump,true,"Unhandled incoming opcode: %s", buffer);
-			FileDumpPacketHex(packet_dump, app);
-
-			if(app->size < 1000)
-				DumpPacket(app, app->size);
-			else{
-				std::cout << "Dump limited to 1000 characters:\n";
-				DumpPacket(app, 1000);
+			char buffer[64]; 
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Unhandled incoming opcode: 0x%04x", app->GetOpcode()); 
+			if (logger.log_settings[EQEmuLogSys::Client_Server_Packet].log_to_console > 0){
+				app->build_header_dump(buffer);
+				if (app->size < 1000)
+					DumpPacket(app, app->size);
+				else{
+					std::cout << "Dump limited to 1000 characters:\n";
+					DumpPacket(app, 1000);
+				}
 			}
 
 			break;
