@@ -504,9 +504,6 @@ public:
 	void ShowStats(Client* client);
 	void ShowBuffs(Client* client);
 	void ShowBuffList(Client* client);
-	float DistNoRootNoZ(float x, float y) const;
-	float DistNoRootNoZ(const Mob &) const;
-	static float GetReciprocalHeading(Mob* target);
 	bool PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, float &z_dest,
 		bool lookForAftArc = true);
 
