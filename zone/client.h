@@ -22,6 +22,7 @@ class Client;
 class EQApplicationPacket;
 class EQStream;
 class Group;
+class Mob;
 class NPC;
 class Object;
 class Raid;
