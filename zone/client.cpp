@@ -574,6 +574,10 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req, CLIENT_CO
 		if(GetFilter(filter) == FilterHide)
 			return; //Client has this filter on, no need to send packet
 	}
+
+	if(client_state == PREDISCONNECTED)
+		return;
+
 	if(client_state != CLIENT_CONNECTED && required_state == CLIENT_CONNECTED){
 		// save packets during connection state
 		AddPacket(app, ack_req);
@@ -581,7 +585,7 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req, CLIENT_CO
 	}
 
 	//Wait for the queue to catch up - THEN send the first available predisconnected (zonechange) packet!
-	if (client_state == PREDISCONNECTED && required_state != PREDISCONNECTED)
+	if (client_state == ZONING && required_state != ZONING)
 	{
 		// save packets in case this fails
 		AddPacket(app, ack_req);
@@ -603,8 +607,15 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 	// if the program doesnt care about the status or if the status isnt what we requested
 
 
+	if(client_state == PREDISCONNECTED)
+	{
+		if (app && (*app))
+			delete *app;
+		return;
+	}
+
 		//Wait for the queue to catch up - THEN send the first available predisconnected (zonechange) packet!
-	if (client_state == PREDISCONNECTED && required_state != PREDISCONNECTED)
+	if (client_state == ZONING && required_state != ZONING)
 	{
 		// save packets in case this fails
 		AddPacket(app, ack_req);

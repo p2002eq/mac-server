@@ -258,11 +258,12 @@ void WorldServer::Process() {
 						entity->CastToClient()->GoToSafeCoords(ztz->requested_zone_id, ztz->requested_instance_id);
 				}
 				outapp->priority = 6;
-				entity->CastToClient()->QueuePacket(outapp, true, Mob::PREDISCONNECTED);
+				entity->CastToClient()->QueuePacket(outapp, true, Mob::ZONING);
 				safe_delete(outapp);
-				entity->CastToClient()->Reconnect();
-				if(ztz->response > 0)
-					entity->CastToClient()->Disconnect();
+				if(ztz->response <= 0)
+					entity->CastToClient()->Reconnect();
+				else
+					entity->CastToClient()->PreDisconnect();
 				switch(ztz->response)
 				{
 				case -2: {
