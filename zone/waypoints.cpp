@@ -1247,16 +1247,11 @@ uint32 ZoneDatabase::AddWPForSpawn(Client *client, uint32 spawn2id, const glm::v
 
 		query = StringFormat("INSERT INTO grid SET id = '%i', zoneid = %i, type ='%i', type2 = '%i'",
 							grid_num, zoneid, type1, type2);
-		results = QueryDatabase(query);
-		if(!results.Success())
-		else if(client)
-			client->LogSQL(query.c_str());
+		QueryDatabase(query);
 
 		query = StringFormat("UPDATE spawn2 SET pathgrid = '%i' WHERE id = '%i'", grid_num, spawn2id);
-		results = QueryDatabase(query);
-		if(!results.Success())
-		else if(client)
-			client->LogSQL(query.c_str());
+		QueryDatabase(query);
+
 	}
 	else	// NPC had a grid assigned to it
 		createdNewGrid = false;
@@ -1279,9 +1274,6 @@ uint32 ZoneDatabase::AddWPForSpawn(Client *client, uint32 spawn2id, const glm::v
 						"VALUES (%i, %i, %i, %f, %f, %f, %i, %f)",
 						grid_num, zoneid, next_wp_num, position.x, position.y, position.z, pause, position.w);
 	results = QueryDatabase(query);
-	if(!results.Success())
-	else if(client)
-		client->LogSQL(query.c_str());
 
 	return createdNewGrid? grid_num: 0;
 }
