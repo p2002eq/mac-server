@@ -45,7 +45,7 @@
 #include "../common/spdat.h"
 #include "../common/eqemu_logsys.h"
 
-#include "client_logs.h"
+
 #include "zone_config.h"
 #include "masterentity.h"
 #include "worldserver.h"
@@ -60,7 +60,7 @@
 #include "quest_parser_collection.h"
 #include "embparser.h"
 #include "lua_parser.h"
-#include "client_logs.h"
+
 #include "questmgr.h"
 //#include "remote_call_subscribe.h"
 //#include "remote_call_subscribe.h"

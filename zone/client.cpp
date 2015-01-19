@@ -48,7 +48,7 @@ extern volatile bool RunLoops;
 #include "petitions.h"
 #include "command.h"
 #include "string_ids.h"
-#include "client_logs.h"
+
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
 #include "../common/crc32.h"
