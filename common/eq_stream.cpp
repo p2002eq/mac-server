@@ -2203,8 +2203,9 @@ EQApplicationPacket *EQOldStream::PopPacket()
 
 	if(p)
 	{
-		if(p->GetRawOpcode() == 0 || p->GetRawOpcode() == 0xFFFF)
+		if(p->GetRawOpcode() == 0 || p->GetRawOpcode() == 0xFFFF || p->size > 2 && !p->pBuffer)
 		{
+			safe_delete_array(p->pBuffer);
 			safe_delete(p);
 			return nullptr;
 		}
