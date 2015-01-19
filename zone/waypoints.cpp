@@ -1160,17 +1160,11 @@ void ZoneDatabase::ModifyGrid(Client *client, bool remove, uint32 id, uint8 type
 		return;
 	}
 
-	std::string query = StringFormat("DELETE FROM grid where id=%i", id);
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-	else if(client)
-		client->LogSQL(query.c_str());
+    std::string query = StringFormat("DELETE FROM grid where id=%i", id);
+    auto results = QueryDatabase(query);
 
     query = StringFormat("DELETE FROM grid_entries WHERE zoneid = %i AND gridid = %i", zoneid, id);
     results = QueryDatabase(query);
-    if(!results.Success())
-    else if(client)
-        client->LogSQL(query.c_str());
 
 }
 

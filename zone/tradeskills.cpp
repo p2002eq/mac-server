@@ -1057,8 +1057,6 @@ void Client::LearnRecipe(uint32 recipeID)
                         "ON DUPLICATE KEY UPDATE madecount = madecount;",
                         recipeID, CharacterID());
     results = database.QueryDatabase(query);
-    if (!results.Success())
-
 }
 
 bool Client::CanIncreaseTradeskill(SkillUseTypes tradeskill) {
