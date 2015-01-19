@@ -1099,7 +1099,6 @@ uint32 newlength=0;
 		ProcessQueue();
 	} else {
 		Log.Out(Logs::Detail, Logs::Netcode, _L "Incoming packet failed checksum" __L);
-		Log.Hex(Logs::Netcode, buffer, length);
 		_SendDisconnect();
 		SetState(CLOSED);
 	}
