@@ -7,7 +7,6 @@ SET(zone_sources
 	beacon.cpp
 	bonuses.cpp
 	client.cpp
-	client_logs.cpp
 	client_mods.cpp
 	client_packet.cpp
 	client_process.cpp
@@ -125,7 +124,6 @@ SET(zone_headers
 	basic_functions.h
 	beacon.h
 	client.h
-	client_logs.h
 	client_packet.h
 	command.h
 	common.h
