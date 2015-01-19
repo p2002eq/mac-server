@@ -246,7 +246,6 @@ bool WorldDatabase::GetStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct*
                                     in_cc->start_zone, in_cc->class_, in_cc->deity, in_cc->race);
     auto results = QueryDatabase(query);
 	if(!results.Success()) {
-		Log.Out(Logs::General, Logs::Status, "Start zone query failed: %s : %s\n", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
