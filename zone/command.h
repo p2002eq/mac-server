@@ -279,8 +279,6 @@ void command_refundaa(Client *c, const Seperator *sep);
 void command_traindisc(Client *c, const Seperator *sep);
 void command_deletegraveyard(Client *c, const Seperator *sep);
 void command_setgraveyard(Client *c, const Seperator *sep);
-void command_getplayerburriedcorpsecount(Client *c, const Seperator *sep);
-void command_summonburriedplayercorpse(Client *c, const Seperator *sep);
 void command_unscribespell(Client *c, const Seperator *sep);
 void command_unmemspell(Client *c, const Seperator *sep);
 void command_unmemspells(Client *c, const Seperator *sep);
