@@ -239,7 +239,7 @@ enum {
 	commandTextureOthers = 100,	//ability to #texture on others
 	commandDoAnimOthers = 100,	//can #doanim on others
 	commandLockZones = 101,		//can lock or unlock zones
-	commandEditPlayerCorpses = 150,	//can Edit Player Corpses
+	commandEditPlayerCorpses = 95,	//can Edit Player Corpses
 	commandChangeFlags = 200,		//ability to set/refresh flags
 	commandBanPlayers = 100,		//can set bans on players
 	commandChangeDatarate = 201,	//edit client's data rate
