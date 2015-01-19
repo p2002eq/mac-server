@@ -58,7 +58,6 @@ bool BaseGuildManager::LoadGuilds() {
 
 	if (!results.Success())
 	{
-		Log.Out(Logs::Detail, Logs::Guilds, "Error loading guilds '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
