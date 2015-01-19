@@ -3356,7 +3356,7 @@ void command_corpse(Client *c, const Seperator *sep)
 			return;
 		}
 		else
-			c->Message(0, "Insufficient status to bury player corpses.");
+			c->Message(0, "Insufficient status to summon buried corpses.");
 	}
 	else if (strcasecmp(sep->arg[1], "charid") == 0)
 	{
