@@ -1286,7 +1286,6 @@ uint32 ZoneDatabase::AddWPForSpawn(Client *client, uint32 spawn2id, const glm::v
 						grid_num, zoneid, next_wp_num, position.x, position.y, position.z, pause, position.w);
 	results = QueryDatabase(query);
 	if(!results.Success())
-		Log.Out(Logs::General, Logs::Error, "Error adding grid entry '%s': '%s'", query.c_str(), results.ErrorMessage().c_str());
 	else if(client)
 		client->LogSQL(query.c_str());
 
