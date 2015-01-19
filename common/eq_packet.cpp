@@ -17,8 +17,8 @@
 */
 
 #include "crc16.h"
+#include "global_define.h"
 #include "crc32.h"
-#include "debug.h"
 #include "eq_packet.h"
 #include "eq_stream.h"
 #include "misc.h"

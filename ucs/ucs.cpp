@@ -18,7 +18,7 @@
 */
 
 #include "../common/eqemu_logsys.h"
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/eqemu_logsys.h"
 #include "clientlist.h"
 #include "../common/opcodemgr.h"
