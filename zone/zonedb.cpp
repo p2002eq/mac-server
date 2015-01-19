@@ -1159,7 +1159,6 @@ bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, uint32 zone_id, u
 	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u position: %s ishome: %u", character_id, zone_id, instance_id, to_string(position).c_str(), is_home);
 	auto results = QueryDatabase(query);
 	if (!results.RowsAffected()) {
-		Log.Out(Logs::General, Logs::None, "ERROR Bind Home Save: %s. %s", results.ErrorMessage().c_str(), query.c_str());
 	}
 	return true;
 }
