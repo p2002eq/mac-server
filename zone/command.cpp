@@ -59,6 +59,7 @@
 #include "qglobals.h"
 #include "queryserv.h"
 #include "quest_parser_collection.h"
+#include <stdlib.h>
 #include "string_ids.h"
 #include "titles.h"
 #include "water_map.h"
@@ -180,7 +181,6 @@ int command_init(void){
 		command_add("dbspawn2", "[spawngroup] [respawn] [variance] - Spawn an NPC from a predefined row in the spawn2 table", 150, command_dbspawn2) ||
 		command_add("delacct", "[accountname] - Delete an account", 250, command_delacct) ||
 		command_add("deletegraveyard", "[zone name] - Deletes the graveyard for the specified zone.", 250, command_deletegraveyard) ||
-		command_add("delpetition", "[petition number] - Delete a petition", 170, command_delpetition) ||
 		command_add("depop", "- Depop your NPC target", 150, command_depop) ||
 		command_add("depopzone", "- Depop the zone", 170, command_depopzone) ||
 		command_add("disablerecipe", "[recipe_id] - Disables a recipe using the recipe id.", 250, command_disablerecipe) ||
@@ -193,7 +193,6 @@ int command_init(void){
 		command_add("emoteview", "Lists all NPC Emotes", 95, command_emoteview) ||
 		command_add("enablerecipe", "[recipe_id] - Enables a recipe using the recipe id.", 250, command_enablerecipe) ||
 		command_add("equipitem", "[slotid(0-21)] - Equip the item on your cursor into the specified slot", 150, command_equipitem) ||
-
 
 		command_add("face", "- Change the face of your target", 150, command_face) || 
 		command_add("falltest", "[+Z] sends you to your current loc plus the Z specified.", 250, command_falltest) ||
@@ -261,7 +260,6 @@ int command_init(void){
 		command_add("lastname", "[new lastname] - Set your or your player target's lastname", 81, command_lastname) ||
 		command_add("level", "[level] - Set your or your target's level", 150, command_level) ||
 		command_add("listnpcs", "[name/range] - Search NPCs", 90, command_listnpcs) ||
-		command_add("listpetition", "- List petitions", 20, command_listpetition) ||
 		command_add("loc", "- Print out your or your target's current location and heading", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver", 250, command_lock) ||
 		command_add("log", "- Search character event log", 95, command_log) ||
@@ -319,7 +317,7 @@ int command_init(void){
 		command_add("permaclass", "[classnum] - Change your or your player target's class (target is disconnected)", 200, command_permaclass) ||
 		command_add("permagender", "[gendernum] - Change your or your player target's gender (zone to take effect)", 200, command_permagender) ||
 		command_add("permarace", "[racenum] - Change your or your player target's race (zone to take effect)", 200, command_permarace) ||
-		command_add("petitioninfo", "[petition number] - Get info about a petition", 20, command_petitioninfo) ||
+		command_add("petition", "Handles everything petition related. Use with no args or with 'help' for how to use", 20, command_petition) ||
 		command_add("peqzone", "[zonename] - Go to specified zone, if you have > 75% health", 255, command_peqzone) ||
 		command_add("pf", "- Display additional mob coordinate and wandering data", 95, command_pf) ||
 #ifdef EQPROFILE
@@ -406,6 +404,7 @@ int command_init(void){
 		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days", 150, command_suspend) ||
 		command_add("synctod", "- Send a time of day update to every client in zone", 100, command_synctod) ||
 
+		command_add("testcopy", "Sends a copy of the targets loginserver/game account/characters to a backup file.", 250, command_testcopy) ||
 		command_add("testspawn", "[memloc] [value] - spawns a NPC for you only, with the specified values set in the spawn struct", 180, command_testspawn) ||
 		command_add("testspawnkill", "- Sends an OP_Death packet for spawn made with #testspawn", 180, command_testspawnkill) ||
 		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment", 250, command_texture) ||
@@ -416,7 +415,7 @@ int command_init(void){
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 255, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
-
+		command_add("tune", "Calculate ideal statical values related to combat.", 250, command_tune) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots", 255, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target", 150, command_unfreeze) ||
 		command_add("unlock", "- Unlock the worldserver", 250, command_unlock) ||
@@ -424,12 +423,11 @@ int command_init(void){
 		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 150, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 150, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 150, command_unscribespells) ||
-		command_add("update", "Updates the source and builds.", 200, command_update) ||
+		command_add("update", "Handles all server updates/reboots. Use with no args or 'help' for how to use.", 200, command_update) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided", 95, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server", 180, command_version) ||
 		command_add("viewnpctype", "[npctype id] - Show info about an npctype", 95, command_viewnpctype) ||
-		command_add("viewpetition", "[petition number] - View a petition", 20, command_viewpetition) ||
 
 		command_add("wc", "[wear slot] [material] - Sends an OP_WearChange for your target", 250, command_wc) ||
 		command_add("weather", "[0/1/2/3] (Off/Rain/Snow/Manual) - Change the weather", 150, command_weather) ||
@@ -793,6 +791,32 @@ void command_serversidename(Client *c, const Seperator *sep){
 		c->Message(0, c->GetTarget()->GetName());
 	else
 		c->Message(0, "Error: no target");
+}
+
+void command_testcopy(Client *c, const Seperator *sep) //Still under construction.
+{
+	if (c->GetTarget() == nullptr)
+	{
+		c->Message(CC_Red, "You must target a player.");
+	}
+	else if (!c->GetTarget()->IsClient())
+	{
+		c->Message(CC_Red, "You can only save backups of players.");
+	}
+	else if (c->GetTarget() && c->GetTarget()->IsClient())
+	{
+		Client* client = c->GetTarget()->CastToClient();
+		c->Message(0, "Backing up %s.", client->GetName());
+		const char* target = client->GetName();
+		char String[255];
+
+#ifdef _WINDOWS
+		//sprintf(String, "tak_testcopy.bat %s", target);
+#else
+		//sprintf(String, "./tak_testcopy %s", target);
+#endif
+		//system(String);
+	}
 }
 
 void command_testspawnkill(Client *c, const Seperator *sep){
@@ -1444,70 +1468,148 @@ void command_movechar(Client *c, const Seperator *sep){
 	}
 }
 
-void command_viewpetition(Client *c, const Seperator *sep)
+void command_petition(Client *c, const Seperator *sep)
 {
-	if (sep->arg[1][0] == 0) {
-		c->Message(0, "Usage: #viewpetition (petition number) Type #listpetition for a list");
-		return;
-    }
+	int admin = c->Admin();
+	std::string help0 = "Petition commands usage:";
+	std::string help1 = "  #petition list - Lists all petitions.";
+	std::string help2 = "  #petition view - #petition view (petition number).";
+	std::string help3 = "  #petition info - #petition info (petition number).";
+	std::string help4 = "  #petition update - #petition update (petition number) (Text).";
+	std::string help5 = "      Adds GM comment Make sure you contain the comments in quotes.";
+	std::string help6 = "  #petition delete - #petition delete. (petition number).";
 
-    c->Message(CC_Red,"	ID : Character Name , Petition Text");
+	std::string help[] = { help0, help1, help2, help3, help4, help5, help6 };
 
-    std::string query = "SELECT petid, charname, petitiontext FROM petitions ORDER BY petid";
-    auto results = database.QueryDatabase(query);
-    if (!results.Success())
-        return;
-
-    LogFile->write(EQEmuLog::Normal,"View petition request from %s, petition number: %i", c->GetName(), atoi(sep->argplus[1]) );
-
-    if (results.RowCount() == 0) {
-        c->Message(CC_Red,"There was an error in your request: ID not found! Please check the Id and try again.");
-        return;
-    }
-
-    for (auto row = results.begin(); row != results.end(); ++row)
-        if (strcasecmp(row[0], sep->argplus[1]) == 0)
-			c->Message(15, " %s:	%s , %s ", row[0], row[1], row[2]);
-
-}
-
-void command_petitioninfo(Client *c, const Seperator *sep){
-	if (sep->arg[1][0] == 0) {
-		c->Message(0, "Usage: #petitioninfo (petition number) Type #listpetition for a list");
-		return;
+	if (strcasecmp(sep->arg[1], "help") == 0)
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
 	}
+	else if (strcasecmp(sep->arg[1], "list") == 0)
+	{
+		std::string query = "SELECT petid, charname, accountname, senttime FROM petitions ORDER BY petid";
+		auto results = database.QueryDatabase(query);
 
-	std::string query = "SELECT petid, charname, accountname, zone, charclass, charrace, charlevel FROM petitions ORDER BY petid";
-	auto results = database.QueryDatabase(query);
-	if (!results.Success())
-		return;
-	
-	LogFile->write(EQEmuLog::Normal, "Petition information request from %s, petition number:", c->GetName(), atoi(sep->argplus[1]));
-	
-	if (results.RowCount() == 0) {
-		c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
-		return;
+		if (!results.Success() || results.RowCount() == 0)
+		{
+			c->Message(CC_Red, "There was an error in your request: No petitions found!");
+			return;
+		}
+
+		c->Message(CC_Red, "ID : Character , Account , Time Sent");
+		for (auto row = results.begin(); row != results.end(); ++row)
+		{
+			char *pet_time = row[3];
+			time_t t = atoi(pet_time);
+			struct tm *tm = localtime(&t);
+			char date[20];
+			strftime(date, sizeof(date), "%c", tm);
+
+			c->Message(CC_Yellow, " %s:	%s , %s , %s", row[0], row[1], row[2], date);
+		}
 	}
-	
-	for (auto row = results.begin(); row != results.end(); ++row)
-		if (strcasecmp(row[0], sep->argplus[1]) == 0)
-			c->Message(CC_Red, "	ID : %s Character Name: %s Account Name: %s Zone: %s Character Class: %s Character Race: %s Character Level: %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6]);
+	else if (strcasecmp(sep->arg[1], "view") == 0)
+	{
+		if (sep->arg[2][0] == 0)
+		{
+			c->Message(0, "Usage: #petition view (petition number) Type #petition list for a list");
+			return;
+		}
+		LogFile->write(EQEmuLog::Normal, "Petition viewed by %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+		c->Message(CC_Red, "ID : Character , Account , Petition Text");
+		std::string query = StringFormat("SELECT petid, charname, accountname, petitiontext FROM petitions WHERE petid = %i", atoi(sep->arg[2]));
+		auto results = database.QueryDatabase(query);
 
-}
+		if (!results.Success() || results.RowCount() == 0)
+		{
+			c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
+			return;
+		}
 
-void command_delpetition(Client *c, const Seperator *sep){
-	if (sep->arg[1][0] == 0 || strcasecmp(sep->arg[1], "*") == 0) {
-		c->Message(0, "Usage: #delpetition (petition number) Type #listpetition for a list");
-		return;
+		auto row = results.begin();
+		c->Message(15, " %s: %s , %s , %s", row[0], row[1], row[2], row[3]);
 	}
-	
-	c->Message(CC_Red, "Attempting to delete petition number: %i", atoi(sep->argplus[1]));
-	std::string query = StringFormat("DELETE FROM petitions WHERE petid = %i", atoi(sep->argplus[1]));
-	auto results = database.QueryDatabase(query);
-	if (!results.Success())
-		return;
-	
-	LogFile->write(EQEmuLog::Normal, "Delete petition request from %s, petition number:", c->GetName(), atoi(sep->argplus[1]));
+	else if (strcasecmp(sep->arg[1], "info") == 0)
+	{
+		if (sep->arg[2][0] == 0)
+		{
+			c->Message(0, "Usage: #petition info (petition number) Type #petition list for a list");
+			return;
+		}
+
+		LogFile->write(EQEmuLog::Normal, "Petition information request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+		c->Message(CC_Red, "ID : Character , Account , Zone , Class , Race , Level , Last GM , GM Comment");
+		std::string query = StringFormat("SELECT petid, charname, accountname, zone, charclass, charrace, charlevel, lastgm, gmtext FROM petitions WHERE petid = %i", atoi(sep->arg[2]));
+		auto results = database.QueryDatabase(query);
+
+		if (!results.Success() || results.RowCount() == 0)
+		{
+			c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
+			return;
+		}
+
+		auto row = results.begin();
+		c->Message(15, "%s: %s %s %s %s %s %s %s %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]);
+	}
+	else if (strcasecmp(sep->arg[1], "update") == 0)
+	{
+		if (admin >= 90)
+		{
+			if (sep->arg[2][0] == 0 || sep->arg[3][0] == 0)
+			{
+				c->Message(0, "Usage: #petition update (petition number) (Text) Make sure you contain the comments in quotes. Type #petition list for a list");
+				return;
+			}
+
+			LogFile->write(EQEmuLog::Normal, "Petition update request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+			std::string query = StringFormat("UPDATE `petitions` SET `lastgm` = '%s', `gmtext` = '%s' WHERE `petid` = %i;", c->GetName(), sep->arg[3], atoi(sep->arg[2]));
+			auto results = database.QueryDatabase(query);
+
+			if (!results.Success())
+			{
+				c->Message(CC_Red, "There was an error in your request: ID not found! Please check the Id and try again.");
+				return;
+			}
+
+			c->Message(15, "%s, Updated petition comment to ( %s ) for petition: %i", c->GetName(), sep->arg[3], atoi(sep->arg[2]));
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else if (strcasecmp(sep->arg[1], "delete") == 0)
+	{
+		if (admin >= 90)
+		{
+			if (sep->arg[1][0] == 0 || sep->arg[2][0] == 0 || strcasecmp(sep->arg[2], "*") == 0)
+			{
+				c->Message(0, "Usage: #petition delete (petition number) Type #petition list for a list");
+				return;
+			}
+
+			c->Message(CC_Red, "Attempting to delete petition number: %i", atoi(sep->arg[2]));
+			std::string query = StringFormat("DELETE FROM petitions WHERE petid = %i", atoi(sep->arg[2]));
+			auto results = database.QueryDatabase(query);
+			if (!results.Success())
+				return;
+
+			petition_list.ReadDatabase();
+			LogFile->write(EQEmuLog::Normal, "Delete petition request from %s, petition number:", c->GetName(), atoi(sep->arg[2]));
+		}
+		else
+			c->Message(0, "Your access level is not high enough to use this command.");
+	}
+	else
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
+	}
 }
 
 void command_listnpcs(Client *c, const Seperator *sep){
@@ -3064,24 +3166,6 @@ void command_motd(Client *c, const Seperator *sep)
 	c->Message(0, "MoTD is set.");
 	worldserver.SendPacket(outpack);
 	safe_delete(outpack);
-}
-
-void command_listpetition(Client *c, const Seperator *sep)
-{
-
-	std::string query = "SELECT petid, charname, petitiontext FROM petitions ORDER BY petid";
-	auto results = database.QueryDatabase(query);
-	if (!results.Success())
-		return;
-
-	if (results.RowCount() == 0) {
-		c->Message(CC_Red, "There was an error in your request: No petitions found!");
-		return;
-	}
-
-	c->Message(CC_Red, "	ID : Character Name , Petition Text");
-	for (auto row = results.begin(); row != results.end(); ++row)
-		c->Message(CC_Yellow, " %s:	%s , %s ", row[0], row[1], row[2]);
 }
 
 void command_equipitem(Client *c, const Seperator *sep){
@@ -10605,3 +10689,211 @@ void command_xpinfo(Client *c, const Seperator *sep){
 	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
 }
 
+void command_tune(Client *c, const Seperator *sep)
+{
+	//Work in progress - Kayen
+
+	if(sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help")) {
+		c->Message(0, "Syntax: #tune [subcommand].");
+		c->Message(0, "-- Tune System Commands --");
+		c->Message(0, "-- Usage: Returning recommended combat statistical values based on a desired outcome.");
+		c->Message(0, "-- Note: If targeted mob does not have a target (ie not engaged in combat), YOU will be considered the target.");
+		c->Message(0, "-- Warning: The calculations done in this process are intense and can potentially cause zone crashes depending on parameters set, use with caution!");
+		c->Message(0, "-- Below are OPTIONAL parameters.");
+		c->Message(0, "-- Note: [interval] Determines how fast the stat being checked increases/decreases till it finds the best result. Default [ATK/AC 50][Acc/Avoid 10] ");
+		c->Message(0, "-- Note: [loop_max] Determines how many iterations are done to increases/decreases the stat till it finds the best result. Default [ATK/AC 100][Acc/Avoid 1000]");
+		c->Message(0, "-- Note: [Stat Override] Will override that stat on mob being checkd with the specified value. Default=0");
+		c->Message(0, "-- Note: [Info Level] How much statistical detail is displayed[0 - 3]. Default=0 ");
+		c->Message(0, "-- Note: Results are only approximations usually accurate to +/- 2 intervals.");
+
+		c->Message(0, "... ");
+		c->Message(0, "...### Category A ### Target = ATTACKER ### YOU or Target's Target = DEFENDER ###");
+		c->Message(0, "...### Category B ### Target = DEFENDER ### YOU or Target's Target = ATTACKER ###");
+		c->Message(0, "... ");
+		c->Message(0, "...#Returns recommended ATK adjustment +/- on ATTACKER that will result in an average mitigation pct on DEFENDER. ");
+		c->Message(0, "...tune FindATK [A/B] [pct mitigation] [interval][loop_max][AC Overwride][Info Level]");
+		c->Message(0, "... ");
+		c->Message(0, "...#Returns recommended AC adjustment +/- on DEFENDER for an average mitigation pct from ATTACKER. ");
+		c->Message(0, "...tune FindAC [A/B] [pct mitigation] [interval][loop_max][ATK Overwride][Info Level] ");
+		c->Message(0, "... ");
+		c->Message(0, "...#Returns recommended Accuracy adjustment +/- on ATTACKER that will result in a hit chance pct on DEFENDER. ");
+		c->Message(0, "...tune FindAccuracy [A/B] [hit chance] [interval][loop_max][Avoidance Overwride][Info Level]");
+		c->Message(0, "... ");
+		c->Message(0, "...#Returns recommended Avoidance adjustment +/- on DEFENDER for in a hit chance pct from ATTACKER. ");
+		c->Message(0, "...tune FindAvoidance [A/B] [pct mitigation] [interval][loop_max][Accuracy Overwride][Info Level] ");
+
+		return;
+	}
+	//Default is category A for attacker/defender settings, which then are swapped under category B.
+	Mob* defender = c;
+	Mob* attacker = c->GetTarget();
+
+	if (!attacker)
+	{
+		c->Message(0, "#Tune - Error no target selected. [#Tune help]");
+		return;
+	}
+
+	Mob* ttarget = attacker->GetTarget();
+
+	if (ttarget)
+		defender = ttarget;
+
+	if(!strcasecmp(sep->arg[1], "FindATK"))
+	{
+		float pct_mitigation = atof(sep->arg[3]);
+		int interval = atoi(sep->arg[4]);
+		int max_loop = atoi(sep->arg[5]);
+		int ac_override = atoi(sep->arg[6]);
+		int info_level = atoi(sep->arg[7]);
+
+		if (!pct_mitigation)
+		{
+			c->Message(13, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			return;
+		}
+
+		if (!interval)
+			interval = 50;
+		if (!max_loop)
+			max_loop = 100;
+		if(!ac_override)
+			ac_override = 0;
+		if (!info_level)
+			info_level = 1;
+		
+		if(!strcasecmp(sep->arg[2], "A"))
+			c->Tune_FindATKByPctMitigation(c, attacker, pct_mitigation, interval, max_loop,ac_override,info_level);
+		else if(!strcasecmp(sep->arg[2], "B"))
+			c->Tune_FindATKByPctMitigation(attacker,c, pct_mitigation, interval, max_loop,ac_override,info_level);
+		else {
+			c->Message(0, "#Tune - Error no category selcted. [#Tune help]");
+			c->Message(0, "Usage #tune FindATK [A/B] [pct mitigation] [interval][loop_max][AC Overwride][Info Level] ");
+			c->Message(0, "Example #tune FindATK A 60");
+		}
+		return;
+	}
+
+	if(!strcasecmp(sep->arg[1], "FindAC"))
+	{
+		float pct_mitigation = atof(sep->arg[3]);
+		int interval = atoi(sep->arg[4]);
+		int max_loop = atoi(sep->arg[5]);
+		int atk_override = atoi(sep->arg[6]);
+		int info_level = atoi(sep->arg[7]);
+
+		if (!pct_mitigation)
+		{
+			c->Message(13, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			return;
+		}
+
+		if (!interval)
+			interval = 50;
+		if (!max_loop)
+			max_loop = 100;
+		if(!atk_override)
+			atk_override = 0;
+		if (!info_level)
+			info_level = 1;
+				
+		if(!strcasecmp(sep->arg[2], "A"))
+			c->Tune_FindACByPctMitigation(c, attacker, pct_mitigation, interval, max_loop,atk_override,info_level);
+		else if(!strcasecmp(sep->arg[2], "B"))
+			c->Tune_FindACByPctMitigation(attacker, c, pct_mitigation, interval, max_loop,atk_override,info_level);
+		else {
+			c->Message(0, "#Tune - Error no category selcted. [#Tune help]");
+			c->Message(0, "Usage #tune FindAC [A/B] [pct mitigation] [interval][loop_max][ATK Overwride][Info Level] ");
+			c->Message(0, "Example #tune FindAC A 60");
+		}
+
+		return;
+	}
+
+	if(!strcasecmp(sep->arg[1], "FindAccuracy"))
+	{
+		float hit_chance = atof(sep->arg[3]);
+		int interval = atoi(sep->arg[4]);
+		int max_loop = atoi(sep->arg[5]);
+		int avoid_override = atoi(sep->arg[6]);
+		int info_level = atoi(sep->arg[7]);
+
+		if (!hit_chance)
+		{
+			c->Message(10, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			return;
+		}
+
+		if (!interval)
+			interval = 10;
+		if (!max_loop)
+			max_loop = 1000;
+		if(!avoid_override)
+			avoid_override = 0;
+		if (!info_level)
+			info_level = 1;
+
+		if (hit_chance > RuleR(Combat,MaxChancetoHit) || hit_chance < RuleR(Combat,MinChancetoHit))
+		{
+			c->Message(10, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
+			return;
+		}
+		
+		if(!strcasecmp(sep->arg[2], "A"))
+			c->Tune_FindAccuaryByHitChance(c, attacker, hit_chance, interval, max_loop,avoid_override,info_level);
+		else if(!strcasecmp(sep->arg[2], "B"))
+			c->Tune_FindAccuaryByHitChance(attacker, c, hit_chance, interval, max_loop,avoid_override,info_level);
+		else {
+			c->Message(0, "#Tune - Error no category selcted. [#Tune help]");
+			c->Message(0, "Usage #tune FindAcccuracy [A/B] [hit chance] [interval][loop_max][Avoidance Overwride][Info Level]");
+			c->Message(0, "Exampled #tune FindAccuracy B 30");
+		}
+
+		return;
+	}
+
+	if(!strcasecmp(sep->arg[1], "FindAvoidance"))
+	{
+		float hit_chance = atof(sep->arg[3]);
+		int interval = atoi(sep->arg[4]);
+		int max_loop = atoi(sep->arg[5]);
+		int acc_override = atoi(sep->arg[6]);
+		int info_level = atoi(sep->arg[7]);
+
+		if (!hit_chance)
+		{
+			c->Message(0, "#Tune - Error must enter the desired hit chance on defender. Ie. Defender to have hit chance of 40 pct.");
+			return;
+		}
+
+		if (!interval)
+			interval = 10;
+		if (!max_loop)
+			max_loop = 1000;
+		if(!acc_override)
+			acc_override = 0;
+		if (!info_level)
+			info_level = 1;
+
+		if (hit_chance > RuleR(Combat,MaxChancetoHit) || hit_chance < RuleR(Combat,MinChancetoHit))
+		{
+			c->Message(10, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
+			return;
+		}
+		
+		if(!strcasecmp(sep->arg[2], "A"))
+			c->Tune_FindAvoidanceByHitChance(c, attacker, hit_chance, interval, max_loop,acc_override, info_level);
+		else if(!strcasecmp(sep->arg[2], "B"))
+			c->Tune_FindAvoidanceByHitChance(attacker, c, hit_chance, interval, max_loop,acc_override, info_level);
+		else {
+			c->Message(0, "#Tune - Error no category selcted. [#Tune help]");
+			c->Message(0, "Usage #tune FindAvoidance [A/B] [hit chance] [interval][loop_max][Accuracy Overwride][Info Level]");
+			c->Message(0, "Exampled #tune FindAvoidance B 30");
+		}
+
+		return;
+	}
+
+
+	return;
+}
