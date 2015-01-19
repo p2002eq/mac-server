@@ -1496,7 +1496,6 @@ void ZoneDatabase::LoadAAs(SendAA_Struct **load)
 		}
 	}
 	else {
-		Log.Out(Logs::General, Logs::Error, "Error in ZoneDatabase::LoadAAs query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 	}
 
 	AARequiredLevelAndCost.clear();
