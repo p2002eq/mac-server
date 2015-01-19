@@ -1320,7 +1320,6 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 	const std::string query = "SELECT * FROM spells_new ORDER BY id ASC";
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.Out(Logs::Detail, Logs::Spells, "Error in LoadSpells query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
         return;
     }
 
