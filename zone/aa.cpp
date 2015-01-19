@@ -546,12 +546,12 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	if(summon_count > MAX_SWARM_PETS)
 		summon_count = MAX_SWARM_PETS;
 
-	static const float swarm_pet_x[MAX_SWARM_PETS] = {	5, -5, 5, -5,
-														10, -10, 10, -10,
-														8, -8, 8, -8 };
-	static const float swarm_pet_y[MAX_SWARM_PETS] = {	5, 5, -5, -5,
-														10, 10, -10, -10,
-														8, 8, -8, -8 };
+	static const xy_location swarmPetLocations[MAX_SWARM_PETS] = {
+        {5, 5}, {-5, 5}, {5, -5}, {-5, -5},
+		{10, 10}, {-10, 10}, {10, -10}, {-10, -10},
+        {8, 8}, {-8, 8}, {8, -8}, {-8, -8}
+    };
+
 	while(summon_count > 0) {
 		int pet_duration = pet.duration;
 		if(duration_override > 0)
@@ -568,8 +568,8 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		NPC* npca = new NPC(
 				(npc_dup!=nullptr)?npc_dup:npc_type,	//make sure we give the NPC the correct data pointer
 				0,
-				GetX()+swarm_pet_x[summon_count], GetY()+swarm_pet_y[summon_count],
-				GetZ(), GetHeading(), FlyMode3);
+				GetPosition() + swarmPetLocations[summon_count],
+				FlyMode3);
 
 		if (followme)
 			npca->SetFollowID(GetID());
@@ -643,12 +643,11 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 	if(summon_count > MAX_SWARM_PETS)
 		summon_count = MAX_SWARM_PETS;
 
-	static const float swarm_pet_x[MAX_SWARM_PETS] = {	5, -5, 5, -5,
-														10, -10, 10, -10,
-														8, -8, 8, -8 };
-	static const float swarm_pet_y[MAX_SWARM_PETS] = {	5, 5, -5, -5,
-														10, 10, -10, -10,
-														8, 8, -8, -8 };
+    static const xy_location swarmPetLocations[MAX_SWARM_PETS] = {
+        {5, 5}, {-5, 5}, {5, -5}, {-5, -5},
+		{10, 10}, {-10, 10}, {10, -10}, {-10, -10},
+        {8, 8}, {-8, 8}, {8, -8}, {-8, -8}
+    };
 
 	while(summon_count > 0) {
 		int pet_duration = pet.duration;
@@ -666,8 +665,8 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 		NPC* npca = new NPC(
 				(npc_dup!=nullptr)?npc_dup:npc_type,	//make sure we give the NPC the correct data pointer
 				0,
-				GetX()+swarm_pet_x[summon_count], GetY()+swarm_pet_y[summon_count],
-				GetZ(), GetHeading(), FlyMode3);
+				GetPosition()+swarmPetLocations[summon_count],
+				FlyMode3);
 
 		if (followme)
 			npca->SetFollowID(GetID());
@@ -852,7 +851,7 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 	make_npc->d_melee_texture1 = 0;
 	make_npc->d_melee_texture2 = 0;
 
-	NPC* npca = new NPC(make_npc, 0, GetX(), GetY(), GetZ(), GetHeading(), FlyMode3);
+	NPC* npca = new NPC(make_npc, 0, GetPosition(), FlyMode3);
 
 	if(!npca->GetSwarmInfo()){
 		AA_SwarmPetInfo* nSI = new AA_SwarmPetInfo;
@@ -1009,7 +1008,7 @@ void Client::BuyAA(AA_Action* action)
 		/* Do Player Profile rank calculations and set player profile */
 		SaveAA();
 		/* Save to Database to avoid having to write the whole AA array to the profile, only write changes*/
-		// database.SaveCharacterAA(this->CharacterID(), aa2->id, (cur_level + 1)); 
+		// database.SaveCharacterAA(this->CharacterID(), aa2->id, (cur_level + 1));
 
 
 		SendAATable();
@@ -1023,7 +1022,7 @@ void Client::BuyAA(AA_Action* action)
 		if (cur_level < 1){
 			Message(15, "You have gained the ability \"%s\" at a cost of %d ability %s.", aa2->name, real_cost, (real_cost>1) ? "points" : "point");
 
-			/* QS: Player_Log_AA_Purchases */ 
+			/* QS: Player_Log_AA_Purchases */
 			if (RuleB(QueryServ, PlayerLogAAPurchases)){
 				std::string event_desc = StringFormat("Initial AA Purchase :: aa_name:%s aa_id:%i at cost:%i in zoneid:%i instid:%i", aa2->name, aa2->id, real_cost, this->GetZoneID(), this->GetInstanceID());
 				QServ->PlayerLogEvent(Player_Log_AA_Purchases, this->CharacterID(), event_desc);
@@ -1283,13 +1282,13 @@ uint32 ZoneDatabase::GetMacToEmuAA(uint8 eqmacid) {
 }
 
 void Client::ResetAA(){
-	RefundAA(); 
+	RefundAA();
 	uint32 i;
 	for(i=0;i<MAX_PP_AA_ARRAY;i++){
 		aa[i]->AA = 0;
 		aa[i]->value = 0;
 		m_pp.aa_array[MAX_PP_AA_ARRAY].AA = 0;
-		m_pp.aa_array[MAX_PP_AA_ARRAY].value = 0; 
+		m_pp.aa_array[MAX_PP_AA_ARRAY].value = 0;
 	}
 
 	std::map<uint32,uint8>::iterator itr;
@@ -1305,7 +1304,7 @@ void Client::ResetAA(){
 	m_pp.raid_leadership_exp = 0;
 
 	database.DeleteCharacterAAs(this->CharacterID());
-	SaveAA(); 
+	SaveAA();
 	SendAATable();
 	database.DeleteCharacterLeadershipAAs(this->CharacterID());
 	Kick();

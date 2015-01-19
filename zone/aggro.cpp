@@ -999,8 +999,10 @@ bool Mob::CheckRegion(Mob* other) {
 
 	WaterRegionType ThisRegionType;
 	WaterRegionType OtherRegionType;
-	ThisRegionType = zone->watermap->ReturnRegionType(GetX(), GetY(), GetZ()-1);
-	OtherRegionType = zone->watermap->ReturnRegionType(other->GetX(), other->GetY(), other->GetZ()-1);
+	auto position = xyz_location(GetX(), GetY(), GetZ() - 1);
+	auto other_position = xyz_location(other->GetX(), other->GetY(), other->GetZ() - 1);
+	ThisRegionType = zone->watermap->ReturnRegionType(position);
+	OtherRegionType = zone->watermap->ReturnRegionType(other_position);
 
 	//_log(SPELLS__CASTING, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
 

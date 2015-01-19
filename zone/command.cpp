@@ -2041,10 +2041,11 @@ void command_itemtest(Client *c, const Seperator *sep){
 void command_gassign(Client *c, const Seperator *sep){
 	if (sep->IsNumber(1) && c->GetTarget() && c->GetTarget()->IsNPC())
 	{
+        auto npcBind = c->GetTarget()->CastToNPC()->m_SpawnPoint;
 		database.AssignGrid(
 			c,
-			(c->GetTarget()->CastToNPC()->org_x),
-			(c->GetTarget()->CastToNPC()->org_y),
+			npcBind.m_X,
+			npcBind.m_Y,
 			atoi(sep->arg[1])
 			);
 	}
@@ -2630,7 +2631,7 @@ void command_spawn(Client *c, const Seperator *sep){
 	LogFile->write(EQEmuLog::Debug, "#spawn Spawning:");
 #endif
 
-	NPC* npc = NPC::SpawnNPC(sep->argplus[1], c->GetX(), c->GetY(), c->GetZ(), c->GetHeading(), c);
+	NPC* npc = NPC::SpawnNPC(sep->argplus[1], c->GetPosition(), c);
 	if (!npc) {
 		c->Message(0, "Format: #spawn name race level material hp gender class priweapon secweapon merchantid bodytype - spawns a npc those parameters.");
 		c->Message(0, "Name Format: NPCFirstname_NPCLastname - All numbers in a name are stripped and \"_\" characters become a space.");
@@ -2687,7 +2688,7 @@ void command_npctypespawn(Client *c, const Seperator *sep){
 		const NPCType* tmp = 0;
 		if ((tmp = database.GetNPCType(atoi(sep->arg[1])))) {
 			//tmp->fixedZ = 1;
-			NPC* npc = new NPC(tmp, 0, c->GetX(), c->GetY(), c->GetZ(), c->GetHeading(), FlyMode3);
+			NPC* npc = new NPC(tmp, 0, c->GetPosition(), FlyMode3);
 			if (npc && sep->IsNumber(2))
 				npc->SetNPCFactionID(atoi(sep->arg[2]));
 
@@ -7448,7 +7449,7 @@ void command_pf(Client *c, const Seperator *sep){
 	{
 		Mob *who = c->GetTarget();
 		c->Message(0, "POS: (%.2f, %.2f, %.2f)", who->GetX(), who->GetY(), who->GetZ());
-		c->Message(0, "WP: (%.2f, %.2f, %.2f) (%d/%d)", who->GetCWPX(), who->GetCWPY(), who->GetCWPZ(), who->GetCWP(), who->IsNPC() ? who->CastToNPC()->GetMaxWp() : -1);
+		c->Message(0, "WP: %s (%d/%d)", to_string(who->GetCurrentWayPoint()).c_str(), who->IsNPC()?who->CastToNPC()->GetMaxWp():-1);
 		c->Message(0, "TAR: (%.2f, %.2f, %.2f)", who->GetTarX(), who->GetTarY(), who->GetTarZ());
 		c->Message(0, "TARV: (%.2f, %.2f, %.2f)", who->GetTarVX(), who->GetTarVY(), who->GetTarVZ());
 		c->Message(0, "|TV|=%.2f index=%d", who->GetTarVector(), who->GetTarNDX());
@@ -7493,16 +7494,18 @@ void command_bestz(Client *c, const Seperator *sep){
 
 		if (c->GetTarget()) {
 			z = c->GetTarget()->GetZ();
-			RegionType = zone->watermap->ReturnRegionType(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
-			c->Message(0, "InWater returns %d", zone->watermap->InWater(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z));
-			c->Message(0, "InLava returns %d", zone->watermap->InLava(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z));
+			auto position = xyz_location(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
+			RegionType = zone->watermap->ReturnRegionType(position);
+			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 		else {
 			z = c->GetZ();
-			RegionType = zone->watermap->ReturnRegionType(c->GetX(), c->GetY(), z);
-			c->Message(0, "InWater returns %d", zone->watermap->InWater(c->GetX(), c->GetY(), z));
-			c->Message(0, "InLava returns %d", zone->watermap->InLava(c->GetX(), c->GetY(), z));
+			auto position = xyz_location(c->GetX(), c->GetY(), z);
+			RegionType = zone->watermap->ReturnRegionType(position);
+			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 

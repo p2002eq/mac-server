@@ -56,7 +56,7 @@ extern Zone* zone;
 extern volatile bool ZoneLoaded;
 extern EntityList entity_list;
 
-NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float heading, int iflymode, bool IsCorpse)
+NPC::NPC(const NPCType* d, Spawn2* in_respawn, const xyz_heading& position, int iflymode, bool IsCorpse)
 : Mob(d->name,
 		d->lastname,
 		d->max_hp,
@@ -70,10 +70,10 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 		d->npc_id,
 		d->size,
 		d->runspeed,
-		heading,
-		x,
-		y,
-		z,
+		position.m_Heading,
+		position.m_X,
+		position.m_Y,
+		position.m_Z,
 		d->light,
 		d->texture,
 		d->helmtexture,
@@ -112,7 +112,10 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	qglobal_purge_timer(30000),
 	sendhpupdate_timer(1000),
 	enraged_timer(1000),
-	taunt_timer(TauntReuseTime * 1000)
+	taunt_timer(TauntReuseTime * 1000),
+	m_SpawnPoint(position),
+	m_GuardPoint(-1,-1,-1,0),
+	m_GuardPointSaved(0,0,0,0)
 {
 	//What is the point of this, since the names get mangled..
 	Mob* mob = entity_list.GetMob(name);
@@ -201,14 +204,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 
 	MerchantType = d->merchanttype;
 	merchant_open = GetClass() == MERCHANT;
-	org_x = x;
-	org_y = y;
-	org_z = z;
 	flymode = iflymode;
-	guard_x = -1;	//just some value we might be able to recongize as "unset"
-	guard_y = -1;
-	guard_z = -1;
-	guard_heading = 0;
 	guard_anim = eaStanding;
 	roambox_distance = 0;
 	roambox_max_x = -2;
@@ -219,7 +215,6 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	roambox_movingto_y = -2;
 	roambox_min_delay = 1000;
 	roambox_delay = 1000;
-	org_heading = heading;
 	p_depop = false;
 	loottable_id = d->loottable_id;
 
@@ -273,10 +268,6 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, float x, float y, float z, float 
 	reface_timer = new Timer(15000);
 	reface_timer->Disable();
 	qGlobals = nullptr;
-	guard_x_saved = 0;
-	guard_y_saved = 0;
-	guard_z_saved = 0;
-	guard_heading_saved = 0;
 	SetEmoteID(d->emoteid);
 	SetWalkSpeed(d->walkspeed);
 	SetCombatHPRegen(d->combat_hp_regen);
@@ -543,8 +534,8 @@ bool NPC::Process()
 			DoGravityEffect();
 	}
 
-	if(reface_timer->Check() && !IsEngaged() && (guard_x == GetX() && guard_y == GetY() && guard_z == GetZ())) {
-		SetHeading(guard_heading);
+	if(reface_timer->Check() && !IsEngaged() && (m_GuardPoint.m_X == GetX() && m_GuardPoint.m_Y == GetY() && m_GuardPoint.m_Z == GetZ())) {
+		SetHeading(m_GuardPoint.m_Heading);
 		SendPosition();
 		reface_timer->Disable();
 	}
@@ -649,7 +640,7 @@ bool NPC::DatabaseCastAccepted(int spell_id) {
 	return false;
 }
 
-NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z, float in_heading, Client* client) {
+NPC* NPC::SpawnNPC(const char* spawncommand, const xyz_heading& position, Client* client) {
 	if(spawncommand == 0 || spawncommand[0] == 0) {
 		return 0;
 	}
@@ -807,7 +798,7 @@ NPC* NPC::SpawnNPC(const char* spawncommand, float in_x, float in_y, float in_z,
 		npc_type->prim_melee_type = 28;
 		npc_type->sec_melee_type = 28;
 
-		NPC* npc = new NPC(npc_type, 0, in_x, in_y, in_z, in_heading/8, FlyMode3);
+		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode3);
 		//npc->GiveNPCTypeData(npc_type);
 
 		entity_list.AddNPC(npc);
@@ -2281,7 +2272,7 @@ void NPC::DepopSwarmPets()
 			Mob* owner = entity_list.GetMobID(GetSwarmInfo()->owner_id);
 			if (owner)
 				owner->SetTempPetCount(owner->GetTempPetCount() - 1);
-			
+
 			Depop();
 			return;
 		}

@@ -48,6 +48,7 @@
 #include "../common/zone_numbers.h"
 #include "event_codes.h"
 #include "guild_mgr.h"
+#include "mob.h"
 #include "petitions.h"
 #include "pets.h"
 #include "queryserv.h"
@@ -1167,10 +1168,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Mob variables for spawn */
 	class_ = m_pp.class_;
 	level = m_pp.level;
-	x_pos = m_pp.x;
-	y_pos = m_pp.y;
-	z_pos = m_pp.z;
-	heading = m_pp.heading;
+	m_Position.m_X = m_pp.x;
+	m_Position.m_Y = m_pp.y;
+	m_Position.m_Z = m_pp.z;
+	m_Position.m_Heading = m_pp.heading;
 	race = m_pp.race;
 	base_race = m_pp.race;
 	gender = m_pp.gender;
@@ -2429,7 +2430,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		params.push_back(std::to_string((double)ppu->x_pos));
 		params.push_back(std::to_string((double)ppu->y_pos));
 		params.push_back(std::to_string((double)ppu->z_pos));
-		params.push_back(std::to_string((double)heading));
+		params.push_back(std::to_string((double)m_Position.m_Heading));
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
@@ -2445,7 +2446,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			}
 
 			// set the boat's position deltas
-			boat->SetDeltas(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			auto boatDelta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			boat->SetDelta(boatDelta);
 			// send an update to everyone nearby except the client controlling the boat
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
 			SpawnPositionUpdate_Struct* ppus = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
@@ -2461,9 +2463,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float dist = 0;
 	float tmp;
-	tmp = x_pos - ppu->x_pos;
+	tmp = m_Position.m_X - ppu->x_pos;
 	dist += tmp*tmp;
-	tmp = y_pos - ppu->y_pos;
+	tmp = m_Position.m_Y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
 
@@ -2606,19 +2608,16 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float rewind_x_diff = 0;
 	float rewind_y_diff = 0;
 
-	rewind_x_diff = ppu->x_pos - rewind_x;
+	rewind_x_diff = ppu->x_pos - m_RewindLocation.m_X;
 	rewind_x_diff *= rewind_x_diff;
-	rewind_y_diff = ppu->y_pos - rewind_y;
+	rewind_y_diff = ppu->y_pos - m_RewindLocation.m_Y;
 	rewind_y_diff *= rewind_y_diff;
 
 	//We only need to store updated values if the player has moved.
 	//If the player has moved more than units for x or y, then we'll store
 	//his pre-PPU x and y for /rewind, in case he gets stuck.
-	if ((rewind_x_diff > 750) || (rewind_y_diff > 750)) {
-		rewind_x = x_pos;
-		rewind_y = y_pos;
-		rewind_z = z_pos;
-	}
+	if ((rewind_x_diff > 750) || (rewind_y_diff > 750))
+        m_RewindLocation = m_Position;
 
 	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
 	//just update rewind coords to the new ppu coords. This will prevent exploitation.
@@ -2637,19 +2636,16 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	// Update internal state
-	delta_x			= ppu->delta_x;
-	delta_y			= ppu->delta_y;
-	delta_z			= ppu->delta_z;
-	delta_heading	= ppu->delta_heading;
-	heading			= ppu->heading;
+	m_Delta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	m_Position.m_Heading = ppu->heading;
 
-	if(IsTracking() && ((x_pos!=ppu->x_pos) || (y_pos!=ppu->y_pos))){
+	if(IsTracking() && ((m_Position.m_X!=ppu->x_pos) || (m_Position.m_Y!=ppu->y_pos))){
 		if(zone->random.Real(0, 100) < 70)//should be good
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
 
 	// Break Hide and Trader mode if moving without sneaking and set rewind timer if moved
-	if(ppu->y_pos != y_pos || ppu->x_pos != x_pos){
+	if(ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X){
 		if((hidden || improved_hidden) && !sneaking){
 			hidden = false;
 			improved_hidden = false;
@@ -2668,15 +2664,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		rewind_timer.Start(30000, true);
 	}
 
-	float water_x = x_pos;
-	float water_y = y_pos;
+	float water_x = m_Position.m_X;
+	float water_y = m_Position.m_Y;
 
 	// Outgoing client packet
-	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->anim_type != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
+	if (ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X || ppu->heading != m_Position.m_Heading || ppu->anim_type != animation || (m_Delta.m_X != 0 || m_Delta.m_Y != 0 || m_Delta.m_Z != 0) && animation == 0)
 	{
-		x_pos = ppu->x_pos;
-		y_pos = ppu->y_pos;
-		z_pos = ppu->z_pos;
+		m_Position.m_X = ppu->x_pos;
+		m_Position.m_Y = ppu->y_pos;
+		m_Position.m_Z = ppu->z_pos;
 		animation = ppu->anim_type;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -2691,7 +2687,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(x_pos, y_pos, z_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		if(zone->watermap->InLiquid(m_Position) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
 			if(zone->random.Roll(50))
@@ -4457,7 +4453,7 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 	{
 		// Inviter is in another zone - Remove merc from group now if any
 		LeaveGroup();
-		
+
 		ServerPacket* pack = new ServerPacket(ServerOP_GroupFollow, sizeof(ServerGroupFollow_Struct));
 		ServerGroupFollow_Struct *sgfs = (ServerGroupFollow_Struct *)pack->pBuffer;
 		sgfs->CharacterID = CharacterID();
@@ -5029,7 +5025,7 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app)
 	EQApplicationPacket* outapp = app->Copy();
 	OldInspectResponse_Struct* insr = (OldInspectResponse_Struct*)outapp->pBuffer;
 	Mob* tmp = entity_list.GetMob(insr->TargetID);
-	
+
 	if (tmp != 0 && tmp->IsClient())
 	{
 		tmp->CastToClient()->QueuePacket(outapp);
@@ -6704,29 +6700,29 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 		int uskill = GetSkill(SkillSenseTraps);
 		if ((zone->random.Int(0, 99) + uskill) >= (zone->random.Int(0, 99) + trap->skill*0.75))
 		{
-			float xdif = trap->x - GetX();
-			float ydif = trap->y - GetY();
-			if (xdif == 0 && ydif == 0)
+			auto diff = trap->m_Position - GetPosition();
+
+			if (diff.m_X == 0 && diff.m_Y == 0)
 				Message(MT_Skills, "You sense a trap right under your feet!");
-			else if (xdif > 10 && ydif > 10)
+			else if (diff.m_X > 10 && diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthWest.");
-			else if (xdif < -10 && ydif > 10)
+			else if (diff.m_X < -10 && diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthEast.");
-			else if (ydif > 10)
+			else if (diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the North.");
-			else if (xdif > 10 && ydif < -10)
+			else if (diff.m_X > 10 && diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthWest.");
-			else if (xdif < -10 && ydif < -10)
+			else if (diff.m_X < -10 && diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthEast.");
-			else if (ydif < -10)
+			else if (diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the South.");
-			else if (xdif > 10)
+			else if (diff.m_X > 10)
 				Message(MT_Skills, "You sense a trap to the West.");
 			else
 				Message(MT_Skills, "You sense a trap to the East.");
 			trap->detected = true;
 
-			float angle = CalculateHeadingToTarget(trap->x, trap->y);
+			float angle = CalculateHeadingToTarget(trap->m_Position.m_X, trap->m_Position.m_Y);
 
 			if (angle < 0)
 				angle = (256 + angle);
@@ -7741,9 +7737,9 @@ void Client::Handle_OP_SwapSpell(const EQApplicationPacket *app)
 	m_pp.spell_book[swapspell->from_slot] = m_pp.spell_book[swapspell->to_slot];
 	m_pp.spell_book[swapspell->to_slot] = swapspelltemp;
 
-	/* Save Spell Swaps */ 
+	/* Save Spell Swaps */
 	if (!database.SaveCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot)){
-		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot); 
+		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
 	}
 	if (!database.SaveCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot)){
 		database.DeleteCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);

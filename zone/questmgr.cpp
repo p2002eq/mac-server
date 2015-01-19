@@ -201,7 +201,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, float x, float y, 
 	const NPCType* tmp = 0;
 	if (tmp = database.GetNPCType(npc_type))
 	{
-		NPC* npc = new NPC(tmp, 0, x, y, z, heading, FlyMode3);
+		NPC* npc = new NPC(tmp, nullptr, xyz_heading(x, y, z, heading), FlyMode3);
 		npc->AddLootTable();
 		entity_list.AddNPC(npc,true,true);
 		if(grid > 0)
@@ -223,7 +223,7 @@ Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, float x, flo
 	const NPCType* tmp = 0;
 	if (tmp = database.GetNPCType(npc_type))
 	{
-		NPC* npc = new NPC(tmp, 0, x, y, z, heading, FlyMode3);
+		NPC* npc = new NPC(tmp, nullptr, xyz_heading(x, y, z, heading), FlyMode3);
 		npc->AddLootTable();
 		entity_list.AddNPC(npc,true,true);
 		if(grid > 0)
@@ -296,8 +296,8 @@ Mob* QuestManager::spawn_from_spawn2(uint32 spawn2_id)
 		database.UpdateSpawn2Timeleft(spawn2_id, zone->GetInstanceID(), 0);
 		found_spawn->SetCurrentNPCID(npcid);
 
-		NPC* npc = new NPC(tmp, found_spawn, found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(),
-			found_spawn->GetHeading(), FlyMode3);
+        auto position = xyz_heading(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
+		NPC* npc = new NPC(tmp, found_spawn, position, FlyMode3);
 
 		found_spawn->SetNPCPointer(npc);
 		npc->AddLootTable();
@@ -907,7 +907,7 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 			spells[curspell].skill != 52 &&
 			( !RuleB(Spells, UseCHAScribeHack) || spells[curspell].effectid[EFFECT_COUNT - 1] != 10 )
 		)
-		{ 
+		{
 			if(IsDiscipline(curspell)){
 				//we may want to come up with a function like Client::GetNextAvailableSpellBookSlot() to help speed this up a little
 				for(uint32 r = 0; r < MAX_PP_DISCIPLINES; r++) {
@@ -921,12 +921,12 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 							SpellGlobalCheckResult = initiator->SpellGlobalCheck(curspell, Char_ID);
 							if (SpellGlobalCheckResult) {
 								initiator->GetPP().disciplines.values[r] = curspell;
-								database.SaveCharacterDisc(Char_ID, r, curspell); 
+								database.SaveCharacterDisc(Char_ID, r, curspell);
 								initiator->SendDisciplineUpdate();
 								initiator->Message(0, "You have learned a new discipline!");
 								count++;	//success counter
 							}
-							break;	//continue the 1st loop 
+							break;	//continue the 1st loop
 						}
 						else {
 							initiator->GetPP().disciplines.values[r] = curspell;
@@ -1502,7 +1502,8 @@ void QuestManager::moveto(float x, float y, float z, float h, bool saveguardspot
 	if (!owner || !owner->IsNPC())
 		return;
 
-	owner->CastToNPC()->MoveTo(x, y, z, h, saveguardspot);
+    auto position = xyz_heading(x,y,z,h);
+	owner->CastToNPC()->MoveTo(position, saveguardspot);
 }
 
 void QuestManager::resume() {
@@ -1525,26 +1526,20 @@ void QuestManager::setnextinchpevent(int at) {
 		owner->SetNextIncHPEvent(at);
 }
 
-void QuestManager::respawn(int npc_type, int grid) {
+void QuestManager::respawn(int npcTypeID, int grid) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC())
 		return;
-	float x,y,z,h;
-
-	x = owner->GetX();
-	y = owner->GetY();
-	z = owner->GetZ();
-	h = owner->GetHeading();
 
 	running_quest e = quests_running_.top();
 	e.depop_npc = true;
 	quests_running_.pop();
 	quests_running_.push(e);
 
-	const NPCType* tmp = 0;
-	if ((tmp = database.GetNPCType(npc_type)))
+	const NPCType* npcType = nullptr;
+	if ((npcType = database.GetNPCType(npcTypeID)))
 	{
-		owner = new NPC(tmp, 0, x, y, z, h, FlyMode3);
+		owner = new NPC(npcType, nullptr, owner->GetPosition(), FlyMode3);
 		owner->CastToNPC()->AddLootTable();
 		entity_list.AddNPC(owner->CastToNPC(),true,true);
 		if(grid > 0)
@@ -2525,7 +2520,7 @@ void QuestManager::CrossZoneSignalPlayerByName(const char *CharName, uint32 data
 	CZSC->data = data;
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-} 
+}
 
 void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharName, const char *Message){
 	uint32 message_len = strlen(CharName) + 1;
@@ -2535,7 +2530,7 @@ void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharNam
 	CZSC->Type = Type;
 	strn0cpy(CZSC->CharName, CharName, 64);
 	strn0cpy(CZSC->Message, Message, 512);
-	worldserver.SendPacket(pack); 
+	worldserver.SendPacket(pack);
 	safe_delete(pack);
 }
 
@@ -2545,7 +2540,7 @@ void QuestManager::CrossZoneSetEntityVariableByNPCTypeID(uint32 npctype_id, cons
 	ServerPacket* pack = new ServerPacket(ServerOP_CZSetEntityVariableByNPCTypeID, sizeof(CZSetEntVarByNPCTypeID_Struct) + message_len + message_len2);
 	CZSetEntVarByNPCTypeID_Struct* CZSNBYNID = (CZSetEntVarByNPCTypeID_Struct*)pack->pBuffer;
 	CZSNBYNID->npctype_id = npctype_id;
-	strn0cpy(CZSNBYNID->id, id, 256); 
+	strn0cpy(CZSNBYNID->id, id, 256);
 	strn0cpy(CZSNBYNID->m_var, m_var, 256);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
