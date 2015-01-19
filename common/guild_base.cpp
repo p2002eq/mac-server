@@ -138,7 +138,6 @@ bool BaseGuildManager::RefreshGuild(uint32 guild_id) {
 
 	if (!results.Success())
 	{
-		Log.Out(Logs::Detail, Logs::Guilds, "Error reloading guild ranks '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
