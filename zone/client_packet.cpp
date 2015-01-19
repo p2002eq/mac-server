@@ -815,14 +815,7 @@ void Client::Handle_Connect_OP_ClientError(const EQApplicationPacket *app)
 			sizeof(ClientError_Struct), app->size);
 		return;
 	}
-	// Client reporting error to server
-	ClientError_Struct* error = (ClientError_Struct*)app->pBuffer;
-	LogFile->write(EQEmuLog::Error, "Client error: %s", error->character_name);
-	LogFile->write(EQEmuLog::Error, "Error message: %s", error->message);
-	Message(13, error->message);
-#if (EQDEBUG>=11)
-	DumpPacket(app);
-#endif
+
 	return;
 }
 

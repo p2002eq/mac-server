@@ -108,6 +108,7 @@ SET(zone_sources
 	tradeskills.cpp
 	trading.cpp
 	trap.cpp
+	tune.cpp
 	water_map.cpp
 	water_map_v1.cpp
 	water_map_v2.cpp
