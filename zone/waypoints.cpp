@@ -1114,7 +1114,6 @@ void ZoneDatabase::AssignGrid(Client *client, const glm::vec2& location, uint32 
 	results = QueryDatabase(query);
 	if (!results.Success())
 	{
-		Log.Out(Logs::General, Logs::Error, "Error updating spawn2 '%s': '%s'", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
