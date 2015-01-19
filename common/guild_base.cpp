@@ -951,7 +951,6 @@ bool BaseGuildManager::GetCharInfo(uint32 char_id, CharGuildInfo &into) {
     query = StringFormat(GuildMemberBaseQuery " WHERE c.id=%d", char_id);
     auto results = m_db->QueryDatabase(query);
 	if (!results.Success()) {
-		Log.Out(Logs::Detail, Logs::Guilds, "Error loading guild member '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
