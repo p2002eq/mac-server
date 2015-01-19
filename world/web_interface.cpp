@@ -6,7 +6,6 @@
 #include "zonelist.h"
 #include "zoneserver.h"
 #include "remote_call.h"
-#include "../common/logtypes.h"
 #include "../common/md5.h"
 #include "../common/emu_tcp_connection.h"
 #include "../common/packet_dump.h"
