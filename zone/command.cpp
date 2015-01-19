@@ -3283,15 +3283,15 @@ void command_zonelock(Client *c, const Seperator *sep){
 void command_corpse(Client *c, const Seperator *sep)
 {
 	std::string help0 = "#Corpse commands usage:";
-	std::string help1 = "  #corpse burriedcount - Get the target's total number of burried player corpses.";
-	std::string help2 = "  #corpse burriedsummon - Summons the target's oldest burried corpse, if any exist.";
+	std::string help1 = "  #corpse buriedcount - Get the target's total number of buried player corpses.";
+	std::string help2 = "  #corpse buriedsummon - Summons the target's oldest buried corpse, if any exist.";
 	std::string help3 = "  #corpse charid [charid] - Change player corpse's owner.";
 	std::string help4 = "  #corpse delete - Delete targetted corpse.";
 	std::string help5 = "  #corpse deletenpccorpses - Delete all NPC corpses.";
 	std::string help6 = "  #corpse deleteplayercorpses - Delete all player corpses.";
 	std::string help7 = "  #corpse depop - Depops single target corpse. Optional arg [bury].";
 	std::string help8 = "  #corpse depopall - Depops all target player's corpses. Optional arg [bury].";
-	std::string help9 = "  - Set bury to 0 or no arg to skip burying the corpses for the above.";
+	std::string help9 = "  - Set bury to 0 to skip burying the corpses for the above.";
 	std::string help10 = "  #corpse inspect - Inspect contents of target corpse.";
 	std::string help11 = "  #corpse list - List corpses for target.";
 	std::string help12 = "  #corpse locate - Locates targetted player corpses. zone and loc.";
@@ -3313,7 +3313,7 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, help[i].c_str());
 		}
 	}
-	else if (strcasecmp(sep->arg[1], "burriedcount") == 0)
+	else if (strcasecmp(sep->arg[1], "buriedcount") == 0)
 	{
 		Client *t = c;
 
@@ -3328,39 +3328,49 @@ void command_corpse(Client *c, const Seperator *sep)
 		uint32 CorpseCount = database.GetCharacterBuriedCorpseCount(t->CharacterID());
 
 		if (CorpseCount > 0)
-			c->Message(0, "Your target has a total of %u burried corpses.", CorpseCount);
+			c->Message(0, "Your target has a total of %u buried corpses.", CorpseCount);
 		else
-			c->Message(0, "Your target doesn't have any burried corpses.");
+			c->Message(0, "Your target doesn't have any buried corpses.");
 
 		return;
 	}
-	else if (strcasecmp(sep->arg[1], "burriedsummon") == 0 && c->Admin() >= commandEditPlayerCorpses)
+	else if (strcasecmp(sep->arg[1], "buriedsummon") == 0)
 	{
-		Client *t = c;
-
-		if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
-			t = c->GetTarget()->CastToClient();
-		else
+		if (c->Admin() >= commandEditPlayerCorpses)
 		{
-			c->Message(0, "You must first select a target!");
+			Client *t = c;
+
+			if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+				t = c->GetTarget()->CastToClient();
+			else
+			{
+				c->Message(0, "You must first select a target!");
+				return;
+			}
+
+			Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+
+			if (!PlayerCorpse)
+				c->Message(0, "Your target doesn't have any buried corpses.");
+
 			return;
 		}
-
-		Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
-
-		if (!PlayerCorpse)
-			c->Message(0, "Your target doesn't have any burried corpses.");
-
-		return;
-	}
-	else if (strcasecmp(sep->arg[1], "charid") == 0 && c->Admin() >= commandEditPlayerCorpses)
-	{
-		if (target == 0 || !target->IsPlayerCorpse())
-			c->Message(0, "Error: Target must be a player corpse to set ID.");
-		else if (!sep->IsNumber(2))
-			c->Message(0, "Error: charid must be a number.");
 		else
-			c->Message(0, "Setting CharID=%u on PlayerCorpse '%s'", target->CastToCorpse()->SetCharID(atoi(sep->arg[2])), target->GetName());
+			c->Message(0, "Insufficient status to bury player corpses.");
+	}
+	else if (strcasecmp(sep->arg[1], "charid") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			if (target == 0 || !target->IsPlayerCorpse())
+				c->Message(0, "Error: Target must be a player corpse to set ID.");
+			else if (!sep->IsNumber(2))
+				c->Message(0, "Error: charid must be a number.");
+			else
+				c->Message(0, "Setting CharID=%u on PlayerCorpse '%s'", target->CastToCorpse()->SetCharID(atoi(sep->arg[2])), target->GetName());
+		}
+		else
+			c->Message(0, "Insufficient status to change corpse owner.");
 	}
 	else if (strcasecmp(sep->arg[1], "delete") == 0)
 	{
@@ -3387,13 +3397,18 @@ void command_corpse(Client *c, const Seperator *sep)
 		else
 			c->Message(0, "DeletePlayerCorpses Error #%d", tmp);
 	}
-	else if (strcasecmp(sep->arg[1], "deleteplayercorpses") == 0 && c->Admin() >= commandEditPlayerCorpses)
+	else if (strcasecmp(sep->arg[1], "deleteplayercorpses") == 0)
 	{
-		int32 tmp = entity_list.DeletePlayerCorpses();
-		if (tmp >= 0)
-			c->Message(0, "%i corpses deleted.", tmp);
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			int32 tmp = entity_list.DeletePlayerCorpses();
+			if (tmp >= 0)
+				c->Message(0, "%i corpses deleted.", tmp);
+			else
+				c->Message(0, "DeletePlayerCorpses Error #%i", tmp);
+		}
 		else
-			c->Message(0, "DeletePlayerCorpses Error #%i", tmp);
+			c->Message(0, "Insufficient status to delete player corpse.");
 	}
 	else if (strcasecmp(sep->arg[1], "depop") == 0)
 	{
