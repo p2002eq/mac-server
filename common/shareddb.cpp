@@ -1306,7 +1306,6 @@ int SharedDatabase::GetMaxSpellID() {
 	std::string query = "SELECT MAX(id) FROM spells_new";
 	auto results = QueryDatabase(query);
     if (!results.Success()) {
-        Log.Out(Logs::Detail, Logs::Spells, "Error in GetMaxSpellID query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
         return -1;
     }
 
