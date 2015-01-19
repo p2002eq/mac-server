@@ -4,6 +4,10 @@
 #include "position.h"
 #include "../common/string_util.h"
 
+#ifdef _MSC_VER
+	#include <algorithm>
+#endif
+
 xy_location::xy_location(float x, float y) :
     m_X(x),
     m_Y(y) {
