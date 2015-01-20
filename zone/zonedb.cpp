@@ -2217,7 +2217,6 @@ int ZoneDatabase::getZoneShutDownDelay(uint32 zoneID, uint32 version)
                                     "ORDER BY version DESC", zoneID, version);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        std::cerr << "Error in getZoneShutDownDelay query '" << query << "' " << results.ErrorMessage().c_str() << std::endl;
         return (RuleI(Zone, AutoShutdownDelay));
     }
 
