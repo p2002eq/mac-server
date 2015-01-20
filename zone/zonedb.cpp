@@ -2513,9 +2513,7 @@ void ZoneDatabase::RemoveTempFactions(Client *client) {
 	std::string query = StringFormat("DELETE FROM faction_values "
                                     "WHERE temp = 1 AND char_id = %u",
                                     client->CharacterID());
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-
+	QueryDatabase(query);
 }
 
 void ZoneDatabase::LoadPetInfo(Client *client) {
