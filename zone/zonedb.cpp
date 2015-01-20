@@ -313,7 +313,6 @@ void ZoneDatabase::UpdateBug(BugStruct* bug, uint32 clienttype) {
 	safe_delete_array(targettext);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::Error, "Error in UpdateBug query %s: %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 
