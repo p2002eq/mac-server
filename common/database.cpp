@@ -1531,7 +1531,6 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 	Log.Out(Logs::Detail, Logs::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
-		Log.Out(Logs::Detail, Logs::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
 	return true;
