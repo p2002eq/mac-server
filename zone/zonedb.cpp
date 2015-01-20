@@ -311,9 +311,7 @@ void ZoneDatabase::UpdateBug(BugStruct* bug, uint32 clienttype) {
 		bugtext == nullptr ? "" : bugtext);
 	safe_delete_array(bugtext);
 	safe_delete_array(targettext);
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-
+	QueryDatabase(query);
 }
 
 void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
