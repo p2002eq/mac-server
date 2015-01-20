@@ -86,6 +86,7 @@ int main() {
 		return 1;
 	}
 
+	/* Register Log System and Settings */
 	Log.LoadLogSettingsDefaults();
 	database.LoadLogSysSettings(Log.log_settings);
 
