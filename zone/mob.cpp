@@ -2324,7 +2324,6 @@ int16 Mob::GetResist(uint8 type) const
 
 uint32 Mob::GetLevelHP(uint8 tlevel)
 {
-	//std::cout<<"Tlevel: "<<(int)tlevel<<std::endl; // cout undefined [CODEBUG]
 	int multiplier = 0;
 	if (tlevel < 10)
 	{
