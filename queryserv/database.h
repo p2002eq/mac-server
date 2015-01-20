@@ -23,6 +23,7 @@
 #define AUTHENTICATION_TIMEOUT	60
 #define INVALID_ID				0xFFFFFFFF
 
+#include "../common/eqemu_logsys.h"
 #include "../common/global_define.h"
 #include "../common/types.h"
 #include "../common/dbcore.h"
@@ -35,12 +36,12 @@
 //atoi is not uint32 or uint32 safe!!!!
 #define atoul(str) strtoul(str, nullptr, 10)
 
-class QSDatabase : public DBcore {
+class Database : public DBcore {
 public:
-	QSDatabase();
-	QSDatabase(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
+	Database();
+	Database(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
 	bool Connect(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
-	~QSDatabase();
+	~Database();
 
 	void LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 DetailCount);
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);
@@ -49,6 +50,9 @@ public:
 	void LogPlayerMove(QSPlayerLogMove_Struct* QS, uint32 Items);
 	void LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint32 Items);
 	void GeneralQueryReceive(ServerPacket *pack);
+
+	void LoadLogSysSettings(EQEmuLogSys::LogSettings* log_settings);
+
 protected:
 	void HandleMysqlError(uint32 errnum);
 private:
