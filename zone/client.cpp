@@ -3022,11 +3022,10 @@ void Client::KeyRingList()
 bool Client::IsDiscovered(uint32 itemid) {
 
 	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in IsDiscovered query '" << query << "' " << results.ErrorMessage() << std::endl;
-		return false;
-	}
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        return false;
+    }
 
 	auto row = results.begin();
 	if (!atoi(row[0]))
