@@ -5108,13 +5108,12 @@ void Client::LoadAccountFlags()
 
 	accountflags.clear();
 	std::string query = StringFormat("SELECT p_flag, p_value "
-									"FROM account_flags WHERE p_accid = '%d'",
-									account_id);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in LoadAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
-		return;
-	}
+                                    "FROM account_flags WHERE p_accid = '%d'",
+                                    account_id);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        return;
+    }
 
 	for (auto row = results.begin(); row != results.end(); ++row)
 		accountflags[row[0]] = row[1];
