@@ -2784,7 +2784,6 @@ bool ZoneDatabase::LoadFactionData()
     query = "SELECT id, name, base FROM faction_list";
     results = QueryDatabase(query);
     if (!results.Success()) {
-        std::cerr << "Error in LoadFactionData '" << query << "' " << results.ErrorMessage() << std::endl;
         return false;
     }
 
