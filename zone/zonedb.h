@@ -332,7 +332,7 @@ public:
 	NPCType*					    GetNPCTypeTemp(uint32 id);
 
 	/* Petitions   */
-	void	UpdateBug(BugStruct* bug);
+	void	UpdateBug(BugStruct* bug, uint32 clienttype);
 	void	UpdateFeedback(Feedback_Struct* feedback);
 	void	DeletePetitionFromDB(Petition* wpet);
 	void	UpdatePetitionToDB(Petition* wpet);

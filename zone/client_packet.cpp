@@ -2001,11 +2001,41 @@ void Client::Handle_OP_Buff(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Bug(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(BugStruct))
+	if (app->size != sizeof(BugStruct) && app->size != sizeof(IntelBugStruct))
+	{
 		printf("Wrong size of BugStruct got %d expected %zu!\n", app->size, sizeof(BugStruct));
-	else{
-		BugStruct* bug = (BugStruct*)app->pBuffer;
-		database.UpdateBug(bug);
+		DumpPacket(app);
+	}
+	else
+	{
+		BugStruct* bug;
+		if(app->size == sizeof(IntelBugStruct))
+		{
+			bug = new struct BugStruct;
+			IntelBugStruct* intelbug = (IntelBugStruct*)app->pBuffer;
+			strcpy(bug->name, intelbug->name);
+			strcpy(bug->bug, intelbug->bug);
+			bug->x = GetX();
+			bug->y = GetY();
+			bug->z = GetZ();
+			bug->heading = GetHeading();
+			memset(bug->target_name,0,64);
+			if(GetTarget())
+				strncpy(bug->target_name,GetTarget()->GetName(),64);
+			bug->type = 0;
+			if(intelbug->duplicate == 1)
+				bug->type += 1;
+			if(intelbug->crash == 1)
+				bug->type += 2;
+			strcpy(bug->chartype, "NA");
+		}
+		else if(app->size == sizeof(BugStruct))
+		{
+			bug = (BugStruct*)app->pBuffer;
+		}
+		Message(CC_Yellow, "Thank you for the bug submission, %s.", bug->name);
+		uint32 clienttype = GetClientVersionBit();
+		database.UpdateBug(bug, clienttype);
 	}
 	return;
 }

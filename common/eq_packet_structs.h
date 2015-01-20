@@ -2694,23 +2694,33 @@ struct GuildMakeLeader{
 	char	target[64];
 };
 
-struct BugStruct{
-/*0000*/	char	chartype[64];
-/*0064*/	char	name[96];
-/*0160*/	char	ui[128];
-/*0288*/	float	x;
-/*0292*/	float	y;
-/*0296*/	float	z;
-/*0300*/	float	heading;
-/*0304*/	uint32	unknown304;
-/*0308*/	char	unknown308[160];
-/*0468*/	char	target_name[64];
-/*0532*/	uint32	type;
-/*0536*/	char	unknown536[2052];
-/*2584*/	char	bug[2048];
-/*4632*/	char	unknown4632[6];
-/*4638*/	char	system_info[4094];
+struct BugStruct
+{
+	/*0000*/	char	chartype[64];
+	/*0064*/	char	name[96];
+	/*0160*/	float	x;
+	/*0164*/	float	y;
+	/*0168*/	float	z;
+	/*0172*/	float	heading;
+	/*0176*/	char	unknown176[16];
+	/*0192*/	char	target_name[64];
+	/*0256*/	uint32	type;
+	/*0260*/	char	unknown256[2052];
+	/*2312*/	char	bug[1024];
+	/*3336*/	uint32	unknown3336;
+	/*3340*/
 };
+
+struct IntelBugStruct
+{
+	/*0000*/  char name[96];
+	/*0096*/  uint8 unknown096[9];
+	/*0105*/  uint8 duplicate;
+	/*0106*/  uint8 crash;
+	/*0107*/  char bug[1024];
+	/*1131*/
+};
+
 struct Make_Pet_Struct { //Simple struct for getting pet info
 	uint8 level;
 	uint8 class_;
