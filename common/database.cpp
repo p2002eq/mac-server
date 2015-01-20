@@ -1486,7 +1486,6 @@ uint32 Database::GetCharacterInfo(const char* iName, uint32* oAccID, uint32* oZo
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetCharacterInfo query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
