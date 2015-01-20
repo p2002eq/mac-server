@@ -7680,9 +7680,8 @@ void command_flagedit(Client *c, const Seperator *sep)
 			"FROM zone WHERE flag_needed != ''";
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
-			c->Message(CC_Red, "Unable to query zone flags: %s", results.ErrorMessage().c_str());
-			return;
-		}
+            return;
+        }
 
 		c->Message(0, "Zones which require flags:");
 		for (auto row = results.begin(); row != results.end(); ++row)
