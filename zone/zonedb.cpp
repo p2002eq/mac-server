@@ -341,7 +341,6 @@ void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
 		name, message, zone->GetShortName());
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		std::cerr << "Error in UpdateFeedback '" << query << "' " << results.ErrorMessage() << std::endl;
 
 }
 
