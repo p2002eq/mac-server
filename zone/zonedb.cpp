@@ -287,7 +287,7 @@ bool ZoneDatabase::logevents(const char* accountname,uint32 accountid,uint8 stat
 	return true;
 }
 
-void ZoneDatabase::UpdateBug(BugStruct* bug) {
+void ZoneDatabase::UpdateBug(BugStruct* bug, uint32 clienttype) {
 
 	uint32 len = strlen(bug->bug);
 	char* bugtext = nullptr;
@@ -296,15 +296,6 @@ void ZoneDatabase::UpdateBug(BugStruct* bug) {
 		bugtext = new char[2 * len + 1];
 		memset(bugtext, 0, 2 * len + 1);
 		DoEscapeString(bugtext, bug->bug, len);
-	}
-
-	len = strlen(bug->ui);
-	char* uitext = nullptr;
-	if (len > 0)
-	{
-		uitext = new char[2 * len + 1];
-		memset(uitext, 0, 2 * len + 1);
-		DoEscapeString(uitext, bug->ui, len);
 	}
 
 	len = strlen(bug->target_name);
@@ -316,18 +307,22 @@ void ZoneDatabase::UpdateBug(BugStruct* bug) {
 		DoEscapeString(targettext, bug->target_name, len);
 	}
 
-	//x and y are intentionally swapped because eq is inversexy coords
+	char uitext[16];
+	if(clienttype == BIT_MacPC)
+		strcpy(uitext, "PC");
+	else if(clienttype == BIT_MacIntel)
+		strcpy(uitext, "Intel");
+
 	std::string query = StringFormat("INSERT INTO bugs (zone, name, ui, x, y, z, type, flag, target, bug, date) "
 		"VALUES('%s', '%s', '%s', '%.2f', '%.2f', '%.2f', '%s', %d, '%s', '%s', CURDATE())",
-		zone->GetShortName(), bug->name, uitext == nullptr ? "" : uitext,
-		bug->x, bug->y, bug->z, bug->chartype, bug->type, targettext == nullptr ? "Unknown Target" : targettext,
+		zone->GetShortName(), bug->name, uitext, bug->x, bug->y, bug->z, bug->chartype, bug->type, 
+		targettext == nullptr ? "Unknown Target" : targettext,
 		bugtext == nullptr ? "" : bugtext);
 	safe_delete_array(bugtext);
-	safe_delete_array(uitext);
 	safe_delete_array(targettext);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		std::cerr << "Error in UpdateBug '" << query << "' " << results.ErrorMessage() << std::endl;
+		LogFile->write(EQEmuLog::Error, "Error in UpdateBug query %s: %s", query.c_str(), results.ErrorMessage().c_str());
 
 }
 

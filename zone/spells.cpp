@@ -1033,9 +1033,29 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	// first check for component reduction
 	if(IsClient() && slot != USE_ITEM_SPELL_SLOT) {
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
-		if(zone->random.Roll(reg_focus)) {
+		if(zone->random.Roll(reg_focus)) 
+		{
+			for(int x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::EQUIPMENT_END; x++)
+			{
+				int16 focus_max = 0;
+				ItemInst* ins = CastToClient()->GetInv().GetItem(x);
+
+				if (!ins)
+					continue;
+
+				const Item_Struct* TempItem = ins->GetItem();
+				if (TempItem && TempItem->Focus.Effect > 0 && TempItem->Focus.Effect != SPELL_UNKNOWN) 
+				{
+					focus_max = CalcFocusEffect(focusReagentCost, TempItem->Focus.Effect, spell_id, true);
+					if (focus_max > 0) 
+					{
+						Message_StringID(MT_Spells, BEGINS_TO_GLOW, TempItem->Name);
+						break;
+					} 
+				}
+			}
 			mlog(SPELLS__CASTING, "Spell %d: Reagent focus item prevented reagent consumption (%d chance)", spell_id, reg_focus);
-		} 
+		}
 		else {
 			if(reg_focus > 0)
 				mlog(SPELLS__CASTING, "Spell %d: Reagent focus item failed to prevent reagent consumption (%d chance)", spell_id, reg_focus);
