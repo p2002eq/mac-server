@@ -2025,7 +2025,6 @@ void ZoneDatabase::DeleteMerchantTemp(uint32 npcid, uint32 slot){
 	std::string query = StringFormat("DELETE FROM merchantlist_temp WHERE npcid=%d AND slot=%d", npcid, slot);
 	auto results = QueryDatabase(query);
 	if (!results.Success())
-		std::cerr << "Error in DeleteMerchantTemp query '" << query << "' " << results.ErrorMessage() << std::endl;
 
 }
 
