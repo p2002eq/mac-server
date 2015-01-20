@@ -2738,7 +2738,6 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
                                         "idle_b_chance FROM npc_spells WHERE id=%d", iDBSpellsID);
         auto results = QueryDatabase(query);
         if (!results.Success()) {
-            std::cerr << "Error in AddNPCSpells query1 '" << query << "' " << results.ErrorMessage() << std::endl;
 			return nullptr;
         }
 
