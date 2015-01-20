@@ -324,7 +324,6 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 				break;
 			}
 #endif
-			//std::cout << "Got OP_SessionRequest" << std::endl;
 			init();
 			OutboundQueueClear();
 			SessionRequest *Request=(SessionRequest *)p->pBuffer;
