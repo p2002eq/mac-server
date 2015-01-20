@@ -212,7 +212,6 @@ int command_init(void){
 
 		command_add("gassign", "[id] - Assign targetted NPC to predefined wandering grid id", 250, command_gassign) ||
 		command_add("gender", "[0/1/2] - Change your or your target's gender to male/female/neuter", 100, command_gender) ||
-		command_add("getplayerburriedcorpsecount", "- Get the target's total number of burried player corpses.", 90, command_getplayerburriedcorpsecount) ||
 		command_add("getvariable", "[varname] - Get the value of a variable from the database", 180, command_getvariable) ||
 		command_add("gi", nullptr, 160, command_giveitem) ||
 		command_add("ginfo", "- get group info on target.", 80, command_ginfo) ||
@@ -399,7 +398,6 @@ int command_init(void){
 		command_add("starve", "Sets hunger and thirst to 0.", 180, command_starve) ||
 		command_add("stun", "[duration] - Stuns you or your target for duration", 150, command_stun) ||
 		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified", 95, command_summon) ||
-		command_add("summonburriedplayercorpse", "- Summons the target's oldest burried corpse, if any exist.", 95, command_summonburriedplayercorpse) ||
 		command_add("summonitem", "[itemid] [charges] - Summon an item onto your cursor. Charges are optional.", 160, command_summonitem) ||
 		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days", 150, command_suspend) ||
 		command_add("synctod", "- Send a time of day update to every client in zone", 100, command_synctod) ||
@@ -2042,14 +2040,7 @@ void command_itemtest(Client *c, const Seperator *sep){
 
 void command_gassign(Client *c, const Seperator *sep){
 	if (sep->IsNumber(1) && c->GetTarget() && c->GetTarget()->IsNPC())
-	{
-		database.AssignGrid(
-			c,
-			(c->GetTarget()->CastToNPC()->org_x),
-			(c->GetTarget()->CastToNPC()->org_y),
-			atoi(sep->arg[1])
-			);
-	}
+		database.AssignGrid(c, c->GetTarget()->CastToNPC()->m_SpawnPoint, atoi(sep->arg[1]));
 	else
 		c->Message(0, "Usage: #gassign [num] - must have an npc target!");
 }
@@ -2217,7 +2208,7 @@ void command_dbspawn2(Client *c, const Seperator *sep){
 			if (sep->IsNumber(5))
 				cond_min = atoi(sep->arg[5]);
 		}
-		database.CreateSpawn2(c, atoi(sep->arg[1]), zone->GetShortName(), c->GetHeading(), c->GetX(), c->GetY(), c->GetZ(), atoi(sep->arg[2]), atoi(sep->arg[3]), cond, cond_min);
+		database.CreateSpawn2(c, atoi(sep->arg[1]), zone->GetShortName(), c->GetPosition(), atoi(sep->arg[2]), atoi(sep->arg[3]), cond, cond_min);
 	}
 	else {
 		c->Message(0, "Usage: #dbspawn2 spawngroup respawn variance [condition_id] [condition_min]");
@@ -2289,11 +2280,13 @@ void command_wp(Client *c, const Seperator *sep){
 	if (strcasecmp("add", sep->arg[1]) == 0) {
 		if (wp == 0) //default to highest if it's left blank, or we enter 0
 			wp = database.GetHighestWaypoint(zone->GetZoneID(), atoi(sep->arg[2])) + 1;
-		if (strcasecmp("-h", sep->arg[5]) == 0) {
-			database.AddWP(c, atoi(sep->arg[2]), wp, c->GetX(), c->GetY(), c->GetZ(), atoi(sep->arg[3]), zone->GetZoneID(), c->GetHeading());
+		if (strcasecmp("-h",sep->arg[5]) == 0) {
+			database.AddWP(c, atoi(sep->arg[2]),wp, c->GetPosition(), atoi(sep->arg[3]),zone->GetZoneID());
 		}
 		else {
-			database.AddWP(c, atoi(sep->arg[2]), wp, c->GetX(), c->GetY(), c->GetZ(), atoi(sep->arg[3]), zone->GetZoneID(), -1);
+            auto position = c->GetPosition();
+            position.m_Heading = -1;
+			database.AddWP(c, atoi(sep->arg[2]),wp, position, atoi(sep->arg[3]),zone->GetZoneID());
 		}
 	}
 	else if (strcasecmp("delete", sep->arg[1]) == 0)
@@ -2632,7 +2625,7 @@ void command_spawn(Client *c, const Seperator *sep){
 	LogFile->write(EQEmuLog::Debug, "#spawn Spawning:");
 #endif
 
-	NPC* npc = NPC::SpawnNPC(sep->argplus[1], c->GetX(), c->GetY(), c->GetZ(), c->GetHeading(), c);
+	NPC* npc = NPC::SpawnNPC(sep->argplus[1], c->GetPosition(), c);
 	if (!npc) {
 		c->Message(0, "Format: #spawn name race level material hp gender class priweapon secweapon merchantid bodytype - spawns a npc those parameters.");
 		c->Message(0, "Name Format: NPCFirstname_NPCLastname - All numbers in a name are stripped and \"_\" characters become a space.");
@@ -2689,7 +2682,7 @@ void command_npctypespawn(Client *c, const Seperator *sep){
 		const NPCType* tmp = 0;
 		if ((tmp = database.GetNPCType(atoi(sep->arg[1])))) {
 			//tmp->fixedZ = 1;
-			NPC* npc = new NPC(tmp, 0, c->GetX(), c->GetY(), c->GetZ(), c->GetHeading(), FlyMode3);
+			NPC* npc = new NPC(tmp, 0, c->GetPosition(), FlyMode3);
 			if (npc && sep->IsNumber(2))
 				npc->SetNPCFactionID(atoi(sep->arg[2]));
 
@@ -3282,94 +3275,142 @@ void command_zonelock(Client *c, const Seperator *sep){
 	safe_delete(pack);
 }
 
-void command_corpse(Client *c, const Seperator *sep){
+void command_corpse(Client *c, const Seperator *sep)
+{
+	std::string help0 = "#Corpse commands usage:";
+	std::string help1 = "  #corpse buriedcount - Get the target's total number of buried player corpses.";
+	std::string help2 = "  #corpse buriedsummon - Summons the target's oldest buried corpse, if any exist.";
+	std::string help3 = "  #corpse charid [charid] - Change player corpse's owner.";
+	std::string help4 = "  #corpse delete - Delete targetted corpse.";
+	std::string help5 = "  #corpse deletenpccorpses - Delete all NPC corpses.";
+	std::string help6 = "  #corpse deleteplayercorpses - Delete all player corpses.";
+	std::string help7 = "  #corpse depop - Depops single target corpse. Optional arg [bury].";
+	std::string help8 = "  #corpse depopall - Depops all target player's corpses. Optional arg [bury].";
+	std::string help9 = "  - Set bury to 0 to skip burying the corpses for the above.";
+	std::string help10 = "  #corpse inspect - Inspect contents of target corpse.";
+	std::string help11 = "  #corpse list - List corpses for target.";
+	std::string help12 = "  #corpse locate - Locates targetted player corpses. zone and loc.";
+	std::string help13 = "  #corpse lock - Locks targetted corpse. Only GMs can loot locked corpses.";
+	std::string help14 = "  #corpse unlock - Unlocks targetted corpse. Only GMs can loot locked corpses.";
+	std::string help15 = "  #corpse removecash - Removes cash from targetted corpse.";
+	std::string help16 = "  - To remove items from corpses, lock and loot them.";
+	std::string help17 = "  #corpse reset - Resets looter status on targetted corpse for debugging.";
+
+	std::string help[] = { help0, help1, help2, help3, help4, help5, help6, help7, help8, help9, help10, help11, help12, help13, help14, help15, help16, help17 };
+
 	Mob *target = c->GetTarget();
 
-	if (strcasecmp(sep->arg[1], "DeletePlayerCorpses") == 0 && c->Admin() >= commandEditPlayerCorpses) {
-		int32 tmp = entity_list.DeletePlayerCorpses();
-		if (tmp >= 0)
-			c->Message(0, "%i corpses deleted.", tmp);
-		else
-			c->Message(0, "DeletePlayerCorpses Error #%i", tmp);
+	if (strcasecmp(sep->arg[1], "help") == 0)
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
 	}
-	else if (strcasecmp(sep->arg[1], "delete") == 0) {
+	else if (strcasecmp(sep->arg[1], "buriedcount") == 0)
+	{
+		Client *t = c;
+
+		if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+			t = c->GetTarget()->CastToClient();
+		else
+		{
+			c->Message(0, "You must first select a target!");
+			return;
+		}
+
+		uint32 CorpseCount = database.GetCharacterBuriedCorpseCount(t->CharacterID());
+
+		if (CorpseCount > 0)
+			c->Message(0, "Your target has a total of %u buried corpses.", CorpseCount);
+		else
+			c->Message(0, "Your target doesn't have any buried corpses.");
+
+		return;
+	}
+	else if (strcasecmp(sep->arg[1], "buriedsummon") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			Client *t = c;
+
+			if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+				t = c->GetTarget()->CastToClient();
+			else
+			{
+				c->Message(0, "You must first select a target!");
+				return;
+			}
+
+			Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
+
+			if (!PlayerCorpse)
+				c->Message(0, "Your target doesn't have any buried corpses.");
+
+			return;
+		}
+		else
+			c->Message(0, "Insufficient status to summon buried corpses.");
+	}
+	else if (strcasecmp(sep->arg[1], "charid") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			if (target == 0 || !target->IsPlayerCorpse())
+				c->Message(0, "Error: Target must be a player corpse to set ID.");
+			else if (!sep->IsNumber(2))
+				c->Message(0, "Error: charid must be a number.");
+			else
+				c->Message(0, "Setting CharID=%u on PlayerCorpse '%s'", target->CastToCorpse()->SetCharID(atoi(sep->arg[2])), target->GetName());
+		}
+		else
+			c->Message(0, "Insufficient status to change corpse owner.");
+	}
+	else if (strcasecmp(sep->arg[1], "delete") == 0)
+	{
 		if (target == 0 || !target->IsCorpse())
 			c->Message(0, "Error: Target the corpse you wish to delete");
-		else if (target->IsNPCCorpse()) {
-
+		else if (target->IsNPCCorpse())
+		{
 			c->Message(0, "Depoping %s.", target->GetName());
 			target->CastToCorpse()->Delete();
 		}
-		else if (c->Admin() >= commandEditPlayerCorpses) {
+		else if (c->Admin() >= commandEditPlayerCorpses)
+		{
 			c->Message(0, "Deleting %s.", target->GetName());
 			target->CastToCorpse()->Delete();
 		}
 		else
 			c->Message(0, "Insufficient status to delete player corpse.");
 	}
-	else if (strcasecmp(sep->arg[1], "ListNPC") == 0) {
-		entity_list.ListNPCCorpses(c);
-	}
-	else if (strcasecmp(sep->arg[1], "ListPlayer") == 0) {
-		entity_list.ListPlayerCorpses(c);
-	}
-	else if (strcasecmp(sep->arg[1], "DeleteNPCCorpses") == 0) {
+	else if (strcasecmp(sep->arg[1], "deletenpccorpses") == 0)
+	{
 		int32 tmp = entity_list.DeleteNPCCorpses();
 		if (tmp >= 0)
 			c->Message(0, "%d corpses deleted.", tmp);
 		else
 			c->Message(0, "DeletePlayerCorpses Error #%d", tmp);
 	}
-	else if (strcasecmp(sep->arg[1], "charid") == 0 && c->Admin() >= commandEditPlayerCorpses) {
+	else if (strcasecmp(sep->arg[1], "deleteplayercorpses") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			int32 tmp = entity_list.DeletePlayerCorpses();
+			if (tmp >= 0)
+				c->Message(0, "%i corpses deleted.", tmp);
+			else
+				c->Message(0, "DeletePlayerCorpses Error #%i", tmp);
+		}
+		else
+			c->Message(0, "Insufficient status to delete player corpse.");
+	}
+	else if (strcasecmp(sep->arg[1], "depop") == 0)
+	{
 		if (target == 0 || !target->IsPlayerCorpse())
-			c->Message(0, "Error: Target must be a player corpse.");
-		else if (!sep->IsNumber(2))
-			c->Message(0, "Error: charid must be a number.");
-		else
-			c->Message(0, "Setting CharID=%u on PlayerCorpse '%s'", target->CastToCorpse()->SetCharID(atoi(sep->arg[2])), target->GetName());
-	}
-	else if (strcasecmp(sep->arg[1], "ResetLooter") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target the corpse you wish to reset");
-		else
-			target->CastToCorpse()->ResetLooter();
-	}
-	else if (strcasecmp(sep->arg[1], "RemoveCash") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target the corpse you wish to remove the cash from");
-		else if (!target->IsPlayerCorpse() || c->Admin() >= commandEditPlayerCorpses) {
-			c->Message(0, "Removing Cash from %s.", target->GetName());
-			target->CastToCorpse()->RemoveCash();
-		}
-		else
-			c->Message(0, "Insufficient status to modify player corpse.");
-	}
-	else if (strcasecmp(sep->arg[1], "InspectLoot") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target must be a corpse.");
-		else
-			target->CastToCorpse()->QueryLoot(c);
-	}
-	else if (strcasecmp(sep->arg[1], "lock") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target must be a corpse.");
-		else {
-			target->CastToCorpse()->Lock();
-			c->Message(0, "Locking %s...", target->GetName());
-		}
-	}
-	else if (strcasecmp(sep->arg[1], "unlock") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target must be a corpse.");
-		else {
-			target->CastToCorpse()->UnLock();
-			c->Message(0, "Unlocking %s...", target->GetName());
-		}
-	}
-	else if (strcasecmp(sep->arg[1], "depop") == 0) {
-		if (target == 0 || !target->IsPlayerCorpse())
-			c->Message(0, "Error: Target must be a player corpse.");
-		else if (c->Admin() >= commandEditPlayerCorpses && target->IsPlayerCorpse()) {
+			c->Message(0, "Error: Target must be a player corpse to depop.");
+		else if (c->Admin() >= commandEditPlayerCorpses && target->IsPlayerCorpse())
+		{
 			c->Message(0, "Depoping %s.", target->GetName());
 			target->CastToCorpse()->DepopPlayerCorpse();
 			if (!sep->arg[2][0] || atoi(sep->arg[2]) != 0)
@@ -3378,39 +3419,101 @@ void command_corpse(Client *c, const Seperator *sep){
 		else
 			c->Message(0, "Insufficient status to depop player corpse.");
 	}
-	else if (strcasecmp(sep->arg[1], "depopall") == 0) {
+	else if (strcasecmp(sep->arg[1], "depopall") == 0)
+	{
 		if (target == 0 || !target->IsClient())
-			c->Message(0, "Error: Target must be a player.");
-		else if (c->Admin() >= commandEditPlayerCorpses && target->IsClient()) {
+			c->Message(0, "Error: Target must be a player to depop their corpses.");
+		else if (c->Admin() >= commandEditPlayerCorpses && target->IsClient())
+		{
 			c->Message(0, "Depoping %s\'s corpses.", target->GetName());
 			target->CastToClient()->DepopAllCorpses();
 			if (!sep->arg[2][0] || atoi(sep->arg[2]) != 0)
 				target->CastToClient()->BuryPlayerCorpses();
 		}
 		else
-			c->Message(0, "Insufficient status to depop player corpse.");
-
+			c->Message(0, "Insufficient status to depop player corpses.");
 	}
-	else if (sep->arg[1][0] == 0 || strcasecmp(sep->arg[1], "help") == 0) {
-		c->Message(0, "#Corpse Sub-Commands:");
-		c->Message(0, "  DeleteNPCCorpses");
-		c->Message(0, "  Delete - Delete targetted corpse");
-		c->Message(0, "  ListNPC");
-		c->Message(0, "  ListPlayer");
-		c->Message(0, "  Lock - GM locks the corpse - cannot be looted by non-GM");
-		c->Message(0, "  UnLock");
-		c->Message(0, "  RemoveCash");
-		c->Message(0, "  InspectLoot");
-		c->Message(0, "  [to remove items from corpses, loot them]");
-		c->Message(0, "Lead-GM status required to delete/modify player corpses");
-		c->Message(0, "  DeletePlayerCorpses");
-		c->Message(0, "  CharID [charid] - change player corpse's owner");
-		c->Message(0, "  Depop [bury] - Depops single target corpse.");
-		c->Message(0, "  Depopall [bury] - Depops all target player's corpses.");
-		c->Message(0, "Set bury to 0 to skip burying the corpses.");
+	else if (strcasecmp(sep->arg[1], "inspect") == 0)
+	{
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target must be a corpse to inspect.");
+		else
+			target->CastToCorpse()->QueryLoot(c);
+	}
+	else if (strcasecmp(sep->arg[1], "list") == 0)
+	{
+		if (!target->IsClient())
+			entity_list.ListNPCCorpses(c);
+		if (target->IsClient())
+			entity_list.ListPlayerCorpses(c);
+	}
+	else if (strcasecmp(sep->arg[1], "locate") == 0)
+	{
+		if (target == 0 || !target->IsClient())
+			c->Message(0, "Error: Target must be a player to locate their corpses.");
+		else
+		{
+			c->Message(CC_Red, "CorpseID : ZoneID , x , y , z");
+			std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses WHERE charid = %d", target->CastToClient()->CharacterID());
+			auto results = database.QueryDatabase(query);
+
+			if (!results.Success() || results.RowCount() == 0)
+			{
+				c->Message(CC_Red, "No corpses exist for %s with ID: %i.", target->GetName(), target->CastToClient()->CharacterID());
+				return;
+			}
+
+			for (auto row = results.begin(); row != results.end(); ++row)
+			{
+				c->Message(CC_Yellow, " %s:	%s , %s , %s , %s", row[0], row[1], row[2], row[3], row[4]);
+			}
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "lock") == 0)
+	{
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target must be a corpse in order to lock.");
+		else {
+			target->CastToCorpse()->Lock();
+			c->Message(0, "Locking %s...", target->GetName());
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "unlock") == 0)
+	{
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target must be a corpse in order to unlock.");
+		else {
+			target->CastToCorpse()->UnLock();
+			c->Message(0, "Unlocking %s...", target->GetName());
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "removecash") == 0)
+	{
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target the corpse you wish to remove the cash from");
+		else if (!target->IsPlayerCorpse() || c->Admin() >= commandEditPlayerCorpses)
+		{
+			c->Message(0, "Removing Cash from %s.", target->GetName());
+			target->CastToCorpse()->RemoveCash();
+		}
+		else
+			c->Message(0, "Insufficient status to modify cash on player corpse.");
+	}
+	else if (strcasecmp(sep->arg[1], "reset") == 0)
+	{
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target the corpse you wish to reset");
+		else
+			target->CastToCorpse()->ResetLooter();
 	}
 	else
-		c->Message(0, "Error, #corpse sub-command not found");
+	{
+		int size = sizeof(help) / sizeof(std::string);
+		for (int i = 0; i < size; i++)
+		{
+			c->Message(0, help[i].c_str());
+		}
+	}
 }
 
 void command_fixmob(Client *c, const Seperator *sep){
@@ -5406,11 +5509,11 @@ void command_wpinfo(Client *c, const Seperator *sep){
 	n->DisplayWaypointInfo(c);
 }
 
-void command_wpadd(Client *c, const Seperator *sep){
-	int	type1 = 0,
-		type2 = 0,
-		pause = 0,
-		heading = -1;	// Defaults for a new grid
+void command_wpadd(Client *c, const Seperator *sep)
+{
+	int	type1=0,
+		type2=0,
+		pause=0;	// Defaults for a new grid
 
 	Mob *t = c->GetTarget();
 	if (t && t->IsNPC())
@@ -5433,9 +5536,11 @@ void command_wpadd(Client *c, const Seperator *sep){
 				return;
 			}
 		}
-		if (strcmp("-h", sep->arg[2]) == 0)
-			heading = c->GetHeading();
-		uint32 tmp_grid = database.AddWPForSpawn(c, s2info->GetID(), c->GetX(), c->GetY(), c->GetZ(), pause, type1, type2, zone->GetZoneID(), heading);
+		auto position = c->GetPosition();
+		if (strcmp("-h",sep->arg[2]) != 0)
+			position.m_Heading = -1;
+
+		uint32 tmp_grid = database.AddWPForSpawn(c, s2info->GetID(), position, pause, type1, type2, zone->GetZoneID());
 		if (tmp_grid)
 			t->CastToNPC()->SetGrid(tmp_grid);
 
@@ -7340,7 +7445,7 @@ void command_pf(Client *c, const Seperator *sep){
 	{
 		Mob *who = c->GetTarget();
 		c->Message(0, "POS: (%.2f, %.2f, %.2f)", who->GetX(), who->GetY(), who->GetZ());
-		c->Message(0, "WP: (%.2f, %.2f, %.2f) (%d/%d)", who->GetCWPX(), who->GetCWPY(), who->GetCWPZ(), who->GetCWP(), who->IsNPC() ? who->CastToNPC()->GetMaxWp() : -1);
+		c->Message(0, "WP: %s (%d/%d)", to_string(who->GetCurrentWayPoint()).c_str(), who->IsNPC()?who->CastToNPC()->GetMaxWp():-1);
 		c->Message(0, "TAR: (%.2f, %.2f, %.2f)", who->GetTarX(), who->GetTarY(), who->GetTarZ());
 		c->Message(0, "TARV: (%.2f, %.2f, %.2f)", who->GetTarVX(), who->GetTarVY(), who->GetTarVZ());
 		c->Message(0, "|TV|=%.2f index=%d", who->GetTarVector(), who->GetTarNDX());
@@ -7385,16 +7490,18 @@ void command_bestz(Client *c, const Seperator *sep){
 
 		if (c->GetTarget()) {
 			z = c->GetTarget()->GetZ();
-			RegionType = zone->watermap->ReturnRegionType(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
-			c->Message(0, "InWater returns %d", zone->watermap->InWater(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z));
-			c->Message(0, "InLava returns %d", zone->watermap->InLava(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z));
+			auto position = xyz_location(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
+			RegionType = zone->watermap->ReturnRegionType(position);
+			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 		else {
 			z = c->GetZ();
-			RegionType = zone->watermap->ReturnRegionType(c->GetX(), c->GetY(), z);
-			c->Message(0, "InWater returns %d", zone->watermap->InWater(c->GetX(), c->GetY(), z));
-			c->Message(0, "InLava returns %d", zone->watermap->InLava(c->GetX(), c->GetY(), z));
+			auto position = xyz_location(c->GetX(), c->GetY(), z);
+			RegionType = zone->watermap->ReturnRegionType(position);
+			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
+			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
 
 		}
 
@@ -8149,7 +8256,7 @@ void command_setgraveyard(Client *c, const Seperator *sep){
 	zoneid = database.GetZoneID(sep->arg[1]);
 
 	if (zoneid > 0) {
-		graveyard_id = database.CreateGraveyardRecord(zoneid, t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+		graveyard_id = database.CreateGraveyardRecord(zoneid, t->GetPosition());
 
 		if (graveyard_id > 0) {
 			c->Message(0, "Successfuly added a new record for this graveyard!");
@@ -8196,44 +8303,6 @@ void command_deletegraveyard(Client *c, const Seperator *sep){
 		else if (graveyard_id <= 0)
 			c->Message(0, "Unable to retrieve a valid GraveyardID for the zone: %s", sep->arg[1]);
 	}
-
-	return;
-}
-
-void command_summonburriedplayercorpse(Client *c, const Seperator *sep){
-	Client *t = c;
-
-	if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
-		t = c->GetTarget()->CastToClient();
-	else {
-		c->Message(0, "You must first select a target!");
-		return;
-	}
-
-	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
-
-	if (!PlayerCorpse)
-		c->Message(0, "Your target doesn't have any burried corpses.");
-
-	return;
-}
-
-void command_getplayerburriedcorpsecount(Client *c, const Seperator *sep){
-	Client *t = c;
-
-	if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
-		t = c->GetTarget()->CastToClient();
-	else {
-		c->Message(0, "You must first select a target!");
-		return;
-	}
-
-	uint32 CorpseCount = database.GetCharacterBuriedCorpseCount(t->CharacterID());
-
-	if (CorpseCount > 0)
-		c->Message(0, "Your target has a total of %u burried corpses.", CorpseCount);
-	else
-		c->Message(0, "Your target doesn't have any burried corpses.");
 
 	return;
 }
