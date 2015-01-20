@@ -1060,7 +1060,7 @@ void NPC::RangedAttack(Mob* other)
 
 		mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", max_range);
 		max_range *= max_range;
-		if(ComparativeDistance(m_Position, other->GetPosition()) > max_range)
+		if (ComparativeDistanceNoZ(m_Position, other->GetPosition()) > max_range)
 			return;
 		else if(ComparativeDistanceNoZ(m_Position, other->GetPosition()) < (min_range * min_range))
 			return;
