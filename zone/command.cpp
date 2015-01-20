@@ -10201,15 +10201,14 @@ void command_mysql(Client *c, const Seperator *sep)
 			++argnum;
 		}
 
-		int highlightTextIndex = 0;
-		std::string query(sep->arg[2]);
-		//swap # for % so like queries can work
-		std::replace(query.begin(), query.end(), '#', '%');
-		auto results = database.QueryDatabase(query);
-		if (!results.Success()) {
-			c->Message(0, "Invalid query: '%s', '%s'", sep->arg[2], results.ErrorMessage().c_str());
-			return;
-		}
+        int highlightTextIndex = 0;
+        std::string query(sep->arg[2]);
+        //swap # for % so like queries can work
+        std::replace(query.begin(), query.end(), '#', '%');
+        auto results = database.QueryDatabase(query);
+        if (!results.Success()) {
+            return;
+        }
 
 		//Using sep->arg[2] again, replace # with %% so it doesn't screw up when sent through vsnprintf in Message
 		query = sep->arg[2];
