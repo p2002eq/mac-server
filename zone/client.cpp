@@ -5491,7 +5491,7 @@ void Client::RewindCommand()
 		Message(0, "You must wait before using #rewind again.");
 	}
 	else {
-		MovePC(zone->GetZoneID(), zone->GetInstanceID(), rewind_x, rewind_y, rewind_z, 0, 2, Rewind);
+		MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_RewindLocation.m_X, m_RewindLocation.m_Y, m_RewindLocation.m_Z, 0, 2, Rewind);
 		rewind_timer.Start(30000, true);
 	}
 }

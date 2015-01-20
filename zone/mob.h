@@ -1103,10 +1103,6 @@ protected:
 	uint8 bardsong_slot;
 	uint32 bardsong_target_id;
 
-	float rewind_x;
-	float rewind_y;
-	float rewind_z;
-
 	xyz_location m_RewindLocation;
 
 	Timer rewind_timer;
