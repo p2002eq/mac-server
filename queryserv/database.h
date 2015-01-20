@@ -35,12 +35,12 @@
 //atoi is not uint32 or uint32 safe!!!!
 #define atoul(str) strtoul(str, nullptr, 10)
 
-class Database : public DBcore {
+class QSDatabase : public DBcore {
 public:
-	Database();
-	Database(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
+	QSDatabase();
+	QSDatabase(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
 	bool Connect(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
-	~Database();
+	~QSDatabase();
 
 	void LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 DetailCount);
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);

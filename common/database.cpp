@@ -2909,7 +2909,7 @@ void Database::LoadLogSysSettings(EQEmuLogSys::LogSettings* log_settings){
 	auto results = QueryDatabase(query);
 
 	int log_category = 0;
-	log_settings.file_logs_enabled = false;
+	Log.file_logs_enabled = false;
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		log_category = atoi(row[0]);
@@ -2922,7 +2922,7 @@ void Database::LoadLogSysSettings(EQEmuLogSys::LogSettings* log_settings){
 			If we go through this whole loop and nothing is set to any debug level, there is no point to create a file or keep anything open
 		*/
 		if (log_settings[log_category].log_to_file > 0){
-			log_settings.file_logs_enabled = true;
+			Log.file_logs_enabled = true;
 		}
 	}
 }
