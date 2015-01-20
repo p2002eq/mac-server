@@ -962,7 +962,6 @@ bool Database::SetVariable(const char* varname_in, const char* varvalue_in) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in SetVariable query '" << query << "' " << results.ErrorMessage() << std::endl;
 		free(varname);
 		free(varvalue);
 		return false;
