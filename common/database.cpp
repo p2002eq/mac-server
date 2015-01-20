@@ -1407,7 +1407,6 @@ bool Database::SetMQDetectionFlag(const char* accountname, const char* character
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in SetMQDetectionFlag query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
