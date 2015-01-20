@@ -654,7 +654,6 @@ void EQStream::Write(int eq_fd)
 	int32 threshold=RateThreshold;
 	MRate.unlock();
 	if (BytesWritten > threshold) {
-		//std::cout << "Over threshold: " << BytesWritten << " > " << threshold << std::endl;
 		return;
 	}
 
