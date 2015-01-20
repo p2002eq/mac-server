@@ -5222,8 +5222,10 @@ int16 Client::GetFocusEffect(focusType type, uint16 spell_id) {
 		if(UsedItem && rand_effectiveness && focus_max_real != 0)
 			realTotal = CalcFocusEffect(type, UsedFocusID, spell_id);
 
-		if (realTotal != 0 && UsedItem)
+		if (realTotal != 0 && UsedItem && type != focusReagentCost)
+		{
 			Message_StringID(MT_Spells, BEGINS_TO_GLOW, UsedItem->Name);
+		}
 	}
 
 	//Check if spell focus effect exists for the client.
