@@ -1648,7 +1648,6 @@ bool Database::GetLiveChar(uint32 account_id, char* cname) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in GetLiveChar query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
