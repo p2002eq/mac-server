@@ -100,6 +100,7 @@ int main() {
 
 	/* Register Log System and Settings */
 	database.LoadLogSysSettings(Log.log_settings);
+	Log.StartFileLogs();
 
 	char tmp[64];
 
