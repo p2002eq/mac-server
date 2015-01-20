@@ -122,7 +122,6 @@ struct sockaddr_in address;
 EQStream *EQStreamFactory::Pop()
 {
 EQStream *s=nullptr;
-	//std::cout << "Pop():Locking MNewStreams" << std::endl;
 	MNewStreams.lock();
 	if (NewStreams.size()) {
 		s=NewStreams.front();
