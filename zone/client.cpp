@@ -2984,10 +2984,9 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM keyring "
-									"WHERE char_id = '%i' ORDER BY item_id", character_id);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in Client::KeyRingLoad query '" << query << "' " << results.ErrorMessage() << std::endl;
+                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
 		return;
 	}
 
