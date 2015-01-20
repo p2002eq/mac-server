@@ -2081,7 +2081,6 @@ bool ZoneDatabase::SetZoneTZ(uint32 zoneid, uint32 version, uint32 tz) {
                                     tz, zoneid, version);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        std::cerr << "Error in SetZoneTZ query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
     }
 
