@@ -2167,7 +2167,6 @@ int32 ZoneDatabase::GetBlockedSpellsCount(uint32 zoneid)
 	std::string query = StringFormat("SELECT count(*) FROM blocked_spells WHERE zoneid = %d", zoneid);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-        std::cerr << "Error in GetBlockedSpellsCount query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return -1;
 	}
 
