@@ -6943,7 +6943,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (mp->quantity < 1) return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (DistNoRoot(*tmp) > USE_NPC_RANGE2)
+	if (ComparativeDistance(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;

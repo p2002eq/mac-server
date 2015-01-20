@@ -473,7 +473,7 @@ int EntityList::GetHatedCountByFaction(Mob *attacker, Mob *exclude)
 
 		AggroRange *= AggroRange;
 
-		if (mob->DistNoRoot(*attacker) > AggroRange)
+		if (ComparativeDistance(mob->GetPosition(), attacker->GetPosition()) > AggroRange)
 			continue;
 
 		// If exclude doesn't have a faction, check for buddies based on race.

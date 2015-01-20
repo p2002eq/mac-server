@@ -1016,7 +1016,7 @@ void Client::AI_Process()
 			if(owner == nullptr)
 				return;
 
-			float dist = DistNoRoot(*owner);
+			float dist = ComparativeDistance(m_Position, owner->GetPosition());
 			if (dist >= 100)
 			{
 				float speed = dist >= 225 ? GetRunspeed() : GetWalkspeed();
@@ -1501,7 +1501,7 @@ void Mob::AI_Process() {
 						//if(owner->IsClient())
 						//	printf("Pet start pos: (%f, %f, %f)\n", GetX(), GetY(), GetZ());
 
-						float dist = DistNoRoot(*owner);
+						float dist = ComparativeDistance(m_Position, owner->GetPosition());
 						if (dist >= 400)
 						{
 							float speed = GetWalkspeed();
@@ -1556,7 +1556,7 @@ void Mob::AI_Process() {
 				if (!follow) SetFollowID(0);
 				else
 				{
-					float dist2 = DistNoRoot(*follow);
+					float dist2 = ComparativeDistance(m_Position, follow->GetPosition());
 					int followdist = GetFollowDistance();
 
 					if (dist2 >= followdist)	// Default follow distance is 100
