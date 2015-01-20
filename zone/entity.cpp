@@ -114,7 +114,6 @@ Trap *Entity::CastToTrap()
 {
 #ifdef DEBUG
 	if (!IsTrap()) {
-		//std::cout << "CastToTrap error" << std::endl;
 		return 0;
 	}
 #endif
