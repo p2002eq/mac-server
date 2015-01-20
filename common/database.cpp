@@ -1334,7 +1334,6 @@ bool Database::CheckUsedName(const char* name) {
 	std::string query = StringFormat("SELECT `id` FROM `character_data` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		std::cerr << "Error in CheckUsedName query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
