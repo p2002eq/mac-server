@@ -2282,8 +2282,7 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
                                     ddoordbid, ddoorid, zone->GetShortName(), zone->GetInstanceVersion(),
                                     ddoor_name, position.x, position.y, position.z, position.w,
                                     dopentype, dguildid, dlockpick, dkeyitem, ddoor_param, dinvert, dincline, dsize);
-    auto results = QueryDatabase(query);
-    if (!results.Success())
+    QueryDatabase(query);
 }
 
 void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name){
