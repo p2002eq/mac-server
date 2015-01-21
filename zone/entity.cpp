@@ -299,10 +299,30 @@ void EntityList::AddClient(Client *client)
 void EntityList::TrapProcess()
 {
 
-#ifdef IDLE_WHEN_EMPTY
-	if (numclients < 1)
-		return;
-#endif
+	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
+	{
+		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
+		{
+			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
+		}
+		else if(numclients >= 1 && zone->idle)
+		{
+			if(zone->idle_timer.Enabled())
+				zone->idle_timer.Disable();
+			zone->idle = false;
+		}
+
+		if(zone->idle_timer.Check())
+		{
+			zone->idle_timer.Disable();
+			zone->idle = true;
+		}
+
+		if(zone->idle)
+		{
+			return;
+		}
+	}
 
 	if (trap_list.empty()) {
 		net.trap_timer.Disable();
@@ -373,10 +393,32 @@ void EntityList::RaidProcess()
 
 void EntityList::DoorProcess()
 {
-#ifdef IDLE_WHEN_EMPTY
-	if (numclients < 1)
-		return;
-#endif
+
+	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
+	{
+		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
+		{
+			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
+		}
+		else if(numclients >= 1 && zone->idle)
+		{
+			if(zone->idle_timer.Enabled())
+				zone->idle_timer.Disable();
+			zone->idle = false;
+		}
+
+		if(zone->idle_timer.Check())
+		{
+			zone->idle_timer.Disable();
+			zone->idle = true;
+		}
+
+		if(zone->idle)
+		{
+			return;
+		}
+	}
+
 	if (door_list.empty()) {
 		net.door_timer.Disable();
 		return;
@@ -395,6 +437,32 @@ void EntityList::DoorProcess()
 
 void EntityList::ObjectProcess()
 {
+
+	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
+	{
+		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
+		{
+			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
+		}
+		else if(numclients >= 1 && zone->idle)
+		{
+			if(zone->idle_timer.Enabled())
+				zone->idle_timer.Disable();
+			zone->idle = false;
+		}
+
+		if(zone->idle_timer.Check())
+		{
+			zone->idle_timer.Disable();
+			zone->idle = true;
+		}
+
+		if(zone->idle)
+		{
+			return;
+		}
+	}
+
 	if (object_list.empty()) {
 		net.object_timer.Disable();
 		return;
@@ -433,10 +501,36 @@ void EntityList::CorpseProcess()
 
 void EntityList::MobProcess()
 {
-#ifdef IDLE_WHEN_EMPTY
-	if (numclients < 1)
-		return;
-#endif
+
+	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
+	{
+		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
+		{
+			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
+			_log(EQMAC__LOG, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
+		}
+		else if(numclients >= 1 && zone->idle)
+		{
+			if(zone->idle_timer.Enabled())
+				zone->idle_timer.Disable();
+			zone->idle = false;
+			_log(EQMAC__LOG, "Entity Process: A player has entered the zone, leaving idle state.");
+		}
+
+		if(zone->idle_timer.Check())
+		{
+			zone->idle_timer.Disable();
+			zone->idle = true;
+			_log(EQMAC__LOG, "Entity Process: Idle timer has expired, zone will now idle.");
+		}
+
+		if(zone->idle)
+		{
+			return;
+		}
+	}
+
+
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		uint16 id = it->first;
