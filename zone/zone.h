@@ -244,6 +244,9 @@ public:
 	void mod_init();
 	void mod_repop();
 
+	Timer   idle_timer;
+	bool	idle;
+
 private:
 	uint32	zoneid;
 	uint32	instanceid;

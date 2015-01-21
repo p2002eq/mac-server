@@ -5,6 +5,7 @@
 #include "position.h"
 #include <string>
 
+
 enum WaterRegionType {
 	RegionTypeUnsupported = -2,
 	RegionTypeUntagged = -1,

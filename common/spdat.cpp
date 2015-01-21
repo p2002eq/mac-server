@@ -70,15 +70,12 @@
 
 */
 
-#include "debug.h"
-#include "spdat.h"
-#include "packet_dump.h"
-#include "moremath.h"
-#include "item.h"
-#include "skills.h"
-#include "bodytypes.h"
+#include "../common/logsys.h"
+#include "../common/logtypes.h"
+
 #include "classes.h"
-#include <math.h>
+#include "spdat.h"
+
 #ifndef WIN32
 #include <stdlib.h>
 #include "unix.h"
@@ -501,7 +498,7 @@ bool IsBlankSpellEffect(uint16 spellid, int effect_index)
 }
 
 // checks some things about a spell id, to see if we can proceed
-bool IsValidSpell(uint32 spellid)
+bool IsValidSpell(uint16 spellid)
 {
 	if (SPDAT_RECORDS > 0 && spellid != 0 && spellid != 1 &&
 			spellid != 0xFFFFFFFF && spellid < SPDAT_RECORDS && spells[spellid].player_1[0])
@@ -1046,6 +1043,38 @@ bool IsPowerDistModSpell(uint16 spell_id)
 	if (IsValidSpell(spell_id) && 
 		(spells[spell_id].max_dist_mod || spells[spell_id].min_dist_mod) && spells[spell_id].max_dist > spells[spell_id].min_dist)
 		return true;
+
+	return false;
+}
+
+bool IsRegeantFocus(uint16 spell_id)
+{
+	return IsEffectInSpell(spell_id, SE_ReduceReagentCost);
+}
+
+bool IsBoltSpell(uint16 spell_id)
+{
+	if(IsValidSpell(spell_id) && spells[spell_id].spell_category == 13)
+		return true;
+
+	return false;
+}
+
+bool RequiresComponents(uint16 spell_id)
+{
+	if(IsValidSpell(spell_id))
+	{
+		for (int t_count = 0; t_count < 4; t_count++) 
+		{
+			int32 component = spells[spell_id].components[t_count];
+
+			if (component == -1)
+				continue;
+
+			if(component > 0)
+				return true;
+		}
+	}
 
 	return false;
 }

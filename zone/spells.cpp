@@ -1031,7 +1031,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	// Check for consumables and Reagent focus items
 	// first check for component reduction
-	if(IsClient() && slot != USE_ITEM_SPELL_SLOT) {
+	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && RequiresComponents(spell_id)) {
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{
@@ -1042,16 +1042,12 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 				if (!ins)
 					continue;
-
+				
 				const Item_Struct* TempItem = ins->GetItem();
-				if (TempItem && TempItem->Focus.Effect > 0 && TempItem->Focus.Effect != SPELL_UNKNOWN) 
+				if (TempItem && IsRegeantFocus(TempItem->Focus.Effect)) 
 				{
-					focus_max = CalcFocusEffect(focusReagentCost, TempItem->Focus.Effect, spell_id, true);
-					if (focus_max > 0) 
-					{
-						Message_StringID(MT_Spells, BEGINS_TO_GLOW, TempItem->Name);
-						break;
-					} 
+					Message_StringID(MT_Spells, BEGINS_TO_GLOW, TempItem->Name);
+					break;
 				}
 			}
 			mlog(SPELLS__CASTING, "Spell %d: Reagent focus item prevented reagent consumption (%d chance)", spell_id, reg_focus);
