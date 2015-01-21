@@ -121,7 +121,6 @@ Corpse *Entity::CastToCorpse()
 #ifdef _EQDEBUG
 	if (!IsCorpse()) {
 		std::cout << "CastToCorpse error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
