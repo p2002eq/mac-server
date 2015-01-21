@@ -156,7 +156,7 @@ RULE_CATEGORY( Zone )
 RULE_INT ( Zone, NPCPositonUpdateTicCount, 32 ) //ms between intervals of sending a position update to the entire zone.
 RULE_INT ( Zone, ClientLinkdeadMS, 180000) //the time a client remains link dead on the server after a sudden disconnection
 RULE_INT ( Zone, GraveyardTimeMS, 1200000) //ms time until a player corpse is moved to a zone's graveyard, if one is specified for the zone
-RULE_BOOL ( Zone, EnableShadowrest, 0 ) // enables or disables the shadowrest zone feature for player corpses. Default is turned on.
+RULE_BOOL ( Zone, EnableShadowrest, true ) // enables or disables the shadowrest zone feature for player corpses. Default is turned on.
 RULE_BOOL ( Zone, UsePlayerCorpseBackups, true) // Keeps backups of player corpses.
 RULE_INT ( Zone, MQWarpExemptStatus, -1 ) // Required status level to exempt the MQWarpDetector. Set to -1 to disable this feature.
 RULE_INT ( Zone, MQZoneExemptStatus, -1 ) // Required status level to exempt the MQZoneDetector. Set to -1 to disable this feature.
@@ -179,6 +179,8 @@ RULE_BOOL ( Zone, LevelBasedEXPMods, false) // Allows you to use the level_exp_m
 RULE_INT ( Zone, WeatherTimer, 600) // Weather timer when no duration is available
 RULE_INT (Zone, SpawnEventMin, 5) // When strict is set in spawn_events, specifies the max EQ minutes into the trigger hour a spawn_event will fire.
 RULE_REAL ( Zone, GroupEXPRange, 500 )
+RULE_BOOL ( Zone, IdleWhenEmpty, true) // After timer is expired, if zone is empty it will idle. Boat zones are excluded, as this will break boat functionality.
+RULE_INT ( Zone, IdleTimer, 600000) // 10 minutes
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
