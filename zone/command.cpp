@@ -266,6 +266,7 @@ int command_init(void){
 		command_add("loc", "- Print out your or your target's current location and heading", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver", 250, command_lock) ||
 		command_add("logsql", "- enable SQL logging", 250, command_logsql) ||
+		command add("log", "Manage anything to do with logs", 250, command_log) ||
 		command_add("logtest", "Performs log performance testing.", 250, command_logtest) ||
 		command_add("los", nullptr, 80, command_checklos) ||
 
@@ -10897,4 +10898,29 @@ void command_crashtest(Client *c, const Seperator *sep)
 	c->Message(0, "Alright, now we get an GPF ;) ");
 	char* gpf = 0;
 	memcpy(gpf, "Ready to crash", 30);
+}
+
+void command_log(Client *c, const Seperator *sep){
+	if (sep->argnum > 0) {
+		if(strcasecmp(sep->arg[1], "reload_all") == 0){
+			c->Message(0, "Yes this is working");
+		}
+		if (strcasecmp(sep->arg[1], "list_settings") == 0){
+			c->Message(0, "[Category ID | log_to_console | log_to_file | log_to_gmsay | Category Description]");
+			int redisplay_columns = 0;
+			for (int i = 0; i < Logs::LogCategory::MaxCategoryID; i++){
+				if (redisplay_columns == 10){
+					c->Message(0, "[Category ID | log_to_console | log_to_file | log_to_gmsay | Category Description]");
+					redisplay_columns = 0;
+				}
+				c->Message(0, StringFormat("--- %i | %u | %u | %u | %s", i, Log.log_settings[i].log_to_console, Log.log_settings[i].log_to_file, Log.log_settings[i].log_to_gmsay, Logs::LogCategoryName[i]).c_str());
+				redisplay_columns++;
+			}
+		}
+	}
+	else {
+		c->Message(0, "#log usage:");
+		c->Message(0, "--- #log reload_all - Reloads all rules defined in database in world and all zone processes");
+		c->Message(0, "--- #log list_settings - Shows current log settings and categories");
+	}
 }
