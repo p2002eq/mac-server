@@ -1090,6 +1090,7 @@ ItemInst* SharedDatabase::CreateBaseItem(const Item_Struct* item, int16 charges)
 }
 
 int32 SharedDatabase::DeleteStalePlayerCorpses() {
+	int32 rows_affected = 0;
 	if(RuleB(Zone, EnableShadowrest)) {
         std::string query = StringFormat(
 			"UPDATE `character_corpses` SET `is_buried` = 1 WHERE `is_buried` = 0 AND "
@@ -1099,17 +1100,50 @@ int32 SharedDatabase::DeleteStalePlayerCorpses() {
 		if (!results.Success())
 			return -1;
 
-		return results.RowsAffected();
+		rows_affected += results.RowsAffected();
+
+		std::string sr_query = StringFormat(
+			"DELETE FROM `character_corpses` WHERE `is_buried` = 1 AND (UNIX_TIMESTAMP() - UNIX_TIMESTAMP(time_of_death)) > %d "
+			"AND NOT time_of_death = 0", (RuleI(Character, CorpseDecayTimeMS) / 1000)*2);
+		 auto sr_results = QueryDatabase(sr_query);
+		 if (!sr_results.Success())
+			 return -1;
+
+		rows_affected += sr_results.RowsAffected();
+
+	}
+	else
+	{
+		std::string query = StringFormat(
+			"DELETE FROM `character_corpses` WHERE (UNIX_TIMESTAMP() - UNIX_TIMESTAMP(time_of_death)) > %d "
+			"AND NOT time_of_death = 0", (RuleI(Character, CorpseDecayTimeMS) / 1000));
+		auto results = QueryDatabase(query);
+		if (!results.Success())
+			return -1;
+
+		rows_affected += results.RowsAffected();
 	}
 
-    std::string query = StringFormat(
-		"DELETE FROM `character_corpses` WHERE (UNIX_TIMESTAMP() - UNIX_TIMESTAMP(time_of_death)) > %d "
-		"AND NOT time_of_death = 0", (RuleI(Character, CorpseDecayTimeMS) / 1000));
-    auto results = QueryDatabase(query);
-    if (!results.Success())
-        return -1;
+	if(RuleB(Character, UsePlayerCorpseBackups))
+	{
+		std::string cb_query = StringFormat(
+			"SELECT id FROM `character_corpses_backup`");
+		auto cb_results = QueryDatabase(cb_query);
+		for (auto row = cb_results.begin(); row != cb_results.end(); ++row) {
+			uint32 corpse_id = atoi(row[0]);
+			std::string cbd_query = StringFormat(
+				"DELETE from character_corpses_backup where id = %d AND ( "
+				"SELECT COUNT(*) from character_corpse_items_backup where corpse_id = %d) "
+				" = 0", corpse_id, corpse_id);
+			auto cbd_results = QueryDatabase(cbd_query);
+			if(!cbd_results.Success())
+				return -1;
 
-    return results.RowsAffected();
+			rows_affected += cbd_results.RowsAffected();
+		}
+	}
+
+    return rows_affected;
 }
 
 bool SharedDatabase::GetCommandSettings(std::map<std::string,uint8> &commands) {

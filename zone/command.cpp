@@ -1499,13 +1499,8 @@ void command_bug(Client *c, const Seperator *sep)
 		c->Message(CC_Red, "ID : Name , Zone , Time Sent");
 		for (auto row = results.begin(); row != results.end(); ++row)
 		{
-			char *pet_time = row[3];
-			time_t t = atoi(pet_time);
-			struct tm *tm = localtime(&t);
-			char date[20];
-			strftime(date, sizeof(date), "%c", tm);
 
-			c->Message(CC_Yellow, " %s:	%s , %s , %s", row[0], row[1], row[2], date);
+			c->Message(CC_Yellow, " %s:	%s , %s , %s", row[0], row[1], row[2], row[3]);
 		}
 	}
 	else if (strcasecmp(sep->arg[1], "view") == 0)
@@ -1516,8 +1511,8 @@ void command_bug(Client *c, const Seperator *sep)
 			return;
 		}
 		LogFile->write(EQEmuLog::Normal, "Bug viewed by %s, bug number:", c->GetName(), atoi(sep->arg[2]));
-		c->Message(CC_Red, "ID : Name , Zone , x , y , z , Type , Flag , Target , Status , Time Sent , Bug");
-		std::string query = StringFormat("SELECT id, name, zone, x, y, z, type, flag, target, status, date, bug FROM bugs WHERE id = %i", atoi(sep->arg[2]));
+		c->Message(CC_Red, "ID : Name , Zone , x , y , z , Type , Flag , Target , Status , Client, Time Sent , Bug");
+		std::string query = StringFormat("SELECT id, name, zone, x, y, z, type, flag, target, status, ui, date, bug FROM bugs WHERE id = %i", atoi(sep->arg[2]));
 		auto results = database.QueryDatabase(query);
 
 		if (!results.Success() || results.RowCount() == 0)
@@ -1527,8 +1522,9 @@ void command_bug(Client *c, const Seperator *sep)
 		}
 
 		auto row = results.begin();
-		c->Message(15, " %s: %s , %s , %s , %s , %s , %s , %s , %s , %s , %s ", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]);
-		c->Message(15, " %s ", row[11]);
+
+		c->Message(15, " %s: %s , %s , %s , %s , %s , %s , %s , %s , %s , %s , %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]);
+		c->Message(15, " %s ", row[12]);
 	}
 	else if (strcasecmp(sep->arg[1], "delete") == 0)
 	{
@@ -3396,8 +3392,10 @@ void command_corpse(Client *c, const Seperator *sep)
 	std::string help15 = "  #corpse removecash - Removes cash from targetted corpse.";
 	std::string help16 = "  - To remove items from corpses, lock and loot them.";
 	std::string help17 = "  #corpse reset - Resets looter status on targetted corpse for debugging.";
+	std::string help18 = "  #corpse backups - List of current target's corpse backups.";
+	std::string help19 = "  #corpse restore [corpse_id] - Summons the specified corpse from a player's backups.";
 
-	std::string help[] = { help0, help1, help2, help3, help4, help5, help6, help7, help8, help9, help10, help11, help12, help13, help14, help15, help16, help17 };
+	std::string help[] = { help0, help1, help2, help3, help4, help5, help6, help7, help8, help9, help10, help11, help12, help13, help14, help15, help16, help17, help18, help19 };
 
 	Mob *target = c->GetTarget();
 
@@ -3440,7 +3438,7 @@ void command_corpse(Client *c, const Seperator *sep)
 				t = c->GetTarget()->CastToClient();
 			else
 			{
-				c->Message(0, "You must first select a target!");
+				c->Message(0, "You must first turn your GM flag on and select a target!");
 				return;
 			}
 
@@ -3475,7 +3473,7 @@ void command_corpse(Client *c, const Seperator *sep)
 		else if (target->IsNPCCorpse())
 		{
 			c->Message(0, "Depoping %s.", target->GetName());
-			target->CastToCorpse()->Delete();
+			target->CastToCorpse()->DepopNPCCorpse();
 		}
 		else if (c->Admin() >= commandEditPlayerCorpses)
 		{
@@ -3554,8 +3552,8 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, "Error: Target must be a player to locate their corpses.");
 		else
 		{
-			c->Message(CC_Red, "CorpseID : ZoneID , x , y , z");
-			std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses WHERE charid = %d", target->CastToClient()->CharacterID());
+			c->Message(CC_Red, "CorpseID : Zone , x , y , z , Buried");
+			std::string query = StringFormat("SELECT id, zone_id, x, y, z, is_buried FROM character_corpses WHERE charid = %d", target->CastToClient()->CharacterID());
 			auto results = database.QueryDatabase(query);
 
 			if (!results.Success() || results.RowCount() == 0)
@@ -3566,7 +3564,8 @@ void command_corpse(Client *c, const Seperator *sep)
 
 			for (auto row = results.begin(); row != results.end(); ++row)
 			{
-				c->Message(CC_Yellow, " %s:	%s , %s , %s , %s", row[0], row[1], row[2], row[3], row[4]);
+
+				c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, (%s)", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], row[5]);
 			}
 		}
 	}
@@ -3606,6 +3605,93 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, "Error: Target the corpse you wish to reset");
 		else
 			target->CastToCorpse()->ResetLooter();
+	}
+	else if (strcasecmp(sep->arg[1], "backups") == 0)
+	{
+		if (target == 0 || !target->IsClient())
+			c->Message(0, "Error: Target must be a player to list their backups.");
+		else
+		{
+			c->Message(CC_Red, "CorpseID : Zone , x , y , z , Items");
+			std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses_backup WHERE charid = %d", target->CastToClient()->CharacterID());
+			auto results = database.QueryDatabase(query);
+
+			if (!results.Success() || results.RowCount() == 0)
+			{
+				c->Message(CC_Red, "No corpse backups exist for %s with ID: %i.", target->GetName(), target->CastToClient()->CharacterID());
+				return;
+			}
+
+			for (auto row = results.begin(); row != results.end(); ++row)
+			{
+				std::string ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items_backup WHERE corpse_id = %d", atoi(row[0]));
+				auto ic_results = database.QueryDatabase(ic_query);
+				auto ic_row = ic_results.begin();
+
+				c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, (%s)", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0]);
+			}
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "restore") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			uint32 corpseid;
+			Client *t = c;
+
+			if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+				t = c->GetTarget()->CastToClient();
+			else
+			{
+				c->Message(0, "You must first turn your GM flag on and select a target!");
+				return;
+			}
+
+			if (!sep->IsNumber(2))
+			{
+				c->Message(0, "Usage: #corpse restore [corpse_id].");
+				return;
+			}
+			else
+				corpseid = atoi(sep->arg[2]);
+
+			if(!database.IsValidCorpseBackup(corpseid))
+			{
+				c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
+				return;
+			}
+			else if(database.IsValidCorpse(corpseid))
+			{
+				c->Message(CC_Red, "Corpse %i has been found! Please summon or delete it before attempting to restore from a backup.", atoi(sep->arg[2]));
+				return;
+			}
+			else if(!database.IsCorpseBackupOwner(corpseid, t->CharacterID()))
+			{
+				c->Message(CC_Red, "Targetted player is not the owner of the specified corpse!");
+				return;
+			}
+			else
+			{
+				if(database.CopyBackupCorpse(corpseid))
+				{
+					Corpse* PlayerCorpse = database.SummonCharacterCorpse(corpseid, t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+
+					if (!PlayerCorpse)
+						c->Message(0, "Summoning of backup corpse failed. Please escalate this issue.");
+
+					return;
+				}
+				else
+				{
+					c->Message(CC_Red, "There was an error copying corpse %i. Please contact a DB admin.", corpseid);
+					return;
+				}
+			}
+		}
+		else
+		{
+			c->Message(0, "Insufficient status to summon backup corpses.");
+		}
 	}
 	else
 	{
