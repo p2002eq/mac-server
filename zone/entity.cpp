@@ -210,7 +210,6 @@ const Corpse *Entity::CastToCorpse() const
 #ifdef _EQDEBUG
 	if (!IsCorpse()) {
 		std::cout << "CastToCorpse error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
