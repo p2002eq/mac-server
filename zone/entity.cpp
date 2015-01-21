@@ -99,7 +99,6 @@ Mob *Entity::CastToMob()
 #ifdef _EQDEBUG
 	if (!IsMob()) {
 		std::cout << "CastToMob error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
