@@ -244,7 +244,7 @@ public:
 	void mod_init();
 	void mod_repop();
 
-	Timer idle_timer;
+	Timer   idle_timer;
 	bool	idle;
 
 private:
