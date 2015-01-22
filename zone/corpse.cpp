@@ -618,10 +618,18 @@ bool Corpse::Save() {
 	/* Create New Corpse*/
 	if (corpse_db_id == 0) {
 		corpse_db_id = database.SaveCharacterCorpse(char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position);
+		if(!IsEmpty() && RuleB(Character, UsePlayerCorpseBackups))
+		{
+			database.SaveCharacterCorpseBackup(corpse_db_id, char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position);
+		}
 	}
 	/* Update Corpse Data */
 	else{
 		corpse_db_id = database.UpdateCharacterCorpse(corpse_db_id, char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position, IsRezzed());
+		if(!IsEmpty() && RuleB(Character, UsePlayerCorpseBackups))
+		{
+			database.UpdateCharacterCorpseBackup(corpse_db_id, char_id, corpse_name, zone->GetZoneID(), zone->GetInstanceID(), dbpc, m_Position, IsRezzed());
+		}
 	}
 
 	safe_delete_array(dbpc);

@@ -559,6 +559,7 @@ public:
 	bool DBSetup_webdata_character();
 	bool DBSetup_webdata_servers();
 	bool DBSetup_feedback();
+	bool DBSetup_PlayerCorpseBackup();
 
 	/*
 	* Database Variables
