@@ -3002,6 +3002,37 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 	return db_id;
 }
 
+bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, const char* char_name, uint32 zone_id, uint16 instance_id, PlayerCorpse_Struct* dbpc, const xyz_heading& position, bool is_rezzed) {
+	std::string query = StringFormat("UPDATE `character_corpses_backup` SET \n"
+		"`charname` =		  '%s',\n"
+		"`charid` =				%d,\n"
+		"`exp` =                 %u,\n"
+		"`gmexp` =				%u,\n"
+		"`copper` =             %u,\n"
+		"`silver` =             %u,\n"
+		"`gold` =               %u,\n"
+		"`platinum` =           %u\n"
+		"WHERE `id` = %u",
+		EscapeString(char_name).c_str(), 
+		char_id, 
+		dbpc->exp,
+		dbpc->gmexp,
+		dbpc->copper,
+		dbpc->silver,
+		dbpc->gold,
+		dbpc->plat,
+		db_id
+	);
+	auto results = QueryDatabase(query);
+	if (!results.Success()){
+		LogFile->write(EQEmuLog::Error, "UpdateCharacterCorpseBackup query '%s' %s", query.c_str(), results.ErrorMessage().c_str());
+		return false;
+	}
+
+	return true;
+}
+
+
 void ZoneDatabase::MarkCorpseAsRezzed(uint32 db_id) {
 	std::string query = StringFormat("UPDATE `character_corpses` SET `is_rezzed` = 1 WHERE `id` = %i", db_id);
 	auto results = QueryDatabase(query);
@@ -3131,6 +3162,141 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 	}
 	auto sc_results = QueryDatabase(query);
 	return last_insert_id;
+}
+
+bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, const xyz_heading& position) {
+	/* Dump Basic Corpse Data */
+	std::string query = StringFormat("INSERT INTO `character_corpses_backup` SET \n"
+		"`id` =						%u,\n"
+		"`charname` =		  '%s',\n"
+		"`zone_id` =				%u,\n"
+		"`instance_id` =			%u,\n"
+		"`charid` =				%d,\n"
+		"`x` =					%1.1f,\n"
+		"`y` =					%1.1f,\n"
+		"`z` =					%1.1f,\n"
+		"`heading` =			%1.1f,\n"
+		"`time_of_death` =		NOW(),\n"
+		"`is_buried` =				0,"
+		"`is_locked` =          %d,\n"
+		"`exp` =                 %u,\n"
+		"`gmexp` =				%u,\n"
+		"`size` =               %f,\n"
+		"`level` =              %u,\n"
+		"`race` =               %u,\n"
+		"`gender` =             %u,\n"
+		"`class` =              %u,\n"
+		"`deity` =              %u,\n"
+		"`texture` =            %u,\n"
+		"`helm_texture` =       %u,\n"
+		"`copper` =             %u,\n"
+		"`silver` =             %u,\n"
+		"`gold` =               %u,\n"
+		"`platinum` =           %u,\n"
+		"`hair_color`  =        %u,\n"
+		"`beard_color` =        %u,\n"
+		"`eye_color_1` =        %u,\n"
+		"`eye_color_2` =        %u,\n"
+		"`hair_style`  =        %u,\n"
+		"`face` =               %u,\n"
+		"`beard` =              %u,\n"
+		"`wc_1` =               %u,\n"
+		"`wc_2` =               %u,\n"
+		"`wc_3` =               %u,\n"
+		"`wc_4` =               %u,\n"
+		"`wc_5` =               %u,\n"
+		"`wc_6` =               %u,\n"
+		"`wc_7` =               %u,\n"
+		"`wc_8` =               %u,\n"
+		"`wc_9`	=               %u,\n"
+		"`killedby` =			%u \n",
+		corpse_id,
+		EscapeString(charname).c_str(),
+		zoneid,
+		instanceid,
+		charid,
+		position.m_X,
+		position.m_Y,
+		position.m_Z,
+		position.m_Heading,
+		dbpc->locked,
+		dbpc->exp,
+		dbpc->gmexp,
+		dbpc->size,
+		dbpc->level,
+		dbpc->race,
+		dbpc->gender,
+		dbpc->class_,
+		dbpc->deity,
+		dbpc->texture,
+		dbpc->helmtexture,
+		dbpc->copper,
+		dbpc->silver,
+		dbpc->gold,
+		dbpc->plat,
+		dbpc->haircolor,
+		dbpc->beardcolor,
+		dbpc->eyecolor1,
+		dbpc->eyecolor2,
+		dbpc->hairstyle,
+		dbpc->face,
+		dbpc->beard,
+		dbpc->item_tint[0].color,
+		dbpc->item_tint[1].color,
+		dbpc->item_tint[2].color,
+		dbpc->item_tint[3].color,
+		dbpc->item_tint[4].color,
+		dbpc->item_tint[5].color,
+		dbpc->item_tint[6].color,
+		dbpc->item_tint[7].color,
+		dbpc->item_tint[8].color,
+		dbpc->killedby
+	);
+	auto results = QueryDatabase(query); 
+	if (!results.Success()){
+		LogFile->write(EQEmuLog::Error, "Error inserting character_corpses_backup.");
+		return false;
+	}
+
+	/* Dump Items from Inventory */
+	uint8 first_entry = 0;
+	for (unsigned int i = 0; i < dbpc->itemcount; i++) { 
+		if (first_entry != 1){
+			query = StringFormat("REPLACE INTO `character_corpse_items_backup` \n"
+				" (corpse_id, equip_slot, item_id, charges, aug_1, aug_2, aug_3, aug_4, aug_5, attuned) \n"
+				" VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
+				corpse_id, 
+				dbpc->items[i].equip_slot,
+				dbpc->items[i].item_id,  
+				dbpc->items[i].charges, 
+				dbpc->items[i].aug_1, 
+				dbpc->items[i].aug_2, 
+				dbpc->items[i].aug_3, 
+				dbpc->items[i].aug_4, 
+				dbpc->items[i].aug_5
+			);
+			first_entry = 1;
+		}
+		else{ 
+			query = query + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
+				corpse_id,
+				dbpc->items[i].equip_slot,
+				dbpc->items[i].item_id,
+				dbpc->items[i].charges,
+				dbpc->items[i].aug_1,
+				dbpc->items[i].aug_2,
+				dbpc->items[i].aug_3,
+				dbpc->items[i].aug_4,
+				dbpc->items[i].aug_5
+			);
+		}
+	}
+	auto sc_results = QueryDatabase(query); 
+	if (!sc_results.Success()){
+		LogFile->write(EQEmuLog::Error, "Error inserting character_corpse_items_backup.");
+		return false;
+	}
+	return true;
 }
 
 uint32 ZoneDatabase::GetCharacterBuriedCorpseCount(uint32 char_id) {
@@ -3343,6 +3509,43 @@ Corpse* ZoneDatabase::SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_z
 	return corpse;
 }
 
+Corpse* ZoneDatabase::SummonCharacterCorpse(uint32 corpse_id, uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, const xyz_heading& position) {
+	Corpse* NewCorpse = 0;
+	std::string query = StringFormat(
+		"SELECT `id`, `charname`, `time_of_death`, `is_rezzed` FROM `character_corpses` WHERE `charid` = '%u' AND `id` = %u", 
+		char_id, corpse_id
+	);
+	auto results = QueryDatabase(query);
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		NewCorpse = Corpse::LoadCharacterCorpseEntity(
+			atoul(row[0]), 			 // uint32 in_dbid
+			char_id, 				 // uint32 in_charid
+			row[1], 				 // char* in_charname
+			position,
+			row[2], 				 // char* time_of_death
+			atoi(row[3]) == 1, 		 // bool rezzed
+			false					 // bool was_at_graveyard
+		);
+		if (NewCorpse) { 
+			entity_list.AddCorpse(NewCorpse);
+			int32 corpse_decay = 0;
+			if(NewCorpse->IsEmpty())
+			{
+				corpse_decay = RuleI(Character, EmptyCorpseDecayTimeMS);
+			}
+			else
+			{
+				corpse_decay = RuleI(Character, CorpseDecayTimeMS);
+			}
+			NewCorpse->SetDecayTimer(corpse_decay);
+			NewCorpse->Spawn();
+		}
+	}
+
+	return NewCorpse;
+}
+
 bool ZoneDatabase::SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, const xyz_heading& position) {
 	Corpse* NewCorpse = 0;
 	int CorpseCount = 0;
@@ -3468,10 +3671,18 @@ uint32 ZoneDatabase::GetFirstCorpseID(uint32 char_id) {
 bool ZoneDatabase::DeleteItemOffCharacterCorpse(uint32 db_id, uint32 equip_slot, uint32 item_id){
 	std::string query = StringFormat("DELETE FROM `character_corpse_items` WHERE `corpse_id` = %u AND equip_slot = %u AND item_id = %u", db_id, equip_slot, item_id);
 	auto results = QueryDatabase(query);
-	if (results.Success() && results.RowsAffected() != 0){
-		return true;
+	if (!results.Success()){
+		return false;
 	}
-	return false;
+	if(RuleB(Character, UsePlayerCorpseBackups))
+	{
+		std::string query = StringFormat("DELETE FROM `character_corpse_items_backup` WHERE `corpse_id` = %u AND equip_slot = %u AND item_id = %u", db_id, equip_slot, item_id);
+		auto results = QueryDatabase(query);
+		if (!results.Success()){
+			return false;
+		}
+	}
+	return true;
 }
 
 bool ZoneDatabase::BuryCharacterCorpse(uint32 db_id) {
@@ -3496,9 +3707,64 @@ bool ZoneDatabase::BuryAllCharacterCorpses(uint32 char_id) {
 bool ZoneDatabase::DeleteCharacterCorpse(uint32 db_id) {
 	std::string query = StringFormat("DELETE FROM `character_corpses` WHERE `id` = %d", db_id);
 	auto results = QueryDatabase(query);
-	if (results.Success() && results.RowsAffected() != 0){
-		return true;
+	if (!results.Success()){ 
+		return false;
 	}
+	std::string ci_query = StringFormat("DELETE FROM `character_corpse_items` WHERE `corpse_id` = %d", db_id);
+	auto ci_results = QueryDatabase(ci_query);
+	if (!ci_results.Success()){ 
+		return false;
+	}
+	return true;
+}
+
+bool ZoneDatabase::IsValidCorpseBackup(uint32 corpse_id) {
+	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	auto results = QueryDatabase(query);
+	auto row = results.begin();
+	if(atoi(row[0]) == 1)
+		return true;
+
+	return false;
+}
+
+bool ZoneDatabase::IsValidCorpse(uint32 corpse_id) {
+	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses` WHERE `id` = %d", corpse_id);
+	auto results = QueryDatabase(query);
+	auto row = results.begin();
+	if(atoi(row[0]) == 1)
+		return true;
+
+	return false;
+}
+
+bool ZoneDatabase::CopyBackupCorpse(uint32 corpse_id) {
+	std::string query = StringFormat("INSERT INTO `character_corpses` SELECT * from `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()){ 
+		return false;
+	}
+	std::string tod_query = StringFormat("UPDATE `character_corpses` SET `time_of_death` = NOW() WHERE `id` = %d", corpse_id);
+	auto tod_results = QueryDatabase(tod_query);
+	if (!tod_results.Success()){ 
+		return false;
+	}
+	std::string ci_query = StringFormat("INSERT INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
+	auto ci_results = QueryDatabase(ci_query);
+	if (!ci_results.Success()){ 
+		LogFile->write(EQEmuLog::Error, "CopyBackupCorpse() Error inserting items. They probably already exist, so continue on...");
+	}
+
+	return true;
+}
+
+bool ZoneDatabase::IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id) {
+	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses_backup` WHERE `id` = %d AND `charid` = %d", corpse_id, char_id);
+	auto results = QueryDatabase(query);
+	auto row = results.begin();
+	if(atoi(row[0]) == 1)
+		return true;
+
 	return false;
 }
 
