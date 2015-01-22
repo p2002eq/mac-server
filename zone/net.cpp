@@ -485,6 +485,7 @@ int main(int argc, char** argv) {
 	command_deinit();
 	safe_delete(parse);
 	Log.Out(Logs::Detail, Logs::Zone_Server, "Proper zone shutdown complete.");
+	Log.CloseFileLogs();
 	return 0;
 }
 
@@ -501,6 +502,7 @@ void Shutdown()
 	RunLoops = false;
 	worldserver.Disconnect(); 
 	Log.Out(Logs::Detail, Logs::Zone_Server, "Shutting down...");
+	Log.CloseFileLogs();
 }
 
 uint32 NetConnection::GetIP()
