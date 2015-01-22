@@ -168,6 +168,8 @@ int main() {
 
 	CL->CloseAllConnections();
 
+	Log.CloseFileLogs();
+
 }
 
 void UpdateWindowTitle(char* iNewTitle) {
