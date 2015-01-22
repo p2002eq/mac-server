@@ -3837,3 +3837,61 @@ int8 ZoneDatabase::ItemQuantityType(int16 item_id)
 	return 0;
 }
 
+bool ZoneDatabase::RetrieveMBMessages(uint16 category, std::vector<MBMessageRetrievalGen_Struct>& outData) {
+	std::string query = StringFormat("SELECT id, date, language, author, subject, category from mb_messages WHERE category=%i ORDER BY time DESC LIMIT %i",category, 500);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		MBMessageRetrievalGen_Struct message;
+		message.id = atoi(row[0]);			
+		strncpy(message.date, row[1], sizeof(message.date));		
+		message.language = atoi(row[2]);
+		strncpy(message.author, row[3],  sizeof(message.author));
+		strncpy(message.subject, row[4], sizeof(message.subject));
+		message.category = atoi(row[5]);
+		outData.push_back(message);
+	}
+	return false;
+}
+
+bool ZoneDatabase::PostMBMessage(uint32 charid, const char* charName, MBMessageRetrievalGen_Struct* inData) {
+	std::string query = StringFormat("INSERT INTO mb_messages (charid, date, language, author, subject, category, message) VALUES (%i, '%s', %i, '%s', '%s', %i, '%s')", charid, EscapeString(inData->date, sizeof(inData->date)).c_str(), inData->language, charName, EscapeString(inData->subject, strlen(inData->subject)).c_str(), inData->category, EscapeString(inData->message, strlen(inData->message)).c_str());
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+	return true;
+}
+
+bool ZoneDatabase::EraseMBMessage(uint32 id, uint32 charid)
+{
+	std::string query = StringFormat("DELETE FROM mb_messages WHERE id=%i AND charid=%i", id, charid);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+	return true;
+}
+
+bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
+	std::string query = StringFormat("SELECT message from mb_messages WHERE id=%i", id);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+
+	if(results.RowCount() == 0 || results.RowCount() > 1)
+	{
+		return false;
+	}
+	auto row = results.begin();
+	strncpy(outData, row[0], 2048);
+	return true;
+}

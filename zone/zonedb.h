@@ -400,6 +400,12 @@ public:
 	/* QGlobals   */
 	void QGlobalPurge();
 
+	/*MBMessages*/
+	bool RetrieveMBMessages(uint16 category, std::vector<MBMessageRetrievalGen_Struct>& outData);
+	bool PostMBMessage(uint32 charid, const char* charName, MBMessageRetrievalGen_Struct* inData);
+	bool EraseMBMessage(uint32 id, uint32 charid);
+	bool ViewMBMessage(uint32 id, char* outData);
+
 	/*
 		* Misc stuff.
 		* PLEASE DO NOT ADD TO THIS COLLECTION OF CRAP UNLESS YOUR METHOD

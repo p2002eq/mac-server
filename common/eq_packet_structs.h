@@ -3403,8 +3403,7 @@ struct Disarm_Struct {
 
 //C->S, used by the client for adding Soulmarks to a player. 
 //0x41D0
-struct SoulMarkUpdate_Struct 
-{
+struct SoulMarkUpdate_Struct {
 	char gmname[64];
 	char gmacctname[32];
 	char charname[64];
@@ -3412,8 +3411,7 @@ struct SoulMarkUpdate_Struct
 };
 
 //S->C and C->S ENTRY for informing us about players' soulmarks. Used in struct below this one.
-struct SoulMarkEntry_Struct
-{
+struct SoulMarkEntry_Struct {
 	char name[64]; //charname
 	char accountname[32]; //station name
 	char gmname[64];  //charname
@@ -3425,16 +3423,14 @@ struct SoulMarkEntry_Struct
 
 //S->C C->S PACKET
 //0x41D1
-struct SoulMarkList_Struct
-{
+struct SoulMarkList_Struct {
 	char interrogatename[64];
 	SoulMarkEntry_Struct entries[12]; //I have no idea why SOE hardcodes the amount of soulmarks, but it shall never exceed 12. Delete soulmarks I guess in the future /shrug
 };
 
 //C->S PACKET
 //0x41D2
-struct SoulMarkAdd_Struct
-{
+struct SoulMarkAdd_Struct{
 	SoulMarkEntry_Struct entry;
 };
 
@@ -3445,6 +3441,61 @@ struct Feedback_Struct {
 /*0107*/ char	message[1024];
 /*1131*/
 };
+
+// Struct for Clients Request to Show specific message board
+struct MBRetrieveMessages_Struct {
+	uint16 entityID;
+	uint16 category; // category is the type of board selected by the client
+	/* Categories */ 
+	/* 00 - OFFICIAL */
+	/* 01 - FOR SALE */
+	/* 02 - GENERAL */
+	/* 03 - HELP WANTED */
+	/* 04 - PERSONALS */
+	/* 05 - GUILDS */
+};
+
+
+struct MBMessageRetrieval_Struct {		
+	uint32 id; 
+	char date[10]; /* char year[2]; char month[2]; char day[2]; */
+	char unknown4[4];
+	char author[64];
+	uint8 language;
+	char unknown8;
+	char subject[64];
+	uint8 category;
+	char unknown12;
+}; 
+
+struct MBMessageRetrievalGen_Struct {		
+	uint32 id; 
+	char date[10]; /* char year[2]; char month[2]; char day[2]; */
+	char unknown4[4];
+	char author[64];
+	uint8 language;
+	char unknown8;
+	char subject[64];
+	uint8 category;
+	char unknown12;
+	char message[2048]; // see eqgame function at .text:0047D4E5
+}; 
+
+
+struct MBModifyRequest_Struct {
+	uint16 EntityID;
+	uint16 id;	
+	uint16 category;
+		 
+}; 
+
+struct MBEraseRequest_Struct {
+	 uint16 EntityID;
+	 uint16 id;
+	 uint16 category;
+	 uint16 unknown;
+
+}; 
 
 typedef std::list<ServerLootItem_Struct*> ItemList;
 
