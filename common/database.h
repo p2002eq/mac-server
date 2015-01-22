@@ -560,6 +560,8 @@ public:
 	bool DBSetup_webdata_servers();
 	bool DBSetup_feedback();
 	bool DBSetup_PlayerCorpseBackup();
+	bool DBSetup_CharacterSoulMarks();
+	bool DBSetup_MessageBoards();
 
 	/*
 	* Database Variables
