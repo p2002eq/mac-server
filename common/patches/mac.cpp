@@ -1825,23 +1825,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	DECODE(OP_Bug)
-	{
-		DECODE_LENGTH_EXACT(structs::BugStruct);
-		SETUP_DIRECT_DECODE(BugStruct, structs::BugStruct);
-		strcpy(emu->chartype,eq->chartype);
-		strn0cpy(emu->bug,eq->bug,sizeof(eq->bug));
-		strcpy(emu->name,eq->name);
-		strcpy(emu->target_name,eq->target_name);
-		strcpy(emu->ui,"EQMac Client");
-		IN(x);
-		IN(y);
-		IN(z);
-		IN(heading);
-		IN(type);
-		FINISH_DIRECT_DECODE();
-	}
-
 	DECODE(OP_CombatAbility) 
 	{
 		DECODE_LENGTH_EXACT(structs::CombatAbility_Struct);

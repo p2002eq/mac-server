@@ -35,11 +35,6 @@ Core Zone features
 
 */
 
-
-//Uncomment this to cause a zone to basically idle
-//when there are no players in it, mobs stop wandering, etc..
-//#define IDLE_WHEN_EMPTY
-
 #ifdef EMBPERL
 //Enable the new XS based perl parser
 #define EMBPERL_XS
@@ -239,7 +234,7 @@ enum {
 	commandTextureOthers = 100,	//ability to #texture on others
 	commandDoAnimOthers = 100,	//can #doanim on others
 	commandLockZones = 101,		//can lock or unlock zones
-	commandEditPlayerCorpses = 150,	//can Edit Player Corpses
+	commandEditPlayerCorpses = 95,	//can Edit Player Corpses
 	commandChangeFlags = 200,		//ability to set/refresh flags
 	commandBanPlayers = 100,		//can set bans on players
 	commandChangeDatarate = 201,	//edit client's data rate

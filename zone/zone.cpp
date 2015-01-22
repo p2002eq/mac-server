@@ -662,6 +662,7 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	aas = nullptr;
 	totalAAs = 0;
 	gottime = false;
+	idle = false;
 
 	Instance_Shutdown_Timer = nullptr;
 	bool is_perma = false;

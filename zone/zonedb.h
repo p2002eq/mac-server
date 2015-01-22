@@ -233,6 +233,7 @@ public:
 	bool		LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct* pcs);
 	Corpse*		LoadCharacterCorpse(uint32 player_corpse_id);
 	Corpse*		SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, float dest_x, float dest_y, float dest_z, float dest_heading);
+	Corpse*		SummonCharacterCorpse(uint32 corpse_id, uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, float dest_x, float dest_y, float dest_z, float dest_heading);
 	void		MarkCorpseAsRezzed(uint32 dbid);
 	bool		GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes); 
 	bool		BuryCharacterCorpse(uint32 dbid);
@@ -249,12 +250,18 @@ public:
 	uint32		CreateGraveyardRecord(uint32 graveyard_zoneid, float graveyard_x, float graveyard_y, float graveyard_z, float graveyard_heading);
 	uint32		AddGraveyardIDToZone(uint32 zone_id, uint32 graveyard_id);
 	uint32		SaveCharacterCorpse(uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading);
+	bool		SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading);
 	uint32		UpdateCharacterCorpse(uint32 dbid, uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading, bool rezzed = false);
+	bool		UpdateCharacterCorpseBackup(uint32 dbid, uint32 charid, const char* charname, uint32 zoneid, uint16 instanceid, PlayerCorpse_Struct* dbpc, float x, float y, float z, float heading, bool rezzed = false);
 	uint32		GetFirstCorpseID(uint32 char_id);
 	uint32		GetCharacterCorpseCount(uint32 char_id);
 	uint32		GetCharacterCorpseID(uint32 char_id, uint8 corpse);
 	uint32		GetCharacterCorpseItemAt(uint32 corpse_id, uint16 slotid);
 	uint32		GetPlayerCorpseTimeLeft(uint8 corpse, uint8 type);
+	bool		IsValidCorpseBackup(uint32 corpse_id);
+	bool		IsValidCorpse(uint32 corpse_id);
+	bool		CopyBackupCorpse(uint32 corpse_id);
+	bool		IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id);
 
 	/* Faction   */
 	bool		GetNPCFactionList(uint32 npcfaction_id, int32* faction_id, int32* value, uint8* temp, int32* primary_faction = 0);
@@ -335,7 +342,7 @@ public:
 	NPCType*					    GetNPCTypeTemp(uint32 id);
 
 	/* Petitions   */
-	void	UpdateBug(BugStruct* bug);
+	void	UpdateBug(BugStruct* bug, uint32 clienttype);
 	void	UpdateFeedback(Feedback_Struct* feedback);
 	void	DeletePetitionFromDB(Petition* wpet);
 	void	UpdatePetitionToDB(Petition* wpet);
