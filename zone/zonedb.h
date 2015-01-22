@@ -341,6 +341,8 @@ public:
 	void	UpdatePetitionToDB(Petition* wpet);
 	void	InsertPetitionToDB(Petition* wpet);
 	void	RefreshPetitionsFromDB();
+	void	AddSoulMark(uint32 charid, const char* charname, const char* accname, const char* gmname, const char* gmacctname, uint32 utime, uint32 type, const char* desc);
+	int		RemoveSoulMark(uint32 charid);
 
 	/* Merchants  */
 	void	SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges);

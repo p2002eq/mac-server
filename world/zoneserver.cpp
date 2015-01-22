@@ -1219,6 +1219,33 @@ bool ZoneServer::Process() {
 				zoneserver_list.SendPacket(pack);
 				break;
 			}
+			case ServerOP_Soulmark:
+			{
+				ServerRequestSoulMark_Struct *sss = (ServerRequestSoulMark_Struct*)pack->pBuffer;
+				ClientListEntry *cle = client_list.FindCharacter(sss->name);
+				if (!cle || cle && !cle->Server())
+				{
+					break;
+				}
+
+				std::vector<SoulMarkEntry_Struct> vec;
+				database.LoadSoulMarksForClient(database.GetCharacterID(sss->entry.interrogatename), vec);
+
+				if(!vec.empty())
+				{
+					std::vector<SoulMarkEntry_Struct>::iterator it = vec.begin();
+					int i = 0;
+					while(it != vec.end() && i < 12)
+					{
+						sss->entry.entries[i] = (*it);
+						i++;
+						it++;
+					}
+					vec.clear();
+					cle->Server()->SendPacket(pack);
+				}
+				break;
+			}
 			case ServerOP_RequestTellQueue:
 			{
 				ServerRequestTellQueue_Struct* rtq = (ServerRequestTellQueue_Struct*) pack->pBuffer;

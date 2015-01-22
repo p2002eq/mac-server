@@ -360,6 +360,36 @@ void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
 
 }
 
+void ZoneDatabase::AddSoulMark(uint32 charid, const char* charname, const char* accname, const char* gmname, const char* gmacctname, uint32 utime, uint32 type, const char* desc) {
+
+	std::string query = StringFormat("INSERT INTO character_soulmarks (charid, charname, acctname, gmname, gmacctname, utime, type, `desc`) "
+		"VALUES(%i, '%s', '%s','%s','%s', %i, %i, '%s')", charid, charname, accname, gmname, gmacctname, utime, type, desc);
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+		std::cerr << "Error in AddSoulMark '" << query << "' " << results.ErrorMessage() << std::endl;
+
+}
+
+int ZoneDatabase::RemoveSoulMark(uint32 charid) {
+
+	std::string query = StringFormat("DELETE FROM character_soulmarks where charid=%i", charid);
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		std::cerr << "Error in DeleteSoulMark '" << query << "' " << results.ErrorMessage() << std::endl;
+		return 0;
+	}
+	int res = 0;
+
+	if(results.RowsAffected() >= 0 && results.RowsAffected() <= 11)
+	{
+		res = results.RowsAffected();
+	}
+
+	return res;
+
+}
+
 bool ZoneDatabase::SetSpecialAttkFlag(uint8 id, const char* flag) {
 
 	std::string query = StringFormat("UPDATE npc_types SET npcspecialattks='%s' WHERE id = %i;", flag, id);

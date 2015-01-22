@@ -885,7 +885,10 @@ void Client::Clearance(int8 response)
 	safe_delete(outapp);
 
 	if (cle)
+	{
+		autobootup_timeout.Disable();
 		cle->SetOnline(CLE_Status_Zoning);
+	}
 }
 
 void Client::ZoneUnavail() {

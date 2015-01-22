@@ -271,4 +271,7 @@ N(OP_ZoneUnavail),
 N(OP_ChecksumExe),
 N(OP_ChecksumSpell),
 N(OP_Feedback),
+N(OP_SoulMarkUpdate),
+N(OP_SoulMarkList),
+N(OP_SoulMarkAdd),
 // mail and chat opcodes located in ../mail_oplist.h

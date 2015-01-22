@@ -256,6 +256,9 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 	ConnectedOpcodes[OP_Disarm] = &Client::Handle_OP_Disarm;
 	ConnectedOpcodes[OP_Feedback] = &Client::Handle_OP_Feedback;
+	ConnectedOpcodes[OP_SoulMarkUpdate] = &Client::Handle_OP_SoulMarkUpdate;
+	ConnectedOpcodes[OP_SoulMarkList] = &Client::Handle_OP_SoulMarkList;
+	ConnectedOpcodes[OP_SoulMarkAdd] = &Client::Handle_OP_SoulMarkAdd;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -8628,5 +8631,82 @@ void Client::Handle_OP_Feedback(const EQApplicationPacket *app)
 	database.UpdateFeedback(in);
 
 	Message(CC_Yellow, "Thank you, %s. Your feedback has been recieved.", in->name);
+	return;
+}
+
+
+void Client::Handle_OP_SoulMarkList(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkList_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkList_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		return;
+	}
+	SoulMarkList_Struct* in = (SoulMarkList_Struct*)app->pBuffer;
+
+	uint32 charid = 0;
+	if(strlen(in->interrogatename) > 0)
+	{
+		charid = database.GetCharacterID(in->interrogatename);
+	}
+
+	if(charid != 0) 
+	{
+		int max = database.RemoveSoulMark(charid);
+		uint32 i = 0;
+		for(i = 0; i < max; i++)
+		{
+			if(in->entries[i].type != 0)
+			database.AddSoulMark(charid, in->entries[i].name, in->entries[i].accountname,  in->entries[i].gmname, in->entries[i].gmaccountname, in->entries[i].unix_timestamp, in->entries[i].type, in->entries[i].description);
+		}
+	}
+
+	return;
+}
+
+
+void Client::Handle_OP_SoulMarkAdd(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkEntry_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkEntry_Struct: Expected: %i, Got: %i", sizeof(SoulMarkEntry_Struct), app->size);
+		return;
+	}
+	SoulMarkEntry_Struct* in = (SoulMarkEntry_Struct*)app->pBuffer;
+
+	uint32 charid = 0;
+	if(strlen(in->name) > 0)
+	{
+		charid = database.GetCharacterID(in->name);
+	}
+	if(charid != 0)
+	{
+		database.AddSoulMark(charid, in->name, in->accountname, in->gmname, in->gmaccountname, std::time(nullptr), in->type, in->description);
+	}
+
+	return;
+}
+
+void Client::Handle_OP_SoulMarkUpdate(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkUpdate_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkUpdate_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		return;
+	}
+	SoulMarkUpdate_Struct* in = (SoulMarkUpdate_Struct*)app->pBuffer;
+
+	ServerPacket* pack = new ServerPacket(ServerOP_Soulmark, sizeof(ServerRequestSoulMark_Struct));
+	ServerRequestSoulMark_Struct* scs = (ServerRequestSoulMark_Struct*)pack->pBuffer;
+	strcpy(scs->name, GetCleanName());
+	strcpy(scs->entry.interrogatename, in->charname);
+	worldserver.SendPacket(pack);
+	safe_delete(pack);
 	return;
 }

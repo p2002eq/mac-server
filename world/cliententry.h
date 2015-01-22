@@ -131,6 +131,7 @@ private:
 
 	// Tell Queue -- really a vector :D
 	std::vector<ServerChannelMessage_Struct *> tell_queue;
+	std::vector<SoulMarkEntry_Struct> soulmarks;
 };
 
 #endif /*CLIENTENTRY_H_*/

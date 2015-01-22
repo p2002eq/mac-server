@@ -949,6 +949,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	bool IsLFG() { return LFG; }
 
 	bool Disarm(Client* client);
+	void SendSoulMarks(SoulMarkList_Struct* SMS);
 
 	//Command #Tune functions
 	virtual int32 Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);

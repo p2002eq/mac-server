@@ -727,6 +727,16 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 uint32 Database::GetCharacterID(const char *name) {
 	std::string query = StringFormat("SELECT `id` FROM `character_data` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+	{
+		std::cerr << "Error in GetAccountIDByChar query '" << query << "' " << results.ErrorMessage() << std::endl;
+		return 0;
+	}
+
+	if (results.RowCount() != 1)
+		return 0; 
+
 	auto row = results.begin();
 	if (row[0]){ return atoi(row[0]); }
 	return 0; 

@@ -5575,3 +5575,18 @@ bool Client::Disarm(Client* client)
 	}
 	return false;
 }
+
+
+void Client::SendSoulMarks(SoulMarkList_Struct* SMS)
+{
+	if(Admin() <= 80)
+		return;
+
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SoulMarkUpdate, sizeof(SoulMarkList_Struct));
+	memset(outapp->pBuffer, 0, sizeof(outapp->pBuffer));
+	SoulMarkList_Struct* soulmarks = (SoulMarkList_Struct*)outapp->pBuffer;
+	memcpy(&soulmarks->entries, SMS->entries, 12 * sizeof(SoulMarkEntry_Struct));
+	strncpy(soulmarks->interrogatename, SMS->interrogatename, 64);
+	QueuePacket(outapp);
+	safe_delete(outapp);	
+}
