@@ -153,8 +153,16 @@ bool Client::Process() {
 			{
 				InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
 			} else {
-				if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
+				//The pulse should be prevented if this is a friendly target, but the song should not be stopped. 
+				if(IsDetrimentalSpell(bardsong) && !IsAttackAllowed(song_target, true, bardsong) && !GetGM())
+				{
+					mlog(SPELLS__CASTING_ERR, "Attempting to apply a detrimental song pulse on a player.");
+					Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+				}
+				else if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
+				{
 					InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
+				}
 				//SpellFinished(bardsong, bardsong_target, bardsong_slot, spells[bardsong].mana);
 			}
 		}

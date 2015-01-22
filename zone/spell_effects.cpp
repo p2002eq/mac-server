@@ -3597,52 +3597,6 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 		}
 	}
-
-	if(caster)
-	{
-		// Send Bards the spell message so they know their song is still applied.
-		if(IsBardSong(spell_id) && !IsBeneficialSpell(spell_id) && !IsCharmSpell(spell_id) && !IsFearSpell(spell_id) && caster->IsClient()) {
-
-			EQApplicationPacket *packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
-
-			Action_Struct* action = (Action_Struct*) packet->pBuffer;
-			action->source = caster->GetID();
-			action->target = GetID();
-			action->spell = spell_id;
-			action->sequence = (uint32) (GetHeading() * 2);	// just some random number
-			action->instrument_mod = caster->GetInstrumentMod(spell_id);
-			action->buff_unknown = 0;
-			action->level = buffs[slot].casterlevel;
-			action->type = DamageTypeSpell;
-			entity_list.QueueCloseClients(this, packet, false, 200, 0, true, FilterBardSongs);
-			mlog(SPELLS__BARDS, "DoBuffTic: Bard Pulse for %d: Sent action", spell_id);
-
-			action->buff_unknown = 4;
-
-			if(IsEffectInSpell(spell_id, SE_TossUp))
-			{
-				action->buff_unknown = 0;
-			}
-			else if(spells[spell_id].pushback > 0 || spells[spell_id].pushup > 0)
-			{
-				action->buff_unknown = 0;
-			}
-			EQApplicationPacket *message_packet = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
-			CombatDamage_Struct *cd = (CombatDamage_Struct *)message_packet->pBuffer;
-			cd->target = action->target;
-			cd->source = action->source;
-			cd->type = DamageTypeSpell;
-			cd->spellid = action->spell;
-			cd->sequence = action->sequence;
-			cd->damage = 0;
-			if(!IsEffectInSpell(spell_id, SE_BindAffinity))
-			{
-				entity_list.QueueCloseClients(this, message_packet, false, 200, 0, true, FilterBardSongs);
-			}
-			safe_delete(message_packet);
-			safe_delete(packet);
-		}
-	}
 }
 
 // removes the buff in the buff slot 'slot'
