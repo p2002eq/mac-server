@@ -86,7 +86,7 @@ int main() {
 	}
 
 	/* Register Log System and Settings */
-	database.LoadLogSysSettings(Log.log_settings);
+	database.LoadLogSettings(Log.log_settings);
 	Log.StartFileLogs();
 
 	if (signal(SIGINT, CatchSignal) == SIG_ERR)	{

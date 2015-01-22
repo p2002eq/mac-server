@@ -598,7 +598,7 @@ public:
 	bool	SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year);
 
 	/* EQEmuLogSys */
-	void	LoadLogSysSettings(EQEmuLogSys::LogSettings* log_settings);
+	void	LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
 
 private:
 	void DBInitVars();

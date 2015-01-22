@@ -326,7 +326,7 @@ void Database::GeneralQueryReceive(ServerPacket *pack) {
 	safe_delete(queryBuffer);
 }
 
-void Database::LoadLogSysSettings(EQEmuLogSys::LogSettings* log_settings){
+void Database::LoadLogSettings(EQEmuLogSys::LogSettings* log_settings){
 	std::string query =
 		"SELECT "
 		"log_category_id, "

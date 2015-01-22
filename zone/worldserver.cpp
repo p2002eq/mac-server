@@ -1474,7 +1474,7 @@ void WorldServer::Process() {
 			break;
 		}
 		case ServerOP_ReloadLogs: {
-			database.LoadLogSysSettings(Log.log_settings);
+			database.LoadLogSettings(Log.log_settings);
 			break;
 		}
 		case ServerOP_QueryServGeneric:
