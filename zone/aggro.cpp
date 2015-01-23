@@ -544,7 +544,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 					if(mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
 						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
-						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), fabs(sender->GetZ()+mob->GetZ()));
+						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
 #endif
 						mob->AddToHateList(attacker, 1, 0, false);
 					}
