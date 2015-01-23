@@ -597,7 +597,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			else
 			{
 				zone_mode = zm;
-				_log(EQMAC__LOG, "Zoning packet about to be sent (GATE). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				_log(EQMAC__LOG, "Zoning packet about to be sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 				RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
