@@ -2133,7 +2133,7 @@ void command_itemtest(Client *c, const Seperator *sep){
 
 void command_gassign(Client *c, const Seperator *sep){
 	if (sep->IsNumber(1) && c->GetTarget() && c->GetTarget()->IsNPC())
-		database.AssignGrid(c, c->GetTarget()->CastToNPC()->m_SpawnPoint, atoi(sep->arg[1]));
+		database.AssignGrid(c, glm::vec2(c->GetTarget()->CastToNPC()->m_SpawnPoint), atoi(sep->arg[1]));
 	else
 		c->Message(0, "Usage: #gassign [num] - must have an npc target!");
 }
@@ -2378,7 +2378,7 @@ void command_wp(Client *c, const Seperator *sep){
 		}
 		else {
             auto position = c->GetPosition();
-            position.m_Heading = -1;
+            position.w = -1;
 			database.AddWP(c, atoi(sep->arg[2]),wp, position, atoi(sep->arg[3]),zone->GetZoneID());
 		}
 	}
@@ -5111,7 +5111,7 @@ void command_manaburn(Client *c, const Seperator *sep){
 		c->Message(0, "#Manaburn needs a target.");
 	else {
 		int cur_level = c->GetAA(MANA_BURN);//ManaBurn ID
-		if (ComparativeDistance(c->GetPosition(), target->GetPosition()) > 200)
+		if (DistanceSquared(c->GetPosition(), target->GetPosition()) > 200)
 			c->Message(0, "You are too far away from your target.");
 		else {
 			if (cur_level == 1) {
@@ -5721,7 +5721,7 @@ void command_wpadd(Client *c, const Seperator *sep)
 		}
 		auto position = c->GetPosition();
 		if (strcmp("-h",sep->arg[2]) != 0)
-			position.m_Heading = -1;
+			position.w = -1;
 
 		uint32 tmp_grid = database.AddWPForSpawn(c, s2info->GetID(), position, pause, type1, type2, zone->GetZoneID());
 		if (tmp_grid)
@@ -7276,7 +7276,7 @@ void command_path(Client *c, const Seperator *sep)
 
 			if (zone->zonemap)
 			{
-				Map::Vertex loc(px, py, pz);
+				glm::vec3 loc(px, py, pz);
 				best_z = zone->zonemap->FindBestZ(loc, nullptr);
 			}
 			else
@@ -7303,7 +7303,7 @@ void command_path(Client *c, const Seperator *sep)
 
 			if (zone->zonemap)
 			{
-				Map::Vertex loc(px, py, pz);
+				glm::vec3 loc(px, py, pz);
 				best_z = zone->zonemap->FindBestZ(loc, nullptr);
 			}
 			else
@@ -7436,8 +7436,8 @@ void command_path(Client *c, const Seperator *sep)
 		{
 			if (c && c->GetTarget())
 			{
-				if (zone->pathing->NoHazardsAccurate(Map::Vertex(c->GetX(), c->GetY(), c->GetZ()),
-					Map::Vertex(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())))
+				if (zone->pathing->NoHazardsAccurate(glm::vec3(c->GetX(), c->GetY(), c->GetZ()),
+					glm::vec3(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())))
 				{
 					c->Message(0, "No hazards.");
 				}
@@ -7513,7 +7513,7 @@ void command_path(Client *c, const Seperator *sep)
 		{
 			Mob *m = c->GetTarget();
 
-			Map::Vertex Position(m->GetX(), m->GetY(), m->GetZ());
+			glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
 
 			int Node = zone->pathing->FindNearestPathNode(Position);
 
@@ -7644,12 +7644,12 @@ void command_bestz(Client *c, const Seperator *sep){
 		c->Message(0, "Map not loaded for this zone");
 	}
 	else {
-		Map::Vertex me;
+		glm::vec3 me;
 		me.x = c->GetX();
 		me.y = c->GetY();
 		me.z = c->GetZ() + (c->GetSize() == 0.0 ? 6 : c->GetSize()) * HEAD_POSITION;
-		Map::Vertex hit;
-		Map::Vertex bme(me);
+		glm::vec3 hit;
+		glm::vec3 bme(me);
 		bme.z -= 500;
 
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
@@ -7673,7 +7673,7 @@ void command_bestz(Client *c, const Seperator *sep){
 
 		if (c->GetTarget()) {
 			z = c->GetTarget()->GetZ();
-			auto position = xyz_location(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
+			auto position = glm::vec3(c->GetTarget()->GetX(), c->GetTarget()->GetY(), z);
 			RegionType = zone->watermap->ReturnRegionType(position);
 			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
 			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));
@@ -7681,7 +7681,7 @@ void command_bestz(Client *c, const Seperator *sep){
 		}
 		else {
 			z = c->GetZ();
-			auto position = xyz_location(c->GetX(), c->GetY(), z);
+			auto position = glm::vec3(c->GetX(), c->GetY(), z);
 			RegionType = zone->watermap->ReturnRegionType(position);
 			c->Message(0,"InWater returns %d", zone->watermap->InWater(position));
 			c->Message(0,"InLava returns %d", zone->watermap->InLava(position));

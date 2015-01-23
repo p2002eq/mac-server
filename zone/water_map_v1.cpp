@@ -10,23 +10,23 @@ WaterMapV1::~WaterMapV1() {
 	}
 }
 
-WaterRegionType WaterMapV1::ReturnRegionType(const xyz_location& location) const {
-	return BSPReturnRegionType(1,location);
+WaterRegionType WaterMapV1::ReturnRegionType(const glm::vec3& location) const {
+	return BSPReturnRegionType(1, location);
 }
 
-bool WaterMapV1::InWater(const xyz_location& location) const {
+bool WaterMapV1::InWater(const glm::vec3& location) const {
 	return ReturnRegionType(location) == RegionTypeWater;
 }
 
-bool WaterMapV1::InVWater(const xyz_location& location) const {
+bool WaterMapV1::InVWater(const glm::vec3& location) const {
 	return ReturnRegionType(location) == RegionTypeVWater;
 }
 
-bool WaterMapV1::InLava(const xyz_location& location) const {
+bool WaterMapV1::InLava(const glm::vec3& location) const {
 	return ReturnRegionType(location) == RegionTypeLava;
 }
 
-bool WaterMapV1::InLiquid(const xyz_location& location) const {
+bool WaterMapV1::InLiquid(const glm::vec3& location) const {
 	return InWater(location) || InLava(location);
 }
 
@@ -48,7 +48,7 @@ bool WaterMapV1::Load(FILE *fp) {
 	return true;
 }
 
-WaterRegionType WaterMapV1::BSPReturnRegionType(int32 node_number, const xyz_location& location) const {
+WaterRegionType WaterMapV1::BSPReturnRegionType(int32 node_number, const glm::vec3& location) const {
 	float distance;
 
 	const ZBSP_Node *current_node = &BSP_Root[node_number - 1];
@@ -58,9 +58,9 @@ WaterRegionType WaterMapV1::BSPReturnRegionType(int32 node_number, const xyz_loc
 		return (WaterRegionType)current_node->special;
 	}
 
-	distance = (location.m_X * current_node->normal[0]) +
-		(location.m_Y * current_node->normal[1]) +
-		(location.m_Z * current_node->normal[2]) +
+	distance = (location.x * current_node->normal[0]) +
+		(location.y * current_node->normal[1]) +
+		(location.z * current_node->normal[2]) +
 		current_node->splitdistance;
 
 	if (distance == 0.0f) {
@@ -71,12 +71,12 @@ WaterRegionType WaterMapV1::BSPReturnRegionType(int32 node_number, const xyz_loc
 		if (current_node->left == 0) {
 			return(RegionTypeNormal);
 		}
-		return BSPReturnRegionType(current_node->left,location);
+		return BSPReturnRegionType(current_node->left, location);
 	}
 
 	if (current_node->right == 0) {
 		return(RegionTypeNormal);
 	}
 
-	return BSPReturnRegionType(current_node->right,location);
+	return BSPReturnRegionType(current_node->right, location);
 }

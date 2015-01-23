@@ -47,7 +47,7 @@ Mob::Mob(const char* in_name,
 		uint32		in_npctype_id,
 		float		in_size,
 		float		in_runspeed,
-		const xyz_heading& position,
+		const glm::vec4& position,
 		uint8		in_light,
 		uint8		in_texture,
 		uint8		in_helmtexture,
@@ -94,8 +94,8 @@ Mob::Mob(const char* in_name,
 		gravity_timer(1000),
 		viral_timer(0),
 		m_FearWalkTarget(-999999.0f,-999999.0f,-999999.0f),
-		m_TargetLocation(xyz_location::Origin()),
-		m_TargetV(xyz_location::Origin()),
+		m_TargetLocation(glm::vec3()),
+		m_TargetV(glm::vec3()),
 		flee_timer(FLEE_CHECK_TIMER),
 		m_Position(position)
 {
@@ -107,7 +107,7 @@ Mob::Mob(const char* in_name,
 	AI_Init();
 	SetMoving(false);
 	moved=false;
-	m_RewindLocation = xyz_location::Origin();
+	m_RewindLocation = glm::vec3();
 	move_tic_count = 0;
 
 	_egnode = nullptr;
@@ -234,7 +234,7 @@ Mob::Mob(const char* in_name,
 		}
 	}
 
-	m_Delta = xyz_heading::Origin();
+	m_Delta = glm::vec4();
 	animation = 0;
 
 	logging_enabled = false;
@@ -289,7 +289,7 @@ Mob::Mob(const char* in_name,
 	wandertype=0;
 	pausetype=0;
 	cur_wp = 0;
-	m_CurrentWayPoint = xyz_heading::Origin();
+	m_CurrentWayPoint = glm::vec4();
 	cur_wp_pause = 0;
 	patrol=0;
 	follow=0;
@@ -833,10 +833,10 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		strn0cpy(ns->spawn.lastName, lastname, sizeof(ns->spawn.lastName));
 	}
 
-	ns->spawn.heading	= m_Position.m_Heading;
-	ns->spawn.x			= m_Position.m_X;//((int32)x_pos)<<3;
-	ns->spawn.y			= m_Position.m_Y;//((int32)y_pos)<<3;
-	ns->spawn.z			= m_Position.m_Z;//((int32)z_pos)<<3;
+	ns->spawn.heading	= m_Position.w;
+	ns->spawn.x			= m_Position.x;//((int32)x_pos)<<3;
+	ns->spawn.y			= m_Position.y;//((int32)y_pos)<<3;
+	ns->spawn.z			= m_Position.z;//((int32)z_pos)<<3;
 	ns->spawn.spawnId	= GetID();
 	ns->spawn.curHp	= static_cast<uint8>(GetHPRatio());
 	ns->spawn.max_hp	= 100;		//this field needs a better name
@@ -1073,13 +1073,13 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.m_X;
-	spu->y_pos		= m_Position.m_Y;
-	spu->z_pos		= m_Position.m_Z;
+	spu->x_pos		= m_Position.x;
+	spu->y_pos		= m_Position.y;
+	spu->z_pos		= m_Position.z;
 	spu->delta_x	= 0;
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
-	spu->heading	= m_Position.m_Heading;
+	spu->heading	= m_Position.w;
 	spu->anim_type	= 0;
 	spu->delta_heading = 0;
 	spu->spacer1	=0;
@@ -1089,10 +1089,10 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
-		params.push_back(std::to_string((double)m_Position.m_X));
-		params.push_back(std::to_string((double)m_Position.m_Y));
-		params.push_back(std::to_string((double)m_Position.m_Z));
-		params.push_back(std::to_string((double)m_Position.m_Heading));
+		params.push_back(std::to_string((double)m_Position.x));
+		params.push_back(std::to_string((double)m_Position.y));
+		params.push_back(std::to_string((double)m_Position.z));
+		params.push_back(std::to_string((double)m_Position.w));
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace()));
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
@@ -1102,20 +1102,20 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 // this is for SendPosUpdate()
 void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.m_X;
-	spu->y_pos		= m_Position.m_Y;
-	spu->z_pos		= m_Position.m_Z;
-	spu->delta_x	= m_Delta.m_X;
-	spu->delta_y	= m_Delta.m_Y;
-	spu->delta_z	= m_Delta.m_Z;
-	spu->heading	= m_Position.m_Heading;
+	spu->x_pos		= m_Position.x;
+	spu->y_pos		= m_Position.y;
+	spu->z_pos		= m_Position.z;
+	spu->delta_x	= m_Delta.x;
+	spu->delta_y	= m_Delta.y;
+	spu->delta_z	= m_Delta.z;
+	spu->heading	= m_Position.w;
 	spu->spacer1	=0;
 	spu->spacer2	=0;
 	if(this->IsClient())
 		spu->anim_type = animation;
 	else
 		spu->anim_type	= pRunAnimSpeed;
-	spu->delta_heading =static_cast<float>(m_Delta.m_Heading);
+	spu->delta_heading =static_cast<float>(m_Delta.w);
 }
 
 void Mob::ShowStats(Client* client)
@@ -1235,11 +1235,11 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 		entity_list.ProcessMove(CastToNPC(), x, y, z);
 	}
 
-	m_Position.m_X = x;
-	m_Position.m_Y = y;
-	m_Position.m_Z = z;
-	if (m_Position.m_Heading != 0.01)
-		this->m_Position.m_Heading = heading;
+	m_Position.x = x;
+	m_Position.y = y;
+	m_Position.z = z;
+	if (m_Position.w != 0.01)
+		this->m_Position.w = heading;
 	if(IsNPC())
 		CastToNPC()->SaveGuardSpot(true);
 	if(SendUpdate)
@@ -1903,10 +1903,10 @@ bool Mob::HateSummon() {
 			entity_list.MessageClose(this, true, 500, MT_Say, "%s says,'You will not evade me, %s!' ", GetCleanName(), target->GetCleanName() );
 
 			if (target->IsClient()) {
-				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Position.m_X, m_Position.m_Y, m_Position.m_Z, target->GetHeading(), 0, SummonPC);
+				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Position.x, m_Position.y, m_Position.z, target->GetHeading(), 0, SummonPC);
 			}
 			else {
-				target->GMMove(m_Position.m_X, m_Position.m_Y, m_Position.m_Z, target->GetHeading());
+				target->GMMove(m_Position.x, m_Position.y, m_Position.z, target->GetHeading());
 			}
 
 			return true;
@@ -2239,12 +2239,12 @@ void Mob::SetNextIncHPEvent( int inchpevent )
 	nextinchpevent = inchpevent;
 }
 //warp for quest function,from sandy
-void Mob::Warp(const xyz_location& location)
+void Mob::Warp(const glm::vec3& location)
 {
 	if(IsNPC())
-		entity_list.ProcessMove(CastToNPC(), location.m_X, location.m_Y, location.m_Z);
+		entity_list.ProcessMove(CastToNPC(), location.x, location.y, location.z);
 
-	m_Position = location;
+	m_Position = glm::vec4(location, m_Position.w);
 
 	Mob* target = GetTarget();
 	if (target)
@@ -2456,11 +2456,11 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 	float ret = -999999;
 	if (zone->zonemap != nullptr)
 	{
-		Map::Vertex me;
-		me.x = m_Position.m_X;
-		me.y = m_Position.m_Y;
-		me.z = m_Position.m_Z + z_offset;
-		Map::Vertex hit;
+		glm::vec3 me;
+		me.x = m_Position.x;
+		me.y = m_Position.y;
+		me.z = m_Position.z + z_offset;
+		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
 		if (best_z != -999999)
 		{
@@ -2476,11 +2476,11 @@ float Mob::GetGroundZ(float new_x, float new_y, float z_offset)
 	float ret = -999999;
 	if (zone->zonemap != 0)
 	{
-		Map::Vertex me;
-		me.x = m_Position.m_X;
-		me.y = m_Position.m_Y;
-		me.z = m_Position.m_Z+z_offset;
-		Map::Vertex hit;
+		glm::vec3 me;
+		me.x = m_Position.x;
+		me.y = m_Position.y;
+		me.z = m_Position.z+z_offset;
+		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
 		if (best_z != -999999)
 		{
@@ -2574,7 +2574,7 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 	}
 }
 
-void Mob::SetDelta(const xyz_heading& delta) {
+void Mob::SetDelta(const glm::vec4& delta) {
 	m_Delta = delta;
 }
 
@@ -3586,9 +3586,9 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
 		_log(SPELLS__CASTING, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
-		m_Position.m_X = new_x;
-		m_Position.m_Y = new_y;
-		m_Position.m_Z = new_z;
+		m_Position.x = new_x;
+		m_Position.y = new_y;
+		m_Position.z = new_z;
 
 		if(IsNPC())
 		{
@@ -3636,8 +3636,8 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, GetZ()))
 	{
-		m_Position.m_X = new_x;
-		m_Position.m_Y = new_y;
+		m_Position.x = new_x;
+		m_Position.y = new_y;
 
 		if(IsNPC())
 		{
@@ -4962,7 +4962,7 @@ void Mob::Disarm()
 			}
 			else
 			{
-				entity_list.CreateGroundObject(weaponid, xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
 			}
 			safe_delete(inst);
 		}

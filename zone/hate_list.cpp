@@ -152,24 +152,24 @@ Mob* HateList::GetDamageTop(Mob* hater)
 }
 
 Mob* HateList::GetClosest(Mob *hater) {
-	Mob* close = nullptr;
-	float closedist = 99999.9f;
-	float thisdist;
+	Mob* close_entity = nullptr;
+	float close_distance = 99999.9f;
+	float this_distance;
 
 	auto iterator = list.begin();
 	while(iterator != list.end()) {
-		thisdist = ComparativeDistanceNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());;
-		if((*iterator)->ent != nullptr && thisdist <= closedist) {
-			closedist = thisdist;
-			close = (*iterator)->ent;
+		this_distance = DistanceSquaredNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());;
+		if((*iterator)->ent != nullptr && this_distance <= close_distance) {
+			close_distance = this_distance;
+			close_entity = (*iterator)->ent;
 		}
 		++iterator;
 	}
 
-	if ((!close && hater->IsNPC()) || (close && close->DivineAura()))
-		close = hater->CastToNPC()->GetHateTop();
+	if ((!close_entity && hater->IsNPC()) || (close_entity && close_entity->DivineAura()))
+		close_entity = hater->CastToNPC()->GetHateTop();
 
-	return close;
+	return close_entity;
 }
 
 
@@ -306,7 +306,7 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-            auto hateEntryPosition = xyz_location(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
+            auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
 				if(!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
@@ -418,7 +418,7 @@ Mob *HateList::GetTop(Mob *center)
 		{
 			tHateEntry *cur = (*iterator);
  			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if (!zone->watermap->InLiquid(cur->ent->GetPosition())) {
+				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition()))) {
 					skipped_count++;
 					++iterator;
 					continue;
@@ -577,7 +577,7 @@ void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_cent
 		tHateEntry *h = (*iterator);
 		if(range > 0)
 		{
-			dist_targ = ComparativeDistance(center->GetPosition(), h->ent->GetPosition());
+			dist_targ = DistanceSquared(center->GetPosition(), h->ent->GetPosition());
 			if (dist_targ <= range && dist_targ >= min_range2)
 			{
 				id_list.push_back(h->ent->GetID());

@@ -225,23 +225,23 @@ bool Client::Process() {
 			if(aa_los_them_mob)
 			{
 				if(auto_attack_target != aa_los_them_mob ||
-					m_AutoAttackPosition.m_X != GetX() ||
-					m_AutoAttackPosition.m_Y != GetY() ||
-					m_AutoAttackPosition.m_Z != GetZ() ||
-					m_AutoAttackTargetLocation.m_X != aa_los_them_mob->GetX() ||
-					m_AutoAttackTargetLocation.m_Y != aa_los_them_mob->GetY() ||
-					m_AutoAttackTargetLocation.m_Z != aa_los_them_mob->GetZ())
+					m_AutoAttackPosition.x != GetX() ||
+					m_AutoAttackPosition.y != GetY() ||
+					m_AutoAttackPosition.z != GetZ() ||
+					m_AutoAttackTargetLocation.x != aa_los_them_mob->GetX() ||
+					m_AutoAttackTargetLocation.y != aa_los_them_mob->GetY() ||
+					m_AutoAttackTargetLocation.z != aa_los_them_mob->GetZ())
 				{
 					aa_los_them_mob = auto_attack_target;
 					m_AutoAttackPosition = GetPosition();
-					m_AutoAttackTargetLocation = aa_los_them_mob->GetPosition();
+					m_AutoAttackTargetLocation = glm::vec3(aa_los_them_mob->GetPosition());
 					los_status = CheckLosFN(auto_attack_target);
 					los_status_facing = IsFacingMob(aa_los_them_mob);
 				}
 				// If only our heading changes, we can skip the CheckLosFN call
 				// but above we still need to update los_status_facing
-				if (m_AutoAttackPosition.m_Heading != GetHeading()) {
-					m_AutoAttackPosition.m_Heading = GetHeading();
+				if (m_AutoAttackPosition.w != GetHeading()) {
+					m_AutoAttackPosition.w = GetHeading();
 					los_status_facing = IsFacingMob(aa_los_them_mob);
 				}
 			}
@@ -249,7 +249,7 @@ bool Client::Process() {
 			{
 				aa_los_them_mob = auto_attack_target;
 				m_AutoAttackPosition = GetPosition();
-				m_AutoAttackTargetLocation = aa_los_them_mob->GetPosition();
+				m_AutoAttackTargetLocation = glm::vec3(aa_los_them_mob->GetPosition());
 				los_status = CheckLosFN(auto_attack_target);
 				los_status_facing = IsFacingMob(aa_los_them_mob);
 			}
@@ -404,7 +404,7 @@ bool Client::Process() {
 				else
 				{
 					animation = 0;
-					m_Delta = xyz_heading(0.0f, 0.0f, 0.0f, m_Delta.m_Heading);
+					m_Delta = glm::vec4(0.0f, 0.0f, 0.0f, m_Delta.w);
 					SendPosUpdate(2);
 				}
 			}
@@ -1473,7 +1473,7 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 			return;
 
 		//you have to be somewhat close to a trainer to be properly using them
-		if(ComparativeDistance(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2)
+		if(DistanceSquared(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2)
 			return;
 
 		SkillUseTypes sk;
@@ -1517,7 +1517,7 @@ void Client::OPGMEndTraining(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to a trainer to be properly using them
-	if(ComparativeDistance(m_Position, pTrainer->GetPosition()) > USE_NPC_RANGE2)
+	if(DistanceSquared(m_Position, pTrainer->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	// goodbye message
@@ -1546,7 +1546,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to a trainer to be properly using them
-	if(ComparativeDistance(m_Position, pTrainer->GetPosition()) > USE_NPC_RANGE2)
+	if(DistanceSquared(m_Position, pTrainer->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	if (gmskill->skillbank == 0x01)

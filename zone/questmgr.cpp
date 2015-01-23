@@ -197,7 +197,7 @@ void QuestManager::write(const char *file, const char *str) {
 	fclose (pFile);
 }
 
-Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const xyz_heading& position) {
+Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const glm::vec4& position) {
 	const NPCType* tmp = 0;
 	if (tmp = database.GetNPCType(npc_type))
 	{
@@ -214,7 +214,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const xyz_heading&
 	return nullptr;
 }
 
-Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const xyz_heading& position) {
+Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const glm::vec4& position) {
 	Mob *other = entity_list.GetMobByNpcTypeID(npc_type);
 	if(other != nullptr) {
 		return other;
@@ -296,7 +296,7 @@ Mob* QuestManager::spawn_from_spawn2(uint32 spawn2_id)
 		database.UpdateSpawn2Timeleft(spawn2_id, zone->GetInstanceID(), 0);
 		found_spawn->SetCurrentNPCID(npcid);
 
-        auto position = xyz_heading(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
+        auto position = glm::vec4(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
 		NPC* npc = new NPC(tmp, found_spawn, position, FlyMode3);
 
 		found_spawn->SetNPCPointer(npc);
@@ -1466,7 +1466,7 @@ void QuestManager::ding() {
 
 }
 
-void QuestManager::rebind(int zoneid, const xyz_location& location) {
+void QuestManager::rebind(int zoneid, const glm::vec3& location) {
 	QuestManagerCurrentQuestVars();
 	if(initiator && initiator->IsClient()) {
 		initiator->SetBindPoint(zoneid, 0, location);
@@ -1497,7 +1497,7 @@ void QuestManager::pause(int duration) {
 	owner->CastToNPC()->PauseWandering(duration);
 }
 
-void QuestManager::moveto(const xyz_heading& position, bool saveguardspot) {
+void QuestManager::moveto(const glm::vec4& position, bool saveguardspot) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC())
 		return;
@@ -1658,7 +1658,7 @@ void QuestManager::sethp(int hpperc) {
 	owner->Damage(owner, newhp, SPELL_UNKNOWN, SkillHandtoHand, false, 0, false);
 }
 
-bool QuestManager::summonburriedplayercorpse(uint32 char_id, const xyz_heading& position) {
+bool QuestManager::summonburriedplayercorpse(uint32 char_id, const glm::vec4& position) {
 	bool Result = false;
 
 	if(char_id <= 0)
@@ -1671,7 +1671,7 @@ bool QuestManager::summonburriedplayercorpse(uint32 char_id, const xyz_heading& 
 	return true;
 }
 
-bool QuestManager::summonallplayercorpses(uint32 char_id, const xyz_heading& position) {
+bool QuestManager::summonallplayercorpses(uint32 char_id, const glm::vec4& position) {
 
 	if(char_id <= 0)
         return false;
@@ -1966,14 +1966,14 @@ int QuestManager::getlevel(uint8 type)
 		return 0;
 }
 
-uint16 QuestManager::CreateGroundObject(uint32 itemid, const xyz_heading& position, uint32 decay_time)
+uint16 QuestManager::CreateGroundObject(uint32 itemid, const glm::vec4& position, uint32 decay_time)
 {
 	uint16 entid = 0; //safety check
 	entid = entity_list.CreateGroundObject(itemid, position, decay_time);
 	return entid;
 }
 
-uint16 QuestManager::CreateGroundObjectFromModel(const char *model, const xyz_heading& position, uint8 type, uint32 decay_time)
+uint16 QuestManager::CreateGroundObjectFromModel(const char *model, const glm::vec4& position, uint8 type, uint32 decay_time)
 {
 	uint16 entid = 0; //safety check
 	entid = entity_list.CreateGroundObjectFromModel(model, position, type, decay_time);
@@ -2248,12 +2248,12 @@ void QuestManager::RemoveAllFromInstance(uint16 instance_id)
 	}
 }
 
-void QuestManager::MovePCInstance(int zone_id, int instance_id, const xyz_heading& position)
+void QuestManager::MovePCInstance(int zone_id, int instance_id, const glm::vec4& position)
 {
 	QuestManagerCurrentQuestVars();
 	if(initiator)
 	{
-		initiator->MovePC(zone_id, instance_id, position.m_X, position.m_Y, position.m_Z, position.m_Heading);
+		initiator->MovePC(zone_id, instance_id, position.x, position.y, position.z, position.w);
 	}
 }
 
@@ -2477,7 +2477,7 @@ void QuestManager::SendMail(const char *to, const char *from, const char *subjec
 uint16 QuestManager::CreateDoor(const char* model, float x, float y, float z, float heading, uint8 opentype, uint16 size)
 {
 	uint16 entid = 0; //safety check
-	entid = entity_list.CreateDoor(model, xyz_heading(x, y, z, heading), opentype, size);
+	entid = entity_list.CreateDoor(model, glm::vec4(x, y, z, heading), opentype, size);
 	return entid;
 }
 
