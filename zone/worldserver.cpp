@@ -1552,6 +1552,21 @@ void WorldServer::Process() {
 			}
 			break;
 		}
+
+		case ServerOP_Soulmark:
+		{
+			ServerRequestSoulMark_Struct* SM = (ServerRequestSoulMark_Struct*) pack->pBuffer;
+			if(zone){
+				
+				Client* client = entity_list.GetClientByName(SM->name);
+				if(client)
+				{
+					client->SendSoulMarks(&SM->entry);
+				}
+			}
+			break;
+		}
+
 	/*	case ServerOP_WIRemoteCall: {
 			char *id = nullptr;
 			char *session_id = nullptr;

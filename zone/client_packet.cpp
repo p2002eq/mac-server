@@ -258,6 +258,13 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
 	ConnectedOpcodes[OP_Disarm] = &Client::Handle_OP_Disarm;
 	ConnectedOpcodes[OP_Feedback] = &Client::Handle_OP_Feedback;
+	ConnectedOpcodes[OP_SoulMarkUpdate] = &Client::Handle_OP_SoulMarkUpdate;
+	ConnectedOpcodes[OP_SoulMarkList] = &Client::Handle_OP_SoulMarkList;
+	ConnectedOpcodes[OP_SoulMarkAdd] = &Client::Handle_OP_SoulMarkAdd;
+	ConnectedOpcodes[OP_MBRetrievalRequest] = &Client::Handle_OP_MBRetrievalRequest;
+	ConnectedOpcodes[OP_MBRetrievalDetailRequest] = &Client::Handle_OP_MBRetrievalDetailRequest;
+	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
+	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -8623,5 +8630,170 @@ void Client::Handle_OP_Feedback(const EQApplicationPacket *app)
 	database.UpdateFeedback(in);
 
 	Message(CC_Yellow, "Thank you, %s. Your feedback has been recieved.", in->name);
+	return;
+}
+
+
+void Client::Handle_OP_SoulMarkList(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkList_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkList_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		return;
+	}
+	SoulMarkList_Struct* in = (SoulMarkList_Struct*)app->pBuffer;
+
+	uint32 charid = 0;
+	if(strlen(in->interrogatename) > 0)
+	{
+		charid = database.GetCharacterID(in->interrogatename);
+	}
+
+	if(charid != 0) 
+	{
+		int max = database.RemoveSoulMark(charid);
+		uint32 i = 0;
+		for(i = 0; i < max; i++)
+		{
+			if(in->entries[i].type != 0)
+			database.AddSoulMark(charid, in->entries[i].name, in->entries[i].accountname,  in->entries[i].gmname, in->entries[i].gmaccountname, in->entries[i].unix_timestamp, in->entries[i].type, in->entries[i].description);
+		}
+	}
+
+	return;
+}
+
+
+void Client::Handle_OP_SoulMarkAdd(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkEntry_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkEntry_Struct: Expected: %i, Got: %i", sizeof(SoulMarkEntry_Struct), app->size);
+		return;
+	}
+	SoulMarkEntry_Struct* in = (SoulMarkEntry_Struct*)app->pBuffer;
+
+	uint32 charid = 0;
+	if(strlen(in->name) > 0)
+	{
+		charid = database.GetCharacterID(in->name);
+	}
+	if(charid != 0)
+	{
+		database.AddSoulMark(charid, in->name, in->accountname, in->gmname, in->gmaccountname, std::time(nullptr), in->type, in->description);
+	}
+
+	return;
+}
+
+void Client::Handle_OP_SoulMarkUpdate(const EQApplicationPacket *app)
+{
+	if(Admin() < 80)
+		return;
+
+	if (app->size != sizeof(SoulMarkUpdate_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for SoulMarkUpdate_Struct: Expected: %i, Got: %i", sizeof(SoulMarkList_Struct), app->size);
+		return;
+	}
+	SoulMarkUpdate_Struct* in = (SoulMarkUpdate_Struct*)app->pBuffer;
+
+	ServerPacket* pack = new ServerPacket(ServerOP_Soulmark, sizeof(ServerRequestSoulMark_Struct));
+	ServerRequestSoulMark_Struct* scs = (ServerRequestSoulMark_Struct*)pack->pBuffer;
+	strcpy(scs->name, GetCleanName());
+	strcpy(scs->entry.interrogatename, in->charname);
+	worldserver.SendPacket(pack);
+	safe_delete(pack);
+	return;
+}
+
+void Client::Handle_OP_MBRetrievalRequest(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(MBRetrieveMessages_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBRetrieveMessages_Struct), app->size);
+		return;
+	}
+	MBRetrieveMessages_Struct* in = (MBRetrieveMessages_Struct*)app->pBuffer;	
+	std::vector<MBMessageRetrievalGen_Struct> messageList;
+
+	database.RetrieveMBMessages(in->category, messageList);
+
+	for (int i=0; i<messageList.size();i++) {   
+
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalResponse, sizeof(MBMessageRetrievalGen_Struct));             
+		memcpy(outapp->pBuffer, &messageList[i], sizeof(MBMessageRetrievalGen_Struct));
+		QueuePacket(outapp);
+		safe_delete(outapp);
+	}
+
+	
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
+	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_MBRetrievalDetailRequest(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(MBModifyRequest_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for MBModifyRequest_Struct: Expected: %i, Got: %i", sizeof(MBModifyRequest_Struct), app->size);
+		return;
+	}
+	MBModifyRequest_Struct* in = (MBModifyRequest_Struct*)app->pBuffer;	
+	char messageText[2048] = "";	
+
+	
+	if(database.ViewMBMessage(in->id, messageText))
+	{
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalDetailResponse, strlen(messageText) + 1);             
+		memcpy(outapp->pBuffer, messageText, strlen(messageText));
+		QueuePacket(outapp);
+		safe_delete(outapp);
+	}
+	else
+	{
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalDetailResponse, 0);
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		
+	}
+
+	//No fin sent for this packet. Just data.
+
+	return;
+}
+
+
+
+void Client::Handle_OP_MBRetrievalPostRequest(const EQApplicationPacket *app)
+{
+	if (app->size > sizeof(MBMessageRetrievalGen_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: at most %i, Got: %i", sizeof(MBMessageRetrievalGen_Struct), app->size);
+		return;
+	}
+	MBMessageRetrievalGen_Struct* in = (MBMessageRetrievalGen_Struct*)app->pBuffer;
+	database.PostMBMessage(CharacterID(), GetCleanName(), in);
+
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
+	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(MBEraseRequest_Struct)) {
+		LogFile->write(EQEmuLog::Error, "Invalid size for MBRetrieveMessages_Struct: Expected: %i, Got: %i", sizeof(MBEraseRequest_Struct), app->size);
+		return;
+	}
+	MBEraseRequest_Struct* in = (MBEraseRequest_Struct*)app->pBuffer;	
+	database.EraseMBMessage(in->id, CharacterID());
+	
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
+	FastQueuePacket(&outapp);
+
 	return;
 }

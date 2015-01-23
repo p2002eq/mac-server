@@ -501,19 +501,19 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			heading = m_pp.binds[0].heading;
 
 			zonesummon_ignorerestrictions = 1;
-			LogFile->write(EQEmuLog::Debug, "Player %s has died and will be zoned to bind point in zone: %s at LOC x=%f, y=%f, z=%f, heading=%f", GetName(), pZoneName, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
+			_log(EQMAC__LOG, "Player %s has died and will be zoned to bind point in zone: %s at LOC x=%f, y=%f, z=%f, heading=%f", GetName(), pZoneName, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
 			break;
 		case SummonPC:
             m_ZoneSummonLocation = m_Position = xyz_location(x, y, z);
 			SetHeading(heading);
 			break;
 		case Rewind:
-			LogFile->write(EQEmuLog::Debug, "%s has requested a /rewind from %f, %f, %f, to %f, %f, %f in %s", GetName(), m_Position.m_X, m_Position.m_Y, m_Position.m_Z, m_RewindLocation.m_X, m_RewindLocation.m_Y, m_RewindLocation.m_Z, zone->GetShortName());
+			_log(EQMAC__LOG, "%s has requested a /rewind from %f, %f, %f, to %f, %f, %f in %s", GetName(), m_Position.m_X, m_Position.m_Y, m_Position.m_Z, m_RewindLocation.m_X, m_RewindLocation.m_Y, m_RewindLocation.m_Z, zone->GetShortName());
 			m_ZoneSummonLocation = m_Position = xyz_location(x, y, z);
 			SetHeading(heading);
 			break;
 		default:
-			LogFile->write(EQEmuLog::Error, "Client::ZonePC() received a reguest to perform an unsupported client zone operation.");
+			_log(EQMAC__LOG, "ERROR: Client::ZonePC() received a reguest to perform an unsupported client zone operation.");
 			ReadyToZone = false;
 			break;
 	}
@@ -544,8 +544,8 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 		zone_mode = zm;
 
-		if(zm == ZoneSolicited || zm == ZoneToBindPoint || zm == ZoneToSafeCoords) {
-			_log(EQMAC__LOG, "Zoning packet about to be sent. We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+		if(zm == ZoneSolicited || zm == ZoneToSafeCoords) {
+			_log(EQMAC__LOG, "Zoning packet about to be sent (ZS/ZTS). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -562,12 +562,31 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			FastQueuePacket(&outapp);
 			safe_delete(outapp);
 		}
-		else if (zm == GateToBindPoint) {
+		else if (zm == ZoneToBindPoint) {
+			//TODO: Find a better packet that works with EQMac on death. Sending OP_RequestClientZoneChange here usually does not zone the
+			//player correctly (it starts the zoning process, then disconnect.) OP_GMGoto seems to work 90% of the time. It's a hack, but it works...
+			_log(EQMAC__LOG, "Zoning packet about to be sent (ZTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+			EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMGoto, sizeof(GMGoto_Struct));
+			GMGoto_Struct* gmg = (GMGoto_Struct*) outapp->pBuffer;
+	
+			strcpy(gmg->charname,this->name);
+			strcpy(gmg->gmname,this->name);
+			gmg->zoneID = zoneID;
+			gmg->x = x;
+			gmg->y = y;
+			gmg->z = z;
+			outapp->priority = 6;
+			FastQueuePacket(&outapp);
+	
+			safe_delete(outapp);
+		}
+		else if (zm == GateToBindPoint) {			
 			// we hide the real zoneid we want to evac/succor to here
 			zonesummon_id = zoneID;
 			zone_mode = zm;
 
 			if(zoneID == GetZoneID()) {
+				_log(EQMAC__LOG, "Zoning packet NOT being sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				//Not doing inter-zone for same zone gates. Client is supposed to handle these, based on PP info it is fed.
 				//properly handle proximities
 				entity_list.ProcessMove(this, m_Position);
@@ -578,7 +597,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			else
 			{
 				zone_mode = zm;
-				_log(EQMAC__LOG, "Zoning packet about to be sent (GOTO). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				_log(EQMAC__LOG, "Zoning packet about to be sent (GATE). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 				RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -597,7 +616,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		else if(zm == EvacToSafeCoords)
 		{
 			zone_mode = zm;
-
+			_log(EQMAC__LOG, "Zoning packet about to be sent (ETSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 

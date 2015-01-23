@@ -356,6 +356,7 @@ public:
 	Corpse* GetClosestCorpse(Mob* sender, const char *Name);
 	NPC* GetClosestBanker(Mob* sender, uint32 &distance);
 	Mob*	GetClosestMobByBodyType(Mob* sender, bodyType BodyType);
+	Mob*	GetClosestClient(Mob* sender, uint32 &distance);
 	void	ForceGroupUpdate(uint32 gid);
 	void	SendGroupLeave(uint32 gid, const char *name, bool checkleader);
 	void	SendGroupJoin(uint32 gid, const char *name);

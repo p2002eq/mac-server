@@ -727,6 +727,16 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 uint32 Database::GetCharacterID(const char *name) {
 	std::string query = StringFormat("SELECT `id` FROM `character_data` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+	{
+		std::cerr << "Error in GetAccountIDByChar query '" << query << "' " << results.ErrorMessage() << std::endl;
+		return 0;
+	}
+
+	if (results.RowCount() != 1)
+		return 0; 
+
 	auto row = results.begin();
 	if (row[0]){ return atoi(row[0]); }
 	return 0; 
@@ -2561,6 +2571,8 @@ bool Database::DBSetup() {
 	DBSetup_webdata_servers();
 	DBSetup_feedback();
 	DBSetup_PlayerCorpseBackup();
+	DBSetup_CharacterSoulMarks();
+	DBSetup_MessageBoards();
 	return true;
 }
 
@@ -2577,7 +2589,7 @@ bool Database::DBSetup_webdata_character() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;	"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table webdata_character..");
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_character..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
 			LogFile->write(EQEmuLog::Error, "Error creating webdata_character table.");
@@ -2600,7 +2612,7 @@ bool Database::DBSetup_webdata_servers() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table webdata_servers..");
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_servers..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
 			LogFile->write(EQEmuLog::Error, "Error creating webdata_servers table.");
@@ -2625,7 +2637,7 @@ bool Database::DBSetup_feedback() {
 			"PRIMARY KEY(`id`)												"
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
 			);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table feedback..");
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table feedback..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
 			LogFile->write(EQEmuLog::Error, "Error creating feedback table.");
@@ -2656,7 +2668,7 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 			"PRIMARY KEY(`corpse_id`, `equip_slot`)		  "
 			") ENGINE = InnoDB DEFAULT CHARSET = latin1;  "
 		);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table character_corpse_items_backup..");
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_corpse_items_backup..");
 		auto create_results = QueryDatabase(create_query);
 		if (!create_results.Success()){
 			LogFile->write(EQEmuLog::Error, "Error creating character_corpse_items_backup table.");
@@ -2764,5 +2776,63 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		LogFile->write(EQEmuLog::Debug, "Corpse backup tables cleaned of empty corpses.");
 	}
 
+	return true;
+}
+
+bool Database::DBSetup_CharacterSoulMarks() {
+	std::string check_query = StringFormat("SHOW TABLES LIKE 'character_soulmarks'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() == 0){
+		std::string create_query = StringFormat(
+			"Create TABLE `character_soulmarks` (								"
+			"`id` int(11) NOT NULL AUTO_INCREMENT,								"
+			"`charid` int(11) NOT NULL DEFAULT '0',								"
+			"`charname` varchar(64) NOT NULL DEFAULT '',						"
+			"`acctname` varchar(32) NOT NULL DEFAULT '',						"
+			"`gmname` varchar(64) NOT NULL DEFAULT '',							"
+			"`gmacctname` varchar(32) NOT NULL DEFAULT '',						"
+			"`utime` int(11) NOT NULL DEFAULT '0',								"
+			"`type` int(11) NOT NULL DEFAULT '0',								"
+			"`desc` varchar(256) NOT NULL DEFAULT '',							"
+			"PRIMARY KEY(`id`)													"
+			") ENGINE = InnoDB AUTO_INCREMENT = 263 DEFAULT CHARSET = latin1;	"
+			);
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_soulmarks..");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success()){
+			LogFile->write(EQEmuLog::Error, "Error creating character_soulmarks table.");
+			return false;
+		}
+		LogFile->write(EQEmuLog::Debug, "character_soulmarks table created.");
+	}
+	return true;
+}
+
+bool Database::DBSetup_MessageBoards() {
+	std::string check_query = StringFormat("SHOW TABLES LIKE 'mb_messages'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() == 0){
+		std::string create_query = StringFormat(
+			"Create TABLE `mb_messages` (														"
+			"`id` int(11) NOT NULL AUTO_INCREMENT,												"
+			"`category` smallint(7) NOT NULL DEFAULT '0',										"
+			"`date` varchar(16) NOT NULL DEFAULT '',											"
+			"`author` varchar(64) NOT NULL DEFAULT '',											"
+			"`time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,	"
+			"`subject` varchar(29) NOT NULL DEFAULT '',											"
+			"`charid` int(11) NOT NULL DEFAULT '0',												"
+			"`language` tinyint(3) NOT NULL DEFAULT '0',										"
+			"`message` varchar(2048) NOT NULL DEFAULT '',										"
+			"PRIMARY KEY(`id`)																	"
+			") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;						"
+			);
+		LogFile->write(EQEmuLog::Debug, "Attempting to create table mb_messages..");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success()){
+			LogFile->write(EQEmuLog::Error, "Error creating mb_messages table.");
+			return false;
+		}
+		LogFile->write(EQEmuLog::Debug, "mb_messages table created.");
+	}
 	return true;
 }

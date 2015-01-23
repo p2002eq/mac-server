@@ -4298,6 +4298,29 @@ Mob *EntityList::GetClosestMobByBodyType(Mob *sender, bodyType BodyType)
 	return ClosestMob;
 }
 
+Mob *EntityList::GetClosestClient(Mob *sender, uint32 &distance)
+{
+	if (!sender)
+		return nullptr;
+
+	distance = 4294967295u;
+	Mob *nc = nullptr;
+
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		if (it->second->IsClient() || (it->second->GetOwner() && it->second->GetOwner()->IsClient())) {
+			uint32 nd = ((it->second->GetY() - sender->GetY()) * (it->second->GetY() - sender->GetY())) +
+				((it->second->GetX() - sender->GetX()) * (it->second->GetX() - sender->GetX()));
+			if (nd < distance){
+				distance = nd;
+				nc = it->second;
+			}
+		}
+		++it;
+	}
+	return nc;
+}
+
 void EntityList::GetTargetsForConeArea(Mob *start, float min_radius, float radius, float height, std::list<Mob*> &m_list)
 {
 	auto it = mob_list.begin();

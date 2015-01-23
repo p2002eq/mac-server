@@ -113,6 +113,8 @@
 #define ServerOP_LFPUpdate			0x0213
 #define ServerOP_LFPMatches			0x0214
 #define ServerOP_ClientVersionSummary 0x0215
+#define ServerOP_Soulmark			0x0216
+#define ServerOP_AddSoulmark		0x0217
 #define ServerOP_LSInfo				0x1000
 #define ServerOP_LSStatus			0x1001
 #define ServerOP_LSClientAuth		0x1002
@@ -1087,6 +1089,11 @@ struct ReloadWorld_Struct{
 
 struct ServerRequestTellQueue_Struct {
 	char	name[64];
+};
+
+struct ServerRequestSoulMark_Struct {
+	char	name[64];
+	SoulMarkList_Struct entry;
 };
 
 #pragma pack()

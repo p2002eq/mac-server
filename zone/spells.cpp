@@ -2372,7 +2372,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
 		}
 
-		if(IsClient()) {
+		if(IsClient() || (caster && caster->IsClient())) {
 			EQApplicationPacket *packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
 
 			Action_Struct* action = (Action_Struct*) packet->pBuffer;

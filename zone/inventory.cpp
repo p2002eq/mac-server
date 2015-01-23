@@ -703,17 +703,25 @@ bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_curs
 					}
 					if( m_inv[MainSecondary] )
 					{
-						uint8 itemtype_2ndItem = m_inv[MainSecondary]->GetItem()->ItemType;
+						uint8 instrument = m_inv[MainSecondary]->GetItem()->ItemType;
 						if( 
-							itemtype_2ndItem == ItemTypeWindInstrument ||
-							itemtype_2ndItem == ItemTypeStringedInstrument ||
-							itemtype_2ndItem == ItemTypeBrassInstrument ||
-							itemtype_2ndItem == ItemTypePercussionInstrument
-						) continue; // Do not auto-equip Primary when Bard Equipment is in Secondary
+							instrument == ItemTypeWindInstrument ||
+							instrument == ItemTypeStringedInstrument ||
+							instrument == ItemTypeBrassInstrument ||
+							instrument == ItemTypePercussionInstrument
+						) continue; // Do not auto-equip Primary when instrument is in Secondary
 					}
 				}
 				if( i== MainSecondary && m_inv[MainPrimary]) // check to see if primary slot is a two hander
 				{
+					uint8 instrument = inst.GetItem()->ItemType;
+					if( 
+						instrument == ItemTypeWindInstrument ||
+						instrument == ItemTypeStringedInstrument ||
+						instrument == ItemTypeBrassInstrument ||
+						instrument == ItemTypePercussionInstrument
+					) continue; // Do not auto-equip instrument in Secondary when Primary is equipped.	
+
 					uint8 use = m_inv[MainPrimary]->GetItem()->ItemType;
 					if(use == ItemType2HSlash || use == ItemType2HBlunt || use == ItemType2HPiercing)
 						continue;

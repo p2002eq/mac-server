@@ -171,3 +171,10 @@
 	void Handle_OP_LFGCommand(const EQApplicationPacket *app);
 	void Handle_OP_Disarm(const EQApplicationPacket *app);
 	void Handle_OP_Feedback(const EQApplicationPacket *app);
+	void Handle_OP_SoulMarkUpdate(const EQApplicationPacket *app);
+	void Handle_OP_SoulMarkList(const EQApplicationPacket *app);
+	void Handle_OP_SoulMarkAdd(const EQApplicationPacket *app);
+	void Handle_OP_MBRetrievalRequest(const EQApplicationPacket *app);
+	void Handle_OP_MBRetrievalDetailRequest(const EQApplicationPacket *app);
+	void Handle_OP_MBRetrievalPostRequest(const EQApplicationPacket *app);
+	void Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app);

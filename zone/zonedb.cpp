@@ -355,6 +355,36 @@ void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
 
 }
 
+void ZoneDatabase::AddSoulMark(uint32 charid, const char* charname, const char* accname, const char* gmname, const char* gmacctname, uint32 utime, uint32 type, const char* desc) {
+
+	std::string query = StringFormat("INSERT INTO character_soulmarks (charid, charname, acctname, gmname, gmacctname, utime, type, `desc`) "
+		"VALUES(%i, '%s', '%s','%s','%s', %i, %i, '%s')", charid, charname, accname, gmname, gmacctname, utime, type, desc);
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+		std::cerr << "Error in AddSoulMark '" << query << "' " << results.ErrorMessage() << std::endl;
+
+}
+
+int ZoneDatabase::RemoveSoulMark(uint32 charid) {
+
+	std::string query = StringFormat("DELETE FROM character_soulmarks where charid=%i", charid);
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		std::cerr << "Error in DeleteSoulMark '" << query << "' " << results.ErrorMessage() << std::endl;
+		return 0;
+	}
+	int res = 0;
+
+	if(results.RowsAffected() >= 0 && results.RowsAffected() <= 11)
+	{
+		res = results.RowsAffected();
+	}
+
+	return res;
+
+}
+
 bool ZoneDatabase::SetSpecialAttkFlag(uint8 id, const char* flag) {
 
 	std::string query = StringFormat("UPDATE npc_types SET npcspecialattks='%s' WHERE id = %i;", flag, id);
@@ -3620,8 +3650,8 @@ Corpse* ZoneDatabase::LoadCharacterCorpse(uint32 player_corpse_id) {
 	for (auto row = results.begin(); row != results.end(); ++row) {
         auto position = xyz_heading(atof(row[3]), atof(row[4]), atof(row[5]), atof(row[6]));
 		NewCorpse = Corpse::LoadCharacterCorpseEntity(
-				atoll(row[0]), 		 // id					  uint32 in_dbid
-				atoll(row[1]),		 // charid				  uint32 in_charid
+				atoul(row[0]), 		 // id					  uint32 in_dbid
+				atoul(row[1]),		 // charid				  uint32 in_charid
 				row[2], 			 //	char_name
 				position,
 				row[7],				 // time_of_death		  char* time_of_death
@@ -3794,3 +3824,61 @@ int8 ZoneDatabase::ItemQuantityType(int16 item_id)
 	return 0;
 }
 
+bool ZoneDatabase::RetrieveMBMessages(uint16 category, std::vector<MBMessageRetrievalGen_Struct>& outData) {
+	std::string query = StringFormat("SELECT id, date, language, author, subject, category from mb_messages WHERE category=%i ORDER BY time DESC LIMIT %i",category, 500);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		MBMessageRetrievalGen_Struct message;
+		message.id = atoi(row[0]);			
+		strncpy(message.date, row[1], sizeof(message.date));		
+		message.language = atoi(row[2]);
+		strncpy(message.author, row[3],  sizeof(message.author));
+		strncpy(message.subject, row[4], sizeof(message.subject));
+		message.category = atoi(row[5]);
+		outData.push_back(message);
+	}
+	return false;
+}
+
+bool ZoneDatabase::PostMBMessage(uint32 charid, const char* charName, MBMessageRetrievalGen_Struct* inData) {
+	std::string query = StringFormat("INSERT INTO mb_messages (charid, date, language, author, subject, category, message) VALUES (%i, '%s', %i, '%s', '%s', %i, '%s')", charid, EscapeString(inData->date, sizeof(inData->date)).c_str(), inData->language, charName, EscapeString(inData->subject, strlen(inData->subject)).c_str(), inData->category, EscapeString(inData->message, strlen(inData->message)).c_str());
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+	return true;
+}
+
+bool ZoneDatabase::EraseMBMessage(uint32 id, uint32 charid)
+{
+	std::string query = StringFormat("DELETE FROM mb_messages WHERE id=%i AND charid=%i", id, charid);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+	return true;
+}
+
+bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
+	std::string query = StringFormat("SELECT message from mb_messages WHERE id=%i", id);
+	auto results = QueryDatabase(query);
+	if(!results.Success())
+	{
+		return false; // no messages
+	}
+
+	if(results.RowCount() == 0 || results.RowCount() > 1)
+	{
+		return false;
+	}
+	auto row = results.begin();
+	strncpy(outData, row[0], 2048);
+	return true;
+}

@@ -389,3 +389,25 @@ bool WorldDatabase::LoadCharacterCreateCombos() {
 	return true;
 }
 
+bool WorldDatabase::LoadSoulMarksForClient(uint32 charid, std::vector<SoulMarkEntry_Struct>& outData) {
+
+	std::string query = StringFormat("SELECT charname, acctname, gmname, gmacctname, utime, type, `desc` FROM character_soulmarks where charid=%i", charid);
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+        return false;
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		SoulMarkEntry_Struct entry;
+		strncpy(entry.name, row[0], 64);
+		strncpy(entry.accountname, row[1], 32);
+		strncpy(entry.gmname, row[2], 64);
+		strncpy(entry.gmaccountname, row[3], 32);
+		entry.unix_timestamp = atoi(row[4]);
+		entry.type = atoi(row[5]);
+		strncpy(entry.description, row[6], 256);
+		outData.push_back(entry);
+	}
+
+	return true;
+}
+
