@@ -7588,7 +7588,6 @@ void command_flagedit(Client *c, const Seperator *sep)
 			return;
 		}
 
-		c->LogSQL(query.c_str());
 		c->Message(CC_Yellow, "Success! Zone %s no longer requires a flag.", database.GetZoneName(zoneid));
 		return;
 	}
