@@ -8165,10 +8165,9 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 			return;
 		}
 
-		c->LogSQL(query.c_str());
-		c->Message(0, "Group ID %i created successfully!", results.LastInsertedID());
-		return;
-	}
+        c->Message(0, "Group ID %i created successfully!", results.LastInsertedID());
+        return;
+    }
 
 	if (strcasecmp(sep->arg[1], "addgroupentry") == 0) {
 		if (!atoi(sep->arg[2]) || !atoi(sep->arg[3]) || !atoi(sep->arg[4])) {
