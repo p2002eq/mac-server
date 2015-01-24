@@ -16,6 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -32,6 +33,8 @@
 #include "../common/packet_dump.h"
 #include "worldserver.h"
 #include "web_interface.h"
+
+EQEmuLogSys logger;
 
 extern std::map<std::string, per_session_data_eqemu*> sessions;
 

@@ -18,6 +18,7 @@
 */
 
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "clientlist.h"
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_factory.h"
@@ -50,6 +51,7 @@ std::string WorldShortName;
 const ucsconfig *Config;
 
 WorldServer *worldserver = nullptr;
+EQEmuLogSys logger;
 
 void CatchSignal(int sig_num) {
 

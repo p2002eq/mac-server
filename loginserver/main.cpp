@@ -16,6 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/types.h"
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_factory.h"
@@ -38,6 +39,8 @@ LoginServer server;
 ErrorLog *server_log;
 EQCrypto eq_crypto;
 bool run_server = true;
+
+EQEmuLogSys logger;
 
 void CatchSignal(int sig_num)
 {

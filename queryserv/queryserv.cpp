@@ -18,6 +18,7 @@
 */
 
 #include "../common/debug.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_factory.h"
 #include "../common/rulesys.h"
@@ -29,6 +30,8 @@
 #include "worldserver.h"
 #include <list>
 #include <signal.h>
+
+EQEmuLogSys logger;
 
 volatile bool RunLoops = true;
 

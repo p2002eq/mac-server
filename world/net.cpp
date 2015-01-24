@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/debug.h"
-
+#include "../common/eqemu_logsys.h"
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -102,6 +102,8 @@ volatile bool RunLoops = true;
 uint32 numclients = 0;
 uint32 numzones = 0;
 bool holdzones = false;
+
+EQEmuLogSys logger;
 
 extern ConsoleList console_list;
 
