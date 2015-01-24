@@ -530,33 +530,21 @@ namespace Mac {
 
 	ENCODE(OP_MobUpdate)
 	{
-		//consume the packet
-		EQApplicationPacket *in = *p;
-		*p = nullptr;
-
-		//store away the emu struct
-		unsigned char *__emu_buffer = in->pBuffer;
-		SpawnPositionUpdate_Struct *emu = (SpawnPositionUpdate_Struct *) __emu_buffer;
-
-		EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate,sizeof(structs::SpawnPositionUpdates_Struct) + sizeof(structs::SpawnPositionUpdate_Struct));
-		structs::SpawnPositionUpdates_Struct* spu = (structs::SpawnPositionUpdates_Struct*)app->pBuffer;
-	
-		spu->num_updates = 1;
-		float anim_type = (float)emu->anim_type / 37.0f;
-		spu->spawn_update[0].anim_type = (uint8)emu->anim_type;
-		spu->spawn_update[0].delta_heading = (uint8)emu->delta_heading;
-		spu->spawn_update[0].delta_x = (uint32)emu->delta_x;
-		spu->spawn_update[0].delta_y = (uint32)emu->delta_y;
-		spu->spawn_update[0].delta_z = (uint32)emu->delta_z;
-		spu->spawn_update[0].spawn_id = emu->spawn_id;
-		spu->spawn_update[0].x_pos = (int16)emu->y_pos;
-		spu->spawn_update[0].y_pos = (int16)emu->x_pos;
-		spu->spawn_update[0].z_pos = (int16)emu->z_pos*10;
-		spu->spawn_update[0].heading = (int8)emu->heading;
-		spu->spawn_update[0].anim_type = anim_type * 7;
-		dest->FastQueuePacket(&app, ack_req);
-
-		delete[] __emu_buffer;
+		SETUP_DIRECT_ENCODE(SpawnPositionUpdates_Struct, structs::SpawnPositionUpdates_Struct);
+		eq->num_updates = 1; //hack - only one position update per packet
+		float anim_type = (float)emu->spawn_update.anim_type / 37.0f;
+		eq->spawn_update.anim_type = (uint8)emu->spawn_update.anim_type;
+		eq->spawn_update.delta_heading = (uint8)emu->spawn_update.delta_heading;
+		eq->spawn_update.delta_x = (uint32)emu->spawn_update.delta_x;
+		eq->spawn_update.delta_y = (uint32)emu->spawn_update.delta_y;
+		eq->spawn_update.delta_z = (uint32)emu->spawn_update.delta_z;
+		eq->spawn_update.spawn_id = emu->spawn_update.spawn_id;
+		eq->spawn_update.x_pos = (int16)emu->spawn_update.y_pos;
+		eq->spawn_update.y_pos = (int16)emu->spawn_update.x_pos;
+		eq->spawn_update.z_pos = (int16)emu->spawn_update.z_pos*10;
+		eq->spawn_update.heading = (int8)emu->spawn_update.heading;
+		eq->spawn_update.anim_type = anim_type * 7;
+		FINISH_ENCODE();
 	}
 
 	ENCODE(OP_ClientUpdate)
@@ -677,6 +665,7 @@ namespace Mac {
 
 			struct structs::Spawn_Struct* spawns = MacSpawns(emu,0);
 			memcpy(eq,spawns,sizeof(structs::Spawn_Struct));
+			safe_delete(spawns);
 
 		}
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ZoneSpawns, sizeof(structs::Spawn_Struct)*entrycount);
@@ -695,6 +684,7 @@ namespace Mac {
 
 		struct structs::Spawn_Struct* spawns = MacSpawns(emu,1);
 		memcpy(eq,spawns,sizeof(structs::Spawn_Struct));
+		safe_delete(spawns);
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_NewSpawn, sizeof(structs::Spawn_Struct));
 		outapp->pBuffer = new uchar[sizeof(structs::Spawn_Struct)];
@@ -702,6 +692,8 @@ namespace Mac {
 		EncryptZoneSpawnPacket(outapp->pBuffer, outapp->size);
 		dest->FastQueuePacket(&outapp, ack_req);
 		delete[] __emu_buffer;
+		safe_delete(__packet);
+
 	}
 
 	DECODE(OP_ZoneChange)
@@ -1050,7 +1042,7 @@ namespace Mac {
 			{
 				char *mac_item_char = reinterpret_cast<char*>(mac_item);
 				mac_item_string.append(mac_item_char,sizeof(structs::Item_Struct));
-				safe_delete_array(mac_item);	
+				safe_delete(mac_item);	
 			}
 		}
 		int32 length = 5000;
@@ -1060,6 +1052,7 @@ namespace Mac {
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_CharInventory, length);
 		outapp->size = buffer + DeflatePacket((uchar*) pi->packets, itemcount * sizeof(structs::Item_Struct), &outapp->pBuffer[buffer], length-buffer);
 		outapp->pBuffer[0] = itemcount;
+		safe_delete_array(pi);
 
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
@@ -1098,14 +1091,15 @@ namespace Mac {
 
 			if(mac_item != 0)
 			{
-				structs::MerchantItemsPacket_Struct* merchant = new struct structs::MerchantItemsPacket_Struct;
+				structs::MerchantItemsPacket_Struct* merchant = new structs::MerchantItemsPacket_Struct;
 				memset(merchant,0,sizeof(structs::MerchantItemsPacket_Struct));
 				memcpy(&merchant->item,mac_item,sizeof(structs::Item_Struct));
 				merchant->itemtype = mac_item->ItemClass;
 
 				char *mac_item_char = reinterpret_cast<char*>(merchant);
 				mac_item_string.append(mac_item_char,sizeof(structs::MerchantItemsPacket_Struct));
-				safe_delete_array(mac_item);	
+				safe_delete(mac_item);	
+				safe_delete(merchant);
 			}
 		}
 		int32 length = 5000;
@@ -1118,6 +1112,7 @@ namespace Mac {
 
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
+		safe_delete_array(pi);
 	}
 
 	DECODE(OP_DeleteCharge) {  DECODE_FORWARD(OP_MoveItem); }
@@ -1942,7 +1937,7 @@ namespace Mac {
 		if(item->ID > 32767)
 			return 0;
 
-		structs::Item_Struct *mac_pop_item = new struct structs::Item_Struct;
+		structs::Item_Struct *mac_pop_item = new structs::Item_Struct;
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
 		// General items
@@ -2146,7 +2141,7 @@ namespace Mac {
 		if(sizeof(emu) == 0)
 			return 0;
 
-		structs::Spawn_Struct *eq = new struct structs::Spawn_Struct;
+		structs::Spawn_Struct *eq = new structs::Spawn_Struct;
 		memset(eq,0,sizeof(structs::Spawn_Struct));
 
 		if(type == 0)

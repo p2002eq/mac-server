@@ -1041,9 +1041,10 @@ void Mob::SendHPUpdate()
 // this one just warps the mob to the current location
 void Mob::SendPosition()
 {
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdate_Struct));
-	SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)app->pBuffer;
-	MakeSpawnUpdateNoDelta(spu);
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
+	spu->num_updates = 1; // hack - only one spawn position per update
+	MakeSpawnUpdateNoDelta(&spu->spawn_update);
 	move_tic_count = 0;
 	entity_list.QueueClients(this, app, true, false);
 	safe_delete(app);
@@ -1051,9 +1052,10 @@ void Mob::SendPosition()
 
 // this one is for mobs on the move, with deltas - this makes them walk
 void Mob::SendPosUpdate(uint8 iSendToSelf) {
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdate_Struct));
-	SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)app->pBuffer;
-	MakeSpawnUpdate(spu);
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
+	spu->num_updates = 1; // hack - only one spawn position per update
+	MakeSpawnUpdate(&spu->spawn_update);
 
 	if (iSendToSelf == 2) {
 		if (this->IsClient())
