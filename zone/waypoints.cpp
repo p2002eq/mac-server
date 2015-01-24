@@ -1196,6 +1196,7 @@ void ZoneDatabase::DeleteWaypoint(Client *client, uint32 grid_num, uint32 wp_num
 	if(!results.Success()) {
 		return;
 	}
+
 }
 
 
