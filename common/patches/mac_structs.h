@@ -689,7 +689,7 @@ struct SpawnPositionUpdates_Struct
 {
 	/*0000*/ uint32  num_updates;               // Number of SpawnUpdates
 	/*0004*/ struct SpawnPositionUpdate_Struct // Spawn Position Update
-						spawn_update[0];
+						spawn_update;
 };
 
 struct SpawnHPUpdate_Struct

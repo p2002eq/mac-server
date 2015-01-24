@@ -1177,6 +1177,14 @@ struct Death_Struct
 						delta_x : 10;             // Z Velocity
 	  /*015*/
   };
+
+  struct SpawnPositionUpdates_Struct
+{
+	/*0000*/ uint32  num_updates;               // Number of SpawnUpdates
+	/*0004*/ struct SpawnPositionUpdate_Struct // Spawn Position Update
+						spawn_update;
+};
+
 /*
 ** Spawn HP Update
 ** Length: 10 Bytes

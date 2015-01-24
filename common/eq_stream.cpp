@@ -1470,11 +1470,6 @@ FragmentGroup::FragmentGroup(uint16 seq, uint16 opcode, uint16 num_fragments)
 
 FragmentGroup::~FragmentGroup()
 {
-	for(int i=0;i<num_fragments;i++)
-	{
-		if(&fragment[i])
-			delete &fragment[i];
-	}
 	safe_delete_array(fragment);//delete[] fragment;
 }
 
@@ -1911,6 +1906,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
 			safe_delete_array(buf);
 			OutQueue.push_back(app);
+			safe_delete(fragment_group);
 			return true;
 		}
 		else
@@ -2365,6 +2361,7 @@ void EQOldStream::FinalizePacketQueue()
 		size = p->ReturnPacket(&data, this);
 		sendto(listening_socket, (char*) data, size, 0, (sockaddr*) &to, sizeof(to));
 		safe_delete_array(data);
+		safe_delete(p);
 		SendQueue.erase(SendQueue.begin());
 	}
 	// ************ Connection finished ************ //
