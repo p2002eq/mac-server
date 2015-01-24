@@ -197,11 +197,11 @@ void QuestManager::write(const char *file, const char *str) {
 	fclose (pFile);
 }
 
-Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const xyz_heading& position) {
+Mob* QuestManager::spawn2(int npc_type, int grid, int unused, float x, float y, float z, float heading) {
 	const NPCType* tmp = 0;
 	if (tmp = database.GetNPCType(npc_type))
 	{
-		NPC* npc = new NPC(tmp, nullptr, position, FlyMode3);
+		NPC* npc = new NPC(tmp, 0, x, y, z, heading, FlyMode3);
 		npc->AddLootTable();
 		entity_list.AddNPC(npc,true,true);
 		if(grid > 0)
@@ -214,7 +214,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const xyz_heading&
 	return nullptr;
 }
 
-Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const xyz_heading& position) {
+Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, float x, float y, float z, float heading) {
 	Mob *other = entity_list.GetMobByNpcTypeID(npc_type);
 	if(other != nullptr) {
 		return other;
@@ -223,7 +223,7 @@ Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const xyz_he
 	const NPCType* tmp = 0;
 	if (tmp = database.GetNPCType(npc_type))
 	{
-		NPC* npc = new NPC(tmp, nullptr, position, FlyMode3);
+		NPC* npc = new NPC(tmp, 0, x, y, z, heading, FlyMode3);
 		npc->AddLootTable();
 		entity_list.AddNPC(npc,true,true);
 		if(grid > 0)
@@ -296,8 +296,8 @@ Mob* QuestManager::spawn_from_spawn2(uint32 spawn2_id)
 		database.UpdateSpawn2Timeleft(spawn2_id, zone->GetInstanceID(), 0);
 		found_spawn->SetCurrentNPCID(npcid);
 
-        auto position = xyz_heading(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
-		NPC* npc = new NPC(tmp, found_spawn, position, FlyMode3);
+		NPC* npc = new NPC(tmp, found_spawn, found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(),
+			found_spawn->GetHeading(), FlyMode3);
 
 		found_spawn->SetNPCPointer(npc);
 		npc->AddLootTable();
@@ -907,7 +907,7 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 			spells[curspell].skill != 52 &&
 			( !RuleB(Spells, UseCHAScribeHack) || spells[curspell].effectid[EFFECT_COUNT - 1] != 10 )
 		)
-		{
+		{ 
 			if(IsDiscipline(curspell)){
 				//we may want to come up with a function like Client::GetNextAvailableSpellBookSlot() to help speed this up a little
 				for(uint32 r = 0; r < MAX_PP_DISCIPLINES; r++) {
@@ -921,12 +921,12 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 							SpellGlobalCheckResult = initiator->SpellGlobalCheck(curspell, Char_ID);
 							if (SpellGlobalCheckResult) {
 								initiator->GetPP().disciplines.values[r] = curspell;
-								database.SaveCharacterDisc(Char_ID, r, curspell);
+								database.SaveCharacterDisc(Char_ID, r, curspell); 
 								initiator->SendDisciplineUpdate();
 								initiator->Message(0, "You have learned a new discipline!");
 								count++;	//success counter
 							}
-							break;	//continue the 1st loop
+							break;	//continue the 1st loop 
 						}
 						else {
 							initiator->GetPP().disciplines.values[r] = curspell;
@@ -1466,10 +1466,10 @@ void QuestManager::ding() {
 
 }
 
-void QuestManager::rebind(int zoneid, const xyz_location& location) {
+void QuestManager::rebind(int zoneid, float x, float y, float z) {
 	QuestManagerCurrentQuestVars();
 	if(initiator && initiator->IsClient()) {
-		initiator->SetBindPoint(zoneid, 0, location);
+		initiator->SetBindPoint(zoneid, x, y, z);
 	}
 }
 
@@ -1497,12 +1497,12 @@ void QuestManager::pause(int duration) {
 	owner->CastToNPC()->PauseWandering(duration);
 }
 
-void QuestManager::moveto(const xyz_heading& position, bool saveguardspot) {
+void QuestManager::moveto(float x, float y, float z, float h, bool saveguardspot) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC())
 		return;
 
-	owner->CastToNPC()->MoveTo(position, saveguardspot);
+	owner->CastToNPC()->MoveTo(x, y, z, h, saveguardspot);
 }
 
 void QuestManager::resume() {
@@ -1525,20 +1525,26 @@ void QuestManager::setnextinchpevent(int at) {
 		owner->SetNextIncHPEvent(at);
 }
 
-void QuestManager::respawn(int npcTypeID, int grid) {
+void QuestManager::respawn(int npc_type, int grid) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC())
 		return;
+	float x,y,z,h;
+
+	x = owner->GetX();
+	y = owner->GetY();
+	z = owner->GetZ();
+	h = owner->GetHeading();
 
 	running_quest e = quests_running_.top();
 	e.depop_npc = true;
 	quests_running_.pop();
 	quests_running_.push(e);
 
-	const NPCType* npcType = nullptr;
-	if ((npcType = database.GetNPCType(npcTypeID)))
+	const NPCType* tmp = 0;
+	if ((tmp = database.GetNPCType(npc_type)))
 	{
-		owner = new NPC(npcType, nullptr, owner->GetPosition(), FlyMode3);
+		owner = new NPC(tmp, 0, x, y, z, h, FlyMode3);
 		owner->CastToNPC()->AddLootTable();
 		entity_list.AddNPC(owner->CastToNPC(),true,true);
 		if(grid > 0)
@@ -1658,28 +1664,27 @@ void QuestManager::sethp(int hpperc) {
 	owner->Damage(owner, newhp, SPELL_UNKNOWN, SkillHandtoHand, false, 0, false);
 }
 
-bool QuestManager::summonburriedplayercorpse(uint32 char_id, const xyz_heading& position) {
+bool QuestManager::summonburriedplayercorpse(uint32 char_id, float dest_x, float dest_y, float dest_z, float dest_heading) {
 	bool Result = false;
 
-	if(char_id <= 0)
-        return false;
-
-	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), position);
-	if(!PlayerCorpse)
-		return false;
-
-	return true;
+	if(char_id > 0) {
+		Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), dest_x, dest_y, dest_z, dest_heading);
+		if(PlayerCorpse) {
+			Result = true;
+		}
+	}
+	return Result;
 }
 
-bool QuestManager::summonallplayercorpses(uint32 char_id, const xyz_heading& position) {
+bool QuestManager::summonallplayercorpses(uint32 char_id, float dest_x, float dest_y, float dest_z, float dest_heading) {
+	bool Result = false;
 
-	if(char_id <= 0)
-        return false;
-
-	Client* c = entity_list.GetClientByCharID(char_id);
-	c->SummonAllCorpses(position);
-
-	return true;
+	if(char_id > 0) {
+		Client* c = entity_list.GetClientByCharID(char_id);
+		c->SummonAllCorpses(dest_x, dest_y, dest_z, dest_heading);
+		Result = true;
+	}
+	return Result;
 }
 
 uint32 QuestManager::getplayerburriedcorpsecount(uint32 char_id) {
@@ -1966,17 +1971,17 @@ int QuestManager::getlevel(uint8 type)
 		return 0;
 }
 
-uint16 QuestManager::CreateGroundObject(uint32 itemid, const xyz_heading& position, uint32 decay_time)
+uint16 QuestManager::CreateGroundObject(uint32 itemid, float x, float y, float z, float heading, uint32 decay_time)
 {
 	uint16 entid = 0; //safety check
-	entid = entity_list.CreateGroundObject(itemid, position, decay_time);
+	entid = entity_list.CreateGroundObject(itemid, x, y, z, heading, decay_time);
 	return entid;
 }
 
-uint16 QuestManager::CreateGroundObjectFromModel(const char *model, const xyz_heading& position, uint8 type, uint32 decay_time)
+uint16 QuestManager::CreateGroundObjectFromModel(const char *model, float x, float y, float z, float heading, uint8 type, uint32 decay_time)
 {
 	uint16 entid = 0; //safety check
-	entid = entity_list.CreateGroundObjectFromModel(model, position, type, decay_time);
+	entid = entity_list.CreateGroundObjectFromModel(model, x, y, z, heading, type, decay_time);
 	return entid;
 }
 
@@ -2248,12 +2253,12 @@ void QuestManager::RemoveAllFromInstance(uint16 instance_id)
 	}
 }
 
-void QuestManager::MovePCInstance(int zone_id, int instance_id, const xyz_heading& position)
+void QuestManager::MovePCInstance(int zone_id, int instance_id, float x, float y, float z, float heading)
 {
 	QuestManagerCurrentQuestVars();
 	if(initiator)
 	{
-		initiator->MovePC(zone_id, instance_id, position.m_X, position.m_Y, position.m_Z, position.m_Heading);
+		initiator->MovePC(zone_id, instance_id, x, y, z, heading);
 	}
 }
 
@@ -2477,7 +2482,7 @@ void QuestManager::SendMail(const char *to, const char *from, const char *subjec
 uint16 QuestManager::CreateDoor(const char* model, float x, float y, float z, float heading, uint8 opentype, uint16 size)
 {
 	uint16 entid = 0; //safety check
-	entid = entity_list.CreateDoor(model, xyz_heading(x, y, z, heading), opentype, size);
+	entid = entity_list.CreateDoor(model, x, y, z, heading, opentype, size);
 	return entid;
 }
 
@@ -2520,7 +2525,7 @@ void QuestManager::CrossZoneSignalPlayerByName(const char *CharName, uint32 data
 	CZSC->data = data;
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-}
+} 
 
 void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharName, const char *Message){
 	uint32 message_len = strlen(CharName) + 1;
@@ -2530,7 +2535,7 @@ void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharNam
 	CZSC->Type = Type;
 	strn0cpy(CZSC->CharName, CharName, 64);
 	strn0cpy(CZSC->Message, Message, 512);
-	worldserver.SendPacket(pack);
+	worldserver.SendPacket(pack); 
 	safe_delete(pack);
 }
 
@@ -2540,7 +2545,7 @@ void QuestManager::CrossZoneSetEntityVariableByNPCTypeID(uint32 npctype_id, cons
 	ServerPacket* pack = new ServerPacket(ServerOP_CZSetEntityVariableByNPCTypeID, sizeof(CZSetEntVarByNPCTypeID_Struct) + message_len + message_len2);
 	CZSetEntVarByNPCTypeID_Struct* CZSNBYNID = (CZSetEntVarByNPCTypeID_Struct*)pack->pBuffer;
 	CZSNBYNID->npctype_id = npctype_id;
-	strn0cpy(CZSNBYNID->id, id, 256);
+	strn0cpy(CZSNBYNID->id, id, 256); 
 	strn0cpy(CZSNBYNID->m_var, m_var, 256);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);

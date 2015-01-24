@@ -15,13 +15,15 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-
-#include "emu_opcodes.h"
-#include "opcodemgr.h"
-
-#include <cstring>
-#include <map>
+#include "debug.h"
 #include <stdio.h>
+#include "opcodemgr.h"
+#include "debug.h"
+#include "emu_opcodes.h"
+#include <cstdlib>
+#include <cstring>
+
+#include <map>
 #include <string>
 
 OpcodeManager::OpcodeManager() {

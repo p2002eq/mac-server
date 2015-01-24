@@ -17,7 +17,7 @@ class Doors : public Entity
 {
 public:
 	Doors(const Door* door);
-	Doors(const char *dmodel, const xyz_heading& position, uint8 dopentype = 58, uint16 dsize = 100);
+	Doors(const char *dmodel, float dx, float dy, float dz, float dheading, uint8 dopentype = 58, uint16 dsize = 100);
 	~Doors();
 	bool	IsDoor() const { return true; }
 	void	HandleClick(Client* sender, uint8 trigger);
@@ -29,7 +29,10 @@ public:
 	char*	GetDoorName() { return door_name; }
 	uint32	GetDoorParam() { return door_param; }
 	int		GetInvertState() { return invert_state; }
-	const xyz_heading GetPosition() const{ return m_Position; }
+	float	GetX() { return pos_x; }
+	float	GetY() { return pos_y; }
+	float	GetZ() { return pos_z; }
+	float	GetHeading() { return heading; }
 	int		GetIncline() { return incline; }
 	bool	triggered;
 	void	SetOpenState(bool st) { isopen = st; }
@@ -51,7 +54,10 @@ public:
 	void	SetEntityID(uint32 entity) { entity_id = entity; }
 
 	void	DumpDoor();
-	const xyz_heading GetDestination() const { return m_Destination; }
+	float	GetDestX() { return dest_x; }
+	float	GetDestY() { return dest_y; }
+	float	GetDestZ() { return dest_z; }
+	float	GetDestHeading() { return dest_heading; }
 
 	uint32	GetClientVersionMask() { return client_version_mask; }
 
@@ -60,11 +66,14 @@ public:
 	void	ForceClose(Mob *sender, bool alt_mode=false);
 	void	ToggleState(Mob *sender);
 
-	void	SetPosition(const xyz_heading& position);
-	void	SetLocation(float x, float y, float z);
+	void	SetX(float in);
+	void	SetY(float in);
+	void	SetZ(float in);
+	void	SetHeading(float in);
 	void	SetIncline(int in);
 	void	SetDoorName(const char* name);
 	void	SetOpenType(uint8 in);
+	void	SetLocation(float x, float y, float z);
 	void	SetSize(uint16 size);
 	void	CreateDatabaseEntry();
 
@@ -74,7 +83,10 @@ private:
 	uint8	door_id;
 	char	zone_name[32];
 	char	door_name[32];
-	xyz_heading m_Position;
+	float	pos_x;
+	float	pos_y;
+	float	pos_z;
+	float	heading;
 	int		incline;
 	uint8	opentype;
 	uint32	guild_id;
@@ -93,7 +105,10 @@ private:
 
 	char	dest_zone[16];
 	int		dest_instance_id;
-	xyz_heading m_Destination;
+	float	dest_x;
+	float	dest_y;
+	float	dest_z;
+	float	dest_heading;
 
 	uint32	client_version_mask;
 };

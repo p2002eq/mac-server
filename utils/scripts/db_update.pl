@@ -6,21 +6,6 @@
 #::: Purpose: To upgrade databases with ease and maintain versioning
 ###########################################################
 
-
-#::: If current version is less than what world is reporting, then download a new one...
-$current_version = 1;
-if($ARGV[0] eq "V"){
-	if($ARGV[1] > $current_version){ 
-		print "Retrieving latest database manifest...\n";
-		GetRemoteFile("https://raw.githubusercontent.com/EQEmu/Server/master/utils/scripts/db_update.pl", "db_update.pl");
-		exit;
-	}
-	else{
-		print "No update necessary \n";
-	}
-	exit;
-}
-
 $perl_version = $^V;
 $perl_version =~s/v//g;
 print "Perl Version is " . $perl_version . "\n";
@@ -41,14 +26,14 @@ while(<F>) {
 	elsif(/<db>(.*)<\/db>/i) { $db = $1; } 
 }
 
-$console_output = 
+print 
 "============================================================
            EQEmu: Automatic Database Upgrade Check         
 ============================================================
 ";
 
 use Config;
-$console_output .= "	Operating System is: $Config{osname}\n";
+print "	Operating System is: $Config{osname}\n";
 if($Config{osname}=~/linux/i){ $OS = "Linux"; }
 if($Config{osname}=~/Win|MS/i){ $OS = "Windows"; }
 
@@ -63,9 +48,9 @@ if($OS eq "Windows"){
 				last;
 			}
 		}
-		$console_output .= "	(Windows) MySQL is in system path \n";
-		$console_output .= "	Path = " . $path . "\n";
-		$console_output .= "============================================================\n";
+		print "	(Windows) MySQL is in system path \n";
+		print "	Path = " . $path . "\n";
+		print "============================================================\n";
 	}
 }
 
@@ -77,9 +62,9 @@ if($OS eq "Linux"){
 	}
 	$path =~s/\n//g; 
 	
-	$console_output .= "	(Linux) MySQL is in system path \n";
-	$console_output .= "	Path = " . $path . "\n";
-	$console_output .= "============================================================\n";
+	print "	(Linux) MySQL is in system path \n";
+	print "	Path = " . $path . "\n";
+	print "============================================================\n";
 }
 
 #::: Path not found, error and exit
@@ -108,21 +93,10 @@ if(GetMySQLResult("SHOW TABLES LIKE 'db_version'") eq ""){
 }
 
 if($OS eq "Windows"){ @db_version = split(': ', `world db_version`); }
-if($OS eq "Linux"){ @db_version = split(': ', `./world db_version`); }  
+if($OS eq "Linux"){ @db_version = split(': ', `./world db_version`); }
 
 $bin_db_ver = trim($db_version[1]);
 $local_db_ver = trim(GetMySQLResult("SELECT version FROM db_version LIMIT 1"));
-
-#::: If ran from Linux startup script, supress output
-if($bin_db_ver == $local_db_ver && $ARGV[0] eq "ran_from_start"){ 
-	print "Database up to date...\n"; 
-	exit; 
-}
-else{ 
-	print $console_output; 
-}
-
-
 print "	Binary Database Version: (" . $bin_db_ver . ")\n";
 print "	Local Database Version: (" . $local_db_ver . ")\n\n";
 
@@ -155,14 +129,13 @@ sub ShowMenuPrompt {
         2 => \&database_dump_compress,
         3 => \&Run_Database_Check,
         4 => \&AA_Fetch,
-        5 => \&OpCodes_Fetch,
         0 => \&Exit,
     );
 
     while (1) { 
 		{
 			local $| = 1;
-			if(!$menu_show && ($ARGV[0] eq "ran_from_world" || $ARGV[0] eq "ran_from_start")){ 
+			if(!$menu_show && $ARGV[0] eq "ran_from_world"){
 				$menu_show++;
 				next;
 			}
@@ -205,7 +178,6 @@ Database Management Menu (Please Select):
 		Ideal to perform before performing updates
 	3) $option[3]
 	4) AAs - Get Latest AA's from PEQ (This deletes AA's already in the database)
-	5) OPCodes - Download latest opcodes from repository
 	0) Exit
 	
 EO_MENU
@@ -240,17 +212,17 @@ sub Exit{ }
 #::: Returns Tab Delimited MySQL Result from Command Line
 sub GetMySQLResult{
 	my $run_query = $_[0];
-	if($OS eq "Windows"){ return `"$path" --host $host --user $user --password="$pass" $db -N -B -e "$run_query"`; }
+	if($OS eq "Windows"){ return `"$path" --user $user --password="$pass" $db -N -B -e "$run_query"`; }
 	if($OS eq "Linux"){ 
 		$run_query =~s/`//g;
-		return `$path --user="$user" --host $host --password="$pass" $db -N -B -e "$run_query"`; 
+		return `$path --user="$user" --password="$pass" $db -N -B -e "$run_query"`; 
 	}
 }
 
 sub GetMySQLResultFromFile{
 	my $update_file = $_[0];
-	if($OS eq "Windows"){ return `"$path" --host $host --user $user --password="$pass" --force $db < $update_file`;  }
-	if($OS eq "Linux"){ return `"$path" --host $host --user $user --password="$pass" --force $db < $update_file`;  }
+	if($OS eq "Windows"){ return `"$path" --user $user --password="$pass" --force $db < $update_file`;  }
+	if($OS eq "Linux"){ return `"$path" --user $user --password="$pass" --force $db < $update_file`;  }
 }
 
 #::: Gets Remote File based on URL (1st Arg), and saves to destination file (2nd Arg)
@@ -304,36 +276,6 @@ sub AA_Fetch{
 	GetRemoteFile("https://raw.githubusercontent.com/EQEmu/Server/master/utils/sql/peq_aa_tables.sql", "db_update/peq_aa_tables.sql");
 	print "\n\nInstalling AA Tables...\n";
 	print GetMySQLResultFromFile("db_update/peq_aa_tables.sql");
-	print "\nDone...\n\n";
-}
-
-#::: Fetch Latest Opcodes
-sub OpCodes_Fetch{
-	print "Pulling down latest opcodes...\n"; 
-	%opcodes = (
-		1 => ["opcodes", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/opcodes.conf"],
-		2 => ["mail_opcodes", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/mail_opcodes.conf"],
-		3 => ["Titanium", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_Titanium.conf"],
-		4 => ["Secrets of Faydwer", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_SoF.conf"],
-		5 => ["Seeds of Destruction", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_SoD.conf"],
-		6 => ["Underfoot", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_Underfoot.conf"],
-		7 => ["Rain of Fear", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_RoF.conf"],
-		8 => ["Rain of Fear 2", "https://raw.githubusercontent.com/EQEmu/Server/master/utils/patches/patch_RoF2.conf"],
-	);
-	$loop = 1;
-	while($opcodes{$loop}[0]){ 
-		#::: Split the URL by the patches folder to get the file name from URL
-		@real_file = split("patches/", $opcodes{$loop}[1]);
-		$find = 0;
-		while($real_file[$find]){
-			$file_name = $real_file[$find]; 
-			$find++;
-		}
-		
-		print "\nDownloading (" . $opcodes{$loop}[0] . ") File: '" . $file_name . "'...\n\n"; 
-		GetRemoteFile($opcodes{$loop}[1], $file_name);
-		$loop++;
-	}
 	print "\nDone...\n\n";
 }
 

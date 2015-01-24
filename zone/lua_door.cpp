@@ -20,50 +20,42 @@ const char *Lua_Door::GetDoorName() {
 
 float Lua_Door::GetX() {
 	Lua_Safe_Call_Real();
-	return self->GetPosition().m_X;
+	return self->GetX();
 }
 
 float Lua_Door::GetY() {
 	Lua_Safe_Call_Real();
-	return self->GetPosition().m_Y;
+	return self->GetY();
 }
 
 float Lua_Door::GetZ() {
 	Lua_Safe_Call_Real();
-	return self->GetPosition().m_Z;
+	return self->GetZ();
 }
 
 float Lua_Door::GetHeading() {
 	Lua_Safe_Call_Real();
-	return self->GetPosition().m_Heading;
+	return self->GetHeading();
 }
 
 void Lua_Door::SetX(float x) {
 	Lua_Safe_Call_Void();
-	auto position = self->GetPosition();
-	position.m_X = x;
-	self->SetPosition(position);
+	self->SetX(x);
 }
 
 void Lua_Door::SetY(float y) {
 	Lua_Safe_Call_Void();
-	auto position = self->GetPosition();
-	position.m_Y = y;
-	self->SetPosition(position);
+	self->SetY(y);
 }
 
 void Lua_Door::SetZ(float z) {
 	Lua_Safe_Call_Void();
-	auto position = self->GetPosition();
-	position.m_Z = z;
-	self->SetPosition(position);
+	self->SetZ(z);
 }
 
 void Lua_Door::SetHeading(float h) {
 	Lua_Safe_Call_Void();
-	auto position = self->GetPosition();
-	position.m_Heading = h;
-	self->SetPosition(position);
+	self->SetHeading(h);
 }
 
 void Lua_Door::SetLocation(float x, float y, float z) {

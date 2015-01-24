@@ -19,6 +19,8 @@
 #define MISCFUNCTIONS_H
 
 #include "types.h"
+#include <stdio.h>
+#include <ctype.h>
 #include <string>
 #include <time.h>
 

@@ -54,7 +54,9 @@ public:
 	Timer	respawn_timer; //Respawn Time when Trap's been disarmed
 	Timer	chkarea_timer;
 	uint32	trap_id; //Database ID of trap
-	xyz_location m_Position;
+	float	x; //X position
+	float	y; //Y position
+	float	z; //Z position
 	float	maxzdiff;	//maximum z diff to be triggerable
 	float	radius;		//radius around trap to be triggerable
 	uint8	chance;		//%chance that the trap is triggered each 'tick'

@@ -22,7 +22,6 @@
 #include "entity.h"
 #include "hate_list.h"
 #include "pathing.h"
-#include "position.h"
 #include <set>
 #include <vector>
 
@@ -85,7 +84,10 @@ public:
 		uint32		in_npctype_id,
 		float		in_size,
 		float		in_runspeed,
-		const xyz_heading& position,
+		float		in_heading,
+		float		in_x_pos,
+		float		in_y_pos,
+		float		in_z_pos,
 		uint8		in_light,
 		uint8		in_texture,
 		uint8		in_helmtexture,
@@ -182,7 +184,7 @@ public:
 	bool IsInvisible(Mob* other = 0) const;
 	void SetInvisible(uint8 state, bool showInvis = true);
 	bool AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* weapon);
-
+	
 	//Song
 	bool UseBardSpellLogic(uint16 spell_id = 0xffff, int slot = -1);
 	bool ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot);
@@ -390,19 +392,18 @@ public:
 		((static_cast<float>(cur_mana) / max_mana) * 100); }
 	virtual int32 CalcMaxMana();
 	uint32 GetNPCTypeID() const { return npctype_id; }
-	inline const xyz_heading GetPosition() const { return m_Position; }
-	inline const float GetX() const { return m_Position.m_X; }
-	inline const float GetY() const { return m_Position.m_Y; }
-	inline const float GetZ() const { return m_Position.m_Z; }
-	inline const float GetHeading() const { return m_Position.m_Heading; }
+	inline const float GetX() const { return x_pos; }
+	inline const float GetY() const { return y_pos; }
+	inline const float GetZ() const { return z_pos; }
+	inline const float GetHeading() const { return heading; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
-	inline const float GetTarX() const { return m_TargetLocation.m_X; }
-	inline const float GetTarY() const { return m_TargetLocation.m_Y; }
-	inline const float GetTarZ() const { return m_TargetLocation.m_Z; }
-	inline const float GetTarVX() const { return m_TargetV.m_X; }
-	inline const float GetTarVY() const { return m_TargetV.m_Y; }
-	inline const float GetTarVZ() const { return m_TargetV.m_Z; }
+	inline const float GetTarX() const { return tarx; }
+	inline const float GetTarY() const { return tary; }
+	inline const float GetTarZ() const { return tarz; }
+	inline const float GetTarVX() const { return tar_vx; }
+	inline const float GetTarVY() const { return tar_vy; }
+	inline const float GetTarVZ() const { return tar_vz; }
 	inline const float GetTarVector() const { return tar_vector; }
 	inline const uint8 GetTarNDX() const { return tar_ndx; }
 	bool IsBoat() const;
@@ -417,9 +418,9 @@ public:
 	virtual inline int32 GetPrimaryFaction() const { return 0; }
 
 	//Movement
-	void Warp(const xyz_location& location);
+	void Warp( float x, float y, float z );
 	inline bool IsMoving() const { return moving; }
-	virtual void SetMoving(bool move) { moving = move; m_Delta = xyz_heading::Origin(); }
+	virtual void SetMoving(bool move) { moving = move; delta_x = 0; delta_y = 0; delta_z = 0; delta_heading = 0; }
 	virtual void GoToBind(uint8 bindnum = 0) { }
 	virtual void Gate();
 	float GetWalkspeed() const { return(_GetMovementSpeed(0, true)); }
@@ -433,15 +434,15 @@ public:
 	bool IsCurrentlyRunning() const { return m_running; }
 	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
-	void SetDelta(const xyz_heading& delta);
+	void SetDeltas(float delta_x, float delta_y, float delta_z, float delta_h);
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
 	void SendPosUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct* spu);
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SendPosition();
 	void SetFlyMode(uint8 flymode);
-	inline void Teleport(Map::Vertex NewPosition) { m_Position.m_X = NewPosition.x; m_Position.m_Y = NewPosition.y;
-		m_Position.m_Z = NewPosition.z; };
+	inline void Teleport(Map::Vertex NewPosition) { x_pos = NewPosition.x; y_pos = NewPosition.y;
+		z_pos = NewPosition.z; };
 
 	//AI
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
@@ -462,8 +463,8 @@ public:
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
-	void SetHeading(float iHeading) { if(m_Position.m_Heading != iHeading) { pLastChange = Timer::GetCurrentTime();
-		m_Position.m_Heading = iHeading; } }
+	void SetHeading(float iHeading) { if(heading != iHeading) { pLastChange = Timer::GetCurrentTime();
+		heading = iHeading; } }
 	void WipeHateList();
 	void AddFeignMemory(Client* attacker);
 	void RemoveFromFeignMemory(Client* attacker);
@@ -504,6 +505,13 @@ public:
 	void ShowStats(Client* client);
 	void ShowBuffs(Client* client);
 	void ShowBuffList(Client* client);
+	float Dist(const Mob &) const;
+	float DistNoZ(const Mob &) const;
+	float DistNoRoot(const Mob &) const;
+	float DistNoRoot(float x, float y, float z) const;
+	float DistNoRootNoZ(float x, float y) const;
+	float DistNoRootNoZ(const Mob &) const;
+	static float GetReciprocalHeading(Mob* target);
 	bool PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, float &z_dest,
 		bool lookForAftArc = true);
 
@@ -612,7 +620,7 @@ public:
 	bool CanBlockSpell() const { return(spellbonuses.BlockNextSpell); }
 	bool DoHPToManaCovert(uint16 mana_cost = 0);
 	int32 ApplySpellEffectiveness(Mob* caster, int16 spell_id, int32 value, bool IsBard = false);
-	int8 GetDecayEffectValue(uint16 spell_id, uint16 spelleffect);
+	int8 GetDecayEffectValue(uint16 spell_id, uint16 spelleffect); 
 	int32 GetExtraSpellAmt(uint16 spell_id, int32 extra_spell_amt, int32 base_spell_dmg);
 	void MeleeLifeTap(int32 damage);
 	bool PassCastRestriction(bool UseCastRestriction = true, int16 value = 0, bool IsDamage = true);
@@ -798,10 +806,10 @@ public:
 	void				SetDontCureMeBefore(uint32 time) { pDontCureMeBefore = time; }
 
 	// calculate interruption of spell via movement of mob
-	void SaveSpellLoc() {m_SpellLocation = m_Position; }
-	inline float GetSpellX() const {return m_SpellLocation.m_X;}
-	inline float GetSpellY() const {return m_SpellLocation.m_Y;}
-	inline float GetSpellZ() const {return m_SpellLocation.m_Z;}
+	void SaveSpellLoc() {spell_x = x_pos; spell_y = y_pos; spell_z = z_pos; }
+	inline float GetSpellX() const {return spell_x;}
+	inline float GetSpellY() const {return spell_y;}
+	inline float GetSpellZ() const {return spell_z;}
 	inline bool IsGrouped() const { return isgrouped; }
 	void SetGrouped(bool v);
 	inline bool IsRaidGrouped() const { return israidgrouped; }
@@ -852,8 +860,11 @@ public:
 
 	Shielders_Struct shielder[MAX_SHIELDERS];
 	Trade* trade;
-
-	inline xyz_heading GetCurrentWayPoint() const { return m_CurrentWayPoint; }
+	
+	inline float GetCWPX() const { return(cur_wp_x); }
+	inline float GetCWPY() const { return(cur_wp_y); }
+	inline float GetCWPZ() const { return(cur_wp_z); }
+	inline float GetCWPH() const { return(cur_wp_heading); }
 	inline float GetCWPP() const { return(static_cast<float>(cur_wp_pause)); }
 	inline int GetCWP() const { return(cur_wp); }
 	void SetCurrentWP(uint16 waypoint) { cur_wp = waypoint; }
@@ -1012,7 +1023,10 @@ protected:
 	uint8 level;
 	uint8 orig_level;
 	uint32 npctype_id;
-	xyz_heading m_Position;
+	float x_pos;
+	float y_pos;
+	float z_pos;
+	float heading;
 	uint16 animation;
 	float base_size;
 	float size;
@@ -1061,7 +1075,10 @@ protected:
 	char clean_name[64];
 	char lastname[64];
 
-	xyz_heading m_Delta;
+	int32 delta_heading;
+	float delta_x;
+	float delta_y;
+	float delta_z;
 
 	uint8 light;
 
@@ -1070,6 +1087,7 @@ protected:
 	uint8 pRunAnimSpeed;
 	bool m_is_running; // This bool tells us if the NPC *should* be running or walking, to calculate speed.
 	bool m_running; // This bool is used to tell us if the NPC is currently running or walking.
+
 
 	Timer attack_timer;
 	Timer attack_dw_timer;
@@ -1082,7 +1100,7 @@ protected:
 	//spell casting vars
 	Timer spellend_timer;
 	uint16 casting_spell_id;
-	xyz_location m_SpellLocation;
+	float spell_x, spell_y, spell_z;
 	int attacked_count;
 	bool delaytimer;
 	uint16 casting_spell_targetid;
@@ -1098,8 +1116,9 @@ protected:
 	uint8 bardsong_slot;
 	uint32 bardsong_target_id;
 
-	xyz_location m_RewindLocation;
-
+	float rewind_x;
+	float rewind_y;
+	float rewind_z;
 	Timer rewind_timer;
 
 	// Currently 3 max nimbus particle effects at a time
@@ -1193,12 +1212,16 @@ protected:
 	int pausetype;
 
 	int cur_wp;
-	xyz_heading m_CurrentWayPoint;
+	float cur_wp_x;
+	float cur_wp_y;
+	float cur_wp_z;
 	int cur_wp_pause;
-
+	float cur_wp_heading;
 
 	int patrol;
-	xyz_location m_FearWalkTarget;
+	float fear_walkto_x;
+	float fear_walkto_y;
+	float fear_walkto_z;
 	bool curfp;
 
 	// Pathing
@@ -1233,10 +1256,14 @@ protected:
 	bool pet_owner_client; //Flags regular and pets as belonging to a client
 
 	EGNode *_egnode; //the EG node we are in
-	xyz_location m_TargetLocation;
+	float tarx;
+	float tary;
+	float tarz;
 	uint8 tar_ndx;
 	float tar_vector;
-	xyz_location m_TargetV;
+	float tar_vx;
+	float tar_vy;
+	float tar_vz;
 	float test_vector;
 
 	uint32 m_spellHitsLeft[38]; // Used to track which spells will have their numhits incremented when spell finishes casting, 38 Buffslots

@@ -590,11 +590,11 @@ void PathManager::SpawnPathNodes()
 
 		npc_type->findable = 1;
 		strcpy(npc_type->special_abilities, "19,1^20,1^24,1^35,1");
-        auto position = xyz_heading(PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0.0f);
-		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-		npc->GiveNPCTypeData(npc_type);
+		
+		NPC* npc = new NPC(npc_type, 0, PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0, FlyMode3);
+		//npc->GiveNPCTypeData(npc_type);
 
-		entity_list.AddNPC(npc, true, true);
+		entity_list.AddNPC(npc);
 	}
 }
 
@@ -1200,14 +1200,12 @@ bool PathManager::NoHazardsAccurate(Map::Vertex From, Map::Vertex To)
 
 		if (zone->watermap)
 		{
-            auto from = xyz_location(From.x, From.y, From.z);
-            auto to = xyz_location(To.x, To.y, To.z);
-			if (zone->watermap->InLiquid(from) || zone->watermap->InLiquid(to))
+			if (zone->watermap->InLiquid(From.x, From.y, From.z) || zone->watermap->InLiquid(To.x, To.y, To.z))
 			{
 				break;
 			}
-            auto testPointNewZ = xyz_location(TestPoint.x, TestPoint.y, NewZ);
-			if (zone->watermap->InLiquid(testPointNewZ))
+
+			if (zone->watermap->InLiquid(TestPoint.x, TestPoint.y, NewZ))
 			{
 				Map::Vertex TestPointWater(TestPoint.x, TestPoint.y, NewZ - 0.5f);
 				Map::Vertex TestPointWaterDest = TestPointWater;
@@ -1547,8 +1545,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		npc_type->CHA = 150;
 		npc_type->findable = 1;
 
-        auto position = xyz_heading(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
-		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
+		NPC* npc = new NPC(npc_type, 0, new_node.v.x, new_node.v.y, new_node.v.z, 0, FlyMode1);
 		npc->GiveNPCTypeData(npc_type);
 		entity_list.AddNPC(npc, true, true);
 
@@ -1608,8 +1605,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		npc_type->CHA = 150;
 		npc_type->findable = 1;
 
-        auto position = xyz_heading(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
-		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
+		NPC* npc = new NPC(npc_type, 0, new_node.v.x, new_node.v.y, new_node.v.z, 0, FlyMode1);
 		npc->GiveNPCTypeData(npc_type);
 		entity_list.AddNPC(npc, true, true);
 

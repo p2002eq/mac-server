@@ -40,7 +40,6 @@ extern volatile bool RunLoops;
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
 #include "../common/data_verification.h"
-#include "position.h"
 #include "net.h"
 #include "worldserver.h"
 #include "zonedb.h"
@@ -78,7 +77,10 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// npctypeid
 	0,	// size
 	RuleR(Character, BaseRunSpeed),	// runspeed
-	xyz_heading::Origin(),
+	0,	// heading
+	0,	// x
+	0,	// y
+	0,	// z
 	0,	// light
 	0xFF,	// texture
 	0xFF,	// helmtexture
@@ -135,11 +137,7 @@ Client::Client(EQStreamInterface* ieqs)
 	qglobal_purge_timer(30000),
 	TrackingTimer(2000),
 	ItemTickTimer(10000),
-	ItemQuestTimer(500),
-	m_Proximity(FLT_MAX, FLT_MAX, FLT_MAX), //arbitrary large number
-	m_ZoneSummonLocation(-2.0f,-2.0f,-2.0f),
-	m_AutoAttackPosition(0.0f, 0.0f, 0.0f, 0.0f),
-	m_AutoAttackTargetLocation(0.0f, 0.0f, 0.0f)
+	ItemQuestTimer(500)
 {
 	for(int cf=0; cf < _FilterCount; cf++)
 		ClientFilters[cf] = FilterShow;
@@ -179,10 +177,16 @@ Client::Client(EQStreamInterface* ieqs)
 	auto_attack = false;
 	auto_fire = false;
 	linkdead_timer.Disable();
+	zonesummon_x = -2;
+	zonesummon_y = -2;
+	zonesummon_z = -2;
 	zonesummon_id = 0;
 	zonesummon_ignorerestrictions = 0;
 	zoning = false;
 	zone_mode = ZoneUnsolicited;
+	proximity_x = FLT_MAX;	//arbitrary large number
+	proximity_y = FLT_MAX;
+	proximity_z = FLT_MAX;
 	casting_spell_id = 0;
 	npcflag = false;
 	npclevel = 0;
@@ -241,6 +245,13 @@ Client::Client(EQStreamInterface* ieqs)
 	m_AssistExemption = 0;
 	m_CheatDetectMoved = false;
 	CanUseReport = true;
+	aa_los_me.x = 0;
+	aa_los_me.y = 0;
+	aa_los_me.z = 0;
+	aa_los_me_heading = 0;
+	aa_los_them.x = 0;
+	aa_los_them.y = 0;
+	aa_los_them.z = 0;
 	aa_los_them_mob = nullptr;
 	los_status = false;
 	los_status_facing = false;
@@ -421,11 +432,11 @@ bool Client::Save(uint8 iCommitNow) {
 		return false;
 
 	/* Wrote current basics to PP for saves */
-	m_pp.x = m_Position.m_X;
-	m_pp.y = m_Position.m_Y;
-	m_pp.z = m_Position.m_Z + 2;
+	m_pp.x = x_pos;
+	m_pp.y = y_pos;
+	m_pp.z = z_pos + 2;
 	m_pp.guildrank = guildrank;
-	m_pp.heading = m_Position.m_Heading;
+	m_pp.heading = heading;
 
 	/* Mana and HP */
 	if (GetHP() <= 0) {
@@ -442,10 +453,8 @@ bool Client::Save(uint8 iCommitNow) {
 	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
 	/* Save Current Bind Points */
-	auto regularBindPosition = xyz_heading(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0.0f);
-	auto homeBindPosition = xyz_heading(m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0.0f);
-	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, regularBindPosition, 0); /* Regular bind */
-	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[4].zoneId, m_pp.binds[4].instance_id, homeBindPosition, 1); /* Home Bind */
+	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0, 0); /* Regular bind */
+	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[4].zoneId, m_pp.binds[4].instance_id, m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0, 1); /* Home Bind */
 
 	/* Save Character Buffs */
 	database.SaveBuffs(this);
@@ -920,13 +929,13 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				CheckEmoteHail(GetTarget(), message);
 
 
-				if(ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition()) <= 200 && !IsInvisible(this)) {
+				if(DistNoRootNoZ(*GetTarget()) <= 200 && !IsInvisible(this)) {
 					NPC *tar = GetTarget()->CastToNPC();
 					parse->EventNPC(EVENT_SAY, tar->CastToNPC(), this, message, language);
 				}
 			}
 			else {
-				if (ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition()) <= 200) {
+				if (DistNoRootNoZ(*GetTarget()) <= 200) {
 					parse->EventNPC(EVENT_AGGRO_SAY, GetTarget()->CastToNPC(), this, message, language);
 				}
 			}
@@ -2152,7 +2161,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 			}
 
 			else {
-				if (!GetFeigned() && (ComparativeDistance(bindmob->GetPosition(), m_Position)  <= 400)) {
+				if (!GetFeigned() && (bindmob->DistNoRoot(*this) <= 400)) {
 					// send bindmob bind done
 					if(!bindmob->IsAIControlled() && bindmob != this ) {
 
@@ -3276,7 +3285,8 @@ void Client::SummonAndRezzAllCorpses()
 
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
-	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(), GetPosition());
+	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
+								GetX(), GetY(), GetZ(), GetHeading());
 	if(CorpseCount <= 0)
 	{
 		Message(clientMessageYellow, "You have no corpses to summnon.");
@@ -3291,11 +3301,13 @@ void Client::SummonAndRezzAllCorpses()
 	Message(clientMessageYellow, "All your corpses have been summoned to your feet and have received a 100% resurrection.");
 }
 
-void Client::SummonAllCorpses(const xyz_heading& position)
+void Client::SummonAllCorpses(float dest_x, float dest_y, float dest_z, float dest_heading)
 {
-    auto summonLocation = position;
-	if(position.isOrigin() && position.m_Heading == 0.0f)
-        summonLocation = GetPosition();
+
+	if(dest_x == 0 && dest_y == 0 && dest_z == 0 && dest_heading == 0)
+	{
+		dest_x = GetX(); dest_y = GetY(); dest_z = GetZ(); dest_heading = GetHeading();
+	}
 
 	ServerPacket *Pack = new ServerPacket(ServerOP_DepopAllPlayersCorpses, sizeof(ServerDepopAllPlayersCorpses_Struct));
 
@@ -3311,7 +3323,12 @@ void Client::SummonAllCorpses(const xyz_heading& position)
 
 	entity_list.RemoveAllCorpsesByCharID(CharacterID());
 
-	database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(), summonLocation);
+	int CorpseCount = database.SummonAllCharacterCorpses(CharacterID(), zone->GetZoneID(), zone->GetInstanceID(),
+								dest_x, dest_y, dest_z, dest_heading);
+	if(CorpseCount <= 0)
+	{
+		return;
+	}
 }
 
 void Client::DepopAllCorpses()
@@ -4038,7 +4055,7 @@ void Client::DragCorpses()
 		Mob *corpse = entity_list.GetMob(It->second);
 
 		if (corpse && corpse->IsPlayerCorpse() &&
-				(ComparativeDistanceNoZ(m_Position, corpse->GetPosition()) <= RuleR(Character, DragCorpseDistance)))
+				(DistNoRootNoZ(*corpse) <= RuleR(Character, DragCorpseDistance)))
 			continue;
 
 		if (!corpse || !corpse->IsPlayerCorpse() ||
@@ -4121,11 +4138,8 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	if(summon_count > MAX_SWARM_PETS)
 		summon_count = MAX_SWARM_PETS;
 
-	static const xy_location swarmPetLocations[MAX_SWARM_PETS] = {
-        xy_location(5, 5), xy_location(-5, 5), xy_location(5, -5), xy_location(-5, -5),
-		xy_location(10, 10), xy_location(-10, 10), xy_location(10, -10), xy_location(-10, -10),
-        xy_location(8, 8), xy_location(-8, 8), xy_location(8, -8), xy_location(-8, -8)
-    };
+	static const float swarm_pet_x[MAX_SWARM_PETS] = { 5, -5, 5, -5, 10, -10, 10, -10, 8, -8, 8, -8 };
+	static const float swarm_pet_y[MAX_SWARM_PETS] = { 5, 5, -5, -5, 10, 10, -10, -10, 8, 8, -8, -8 };
 
 	while(summon_count > 0) {
 		NPCType *npc_dup = nullptr;
@@ -4137,8 +4151,8 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		NPC* npca = new NPC(
 				(npc_dup!=nullptr)?npc_dup:npc_type,	//make sure we give the NPC the correct data pointer
 				0,
-				GetPosition()+swarmPetLocations[summon_count],
-				FlyMode3);
+				GetX()+swarm_pet_x[summon_count], GetY()+swarm_pet_y[summon_count],
+				GetZ(), GetHeading(), FlyMode3);
 
 		if(!npca->GetSwarmInfo()){
 			AA_SwarmPetInfo* nSI = new AA_SwarmPetInfo;
@@ -5495,7 +5509,7 @@ void Client::RewindCommand()
 		Message(0, "You must wait before using #rewind again.");
 	}
 	else {
-		MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_RewindLocation.m_X, m_RewindLocation.m_Y, m_RewindLocation.m_Z, 0, 2, Rewind);
+		MovePC(zone->GetZoneID(), zone->GetInstanceID(), rewind_x, rewind_y, rewind_z, 0, 2, Rewind);
 		rewind_timer.Start(30000, true);
 	}
 }

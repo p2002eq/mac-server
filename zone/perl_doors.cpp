@@ -138,7 +138,7 @@ XS(XS_Doors_GetX)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetPosition().m_X;
+		RETVAL = THIS->GetX();
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -164,7 +164,7 @@ XS(XS_Doors_GetY)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetPosition().m_Y;
+		RETVAL = THIS->GetY();
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -190,7 +190,7 @@ XS(XS_Doors_GetZ)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetPosition().m_Z;
+		RETVAL = THIS->GetZ();
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -216,7 +216,7 @@ XS(XS_Doors_GetHeading)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetPosition().m_Heading;
+		RETVAL = THIS->GetHeading();
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -556,7 +556,7 @@ XS(XS_Doors_SetX)
 		Perl_croak(aTHX_ "Usage: Doors::SetX(THIS, XPos)");
 	{
 		Doors *		THIS;
-		float		x = (float)SvNV(ST(1));
+		float		pos = (float)SvNV(ST(1));
 
 		if (sv_derived_from(ST(0), "Doors")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -566,9 +566,8 @@ XS(XS_Doors_SetX)
 			Perl_croak(aTHX_ "THIS is not of type Doors");
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-        auto position = THIS->GetPosition();
-        position.m_X = x;
-		THIS->SetPosition(position);
+
+		THIS->SetX(pos);
 	}
 	XSRETURN_EMPTY;
 }
@@ -581,7 +580,7 @@ XS(XS_Doors_SetY)
 		Perl_croak(aTHX_ "Usage: Doors::SetY(THIS, YPos)");
 	{
 		Doors *		THIS;
-		float		y = (float)SvNV(ST(1));
+		float		pos = (float)SvNV(ST(1));
 
 		if (sv_derived_from(ST(0), "Doors")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -592,9 +591,7 @@ XS(XS_Doors_SetY)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-        auto position = THIS->GetPosition();
-        position.m_Y = y;
-		THIS->SetPosition(position);
+		THIS->SetY(pos);
 	}
 	XSRETURN_EMPTY;
 }
@@ -607,7 +604,7 @@ XS(XS_Doors_SetZ)
 		Perl_croak(aTHX_ "Usage: Doors::SetZ(THIS, ZPos)");
 	{
 		Doors *		THIS;
-		float		z = (float)SvNV(ST(1));
+		float		pos = (float)SvNV(ST(1));
 
 		if (sv_derived_from(ST(0), "Doors")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -618,9 +615,7 @@ XS(XS_Doors_SetZ)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		auto position = THIS->GetPosition();
-        position.m_Z = z;
-		THIS->SetPosition(position);
+		THIS->SetZ(pos);
 	}
 	XSRETURN_EMPTY;
 }
@@ -644,9 +639,7 @@ XS(XS_Doors_SetHeading)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		auto position = THIS->GetPosition();
-        position.m_Heading = heading;
-		THIS->SetPosition(position);
+		THIS->SetHeading(heading);
 	}
 	XSRETURN_EMPTY;
 }

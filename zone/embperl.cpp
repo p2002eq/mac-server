@@ -145,7 +145,7 @@ void Embperl::DoInit() {
 
 #ifdef EMBPERL_IO_CAPTURE
 	LogFile->write(EQEmuLog::Quest, "Tying perl output to eqemu logs");
-	//make a tieable class to capture IO and pass it into EQEMuLog
+	//make a tieable class to capture IO and pass it into EQEmuLog
 	eval_pv(
 		"package EQEmuIO; "
  			"sub TIEHANDLE { my $me = bless {}, $_[0]; $me->PRINT('Creating '.$me); return($me); } "

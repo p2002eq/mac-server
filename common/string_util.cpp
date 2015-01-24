@@ -16,6 +16,9 @@
 
 #include "string_util.h"
 
+#include <cstring> // for strncpy
+#include <stdexcept>
+
 #ifdef _WINDOWS
 	#include <windows.h>
 

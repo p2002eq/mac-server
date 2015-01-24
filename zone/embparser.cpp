@@ -224,7 +224,6 @@ int PerlembParser::EventGlobalPlayer(QuestEventID evt, Client *client, std::stri
 
 int PerlembParser::EventItem(QuestEventID evt, Client *client, ItemInst *item, Mob *mob, std::string data, uint32 extra_data,
 							std::vector<EQEmu::Any> *extra_pointers) {
-	// needs pointer validation on 'item' argument
 	return EventCommon(evt, item->GetID(), nullptr, nullptr, item, client, extra_data, false, extra_pointers);
 }
 
@@ -326,9 +325,6 @@ bool PerlembParser::ItemHasQuestSub(ItemInst *itm, QuestEventID evt) {
 	package_name << "qst_item_" << itm->GetID();
 
 	if(!perl)
-		return false;
-
-	if (itm == nullptr)
 		return false;
 
 	if(evt >= _LargestEventID)
@@ -445,9 +441,6 @@ void PerlembParser::LoadGlobalPlayerScript(std::string filename) {
 }
 
 void PerlembParser::LoadItemScript(std::string filename, ItemInst *item) {
-	if (item == nullptr)
-		return;
-
 	std::stringstream package_name;
 	package_name << "qst_item_" << item->GetID();
 	
@@ -854,7 +847,6 @@ void PerlembParser::GetQuestPackageName(bool &isPlayerQuest, bool &isGlobalPlaye
 		}
 	}
 	else if(isItemQuest) {
-		// need a valid ItemInst pointer check here..unsure how to cancel this process -U
 		const Item_Struct* item = iteminst->GetItem();
 		package_name = "qst_item_";
 		package_name += itoa(item->ID);
@@ -1135,7 +1127,7 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 					ItemInst *inst = EQEmu::any_cast<ItemInst*>(extra_pointers->at(i));
 
 					std::string var_name = "item";
-					var_name += std::to_string(i + 1);
+					var_name += std::to_string(static_cast<long long>(i + 1));
 
 					if(inst) {
 						ExportVar(package_name.c_str(), var_name.c_str(), inst->GetItem()->ID);
@@ -1147,8 +1139,7 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 						temp_var_name = var_name;
 						temp_var_name += "_attuned";
 						ExportVar(package_name.c_str(), temp_var_name.c_str(), inst->IsInstNoDrop());
-					}
-					else {
+					} else {
 						ExportVar(package_name.c_str(), var_name.c_str(), 0);
 
 						std::string temp_var_name = var_name;
@@ -1261,7 +1252,6 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 
 		case EVENT_SCALE_CALC:
 		case EVENT_ITEM_ENTER_ZONE: {
-			// need a valid ItemInst pointer check here..unsure how to cancel this process -U
 			ExportVar(package_name.c_str(), "itemid", objid);
 			ExportVar(package_name.c_str(), "itemname", iteminst->GetItem()->Name);
 			break;
@@ -1269,7 +1259,6 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 
 		case EVENT_ITEM_CLICK_CAST:
 		case EVENT_ITEM_CLICK: {
-			// need a valid ItemInst pointer check here..unsure how to cancel this process -U
 			ExportVar(package_name.c_str(), "itemid", objid);
 			ExportVar(package_name.c_str(), "itemname", iteminst->GetItem()->Name);
 			ExportVar(package_name.c_str(), "slotid", extradata);
