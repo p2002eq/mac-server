@@ -8291,11 +8291,10 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 			return;
 		}
 
-		c->LogSQL(query.c_str());
-		c->Message(0, "Updating coordinates successful.");
-		target->CastToNPC()->GMMove(c->GetX(), c->GetY(), c->GetZ(), c->GetHeading());
-		target->CastToNPC()->SaveGuardSpot(true);
-		target->SendPosition();
+        c->Message(0, "Updating coordinates successful.");
+        target->CastToNPC()->GMMove(c->GetX(), c->GetY(), c->GetZ(), c->GetHeading());
+        target->CastToNPC()->SaveGuardSpot(true);
+        target->SendPosition();
 
 		return;
 	}
