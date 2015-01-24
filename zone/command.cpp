@@ -6985,8 +6985,7 @@ void command_qglobal(Client *c, const Seperator *sep)
 			return;
 		}
 
-		c->LogSQL(query.c_str());
-		c->Message(CC_Yellow, "Success! Changes take effect on zone reboot.");
+        c->Message(CC_Yellow, "Success! Changes take effect on zone reboot.");
 		return;
 	}
 
