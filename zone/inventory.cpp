@@ -277,7 +277,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 			if(to_slot == MainCursor || to_slot == INVALID_INDEX) {
 				if(m_inv.GetItem(MainCursor) != nullptr || to_slot == INVALID_INDEX) {
 					Message(CC_Red,"You have no more room. The item falls to the ground."); 
-					entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+					entity_list.CreateGroundObject(inst->GetID(), xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 				}
 			}
 		}
@@ -703,17 +703,25 @@ bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_curs
 					}
 					if( m_inv[MainSecondary] )
 					{
-						uint8 itemtype_2ndItem = m_inv[MainSecondary]->GetItem()->ItemType;
+						uint8 instrument = m_inv[MainSecondary]->GetItem()->ItemType;
 						if( 
-							itemtype_2ndItem == ItemTypeWindInstrument ||
-							itemtype_2ndItem == ItemTypeStringedInstrument ||
-							itemtype_2ndItem == ItemTypeBrassInstrument ||
-							itemtype_2ndItem == ItemTypePercussionInstrument
-						) continue; // Do not auto-equip Primary when Bard Equipment is in Secondary
+							instrument == ItemTypeWindInstrument ||
+							instrument == ItemTypeStringedInstrument ||
+							instrument == ItemTypeBrassInstrument ||
+							instrument == ItemTypePercussionInstrument
+						) continue; // Do not auto-equip Primary when instrument is in Secondary
 					}
 				}
 				if( i== MainSecondary && m_inv[MainPrimary]) // check to see if primary slot is a two hander
 				{
+					uint8 instrument = inst.GetItem()->ItemType;
+					if( 
+						instrument == ItemTypeWindInstrument ||
+						instrument == ItemTypeStringedInstrument ||
+						instrument == ItemTypeBrassInstrument ||
+						instrument == ItemTypePercussionInstrument
+					) continue; // Do not auto-equip instrument in Secondary when Primary is equipped.	
+
 					uint8 use = m_inv[MainPrimary]->GetItem()->ItemType;
 					if(use == ItemType2HSlash || use == ItemType2HBlunt || use == ItemType2HPiercing)
 						continue;
