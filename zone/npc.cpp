@@ -917,18 +917,12 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
 		npc_type_id = results.LastInsertedID();
 	}
 
-	if(client)
-        client->LogSQL(query.c_str());
-
 	query = StringFormat("INSERT INTO spawngroup (id, name) VALUES(%i, '%s-%s')", 0, zone, spawn->GetName());
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
 	}
     uint32 spawngroupid = results.LastInsertedID();
-
-	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("INSERT INTO spawn2 (zone, version, x, y, z, respawntime, heading, spawngroupID) "
                         "VALUES('%s', %u, %f, %f, %f, %i, %f, %i)",
@@ -939,18 +933,12 @@ uint32 ZoneDatabase::CreateNewNPCCommand(const char* zone, uint32 zone_version,C
 		return false;
 	}
 
-	if(client)
-        client->LogSQL(query.c_str());
-
     query = StringFormat("INSERT INTO spawnentry (spawngroupID, npcID, chance) VALUES(%i, %i, %i)",
                         spawngroupid, npc_type_id, 100);
     results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
 	}
-
-	if(client)
-        client->LogSQL(query.c_str());
 
 	return true;
 }
@@ -965,9 +953,6 @@ uint32 ZoneDatabase::AddNewNPCSpawnGroupCommand(const char* zone, uint32 zone_ve
 		return 0;
 	}
     last_insert_id = results.LastInsertedID();
-
-    if(client)
-        client->LogSQL(query.c_str());
 
     uint32 respawntime = 0;
     uint32 spawnid = 0;
@@ -988,18 +973,12 @@ uint32 ZoneDatabase::AddNewNPCSpawnGroupCommand(const char* zone, uint32 zone_ve
     }
     spawnid = results.LastInsertedID();
 
-    if(client)
-        client->LogSQL(query.c_str());
-
     query = StringFormat("INSERT INTO spawnentry (spawngroupID, npcID, chance) VALUES(%i, %i, %i)",
                         last_insert_id, spawn->GetNPCTypeID(), 100);
     results = QueryDatabase(query);
     if (!results.Success()) {
         return 0;
     }
-
-    if(client)
-        client->LogSQL(query.c_str());
 
     return spawnid;
 }
@@ -1015,7 +994,6 @@ uint32 ZoneDatabase::UpdateNPCTypeAppearance(Client *client, NPC* spawn) {
                                     spawn->MerchantType, spawn->GetNPCTypeID());
     auto results = QueryDatabase(query);
     if (!results.Success() && client)
-            client->LogSQL(query.c_str());
 
     return results.Success() == true? 1: 0;
 }
@@ -1046,7 +1024,6 @@ uint32 ZoneDatabase::DeleteSpawnLeaveInNPCTypeTable(const char* zone, Client *cl
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("DELETE FROM spawngroup WHERE id = '%i'", spawngroupID);
     results = QueryDatabase(query);
@@ -1054,7 +1031,6 @@ uint32 ZoneDatabase::DeleteSpawnLeaveInNPCTypeTable(const char* zone, Client *cl
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("DELETE FROM spawnentry WHERE spawngroupID = '%i'", spawngroupID);
     results = QueryDatabase(query);
@@ -1062,7 +1038,6 @@ uint32 ZoneDatabase::DeleteSpawnLeaveInNPCTypeTable(const char* zone, Client *cl
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
 	return 1;
 }
@@ -1096,7 +1071,6 @@ uint32 ZoneDatabase::DeleteSpawnRemoveFromNPCTypeTable(const char* zone, uint32 
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("DELETE FROM spawngroup WHERE id = '%i'", spawngroupID);
 	results = QueryDatabase(query);
@@ -1104,7 +1078,6 @@ uint32 ZoneDatabase::DeleteSpawnRemoveFromNPCTypeTable(const char* zone, uint32 
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("DELETE FROM spawnentry WHERE spawngroupID = '%i'", spawngroupID);
 	results = QueryDatabase(query);
@@ -1112,7 +1085,6 @@ uint32 ZoneDatabase::DeleteSpawnRemoveFromNPCTypeTable(const char* zone, uint32 
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     query = StringFormat("DELETE FROM npc_types WHERE id = '%i'", spawn->GetNPCTypeID());
 	results = QueryDatabase(query);
@@ -1120,7 +1092,6 @@ uint32 ZoneDatabase::DeleteSpawnRemoveFromNPCTypeTable(const char* zone, uint32 
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
 	return 1;
 }
@@ -1137,7 +1108,6 @@ uint32  ZoneDatabase::AddSpawnFromSpawnGroup(const char* zone, uint32 zone_versi
 		return 0;
 
 	if(client)
-        client->LogSQL(query.c_str());
 
     return 1;
 }
@@ -1162,7 +1132,6 @@ uint32 ZoneDatabase::AddNPCTypes(const char* zone, uint32 zone_version, Client *
     npc_type_id = results.LastInsertedID();
 
 	if(client)
-        client->LogSQL(query.c_str());
 
 	if(client)
         client->Message(0, "%s npc_type ID %i created successfully!", numberlessName, npc_type_id);

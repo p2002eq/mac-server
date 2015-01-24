@@ -265,7 +265,6 @@ int command_init(void){
 		command_add("listnpcs", "[name/range] - Search NPCs", 90, command_listnpcs) ||
 		command_add("loc", "- Print out your or your target's current location and heading", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver", 250, command_lock) ||
-		command_add("logsql", "- enable SQL logging", 250, command_logsql) ||
 		command_add("logs", "Manage anything to do with logs", 250, command_logs) ||
 		command_add("logtest", "Performs log performance testing.", 250, command_logtest) ||
 		command_add("los", nullptr, 80, command_checklos) ||
@@ -781,7 +780,6 @@ void command_setfaction(Client *c, const Seperator *sep){
 	std::string query = StringFormat("UPDATE npc_types SET npc_faction_id = %i WHERE id = %i",
 		atoi(sep->argplus[1]), npcTypeID);
 	database.QueryDatabase(query);
-	c->LogSQL(query.c_str());
 }
 
 void command_serversidename(Client *c, const Seperator *sep){
@@ -4460,9 +4458,8 @@ void command_spawnfix(Client *c, const Seperator *sep)
 		return;
 	}
 
-	c->LogSQL(query.c_str());
-	c->Message(0, "Updating coordinates successful.");
-	targetMob->Depop(false);
+    c->Message(0, "Updating coordinates successful.");
+    targetMob->Depop(false);
 }
 
 void command_loc(Client *c, const Seperator *sep)
@@ -6308,7 +6305,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET name = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6318,7 +6314,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET lastname = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6328,7 +6323,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET race = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6338,7 +6332,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET class = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6348,7 +6341,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET bodytype = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6358,7 +6350,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET hp = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6368,7 +6359,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET gender = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6378,7 +6368,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET texture = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6388,7 +6377,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET helmtexture = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6398,7 +6386,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET size = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6408,7 +6395,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET hp_regen_rate = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6418,7 +6404,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET mana_regen_rate = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6428,7 +6413,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET loottable_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6438,7 +6422,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET merchant_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6448,7 +6431,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET alt_currency_id = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6458,7 +6440,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET npc_spells_effects_id = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6468,7 +6449,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET trap_template = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6478,7 +6458,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET special_abilities = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6488,7 +6467,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET npc_spells_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6498,7 +6476,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET npc_faction_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6508,7 +6485,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET mindmg = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6518,7 +6494,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET maxdmg = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6528,7 +6503,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET aggroradius = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6538,7 +6512,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET assistradius = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6548,7 +6521,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET social = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6558,7 +6530,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET runspeed = %f WHERE id = %i",
 			atof(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6568,7 +6539,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET AGI = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6578,7 +6548,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET CHA = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6588,7 +6557,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET DEX = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6598,7 +6566,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET _INT = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6608,7 +6575,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET STA = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6618,7 +6584,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET STR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6628,7 +6593,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET WIS = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6638,7 +6602,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET MR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6648,7 +6611,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET DR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6658,7 +6620,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET CR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6668,7 +6629,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET FR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6678,7 +6638,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET PR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6688,7 +6647,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET corrup = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6698,7 +6656,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET PhR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6708,7 +6665,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET see_invis = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6718,7 +6674,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET see_invis_undead = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6728,7 +6683,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET see_hide = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6738,7 +6692,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET see_improved_hide = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6748,7 +6701,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET ac = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6758,7 +6710,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET atk = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6768,7 +6719,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET accuracy = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6778,7 +6728,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET level = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6788,7 +6737,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET maxlevel = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6799,7 +6747,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET qglobal = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6810,7 +6757,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET npc_aggro = %i WHERE id = %i",
 			atoi(sep->argplus[2]) == 0 ? 0 : 1, npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6821,7 +6767,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET limit = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6830,7 +6775,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 
 		std::string query = StringFormat("UPDATE npc_types SET attack_delay = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6840,7 +6784,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET findable = %i WHERE id = %i",
 			atoi(sep->argplus[2]) == 0 ? 0 : 1, npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6851,7 +6794,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET d_melee_texture1 = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6862,7 +6804,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET d_melee_texture2 = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6881,7 +6822,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 			target->GetHairStyle(), target->GetBeard(),
 			target->GetLuclinFace(), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6894,7 +6834,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 			"WHERE id = %i",
 			atoi(sep->arg[2]), atoi(sep->arg[3]), atoi(sep->arg[4]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6905,7 +6844,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET armortint_id = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6936,7 +6874,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 			"WHERE spawngroupID = %i",
 			animation, c->GetTarget()->CastToNPC()->GetSp2());
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 
 		c->GetTarget()->SetAppearance(EmuAppearance(animation));
 		return;
@@ -6949,7 +6886,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET scalerate = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6960,7 +6896,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET healscale = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6971,7 +6906,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET spellscale = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -6982,7 +6916,6 @@ void command_npcedit(Client *c, const Seperator *sep){
 		std::string query = StringFormat("UPDATE npc_types SET no_target_hotkey = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
-		c->LogSQL(query.c_str());
 		return;
 	}
 
@@ -7026,18 +6959,6 @@ void command_opcode(Client *c, const Seperator *sep){
 	if (!strcasecmp(sep->arg[1], "reload")) {
 		ReloadAllPatches();
 		c->Message(0, "Opcodes for all patches have been reloaded");
-	}
-}
-
-void command_logsql(Client *c, const Seperator *sep){
-	if (!strcasecmp(sep->arg[1], "off")) {
-		c->ChangeSQLLog(nullptr);
-	}
-	else if (sep->arg[1][0] != '\0') {
-		c->ChangeSQLLog(sep->argplus[1]);
-	}
-	else {
-		c->Message(0, "Usage: #logsql (file name)");
 	}
 }
 

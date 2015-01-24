@@ -1119,7 +1119,6 @@ void ZoneDatabase::AssignGrid(Client *client, const glm::vec2& location, uint32 
 	}
 
 	if(client)
-		client->LogSQL(query.c_str());
 
 	if (!fuzzy)
 	{
@@ -1150,7 +1149,6 @@ void ZoneDatabase::ModifyGrid(Client *client, bool remove, uint32 id, uint8 type
         }
 
 		if(client)
-			client->LogSQL(query.c_str());
 
 		return;
 	}
@@ -1176,8 +1174,6 @@ void ZoneDatabase::AddWP(Client *client, uint32 gridid, uint32 wpnum, const glm:
 		return;
 	}
 
-	if(client)
-		client->LogSQL(query.c_str());
 }
 
 
@@ -1200,9 +1196,6 @@ void ZoneDatabase::DeleteWaypoint(Client *client, uint32 grid_num, uint32 wp_num
 	if(!results.Success()) {
 		return;
 	}
-
-	if(client)
-		client->LogSQL(query.c_str());
 }
 
 
