@@ -8208,8 +8208,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 			return;
 		}
 
-		c->LogSQL(query.c_str());
-		c->Message(0, "Group ID %i created successfully!", results.LastInsertedID());
+        c->Message(0, "Group ID %i created successfully!", results.LastInsertedID());
 
 		return;
 	}
