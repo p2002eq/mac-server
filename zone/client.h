@@ -774,7 +774,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	void LoadZoneFlags();
 
 	void ChangeSQLLog(const char *file);
-	void LogSQL(const char *fmt, ...);
 	bool CanFish();
 	void GoFish();
 	void ForageItem(bool guarantee = false);
