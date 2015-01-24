@@ -473,10 +473,8 @@ int command_init(void){
 		}
 		else
 		{
-#ifdef COMMANDS_WARNINGS
 			if(cur->second->access == 0)
-				Log.Out(Logs::General, Logs::Status, "command_init(): Warning: Command '%s' defaulting to access level 0!" , cur->first.c_str());
-#endif
+				Log.Out(Logs::General, Logs::Error, "command_init(): Warning: Command '%s' defaulting to access level 0!" , cur->first.c_str());
 		}
 	}
 
