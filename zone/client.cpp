@@ -2759,26 +2759,6 @@ float Client::CalcPriceMod(Mob* other, bool reverse)
 	return chaformula; //Returns 1.10, expensive stuff!
 }
 
-void Client::ChangeSQLLog(const char *file) {
-	if(SQL_log != nullptr) {
-		fclose(SQL_log);
-		SQL_log = nullptr;
-	}
-	if(file != nullptr) {
-		if(strstr(file, "..") != nullptr) {
-			Message(CC_Red, ".. is forbibben in SQL log file names.");
-			return;
-		}
-		char buf[512];
-		snprintf(buf, 511, "%s%s", SQL_LOG_PATH, file);
-		buf[511] = '\0';
-		SQL_log = fopen(buf, "a");
-		if(SQL_log == nullptr) {
-			Message(CC_Red, "Unable to open SQL log file: %s\n", strerror(errno));
-		}
-	}
-}
-
 void Client::EnteringMessages(Client* client)
 {
 	//server rules
