@@ -441,7 +441,7 @@ public:
 	int32 GetActDoTDamage(uint16 spell_id, int32 value, Mob* target = nullptr);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
-	virtual int GetCurrentBuffSlots() const;
+	virtual int GetCurrentBuffSlots() const;void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
 	virtual int GetCurrentSongSlots() const;
 	virtual int GetMaxBuffSlots() const { return 25; }
 	virtual int GetMaxSongSlots() const { return 12; }
@@ -518,17 +518,18 @@ public:
 	void GoToDeath();
 	inline const int32 GetInstanceID() const { return zone->GetInstanceID(); }
 
-	FACTION_VALUE	GetReverseFactionCon(Mob* iOther);
-	FACTION_VALUE	GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
-	int32	GetCharacterFactionLevel(int32 faction_id);
-	int32	GetModCharacterFactionLevel(int32 faction_id);
-	void	MerchantRejectMessage(Mob *merchant, int primaryfaction);
-	void	SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalvalue, uint8 temp);
+	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
+	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
+	int32 GetCharacterFactionLevel(int32 faction_id);
+	int32 GetModCharacterFactionLevel(int32 faction_id);
+	void MerchantRejectMessage(Mob *merchant, int primaryfaction);
+	void SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp);
 
-	void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
-	void	SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
-	int32	GetRawItemAC();
-	uint16	GetCombinedAC_TEST();
+	bool UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction_id, int32 *current_value, int32 temp);
+	void SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
+	void SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
+	int32 GetRawItemAC();
+	uint16 GetCombinedAC_TEST();
 
 	inline uint32 LSAccountID() const { return lsaccountid; }
 	inline uint32 GetWID() const { return WID; }
