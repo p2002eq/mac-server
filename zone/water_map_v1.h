@@ -19,17 +19,17 @@ public:
 	WaterMapV1();
 	~WaterMapV1();
 	
-	virtual WaterRegionType ReturnRegionType(float y, float x, float z) const;
-	virtual bool InWater(float y, float x, float z) const;
-	virtual bool InVWater(float y, float x, float z) const;
-	virtual bool InLava(float y, float x, float z) const;
-	virtual bool InLiquid(float y, float x, float z) const;
+	virtual WaterRegionType ReturnRegionType(const xyz_location& location) const;
+	virtual bool InWater(const xyz_location& location) const;
+	virtual bool InVWater(const xyz_location& location) const;
+	virtual bool InLava(const xyz_location& location) const;
+	virtual bool InLiquid(const xyz_location& location) const;
 	
 protected:
 	virtual bool Load(FILE *fp);
 
 private:
-	WaterRegionType BSPReturnRegionType(int32 node_number, float y, float x, float z) const;
+	WaterRegionType BSPReturnRegionType(int32 node_number, const xyz_location& location) const;
 	ZBSP_Node* BSP_Root;
 
 	friend class WaterMap;
