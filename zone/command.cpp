@@ -164,6 +164,7 @@ int command_init(void){
 		command_add("cast", nullptr, 150, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell", 150, command_castspell) ||
 		command_add("chat", "[channel num] [message] - Send a channel message to all zones", 90, command_chat) ||
+		command_add("chattest", "[color] - Sends a test message with the specified color to yourself.", 90, command_chattest) ||
 		command_add("checklos", "- Check for line of sight to your target", 95, command_checklos) ||
 		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
 		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
@@ -732,7 +733,7 @@ void command_optest(Client *c, const Seperator *sep){
 		int arg = atoi(sep->arg[1]);
 		for (int i = 0; i < arg; i++)
 		{
-			c->Message(15, "Test command");
+			c->Message(CC_Yellow, "Test command");
 		}
 	}
 
@@ -777,7 +778,7 @@ void command_setfaction(Client *c, const Seperator *sep){
 	}
 	
 	auto npcTypeID = c->GetTarget()->CastToNPC()->GetNPCTypeID();
-	c->Message(15, "Setting NPC %u to faction %i", npcTypeID, atoi(sep->argplus[1]));
+	c->Message(CC_Yellow, "Setting NPC %u to faction %i", npcTypeID, atoi(sep->argplus[1]));
 	
 	std::string query = StringFormat("UPDATE npc_types SET npc_faction_id = %i WHERE id = %i",
 		atoi(sep->argplus[1]), npcTypeID);
@@ -1523,8 +1524,8 @@ void command_bug(Client *c, const Seperator *sep)
 
 		auto row = results.begin();
 
-		c->Message(15, " %s: %s , %s , %s , %s , %s , %s , %s , %s , %s , %s , %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]);
-		c->Message(15, " %s ", row[12]);
+		c->Message(CC_Yellow, " %s: %s , %s , %s , %s , %s , %s , %s , %s , %s , %s , %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11]);
+		c->Message(CC_Yellow, " %s ", row[12]);
 	}
 	else if (strcasecmp(sep->arg[1], "delete") == 0)
 	{
@@ -1621,7 +1622,7 @@ void command_petition(Client *c, const Seperator *sep)
 		}
 
 		auto row = results.begin();
-		c->Message(15, " %s: %s , %s , %s", row[0], row[1], row[2], row[3]);
+		c->Message(CC_Yellow, " %s: %s , %s , %s", row[0], row[1], row[2], row[3]);
 	}
 	else if (strcasecmp(sep->arg[1], "info") == 0)
 	{
@@ -1643,7 +1644,7 @@ void command_petition(Client *c, const Seperator *sep)
 		}
 
 		auto row = results.begin();
-		c->Message(15, "%s: %s %s %s %s %s %s %s %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]);
+		c->Message(CC_Yellow, "%s: %s %s %s %s %s %s %s %s", row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]);
 	}
 	else if (strcasecmp(sep->arg[1], "update") == 0)
 	{
@@ -1665,7 +1666,7 @@ void command_petition(Client *c, const Seperator *sep)
 				return;
 			}
 
-			c->Message(15, "%s, Updated petition comment to ( %s ) for petition: %i", c->GetName(), sep->arg[3], atoi(sep->arg[2]));
+			c->Message(CC_Yellow, "%s, Updated petition comment to ( %s ) for petition: %i", c->GetName(), sep->arg[3], atoi(sep->arg[2]));
 		}
 		else
 			c->Message(0, "Your access level is not high enough to use this command.");
@@ -3140,10 +3141,10 @@ void command_reloadlevelmods(Client *c, const Seperator *sep){
 	{
 		if (RuleB(Zone, LevelBasedEXPMods)){
 			zone->LoadLevelEXPMods();
-			c->Message(15, "Level based EXP Mods have been reloaded zonewide");
+			c->Message(CC_Yellow, "Level based EXP Mods have been reloaded zonewide");
 		}
 		else{
-			c->Message(15, "Level based EXP Mods are disabled in rules!");
+			c->Message(CC_Yellow, "Level based EXP Mods are disabled in rules!");
 		}
 	}
 }
@@ -4520,7 +4521,7 @@ void command_spawnfix(Client *c, const Seperator *sep)
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		c->Message(CC_Red, "Update failed! MySQL gave the following error:");
-		c->Message(13, results.ErrorMessage().c_str());
+		c->Message(CC_Red, results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -5126,7 +5127,7 @@ void command_manaburn(Client *c, const Seperator *sep){
 					if (nukedmg>0)
 					{
 						target->Damage(c, nukedmg, 2751, SkillAbjuration/*hackish*/);
-						c->Message(CC_Purple, "You unleash an enormous blast of magical energies.");
+						c->Message(CC_Blue, "You unleash an enormous blast of magical energies.");
 					}
 					LogFile->write(EQEmuLog::Normal, "Manaburn request from %s, damage: %d", c->GetName(), nukedmg);
 				}
@@ -6365,7 +6366,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	uint32 npcTypeID = c->GetTarget()->CastToNPC()->GetNPCTypeID();
 
 	if (strcasecmp(sep->arg[1], "name") == 0) {
-		c->Message(15, "NPCID %u now has the name %s.", npcTypeID, sep->argplus[2]);
+		c->Message(CC_Yellow, "NPCID %u now has the name %s.", npcTypeID, sep->argplus[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET name = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6375,7 +6376,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "lastname") == 0) {
-		c->Message(15, "NPCID %u now has the lastname %s.", npcTypeID, sep->argplus[2]);
+		c->Message(CC_Yellow, "NPCID %u now has the lastname %s.", npcTypeID, sep->argplus[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET lastname = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6385,7 +6386,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "race") == 0) {
-		c->Message(15, "NPCID %u now has the race %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has the race %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET race = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6395,7 +6396,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "class") == 0) {
-		c->Message(15, "NPCID %u is now class %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now class %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET class = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6405,7 +6406,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "bodytype") == 0) {
-		c->Message(15, "NPCID %u now has type %i bodytype.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has type %i bodytype.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET bodytype = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6415,7 +6416,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "hp") == 0) {
-		c->Message(15, "NPCID %u now has %i Hitpoints.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Hitpoints.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET hp = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6425,7 +6426,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "gender") == 0) {
-		c->Message(15, "NPCID %u is now gender %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now gender %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET gender = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6435,7 +6436,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "texture") == 0) {
-		c->Message(15, "NPCID %u now uses texture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses texture %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET texture = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6445,7 +6446,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "helmtexture") == 0) {
-		c->Message(15, "NPCID %u now uses helmtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses helmtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET helmtexture = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6455,7 +6456,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "size") == 0) {
-		c->Message(15, "NPCID %u is now size %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now size %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET size = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6465,7 +6466,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "hpregen") == 0) {
-		c->Message(15, "NPCID %u now regens %i hitpoints per tick.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now regens %i hitpoints per tick.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET hp_regen_rate = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6475,7 +6476,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "manaregen") == 0) {
-		c->Message(15, "NPCID %u now regens %i mana per tick.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now regens %i mana per tick.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET mana_regen_rate = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6485,7 +6486,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "loottable") == 0) {
-		c->Message(15, "NPCID %u is now on loottable_id %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now on loottable_id %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET loottable_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6495,7 +6496,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "merchantid") == 0) {
-		c->Message(15, "NPCID %u is now merchant_id %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now merchant_id %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET merchant_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6505,7 +6506,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "alt_currency_id") == 0) {
-		c->Message(15, "NPCID %u now has field 'alt_currency_id' set to %s.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has field 'alt_currency_id' set to %s.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET alt_currency_id = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6515,7 +6516,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "npc_spells_effects_id") == 0) {
-		c->Message(15, "NPCID %u now has field 'npc_spells_effects_id' set to %s.", npcTypeID, sep->argplus[2]);
+		c->Message(CC_Yellow, "NPCID %u now has field 'npc_spells_effects_id' set to %s.", npcTypeID, sep->argplus[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET npc_spells_effects_id = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6525,7 +6526,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "trap_template") == 0) {
-		c->Message(15, "NPCID %u now has field 'trap_template' set to %s.", npcTypeID, sep->argplus[2]);
+		c->Message(CC_Yellow, "NPCID %u now has field 'trap_template' set to %s.", npcTypeID, sep->argplus[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET trap_template = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6535,7 +6536,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "special_abilities") == 0) {
-		c->Message(15, "NPCID %u now has field 'special_abilities' set to %s.", npcTypeID, sep->argplus[2]);
+		c->Message(CC_Yellow, "NPCID %u now has field 'special_abilities' set to %s.", npcTypeID, sep->argplus[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET special_abilities = '%s' WHERE id = %i",
 			sep->argplus[2], npcTypeID);
@@ -6545,7 +6546,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "spell") == 0) {
-		c->Message(15, "NPCID %u now uses spell list %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses spell list %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET npc_spells_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6555,7 +6556,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "faction") == 0) {
-		c->Message(15, "NPCID %u is now faction %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now faction %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET npc_faction_id = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6565,7 +6566,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "mindmg") == 0) {
-		c->Message(15, "NPCID %u now hits for a min of %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now hits for a min of %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET mindmg = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6575,7 +6576,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "maxdmg") == 0) {
-		c->Message(15, "NPCID %u now hits for a max of %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now hits for a max of %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET maxdmg = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6585,7 +6586,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "aggroradius") == 0) {
-		c->Message(15, "NPCID %u now has an aggro radius of %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has an aggro radius of %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET aggroradius = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6595,7 +6596,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "assistradius") == 0) {
-		c->Message(15, "NPCID %u now has an assist radius of %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has an assist radius of %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET assistradius = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6605,7 +6606,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "social") == 0) {
-		c->Message(15, "NPCID %u social status is now %i", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u social status is now %i", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET social = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6615,7 +6616,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "runspeed") == 0) {
-		c->Message(15, "NPCID %u now runs at %f", npcTypeID, atof(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now runs at %f", npcTypeID, atof(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET runspeed = %f WHERE id = %i",
 			atof(sep->argplus[2]), npcTypeID);
@@ -6625,7 +6626,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "AGI") == 0) {
-		c->Message(15, "NPCID %u now has %i Agility.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Agility.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET AGI = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6635,7 +6636,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "CHA") == 0) {
-		c->Message(15, "NPCID %u now has %i Charisma.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Charisma.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET CHA = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6645,7 +6646,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "DEX") == 0) {
-		c->Message(15, "NPCID %u now has %i Dexterity.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Dexterity.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET DEX = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6655,7 +6656,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "INT") == 0) {
-		c->Message(15, "NPCID %u now has %i Intelligence.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Intelligence.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET _INT = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6665,7 +6666,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "STA") == 0) {
-		c->Message(15, "NPCID %u now has %i Stamina.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Stamina.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET STA = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6675,7 +6676,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "STR") == 0) {
-		c->Message(15, "NPCID %u now has %i Strength.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Strength.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET STR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6685,7 +6686,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "WIS") == 0) {
-		c->Message(15, "NPCID %u now has a Magic Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Magic Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET WIS = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6695,7 +6696,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "MR") == 0) {
-		c->Message(15, "NPCID %u now has a Magic Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Magic Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET MR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6705,7 +6706,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "DR") == 0) {
-		c->Message(15, "NPCID %u now has a Disease Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Disease Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET DR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6715,7 +6716,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "CR") == 0) {
-		c->Message(15, "NPCID %u now has a Cold Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Cold Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET CR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6725,7 +6726,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "FR") == 0) {
-		c->Message(15, "NPCID %u now has a Fire Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Fire Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET FR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6735,7 +6736,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "PR") == 0) {
-		c->Message(15, "NPCID %u now has a Poison Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Poison Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET PR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6745,7 +6746,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "Corrup") == 0) {
-		c->Message(15, "NPCID %u now has a Corruption Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Corruption Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET corrup = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6755,7 +6756,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "PhR") == 0) {
-		c->Message(15, "NPCID %u now has a Physical Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a Physical Resistance of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET PhR = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6765,7 +6766,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "seeinvis") == 0) {
-		c->Message(15, "NPCID %u now has seeinvis set to %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has seeinvis set to %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET see_invis = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6775,7 +6776,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "seeinvisundead") == 0) {
-		c->Message(15, "NPCID %u now has seeinvisundead set to %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has seeinvisundead set to %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET see_invis_undead = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6785,7 +6786,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "seehide") == 0) {
-		c->Message(15, "NPCID %u now has seehide set to %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has seehide set to %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET see_hide = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6795,7 +6796,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "seeimprovedhide") == 0) {
-		c->Message(15, "NPCID %u now has seeimprovedhide set to %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has seeimprovedhide set to %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET see_improved_hide = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6805,7 +6806,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "AC") == 0) {
-		c->Message(15, "NPCID %u now has %i Armor Class.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Armor Class.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET ac = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6815,7 +6816,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "ATK") == 0) {
-		c->Message(15, "NPCID %u now has %i Attack.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Attack.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET atk = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6825,7 +6826,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "Accuracy") == 0) {
-		c->Message(15, "NPCID %u now has %i Accuracy.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has %i Accuracy.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET accuracy = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6835,7 +6836,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "level") == 0) {
-		c->Message(15, "NPCID %u is now level %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u is now level %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET level = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6845,7 +6846,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "maxlevel") == 0) {
-		c->Message(15, "NPCID %u now has a maximum level of %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now has a maximum level of %i.", npcTypeID, atoi(sep->argplus[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET maxlevel = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
@@ -6855,7 +6856,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "qglobal") == 0) {
-		c->Message(15, "Quest globals have been %s for NPCID %u",
+		c->Message(CC_Yellow, "Quest globals have been %s for NPCID %u",
 			atoi(sep->arg[2]) == 0 ? "disabled" : "enabled", npcTypeID);
 
 		std::string query = StringFormat("UPDATE npc_types SET qglobal = %i WHERE id = %i",
@@ -6866,7 +6867,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "npcaggro") == 0) {
-		c->Message(15, "NPCID %u will now %s other NPCs with negative faction npc_value",
+		c->Message(CC_Yellow, "NPCID %u will now %s other NPCs with negative faction npc_value",
 			npcTypeID, atoi(sep->arg[2]) == 0 ? "not aggro" : "aggro");
 
 		std::string query = StringFormat("UPDATE npc_types SET npc_aggro = %i WHERE id = %i",
@@ -6877,7 +6878,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "limit") == 0) {
-		c->Message(15, "NPCID %u now has a spawn limit of %i",
+		c->Message(CC_Yellow, "NPCID %u now has a spawn limit of %i",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET limit = %i WHERE id = %i",
@@ -6888,7 +6889,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "Attackdelay") == 0) {
-		c->Message(15, "NPCID %u now has attack_delay set to %i", npcTypeID, atoi(sep->arg[2]));
+		c->Message(CC_Yellow, "NPCID %u now has attack_delay set to %i", npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET attack_delay = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
@@ -6897,7 +6898,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "findable") == 0) {
-		c->Message(15, "NPCID %u is now %s", npcTypeID, atoi(sep->arg[2]) == 0 ? "not findable" : "findable");
+		c->Message(CC_Yellow, "NPCID %u is now %s", npcTypeID, atoi(sep->arg[2]) == 0 ? "not findable" : "findable");
 
 		std::string query = StringFormat("UPDATE npc_types SET findable = %i WHERE id = %i",
 			atoi(sep->argplus[2]) == 0 ? 0 : 1, npcTypeID);
@@ -6907,7 +6908,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "wep1") == 0) {
-		c->Message(15, "NPCID %u will have item graphic %i set to his primary on repop.",
+		c->Message(CC_Yellow, "NPCID %u will have item graphic %i set to his primary on repop.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET d_melee_texture1 = %i WHERE id = %i",
@@ -6918,7 +6919,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "wep2") == 0) {
-		c->Message(15, "NPCID %u will have item graphic %i set to his secondary on repop.",
+		c->Message(CC_Yellow, "NPCID %u will have item graphic %i set to his secondary on repop.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET d_melee_texture2 = %i WHERE id = %i",
@@ -6929,7 +6930,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "featuresave") == 0) {
-		c->Message(15, "NPCID %u saved with all current facial feature settings",
+		c->Message(CC_Yellow, "NPCID %u saved with all current facial feature settings",
 			npcTypeID);
 
 		Mob* target = c->GetTarget();
@@ -6948,7 +6949,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "color") == 0) {
-		c->Message(15, "NPCID %u now has %i red, %i green, and %i blue tinting on their armor.",
+		c->Message(CC_Yellow, "NPCID %u now has %i red, %i green, and %i blue tinting on their armor.",
 			npcTypeID, atoi(sep->arg[2]), atoi(sep->arg[3]), atoi(sep->arg[4]));
 
 		std::string query = StringFormat("UPDATE npc_types "
@@ -6961,7 +6962,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "armortint_id") == 0) {
-		c->Message(15, "NPCID %u now has field 'armortint_id' set to %s",
+		c->Message(CC_Yellow, "NPCID %u now has field 'armortint_id' set to %s",
 			npcTypeID, sep->arg[2]);
 
 		std::string query = StringFormat("UPDATE npc_types SET armortint_id = '%s' WHERE id = %i",
@@ -6992,7 +6993,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 			return;
 		}
 
-		c->Message(15,"NPCID %u now has the animation set to %i on spawn with spawngroup %i", npcTypeID, animation, c->GetTarget()->CastToNPC()->GetSp2() );
+		c->Message(CC_Yellow,"NPCID %u now has the animation set to %i on spawn with spawngroup %i", npcTypeID, animation, c->GetTarget()->CastToNPC()->GetSp2() );
 
 		std::string query = StringFormat("UPDATE spawn2 SET animation = %i "
 			"WHERE spawngroupID = %i",
@@ -7005,7 +7006,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 		}
 
 	if (strcasecmp(sep->arg[1], "scalerate") == 0) {
-		c->Message(15, "NPCID %u now has a scaling rate of %i.",
+		c->Message(CC_Yellow, "NPCID %u now has a scaling rate of %i.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET scalerate = %i WHERE id = %i",
@@ -7016,7 +7017,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "healscale") == 0) {
-		c->Message(15, "NPCID %u now has a heal scaling rate of %i.",
+		c->Message(CC_Yellow, "NPCID %u now has a heal scaling rate of %i.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET healscale = %i WHERE id = %i",
@@ -7027,7 +7028,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "spellscale") == 0) {
-		c->Message(15, "NPCID %u now has a spell scaling rate of %i.",
+		c->Message(CC_Yellow, "NPCID %u now has a spell scaling rate of %i.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET spellscale = %i WHERE id = %i",
@@ -7038,7 +7039,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "no_target") == 0) {
-		c->Message(15, "NPCID %u is now %s.",
+		c->Message(CC_Yellow, "NPCID %u is now %s.",
 			npcTypeID, atoi(sep->arg[2]) == 0 ? "targetable" : "untargetable");
 
 		std::string query = StringFormat("UPDATE npc_types SET no_target_hotkey = %i WHERE id = %i",
@@ -7049,7 +7050,7 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "version") == 0) {
-		c->Message(15, "NPCID %u is now version %i.",
+		c->Message(CC_Yellow, "NPCID %u is now version %i.",
 			npcTypeID, atoi(sep->arg[2]));
 
 		std::string query = StringFormat("UPDATE npc_types SET version = %i WHERE id = %i",
@@ -7184,12 +7185,12 @@ void command_qglobal(Client *c, const Seperator *sep)
 			target->GetNPCTypeID());
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
-			c->Message(15, "Could not update database.");
+			c->Message(CC_Yellow, "Could not update database.");
 			return;
 		}
 
 		c->LogSQL(query.c_str());
-		c->Message(15, "Success! Changes take effect on zone reboot.");
+		c->Message(CC_Yellow, "Success! Changes take effect on zone reboot.");
 		return;
 	}
 
@@ -7198,27 +7199,27 @@ void command_qglobal(Client *c, const Seperator *sep)
 			target->GetNPCTypeID());
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
-			c->Message(15, "Could not update database.");
+			c->Message(CC_Yellow, "Could not update database.");
 			return;
 		}
 
 		c->LogSQL(query.c_str());
-		c->Message(15, "Success! Changes take effect on zone reboot.");
+		c->Message(CC_Yellow, "Success! Changes take effect on zone reboot.");
 		return;
 	}
 
 	if (!strcasecmp(sep->arg[1], "view")) {
 		const NPCType *type = database.GetNPCType(target->GetNPCTypeID());
 		if (!type)
-			c->Message(15, "Invalid NPC type.");
+			c->Message(CC_Yellow, "Invalid NPC type.");
 		else if (type->qglobal)
-			c->Message(15, "This NPC has quest globals active.");
+			c->Message(CC_Yellow, "This NPC has quest globals active.");
 		else
-			c->Message(15, "This NPC has quest globals disabled.");
+			c->Message(CC_Yellow, "This NPC has quest globals disabled.");
 		return;
 	}
 
-	c->Message(15, "Invalid action specified.");
+	c->Message(CC_Yellow, "Invalid action specified.");
 }
 
 void command_path(Client *c, const Seperator *sep)
@@ -7765,7 +7766,7 @@ void command_flagedit(Client *c, const Seperator *sep)
 		}
 
 		c->LogSQL(query.c_str());
-		c->Message(15, "Success! Zone %s now requires a flag, named %s", database.GetZoneName(zoneid), flag_name);
+		c->Message(CC_Yellow, "Success! Zone %s now requires a flag, named %s", database.GetZoneName(zoneid), flag_name);
 		return;
 	}
 
@@ -7788,12 +7789,12 @@ void command_flagedit(Client *c, const Seperator *sep)
 			zoneid, zone->GetInstanceVersion());
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
-			c->Message(15, "Error updating zone: %s", results.ErrorMessage().c_str());
+			c->Message(CC_Yellow, "Error updating zone: %s", results.ErrorMessage().c_str());
 			return;
 		}
 
 		c->LogSQL(query.c_str());
-		c->Message(15, "Success! Zone %s no longer requires a flag.", database.GetZoneName(zoneid));
+		c->Message(CC_Yellow, "Success! Zone %s no longer requires a flag.", database.GetZoneName(zoneid));
 		return;
 	}
 
@@ -7859,7 +7860,7 @@ void command_flagedit(Client *c, const Seperator *sep)
 		return;
 	}
 
-	c->Message(15, "Invalid action specified. use '#flagedit help' for help");
+	c->Message(CC_Yellow, "Invalid action specified. use '#flagedit help' for help");
 }
 
 void command_mlog(Client *c, const Seperator *sep){
@@ -8028,7 +8029,7 @@ void command_mlog(Client *c, const Seperator *sep){
 		}
 	}
 	else {
-		c->Message(15, "Invalid action specified. use '#mlog help' for help");
+		c->Message(CC_Yellow, "Invalid action specified. use '#mlog help' for help");
 	}
 }
 
@@ -8284,7 +8285,7 @@ void command_rules(Client *c, const Seperator *sep){
 
 	}
 	else {
-		c->Message(15, "Invalid action specified. use '#rules help' for help");
+		c->Message(CC_Yellow, "Invalid action specified. use '#rules help' for help");
 	}
 }
 
@@ -8292,27 +8293,27 @@ void command_reloadtitles(Client *c, const Seperator *sep){
 	ServerPacket* pack = new ServerPacket(ServerOP_ReloadTitles, 0);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-	c->Message(15, "Player Titles Reloaded.");
+	c->Message(CC_Yellow, "Player Titles Reloaded.");
 
 }
 
 void command_altactivate(Client *c, const Seperator *sep){
 	if (sep->arg[1][0] == '\0'){
-		c->Message(10, "Invalid argument, usage:");
-		c->Message(10, "#altactivate list - lists the AA ID numbers that are available to you");
-		c->Message(10, "#altactivate time [argument] - returns the time left until you can use the AA with the ID that matches the argument.");
-		c->Message(10, "#altactivate [argument] - activates the AA with the ID that matches the argument.");
+		c->Message(CC_Default, "Invalid argument, usage:");
+		c->Message(CC_Default, "#altactivate list - lists the AA ID numbers that are available to you");
+		c->Message(CC_Default, "#altactivate time [argument] - returns the time left until you can use the AA with the ID that matches the argument.");
+		c->Message(CC_Default, "#altactivate [argument] - activates the AA with the ID that matches the argument.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "help")){
-		c->Message(10, "Usage:");
-		c->Message(10, "#altactivate list - lists the AA ID numbers that are available to you");
-		c->Message(10, "#altactivate time [argument] - returns the time left until you can use the AA with the ID that matches the argument.");
-		c->Message(10, "#altactivate [argument] - activates the AA with the ID that matches the argument.");
+		c->Message(CC_Default, "Usage:");
+		c->Message(CC_Default, "#altactivate list - lists the AA ID numbers that are available to you");
+		c->Message(CC_Default, "#altactivate time [argument] - returns the time left until you can use the AA with the ID that matches the argument.");
+		c->Message(CC_Default, "#altactivate [argument] - activates the AA with the ID that matches the argument.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "list")){
-		c->Message(10, "You have access to the following AA Abilities:");
+		c->Message(CC_Default, "You have access to the following AA Abilities:");
 		int x, val;
 		SendAA_Struct* saa = nullptr;
 		for (x = 0; x < aaHighestID; x++){
@@ -8322,7 +8323,7 @@ void command_altactivate(Client *c, const Seperator *sep){
 				val = c->GetAA(x);
 				if (val){
 					saa = zone->FindAA(x);
-					c->Message(10, "%d: %s %d", x, saa->name, val);
+					c->Message(CC_Default, "%d: %s %d", x, saa->name, val);
 				}
 			}
 		}
@@ -8332,12 +8333,12 @@ void command_altactivate(Client *c, const Seperator *sep){
 		if (c->GetAA(ability)){
 			int remain = c->GetPTimers().GetRemainingTime(pTimerAAStart + ability);
 			if (remain)
-				c->Message(10, "You may use that ability in %d minutes and %d seconds.", (remain / 60), (remain % 60));
+				c->Message(CC_Default, "You may use that ability in %d minutes and %d seconds.", (remain / 60), (remain % 60));
 			else
-				c->Message(10, "You may use that ability now.");
+				c->Message(CC_Default, "You may use that ability now.");
 		}
 		else{
-			c->Message(10, "You do not have access to that ability.");
+			c->Message(CC_Default, "You do not have access to that ability.");
 		}
 	}
 	else
@@ -8537,7 +8538,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(0, "Invalid Arguments -- MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8558,7 +8559,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(0, "Invalid Arguments -- MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8582,7 +8583,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(0, "Invalid Arguments -- MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8605,7 +8606,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(0, "Invalid Arguments -- MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8638,7 +8639,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(CC_Red, "Update failed! MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8668,7 +8669,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(CC_Red, "Update failed! MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8711,7 +8712,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(CC_Red, "Update failed! MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -8741,7 +8742,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(CC_Red, "Update failed! MySQL gave the following error:");
-			c->Message(13, results.ErrorMessage().c_str());
+			c->Message(CC_Red, results.ErrorMessage().c_str());
 			return;
 		}
 
@@ -10119,22 +10120,22 @@ void command_raidloot(Client *c, const Seperator *sep){
 
 		if (strcasecmp(sep->arg[1], "LEADER") == 0)
 		{
-			c->Message(15, "Loot type changed to: 1");
+			c->Message(CC_Yellow, "Loot type changed to: 1");
 			r->ChangeLootType(1);
 		}
 		else if (strcasecmp(sep->arg[1], "GROUPLEADER") == 0)
 		{
-			c->Message(15, "Loot type changed to: 2");
+			c->Message(CC_Yellow, "Loot type changed to: 2");
 			r->ChangeLootType(2);
 		}
 		else if (strcasecmp(sep->arg[1], "SELECTED") == 0)
 		{
-			c->Message(15, "Loot type changed to: 3");
+			c->Message(CC_Yellow, "Loot type changed to: 3");
 			r->ChangeLootType(3);
 		}
 		else if (strcasecmp(sep->arg[1], "ALL") == 0)
 		{
-			c->Message(15, "Loot type changed to: 4");
+			c->Message(CC_Yellow, "Loot type changed to: 4");
 			r->ChangeLootType(4);
 		}
 		else
@@ -10488,7 +10489,7 @@ void command_mysql(Client *c, const Seperator *sep)
 			case 's': optionS = true; break;
 			case 'h': optionH = true; break;
 			default:
-				c->Message(15, "%s, there is no option '%c'", c->GetName(), sep->arg[argnum][1]);
+				c->Message(CC_Yellow, "%s, there is no option '%c'", c->GetName(), sep->arg[argnum][1]);
 				return;
 			}
 			++argnum;
@@ -10512,7 +10513,7 @@ void command_mysql(Client *c, const Seperator *sep)
 			query.insert(pos, "%%");
 			pos = query.find('#');
 		}
-		c->Message(15, "---Running query: '%s'", query.c_str());
+		c->Message(CC_Yellow, "---Running query: '%s'", query.c_str());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			std::stringstream lineText;
@@ -10941,6 +10942,21 @@ void command_xpinfo(Client *c, const Seperator *sep){
 	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
 }
 
+void command_chattest(Client *c, const Seperator *sep)
+{
+	if(!sep->IsNumber(1))
+		c->Message(CC_Red, "Please specify a valid number to send as the message color. (This message is red, btw.)");
+	else
+	{
+		uint16 base = atoi(sep->arg[1]);
+		for(uint8 i = 0; i < 10; ++i)
+		{
+			uint16 color = base + i;
+			c->Message(color, "All work and no play makes Jack a dull boy. (%i)", color);
+		}
+	}
+}
+
 void command_tune(Client *c, const Seperator *sep)
 {
 	//Work in progress - Kayen
@@ -11001,7 +11017,7 @@ void command_tune(Client *c, const Seperator *sep)
 
 		if (!pct_mitigation)
 		{
-			c->Message(13, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			c->Message(CC_Red, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
 			return;
 		}
 
@@ -11036,7 +11052,7 @@ void command_tune(Client *c, const Seperator *sep)
 
 		if (!pct_mitigation)
 		{
-			c->Message(13, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			c->Message(CC_Red, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
 			return;
 		}
 
@@ -11072,7 +11088,7 @@ void command_tune(Client *c, const Seperator *sep)
 
 		if (!hit_chance)
 		{
-			c->Message(10, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
+			c->Message(CC_Default, "#Tune - Error must enter the desired percent mitigation on defender. Ie. Defender to mitigate on average 20 pct of max damage.");
 			return;
 		}
 
@@ -11087,7 +11103,7 @@ void command_tune(Client *c, const Seperator *sep)
 
 		if (hit_chance > RuleR(Combat,MaxChancetoHit) || hit_chance < RuleR(Combat,MinChancetoHit))
 		{
-			c->Message(10, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
+			c->Message(CC_Default, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
 			return;
 		}
 		
@@ -11129,7 +11145,7 @@ void command_tune(Client *c, const Seperator *sep)
 
 		if (hit_chance > RuleR(Combat,MaxChancetoHit) || hit_chance < RuleR(Combat,MinChancetoHit))
 		{
-			c->Message(10, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
+			c->Message(CC_Default, "#Tune - Error hit chance out of bounds. [Max %.2f Min .2f]", RuleR(Combat,MaxChancetoHit),RuleR(Combat,MinChancetoHit));
 			return;
 		}
 		

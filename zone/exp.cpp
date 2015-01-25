@@ -181,7 +181,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		}
 	}
 	else if((set_exp + set_aaxp) < (m_pp.exp+m_pp.expAA)){ //only loss message if you lose exp, no message if you gained/lost nothing.
-		Message(15, "You have lost experience.");
+		Message(CC_Yellow, "You have lost experience.");
 	}
 
 	//check_level represents the level we should be when we have
@@ -245,7 +245,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		//figure out how many points were actually gained
 		/*uint32 gained = m_pp.aapoints - last_unspentAA;*/	//unused
 
-		//Message(15, "You have gained %d skill points!!", m_pp.aapoints - last_unspentAA);
+		//Message(CC_Yellow, "You have gained %d skill points!!", m_pp.aapoints - last_unspentAA);
 		char val1[20]={0};
 		Message_StringID(CC_Yellow, GAIN_ABILITY_POINT,ConvertArray(m_pp.aapoints, val1),m_pp.aapoints == 1 ? "" : "(s)");	//You have gained an ability point! You now have %1 ability point%2.
 		
@@ -256,7 +256,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 			QServ->SendQuery(query.c_str());
 		}
 
-		//Message(15, "You now have %d skill points available to spend.", m_pp.aapoints);
+		//Message(CC_Yellow, "You now have %d skill points available to spend.", m_pp.aapoints);
 	}
 
 	uint8 maxlevel = RuleI(Character, MaxExpLevel) + 1;
@@ -295,7 +295,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 			if (level_count == 1)
 			{
 				Message_StringID(CC_Yellow, GAIN_LEVEL, ConvertArray(check_level, val1));
-				/* Message(15, "You have gained a level! Welcome to level %i!", check_level); */
+				/* Message(CC_Yellow, "You have gained a level! Welcome to level %i!", check_level); */
 			}
 			else
 				Message(CC_Yellow, "Welcome to level %i!", check_level);
@@ -309,7 +309,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		else 
 		{
 			Message_StringID(CC_Yellow, LOSE_LEVEL, ConvertArray(check_level, val1));
-			/* Message(15, "You lost a level! You are now level %i!", check_level); */
+			/* Message(CC_Yellow, "You lost a level! You are now level %i!", check_level); */
 		}
 		SetLevel(check_level);
 	}
@@ -348,7 +348,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		char val2[20]={0};
 		char val3[20]={0};
 		Message_StringID(CC_Yellow, GM_GAINXP,ConvertArray(set_aaxp,val1),ConvertArray(set_exp,val2),ConvertArray(GetEXPForLevel(GetLevel()+1),val3));	//[GM] You have gained %1 AXP and %2 EXP (%3).
-		//Message(15, "[GM] You now have %d / %d EXP and %d / %d AA exp.", set_exp, GetEXPForLevel(GetLevel()+1), set_aaxp, max_AAXP);
+		//Message(CC_Yellow, "[GM] You now have %d / %d EXP and %d / %d AA exp.", set_exp, GetEXPForLevel(GetLevel()+1), set_aaxp, max_AAXP);
 	}
 }
 
@@ -402,7 +402,7 @@ void Client::SetLevel(uint8 set_level, bool command)
 	m_pp.level = set_level;
 	if (command){
 		m_pp.exp = GetEXPForLevel(set_level);
-		Message(15, "Welcome to level %i!", set_level);
+		Message(CC_Yellow, "Welcome to level %i!", set_level);
 		lu->exp = 0;
 	}
 	else {

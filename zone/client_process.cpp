@@ -151,7 +151,7 @@ bool Client::Process() {
 
 			if (song_target == nullptr || (IsCharmSpell(bardsong) && song_target->IsCharmed()))
 			{
-				InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
+				InterruptSpell(SONG_ENDS_ABRUPTLY, CC_User_SpellFailure, bardsong);
 			} else {
 				//The pulse should be prevented if this is a friendly target, but the song should not be stopped. 
 				if(IsDetrimentalSpell(bardsong) && !IsAttackAllowed(song_target, true, bardsong) && !GetGM())
@@ -161,7 +161,7 @@ bool Client::Process() {
 				}
 				else if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
 				{
-					InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
+					InterruptSpell(SONG_ENDS_ABRUPTLY, CC_User_SpellFailure, bardsong);
 				}
 				//SpellFinished(bardsong, bardsong_target, bardsong_slot, spells[bardsong].mana);
 			}
@@ -957,9 +957,9 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		sprintf(handy_id, "%i", greet_id);
 
 		if (greet_id != MERCHANT_GREETING)
-			Message_StringID(10, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName(), handyitem->Name);
+			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName(), handyitem->Name);
 		else
-			Message_StringID(10, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName());
+			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName());
 
 		merch->CastToNPC()->FaceTarget(this->CastToMob());
 	}
@@ -1447,8 +1447,8 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 			with->trade->state = Trading;
 
 		Client* recipient = trader->CastToClient();
-		recipient->Message(15, "%s adds some coins to the trade.", GetName());
-		recipient->Message(15, "The total trade is: %i PP, %i GP, %i SP, %i CP",
+		recipient->Message(CC_Yellow, "%s adds some coins to the trade.", GetName());
+		recipient->Message(CC_Yellow, "The total trade is: %i PP, %i GP, %i SP, %i CP",
 			trade->pp, trade->gp,
 			trade->sp, trade->cp
 		);

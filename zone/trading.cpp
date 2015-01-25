@@ -1898,7 +1898,7 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
     uint32 ID = 0;
 
     if (results.RowCount() == static_cast<unsigned long>(RuleI(Bazaar, MaxSearchResults)))
-			Message(15, "Your search reached the limit of %i results. Please narrow your search down by selecting more options.",
+			Message(CC_Yellow, "Your search reached the limit of %i results. Please narrow your search down by selecting more options.",
 					RuleI(Bazaar, MaxSearchResults));
 
     if(results.RowCount() == 0) {

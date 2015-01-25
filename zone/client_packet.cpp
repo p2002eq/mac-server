@@ -2929,10 +2929,10 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			min = (ttime / 60000) % 60; // Total seconds / 60 drop .00
 			char val1[20] = { 0 };
 			char val2[20] = { 0 };
-			Message_StringID(10, CORPSE_DECAY1, ConvertArray(min, val1), ConvertArray(sec, val2));
+			Message_StringID(CC_Default, CORPSE_DECAY1, ConvertArray(min, val1), ConvertArray(sec, val2));
 		}
 		else {
-			Message_StringID(10, CORPSE_DECAY_NOW);
+			Message_StringID(CC_Default, CORPSE_DECAY_NOW);
 		}
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
@@ -2956,7 +2956,7 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			hour = 0;
 		}
 		else {
-			Message_StringID(10, CORPSE_DECAY_NOW);
+			Message_StringID(CC_Default, CORPSE_DECAY_NOW);
 		}
 	}
 }
@@ -3351,9 +3351,9 @@ void Client::Handle_OP_DuelResponse(const EQApplicationPacket *app)
 	initiator->CastToClient()->SetDuelTarget(0);
 	initiator->CastToClient()->SetDueling(false);
 	if (GetID() == initiator->GetID())
-		entity->CastToClient()->Message_StringID(10, DUEL_DECLINE, initiator->GetName());
+		entity->CastToClient()->Message_StringID(CC_Default, DUEL_DECLINE, initiator->GetName());
 	else
-		initiator->CastToClient()->Message_StringID(10, DUEL_DECLINE, entity->GetName());
+		initiator->CastToClient()->Message_StringID(CC_Default, DUEL_DECLINE, entity->GetName());
 	return;
 }
 
@@ -4849,7 +4849,7 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 
 			if (guild_mgr.SetGuildLeader(GuildID(), newleader->CharacterID())){
 				Message(0, "Successfully Transfered Leadership to %s.", target);
-				newleader->Message(15, "%s has transfered the guild leadership into your hands.", GetName());
+				newleader->Message(CC_Yellow, "%s has transfered the guild leadership into your hands.", GetName());
 			}
 			else
 				Message(0, "Could not change leadership at this time.");
@@ -5269,9 +5269,9 @@ void Client::Handle_OP_ManaChange(const EQApplicationPacket *app)
 	if (app->size == 0) {
 		// i think thats the sign to stop the songs
 		if (IsBardSong(casting_spell_id) || bardsong != 0)
-			InterruptSpell(SONG_ENDS, 0x121);
+			InterruptSpell(SONG_ENDS, CC_User_SpellFailure);
 		else
-			InterruptSpell(INTERRUPT_SPELL, 0x121);
+			InterruptSpell(INTERRUPT_SPELL, CC_User_SpellFailure);
 
 		return;
 	}
@@ -5323,11 +5323,11 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 		if (zone->random.Int(0, 99) < criticalchance){
 			mendhp *= 2;
-			Message_StringID(CC_Purple, MEND_CRITICAL);
+			Message_StringID(CC_Blue, MEND_CRITICAL);
 		}
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
-		Message_StringID(CC_Purple, MEND_SUCCESS);
+		Message_StringID(CC_Blue, MEND_SUCCESS);
 	}
 	else {
 		/* the purpose of the following is to make the chance to worsen wounds much less common,
@@ -5340,10 +5340,10 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		{
 			SetHP(currenthp > mendhp ? (GetHP() - mendhp) : 1);
 			SendHPUpdate();
-			Message_StringID(CC_Purple, MEND_WORSEN);
+			Message_StringID(CC_Blue, MEND_WORSEN);
 		}
 		else
-			Message_StringID(CC_Purple, MEND_FAIL);
+			Message_StringID(CC_Blue, MEND_FAIL);
 	}
 
 	CheckIncreaseSkill(SkillMend, nullptr, 10);
@@ -5422,7 +5422,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		}
 	}
 
-	if (mi_hack) { Message(15, "Caution: Illegal use of inaccessable bag slots!"); }
+	if (mi_hack) { Message(CC_Yellow, "Caution: Illegal use of inaccessable bag slots!"); }
 
 	if (IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
 		bool si = SwapItem(mi);
@@ -5489,7 +5489,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		if (!GetTarget())
 			break;
 		if (GetTarget()->IsMezzed()) {
-			Message_StringID(10, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
+			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
 			break;
 		}
 		if (mypet->IsFeared())
@@ -5532,7 +5532,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	case PET_HEALTHREPORT: {
 		Message_StringID(MT_PetResponse, PET_REPORT_HP, ConvertArrayF(mypet->GetHPRatio(), val1));
 		mypet->ShowBuffList(this);
-		//Message(10,"%s tells you, 'I have %d percent of my hit points left.'",mypet->GetName(),(uint8)mypet->GetHPRatio());
+		//Message(CC_Default,"%s tells you, 'I have %d percent of my hit points left.'",mypet->GetName(),(uint8)mypet->GetHPRatio());
 		break;
 	}
 	case PET_GETLOST: {
@@ -6444,7 +6444,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Loot type changed to: %d.", ri->parameter);
+			Message(CC_Yellow, "Loot type changed to: %d.", ri->parameter);
 			r->ChangeLootType(ri->parameter);
 		}
 		break;
@@ -6456,7 +6456,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Adding %s as a raid looter.", ri->leader_name);
+			Message(CC_Yellow, "Adding %s as a raid looter.", ri->leader_name);
 			r->AddRaidLooter(ri->leader_name);
 		}
 		break;
@@ -6468,7 +6468,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Removing %s as a raid looter.", ri->leader_name);
+			Message(CC_Yellow, "Removing %s as a raid looter.", ri->leader_name);
 			r->RemoveRaidLooter(ri->leader_name);
 		}
 		break;
@@ -6606,11 +6606,11 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 	ds->duel_target = duel;
 	Entity* entity = entity_list.GetID(ds->duel_target);
 	if (GetID() != ds->duel_target && entity->IsClient() && (entity->CastToClient()->IsDueling() && entity->CastToClient()->GetDuelTarget() != 0)) {
-		Message_StringID(10, DUEL_CONSIDERING, entity->GetName());
+		Message_StringID(CC_Default, DUEL_CONSIDERING, entity->GetName());
 		return;
 	}
 	if (IsDueling()) {
-		Message_StringID(10, DUEL_INPROGRESS);
+		Message_StringID(CC_Default, DUEL_INPROGRESS);
 		return;
 	}
 
@@ -7041,7 +7041,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 	if (CheckLoreConflict(item))
 	{
-		Message(15, "You can only have one of a lore item.");
+		Message(CC_Yellow, "You can only have one of a lore item.");
 		return;
 	}
 	// This makes sure the vendor deletes charged items from their temp list properly.
@@ -7713,7 +7713,7 @@ void Client::Handle_OP_Surname(const EQApplicationPacket *app)
 
 	if (!p_timers.Expired(&database, pTimerSurnameChange, false) && !GetGM())
 	{
-		Message(15, "You may only change surnames once every 7 days, your /surname is currently on cooldown.");
+		Message(CC_Yellow, "You may only change surnames once every 7 days, your /surname is currently on cooldown.");
 		return;
 	}
 

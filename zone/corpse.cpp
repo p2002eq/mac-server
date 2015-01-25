@@ -1068,15 +1068,15 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 
 		if(IsPlayerCorpse() && (char_id == client->CharacterID() || client->GetGM())) {
 			if(i > corpselootlimit) {
-				client->Message(15, "*** This corpse contains more items than can be displayed! ***");
+				client->Message(CC_Yellow, "*** This corpse contains more items than can be displayed! ***");
 				client->Message(0, "Remove items and re-loot corpse to access remaining inventory.");
 				client->Message(0, "(%s contains %i additional %s.)", GetName(), (i - corpselootlimit), (i - corpselootlimit) == 1 ? "item" : "items");
 			}
 
 			if (IsPlayerCorpse() && i == 0 && itemlist.size() > 0) { // somehow, player corpse contains items, but client doesn't see them...
 				client->Message(CC_Red, "This corpse contains items that are inaccessable!");
-				client->Message(15, "Contact a GM for item replacement, if necessary.");
-				client->Message(15, "BUGGED CORPSE [DBID: %i, Name: %s, Item Count: %i]", GetCorpseDBID(), GetName(), itemlist.size());
+				client->Message(CC_Yellow, "Contact a GM for item replacement, if necessary.");
+				client->Message(CC_Yellow, "BUGGED CORPSE [DBID: %i, Name: %s, Item Count: %i]", GetCorpseDBID(), GetName(), itemlist.size());
 
 				cur = itemlist.begin();
 				end = itemlist.end();

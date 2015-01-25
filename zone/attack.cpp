@@ -1367,7 +1367,7 @@ void Mob::AggroPet(Mob* attacker)
 				mlog(PETS__AGGRO, "Sending pet %s into battle due to attack.", pet->GetName());
 				pet->AddToHateList(attacker, 1);
 				pet->SetTarget(attacker);
-				Message_StringID(10, PET_ATTACKING, pet->GetCleanName(), attacker->GetCleanName());
+				Message_StringID(CC_Default, PET_ATTACKING, pet->GetCleanName(), attacker->GetCleanName());
 			}
 		}
 	}
@@ -3342,7 +3342,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			damage = AffectMagicalDamage(damage, spell_id, iBuffTic, attacker);
 			if (origdmg != damage && attacker && attacker->IsClient()) {
 				if(attacker->CastToClient()->GetFilter(FilterDamageShields) != FilterHide)
-					attacker->Message(15, "The Spellshield absorbed %d of %d points of damage", origdmg - damage, origdmg);
+					attacker->Message(CC_Yellow, "The Spellshield absorbed %d of %d points of damage", origdmg - damage, origdmg);
 			}
 			if (damage == 0 && attacker && origdmg != damage && IsClient()) {
 				//Kayen: Probably need to add a filter for this - Not sure if this msg is correct but there should be a message for spell negate/runes.

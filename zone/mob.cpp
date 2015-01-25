@@ -353,8 +353,17 @@ Mob::Mob(const char* in_name,
 	hasTempPet = false;
 	count_TempPet = 0;
 
-	m_is_running = false;
-	m_running = false;
+	//Boats always "run"
+	if(race == SHIP && RuleB(NPC, BoatsRunByDefault))
+	{
+		m_is_running = true;
+		m_running = true;
+	}
+	else
+	{
+		m_is_running = false;
+		m_running = false;
+	}
 
 	nimbus_effect1 = 0;
 	nimbus_effect2 = 0;
@@ -1063,7 +1072,13 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 	}
 	else
 	{
-		if(move_tic_count == RuleI(Zone, NPCPositonUpdateTicCount))
+		uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
+	/*	if(this->IsNPC())
+		{
+			if(this->GetBaseRace() == SHIP)
+				position_update = RuleI(Zone, NPCPositonUpdateTicCount)/2;
+		}*/
+		if(move_tic_count == position_update)
 		{
 			entity_list.QueueClients(this, app, (iSendToSelf==0), false);
 			move_tic_count = 0;

@@ -3495,7 +3495,7 @@ void EntityList::QuestJournalledSayClose(Mob *sender, Client *QuestInitiator,
 	for (auto it = client_list.begin(); it != client_list.end(); ++it) {
 		c = it->second;
 		if(c && (c != QuestInitiator) && c->DistNoRoot(*sender) <= dist2)
-			c->Message_StringID(10, GENERIC_SAY, mobname, message);
+			c->Message_StringID(CC_Default, GENERIC_SAY, mobname, message);
 	}
 }
 

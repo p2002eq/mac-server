@@ -181,7 +181,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		int chance = CastToClient()->GetFocusEffect(focusFcMute, spell_id);
 
 		if (zone->random.Roll(chance)) {
-			Message_StringID(CC_Red, SILENCED_STRING);
+			Message_StringID(CC_User_SpellFailure, SILENCED_STRING);
 			if(IsClient())
 				CastToClient()->SendSpellBarEnable(spell_id);
 			return(false);
@@ -189,7 +189,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	}
 
 	if(IsDetrimentalSpell(spell_id) && !zone->CanDoCombat()){
-		Message_StringID(CC_Red, SPELL_WOULDNT_HOLD);
+		Message_StringID(CC_User_SpellFailure, SPELL_WOULDNT_HOLD);
 		if(IsClient())
 			CastToClient()->SendSpellBarEnable(spell_id);
 		if(casting_spell_id && IsNPC())
@@ -200,7 +200,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	//cannot cast under divine aura
 	if(DivineAura()) {
 		mlog(SPELLS__CASTING_ERR, "Spell casting canceled: cannot cast while Divine Aura is in effect.");
-		InterruptSpell(SPELL_FIZZLE, CC_Red, false);
+		InterruptSpell(SPELL_FIZZLE, CC_User_SpellFailure, false);
 		return(false);
 	}
 
@@ -230,7 +230,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if(slot < MAX_PP_MEMSPELL && !CheckFizzle(spell_id))
 	{
 		int fizzle_msg = IsBardSong(spell_id) ? MISS_NOTE : SPELL_FIZZLE;
-		InterruptSpell(fizzle_msg, CC_Red, spell_id);
+		InterruptSpell(fizzle_msg, CC_User_SpellFailure, spell_id);
 
 		uint32 use_mana = ((spells[spell_id].mana) / 4);
 		mlog(SPELLS__CASTING_ERR, "Spell casting canceled: fizzled. %d mana has been consumed", use_mana);
@@ -407,7 +407,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 				mlog(SPELLS__CASTING_ERR, "Spell Error not enough mana spell=%d mymana=%d cost=%d\n", GetName(), spell_id, my_curmana, mana_cost);
 				if(IsClient()) {
 					//clients produce messages... npcs should not for this case
-					InterruptSpell(INSUFFICIENT_MANA,CC_Red);
+					InterruptSpell(INSUFFICIENT_MANA,CC_User_SpellFailure);
 				} else {
 					InterruptSpell(0, 0, 0);	//the 0 args should cause no messages
 				}
@@ -432,7 +432,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		!IsBindSightSpell(spell_id))
 		{
 			mlog(SPELLS__CASTING, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
-			InterruptSpell(CANT_SEE_TARGET,CC_Red,spell_id);
+			InterruptSpell(CANT_SEE_TARGET,CC_User_SpellFailure,spell_id);
 			return (false);
 		}
 	}
@@ -512,27 +512,27 @@ bool Mob::DoCastingChecks()
 
 	if (spells[spell_id].TimeOfDay == 2 && !zone->zone_time.IsNightTime())
 	{
-		Message_StringID(CC_Red, CAST_NIGHTTIME);
+		Message_StringID(CC_User_SpellFailure, CAST_NIGHTTIME);
 		return false;
 	}
 
 	if (spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()) {
-		Message_StringID(CC_Red, CAST_OUTDOORS);
+		Message_StringID(CC_User_SpellFailure, CAST_OUTDOORS);
 		return false;
 	}
 
 	if (IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()) {
-		Message(CC_Red, "You can't levitate in this zone.");
+		Message(CC_User_SpellFailure, "You can't levitate in this zone.");
 		return false;
 	}
 
 	if (zone->IsSpellBlocked(spell_id, GetX(), GetY(), GetZ())) {
 		const char *msg = zone->GetSpellBlockedMessage(spell_id, GetX(), GetY(), GetZ());
 		if (msg) {
-			Message(13, msg);
+			Message(CC_User_SpellFailure, msg);
 			return false;
 		} else {
-			Message(CC_Red, "You can't cast this spell here.");
+			Message(CC_User_SpellFailure, "You can't cast this spell here.");
 			return false;
 		}
 	}
@@ -881,7 +881,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	if(IsClient() && slot != USE_ITEM_SPELL_SLOT) { // 10 is item
 		if(!CastToClient()->GetPTimers().Expired(&database, pTimerSpellStart + spell_id, false)) {
 			//should we issue a message or send them a spell gem packet?
-			Message_StringID(CC_Red, SPELL_RECAST);
+			Message_StringID(CC_User_SpellFailure, SPELL_RECAST);
 			mlog(SPELLS__CASTING_ERR, "Casting of %d canceled: spell reuse timer not expired", spell_id);
 			InterruptSpell();
 			return;
@@ -895,7 +895,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		if(itm && itm->GetItem()->RecastDelay > 0)
 		{
 			if(!CastToClient()->GetPTimers().Expired(&database, (pTimerItemStart + itm->GetItem()->RecastType), false)) {
-				Message_StringID(CC_Red, SPELL_RECAST);
+				Message_StringID(CC_User_SpellFailure, SPELL_RECAST);
 				mlog(SPELLS__CASTING_ERR, "Casting of %d canceled: item spell reuse timer not expired", spell_id);
 				InterruptSpell();
 				return;
@@ -1405,7 +1405,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		if (IsDetrimentalSpell(spell_id)) {
 			if ( (spell_target->IsNPC() && spell_target->IsEngaged()) ||
 				(spell_target->IsClient() && spell_target->CastToClient()->GetAggroCount())){
-					Message_StringID(13,SPELL_NO_EFFECT); //Unsure correct string
+					Message_StringID(CC_User_SpellFailure,SPELL_NO_EFFECT); //Unsure correct string
 					return false;
 			}
 		}
@@ -1414,9 +1414,9 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			if ( (IsNPC() && IsEngaged()) ||
 				(IsClient() && CastToClient()->GetAggroCount())){
 					if (IsDiscipline(spell_id))
-						Message_StringID(13,NO_ABILITY_IN_COMBAT);
+						Message_StringID(CC_User_SpellFailure,NO_ABILITY_IN_COMBAT);
 					else
-						Message_StringID(13,NO_CAST_IN_COMBAT);
+						Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
 
 					return false;
 			}
@@ -1428,7 +1428,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		if (IsDetrimentalSpell(spell_id)) {
 			if ( (spell_target->IsNPC() && !spell_target->IsEngaged()) ||
 				(spell_target->IsClient() && !spell_target->CastToClient()->GetAggroCount())){
-					Message_StringID(13,SPELL_NO_EFFECT); //Unsure correct string
+					Message_StringID(CC_User_SpellFailure,SPELL_NO_EFFECT); //Unsure correct string
 					return false;
 			}
 		}
@@ -1437,9 +1437,9 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			if ( (IsNPC() && !IsEngaged()) ||
 				(IsClient() && !CastToClient()->GetAggroCount())){
 					if (IsDiscipline(spell_id))
-						Message_StringID(13,NO_ABILITY_OUT_OF_COMBAT);
+						Message_StringID(CC_User_SpellFailure,NO_ABILITY_OUT_OF_COMBAT);
 					else
-						Message_StringID(13,NO_CAST_OUT_OF_COMBAT);
+						Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
 
 					return false;
 			}
@@ -1827,7 +1827,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	if( spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()){
 		if(IsClient()){
 				if(!CastToClient()->GetGM()){
-					Message_StringID(CC_Red, CAST_OUTDOORS);
+					Message_StringID(CC_User_SpellFailure, CAST_OUTDOORS);
 					return false;
 				}
 			}
@@ -1836,7 +1836,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	if(IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()){
 			if(IsClient()){
 				if(!CastToClient()->GetGM()){
-					Message(CC_Red, "You can't levitate in this zone.");
+					Message(CC_User_SpellFailure, "You can't levitate in this zone.");
 					return false;
 				}
 			}
@@ -1847,11 +1847,11 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		if(zone->IsSpellBlocked(spell_id, GetX(), GetY(), GetZ())){
 			const char *msg = zone->GetSpellBlockedMessage(spell_id, GetX(), GetY(), GetZ());
 			if(msg){
-				Message(13, msg);
+				Message(CC_User_SpellFailure, msg);
 				return false;
 			}
 			else{
-				Message(CC_Red, "You can't cast this spell here.");
+				Message(CC_User_SpellFailure, "You can't cast this spell here.");
 				return false;
 			}
 
@@ -1926,13 +1926,13 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		if(dist2 > range2) {
 			//target is out of range.
 			mlog(SPELLS__CASTING, "Spell %d: Spell target is out of range (squared: %f > %f)", spell_id, dist2, range2);
-			Message_StringID(CC_Red, TARGET_OUT_OF_RANGE);
+			Message_StringID(CC_User_SpellFailure, TARGET_OUT_OF_RANGE);
 			return(false);
 		}
 		else if (dist2 < min_range2){
 			//target is too close range.
 			mlog(SPELLS__CASTING, "Spell %d: Spell target is too close (squared: %f < %f)", spell_id, dist2, min_range2);
-			Message_StringID(13, TARGET_TOO_CLOSE);
+			Message_StringID(CC_User_SpellFailure, TARGET_TOO_CLOSE);
 			return(false);
 		}
 

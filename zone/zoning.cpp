@@ -424,7 +424,7 @@ void Client::ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, 
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		case GMSummon:
-			Message(15, "You have been summoned by a GM!");
+			Message(CC_Yellow, "You have been summoned by a GM!");
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		case ZoneToBindPoint:
@@ -434,11 +434,12 @@ void Client::ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, 
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		case SummonPC:
-			Message(15, "You have been summoned!");
+			if(!GetGM())
+				Message(CC_Yellow, "You have been summoned!");
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		case Rewind:
-			Message(15, "Rewinding to previous location.");
+			Message(CC_Yellow, "Rewinding to previous location.");
 			ZonePC(zoneID, instance_id, x, y, z, heading, ignorerestrictions, zm);
 			break;
 		default:

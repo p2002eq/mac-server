@@ -691,13 +691,13 @@ void QuestManager::changedeity(int diety_id) {
 		if(initiator->IsClient())
 		{
 			initiator->SetDeity(diety_id);
-			initiator->Message(15,"Your Deity has been changed/set to: %i", diety_id);
+			initiator->Message(CC_Yellow,"Your Deity has been changed/set to: %i", diety_id);
 			initiator->Save(1);
 			initiator->Kick();
 		}
 		else
 		{
-			initiator->Message(15,"Error changing Deity");
+			initiator->Message(CC_Yellow,"Error changing Deity");
 		}
 	}
 }
@@ -813,11 +813,11 @@ void QuestManager::surname(const char *name) {
 		if(initiator->IsClient())
 		{
 			initiator->ChangeLastName(name);
-			initiator->Message(15,"Your surname has been changed/set to: %s", name);
+			initiator->Message(CC_Yellow,"Your surname has been changed/set to: %s", name);
 		}
 		else
 		{
-			initiator->Message(15,"Error changing/setting surname");
+			initiator->Message(CC_Yellow,"Error changing/setting surname");
 		}
 	}
 }

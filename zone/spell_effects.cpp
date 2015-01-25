@@ -1973,7 +1973,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			{
 			if(IsClient()){
 					CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), caster->GetX(), caster->GetY(), caster->GetZ(), caster->GetHeading(), 2, SummonPC);
-					Message(15, "You have been summoned!");
+					Message(CC_Yellow, "You have been summoned!");
 					entity_list.ClearAggro(this);
 				}
 				else
@@ -2589,7 +2589,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 			case SE_IllusionOther: {
 				SetProjectIllusion(true);
-				Message(10, "The power of your next illusion spell will flow to your grouped target in your place.");
+				Message(CC_Default, "The power of your next illusion spell will flow to your grouped target in your place.");
 				break;
 			}
 

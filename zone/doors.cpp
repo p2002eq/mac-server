@@ -215,15 +215,15 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 			{
 				strcpy(tmpmsg, "Door is locked by an unknown guild");
 			}
-			sender->Message(CC_Purple, tmpmsg);
+			sender->Message(CC_Blue, tmpmsg);
 			safe_delete(outapp);
 			return;
 		}
 		// a key is required or the door is locked but can be picked or both
-		sender->Message(CC_Purple, "This is locked...");		// debug spam - should probably go
+		sender->Message(CC_Blue, "This is locked...");		// debug spam - should probably go
 		if(sender->GetGM())		// GM can always open locks - should probably be changed to require a key
 		{
-			sender->Message_StringID(CC_Purple,DOORS_GM);
+			sender->Message_StringID(CC_Blue,DOORS_GM);
 			if(!IsDoorOpen() || (opentype == 58))
 			{
 				md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
@@ -237,7 +237,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 		{	// they have something they are trying to open it with
 			if(keyneeded && (keyneeded == playerkey))
 			{	// key required and client is using the right key
-				sender->Message(CC_Purple, "You got it open!");
+				sender->Message(CC_Blue, "You got it open!");
 				if(!IsDoorOpen() || (opentype == 58))
 				{
 					md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
@@ -272,25 +272,25 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 						{
 							md->action = invert_state == 0 ? CLOSE_DOOR : CLOSE_INVDOOR;
 						}
-						sender->Message_StringID(CC_Purple, DOORS_SUCCESSFUL_PICK);
+						sender->Message_StringID(CC_Blue, DOORS_SUCCESSFUL_PICK);
 					}
 					else
 					{
-						sender->Message_StringID(CC_Purple, DOORS_INSUFFICIENT_SKILL);
+						sender->Message_StringID(CC_Blue, DOORS_INSUFFICIENT_SKILL);
 						safe_delete(outapp);
 						return;
 					}
 				}
 				else
 				{
-					sender->Message_StringID(CC_Purple, DOORS_NO_PICK);
+					sender->Message_StringID(CC_Blue, DOORS_NO_PICK);
 					safe_delete(outapp);
 					return;
 				}
 			}
 			else
 			{
-				sender->Message_StringID(CC_Purple, DOORS_CANT_PICK);
+				sender->Message_StringID(CC_Blue, DOORS_CANT_PICK);
 				safe_delete(outapp);
 				return;
 			}
@@ -301,7 +301,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 			if(sender->KeyRingCheck(keyneeded))
 			{
 				playerkey = keyneeded;
-				sender->Message(CC_Purple, "You got it open!"); // more debug spam
+				sender->Message(CC_Blue, "You got it open!"); // more debug spam
 				if(!IsDoorOpen() || (opentype == 58))
 				{
 					md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
@@ -313,7 +313,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 			}
 			else
 			{
-				sender->Message_StringID(CC_Purple, DOORS_LOCKED);
+				sender->Message_StringID(CC_Blue, DOORS_LOCKED);
 				safe_delete(outapp);
 				return;
 			}

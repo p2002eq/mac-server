@@ -3022,14 +3022,14 @@ bool Client::KeyRingCheck(uint32 item_id)
 
 void Client::KeyRingList()
 {
-	Message(CC_Purple,"Keys on Keyring:");
+	Message(CC_Blue,"Keys on Keyring:");
 	const Item_Struct *item = 0;
 	for(std::list<uint32>::iterator iter = keyring.begin();
 		iter != keyring.end();
 		++iter)
 	{
 		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(CC_Purple,item->Name);
+			Message(CC_Blue,item->Name);
 		}
 	}
 }
@@ -4660,11 +4660,11 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 			goto Extra_Info;
 		}
 		else {
-			client->Message(15, "The window has exceeded its character limit, displaying stats to chat window:");
+			client->Message(CC_Yellow, "The window has exceeded its character limit, displaying stats to chat window:");
 		}
 	}
 
-	client->Message(15, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
+	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
 	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f  Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
