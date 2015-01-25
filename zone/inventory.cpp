@@ -1267,7 +1267,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			if ((int8)move_in->number_in_stack >= src_inst->GetCharges()) {
 				// Move entire stack
 				if(!m_inv.SwapItem(src_slot_id, dst_slot_id)) { 
-					mlog(INVENTORY__ERROR, "Could not move entire stack from %d to %d with stack size %d. Dest empty.", src_slot_id, dst_slot_id, move_in->number_in_stack);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Could not move entire stack from %d to %d with stack size %d. Dest empty.", src_slot_id, dst_slot_id, move_in->number_in_stack);
 					return false; 
 				}
 				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Move entire stack from %d to %d with stack size %d. Dest empty.", src_slot_id, dst_slot_id, move_in->number_in_stack);
@@ -1291,7 +1291,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			SetMaterial(dst_slot_id,src_inst->GetItem()->ID);
 		}
 		if(!m_inv.SwapItem(src_slot_id, dst_slot_id)) {
-			mlog(INVENTORY__ERROR, "Destination slot is not valid for item %s from slot %d to slot %d", src_inst->GetItem()->Name, src_slot_id, dst_slot_id);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Destination slot is not valid for item %s from slot %d to slot %d", src_inst->GetItem()->Name, src_slot_id, dst_slot_id);
 			return false;
 		}
 		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Moving entire item from slot %d to slot %d", src_slot_id, dst_slot_id);
@@ -1349,7 +1349,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 				const ItemInst* inst = m_inv[trade_bag_slot];
 				if(inst)
 				{
-					mlog(INVENTORY__SLOTS, "Sending out packet for bagged item: %s in slot: %i bag slot: %i", inst->GetItem()->Name, trade_bag_slot, dst_slot_id);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Sending out packet for bagged item: %s in slot: %i bag slot: %i", inst->GetItem()->Name, trade_bag_slot, dst_slot_id);
 					SendItemPacket(trade_bag_slot, inst, ItemPacketTrade);
 				}
 			}

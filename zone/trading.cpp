@@ -511,16 +511,16 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 									const ItemInst* inst = m_inv[trade_bag_slot];
 
 									if (inst) {
-									mlog(TRADING__CLIENT, "Giving item in container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_bag_slot, other->GetName());
+									logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Giving item in container %s (%d) in slot %d to %s", inst->GetItem()->Name, inst->GetItem()->ID, trade_bag_slot, other->GetName());
 	
 										if (inst->GetItem()->NoDrop != 0 || Admin() >= RuleI(Character, MinStatusForNoDropExemptions) || RuleI(World, FVNoDropFlag) == 1 || other == this) 
 										{
 											int16 free_bag_slot = other->GetInv().CalcSlotId(free_slot, bagidx);
-											mlog(TRADING__CLIENT, "Free slot is: %i. Slot bag is in: %i Index is: %i", free_bag_slot, free_slot, bagidx);
+											logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Free slot is: %i. Slot bag is in: %i Index is: %i", free_bag_slot, free_slot, bagidx);
 											if (free_bag_slot != INVALID_INDEX) {
 												if (other->PutItemInInventory(free_bag_slot, *inst, true)) 
 												{
-													mlog(TRADING__CLIENT, "Container item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
+													logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Container item %s (%d) successfully transferred, deleting from trade slot.", inst->GetItem()->Name, inst->GetItem()->ID);
 												}
 
 												else {

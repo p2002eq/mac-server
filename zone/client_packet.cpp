@@ -667,7 +667,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
 		else
-			mlog(EQMAC__LOG, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
 
 	}
 	else
@@ -683,7 +683,7 @@ void Client::CompleteConnect()
 		if(GetGM())
 			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
-			mlog(EQMAC__LOG, "Client version is: %s.", string.c_str());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Client version is: %s.", string.c_str());
 	}
 
 	uint16 level = GetLevel();
@@ -1538,7 +1538,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			const ItemInst* inst = m_inv[slot_id];
 			if (inst){
 				itemsinabag = true;
-				mlog(INVENTORY__SLOTS, "Sending cursor bag with items.");
+
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Sending cursor bag with items.");
 				break;
 			}
 		}
@@ -1617,7 +1618,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		action->exp_value = m_epp.perAA;
 		action->unknown08 = 0;
 
-		mlog(AA__MESSAGE, "Buying: EmuaaID: %i, MacaaID: %i, action: %i, exp: %i", action->ability, aa, action->action, action->exp_value);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AA, "Buying: EmuaaID: %i, MacaaID: %i, action: %i, exp: %i", action->ability, aa, action->action, action->exp_value);
 		BuyAA(action);
 	}
 	else if (strncmp((char *)app->pBuffer, "activate ", 9) == 0)
@@ -1632,7 +1633,7 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		AA_Action *action = (AA_Action *)app->pBuffer;
 
 		action->ability = database.GetMacToEmuAA(aa);
-		mlog(AA__MESSAGE, "Activating AA %d", action->ability);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AA, "Activating AA %d", action->ability);
 		ActivateAA((aaID)action->ability);
 	}
 
@@ -6736,7 +6737,7 @@ void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
 
 	if (app->size != sizeof(GuildMOTD_Struct)) {
 		// client calls for a motd on login even if they arent in a guild
-		mlog(GUILDS__ERROR, "Error: app size of %i != size of GuildMOTD_Struct of %zu\n", app->size, sizeof(GuildMOTD_Struct));
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Guilds, "Error: app size of %i != size of GuildMOTD_Struct of %zu\n", app->size, sizeof(GuildMOTD_Struct));
 		return;
 	}
 	if (!IsInAGuild()) {
@@ -6750,7 +6751,7 @@ void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
 	GuildMOTD_Struct* gmotd = (GuildMOTD_Struct*)app->pBuffer;
 	if (gmotd->motd[0] == 0)
 	{
-		mlog(GUILDS__ERROR, "Client is trying to remove MOTD. This may be intentional but still will be prevented for now.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Guilds, "Client is trying to remove MOTD. This may be intentional but still will be prevented for now.");
 		return; //EQMac sends this on login, and it overwrites the existing MOTD. Need to figure out a better way to handle it
 	}
 
@@ -8511,7 +8512,7 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	}
 	else
 	{
-		mlog(CLIENT__ERROR, "Invalid LFG value sent. %i", lfg->value);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Invalid LFG value sent. %i", lfg->value);
 	}
 
 	UpdateWho();
