@@ -438,7 +438,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		}
 	}
 
-	mlog(SPELLS__CASTING, "Spell %d: Casting time %d (orig %d), mana cost %d",
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d: Casting time %d (orig %d), mana cost %d",
 			spell_id, cast_time, orgcasttime, mana_cost);
 
 	// cast time is 0, just finish it right now and be done with it
@@ -1229,11 +1229,11 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 		break;
 
 	default:	// some non-instrument component. Let it go, but record it in the log
-		mlog(SPELLS__CASTING_ERR, "Something odd happened: Song %d required instrument %d", spell_id, InstComponent);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Something odd happened: Song %d required instrument %d", spell_id, InstComponent);
 	}
 
 	if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
-		mlog(SPELLS__CASTING_ERR, "Song %d: Canceled. Missing required instrument %d", spell_id, InstComponent);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Song %d: Canceled. Missing required instrument %d", spell_id, InstComponent);
 		if (c->GetGM())
 			c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
 		else {
@@ -1301,7 +1301,7 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			if (component == -1)
 				continue;
 			int component_count = spells[spell_id].component_counts[t_count];
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Consuming %d of spell component item id %d", spell_id, component, component_count);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d: Consuming %d of spell component item id %d", spell_id, component, component_count);
 			// Components found, Deleting
 			// now we go looking for and deleting the items one by one
 			for (int s = 0; s < component_count; s++)
@@ -1337,12 +1337,12 @@ bool Mob::HasReagent(uint16 spell_id, int component, int component_count, bool m
 
 		if (item) {
 			c->Message_StringID(CC_Red, MISSING_SPELL_COMP_ITEM, item->Name);
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
 		}
 		else {
 			char TempItemName[64];
 			strcpy((char*)&TempItemName, "UNKNOWN");
-			mlog(SPELLS__CASTING_ERR, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, TempItemName, component);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, TempItemName, component);
 		}
 		return false;
 	}
@@ -3173,7 +3173,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
 		if (!CancelMagicIsAllowedOnTarget(spelltar))
 		{
-			mlog(SPELLS__CASTING_ERR, "Cancel Magic failure.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Cancel Magic failure.");
 			Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 			return false;
 		}
@@ -3190,7 +3190,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id) && spell_id != 721)
 		{
 			if(!IsClient() || !CastToClient()->GetGM()) {
-				mlog(SPELLS__CASTING_ERR, "Attempting to cast a detrimental spell on a player.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a detrimental spell on a player.");
 				Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				return false;
 			}
@@ -3709,7 +3709,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	cd->spellid = action->spell;
 	cd->sequence = action->sequence;
 	cd->damage = 0;
-	mlog(SPELLS__CASTING, "target: %i, source: %i, type: %i, spellid: %i, sequence: %i, damage: %i", cd->target, cd->source, cd->type, cd->spellid, cd->sequence, cd->damage);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "target: %i, source: %i, type: %i, spellid: %i, sequence: %i, damage: %i", cd->target, cd->source, cd->type, cd->spellid, cd->sequence, cd->damage);
 	if(!IsEffectInSpell(spell_id, SE_BindAffinity))
 	{
 		// We send this packet in Mob::CommonDamage for damage spells

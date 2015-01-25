@@ -158,7 +158,7 @@ bool Client::Process() {
 				//The pulse should be prevented if this is a friendly target, but the song should not be stopped. 
 				if(IsDetrimentalSpell(bardsong) && !IsAttackAllowed(song_target, true, bardsong) && !GetGM())
 				{
-					mlog(SPELLS__CASTING_ERR, "Attempting to apply a detrimental song pulse on a player.");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to apply a detrimental song pulse on a player.");
 					Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				}
 				else if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
@@ -756,7 +756,7 @@ void Client::BulkSendItems()
 		if(inst) {
 			bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
 			int16 free_slot_id = m_inv.FindFreeSlot(inst->IsType(ItemClassContainer), true, inst->GetItem()->Size, is_arrow);
-			mlog(INVENTORY__ERROR, "Incomplete Trade Transaction: Moving %s from slot %i to %i", inst->GetItem()->Name, slot_id, free_slot_id);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Incomplete Trade Transaction: Moving %s from slot %i to %i", inst->GetItem()->Name, slot_id, free_slot_id);
 			PutItemInInventory(free_slot_id, *inst, false);
 			database.SaveInventory(character_id, nullptr, slot_id);
 			safe_delete(inst);
@@ -1556,7 +1556,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// languages go here
 		if (gmskill->skill_id > 25)
 		{
-			mlog(CLIENT__ERROR, "Wrong Training Skill (languages)");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Wrong Training Skill (languages)");
 			DumpPacket(app);
 			return;
 		}
@@ -1571,7 +1571,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// normal skills go here
 		if (gmskill->skill_id > HIGHEST_SKILL)
 		{
-			mlog(CLIENT__ERROR, "Wrong Training Skill (abilities)" );
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Wrong Training Skill (abilities)" );
 			DumpPacket(app);
 			return;
 		}
@@ -1579,12 +1579,12 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		SkillUseTypes skill = (SkillUseTypes) gmskill->skill_id;
 
 		if(!CanHaveSkill(skill)) {
-			mlog(CLIENT__ERROR, "Tried to train skill %d, which is not allowed.", skill);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Tried to train skill %d, which is not allowed.", skill);
 			return;
 		}
 
 		if(MaxSkill(skill) == 0) {
-			mlog(CLIENT__ERROR, "Tried to train skill %d, but training is not allowed at this level.", skill);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Tried to train skill %d, but training is not allowed at this level.", skill);
 			return;
 		}
 
@@ -1594,7 +1594,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			uint16 t_level = SkillTrainLevel(skill, GetClass());
 			if (t_level == 0)
 			{
-				mlog(CLIENT__ERROR, "Tried to train a new skill %d which is invalid for this race/class.", skill);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Tried to train a new skill %d which is invalid for this race/class.", skill);
 				return;
 			}
 			SetSkill(skill, t_level);

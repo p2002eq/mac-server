@@ -88,7 +88,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			buffslot = AddBuff(caster, spell_id, durat, caster_level);
 			if(buffslot == -1)	// stacking failure
 			{
-				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error from item click.", spell_id);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell: %d stacking error from item click.", spell_id);
 				return false;
 			}
 		}
@@ -115,7 +115,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			}
 			if(buffslot == -1)	// stacking failure
 			{
-				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error.", spell_id);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell: %d stacking error.", spell_id);
 				return false;
 			}
 		} else {

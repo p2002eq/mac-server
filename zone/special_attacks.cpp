@@ -1058,7 +1058,7 @@ void NPC::RangedAttack(Mob* other)
 		if (sa_min_range)
 			min_range = static_cast<float>(sa_min_range);
 
-		mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", max_range);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", max_range);
 		max_range *= max_range;
 		if (ComparativeDistanceNoZ(m_Position, other->GetPosition()) > max_range)
 			return;
@@ -1090,7 +1090,7 @@ void NPC::RangedAttack(Mob* other)
 
 		if (!other->CheckHitChance(this, skillinuse, MainRange, GetSpecialAbilityParam(SPECATK_RANGED_ATK, 2)))
 		{
-			mlog(COMBAT__RANGED, "Ranged attack missed %s.", other->GetName());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack missed %s.", other->GetName());
 			other->Damage(this, 0, SPELL_UNKNOWN, skillinuse);
 		}
 		else
@@ -1100,7 +1100,7 @@ void NPC::RangedAttack(Mob* other)
 			int32 TotalDmg = 0;
 			if(WDmg > 0 || ADmg > 0)
 			{
-				mlog(COMBAT__RANGED, "Ranged attack hit %s.", other->GetName());
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack hit %s.", other->GetName());
 
 				int32 MaxDmg = max_dmg * RuleR(Combat, ArcheryNPCMultiplier); // should add a field to npc_types
 				int32 MinDmg = min_dmg * RuleR(Combat, ArcheryNPCMultiplier);

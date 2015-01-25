@@ -524,17 +524,17 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 												}
 
 												else {
-													mlog(TRADING__ERROR, "Transfer of container item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
+													logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Transfer of container item %s (%d) to %s failed, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID, other->GetName());
 													dropitem = true;
 												}
 											}
 											else {
-												mlog(TRADING__ERROR, "%s's inventory is full, returning container item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
+												logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "%s's inventory is full, returning container item %s (%d) to giver.", other->GetName(), inst->GetItem()->Name, inst->GetItem()->ID);
 												dropitem = true;
 											}
 										}
 										else {
-											mlog(TRADING__ERROR, "Container item %s (%d) is NoDrop, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID);
+											logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Container item %s (%d) is NoDrop, returning to giver.", inst->GetItem()->Name, inst->GetItem()->ID);
 											PushItemOnCursor(*inst, true);
 										}
 										DeleteItemInInventory(trade_bag_slot);
