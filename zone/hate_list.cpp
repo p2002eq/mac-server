@@ -417,9 +417,8 @@ Mob *HateList::GetTop(Mob *center)
 		while(iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
-            auto hateEntryPosition = xyz_location(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
-			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(hateEntryPosition)) {
+ 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
+				if (!zone->watermap->InLiquid(cur->ent->GetPosition())) {
 					skipped_count++;
 					++iterator;
 					continue;

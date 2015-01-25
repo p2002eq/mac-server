@@ -2314,9 +2314,8 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
-    auto otherPosition = xyz_location(other->GetX(), other->GetY(), other->GetZ());
 	if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-		if(!zone->watermap->InLiquid(otherPosition)) {
+		if (!zone->watermap->InLiquid(other->GetPosition())) {
 			return;
 		}
 	}
