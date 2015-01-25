@@ -246,9 +246,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 					float modskill=sender->GetSkill(SkillPickLock);
 					
 
-#if EQDEBUG>=5
-					Log.Out(Logs::General, Logs::None, "Client has lockpicks: skill=%f", modskill);
-#endif
+					Log.Out(Logs::General, Logs::Skills, "Client has lockpicks: skill=%f", modskill);
 
 					if(GetLockpick() <= modskill)
 					{
