@@ -1021,7 +1021,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			database.SetMQDetectionFlag(AccountName(), GetName(), hacked_string, zone->GetShortName());
 			safe_delete_array(hacked_string);
 			Kick();	// Kicking player to avoid item loss do to client and server inventories not being sync'd
-			_log(INVENTORY__ERROR, "Banker error");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Banker error");
 			return false;
 		}
 	}
@@ -1038,7 +1038,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 		if (src_inst->GetCharges() > 0 && (src_inst->GetCharges() < (int16)move_in->number_in_stack || move_in->number_in_stack > src_inst->GetItem()->StackSize))
 		{
 			//Damn Intel client sending SwapItem multiple times :I
-			_log(INVENTORY__ERROR, "Insufficent number in stack. Ignore this if on EQMac.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Insufficent number in stack. Ignore this if on EQMac.");
 			return false;
 		}
 	}
@@ -1104,7 +1104,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	&& RuleI(World, FVNoDropFlag) == 0 || RuleI(Character, MinStatusForNoDropExemptions) < Admin() && RuleI(World, FVNoDropFlag) == 2) {
 		DeleteItemInInventory(src_slot_id);
 		WorldKick();
-		_log(INVENTORY__ERROR, "No drop hack.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "No drop hack.");
 		return false;
 	}
 
@@ -1190,7 +1190,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	if (dst_slot_id >= EmuConstants::TRADE_BEGIN && dst_slot_id <= EmuConstants::TRADE_END) {
 		if (src_slot_id != MainCursor) {
 			Kick();
-			_log(INVENTORY__ERROR, "Trading item no on cursor.");
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Trading item no on cursor.");
 			return false;
 		}
 		if (with) {
@@ -1198,7 +1198,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			// Fill Trade list with items from cursor
 			if (!m_inv[MainCursor]) {
 				Message(CC_Red, "Error: Cursor item not located on server!");
-				_log(INVENTORY__ERROR, "Error: Cursor item not located on server!");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Error: Cursor item not located on server!");
 				return false;
 			}
 

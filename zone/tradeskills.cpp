@@ -705,7 +705,7 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 
 	bonusstat -= twoStatPenalty;
 
-	_log(TRADESKILLS__TRACE, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat, GetINT(), GetWIS(), GetDEX(), GetSTR());
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Tradeskills, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat, GetINT(), GetWIS(), GetDEX(), GetSTR());
 
 	uint16 current_raw_skill = GetRawSkill(tradeskill);
 

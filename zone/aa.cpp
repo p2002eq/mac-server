@@ -1095,7 +1095,7 @@ void Client::SendAATimers() {
 					uaaout->end = static_cast<uint32>(time(nullptr));
 					uaaout->ability = zone->EmuToEQMacAA(aa2->id);
 					QueuePacket(outapp);
-					_log(AA__MESSAGE, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AA, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
 				}
 			}
 		}

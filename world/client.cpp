@@ -227,9 +227,9 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 				ClientVersionBit = 16;
 		}
 
-		clog(WORLD__CLIENT,"ClientVersionBit is: %i", ClientVersionBit);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "ClientVersionBit is: %i", ClientVersionBit);
 		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server,"Logged in. Mode=%s",pZoning ? "(Zoning)" : "(CharSel)");
-		clog(WORLD__CLIENT,"LS Account #%d",cle->LSID());
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "LS Account #%d", cle->LSID());
 
 		const WorldConfig *Config=WorldConfig::get();
 
@@ -292,35 +292,35 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	outapp->pBuffer = new uchar[1];
 	outapp->size = 1;
 
-	clog(WORLD__CLIENT, "common/client.cpp line 292 pass");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 292 pass");
 	bool valid = false;
 	if (!database.CheckNameFilter(char_name)) {
-		clog(WORLD__CLIENT, "Invalid name");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Invalid name");
 		valid = false; 
 	}
 	/* Name must begin with an upper-case letter. */
 	else if (islower(char_name[0])) {
-		clog(WORLD__CLIENT, "Must begin with uppercase");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Must begin with uppercase");
 		valid = false; 
 	} 
 	else if (database.ReserveName(GetAccountID(), char_name)) {
-		clog(WORLD__CLIENT, "common/client.cpp line 304 pass");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 304 pass");
 		valid = true; 	
 	}
 	else {
-		clog(WORLD__CLIENT, "common/client.cpp line 308 pass");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 308 pass");
 		valid = false; 
 	}
 
-	clog(WORLD__CLIENT, "common/client.cpp line 312 pass");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 312 pass");
 	outapp->pBuffer[0] = valid? 1 : 0;
 	QueuePacket(outapp);
 	safe_delete(outapp);
-	clog(WORLD__CLIENT, "common/client.cpp line 316 pass");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 316 pass");
 
 	if (!valid)
 		memset(char_name, 0, sizeof(char_name));
-		clog(WORLD__CLIENT, "common/client.cpp line 320 pass");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "common/client.cpp line 320 pass");
 
 	return true;
 }

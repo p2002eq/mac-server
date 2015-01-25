@@ -1310,7 +1310,7 @@ ItemInst* Client::FindTraderItemByID(int32 ItemID){
 			}
 		}
 	}
-	_log(TRADING__CLIENT, "Client::FindTraderItemByID Couldn't find item! Item No. was %i", ItemID);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::FindTraderItemByID Couldn't find item! Item No. was %i", ItemID);
 
 	return nullptr;
 }
@@ -1392,8 +1392,7 @@ void Client::NukeTraderItem(uint16 Slot,int16 Charges,uint16 Quantity,Client* Cu
 		tdis->type=65;
 		tdis->itemslot = TraderSlot;
 
-		_log(TRADING__CLIENT, "Telling customer to remove item %i with %i charges.",SerialNumber, Charges);
-		_pkt(TRADING__PACKETS, outapp);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Telling customer to remove item %i with %i charges.", SerialNumber, Charges);
 
 		Customer->QueuePacket(outapp);
 		safe_delete(outapp);
@@ -2044,8 +2043,7 @@ static void UpdateTraderCustomerPriceChanged(uint32 SellerID, uint32 CustomerID,
 			for(int i = 0; i < 80; i++) {
 				if(gis->ItemID[i] == ItemID) {
 					tdis->itemslot = i;
-					_log(TRADING__CLIENT, "Telling customer to remove item %i with %i charges.",ItemID, Charges);
-					_pkt(TRADING__PACKETS, outapp);
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Telling customer to remove item %i with %i charges.", ItemID, Charges);
 
 					Customer->QueuePacket(outapp);
 				}

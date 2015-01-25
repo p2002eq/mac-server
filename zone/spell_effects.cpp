@@ -1937,7 +1937,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(toss_amt > 20.0)
 					toss_amt = 20.0;
 
-				_log(SPELLS__CASTING, "TossUp Spell: %d has a pushback (%0.1f) pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, toss_amt);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "TossUp Spell: %d has a pushback (%0.1f) pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, toss_amt);
 				DoKnockback(caster, spells[spell_id].pushback, toss_amt);
 
 				break;

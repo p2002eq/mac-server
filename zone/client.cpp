@@ -1807,7 +1807,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 		if(against_who->GetSpecialAbility(IMMUNE_AGGRO) || against_who->IsClient() ||
 			GetLevelCon(against_who->GetLevel()) == CON_GREEN)
 		{
-			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Skills, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
 			return false; 
 		}
 	}

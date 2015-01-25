@@ -2369,7 +2369,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 
 		if(spells[spell_id].pushback != 0 || spells[spell_id].pushup != 0)
 		{
-			_log(SPELLS__CASTING, "Bard Pulse: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Bard Pulse: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
 			DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
 		}
 
@@ -3675,7 +3675,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	else if(spells[spell_id].pushback != 0 || spells[spell_id].pushup != 0)
 	{
 		action->buff_unknown = 0;
-		_log(SPELLS__CASTING, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
 		spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
 	}
 
@@ -4333,7 +4333,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				{
 					resist_modifier += 20 * (leveldiff + leveldiff);
 				}
-				_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
 			}
 		}
 	}
@@ -4350,7 +4350,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		else
 			target_resist = 15;
 
-		_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d  No Charisma check. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "ResistSpell(): Spell: %d  No Charisma check. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
 	}
 
 	//Add our level, resist and -spell resist modifier to our roll chance
@@ -4393,7 +4393,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
-	_log(SPELLS__RESISTS, "ResistSpell(): Spell: %d roll %i > resist_chance %i", spell_id, roll, resist_chance);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "ResistSpell(): Spell: %d roll %i > resist_chance %i", spell_id, roll, resist_chance);
 	if(roll > resist_chance)
 	{
 		return 100;

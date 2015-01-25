@@ -3562,7 +3562,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 {
 	// This method should only be used for spell effects.
 
-	_log(SPELLS__CASTING, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
 	float new_x = GetX();
 	float new_y = GetY();
 	float new_z = GetZ() + pushup;
@@ -3570,7 +3570,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		_log(SPELLS__CASTING, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		m_Position.m_X = new_x;
 		m_Position.m_Y = new_y;
 		m_Position.m_Z = new_z;
@@ -3606,7 +3606,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	}
 	else
 	{
-		_log(SPELLS__CASTING, "DoKnockback(): LOS check failed.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }

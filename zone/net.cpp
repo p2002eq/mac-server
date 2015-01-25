@@ -389,7 +389,7 @@ int main(int argc, char** argv) {
 			//structures and opcodes for that patch.
 			struct in_addr	in;
 			in.s_addr = eqoss->GetRemoteIP();
-			_log(WORLD__CLIENT, "New connection from %s:%d", inet_ntoa(in),ntohs(eqoss->GetRemotePort()));
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "New connection from %s:%d", inet_ntoa(in), ntohs(eqoss->GetRemotePort()));
 			stream_identifier.AddOldStream(eqoss);	//takes the stream
 		}
 

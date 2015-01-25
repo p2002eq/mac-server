@@ -1580,7 +1580,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	_log(DATABASE__LOG, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating character_data table from CharacterJoin.");
@@ -1592,12 +1592,14 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i...", char_id);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -1620,7 +1622,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	_log(DATABASE__LOG, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
@@ -1632,7 +1635,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-		_log(DATABASE__LOG, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
@@ -1657,7 +1661,8 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	_log(DATABASE__LOG, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Loading EQ time of day failed. Using defaults.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
@@ -1669,7 +1674,7 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	_log(DATABASE__LOG, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
 		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
@@ -2531,7 +2536,7 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 
 	if (!results.Success() || results.RowCount() == 0)
 	{
-		_log(WORLD__INIT, "Loading EQ time of day failed. Using defaults.");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::World_Server, "Loading EQ time of day failed. Using defaults.");
 		eqTime.minute = 0;
 		eqTime.hour = 9;
 		eqTime.day = 1;

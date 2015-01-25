@@ -71,7 +71,7 @@ Group::Group(Mob* leader)
 	leader->SetGrouped(true);
 	SetLeader(leader);
 	SetOldLeaderName(leader->GetName());
-	_log(_GROUP__LOG, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
 	uint32 i;
 	for(i=0;i<MAX_GROUP_MEMBERS;i++)
 	{
@@ -441,7 +441,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 				memset(membername[i], 0, 64);
 				MemberRoles[i] = 0;
 				removed = true;
-				_log(_GROUP__LOG, "DelMemberOOZ: Removed Member: %s", Name);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "DelMemberOOZ: Removed Member: %s", Name);
 				break;
 			}
 		}
@@ -455,7 +455,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 
 	if(checkleader)
 	{
-		_log(_GROUP__LOG, "DelMemberOOZ: Checking leader...");
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "DelMemberOOZ: Checking leader...");
 		if (strcmp(GetOldLeaderName(),Name) == 0 && GroupCount() >= 2)
 		{
 			for(uint32 nl = 0; nl < MAX_GROUP_MEMBERS; nl++)
@@ -490,7 +490,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 			membername[i][0] = '\0';
 			memset(membername[i],0,64);
 			MemberRoles[i] = 0;
-			_log(_GROUP__LOG, "DelMember: Removed Member: %s", oldmember->GetCleanName());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "DelMember: Removed Member: %s", oldmember->GetCleanName());
 			break;
 		}
 	}
@@ -1167,12 +1167,12 @@ void Group::ChangeLeader(Mob* newleader)
 		if (members[i] && members[i]->IsClient())
 		{
 			members[i]->CastToClient()->QueuePacket(outapp);
-			_log(_GROUP__LOG, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
 		}
 	}
 	safe_delete(outapp);
 
-	_log(_GROUP__LOG, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
 
 	ServerPacket* pack = new ServerPacket(ServerOP_ChangeGroupLeader, sizeof(ServerGroupLeader_Struct));
 	ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;

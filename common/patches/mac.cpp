@@ -964,7 +964,7 @@ namespace Mac {
 				outapp->SetOpcode(OP_ItemPacket);
 
 			if(outapp->size != sizeof(structs::Item_Struct))
-				_log(ZONE__INIT,"Invalid size on OP_ItemPacket packet. Expected: %i, Got: %i", sizeof(structs::Item_Struct), outapp->size);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_ItemPacket packet. Expected: %i, Got: %i", sizeof(structs::Item_Struct), outapp->size);
 
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
@@ -1001,7 +1001,7 @@ namespace Mac {
 			memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
 		
 			if(outapp->size != sizeof(structs::TradeItemsPacket_Struct))
-				_log(ZONE__INIT,"Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
 
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
@@ -1071,7 +1071,7 @@ namespace Mac {
 		int16 itemcount = in->size / sizeof(InternalSerializedItem_Struct);
 		if(itemcount == 0 || (in->size % sizeof(InternalSerializedItem_Struct)) != 0) 
 		{
-			_log(ZONE__INIT, "Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "Wrong size on outbound %s: Got %d, expected multiple of %d", opcodes->EmuToName(in->GetOpcode()), in->size, sizeof(InternalSerializedItem_Struct));
 			delete in;
 			return;
 		}
@@ -1125,7 +1125,7 @@ namespace Mac {
 		emu->to_slot = MacToServerSlot(eq->to_slot);
 		IN(number_in_stack);
 
-		_log(INVENTORY__SLOTS, "EQMAC DECODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", emu->to_slot, emu->from_slot, emu->number_in_stack);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC DECODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", emu->to_slot, emu->from_slot, emu->number_in_stack);
 		FINISH_DIRECT_DECODE();
 	}
 
@@ -1139,7 +1139,7 @@ namespace Mac {
 		eq->to_slot = ServerToMacSlot(emu->to_slot);
 		OUT(to_slot);
 		OUT(number_in_stack);
-		_log(INVENTORY__SLOTS, "EQMAC ENCODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", eq->to_slot, eq->from_slot, eq->number_in_stack);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "EQMAC ENCODE OUTPUT to_slot: %i, from_slot: %i, number_in_stack: %i", eq->to_slot, eq->from_slot, eq->number_in_stack);
 
 		FINISH_ENCODE();
 	}
@@ -1401,7 +1401,7 @@ namespace Mac {
 			if(eq->itemsinbag[g] > 0)
 			{
 				eq->itemsinbag[g] = emu->itemsinbag[g];
-				_log(EQMAC__LOG, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Found a container item %i in slot: %i", emu->itemsinbag[g], g);
 			}
 			else
 				eq->itemsinbag[g] = 0xFFFF;
@@ -2233,7 +2233,7 @@ namespace Mac {
 		EQApplicationPacket *in = *p;
 		*p = nullptr;
 
-		_log(EQMAC__LOG, "Dropped an invalid packet: %s",opcodes->EmuToName(in->GetOpcode()));
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Client_Server_Packet, "Dropped an invalid packet: %s", opcodes->EmuToName(in->GetOpcode()));
 
 		delete in;
 		return;

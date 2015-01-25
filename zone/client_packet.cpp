@@ -870,7 +870,7 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 	NewZone_Struct* nz = (NewZone_Struct*)outapp->pBuffer;
 	memcpy(outapp->pBuffer, &zone->newzone_data, sizeof(NewZone_Struct));
 	strcpy(nz->char_name, m_pp.name);
-	_log(ZONE__INIT, "NewZone data for %s (%i) successfully sent.", zone->newzone_data.zone_short_name, zone->newzone_data.zone_id);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "NewZone data for %s (%i) successfully sent.", zone->newzone_data.zone_short_name, zone->newzone_data.zone_id);
 
 	FastQueuePacket(&outapp);
 
@@ -1044,7 +1044,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		else
 			ClientVersionBit = 16;
 	}
-	_log(ZONE__INIT,"ClientVersionBit is: %i", ClientVersionBit);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Zone_Server, "ClientVersionBit is: %i", ClientVersionBit);
 
 	strcpy(name, cze->char_name);
 	/* Check for Client Spoofing */
@@ -1370,7 +1370,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				m_pp.buffs[i].effect = 0;
 				m_pp.buffs[i].duration = 0;
 				m_pp.buffs[i].counters = 0;
-				_log(EQMAC__LOG, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
+				//_log(EQMAC__LOG, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
 				BuffFadeAll();
 			}
 		}
@@ -5331,7 +5331,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	}
 
 	MoveItem_Struct* mi = (MoveItem_Struct*)app->pBuffer;
-	_log(INVENTORY__SLOTS, "Moveitem from_slot: %i, to_slot: %i, number_in_stack: %i", mi->from_slot, mi->to_slot, mi->number_in_stack);
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "Moveitem from_slot: %i, to_slot: %i, number_in_stack: %i", mi->from_slot, mi->to_slot, mi->number_in_stack);
 
 	if (spellend_timer.Enabled() && casting_spell_id && !IsBardSong(casting_spell_id))
 	{
@@ -5382,7 +5382,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		bool si = SwapItem(mi);
 		if (!si)
 		{
-			_log(INVENTORY__ERROR, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", SwapItem(mi), IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
+			logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Inventory, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", SwapItem(mi), IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
 			SwapItemResync(mi);
 
 			bool error = false;
@@ -8198,7 +8198,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				if (c)
 					c->WithCustomer(0);
 				else
-					_log(TRADING__CLIENT, "Client::Handle_OP_Trader: Null Client Pointer");
+					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Trading, "Client::Handle_OP_Trader: Null Client Pointer");
 
 				EQApplicationPacket empty(OP_ShopEndConfirm);
 				QueuePacket(&empty);

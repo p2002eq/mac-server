@@ -599,7 +599,7 @@ void SpawnConditionManager::Process() {
 					if(!cevent.strict || (cevent.strict && tod.minute < min && cevent.next.hour == tod.hour && cevent.next.day == tod.day && cevent.next.month == tod.month && cevent.next.year == tod.year))
 						ExecEvent(cevent, true);
 					else
-						_log(SPAWNS__CONDITIONS, "Event %d: Is strict, ExecEvent is skipped.", cevent.id);
+						logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spawns, "Event %d: Is strict, ExecEvent is skipped.", cevent.id);
 
 					//add the period of the event to the trigger time
 					EQTime::AddMinutes(cevent.period, &cevent.next);

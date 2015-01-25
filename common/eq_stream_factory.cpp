@@ -45,14 +45,14 @@ ThreadReturnType EQStreamFactoryWriterLoop(void *eqfs)
 #ifndef WIN32
 	logger.LogDebug(EQEmuLogSys::Detail,  "Starting EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
 #else
-	_log(COMMON__THREADS, "Starting EQStreamFactoryWriterLoop");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Starting EQStreamFactoryWriterLoop");
 #endif
 	fs->WriterLoop();
 
 #ifndef WIN32
 	logger.LogDebug(EQEmuLogSys::Detail,  "Ending EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
 #else
-	_log(COMMON__THREADS, "Ending EQStreamFactoryWriterLoop");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::General, "Ending EQStreamFactoryWriterLoop");
 #endif
 
 	THREAD_RETURN(nullptr);

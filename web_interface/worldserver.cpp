@@ -47,7 +47,7 @@ WorldServer::~WorldServer(){
 }
 
 void WorldServer::OnConnected(){
-	_log(WEB_INTERFACE__INIT, "Connected to World.");
+	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Connected to World.");
 	WorldConnection::OnConnected();
 }
 
@@ -58,7 +58,7 @@ void WorldServer::Process(){
 
 	ServerPacket *pack = nullptr;
 	while((pack = tcpc.PopPacket())){
-		_log(WEB_INTERFACE__TRACE, "Received Opcode: %4X", pack->opcode);
+		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::WebInterface_Server, "Received Opcode: %4X", pack->opcode);
 		switch(pack->opcode) {
 			case 0: { break; }
 			case ServerOP_KeepAlive: { break; }

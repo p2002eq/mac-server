@@ -765,7 +765,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		if (bad) {
 			if (!caster->IsAttackAllowed(curmob, true))
 			{
-				_log(SPELLS__CASTING_ERR, "Attempting to cast a detrimental AE spell/song on a player.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
 				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
 			}
@@ -778,7 +778,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			// check may still be needed. Any changes here should also reflect in BardAEPulse() -U
 			if (caster->IsAttackAllowed(curmob, true))
 			{
-				_log(SPELLS__CASTING_ERR, "Attempting to cast a beneficial AE spell/song on a NPC.");
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Spells, "Attempting to cast a beneficial AE spell/song on a NPC.");
 				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
 			}
