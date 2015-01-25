@@ -79,7 +79,7 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// size
 	RuleR(Character, BaseRunSpeed),	// runspeed
 	glm::vec4(),
-	0,	// light
+	0,	// light - verified for client innate_light value
 	0xFF,	// texture
 	0xFF,	// helmtexture
 	0,	// ac
@@ -262,6 +262,9 @@ Client::Client(EQStreamInterface* ieqs)
 	SavedRaidRestTimer = 0;
 
 	interrogateinv_flag = false;
+
+	active_light = innate_light;
+	spell_light = equip_light = NOT_USED;
 }
 
 Client::~Client() {
@@ -1435,6 +1438,9 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	//filling in some unknowns to make the client happy
 //	ns->spawn.unknown0002[2] = 3;
 
+	UpdateEquipLightValue();
+	UpdateActiveLightValue();
+	ns->spawn.light = active_light;
 }
 
 bool Client::GMHideMe(Client* client) {

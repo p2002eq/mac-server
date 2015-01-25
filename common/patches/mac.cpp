@@ -2194,6 +2194,8 @@ namespace Mac {
 		strncpy(eq->Surname, emu->lastName, 32);
 		eq->walkspeed = emu->walkspeed;
 		eq->light = emu->light;
+		if(emu->NPC == 1 && emu->light > 0)
+			_log(EQMAC__LOG, "%s is a NPC and is sending light: %i", emu->name, emu->light);
 		if(emu->class_ > 19 && emu->class_ < 35)
 			eq->class_ = emu->class_-3;
 		else if(emu->class_ == 40)

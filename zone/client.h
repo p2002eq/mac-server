@@ -436,8 +436,6 @@ public:
 	inline virtual int32 GetStringMod() const { return itembonuses.stringedMod; }
 	inline virtual int32 GetWindMod() const { return itembonuses.windMod; }
 
-	inline virtual int32 GetDelayDeath() const { return aabonuses.DelayDeath + spellbonuses.DelayDeath + itembonuses.DelayDeath + 11; }
-
 	float GetActSpellRange(uint16 spell_id, float range, bool IsBard = false);
 	int32 GetActSpellDamage(uint16 spell_id, int32 value, Mob* target = nullptr);
 	int32 GetActSpellHealing(uint16 spell_id, int32 value, Mob* target = nullptr);
@@ -657,6 +655,7 @@ public:
 #endif
 	uint32 GetEquipment(uint8 material_slot) const; // returns item id
 	uint32 GetEquipmentColor(uint8 material_slot) const;
+	virtual void UpdateEquipLightValue() { equip_light = m_inv.FindHighestLightValue(); }
 
 	inline bool AutoSplitEnabled() { return m_pp.autosplit != 0; }
 

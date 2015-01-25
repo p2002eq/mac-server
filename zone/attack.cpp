@@ -4157,11 +4157,8 @@ void Mob::ApplyMeleeDamageBonus(uint16 skill, int32 &damage){
 
 bool Mob::HasDied() {
 	bool Result = false;
-	int32 hp_below = 0;
 
-	hp_below = (GetDelayDeath() * -1);
-
-	if((GetHP()) <= (hp_below))
+	if((GetHP()) <= 0)
 		Result = true;
 
 	return Result;

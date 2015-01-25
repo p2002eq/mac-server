@@ -390,7 +390,6 @@ struct StatBonuses {
 	// AAs
 	int8	Packrat;							//weight reduction for items, 1 point = 10%
 	uint8	BuffSlotIncrease;					// Increases number of available buff slots
-	uint32	DelayDeath;							// how far below 0 hp you can go
 	int8	BaseMovementSpeed;					// Adjust base run speed, does not stack with other movement bonuses.
 	uint8	IncreaseRunSpeedCap;				// Increase max run speed above cap.
 	int32	DoubleSpecialAttack;				// Chance to to perform a double special attack (ie flying kick 2x)
