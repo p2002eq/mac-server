@@ -406,7 +406,7 @@ RULE_INT ( Combat, ArcheryBonusChance, 50)
 RULE_INT ( Combat, BerserkerFrenzyStart, 35)
 RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
-RULE_REAL ( Combat, PushBackAmount, 3.0)
+RULE_REAL ( Combat, PushBackAmount, 1.5)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )
@@ -425,7 +425,7 @@ RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
 RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
-RULE_REAL ( NPC, SpeedMultiplier, 45.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
+RULE_REAL ( NPC, SpeedMultiplier, 50.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
 RULE_INT ( NPC, RunAnimRatio, 37 )	//This changes their animation based on their movement speed.
 RULE_REAL ( NPC, WalkSpeedMultiplier, 30.0 ) //Same as above for walking.
 RULE_INT ( NPC, WalkAnimRatio, 37 ) //Same as above for walking. Probably okay to combine with the runspeed rule.

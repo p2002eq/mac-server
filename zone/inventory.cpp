@@ -277,7 +277,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 			if(to_slot == MainCursor || to_slot == INVALID_INDEX) {
 				if(m_inv.GetItem(MainCursor) != nullptr || to_slot == INVALID_INDEX) {
 					Message(CC_Red,"You have no more room. The item falls to the ground."); 
-					entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+					entity_list.CreateGroundObject(inst->GetID(), xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 				}
 			}
 		}

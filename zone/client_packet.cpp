@@ -48,6 +48,7 @@
 #include "../common/zone_numbers.h"
 #include "event_codes.h"
 #include "guild_mgr.h"
+#include "mob.h"
 #include "petitions.h"
 #include "pets.h"
 #include "queryserv.h"
@@ -60,6 +61,7 @@
 #include "remote_call_subscribe.h"
 #include "remote_call_subscribe.h"
 #include "../common/misc.h"
+#include "position.h"
 
 extern QueryServ* QServ;
 extern Zone* zone;
@@ -1140,11 +1142,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
 			if(!boat)
 			{
+				auto safePoint = zone->GetSafePoint();
 				m_pp.boatid = 0;
 				m_pp.boat[0] = 0;
-				m_pp.x = zone->safe_x();
-				m_pp.y = zone->safe_y();
-				m_pp.z = zone->safe_z();
+				m_pp.x = safePoint.m_X;
+				m_pp.y = safePoint.m_Y;
+				m_pp.z = safePoint.m_Z;
 			}
 		}
 	}
@@ -1162,9 +1165,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	strcpy(lastname, m_pp.last_name);
 	/* If PP is set to weird coordinates */
 	if ((m_pp.x == -1 && m_pp.y == -1 && m_pp.z == -1) || (m_pp.x == -2 && m_pp.y == -2 && m_pp.z == -2)) {
-		m_pp.x = zone->safe_x();
-		m_pp.y = zone->safe_y();
-		m_pp.z = zone->safe_z();
+        auto safePoint = zone->GetSafePoint();
+		m_pp.x = safePoint.m_X;
+		m_pp.y = safePoint.m_Y;
+		m_pp.z = safePoint.m_Z;
 	}
 	/* If too far below ground, then fix */
 	// float ground_z = GetGroundZ(m_pp.x, m_pp.y, m_pp.z);
@@ -1174,10 +1178,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Mob variables for spawn */
 	class_ = m_pp.class_;
 	level = m_pp.level;
-	x_pos = m_pp.x;
-	y_pos = m_pp.y;
-	z_pos = m_pp.z;
-	heading = m_pp.heading;
+	m_Position.m_X = m_pp.x;
+	m_Position.m_Y = m_pp.y;
+	m_Position.m_Z = m_pp.z;
+	m_Position.m_Heading = m_pp.heading;
 	race = m_pp.race;
 	base_race = m_pp.race;
 	gender = m_pp.gender;
@@ -1736,7 +1740,7 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app)
 		if (assistee->GetTarget()) {
 			Mob *new_target = assistee->GetTarget();
 			if (new_target && (GetGM() ||
-				Dist(*assistee) <= TARGETING_RANGE)) {
+				Distance(m_Position, assistee->GetPosition()) <= TARGETING_RANGE)) {
 				SetAssistExemption(true);
 				eid->entity_id = new_target->GetID();
 			}
@@ -1765,13 +1769,8 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 		ranged_timer.Disable();
 		attack_dw_timer.Disable();
 
-		aa_los_me.x = 0;
-		aa_los_me.y = 0;
-		aa_los_me.z = 0;
-		aa_los_me_heading = 0;
-		aa_los_them.x = 0;
-		aa_los_them.y = 0;
-		aa_los_them.z = 0;
+		m_AutoAttackPosition = xyz_heading::Origin();
+		m_AutoAttackTargetLocation = xyz_location::Origin();
 		aa_los_them_mob = nullptr;
 	}
 	else if (app->pBuffer[0] == 1)
@@ -1785,25 +1784,15 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 		if (GetTarget())
 		{
 			aa_los_them_mob = GetTarget();
-			aa_los_me.x = GetX();
-			aa_los_me.y = GetY();
-			aa_los_me.z = GetZ();
-			aa_los_me_heading = GetHeading();
-			aa_los_them.x = aa_los_them_mob->GetX();
-			aa_los_them.y = aa_los_them_mob->GetY();
-			aa_los_them.z = aa_los_them_mob->GetZ();
+			m_AutoAttackPosition = GetPosition();
+			m_AutoAttackTargetLocation = aa_los_them_mob->GetPosition();
 			los_status = CheckLosFN(aa_los_them_mob);
 			los_status_facing = IsFacingMob(aa_los_them_mob);
 		}
 		else
 		{
-			aa_los_me.x = GetX();
-			aa_los_me.y = GetY();
-			aa_los_me.z = GetZ();
-			aa_los_me_heading = GetHeading();
-			aa_los_them.x = 0;
-			aa_los_them.y = 0;
-			aa_los_them.z = 0;
+			m_AutoAttackPosition = GetPosition();
+			m_AutoAttackTargetLocation = xyz_location::Origin();
 			aa_los_them_mob = nullptr;
 			los_status = false;
 			los_status_facing = false;
@@ -2466,7 +2455,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		params.push_back(std::to_string((double)ppu->x_pos));
 		params.push_back(std::to_string((double)ppu->y_pos));
 		params.push_back(std::to_string((double)ppu->z_pos));
-		params.push_back(std::to_string((double)heading));
+		params.push_back(std::to_string((double)m_Position.m_Heading));
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
@@ -2482,7 +2471,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			}
 
 			// set the boat's position deltas
-			boat->SetDeltas(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			auto boatDelta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			boat->SetDelta(boatDelta);
 			// send an update to everyone nearby except the client controlling the boat
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
 			SpawnPositionUpdate_Struct* ppus = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
@@ -2498,9 +2488,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float dist = 0;
 	float tmp;
-	tmp = x_pos - ppu->x_pos;
+	tmp = m_Position.m_X - ppu->x_pos;
 	dist += tmp*tmp;
-	tmp = y_pos - ppu->y_pos;
+	tmp = m_Position.m_Y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
 
@@ -2643,50 +2633,40 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float rewind_x_diff = 0;
 	float rewind_y_diff = 0;
 
-	rewind_x_diff = ppu->x_pos - rewind_x;
+	rewind_x_diff = ppu->x_pos - m_RewindLocation.m_X;
 	rewind_x_diff *= rewind_x_diff;
-	rewind_y_diff = ppu->y_pos - rewind_y;
+	rewind_y_diff = ppu->y_pos - m_RewindLocation.m_Y;
 	rewind_y_diff *= rewind_y_diff;
 
 	//We only need to store updated values if the player has moved.
 	//If the player has moved more than units for x or y, then we'll store
 	//his pre-PPU x and y for /rewind, in case he gets stuck.
-	if ((rewind_x_diff > 750) || (rewind_y_diff > 750)) {
-		rewind_x = x_pos;
-		rewind_y = y_pos;
-		rewind_z = z_pos;
-	}
+	if ((rewind_x_diff > 750) || (rewind_y_diff > 750))
+        m_RewindLocation = m_Position;
 
 	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
 	//just update rewind coords to the new ppu coords. This will prevent exploitation.
 
-	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000)) {
-		rewind_x = ppu->x_pos;
-		rewind_y = ppu->y_pos;
-		rewind_z = ppu->z_pos;
-	}
+	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000))
+		m_RewindLocation = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 
 	if(proximity_timer.Check()) {
-		entity_list.ProcessMove(this, ppu->x_pos, ppu->y_pos, ppu->z_pos);
-		proximity_x = ppu->x_pos;
-		proximity_y = ppu->y_pos;
-		proximity_z = ppu->z_pos;
+		entity_list.ProcessMove(this, xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos));
+
+		m_Proximity = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
 	// Update internal state
-	delta_x			= ppu->delta_x;
-	delta_y			= ppu->delta_y;
-	delta_z			= ppu->delta_z;
-	delta_heading	= ppu->delta_heading;
-	heading			= ppu->heading;
+	m_Delta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	m_Position.m_Heading = ppu->heading;
 
-	if(IsTracking() && ((x_pos!=ppu->x_pos) || (y_pos!=ppu->y_pos))){
+	if(IsTracking() && ((m_Position.m_X!=ppu->x_pos) || (m_Position.m_Y!=ppu->y_pos))){
 		if(zone->random.Real(0, 100) < 70)//should be good
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
 
 	// Break Hide and Trader mode if moving without sneaking and set rewind timer if moved
-	if(ppu->y_pos != y_pos || ppu->x_pos != x_pos){
+	if(ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X){
 		if((hidden || improved_hidden) && !sneaking){
 			hidden = false;
 			improved_hidden = false;
@@ -2705,15 +2685,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		rewind_timer.Start(30000, true);
 	}
 
-	float water_x = x_pos;
-	float water_y = y_pos;
+	float water_x = m_Position.m_X;
+	float water_y = m_Position.m_Y;
 
 	// Outgoing client packet
-	if (ppu->y_pos != y_pos || ppu->x_pos != x_pos || ppu->heading != heading || ppu->anim_type != animation || (delta_x != 0 || delta_y != 0 || delta_z != 0) && animation == 0)
+	if (ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X || ppu->heading != m_Position.m_Heading || ppu->anim_type != animation || (m_Delta.m_X != 0 || m_Delta.m_Y != 0 || m_Delta.m_Z != 0) && animation == 0)
 	{
-		x_pos = ppu->x_pos;
-		y_pos = ppu->y_pos;
-		z_pos = ppu->z_pos;
+		m_Position.m_X = ppu->x_pos;
+		m_Position.m_Y = ppu->y_pos;
+		m_Position.m_Z = ppu->z_pos;
 		animation = ppu->anim_type;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -2728,7 +2708,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(x_pos, y_pos, z_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		if(zone->watermap->InLiquid(m_Position) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
 			if(zone->random.Roll(50))
@@ -2773,13 +2753,8 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 		ranged_timer.Disable();
 		attack_dw_timer.Disable();
 
-		aa_los_me.x = 0;
-		aa_los_me.y = 0;
-		aa_los_me.z = 0;
-		aa_los_me_heading = 0;
-		aa_los_them.x = 0;
-		aa_los_them.y = 0;
-		aa_los_them.z = 0;
+        m_AutoAttackPosition = xyz_heading::Origin();
+        m_AutoAttackTargetLocation = xyz_location::Origin();
 		aa_los_them_mob = nullptr;
 	}
 	else if (app->pBuffer[0] == 1)
@@ -2793,25 +2768,15 @@ void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 		if(GetTarget())
 		{
 			aa_los_them_mob = GetTarget();
-			aa_los_me.x = GetX();
-			aa_los_me.y = GetY();
-			aa_los_me.z = GetZ();
-			aa_los_me_heading = GetHeading();
-			aa_los_them.x = aa_los_them_mob->GetX();
-			aa_los_them.y = aa_los_them_mob->GetY();
-			aa_los_them.z = aa_los_them_mob->GetZ();
+			m_AutoAttackPosition = GetPosition();
+			m_AutoAttackTargetLocation = aa_los_them_mob->GetPosition();
 			los_status = CheckLosFN(aa_los_them_mob);
 			los_status_facing = IsFacingMob(aa_los_them_mob);
 		}
 		else
 		{
-			aa_los_me.x = GetX();
-			aa_los_me.y = GetY();
-			aa_los_me.z = GetZ();
-			aa_los_me_heading = GetHeading();
-			aa_los_them.x = 0;
-			aa_los_them.y = 0;
-			aa_los_them.z = 0;
+			m_AutoAttackPosition = GetPosition();
+			m_AutoAttackTargetLocation = xyz_location::Origin();
 			aa_los_them_mob = nullptr;
 			los_status = false;
 			los_status_facing = false;
@@ -4494,7 +4459,7 @@ void Client::Handle_OP_GroupFollow(const EQApplicationPacket *app)
 	{
 		// Inviter is in another zone - Remove merc from group now if any
 		LeaveGroup();
-		
+
 		ServerPacket* pack = new ServerPacket(ServerOP_GroupFollow, sizeof(ServerGroupFollow_Struct));
 		ServerGroupFollow_Struct *sgfs = (ServerGroupFollow_Struct *)pack->pBuffer;
 		sgfs->CharacterID = CharacterID();
@@ -5066,7 +5031,7 @@ void Client::Handle_OP_InspectAnswer(const EQApplicationPacket *app)
 	EQApplicationPacket* outapp = app->Copy();
 	OldInspectResponse_Struct* insr = (OldInspectResponse_Struct*)outapp->pBuffer;
 	Mob* tmp = entity_list.GetMob(insr->TargetID);
-	
+
 	if (tmp != 0 && tmp->IsClient())
 	{
 		tmp->CastToClient()->QueuePacket(outapp);
@@ -5221,7 +5186,7 @@ void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
 	{
 		SetLooting(ent->GetID()); //store the entity we are looting
 		Corpse *ent_corpse = ent->CastToCorpse();
-		if (DistNoRootNoZ(ent_corpse->GetX(), ent_corpse->GetY()) > 625)
+		if (ComparativeDistanceNoZ(m_Position, ent_corpse->GetPosition())  > 625)
 		{
 			Message(CC_Red, "Corpse too far away.");
 			Corpse::SendLootReqErrorPacket(this);
@@ -5501,7 +5466,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		}
 
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 2) || mypet->GetPetType() != petAnimation) {
-			if (GetTarget() != this && mypet->DistNoRootNoZ(*GetTarget()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+			if (GetTarget() != this && ComparativeDistanceNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 				if (mypet->IsHeld()) {
 					if (!mypet->IsFocused()) {
 						mypet->SetHeld(false); //break the hold and guard if we explicitly tell the pet to attack.
@@ -6741,29 +6706,29 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 		int uskill = GetSkill(SkillSenseTraps);
 		if ((zone->random.Int(0, 99) + uskill) >= (zone->random.Int(0, 99) + trap->skill*0.75))
 		{
-			float xdif = trap->x - GetX();
-			float ydif = trap->y - GetY();
-			if (xdif == 0 && ydif == 0)
+			auto diff = trap->m_Position - GetPosition();
+
+			if (diff.m_X == 0 && diff.m_Y == 0)
 				Message(MT_Skills, "You sense a trap right under your feet!");
-			else if (xdif > 10 && ydif > 10)
+			else if (diff.m_X > 10 && diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthWest.");
-			else if (xdif < -10 && ydif > 10)
+			else if (diff.m_X < -10 && diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthEast.");
-			else if (ydif > 10)
+			else if (diff.m_Y > 10)
 				Message(MT_Skills, "You sense a trap to the North.");
-			else if (xdif > 10 && ydif < -10)
+			else if (diff.m_X > 10 && diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthWest.");
-			else if (xdif < -10 && ydif < -10)
+			else if (diff.m_X < -10 && diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthEast.");
-			else if (ydif < -10)
+			else if (diff.m_Y < -10)
 				Message(MT_Skills, "You sense a trap to the South.");
-			else if (xdif > 10)
+			else if (diff.m_X > 10)
 				Message(MT_Skills, "You sense a trap to the West.");
 			else
 				Message(MT_Skills, "You sense a trap to the East.");
 			trap->detected = true;
 
-			float angle = CalculateHeadingToTarget(trap->x, trap->y);
+			float angle = CalculateHeadingToTarget(trap->m_Position.m_X, trap->m_Position.m_Y);
 
 			if (angle < 0)
 				angle = (256 + angle);
@@ -6985,7 +6950,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (mp->quantity < 1) return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (DistNoRoot(*tmp) > USE_NPC_RANGE2)
+	if (ComparativeDistance(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
@@ -7127,7 +7092,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
 			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+				entity_list.CreateGroundObject(inst->GetID(), xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 				QueuePacket(outapp);
 				safe_delete(outapp);
 				safe_delete(inst);
@@ -7243,7 +7208,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (DistNoRoot(*vendor) > USE_NPC_RANGE2)
+	if (ComparativeDistance(m_Position, vendor->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	uint32 price = 0;
@@ -7389,7 +7354,7 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (DistNoRoot(*tmp) > USE_NPC_RANGE2)
+	if (ComparativeDistance(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
@@ -7778,9 +7743,9 @@ void Client::Handle_OP_SwapSpell(const EQApplicationPacket *app)
 	m_pp.spell_book[swapspell->from_slot] = m_pp.spell_book[swapspell->to_slot];
 	m_pp.spell_book[swapspell->to_slot] = swapspelltemp;
 
-	/* Save Spell Swaps */ 
+	/* Save Spell Swaps */
 	if (!database.SaveCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot)){
-		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot); 
+		database.DeleteCharacterSpell(this->CharacterID(), m_pp.spell_book[swapspell->from_slot], swapspell->from_slot);
 	}
 	if (!database.SaveCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot)){
 		database.DeleteCharacterSpell(this->CharacterID(), swapspelltemp, swapspell->to_slot);
@@ -7830,7 +7795,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 
 	// For /target, send reject or success packet
 	if (app->GetOpcode() == OP_TargetCommand) {
-		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (DistNoRoot(*GetTarget()) <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
+		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (ComparativeDistance(m_Position, GetTarget()->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
 			if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
 				|| GetTarget()->GetBodyType() == BT_NoTarget)
 			{
@@ -7900,9 +7865,9 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 			}
 			else if (GetBindSightTarget())
 			{
-				if (GetBindSightTarget()->DistNoRoot(*GetTarget()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+				if (ComparativeDistance(GetBindSightTarget()->GetPosition(), GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 				{
-					if (DistNoRoot(*GetTarget()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+					if (ComparativeDistance(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 					{
 						char *hacker_str = nullptr;
 						MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
@@ -7916,7 +7881,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 					}
 				}
 			}
-			else if (DistNoRoot(*GetTarget()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+			else if (ComparativeDistance(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 			{
 				char *hacker_str = nullptr;
 				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
