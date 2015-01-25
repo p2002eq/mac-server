@@ -2442,7 +2442,6 @@ void Database::FlagInstanceByRaidLeader(uint32 zone, int16 version, uint32 chari
 
 void Database::SetInstanceDuration(uint16 instance_id, uint32 new_duration)
 {
-
 	std::string query = StringFormat("UPDATE `instance_list` SET start_time=UNIX_TIMESTAMP(), "
 		"duration=%u WHERE id=%u", new_duration, instance_id);
 	auto results = QueryDatabase(query);
@@ -2450,8 +2449,16 @@ void Database::SetInstanceDuration(uint16 instance_id, uint32 new_duration)
 
 bool Database::GlobalInstance(uint16 instance_id)
 {
-	
-	std::string query = StringFormat("SELECT is_global from instance_list where id=%u LIMIT 1", instance_id);
+	std::string query = StringFormat(
+		"SELECT "
+		"is_global "
+		"FROM "
+		"instance_list "
+		"WHERE "
+		"id = %u "
+		"LIMIT 1 ", 
+		instance_id
+	);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
