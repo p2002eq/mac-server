@@ -587,7 +587,6 @@ int command_realdispatch(Client *c, const char *message){
 		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc);
 	}
 
-#ifdef COMMANDS_LOGGING
 	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
 		const char* targetType;
 		if (c->GetTarget()){
@@ -603,7 +602,6 @@ int command_realdispatch(Client *c, const char *message){
 		}
 		//Log.Out(Logs::General, Logs::Commands, "%s (%s) used command: %s (target=%s)", c->GetName(), c->AccountName(), message, c->GetTarget() ? c->GetTarget()->GetName() : "NONE");
 	}
-#endif
 
 	if (cur->function == nullptr) {
 		Log.Out(Logs::General, Logs::Error, "Command '%s' has a null function\n", cstr.c_str());
