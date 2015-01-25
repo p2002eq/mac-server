@@ -2128,17 +2128,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 	CastSpell_Struct* castspell = (CastSpell_Struct*)app->pBuffer;
 
-#ifdef _EQDEBUG
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[0], castspell->cs_unknown[0]);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[1], castspell->cs_unknown[1]);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[2], castspell->cs_unknown[2]);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: %u %i", (uint8)castspell->cs_unknown[3], castspell->cs_unknown[3]);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: 32 %p %u", &castspell->cs_unknown, *(uint32*)castspell->cs_unknown);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: 32 %p %i", &castspell->cs_unknown, *(uint32*)castspell->cs_unknown);
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: 16 %p %u %u", &castspell->cs_unknown, *(uint16*)castspell->cs_unknown, *(uint16*)castspell->cs_unknown + sizeof(uint16));
-	Log.Out(Logs::General, Logs::None, "cs_unknown2: 16 %p %i %i", &castspell->cs_unknown, *(uint16*)castspell->cs_unknown, *(uint16*)castspell->cs_unknown + sizeof(uint16));
-#endif
-	Log.Out(Logs::General, Logs::None, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
+	Log.Out(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 
 	if (m_pp.boatid != 0)
 	{
