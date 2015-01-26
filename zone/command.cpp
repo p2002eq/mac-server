@@ -2426,7 +2426,7 @@ void command_size(Client *c, const Seperator *sep){
 
 			//	target->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
 			//								EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF, newsize);
-			target->SendAppearancePacket(AT_Size, newsize);
+			target->ChangeSize(newsize);
 
 			c->Message(0, "Size = %f", atof(sep->arg[1]));
 		}
