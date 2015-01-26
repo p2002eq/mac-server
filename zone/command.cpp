@@ -811,11 +811,11 @@ void command_testcopy(Client *c, const Seperator *sep) //Still under constructio
 		char String[255];
 
 #ifdef _WINDOWS
-		//sprintf(String, "tak_testcopy.bat %s", target);
+		sprintf(String, "tak_testcopy.bat %s", target);
 #else
-		//sprintf(String, "./tak_testcopy %s", target);
+		sprintf(String, "./tak_testcopy %s", target);
 #endif
-		//system(String);
+		system(String);
 	}
 }
 
