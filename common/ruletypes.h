@@ -431,6 +431,7 @@ RULE_REAL ( NPC, WalkSpeedMultiplier, 30.0 ) //Same as above for walking.
 RULE_INT ( NPC, WalkAnimRatio, 37 ) //Same as above for walking. Probably okay to combine with the runspeed rule.
 RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT ( NPC, NPCTemplateID, 153076)
+RULE_BOOL ( NPC, BoatsRunByDefault, false) // Mainly to make it easier to adjust boats' timing on the fly.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Aggro )

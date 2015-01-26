@@ -445,7 +445,7 @@ bool GuildApproval::ProcessApproval()
 {
 	if(owner && owner->GuildID() != 0)
 	{
-		owner->Message(10,"You are already in a guild! Guild request deleted.");
+		owner->Message(CC_Default,"You are already in a guild! Guild request deleted.");
 		return false;
 	}
 	if(deletion_timer->Check() || !owner)

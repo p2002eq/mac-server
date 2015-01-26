@@ -2578,6 +2578,146 @@ bool Database::DBSetup() {
 	DBSetup_PlayerCorpseBackup();
 	DBSetup_CharacterSoulMarks();
 	DBSetup_MessageBoards();
+	GITInfo();
+	return true;
+}
+
+bool Database::GITInfo()
+{
+	std::string check_query1 = StringFormat("SELECT * FROM `variables` WHERE `varname`='git-HEAD-hash'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		std::string check_query2 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-HEAD-hash', '', 'git rev-parse HEAD', '')");
+		auto results2 = QueryDatabase(check_query2);
+		if (!results2.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error creating git-HEAD-hash field.");
+			return false;
+		}
+	}
+	std::string check_query3 = StringFormat("SELECT * FROM `variables` WHERE `varname`='git-BRANCH'");
+	auto results3 = QueryDatabase(check_query3);
+	if (results3.RowCount() == 0)
+	{
+		std::string check_query4 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-BRANCH', '', 'git rev-parse --abbrev-ref HEAD', '')");
+		auto results4 = QueryDatabase(check_query4);
+		if (!results4.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error creating git-BRANCH field.");
+			return false;
+		}
+	}
+	const char* hash;
+	const char* branch;
+	FILE *fhash;
+	FILE *fbranch;
+#ifdef _WINDOWS
+	char buf[1024];
+	fhash = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse HEAD", "r");
+	while (fgets(buf, 1024, fhash))
+	{
+		const char * output = (const char *)buf;
+		hash = output;
+
+		std::string hashstring = std::string(hash); int pos;
+		if ((pos = hashstring.find('\n')) != std::string::npos)
+			hashstring.erase(pos);
+
+		const char * hash = hashstring.c_str();
+
+		std::string queryhash = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-HEAD-hash')", hash);
+		auto resultshash = QueryDatabase(queryhash);
+		if (!resultshash.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
+			fclose(fhash);
+			return false;
+		}
+	}
+	fclose(fhash);
+
+	char buf2[1024];
+	fbranch = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse --abbrev-ref HEAD", "r");
+	while (fgets(buf2, 1024, fbranch))
+	{
+		const char * output = (const char *)buf2;
+		branch = output;
+
+		std::string branchstring = std::string(branch); int pos;
+		if ((pos = branchstring.find('\n')) != std::string::npos)
+			branchstring.erase(pos);
+
+		const char * branch = branchstring.c_str();
+
+		std::string querybranch = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-BRANCH')", branch);
+		auto resultsbranch = QueryDatabase(querybranch);
+		if (!resultsbranch.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
+			fclose(fbranch);
+			return false;
+		}
+	}
+	fclose(fbranch);
+#else
+	char* buf = NULL;
+	size_t len = 0;
+	fflush(NULL);
+	fhash = popen("git --git-dir=./source/.git rev-parse HEAD", "r");
+
+	while (getline(&buf, &len, fhash) != -1)
+	{
+		const char * output = (const char *)buf;
+		hash = output;
+
+		std::string hashstring = std::string(hash); int pos;
+		if ((pos = hashstring.find('\n')) != std::string::npos)
+			hashstring.erase(pos);
+
+		const char * hash = hashstring.c_str();
+
+
+		std::string queryhash = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-HEAD-hash')", hash);
+		auto resultshash = QueryDatabase(queryhash);
+		if (!resultshash.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
+			free(buf);
+			fflush(fhash);
+			return false;
+		}
+	}
+	free(buf);
+	fflush(fhash);
+
+	char* buf2 = NULL;
+	len = 0;
+	fbranch = popen("git --git-dir=./source/.git rev-parse --abbrev-ref HEAD", "r");
+	while (getline(&buf2, &len, fbranch) != -1)
+	{
+		const char * output = (const char *)buf2;
+		branch = output;
+
+		std::string branchstring = std::string(branch); int pos;
+		if ((pos = branchstring.find('\n')) != std::string::npos)
+			branchstring.erase(pos);
+
+		const char * branch = branchstring.c_str();
+
+		std::string querybranch = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-BRANCH')", branch);
+		auto resultsbranch = QueryDatabase(querybranch);
+		if (!resultsbranch.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
+			free(buf2);
+			fflush(fbranch);
+			return false;
+		}
+	}
+	free(buf2);
+	fflush(fbranch);
+#endif
 	return true;
 }
 

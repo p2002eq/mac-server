@@ -689,7 +689,7 @@ void Mob::Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_ch
 		tmp_hit_chance =Tune_CheckHitChance(defender,attacker, skillinuse, MainPrimary,0,false,0, avoid_override, add_acc);
 
 		if (Msg >= 3)
-			Message(15, "#Tune - Processing... [%i] [ACCURACY %i] Hit Chance %.2f ",j,add_acc,tmp_hit_chance);
+			Message(CC_Yellow, "#Tune - Processing... [%i] [ACCURACY %i] Hit Chance %.2f ",j,add_acc,tmp_hit_chance);
 
 		if (interval > 0 && tmp_hit_chance >= hit_chance){
 			end = true;

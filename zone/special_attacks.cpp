@@ -830,7 +830,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
-	float dist = ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition());
+	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
 		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
@@ -1060,9 +1060,9 @@ void NPC::RangedAttack(Mob* other)
 
 		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", max_range);
 		max_range *= max_range;
-		if (ComparativeDistanceNoZ(m_Position, other->GetPosition()) > max_range)
+		if (DistanceSquaredNoZ(m_Position, other->GetPosition()) > max_range)
 			return;
-		else if(ComparativeDistanceNoZ(m_Position, other->GetPosition()) < (min_range * min_range))
+		else if(DistanceSquaredNoZ(m_Position, other->GetPosition()) < (min_range * min_range))
 			return;
 	
 
@@ -1222,7 +1222,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	int range = item->Range +50/*Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0*/;
 	logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
-	float dist = ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition());
+	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
 		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
@@ -1940,7 +1940,7 @@ void Mob::InstillDoubt(Mob *who) {
 		SpellOnTarget(229, who, false, true, -2000);
 		//is there a success message?
 	} else {
-		Message_StringID(CC_Purple,NOT_SCARING);
+		Message_StringID(CC_Blue,NOT_SCARING);
 		//Idea from WR:
 		/* if (target->IsNPC() && zone->random.Int(0,99) < 10 ) {
 			entity_list.MessageClose(target, false, 50, MT_NPCRampage, "%s lashes out in anger!",target->GetName());

@@ -3447,7 +3447,7 @@ XS(XS_Mob_GetWaypointX)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetCurrentWayPoint().m_X;
+		RETVAL = THIS->GetCurrentWayPoint().x;
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -3473,7 +3473,7 @@ XS(XS_Mob_GetWaypointY)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetCurrentWayPoint().m_Y;
+		RETVAL = THIS->GetCurrentWayPoint().y;
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -3499,7 +3499,7 @@ XS(XS_Mob_GetWaypointZ)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetCurrentWayPoint().m_Z;
+		RETVAL = THIS->GetCurrentWayPoint().z;
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -3525,7 +3525,7 @@ XS(XS_Mob_GetWaypointH)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->GetCurrentWayPoint().m_Heading;
+		RETVAL = THIS->GetCurrentWayPoint().w;
 		XSprePUSH; PUSHn((double)RETVAL);
 	}
 	XSRETURN(1);
@@ -7364,7 +7364,7 @@ XS(XS_Mob_SetDeltas)
 		Perl_croak(aTHX_ "Usage: Mob::SetDeltas(THIS, delta_x, delta_y, delta_z, delta_h)");
 	{
 		Mob *		THIS;
-		auto delta = xyz_heading((float)SvNV(ST(1)), (float)SvNV(ST(2)), (float)SvNV(ST(3)), (float)SvNV(ST(4)));
+		auto delta = glm::vec4((float)SvNV(ST(1)), (float)SvNV(ST(2)), (float)SvNV(ST(3)), (float)SvNV(ST(4)));
 
 		if (sv_derived_from(ST(0), "Mob")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));

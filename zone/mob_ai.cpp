@@ -69,7 +69,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		dist2 = 0; //DistNoRoot(*this);	//WTF was up with this...
 	}
 	else
-		dist2 = ComparativeDistance(m_Position, tar->GetPosition());
+		dist2 = DistanceSquared(m_Position, tar->GetPosition());
 
 	bool checked_los = false;	//we do not check LOS until we are absolutely sure we need to, and we only do it once.
 
@@ -413,7 +413,7 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 		if (t1 > iRange
 			|| t2 > iRange
 			|| t3 > iRange
-			|| ComparativeDistance(mob->GetPosition(), caster->GetPosition()) > iRange2
+			|| DistanceSquared(mob->GetPosition(), caster->GetPosition()) > iRange2
 				//this call should seem backwards:
 			|| !mob->CheckLosFN(caster)
 			|| mob->GetReverseFactionCon(caster) >= FACTION_KINDLY
@@ -503,7 +503,7 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 		pAssistRange = 70;
 	hate_list.Wipe();
 
-	m_Delta = xyz_heading::Origin();
+	m_Delta = glm::vec4();
 	pRunAnimSpeed = 0;
 	pLastChange = Timer::GetCurrentTime();
 }
@@ -633,7 +633,7 @@ void Client::AI_SpellCast()
 	if(!targ)
 		return;
 
-	float dist = ComparativeDistanceNoZ(m_Position, targ->GetPosition());
+	float dist = DistanceSquaredNoZ(m_Position, targ->GetPosition());
 
 	std::vector<uint32> valid_spells;
 	std::vector<uint32> slots;
@@ -795,17 +795,17 @@ void Client::AI_Process()
 				if(AImovement_timer->Check()) {
 					animation = GetRunspeed() * 21;
 					// Check if we have reached the last fear point
-					if((ABS(GetX()-m_FearWalkTarget.m_X) < 0.1) && (ABS(GetY()-m_FearWalkTarget.m_Y) <0.1)) {
+					if((ABS(GetX()-m_FearWalkTarget.x) < 0.1) && (ABS(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
 					if(!RuleB(Pathing, Fear) || !zone->pathing)
-						CalculateNewPosition2(m_FearWalkTarget.m_X, m_FearWalkTarget.m_Y, m_FearWalkTarget.m_Z, GetFearSpeed(), true);
+						CalculateNewPosition2(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z, GetFearSpeed(), true);
 					else
 					{
 						bool WaypointChanged, NodeReached;
 
-						Map::Vertex Goal = UpdatePath(m_FearWalkTarget.m_X, m_FearWalkTarget.m_Y, m_FearWalkTarget.m_Z,
+						glm::vec3 Goal = UpdatePath(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z,
 									GetFearSpeed(), WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
@@ -969,7 +969,7 @@ void Client::AI_Process()
 				else
 				{
 					bool WaypointChanged, NodeReached;
-					Map::Vertex Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
+					glm::vec3 Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
 						GetRunspeed(), WaypointChanged, NodeReached);
 
 					if(WaypointChanged)
@@ -1016,7 +1016,7 @@ void Client::AI_Process()
 			if(owner == nullptr)
 				return;
 
-			float dist = ComparativeDistance(m_Position, owner->GetPosition());
+			float dist = DistanceSquared(m_Position, owner->GetPosition());
 			if (dist >= 100)
 			{
 				float speed = dist >= 225 ? GetRunspeed() : GetWalkspeed();
@@ -1071,17 +1071,17 @@ void Mob::AI_Process() {
 			} else {
 				if(AImovement_timer->Check()) {
 					// Check if we have reached the last fear point
-					if((ABS(GetX()-m_FearWalkTarget.m_X) < 0.1) && (ABS(GetY()-m_FearWalkTarget.m_Y) <0.1)) {
+					if((ABS(GetX()-m_FearWalkTarget.x) < 0.1) && (ABS(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
 					if(!RuleB(Pathing, Fear) || !zone->pathing)
-						CalculateNewPosition2(m_FearWalkTarget.m_X, m_FearWalkTarget.m_Y, m_FearWalkTarget.m_Z, GetFearSpeed(), true);
+						CalculateNewPosition2(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z, GetFearSpeed(), true);
 					else
 					{
 						bool WaypointChanged, NodeReached;
 
-						Map::Vertex Goal = UpdatePath(m_FearWalkTarget.m_X, m_FearWalkTarget.m_Y, m_FearWalkTarget.m_Z,
+						glm::vec3 Goal = UpdatePath(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z,
 									GetFearSpeed(), WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
@@ -1139,15 +1139,15 @@ void Mob::AI_Process() {
 			float tether_range = static_cast<float>(GetSpecialAbilityParam(TETHER, 0));
 			tether_range = tether_range > 0.0f ? tether_range * tether_range : pAggroRange * pAggroRange;
 
-			if(ComparativeDistanceNoZ(m_Position, npcSpawnPoint) > tether_range) {
-				GMMove(npcSpawnPoint.m_X, npcSpawnPoint.m_Y, npcSpawnPoint.m_Z, npcSpawnPoint.m_Heading);
+			if(DistanceSquaredNoZ(m_Position, npcSpawnPoint) > tether_range) {
+				GMMove(npcSpawnPoint.x, npcSpawnPoint.y, npcSpawnPoint.z, npcSpawnPoint.w);
 			}
 		} else if(GetSpecialAbility(LEASH)) {
 			float leash_range = static_cast<float>(GetSpecialAbilityParam(LEASH, 0));
 			leash_range = leash_range > 0.0f ? leash_range * leash_range : pAggroRange * pAggroRange;
 
-			if(ComparativeDistanceNoZ(m_Position, npcSpawnPoint) > leash_range) {
-				GMMove(npcSpawnPoint.m_X, npcSpawnPoint.m_Y, npcSpawnPoint.m_Z, npcSpawnPoint.m_Heading);
+			if(DistanceSquaredNoZ(m_Position, npcSpawnPoint) > leash_range) {
+				GMMove(npcSpawnPoint.x, npcSpawnPoint.y, npcSpawnPoint.z, npcSpawnPoint.w);
 				SetHP(GetMaxHP());
 				BuffFadeAll();
 				WipeHateList();
@@ -1382,7 +1382,7 @@ void Mob::AI_Process() {
 			//we cannot reach our target...
 			//underwater stuff only works with water maps in the zone!
 			if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-                auto targetPosition = xyz_location(target->GetX(), target->GetY(), target->GetZ());
+                auto targetPosition = glm::vec3(target->GetX(), target->GetY(), target->GetZ());
 				if(!zone->watermap->InLiquid(targetPosition)) {
 					Mob *tar = hate_list.GetTop(this);
 					if(tar == target) {
@@ -1421,7 +1421,7 @@ void Mob::AI_Process() {
 						{
 							bool WaypointChanged, NodeReached;
 
-							Map::Vertex Goal = UpdatePath(target->GetX(), target->GetY(), target->GetZ(),
+							glm::vec3 Goal = UpdatePath(target->GetX(), target->GetY(), target->GetZ(),
 											GetRunspeed(), WaypointChanged, NodeReached);
 
 							if(WaypointChanged)
@@ -1501,7 +1501,7 @@ void Mob::AI_Process() {
 						//if(owner->IsClient())
 						//	printf("Pet start pos: (%f, %f, %f)\n", GetX(), GetY(), GetZ());
 
-						float dist = ComparativeDistance(m_Position, owner->GetPosition());
+						float dist = DistanceSquared(m_Position, owner->GetPosition());
 						if (dist >= 400)
 						{
 							float speed = GetWalkspeed();
@@ -1556,7 +1556,7 @@ void Mob::AI_Process() {
 				if (!follow) SetFollowID(0);
 				else
 				{
-					float dist2 = ComparativeDistance(m_Position, follow->GetPosition());
+					float dist2 = DistanceSquared(m_Position, follow->GetPosition());
 					int followdist = GetFollowDistance();
 
 					if (dist2 >= followdist)	// Default follow distance is 100
@@ -1733,15 +1733,15 @@ void NPC::AI_DoMovement() {
 			}	// endif (movetimercompleted==true)
 			else if (!(AIwalking_timer->Enabled()))
 			{	// currently moving
-				if (m_CurrentWayPoint.m_X == GetX() && m_CurrentWayPoint.m_Y == GetY())
+				if (m_CurrentWayPoint.x == GetX() && m_CurrentWayPoint.y == GetY())
 				{	// are we there yet? then stop
 					logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AI, "We have reached waypoint %d (%.3f,%.3f,%.3f) on grid %d", cur_wp, GetX(), GetY(), GetZ(), GetGrid());
 					SetWaypointPause();
 					if(GetAppearance() != eaStanding)
 						SetAppearance(eaStanding, false);
 					SetMoving(false);
-					if (m_CurrentWayPoint.m_Heading >= 0.0) {
-						SetHeading(m_CurrentWayPoint.m_Heading);
+					if (m_CurrentWayPoint.w >= 0.0) {
+						SetHeading(m_CurrentWayPoint.w);
 					}
 					SendPosition();
 
@@ -1757,12 +1757,12 @@ void NPC::AI_DoMovement() {
 				else
 				{	// not at waypoint yet, so keep moving
 					if(!RuleB(Pathing, AggroReturnToGrid) || !zone->pathing || (DistractedFromGrid == 0))
-						CalculateNewPosition2(m_CurrentWayPoint.m_X, m_CurrentWayPoint.m_Y, m_CurrentWayPoint.m_Z, walksp, true);
+						CalculateNewPosition2(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, walksp, true);
 					else
 					{
 						bool WaypointChanged;
 						bool NodeReached;
-						Map::Vertex Goal = UpdatePath(m_CurrentWayPoint.m_X, m_CurrentWayPoint.m_Y, m_CurrentWayPoint.m_Z, walksp, WaypointChanged, NodeReached);
+						glm::vec3 Goal = UpdatePath(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, walksp, WaypointChanged, NodeReached);
 						if(WaypointChanged)
 							tar_ndx = 20;
 
@@ -1795,13 +1795,13 @@ void NPC::AI_DoMovement() {
 	{
 		bool CP2Moved;
 		if(!RuleB(Pathing, Guard) || !zone->pathing)
-			CP2Moved = CalculateNewPosition2(m_GuardPoint.m_X, m_GuardPoint.m_Y, m_GuardPoint.m_Z, walksp);
+			CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
 		else
 		{
-			if(!((m_Position.m_X == m_GuardPoint.m_X) && (m_Position.m_Y == m_GuardPoint.m_Y) && (m_Position.m_Z == m_GuardPoint.m_Z)))
+			if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
 			{
 				bool WaypointChanged, NodeReached;
-				Map::Vertex Goal = UpdatePath(m_GuardPoint.m_X, m_GuardPoint.m_Y, m_GuardPoint.m_Z, walksp, WaypointChanged, NodeReached);
+				glm::vec3 Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
 				if(WaypointChanged)
 					tar_ndx = 20;
 
@@ -1817,13 +1817,13 @@ void NPC::AI_DoMovement() {
 		if (!CP2Moved)
 		{
 			if(moved) {
-				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.m_X, m_GuardPoint.m_Y, m_GuardPoint.m_Z);
+				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				ClearFeignMemory();
 				moved=false;
 				SetMoving(false);
-				if (GetTarget() == nullptr || ComparativeDistance(m_Position, GetTarget()->GetPosition()) >= 5*5 )
+				if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
 				{
-					SetHeading(m_GuardPoint.m_Heading);
+					SetHeading(m_GuardPoint.w);
 				} else {
 					FaceTarget(GetTarget());
 				}
@@ -2392,7 +2392,6 @@ create table npc_spells_entries (
 
 bool IsSpellInList(DBnpcspells_Struct* spell_list, int16 iSpellID);
 bool IsSpellEffectInList(DBnpcspellseffects_Struct* spelleffect_list, uint16 iSpellEffectID, int32 base, int32 limit, int32 max);
-bool Compare_AI_Spells(AISpells_Struct i, AISpells_Struct j);
 
 bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 	// ok, this function should load the list, and the parent list then shove them into the struct and sort
@@ -2517,7 +2516,9 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 				spell_list->entries[i].resist_adjust);
 		}
 	}
-	std::sort(AIspells.begin(), AIspells.end(), Compare_AI_Spells);
+	std::sort(AIspells.begin(), AIspells.end(), [](const AISpells_Struct& a, const AISpells_Struct& b) {
+		return a.priority > b.priority;
+	});
 
 	if (IsValidSpell(attack_proc_spell))
 		AddProcToWeapon(attack_proc_spell, true, proc_chance);
@@ -2655,11 +2656,6 @@ bool IsSpellInList(DBnpcspells_Struct* spell_list, int16 iSpellID) {
 			return true;
 	}
 	return false;
-}
-
-bool Compare_AI_Spells(AISpells_Struct i, AISpells_Struct j)
-{
-	return(i.priority > j.priority);
 }
 
 // adds a spell to the list, taking into account priority and resorting list as needed.

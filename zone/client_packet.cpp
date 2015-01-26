@@ -1144,9 +1144,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				auto safePoint = zone->GetSafePoint();
 				m_pp.boatid = 0;
 				m_pp.boat[0] = 0;
-				m_pp.x = safePoint.m_X;
-				m_pp.y = safePoint.m_Y;
-				m_pp.z = safePoint.m_Z;
+				m_pp.x = safePoint.x;
+				m_pp.y = safePoint.y;
+				m_pp.z = safePoint.z;
 			}
 		}
 	}
@@ -1165,9 +1165,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* If PP is set to weird coordinates */
 	if ((m_pp.x == -1 && m_pp.y == -1 && m_pp.z == -1) || (m_pp.x == -2 && m_pp.y == -2 && m_pp.z == -2)) {
         auto safePoint = zone->GetSafePoint();
-		m_pp.x = safePoint.m_X;
-		m_pp.y = safePoint.m_Y;
-		m_pp.z = safePoint.m_Z;
+		m_pp.x = safePoint.x;
+		m_pp.y = safePoint.y;
+		m_pp.z = safePoint.z;
 	}
 	/* If too far below ground, then fix */
 	// float ground_z = GetGroundZ(m_pp.x, m_pp.y, m_pp.z);
@@ -1177,10 +1177,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Mob variables for spawn */
 	class_ = m_pp.class_;
 	level = m_pp.level;
-	m_Position.m_X = m_pp.x;
-	m_Position.m_Y = m_pp.y;
-	m_Position.m_Z = m_pp.z;
-	m_Position.m_Heading = m_pp.heading;
+	m_Position.x = m_pp.x;
+	m_Position.y = m_pp.y;
+	m_Position.z = m_pp.z;
+	m_Position.w = m_pp.heading;
 	race = m_pp.race;
 	base_race = m_pp.race;
 	gender = m_pp.gender;
@@ -1769,8 +1769,8 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 		ranged_timer.Disable();
 		attack_dw_timer.Disable();
 
-		m_AutoAttackPosition = xyz_heading::Origin();
-		m_AutoAttackTargetLocation = xyz_location::Origin();
+		m_AutoAttackPosition = glm::vec4();
+		m_AutoAttackTargetLocation = glm::vec3();
 		aa_los_them_mob = nullptr;
 	}
 	else if (app->pBuffer[0] == 1)
@@ -1785,14 +1785,14 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 		{
 			aa_los_them_mob = GetTarget();
 			m_AutoAttackPosition = GetPosition();
-			m_AutoAttackTargetLocation = aa_los_them_mob->GetPosition();
+			m_AutoAttackTargetLocation = glm::vec3(aa_los_them_mob->GetPosition());
 			los_status = CheckLosFN(aa_los_them_mob);
 			los_status_facing = IsFacingMob(aa_los_them_mob);
 		}
 		else
 		{
 			m_AutoAttackPosition = GetPosition();
-			m_AutoAttackTargetLocation = xyz_location::Origin();
+			m_AutoAttackTargetLocation = glm::vec3();
 			aa_los_them_mob = nullptr;
 			los_status = false;
 			los_status_facing = false;
@@ -2455,7 +2455,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		params.push_back(std::to_string((double)ppu->x_pos));
 		params.push_back(std::to_string((double)ppu->y_pos));
 		params.push_back(std::to_string((double)ppu->z_pos));
-		params.push_back(std::to_string((double)m_Position.m_Heading));
+		params.push_back(std::to_string((double)m_Position.w));
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
@@ -2471,7 +2471,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			}
 
 			// set the boat's position deltas
-			auto boatDelta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			auto boatDelta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 			boat->SetDelta(boatDelta);
 			// send an update to everyone nearby except the client controlling the boat
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -2488,9 +2488,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float dist = 0;
 	float tmp;
-	tmp = m_Position.m_X - ppu->x_pos;
+	tmp = m_Position.x - ppu->x_pos;
 	dist += tmp*tmp;
-	tmp = m_Position.m_Y - ppu->y_pos;
+	tmp = m_Position.y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
 
@@ -2633,40 +2633,40 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float rewind_x_diff = 0;
 	float rewind_y_diff = 0;
 
-	rewind_x_diff = ppu->x_pos - m_RewindLocation.m_X;
+	rewind_x_diff = ppu->x_pos - m_RewindLocation.x;
 	rewind_x_diff *= rewind_x_diff;
-	rewind_y_diff = ppu->y_pos - m_RewindLocation.m_Y;
+	rewind_y_diff = ppu->y_pos - m_RewindLocation.y;
 	rewind_y_diff *= rewind_y_diff;
 
 	//We only need to store updated values if the player has moved.
 	//If the player has moved more than units for x or y, then we'll store
 	//his pre-PPU x and y for /rewind, in case he gets stuck.
 	if ((rewind_x_diff > 750) || (rewind_y_diff > 750))
-        m_RewindLocation = m_Position;
+		m_RewindLocation = glm::vec3(m_Position);
 
 	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
 	//just update rewind coords to the new ppu coords. This will prevent exploitation.
 
 	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000))
-		m_RewindLocation = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
+		m_RewindLocation = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 
 	if(proximity_timer.Check()) {
-		entity_list.ProcessMove(this, xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos));
+		entity_list.ProcessMove(this, glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos));
 
-		m_Proximity = xyz_location(ppu->x_pos, ppu->y_pos, ppu->z_pos);
+		m_Proximity = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
 	// Update internal state
-	m_Delta = xyz_heading(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
-	m_Position.m_Heading = ppu->heading;
+	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	m_Position.w = ppu->heading;
 
-	if(IsTracking() && ((m_Position.m_X!=ppu->x_pos) || (m_Position.m_Y!=ppu->y_pos))){
+	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
 		if(zone->random.Real(0, 100) < 70)//should be good
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
 
 	// Break Hide and Trader mode if moving without sneaking and set rewind timer if moved
-	if(ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X){
+	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x){
 		if((hidden || improved_hidden) && !sneaking){
 			hidden = false;
 			improved_hidden = false;
@@ -2685,15 +2685,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		rewind_timer.Start(30000, true);
 	}
 
-	float water_x = m_Position.m_X;
-	float water_y = m_Position.m_Y;
+	float water_x = m_Position.x;
+	float water_y = m_Position.y;
 
 	// Outgoing client packet
-	if (ppu->y_pos != m_Position.m_Y || ppu->x_pos != m_Position.m_X || ppu->heading != m_Position.m_Heading || ppu->anim_type != animation || (m_Delta.m_X != 0 || m_Delta.m_Y != 0 || m_Delta.m_Z != 0) && animation == 0)
+	if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->heading != m_Position.w || ppu->anim_type != animation || (m_Delta.x != 0 || m_Delta.y != 0 || m_Delta.z != 0) && animation == 0)
 	{
-		m_Position.m_X = ppu->x_pos;
-		m_Position.m_Y = ppu->y_pos;
-		m_Position.m_Z = ppu->z_pos;
+		m_Position.x = ppu->x_pos;
+		m_Position.y = ppu->y_pos;
+		m_Position.z = ppu->z_pos;
 		animation = ppu->anim_type;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -2708,7 +2708,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(m_Position) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
 			if(zone->random.Roll(50))
@@ -2894,10 +2894,10 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			min = (ttime / 60000) % 60; // Total seconds / 60 drop .00
 			char val1[20] = { 0 };
 			char val2[20] = { 0 };
-			Message_StringID(10, CORPSE_DECAY1, ConvertArray(min, val1), ConvertArray(sec, val2));
+			Message_StringID(CC_Default, CORPSE_DECAY1, ConvertArray(min, val1), ConvertArray(sec, val2));
 		}
 		else {
-			Message_StringID(10, CORPSE_DECAY_NOW);
+			Message_StringID(CC_Default, CORPSE_DECAY_NOW);
 		}
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
@@ -2921,7 +2921,7 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			hour = 0;
 		}
 		else {
-			Message_StringID(10, CORPSE_DECAY_NOW);
+			Message_StringID(CC_Default, CORPSE_DECAY_NOW);
 		}
 	}
 }
@@ -3315,9 +3315,9 @@ void Client::Handle_OP_DuelResponse(const EQApplicationPacket *app)
 	initiator->CastToClient()->SetDuelTarget(0);
 	initiator->CastToClient()->SetDueling(false);
 	if (GetID() == initiator->GetID())
-		entity->CastToClient()->Message_StringID(10, DUEL_DECLINE, initiator->GetName());
+		entity->CastToClient()->Message_StringID(CC_Default, DUEL_DECLINE, initiator->GetName());
 	else
-		initiator->CastToClient()->Message_StringID(10, DUEL_DECLINE, entity->GetName());
+		initiator->CastToClient()->Message_StringID(CC_Default, DUEL_DECLINE, entity->GetName());
 	return;
 }
 
@@ -4806,7 +4806,7 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 
 			if (guild_mgr.SetGuildLeader(GuildID(), newleader->CharacterID())){
 				Message(0, "Successfully Transfered Leadership to %s.", target);
-				newleader->Message(15, "%s has transfered the guild leadership into your hands.", GetName());
+				newleader->Message(CC_Yellow, "%s has transfered the guild leadership into your hands.", GetName());
 			}
 			else
 				Message(0, "Could not change leadership at this time.");
@@ -5175,7 +5175,7 @@ void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
 	{
 		SetLooting(ent->GetID()); //store the entity we are looting
 		Corpse *ent_corpse = ent->CastToCorpse();
-		if (ComparativeDistanceNoZ(m_Position, ent_corpse->GetPosition())  > 625)
+		if (DistanceSquaredNoZ(m_Position, ent_corpse->GetPosition())  > 625)
 		{
 			Message(CC_Red, "Corpse too far away.");
 			Corpse::SendLootReqErrorPacket(this);
@@ -5223,9 +5223,9 @@ void Client::Handle_OP_ManaChange(const EQApplicationPacket *app)
 	if (app->size == 0) {
 		// i think thats the sign to stop the songs
 		if (IsBardSong(casting_spell_id) || bardsong != 0)
-			InterruptSpell(SONG_ENDS, 0x121);
+			InterruptSpell(SONG_ENDS, CC_User_SpellFailure);
 		else
-			InterruptSpell(INTERRUPT_SPELL, 0x121);
+			InterruptSpell(INTERRUPT_SPELL, CC_User_SpellFailure);
 
 		return;
 	}
@@ -5277,11 +5277,11 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 		if (zone->random.Int(0, 99) < criticalchance){
 			mendhp *= 2;
-			Message_StringID(CC_Purple, MEND_CRITICAL);
+			Message_StringID(CC_Blue, MEND_CRITICAL);
 		}
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
-		Message_StringID(CC_Purple, MEND_SUCCESS);
+		Message_StringID(CC_Blue, MEND_SUCCESS);
 	}
 	else {
 		/* the purpose of the following is to make the chance to worsen wounds much less common,
@@ -5294,10 +5294,10 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		{
 			SetHP(currenthp > mendhp ? (GetHP() - mendhp) : 1);
 			SendHPUpdate();
-			Message_StringID(CC_Purple, MEND_WORSEN);
+			Message_StringID(CC_Blue, MEND_WORSEN);
 		}
 		else
-			Message_StringID(CC_Purple, MEND_FAIL);
+			Message_StringID(CC_Blue, MEND_FAIL);
 	}
 
 	CheckIncreaseSkill(SkillMend, nullptr, 10);
@@ -5376,7 +5376,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		}
 	}
 
-	if (mi_hack) { Message(15, "Caution: Illegal use of inaccessable bag slots!"); }
+	if (mi_hack) { Message(CC_Yellow, "Caution: Illegal use of inaccessable bag slots!"); }
 
 	if (IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot)) {
 		bool si = SwapItem(mi);
@@ -5443,7 +5443,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		if (!GetTarget())
 			break;
 		if (GetTarget()->IsMezzed()) {
-			Message_StringID(10, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
+			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
 			break;
 		}
 		if (mypet->IsFeared())
@@ -5455,7 +5455,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		}
 
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 2) || mypet->GetPetType() != petAnimation) {
-			if (GetTarget() != this && ComparativeDistanceNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+			if (GetTarget() != this && DistanceSquaredNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 				if (mypet->IsHeld()) {
 					if (!mypet->IsFocused()) {
 						mypet->SetHeld(false); //break the hold and guard if we explicitly tell the pet to attack.
@@ -5486,7 +5486,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	case PET_HEALTHREPORT: {
 		Message_StringID(MT_PetResponse, PET_REPORT_HP, ConvertArrayF(mypet->GetHPRatio(), val1));
 		mypet->ShowBuffList(this);
-		//Message(10,"%s tells you, 'I have %d percent of my hit points left.'",mypet->GetName(),(uint8)mypet->GetHPRatio());
+		//Message(CC_Default,"%s tells you, 'I have %d percent of my hit points left.'",mypet->GetName(),(uint8)mypet->GetHPRatio());
 		break;
 	}
 	case PET_GETLOST: {
@@ -6398,7 +6398,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Loot type changed to: %d.", ri->parameter);
+			Message(CC_Yellow, "Loot type changed to: %d.", ri->parameter);
 			r->ChangeLootType(ri->parameter);
 		}
 		break;
@@ -6410,7 +6410,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Adding %s as a raid looter.", ri->leader_name);
+			Message(CC_Yellow, "Adding %s as a raid looter.", ri->leader_name);
 			r->AddRaidLooter(ri->leader_name);
 		}
 		break;
@@ -6422,7 +6422,7 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 		Raid *r = entity_list.GetRaidByClient(this);
 		if (r)
 		{
-			Message(15, "Removing %s as a raid looter.", ri->leader_name);
+			Message(CC_Yellow, "Removing %s as a raid looter.", ri->leader_name);
 			r->RemoveRaidLooter(ri->leader_name);
 		}
 		break;
@@ -6560,11 +6560,11 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 	ds->duel_target = duel;
 	Entity* entity = entity_list.GetID(ds->duel_target);
 	if (GetID() != ds->duel_target && entity->IsClient() && (entity->CastToClient()->IsDueling() && entity->CastToClient()->GetDuelTarget() != 0)) {
-		Message_StringID(10, DUEL_CONSIDERING, entity->GetName());
+		Message_StringID(CC_Default, DUEL_CONSIDERING, entity->GetName());
 		return;
 	}
 	if (IsDueling()) {
-		Message_StringID(10, DUEL_INPROGRESS);
+		Message_StringID(CC_Default, DUEL_INPROGRESS);
 		return;
 	}
 
@@ -6695,29 +6695,29 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 		int uskill = GetSkill(SkillSenseTraps);
 		if ((zone->random.Int(0, 99) + uskill) >= (zone->random.Int(0, 99) + trap->skill*0.75))
 		{
-			auto diff = trap->m_Position - GetPosition();
+			auto diff = trap->m_Position - glm::vec3(GetPosition());
 
-			if (diff.m_X == 0 && diff.m_Y == 0)
+			if (diff.x == 0 && diff.y == 0)
 				Message(MT_Skills, "You sense a trap right under your feet!");
-			else if (diff.m_X > 10 && diff.m_Y > 10)
+			else if (diff.x > 10 && diff.y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthWest.");
-			else if (diff.m_X < -10 && diff.m_Y > 10)
+			else if (diff.x < -10 && diff.y > 10)
 				Message(MT_Skills, "You sense a trap to the NorthEast.");
-			else if (diff.m_Y > 10)
+			else if (diff.y > 10)
 				Message(MT_Skills, "You sense a trap to the North.");
-			else if (diff.m_X > 10 && diff.m_Y < -10)
+			else if (diff.x > 10 && diff.y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthWest.");
-			else if (diff.m_X < -10 && diff.m_Y < -10)
+			else if (diff.x < -10 && diff.y < -10)
 				Message(MT_Skills, "You sense a trap to the SouthEast.");
-			else if (diff.m_Y < -10)
+			else if (diff.y < -10)
 				Message(MT_Skills, "You sense a trap to the South.");
-			else if (diff.m_X > 10)
+			else if (diff.x > 10)
 				Message(MT_Skills, "You sense a trap to the West.");
 			else
 				Message(MT_Skills, "You sense a trap to the East.");
 			trap->detected = true;
 
-			float angle = CalculateHeadingToTarget(trap->m_Position.m_X, trap->m_Position.m_Y);
+			float angle = CalculateHeadingToTarget(trap->m_Position.x, trap->m_Position.y);
 
 			if (angle < 0)
 				angle = (256 + angle);
@@ -6938,7 +6938,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (mp->quantity < 1) return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (ComparativeDistance(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
+	if (DistanceSquared(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
@@ -6994,7 +6994,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 	if (CheckLoreConflict(item))
 	{
-		Message(15, "You can only have one of a lore item.");
+		Message(CC_Yellow, "You can only have one of a lore item.");
 		return;
 	}
 	// This makes sure the vendor deletes charged items from their temp list properly.
@@ -7080,7 +7080,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
 			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) {
 				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(), xyz_heading(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
+				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 				QueuePacket(outapp);
 				safe_delete(outapp);
 				safe_delete(inst);
@@ -7196,7 +7196,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (ComparativeDistance(m_Position, vendor->GetPosition()) > USE_NPC_RANGE2)
+	if (DistanceSquared(m_Position, vendor->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	uint32 price = 0;
@@ -7342,7 +7342,7 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 		return;
 
 	//you have to be somewhat close to them to be properly using them
-	if (ComparativeDistance(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
+	if (DistanceSquared(m_Position, tmp->GetPosition()) > USE_NPC_RANGE2)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
@@ -7666,7 +7666,7 @@ void Client::Handle_OP_Surname(const EQApplicationPacket *app)
 
 	if (!p_timers.Expired(&database, pTimerSurnameChange, false) && !GetGM())
 	{
-		Message(15, "You may only change surnames once every 7 days, your /surname is currently on cooldown.");
+		Message(CC_Yellow, "You may only change surnames once every 7 days, your /surname is currently on cooldown.");
 		return;
 	}
 
@@ -7783,7 +7783,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 
 	// For /target, send reject or success packet
 	if (app->GetOpcode() == OP_TargetCommand) {
-		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (ComparativeDistance(m_Position, GetTarget()->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
+		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (DistanceSquared(m_Position, GetTarget()->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
 			if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
 				|| GetTarget()->GetBodyType() == BT_NoTarget)
 			{
@@ -7853,9 +7853,9 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 			}
 			else if (GetBindSightTarget())
 			{
-				if (ComparativeDistance(GetBindSightTarget()->GetPosition(), GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+				if (DistanceSquared(GetBindSightTarget()->GetPosition(), GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 				{
-					if (ComparativeDistance(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+					if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 					{
 						char *hacker_str = nullptr;
 						MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
@@ -7869,7 +7869,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 					}
 				}
 			}
-			else if (ComparativeDistance(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 			{
 				char *hacker_str = nullptr;
 				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"

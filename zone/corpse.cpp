@@ -72,7 +72,7 @@ void Corpse::SendLootReqErrorPacket(Client* client, uint8 response) {
 	safe_delete(outapp);
 }
 
-Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const xyz_heading& position, std::string time_of_death, bool rezzed, bool was_at_graveyard){
+Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const glm::vec4& position, std::string time_of_death, bool rezzed, bool was_at_graveyard){
 	uint32 item_count = database.GetCharacterCorpseItemCount(in_dbid);
 	char *buffer = new char[sizeof(PlayerCorpse_Struct) + (item_count * sizeof(player_lootitem::ServerLootItem_Struct))];
 	PlayerCorpse_Struct *pcs = (PlayerCorpse_Struct*)buffer;
@@ -442,7 +442,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 
 /* Called from Database Load */
 
-Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const xyz_heading& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture,uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard)
+Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", // const char* in_name,
 	"",						// const char* in_lastname,
 	0,						// int32		in_cur_hp,
@@ -497,7 +497,7 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	// to the corpse. The corpse seems to poof shortly after the timer is applied if it is done so
 	// after items are loaded.
 	bool empty = true;
-	if(!in_itemlist->empty() || in_copper != 0 || in_silver != 0 || in_gold != 0 || in_plat != 0)
+	if (!in_itemlist->empty() || in_copper != 0 || in_silver != 0 || in_gold != 0 || in_plat != 0)
 		empty = false;
 
 	LoadPlayerCorpseDecayTime(in_dbid, empty);
@@ -530,12 +530,14 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	gm_rez_experience = in_gmrezexp;
 	killedby = in_killedby;
 
-	if(killedby == Killed_DUEL)
+	if (killedby == Killed_DUEL)
+	{
 		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
+	}
 
-	for (int i = 0; i < MAX_LOOTERS; i++)
+	for (int i = 0; i < MAX_LOOTERS; i++){
 		allowed_looters[i] = 0;
-
+	}
 	SetPlayerKillItemID(0);
 }
 
@@ -1054,15 +1056,15 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 
 		if(IsPlayerCorpse() && (char_id == client->CharacterID() || client->GetGM())) {
 			if(i > corpselootlimit) {
-				client->Message(15, "*** This corpse contains more items than can be displayed! ***");
+				client->Message(CC_Yellow, "*** This corpse contains more items than can be displayed! ***");
 				client->Message(0, "Remove items and re-loot corpse to access remaining inventory.");
 				client->Message(0, "(%s contains %i additional %s.)", GetName(), (i - corpselootlimit), (i - corpselootlimit) == 1 ? "item" : "items");
 			}
 
 			if (IsPlayerCorpse() && i == 0 && itemlist.size() > 0) { // somehow, player corpse contains items, but client doesn't see them...
 				client->Message(CC_Red, "This corpse contains items that are inaccessable!");
-				client->Message(15, "Contact a GM for item replacement, if necessary.");
-				client->Message(15, "BUGGED CORPSE [DBID: %i, Name: %s, Item Count: %i]", GetCorpseDBID(), GetName(), itemlist.size());
+				client->Message(CC_Yellow, "Contact a GM for item replacement, if necessary.");
+				client->Message(CC_Yellow, "BUGGED CORPSE [DBID: %i, Name: %s, Item Count: %i]", GetCorpseDBID(), GetName(), itemlist.size());
 
 				cur = itemlist.begin();
 				end = itemlist.end();
@@ -1332,7 +1334,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 				client->Message(CC_Red, "That corpse is locked by a GM.");
 				return false;
 			}
-			if (!CheckDistance || (ComparativeDistanceNoZ(m_Position, client->GetPosition()) <= dist2)) {
+			if (!CheckDistance || (DistanceSquaredNoZ(m_Position, client->GetPosition()) <= dist2)) {
 				GMMove(client->GetX(), client->GetY(), client->GetZ());
 				is_corpse_changed = true;
 			}
@@ -1347,7 +1349,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 			std::list<std::string>::iterator itr;
 			for(itr = client->consent_list.begin(); itr != client->consent_list.end(); ++itr) {
 				if(strcmp(this->GetOwnerName(), itr->c_str()) == 0) {
-					if (!CheckDistance || (ComparativeDistanceNoZ(m_Position, client->GetPosition()) <= dist2)) {
+					if (!CheckDistance || (DistanceSquaredNoZ(m_Position, client->GetPosition()) <= dist2)) {
 						GMMove(client->GetX(), client->GetY(), client->GetZ());
 						is_corpse_changed = true;
 					}

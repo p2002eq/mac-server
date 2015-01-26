@@ -1469,6 +1469,11 @@ FragmentGroup::FragmentGroup(uint16 seq, uint16 opcode, uint16 num_fragments)
 
 FragmentGroup::~FragmentGroup()
 {
+	for(int i=0;i<num_fragments;i++)
+	{
+		if(&fragment[i])
+			delete &fragment[i];
+	}
 	safe_delete_array(fragment);//delete[] fragment;
 }
 
@@ -1477,6 +1482,7 @@ void FragmentGroup::Add(uint16 frag_id, uchar* data, uint32 size)
 	//The frag_id references a fragment within the group
 	if(frag_id < num_fragments)
 	{
+		if(fragment)
 		fragment[frag_id].SetData(data, size);
 	}
 	//The frag_id is attempting to reference an element outside the bounds of the group array
@@ -1905,7 +1911,6 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 			EQRawApplicationPacket *app = new EQRawApplicationPacket(fragment_group->GetOpcode(), buf, sizep);
 			safe_delete_array(buf);
 			OutQueue.push_back(app);
-			safe_delete(fragment_group);
 			return true;
 		}
 		else

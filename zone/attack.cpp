@@ -1361,7 +1361,7 @@ void Mob::AggroPet(Mob* attacker)
 				logger.DebugCategory(EQEmuLogSys::Detail, EQEmuLogSys::Combat, "Sending pet %s into battle due to attack.", pet->GetName());
 				pet->AddToHateList(attacker, 1);
 				pet->SetTarget(attacker);
-				Message_StringID(10, PET_ATTACKING, pet->GetCleanName(), attacker->GetCleanName());
+				Message_StringID(CC_Default, PET_ATTACKING, pet->GetCleanName(), attacker->GetCleanName());
 			}
 		}
 	}
@@ -1506,9 +1506,9 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 			{
 				if(zone->zonemap != nullptr)
 				{
-					m_Position.m_Z -= 100;
-					Map::Vertex dest(m_Position.m_X, m_Position.m_Y, m_Position.m_Z);
-					m_Position.m_Z = zone->zonemap->FindBestZ(dest, nullptr);
+					m_Position.z -= 100;
+					glm::vec3 dest(m_Position.x, m_Position.y, m_Position.z);
+					m_Position.z = zone->zonemap->FindBestZ(dest, nullptr);
 				}
 			}
 
@@ -2306,9 +2306,8 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
-    auto otherPosition = xyz_location(other->GetX(), other->GetY(), other->GetZ());
 	if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-		if(!zone->watermap->InLiquid(otherPosition)) {
+		if(!zone->watermap->InLiquid(glm::vec3(other->GetPosition()))) {
 			return;
 		}
 	}
@@ -3338,7 +3337,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			damage = AffectMagicalDamage(damage, spell_id, iBuffTic, attacker);
 			if (origdmg != damage && attacker && attacker->IsClient()) {
 				if(attacker->CastToClient()->GetFilter(FilterDamageShields) != FilterHide)
-					attacker->Message(15, "The Spellshield absorbed %d of %d points of damage", origdmg - damage, origdmg);
+					attacker->Message(CC_Yellow, "The Spellshield absorbed %d of %d points of damage", origdmg - damage, origdmg);
 			}
 			if (damage == 0 && attacker && origdmg != damage && IsClient()) {
 				//Kayen: Probably need to add a filter for this - Not sure if this msg is correct but there should be a message for spell negate/runes.
@@ -4542,20 +4541,20 @@ void Mob::CommonBreakInvisible()
 
 /* Dev quotes:
  * Old formula
- *     Final delay = (Original Delay / (haste mod *.01f)) + ((Hundred Hands / 100) * Original Delay)
+ *	 Final delay = (Original Delay / (haste mod *.01f)) + ((Hundred Hands / 100) * Original Delay)
  * New formula
- *     Final delay = (Original Delay / (haste mod *.01f)) + ((Hundred Hands / 1000) * (Original Delay / (haste mod *.01f))
- * Base Delay      20              25              30              37
- * Haste           2.25            2.25            2.25            2.25
- * HHE (old)      -17             -17             -17             -17
- * Final Delay     5.488888889     6.861111111     8.233333333     10.15444444
+ *	 Final delay = (Original Delay / (haste mod *.01f)) + ((Hundred Hands / 1000) * (Original Delay / (haste mod *.01f))
+ * Base Delay	  20			  25			  30			  37
+ * Haste		   2.25			2.25			2.25			2.25
+ * HHE (old)	  -17			 -17			 -17			 -17
+ * Final Delay	 5.488888889	 6.861111111	 8.233333333	 10.15444444
  *
- * Base Delay      20              25              30              37
- * Haste           2.25            2.25            2.25            2.25
- * HHE (new)      -383            -383            -383            -383
- * Final Delay     5.484444444     6.855555556     8.226666667     10.14622222
+ * Base Delay	  20			  25			  30			  37
+ * Haste		   2.25			2.25			2.25			2.25
+ * HHE (new)	  -383			-383			-383			-383
+ * Final Delay	 5.484444444	 6.855555556	 8.226666667	 10.14622222
  *
- * Difference     -0.004444444   -0.005555556   -0.006666667   -0.008222222
+ * Difference	 -0.004444444   -0.005555556   -0.006666667   -0.008222222
  *
  * These times are in 10th of a second
  */

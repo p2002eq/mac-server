@@ -359,21 +359,20 @@ typedef enum {
 #define MT_StrikeThrough		339
 #define MT_Stun					340
 
-//from showeq
+//Unused numbers are either White, Grey, or LightGrey. After 20, all are LightGrey until 256.
 enum ChatColor
 {
-	CC_Default					= 0,
-	CC_DarkGrey					= 1,
-	CC_DarkGreen				= 2,
-	CC_DarkBlue					= 3,
-	CC_Purple					= 4,
-	CC_Purple2					= 5,
-	CC_LightGrey				= 6,
-	CC_LightSilver				= 12,
-	CC_Red						= 13,
-	CC_LightGreen				= 14,
-	CC_Yellow					= 15,
-	CC_Cyan						= 18,
+	CC_Default					= 0, // Normal
+	CC_Grey						= 1, 
+	CC_Green					= 2, // Auction/OOC
+	CC_Blue						= 4, // Skills/Spells/Emote
+	CC_Purple					= 5, // Item Tags
+	CC_LightGrey				= 6, 
+	CC_Red						= 13, // Shout/Fizzles
+	CC_LightGreen				= 14, // Guild
+	CC_Yellow					= 15, // Spell Worn Off/Broadcast
+	CC_LightBlue				= 16, 
+	CC_Cyan						= 18, // Group/Raid
 	CC_User_Say					= 256,
 	CC_User_Tell				= 257,
 	CC_User_Group				= 258,
@@ -441,7 +440,7 @@ enum ChatColor
 	CC_User_EchoChat8			= 322,
 	CC_User_EchoChat9			= 323,
 	CC_User_EchoChat10			= 324,
-	CC_User_UnusedAtThisTime	= 325,
+	CC_User_UnusedAtThisTime	= 325, //Yellow
 	CC_User_ItemTags			= 326,
 	CC_User_RaidSay				= 327,
 	CC_User_MyPet				= 328,

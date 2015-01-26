@@ -79,7 +79,7 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// npctypeid
 	0,	// size
 	RuleR(Character, BaseRunSpeed),	// runspeed
-	xyz_heading::Origin(),
+	glm::vec4(),
 	0,	// light
 	0xFF,	// texture
 	0xFF,	// helmtexture
@@ -422,11 +422,11 @@ bool Client::Save(uint8 iCommitNow) {
 		return false;
 
 	/* Wrote current basics to PP for saves */
-	m_pp.x = m_Position.m_X;
-	m_pp.y = m_Position.m_Y;
-	m_pp.z = m_Position.m_Z + 2;
+	m_pp.x = m_Position.x;
+	m_pp.y = m_Position.y;
+	m_pp.z = m_Position.z + 2;
 	m_pp.guildrank = guildrank;
-	m_pp.heading = m_Position.m_Heading;
+	m_pp.heading = m_Position.w;
 
 	/* Mana and HP */
 	if (GetHP() <= 0) {
@@ -443,8 +443,8 @@ bool Client::Save(uint8 iCommitNow) {
 	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
 	/* Save Current Bind Points */
-	auto regularBindPosition = xyz_heading(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0.0f);
-	auto homeBindPosition = xyz_heading(m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0.0f);
+	auto regularBindPosition = glm::vec4(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0.0f);
+	auto homeBindPosition = glm::vec4(m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0.0f);
 	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, regularBindPosition, 0); /* Regular bind */
 	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[4].zoneId, m_pp.binds[4].instance_id, homeBindPosition, 1); /* Home Bind */
 
@@ -916,13 +916,13 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				CheckEmoteHail(GetTarget(), message);
 
 
-				if(ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition()) <= 200 && !IsInvisible(this)) {
+				if(DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition()) <= 200 && !IsInvisible(this)) {
 					NPC *tar = GetTarget()->CastToNPC();
 					parse->EventNPC(EVENT_SAY, tar->CastToNPC(), this, message, language);
 				}
 			}
 			else {
-				if (ComparativeDistanceNoZ(m_Position, GetTarget()->GetPosition()) <= 200) {
+				if (DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition()) <= 200) {
 					parse->EventNPC(EVENT_AGGRO_SAY, GetTarget()->CastToNPC(), this, message, language);
 				}
 			}
@@ -2146,7 +2146,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 			}
 
 			else {
-				if (!GetFeigned() && (ComparativeDistance(bindmob->GetPosition(), m_Position)  <= 400)) {
+				if (!GetFeigned() && (DistanceSquared(bindmob->GetPosition(), m_Position)  <= 400)) {
 					// send bindmob bind done
 					if(!bindmob->IsAIControlled() && bindmob != this ) {
 
@@ -2983,15 +2983,15 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM keyring "
-                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        std::cerr << "Error in Client::KeyRingLoad query '" << query << "' " << results.ErrorMessage() << std::endl;
+									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		std::cerr << "Error in Client::KeyRingLoad query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return;
-    }
+	}
 
-    for (auto row = results.begin(); row != results.end(); ++row)
-        keyring.push_back(atoi(row[0]));
+	for (auto row = results.begin(); row != results.end(); ++row)
+		keyring.push_back(atoi(row[0]));
 
 }
 
@@ -3007,14 +3007,14 @@ bool Client::KeyRingCheck(uint32 item_id)
 
 void Client::KeyRingList()
 {
-	Message(CC_Purple,"Keys on Keyring:");
+	Message(CC_Blue,"Keys on Keyring:");
 	const Item_Struct *item = 0;
 	for(std::list<uint32>::iterator iter = keyring.begin();
 		iter != keyring.end();
 		++iter)
 	{
 		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(CC_Purple,item->Name);
+			Message(CC_Blue,item->Name);
 		}
 	}
 }
@@ -3022,15 +3022,15 @@ void Client::KeyRingList()
 bool Client::IsDiscovered(uint32 itemid) {
 
 	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        std::cerr << "Error in IsDiscovered query '" << query << "' " << results.ErrorMessage() << std::endl;
-        return false;
-    }
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		std::cerr << "Error in IsDiscovered query '" << query << "' " << results.ErrorMessage() << std::endl;
+		return false;
+	}
 
 	auto row = results.begin();
-    if (!atoi(row[0]))
-        return false;
+	if (!atoi(row[0]))
+		return false;
 
 	return true;
 }
@@ -3038,9 +3038,9 @@ bool Client::IsDiscovered(uint32 itemid) {
 void Client::DiscoverItem(uint32 itemid) {
 
 	std::string query = StringFormat("INSERT INTO discovered_items "
-                                    "SET item_id = %lu, char_name = '%s', "
-                                    "discovered_date = UNIX_TIMESTAMP(), account_status = %i",
-                                    itemid, GetName(), Admin());
+									"SET item_id = %lu, char_name = '%s', "
+									"discovered_date = UNIX_TIMESTAMP(), account_status = %i",
+									itemid, GetName(), Admin());
 	auto results = database.QueryDatabase(query);
 
 	parse->EventPlayer(EVENT_DISCOVER_ITEM, this, "", itemid);
@@ -3285,11 +3285,11 @@ void Client::SummonAndRezzAllCorpses()
 	Message(clientMessageYellow, "All your corpses have been summoned to your feet and have received a 100% resurrection.");
 }
 
-void Client::SummonAllCorpses(const xyz_heading& position)
+void Client::SummonAllCorpses(const glm::vec4& position)
 {
-    auto summonLocation = position;
-	if(position.isOrigin() && position.m_Heading == 0.0f)
-        summonLocation = GetPosition();
+	auto summonLocation = position;
+	if(IsOrigin(position) && position.w == 0.0f)
+		summonLocation = GetPosition();
 
 	ServerPacket *Pack = new ServerPacket(ServerOP_DepopAllPlayersCorpses, sizeof(ServerDepopAllPlayersCorpses_Struct));
 
@@ -4032,7 +4032,7 @@ void Client::DragCorpses()
 		Mob *corpse = entity_list.GetMob(It->second);
 
 		if (corpse && corpse->IsPlayerCorpse() &&
-				(ComparativeDistanceNoZ(m_Position, corpse->GetPosition()) <= RuleR(Character, DragCorpseDistance)))
+				(DistanceSquaredNoZ(m_Position, corpse->GetPosition()) <= RuleR(Character, DragCorpseDistance)))
 			continue;
 
 		if (!corpse || !corpse->IsPlayerCorpse() ||
@@ -4115,11 +4115,11 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	if(summon_count > MAX_SWARM_PETS)
 		summon_count = MAX_SWARM_PETS;
 
-	static const xy_location swarmPetLocations[MAX_SWARM_PETS] = {
-        xy_location(5, 5), xy_location(-5, 5), xy_location(5, -5), xy_location(-5, -5),
-		xy_location(10, 10), xy_location(-10, 10), xy_location(10, -10), xy_location(-10, -10),
-        xy_location(8, 8), xy_location(-8, 8), xy_location(8, -8), xy_location(-8, -8)
-    };
+	static const glm::vec2 swarmPetLocations[MAX_SWARM_PETS] = {
+		glm::vec2(5, 5), glm::vec2(-5, 5), glm::vec2(5, -5), glm::vec2(-5, -5),
+		glm::vec2(10, 10), glm::vec2(-10, 10), glm::vec2(10, -10), glm::vec2(-10, -10),
+		glm::vec2(8, 8), glm::vec2(-8, 8), glm::vec2(8, -8), glm::vec2(-8, -8)
+	};
 
 	while(summon_count > 0) {
 		NPCType *npc_dup = nullptr;
@@ -4131,7 +4131,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		NPC* npca = new NPC(
 				(npc_dup!=nullptr)?npc_dup:npc_type,	//make sure we give the NPC the correct data pointer
 				0,
-				GetPosition()+swarmPetLocations[summon_count],
+				GetPosition() + glm::vec4(swarmPetLocations[summon_count], 0.0f, 0.0f),
 				FlyMode3);
 
 		if(!npca->GetSwarmInfo()){
@@ -4640,11 +4640,11 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 			goto Extra_Info;
 		}
 		else {
-			client->Message(15, "The window has exceeded its character limit, displaying stats to chat window:");
+			client->Message(CC_Yellow, "The window has exceeded its character limit, displaying stats to chat window:");
 		}
 	}
 
-	client->Message(15, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
+	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
 	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f  Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
@@ -5109,24 +5109,24 @@ void Client::LoadAccountFlags()
 
 	accountflags.clear();
 	std::string query = StringFormat("SELECT p_flag, p_value "
-                                    "FROM account_flags WHERE p_accid = '%d'",
-                                    account_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        std::cerr << "Error in LoadAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
-        return;
-    }
+									"FROM account_flags WHERE p_accid = '%d'",
+									account_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		std::cerr << "Error in LoadAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
+		return;
+	}
 
-    for (auto row = results.begin(); row != results.end(); ++row)
-        accountflags[row[0]] = row[1];
+	for (auto row = results.begin(); row != results.end(); ++row)
+		accountflags[row[0]] = row[1];
 }
 
 void Client::SetAccountFlag(std::string flag, std::string val) {
 
-    std::string query = StringFormat("REPLACE INTO account_flags (p_accid, p_flag, p_value) "
-                                    "VALUES( '%d', '%s', '%s')",
-                                    account_id, flag.c_str(), val.c_str());
-    auto results = database.QueryDatabase(query);
+	std::string query = StringFormat("REPLACE INTO account_flags (p_accid, p_flag, p_value) "
+									"VALUES( '%d', '%s', '%s')",
+									account_id, flag.c_str(), val.c_str());
+	auto results = database.QueryDatabase(query);
 	if(!results.Success()) {
 		std::cerr << "Error in SetAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return;
@@ -5489,7 +5489,7 @@ void Client::RewindCommand()
 		Message(0, "You must wait before using #rewind again.");
 	}
 	else {
-		MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_RewindLocation.m_X, m_RewindLocation.m_Y, m_RewindLocation.m_Z, 0, 2, Rewind);
+		MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_RewindLocation.x, m_RewindLocation.y, m_RewindLocation.z, 0, 2, Rewind);
 		rewind_timer.Start(30000, true);
 	}
 }
