@@ -147,7 +147,7 @@ Mob::Mob(const char* in_name,
 	orig_level = in_level;
 	npctype_id	= in_npctype_id;
 	size		= in_size;
-	base_size	= size;
+	base_size	= in_size;
 	runspeed	= in_runspeed;
 
 
@@ -1155,7 +1155,7 @@ void Mob::ShowStats(Client* client)
 		}
 	}
 	else {
-		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetHaste());
+		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  BaseSize: %1.1f Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetBaseSize(), GetHaste());
 		client->Message(0, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
 		client->Message(0, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
 		client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
@@ -1567,7 +1567,8 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 		in_size = 255.0;
 	//End of Size Code
 	this->size = in_size;
-	SendAppearancePacket(AT_Size, (uint32) in_size);
+	uint32 newsize = floor(in_size + 0.5);
+	SendAppearancePacket(AT_Size, newsize);
 }
 
 Mob* Mob::GetOwnerOrSelf() {
