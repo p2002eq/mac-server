@@ -578,6 +578,9 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if(conlevel == CON_GREEN)
 		isgreen = true;
 
+	if(isgreen && !RuleB(AlKabor, GreensGiveXPToGroup))
+		return;
+
 	// The first loop grabs the maxlevel, so we need to adjust the count here checking for level range, 
 	// before applying xp in the third and final loop.
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
