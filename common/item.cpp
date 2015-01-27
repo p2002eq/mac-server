@@ -1738,6 +1738,7 @@ bool ItemInst::IsSlotAllowed(int16 slot_id) const {
 	else if (Inventory::SupportsContainers(slot_id)) { return true; }
 	else if (m_item->Slots & (1 << slot_id)) { return true; }
 	else if (slot_id == MainPowerSource && (m_item->Slots & (1 << 22))) { return true; } // got lazy... <watch>
+	else if (slot_id == MainAmmo && (m_item->ItemType == ItemTypeSmallThrowing || m_item->ItemType == ItemTypeLargeThrowing)) { return true; }
 	else if (slot_id != MainPowerSource && slot_id > EmuConstants::EQUIPMENT_END) { return true; }
 	else { return false; }
 }
