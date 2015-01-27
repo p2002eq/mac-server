@@ -189,6 +189,7 @@ RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
 RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
 RULE_BOOL ( AlKabor, Count6thGroupMember, false)
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true)
 RULE_CATEGORY_END()
 
 
