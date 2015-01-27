@@ -469,14 +469,15 @@ int command_init(void){
 		if ((itr = command_settings.find(cur->first)) != command_settings.end())
 		{
 			cur->second->access = itr->second;
+#if EQDEBUG >=11
 			Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Commands, "command_init(): - Command '%s' set to access level %d.", cur->first.c_str(), itr->second);
 #endif
 		}
 		else
 		{
 #ifdef COMMANDS_WARNINGS
-			if(cur->second->access == 0)
-				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Status, "command_init(): Warning: Command '%s' defaulting to access level 0!" , cur->first.c_str());
+			if (cur->second->access == 0)
+				Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Status, "command_init(): Warning: Command '%s' defaulting to access level 0!", cur->first.c_str());
 #endif
 		}
 	}
@@ -604,7 +605,7 @@ int command_realdispatch(Client *c, const char *message){
 		else{
 			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, "notarget", "notarget", 0, 0, 0, c->GetZoneID(), zone->GetShortName());
 		}
-		/Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Commands, "%s (%s) used command: %s (target=%s)", c->GetName(), c->AccountName(), message, c->GetTarget() ? c->GetTarget()->GetName() : "NONE");
+		//Log.DebugCategory(EQEmuLogSys::General, EQEmuLogSys::Commands, "%s (%s) used command: %s (target=%s)", c->GetName(), c->AccountName(), message, c->GetTarget() ? c->GetTarget()->GetName() : "NONE");
 	}
 #endif
 
