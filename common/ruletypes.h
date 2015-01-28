@@ -139,8 +139,8 @@ RULE_INT ( World, AddMaxClientsStatus, -1 ) // Accounts with status >= this rule
 RULE_BOOL ( World, MaxClientsSetByStatus, false) // If True, IP Limiting will be set to the status on the account as long as the status is > MaxClientsPerIP
 RULE_BOOL ( World, ClearTempMerchantlist, false) // Clears temp merchant items when world boots.
 RULE_BOOL ( World, DeleteStaleCorpeBackups, true) // Deletes stale corpse backups older than 2 weeks.
-RULE_INT ( World, AccountSessionLimit, -1 ) //Max number of characters allowed on at once from a single account (-1 is disabled)
-RULE_INT ( World, ExemptAccountLimitStatus, -1 ) //Min status required to be exempt from multi-session per account limiting (-1 is disabled)
+RULE_INT ( World, AccountSessionLimit, 1 ) //Max number of characters allowed on at once from a single account (-1 is disabled)
+RULE_INT ( World, ExemptAccountLimitStatus, 100 ) //Min status required to be exempt from multi-session per account limiting (-1 is disabled)
 RULE_BOOL ( World, GMAccountIPList, false) // Check ip list against GM Accounts, AntiHack GM Accounts.
 RULE_INT ( World, MinGMAntiHackStatus, 1 ) //Minimum GM status to check against AntiHack list
 RULE_INT ( World, SoFStartZoneID, -1 ) //Sets the Starting Zone for SoF Clients separate from Titanium Clients (-1 is disabled)
