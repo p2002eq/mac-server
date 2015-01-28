@@ -56,7 +56,7 @@ public:
 	ClientListEntry* GetCLE(uint32 iID);
 	void	GetCLEIP(uint32 iIP);
 	void	DisconnectByIP(uint32 iIP);
-	void	EnforceSessionLimit(uint32 iLSAccountID);
+	bool	EnforceSessionLimit(uint32 iLSAccountID);
 	void	CLCheckStale();
 	void	CLEKeepAlive(uint32 numupdates, uint32* wid);
 	void	CLEAdd(uint32 iLSID, const char* iLoginName, const char* iLoginKey, int16 iWorldAdmin = 0, uint32 ip = 0, uint8 local=0, uint8 version=0);

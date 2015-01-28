@@ -213,6 +213,17 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	if (((cle = client_list.CheckAuth(name, password)) || (cle = client_list.CheckAuth(id, password))))
 #endif
 	{
+		if (RuleI(World, AccountSessionLimit) >= 0) 
+		{
+			// Enforce the limit on the number of characters on the same account that can be
+			// online at the same time.
+			if(client_list.EnforceSessionLimit(cle->LSID()))
+			{
+				clog(WORLD__CLIENT_ERR,"LSAccount %d attempted to login with an active player in the world.", cle->LSID());
+				return false;
+			}
+		}
+
 		cle->SetOnline();
 		
 		if(eqs->ClientVersion() == EQClientMac)
