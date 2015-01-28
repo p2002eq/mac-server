@@ -21,7 +21,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include <stdio.h>
 //#ifdef _CRTDBG_MAP_ALLOC
 //	#undef new

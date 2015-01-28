@@ -1,4 +1,4 @@
-#include "global_define.h"
+#include "../global_define.h"
 #include "../eqemu_logsys.h"
 #include "evolution.h"
 #include "../opcodemgr.h"

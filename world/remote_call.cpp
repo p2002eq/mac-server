@@ -1,6 +1,6 @@
 #include <string>
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/md5.h"
 #include "../common/emu_tcp_connection.h"
 #include "../common/packet_dump.h"
