@@ -1361,7 +1361,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				// Racial Illusions
 				else {
 					// Texture doesn't seem to be in our spell data :I
-					int8 texture = 0; //spell.base2[i];
+					int8 texture = GetTexture(); //spell.base2[i];
 					// Elemental Illusions
 					if(spell_id == 598)
 						texture = 1;
@@ -1624,9 +1624,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Model Size: %d%%", effect_value);
 #endif
-				// Only allow 2 size changes from Base Size
+				// Only allow 1 size changes from Base Size
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
-				float maxModAmount = GetBaseSize() * modifyAmount * modifyAmount;
+				float maxModAmount = GetBaseSize() * modifyAmount;
 				if ((GetSize() <= GetBaseSize() && GetSize() > maxModAmount) || 
 					(GetSize() >= GetBaseSize() && GetSize() < maxModAmount) ||
 					(GetSize() <= GetBaseSize() && maxModAmount > 1.0f) || 

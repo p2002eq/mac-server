@@ -794,9 +794,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_PersistantCasting:
 				newbon->PersistantCasting += base1;
 				break;
-			case SE_DelayDeath:
-				newbon->DelayDeath += base1;
-				break;
 			case SE_FrontalStunResist:
 				newbon->FrontalStunResist += base1;
 				break;
@@ -2353,10 +2350,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_ImmuneFleeing:
 				new_bonus->ImmuneToFlee = true;
-				break;
-
-			case SE_DelayDeath:
-				new_bonus->DelayDeath += effect_value;
 				break;
 
 			case SE_SpellProcChance:
@@ -3921,12 +3914,6 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 
 				case SE_ImmuneFleeing:
 					spellbonuses.ImmuneToFlee = false;
-					break;
-
-				case SE_DelayDeath:
-					spellbonuses.DelayDeath = effect_value;
-					aabonuses.DelayDeath = effect_value;
-					itembonuses.DelayDeath = effect_value;
 					break;
 
 				case SE_SpellProcChance:

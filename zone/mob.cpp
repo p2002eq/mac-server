@@ -136,7 +136,7 @@ Mob::Mob(const char* in_name,
 	orig_level = in_level;
 	npctype_id	= in_npctype_id;
 	size		= in_size;
-	base_size	= size;
+	base_size	= in_size;
 	runspeed	= in_runspeed;
 
 
@@ -144,7 +144,9 @@ Mob::Mob(const char* in_name,
 	if (runspeed < 0 || runspeed > 20)
 		runspeed = 1.25f;
 
-	light		= in_light;
+	active_light = innate_light = in_light;
+	spell_light = equip_light = NOT_USED;
+
 	texture		= in_texture;
 	helmtexture	= in_helmtexture;
 	haircolor	= in_haircolor;
@@ -849,7 +851,10 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.deity		= deity;
 	ns->spawn.animation	= animation;
 	ns->spawn.findable	= findable?1:0;
-	ns->spawn.light		= light;
+
+	UpdateActiveLightValue();
+	ns->spawn.light		= active_light;
+
 	ns->spawn.showhelm = 1;
 
 	if(IsNPC())
@@ -1132,7 +1137,7 @@ void Mob::ShowStats(Client* client)
 		}
 	}
 	else {
-		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetHaste());
+		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  BaseSize: %1.1f Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetBaseSize(), GetHaste());
 		client->Message(0, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
 		client->Message(0, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
 		client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
@@ -1140,7 +1145,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
 		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
-		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetLight());
+		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightValue(), GetActiveLightValue());
 		if (client->Admin() >= 100)
 			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), IsAIControlled(), targeted);
 
@@ -1522,6 +1527,39 @@ void Mob::SetAppearance(EmuAppearance app, bool iIgnoreSelf) {
 	}
 }
 
+bool Mob::UpdateActiveLightValue()
+{
+	/*	This is old information...
+		0 - "None"
+		1 - "Candle"
+		2 - "Torch"
+		3 - "Tiny Glowing Skull"
+		4 - "Small Lantern"
+		5 - "Stein of Moggok"
+		6 - "Large Lantern"
+		7 - "Flameless Lantern"
+		8 - "Globe of Stars"
+		9 - "Light Globe"
+		10 - "Lightstone"
+		11 - "Greater Lightstone"
+		12 - "Fire Beatle Eye"
+		13 - "Coldlight"
+		14 - "Unknown"
+		15 - "Unknown"
+	*/
+	
+	uint8 old_light = (active_light & 0x0F);
+	active_light = (innate_light & 0x0F);
+
+	if (equip_light > active_light) { active_light = equip_light; } // limiter in property handler
+	if (spell_light > active_light) { active_light = spell_light; } // limiter in property handler
+
+	if (active_light != old_light)
+		return true;
+
+	return false;
+}
+
 void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	// Size Code
 	if (!bNoRestriction)
@@ -1544,7 +1582,8 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 		in_size = 255.0;
 	//End of Size Code
 	this->size = in_size;
-	SendAppearancePacket(AT_Size, (uint32) in_size);
+	uint32 newsize = floor(in_size + 0.5);
+	SendAppearancePacket(AT_Size, newsize);
 }
 
 Mob* Mob::GetOwnerOrSelf() {

@@ -80,7 +80,7 @@ Client::Client(EQStreamInterface* ieqs)
 	0,	// size
 	RuleR(Character, BaseRunSpeed),	// runspeed
 	glm::vec4(),
-	0,	// light
+	0,	// light - verified for client innate_light value
 	0xFF,	// texture
 	0xFF,	// helmtexture
 	0,	// ac
@@ -263,6 +263,9 @@ Client::Client(EQStreamInterface* ieqs)
 	SavedRaidRestTimer = 0;
 
 	interrogateinv_flag = false;
+
+	active_light = innate_light;
+	spell_light = equip_light = NOT_USED;
 }
 
 Client::~Client() {
@@ -1425,6 +1428,9 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	//filling in some unknowns to make the client happy
 //	ns->spawn.unknown0002[2] = 3;
 
+	UpdateEquipLightValue();
+	UpdateActiveLightValue();
+	ns->spawn.light = active_light;
 }
 
 bool Client::GMHideMe(Client* client) {
@@ -4641,7 +4647,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	}
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
-	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f  Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
+	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
 	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), IsLD(), GetClientVersionBit());

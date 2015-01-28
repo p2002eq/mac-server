@@ -1780,7 +1780,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->walkspeed= atof(row[84]);
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
-		tmpNPCType->light = atoi(row[87]);
+		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1835,7 +1835,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1993,6 +1993,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->walkspeed= atof(row[84]);
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
+		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

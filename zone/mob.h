@@ -377,7 +377,6 @@ public:
 	inline virtual int32 GetMaxDR() const { return 255; }
 	inline virtual int32 GetMaxCR() const { return 255; }
 	inline virtual int32 GetMaxFR() const { return 255; }
-	inline virtual int32 GetDelayDeath() const { return 0; }
 	inline int32 GetHP() const { return cur_hp; }
 	inline int32 GetMaxHP() const { return max_hp; }
 	virtual int32 CalcMaxHP();
@@ -641,6 +640,15 @@ public:
 	inline const uint8 GetRunAnimSpeed() const { return pRunAnimSpeed; }
 	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; pLastChange = Timer::GetCurrentTime(); } }
 	float SetRunAnimation(float speed);
+
+	inline uint8 GetInnateLightValue() { return innate_light; }
+	inline uint8 GetEquipLightValue() { return equip_light; }
+	inline uint8 GetSpellLightValue() { return spell_light; }
+	virtual void UpdateEquipLightValue() { equip_light = NOT_USED; }
+	inline void SetSpellLightValue(uint8 light_value) { spell_light = (light_value & 0x0F); }
+
+	inline uint8 GetActiveLightValue() { return active_light; }
+	bool UpdateActiveLightValue(); // returns true if change, false if no change
 
 	Mob* GetPet();
 	void SetPet(Mob* newpet);
@@ -918,8 +926,6 @@ public:
 	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
 	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
 
-	uint8 GetLight() { return light; }
-
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
@@ -1057,7 +1063,10 @@ protected:
 
 	glm::vec4 m_Delta;
 
-	uint8 light;
+	uint8 innate_light;	// defined by db field `npc_types`.`light` - where appropriate
+	uint8 equip_light;	// highest value of equipped/carried light-producing items
+	uint8 spell_light;	// set value of any light-producing spell (can be modded to mimic equip_light behavior)
+	uint8 active_light;	// highest value of all light sources
 
 	float fixedZ;
 	EmuAppearance _appearance;
