@@ -364,12 +364,38 @@ void Client::ForageItem(bool guarantee) {
 		13106 // Fishing Grubs
 	};
 
+	uint32 food_ids[5] = {
+		13046, // Fruit
+		13045, // Berries
+		13419, // Vegetables
+		13048, // Rabbit Meat
+		13047  // Roots
+	};
+
 	// these may need to be fine tuned, I am just guessing here
-	if (guarantee || zone->random.Int(0,199) < skill_level) {
+	if (guarantee || zone->random.Int(0,199) < skill_level) 
+	{
 		uint32 foragedfood = 0;
 		uint32 stringid = FORAGE_NOEAT;
 
-		if (zone->random.Roll(25)) {
+		// If we're hungry or thirsty, we want to prefer food or water.
+		if(m_pp.hunger_level < 2000)
+		{
+			if(GetZoneID() == poknowledge)
+				foragedfood = 13047; //PoK only has roots from the above array.
+			else
+			{
+				uint8 foodindex = zone->random.Int(0, 4);
+				foragedfood = food_ids[foodindex];
+			}
+		}
+		else if(m_pp.thirst_level < 2000)
+		{
+			foragedfood = 13044;
+		}
+
+		// Do a roll to check if we pull an item from the DB.
+		if (zone->random.Roll(25) && foragedfood == 0) {
 			foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
 		}
 
@@ -393,8 +419,9 @@ void Client::ForageItem(bool guarantee) {
 		if(foragedfood == 13106)
 			stringid = FORAGE_GRUBS;
 		else
-			switch(food_item->ItemType) {
-
+		{
+			switch(food_item->ItemType) 
+			{
 				case ItemTypeFood:
 					stringid = FORAGE_FOOD;
 					break;
@@ -405,9 +432,11 @@ void Client::ForageItem(bool guarantee) {
 					else
 						stringid = FORAGE_DRINK;
 					break;
+
 				default:
 					break;
-				}
+			}
+		}
 
 		Message_StringID(MT_Skills, stringid);
 		ItemInst* inst = database.CreateItem(food_item, 1);
