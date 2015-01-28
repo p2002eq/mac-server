@@ -112,6 +112,10 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	if(aaexp < had_aaexp)
 		aaexp = had_aaexp;	//watch for wrap
 
+	uint32 neededxp = GetEXPForLevel(GetLevel()+1) - (GetEXP() + add_exp);
+	if (admin>=100 && GetGM()) {
+		Message(CC_Yellow, "[GM] You have gained %d (%d) AXP and %d (%d) EXP. %d more EXP is needed for Level %d", add_aaxp, GetAAXP() + add_aaxp, add_exp, GetEXP() + add_exp, neededxp, GetLevel()+1);
+	}
 	//Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
 	SetEXP(exp, aaexp, resexp);
 }
@@ -343,13 +347,14 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		FastQueuePacket(&outapp);
 	}
 
-	if (admin>=100 && GetGM()) {
+/*	if (admin>=100 && GetGM()) {
 		char val1[20]={0};
 		char val2[20]={0};
 		char val3[20]={0};
 		Message_StringID(CC_Yellow, GM_GAINXP,ConvertArray(set_aaxp,val1),ConvertArray(set_exp,val2),ConvertArray(GetEXPForLevel(GetLevel()+1),val3)); //[GM] You have gained %1 AXP and %2 EXP (%3).
+		//Message(CC_Yellow, "[GM] You have gained %d AXP and %d EXP (%d)", set_aaxp, set_exp, GetEXPForLevel(GetLevel()+1));
 		//Message(CC_Yellow, "[GM] You now have %d / %d EXP and %d / %d AA exp.", set_exp, GetEXPForLevel(GetLevel()+1), set_aaxp, max_AAXP);
-	}
+	}*/
 }
 
 void Client::SetLevel(uint8 set_level, bool command)

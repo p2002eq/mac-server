@@ -74,6 +74,7 @@
 #include "../common/logtypes.h"
 
 #include "classes.h"
+#include "races.h"
 #include "spdat.h"
 
 #ifndef WIN32
@@ -1176,3 +1177,20 @@ const char* GetSpellName(int16 spell_id)
     return spells[spell_id].name;
 }
 
+bool IsRacialIllusion(uint16 spell_id)
+{
+	for (int i = 0; i < EFFECT_COUNT; i++)
+	{
+		if(spells[spell_id].effectid[i] == SE_Illusion && (spells[spell_id].base[i] == HUMAN || 
+			spells[spell_id].base[i] == BARBARIAN || spells[spell_id].base[i] == ERUDITE || 
+			spells[spell_id].base[i] == WOOD_ELF || spells[spell_id].base[i] == HIGH_ELF || 
+			spells[spell_id].base[i] == DARK_ELF || spells[spell_id].base[i] == HALF_ELF || 
+			spells[spell_id].base[i] == DWARF || spells[spell_id].base[i] == TROLL || 
+			spells[spell_id].base[i] == OGRE || spells[spell_id].base[i] == HALFLING || 
+			spells[spell_id].base[i] == GNOME || spells[spell_id].base[i] == IKSAR || 
+			spells[spell_id].base[i] == VAHSHIR))
+			return true;
+		else
+			return false;
+	}
+}

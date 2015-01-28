@@ -1324,58 +1324,59 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Illusion: race %d", effect_value);
 #endif
 				// Gender Illusions
-				if(spell.base[i] == -1) {
-					// Specific Gender Illusions
-					if(spell_id == 1732 || spell_id == 1731) {
-						int specific_gender = -1;
-						// Male
-						if(spell_id == 1732)
-							specific_gender = 0;
-						// Female
-						else if (spell_id == 1731)
+				if(spell.base[i] == -1) 
+				{
+					int specific_gender = -1;
+					// Male
+					if(spell_id == 1732)
+						specific_gender = 0;
+					// Female
+					else if (spell_id == 1731)
+						specific_gender = 1;
+					// Switch
+					else if(spell_id == 1730)
+					{
+						if(caster->GetTarget()->GetGender() == 0)
 							specific_gender = 1;
-						if(specific_gender > -1) {
-							if(caster && caster->GetTarget()) {
-								SendIllusionPacket
-								(
-									caster->GetTarget()->GetBaseRace(),
-									specific_gender,
-									caster->GetTarget()->GetTexture()
-								);
-							}
-						}
+						else
+							specific_gender = 0;
 					}
-					// Change Gender Illusions
-					else {
-						if(caster && caster->GetTarget()) {
-							int opposite_gender = 0;
-							if(caster->GetTarget()->GetGender() == 0)
-								opposite_gender = 1;
 
+					if(specific_gender > -1) 
+					{
+						if(caster && caster->GetTarget()) 
+						{
 							SendIllusionPacket
 							(
-								caster->GetTarget()->GetRace(),
-								opposite_gender,
+								caster->GetTarget()->GetBaseRace(),
+								specific_gender,
 								caster->GetTarget()->GetTexture()
 							);
 						}
 					}
 				}
-				// Racial Illusions
-				else {
+				else // Racial Illusions
+				{
 					// Texture doesn't seem to be in our spell data :I
-					int8 texture = GetTexture(); //spell.base2[i];
-					// Elemental Illusions
-					if(spell_id == 598)
-						texture = 1;
-					if(spell_id == 599)
-						texture = 2;
-					if(spell_id == 597)
+					int8 texture = 0;
+					if(IsRacialIllusion(spell_id))
+						texture = caster->GetTarget()->GetTexture();
+					// Elemental Illusions (Earth is texture 0)
+					// Air
+					else if(spell_id == 597 || spell_id == 2789 || spell_id == 2790 || spell_id == 2791 || spell_id == 3854)
 						texture = 3;
+					// Fire
+					else if(spell_id == 598 || spell_id == 2795 || spell_id == 2796 || spell_id == 2797 || spell_id == 3856)
+						texture = 1;
+					// Water
+					else if(spell_id == 599 || spell_id == 2798 || spell_id == 2799 || spell_id == 2800 || spell_id == 3857)
+						texture = 2;
+
 					int8 gender = Mob::GetDefaultGender(spell.base[i], GetGender());
 					// Scaled Wolf is a female wolf.
 					if(spell_id == 3586)
 						gender = 1;
+
 					SendIllusionPacket
 					(
 						spell.base[i],

@@ -435,7 +435,7 @@ int command_init(void){
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 250, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 250, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 250, command_wpinfo) ||
-		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
+		command_add("xpinfo", "- Show XP info about your current target", 100, command_xpinfo) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 250, command_zclip) ||
 		command_add("zcolor", "[red] [green] [blue] - Change sky color", 250, command_zcolor) ||
 		command_add("zhdr", nullptr, 250, command_zheader) ||
