@@ -337,8 +337,8 @@ void ZoneDatabase::UpdateFeedback(Feedback_Struct* feedback) {
 	std::string query = StringFormat("INSERT INTO feedback (name, message, zone, date) "
 		"VALUES('%s', '%s', '%s', CURDATE())",
 		name, message, zone->GetShortName());
-	auto results = QueryDatabase(query);
-	if (!results.Success())
+
+	QueryDatabase(query);
 
 }
 
