@@ -164,7 +164,7 @@ int command_init(void){
 		command_add("cast", nullptr, 150, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell", 150, command_castspell) ||
 		command_add("chat", "[channel num] [message] - Send a channel message to all zones", 90, command_chat) ||
-		command_add("chattest", "[color] - Sends a test message with the specified color to yourself.", 90, command_chattest) ||
+		command_add("chattest", "[color] [loops] - Sends a test message with the specified color to yourself.", 90, command_chattest) ||
 		command_add("checklos", "- Check for line of sight to your target", 95, command_checklos) ||
 		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
 		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
@@ -10947,8 +10947,12 @@ void command_chattest(Client *c, const Seperator *sep)
 		c->Message(CC_Red, "Please specify a valid number to send as the message color. (This message is red, btw.)");
 	else
 	{
+		int default_ = 10;
+		if(sep->IsNumber(2))
+			default_ = atoi(sep->arg[2]);
+
 		uint16 base = atoi(sep->arg[1]);
-		for(uint8 i = 0; i < 10; ++i)
+		for(uint8 i = 0; i < default_; ++i)
 		{
 			uint16 color = base + i;
 			c->Message(color, "All work and no play makes Jack a dull boy. (%i)", color);
