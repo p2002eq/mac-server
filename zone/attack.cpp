@@ -412,8 +412,8 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	float block_chance = 0.0f;
 	if (damage > 0 && CanThisClassBlock() && (other->InFrontMob(this, other->GetX(), other->GetY()) || bBlockFromRear)) {
 		block_chance = (100.0f + (float)spellbonuses.IncreaseBlockChance + (float)itembonuses.IncreaseBlockChance) / 100.0f;
-		skill = CastToClient()->GetSkill(SkillBlock);
 		if (IsClient()) {
+			skill = CastToClient()->GetSkill(SkillBlock);
 			CastToClient()->CheckIncreaseSkill(SkillBlock, other, -10);
 		}
 
@@ -453,8 +453,8 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	if (damage > 0 && CanThisClassParry() && other->InFrontMob(this, other->GetX(), other->GetY()))
 	{
 		parry_chance = (100.0f + (float)defender->spellbonuses.ParryChance + (float)defender->itembonuses.ParryChance) / 100.0f;
-		skill = CastToClient()->GetSkill(SkillParry);
 		if (IsClient()) {
+			skill = CastToClient()->GetSkill(SkillParry);
 			CastToClient()->CheckIncreaseSkill(SkillParry, other, -10);
 		}
 
@@ -476,8 +476,8 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	if (damage > 0 && CanThisClassDodge() && other->InFrontMob(this, other->GetX(), other->GetY()))
 	{
 		dodge_chance = (100.0f + (float)defender->spellbonuses.DodgeChance + (float)defender->itembonuses.DodgeChance) / 100.0f;
-		skill = CastToClient()->GetSkill(SkillDodge);
 		if (IsClient()) {
+			skill = CastToClient()->GetSkill(SkillDodge);
 			CastToClient()->CheckIncreaseSkill(SkillDodge, other, -10);
 		}
 

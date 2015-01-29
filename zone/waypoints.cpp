@@ -888,10 +888,15 @@ void NPC::AssignWaypoints(int32 grid)
 
 	this->CastToNPC()->SetGrid(grid); // Assign grid number
 
-	this->CastToNPC()->SetGrid(grid);	// Assign grid number
-
-	roamer = true;
-	max_wp = 0; // Initialize it; will increment it for each waypoint successfully added to the list
+	// Retrieve all waypoints for this grid
+	query = StringFormat("SELECT `x`,`y`,`z`,`pause`,`heading` "
+		"FROM grid_entries WHERE `gridid` = %i AND `zoneid` = %i "
+		"ORDER BY `number`", grid, zone->GetZoneID());
+	results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to assign waypoints from grid %u to mob %s: %s", grid, name, results.ErrorMessage().c_str());
+		return;
+	}
 
 	roamer = true;
 	max_wp = 0;	// Initialize it; will increment it for each waypoint successfully added to the list
