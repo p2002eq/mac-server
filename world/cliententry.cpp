@@ -167,6 +167,7 @@ void ClientListEntry::Update(ZoneServer* iZS, ServerClientList_Struct* scl, int8
 	pLFG = scl->LFG;
 	gm = scl->gm;
 	pClientVersion = scl->ClientVersion;
+	pLD = scl->LD;
 
 	// Fields from the LFG Window
 	if((scl->LFGFromLevel != 0) && (scl->LFGToLevel != 0)) {
@@ -220,6 +221,7 @@ void ClientListEntry::ClearVars(bool iAll) {
 	gm = 0;
 	pClientVersion = 0;
 	tell_queue.clear();
+	pLD;
 }
 
 void ClientListEntry::Camp(ZoneServer* iZS) {

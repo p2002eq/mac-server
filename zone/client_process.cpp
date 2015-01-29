@@ -546,6 +546,7 @@ bool Client::Process() {
 			client_state = CLIENT_LINKDEAD;
 			AI_Start(CLIENT_LD_TIMEOUT);
 			SendAppearancePacket(AT_Linkdead, 1);
+			UpdateWho();
 		}
 	}
 

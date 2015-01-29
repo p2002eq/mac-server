@@ -111,7 +111,7 @@ bool ClientList::EnforceSessionLimit(uint32 iLSAccountID) {
 			((ClientEntry->Admin() <= (RuleI(World, ExemptAccountLimitStatus))) || (RuleI(World, ExemptAccountLimitStatus) < 0))) 
 		{
 
-			if(strlen(ClientEntry->name())) 
+			if(strlen(ClientEntry->name()) && !ClientEntry->LD()) 
 			{
 				CharacterCount++;
 			}

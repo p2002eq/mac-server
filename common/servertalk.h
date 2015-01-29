@@ -388,6 +388,7 @@ struct ServerClientList_Struct {
 	uint8	LFGToLevel;
 	bool	LFGMatchFilter;
 	char	LFGComments[64];
+	bool	LD;
 };
 
 struct ServerClientListKeepAlive_Struct {
