@@ -1092,8 +1092,6 @@ void ZoneDatabase::ModifyGrid(Client *client, bool remove, uint32 id, uint8 type
             return;
         }
 
-		if(client)
-
 		return;
 	}
 

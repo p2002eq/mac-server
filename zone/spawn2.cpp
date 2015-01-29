@@ -437,8 +437,6 @@ bool ZoneDatabase::CreateSpawn2(Client *client, uint32 spawngroup, const char* z
     if (results.RowsAffected() != 1)
         return false;
 
-    if(client)
-
     return true;
 }
 

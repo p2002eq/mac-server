@@ -993,7 +993,6 @@ uint32 ZoneDatabase::UpdateNPCTypeAppearance(Client *client, NPC* spawn) {
                                     spawn->GetHelmTexture(), spawn->GetSize(), spawn->GetLoottableID(),
                                     spawn->MerchantType, spawn->GetNPCTypeID());
     auto results = QueryDatabase(query);
-    if (!results.Success() && client)
 
     return results.Success() == true? 1: 0;
 }
@@ -1023,21 +1022,15 @@ uint32 ZoneDatabase::DeleteSpawnLeaveInNPCTypeTable(const char* zone, Client *cl
 	if (!results.Success())
 		return 0;
 
-	if(client)
-
     query = StringFormat("DELETE FROM spawngroup WHERE id = '%i'", spawngroupID);
     results = QueryDatabase(query);
 	if (!results.Success())
 		return 0;
 
-	if(client)
-
     query = StringFormat("DELETE FROM spawnentry WHERE spawngroupID = '%i'", spawngroupID);
     results = QueryDatabase(query);
 	if (!results.Success())
 		return 0;
-
-	if(client)
 
 	return 1;
 }
@@ -1070,28 +1063,20 @@ uint32 ZoneDatabase::DeleteSpawnRemoveFromNPCTypeTable(const char* zone, uint32 
 	if (!results.Success())
 		return 0;
 
-	if(client)
-
     query = StringFormat("DELETE FROM spawngroup WHERE id = '%i'", spawngroupID);
 	results = QueryDatabase(query);
 	if (!results.Success())
 		return 0;
-
-	if(client)
 
     query = StringFormat("DELETE FROM spawnentry WHERE spawngroupID = '%i'", spawngroupID);
 	results = QueryDatabase(query);
 	if (!results.Success())
 		return 0;
 
-	if(client)
-
     query = StringFormat("DELETE FROM npc_types WHERE id = '%i'", spawn->GetNPCTypeID());
 	results = QueryDatabase(query);
 	if (!results.Success())
 		return 0;
-
-	if(client)
 
 	return 1;
 }
@@ -1106,8 +1091,6 @@ uint32  ZoneDatabase::AddSpawnFromSpawnGroup(const char* zone, uint32 zone_versi
     auto results = QueryDatabase(query);
     if (!results.Success())
 		return 0;
-
-	if(client)
 
     return 1;
 }
@@ -1130,8 +1113,6 @@ uint32 ZoneDatabase::AddNPCTypes(const char* zone, uint32 zone_version, Client *
 	if (!results.Success())
 		return 0;
     npc_type_id = results.LastInsertedID();
-
-	if(client)
 
 	if(client)
         client->Message(0, "%s npc_type ID %i created successfully!", numberlessName, npc_type_id);
