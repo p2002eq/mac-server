@@ -806,16 +806,19 @@ void command_testcopy(Client *c, const Seperator *sep) //Still under constructio
 	else if (c->GetTarget() && c->GetTarget()->IsClient())
 	{
 		Client* client = c->GetTarget()->CastToClient();
-		c->Message(0, "Backing up %s.", client->GetName());
+		int targetLSID = client->LSAccountID();
+		//int targetAcctID = client->AccountID();
 		int targetID = client->CharacterID();
+		auto targetAcctID = database.GetAccountIDByChar(targetID);
 		const char* targetName = client->GetName();
+		c->Message(0, "Backing up targetName: %s, targetLSID: %i, targetID: %i, targetAcctID: %i", targetName, targetLSID, targetAcctID, targetID);
 
 		char String[255];
 
 #ifdef _WINDOWS
-		sprintf(String, "tak_testcopy.bat %i %s", targetID, targetName);
+		sprintf(String, "tak_testcopy.bat %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
 #else
-		sprintf(String, "./tak_testcopy %i %s", targetID, targetName);
+		sprintf(String, "./tak_testcopy %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
 #endif
 		system(String);
 	}
