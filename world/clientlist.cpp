@@ -118,7 +118,7 @@ bool ClientList::EnforceSessionLimit(uint32 iLSAccountID) {
 
 			if (CharacterCount > (RuleI(World, AccountSessionLimit)))
 			{
-				_log(WORLD__CLIENT_ERR,"LSAccount %d has a CharacterCount of: %d.", iLSAccountID, CharacterCount);
+				Log.Out(Logs::Detail, Logs::World_Server,"LSAccount %d has a CharacterCount of: %d.", iLSAccountID, CharacterCount);
 				return true;
 			}
 		}

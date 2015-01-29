@@ -219,7 +219,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 			// online at the same time.
 			if(client_list.EnforceSessionLimit(cle->LSID()))
 			{
-				clog(WORLD__CLIENT_ERR,"LSAccount %d attempted to login with an active player in the world.", cle->LSID());
+				Log.Out(Logs::Detail, Logs::World_Server,"LSAccount %d attempted to login with an active player in the world.", cle->LSID());
 				return false;
 			}
 		}

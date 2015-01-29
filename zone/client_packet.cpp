@@ -671,7 +671,7 @@ void Client::CompleteConnect()
 			type = "Invalid";
 
 		if(GetGM())
-			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
 		else
 			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
 
