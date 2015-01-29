@@ -807,13 +807,15 @@ void command_testcopy(Client *c, const Seperator *sep) //Still under constructio
 	{
 		Client* client = c->GetTarget()->CastToClient();
 		c->Message(0, "Backing up %s.", client->GetName());
-		const char* target = client->GetName();
+		int targetID = client->CharacterID();
+		const char* targetName = client->GetName();
+
 		char String[255];
 
 #ifdef _WINDOWS
-		sprintf(String, "tak_testcopy.bat %s", target);
+		sprintf(String, "tak_testcopy.bat %i %s", targetID, targetName);
 #else
-		sprintf(String, "./tak_testcopy %s", target);
+		sprintf(String, "./tak_testcopy %i %s", targetID, targetName);
 #endif
 		system(String);
 	}
