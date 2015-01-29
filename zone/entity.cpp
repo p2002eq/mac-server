@@ -65,7 +65,7 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	
+
 }
 
 Client *Entity::CastToClient()
@@ -535,14 +535,14 @@ void EntityList::MobProcess()
 	while (it != mob_list.end()) {
 		uint16 id = it->first;
 		Mob *mob = it->second;
-		
+
 		size_t sz = mob_list.size();
 		bool p_val = mob->Process();
 		size_t a_sz = mob_list.size();
-		
+
 		if(a_sz > sz) {
 			//increased size can potentially screw with iterators so reset it to current value
-			//if buckets are re-orderered we may skip a process here and there but since 
+			//if buckets are re-orderered we may skip a process here and there but since
 			//process happens so often it shouldn't matter much
 			it = mob_list.find(id);
 			++it;
@@ -696,7 +696,7 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 		} else {
 			NewSpawn_Struct *ns = new NewSpawn_Struct;
 			memset(ns, 0, sizeof(NewSpawn_Struct));
-			npc->FillSpawnStruct(ns, 0);	// Not working on player newspawns, so it's safe to use a ForWho of 0
+			npc->FillSpawnStruct(ns, nullptr);	// Not working on player newspawns, so it's safe to use a ForWho of 0
 			AddToSpawnQueue(npc->GetID(), &ns);
 			safe_delete(ns);
 		}
@@ -870,11 +870,11 @@ bool EntityList::SendZoneDoorsBulk(EQApplicationPacket* app, Client *client, uin
 		if (door && (door->GetClientVersionMask() & mask_test) &&
 				strlen(door->GetDoorName()) > 3) {
 			memcpy(nd->name, door->GetDoorName(), 16);
-			nd->xPos = door->GetX();
-			nd->yPos = door->GetY();
-			nd->zPos = door->GetZ();
-			nd->heading = door->GetHeading();
-			nd->incline = door->GetIncline();
+			auto position = door->GetPosition();
+			nd->xPos = position.x;
+			nd->yPos = position.y;
+			nd->zPos = position.z;
+			nd->heading = position.w;			nd->incline = door->GetIncline();
 			nd->size = door->GetSize();
 			nd->doorid = door->GetDoorID();
 			nd->opentype = door->GetOpenType();
@@ -936,10 +936,11 @@ bool EntityList::MakeDoorSpawnPacket(EQApplicationPacket* app, Client *client)
 				strlen(door->GetDoorName()) > 3) {
 			memset(&nd, 0, sizeof(nd));
 			memcpy(nd.name, door->GetDoorName(), 32);
-			nd.xPos = door->GetX();
-			nd.yPos = door->GetY();
-			nd.zPos = door->GetZ();
-			nd.heading = door->GetHeading();
+			auto position = door->GetPosition();
+			nd.xPos = position.x;
+			nd.yPos = position.y;
+			nd.zPos = position.z;
+			nd.heading = position.w;
 			nd.incline = door->GetIncline();
 			nd.size = door->GetSize();
 			nd.doorId = door->GetDoorID();
@@ -1201,7 +1202,7 @@ void EntityList::ChannelMessage(Mob *from, uint8 chan_num, uint8 language,
 			filter = FilterAuctions;
 		//
 		// Only say is limited in range
-		if (chan_num != 8 || client->Dist(*from) < 200)
+		if (chan_num != 8 || Distance(client->GetPosition(), from->GetPosition()) < 200)
 			if (filter == FilterNone || client->GetFilter(filter) != FilterHide)
 				client->ChannelMessageSend(from->GetName(), 0, chan_num, language, lang_skill, buffer);
 		++it;
@@ -1421,7 +1422,7 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 				|| (filter2 == FilterShowGroupOnly && (sender == ent ||
 					(ent->GetGroup() && ent->GetGroup()->IsGroupMember(sender))))
 				|| (filter2 == FilterShowSelfOnly && ent == sender))
-			&& (ent->DistNoRoot(*sender) <= dist2)) {
+			&& (DistanceSquared(ent->GetPosition(), sender->GetPosition()) <= dist2)) {
 				ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
 			}
 		}
@@ -1531,16 +1532,14 @@ Client *EntityList::GetClientByWID(uint32 iWID)
 	return nullptr;
 }
 
-Client *EntityList::GetRandomClient(float x, float y, float z, float Distance, Client *ExcludeClient)
+Client *EntityList::GetRandomClient(const glm::vec3& location, float Distance, Client *ExcludeClient)
 {
 	std::vector<Client *> ClientsInRange;
 
-	auto it = client_list.begin();
-	while (it != client_list.end()) {
-		if ((it->second != ExcludeClient) && (it->second->DistNoRoot(x, y, z) <= Distance))
+
+	for (auto it = client_list.begin();it != client_list.end(); ++it)
+		if ((it->second != ExcludeClient) && (DistanceSquared(static_cast<glm::vec3>(it->second->GetPosition()), location) <= Distance))
 			ClientsInRange.push_back(it->second);
-		++it;
-	}
 
 	if (ClientsInRange.empty())
 		return nullptr;
@@ -1565,7 +1564,7 @@ Corpse *EntityList::GetCorpseByOwnerWithinRange(Client *client, Mob *center, int
 	auto it = corpse_list.begin();
 	while (it != corpse_list.end()) {
 		if (it->second->IsPlayerCorpse())
-			if (center->DistNoRootNoZ(*it->second) < range &&
+			if (DistanceSquaredNoZ(center->GetPosition(), it->second->GetPosition()) < range &&
 					strcasecmp(it->second->GetOwnerName(), client->GetName()) == 0)
 				return it->second;
 		++it;
@@ -1876,7 +1875,7 @@ void EntityList::MessageClose_StringID(Mob *sender, bool skipsender, float dist,
 
 	for (auto it = client_list.begin(); it != client_list.end(); ++it) {
 		c = it->second;
-		if(c && c->DistNoRoot(*sender) <= dist2 && (!skipsender || c != sender))
+		if(c && DistanceSquared(c->GetPosition(), sender->GetPosition()) <= dist2 && (!skipsender || c != sender))
 			c->Message_StringID(type, string_id, message1, message2, message3, message4, message5, message6, message7, message8, message9);
 	}
 }
@@ -1892,7 +1891,7 @@ void EntityList::FilteredMessageClose_StringID(Mob *sender, bool skipsender,
 
 	for (auto it = client_list.begin(); it != client_list.end(); ++it) {
 		c = it->second;
-		if (c && c->DistNoRoot(*sender) <= dist2 && (!skipsender || c != sender))
+		if (c && DistanceSquared(c->GetPosition(), sender->GetPosition()) <= dist2 && (!skipsender || c != sender))
 			c->FilteredMessage_StringID(sender, type, filter, string_id,
 					message1, message2, message3, message4, message5,
 					message6, message7, message8, message9);
@@ -1940,7 +1939,7 @@ void EntityList::MessageClose(Mob* sender, bool skipsender, float dist, uint32 t
 
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
-		if (it->second->DistNoRoot(*sender) <= dist2 && (!skipsender || it->second != sender))
+		if (DistanceSquared(it->second->GetPosition(), sender->GetPosition()) <= dist2 && (!skipsender || it->second != sender))
 			it->second->Message(type, buffer);
 		++it;
 	}
@@ -2407,7 +2406,7 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 			//bool Grouped = client->HasGroup() && mob->IsClient() && (client->GetGroup() == mob->CastToClient()->GetGroup());
 
 			//if (range == 0 || (iterator.GetData() == alwayssend) || Grouped || (mob->DistNoRootNoZ(*client) <= range)) {
-			if (range == 0 || (it->second == alwayssend) || mob->IsClient() || (mob->DistNoRoot(*client) <= range)) {
+			if (range == 0 || (it->second == alwayssend) || mob->IsClient() || (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range)) {
 				mob->MakeSpawnUpdate(ppu);
 			}
 			if(mob && mob->IsClient() && mob->GetID()>0) {
@@ -2566,8 +2565,8 @@ void EntityList::FindPathsToAllNPCs()
 
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
-		Map::Vertex Node0 = zone->pathing->GetPathNodeCoordinates(0, false);
-		Map::Vertex Dest(it->second->GetX(), it->second->GetY(), it->second->GetZ());
+		glm::vec3 Node0 = zone->pathing->GetPathNodeCoordinates(0, false);
+		glm::vec3 Dest(it->second->GetX(), it->second->GetY(), it->second->GetZ());
 		std::deque<int> Route = zone->pathing->FindRoute(Node0, Dest);
 		if (Route.size() == 0)
 			printf("Unable to find a route to %s\n", it->second->GetName());
@@ -2864,7 +2863,8 @@ void EntityList::MessageGroup(Mob *sender, bool skipclose, uint32 type, const ch
 
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
-		if (it->second != sender && (it->second->Dist(*sender) <= dist2 || it->second->GetGroup() == sender->CastToClient()->GetGroup())) {
+		if (it->second != sender &&
+				(Distance(it->second->GetPosition(), sender->GetPosition()) <= dist2 || it->second->GetGroup() == sender->CastToClient()->GetGroup())) {
 			it->second->Message(type, buffer);
 		}
 		++it;
@@ -2937,54 +2937,42 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 thedam)
 
 void EntityList::OpenDoorsNear(NPC *who)
 {
-	auto it = door_list.begin();
-	while (it != door_list.end()) {
+
+	for (auto it = door_list.begin();it != door_list.end(); ++it) {
 		Doors *cdoor = it->second;
-		if (cdoor && !cdoor->IsDoorOpen()) {
-			float zdiff = who->GetZ() - cdoor->GetZ();
-			if (zdiff < 0)
-				zdiff = 0 - zdiff;
-			float curdist = 0;
-			float tmp = who->GetX() - cdoor->GetX();
-			curdist += tmp * tmp;
-			tmp = who->GetY() - cdoor->GetY();
-			curdist += tmp * tmp;
-			if (zdiff < 10 && curdist <= 100)
-				cdoor->NPCOpen(who);
-		}
-		++it;
+		if (!cdoor || cdoor->IsDoorOpen())
+			continue;
+
+		auto diff = who->GetPosition() - cdoor->GetPosition();
+
+		float curdist = diff.x * diff.x + diff.y * diff.y;
+
+		if (diff.z * diff.z < 10 && curdist <= 100)
+			cdoor->NPCOpen(who);
 	}
 }
 
 void EntityList::SendAlarm(Trap *trap, Mob *currenttarget, uint8 kos)
 {
-	float val2 = trap->effectvalue * trap->effectvalue;
+	float preSquareDistance = trap->effectvalue * trap->effectvalue;
 
-	auto it = npc_list.begin();
-	while (it != npc_list.end()) {
+	for (auto it = npc_list.begin();it != npc_list.end(); ++it) {
 		NPC *cur = it->second;
-		float curdist = 0;
-		float tmp = cur->GetX() - trap->x;
-		curdist += tmp*tmp;
-		tmp = cur->GetY() - trap->y;
-		curdist += tmp*tmp;
-		tmp = cur->GetZ() - trap->z;
-		curdist += tmp*tmp;
-		if (!cur->GetOwner() &&
-			/*!cur->CastToMob()->dead && */
-			!cur->IsEngaged() &&
-			curdist <= val2 )
-		{
-			if (kos) {
-				uint8 factioncon = currenttarget->GetReverseFactionCon(cur);
-				if (factioncon == FACTION_THREATENLY || factioncon == FACTION_SCOWLS) {
-					cur->AddToHateList(currenttarget,1);
-				}
-			} else {
+
+		auto diff = glm::vec3(cur->GetPosition()) - trap->m_Position;
+		float curdist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+
+		if (cur->GetOwner() || cur->IsEngaged() || curdist > preSquareDistance )
+			continue;
+
+		if (kos) {
+			uint8 factioncon = currenttarget->GetReverseFactionCon(cur);
+			if (factioncon == FACTION_THREATENLY || factioncon == FACTION_SCOWLS) {
 				cur->AddToHateList(currenttarget,1);
 			}
 		}
-		++it;
+		else
+			cur->AddToHateList(currenttarget,1);
 	}
 }
 
@@ -3021,7 +3009,7 @@ struct quest_proximity_event {
 	int area_type;
 };
 
-void EntityList::ProcessMove(Client *c, float x, float y, float z)
+void EntityList::ProcessMove(Client *c, const glm::vec3& location)
 {
 	float last_x = c->ProximityX();
 	float last_y = c->ProximityY();
@@ -3043,9 +3031,9 @@ void EntityList::ProcessMove(Client *c, float x, float y, float z)
 				last_z < l->min_z || last_z > l->max_z) {
 			old_in = false;
 		}
-		if (x < l->min_x || x > l->max_x ||
-				y < l->min_y || y > l->max_y ||
-				z < l->min_z || z > l->max_z) {
+		if (location.x < l->min_x || location.x > l->max_x ||
+				location.y < l->min_y || location.y > l->max_y ||
+				location.z < l->min_z || location.z > l->max_z) {
 			new_in = false;
 		}
 
@@ -3078,9 +3066,9 @@ void EntityList::ProcessMove(Client *c, float x, float y, float z)
 			old_in = false;
 		}
 
-		if (x < a.min_x || x > a.max_x ||
-				y < a.min_y || y > a.max_y ||
-				z < a.min_z || z > a.max_z ) {
+		if (location.x < a.min_x || location.x > a.max_x ||
+				location.y < a.min_y || location.y > a.max_y ||
+				location.z < a.min_z || location.z > a.max_z ) {
 			new_in = false;
 		}
 
@@ -3392,7 +3380,7 @@ void EntityList::RadialSetLogging(Mob *around, bool enabled, bool clients,
 				continue;
 		}
 
-		if (around->DistNoRoot(*mob) > range2)
+		if (DistanceSquared(around->GetPosition(), mob->GetPosition()) > range2)
 			continue;
 
 		if (enabled)
@@ -3429,7 +3417,7 @@ int16 EntityList::CountTempPets(Mob *owner)
 		}
 		++it;
 	}
-	
+
 	owner->SetTempPetCount(count);
 
 	return count;
@@ -3458,9 +3446,9 @@ bool Entity::CheckCoordLosNoZLeaps(float cur_x, float cur_y, float cur_z,
 	if (zone->zonemap == nullptr)
 		return true;
 
-	Map::Vertex myloc;
-	Map::Vertex oloc;
-	Map::Vertex hit;
+	glm::vec3 myloc;
+	glm::vec3 oloc;
+	glm::vec3 hit;
 
 	myloc.x = cur_x;
 	myloc.y = cur_y;
@@ -3494,7 +3482,7 @@ void EntityList::QuestJournalledSayClose(Mob *sender, Client *QuestInitiator,
 	// Use the old method for all other nearby clients
 	for (auto it = client_list.begin(); it != client_list.end(); ++it) {
 		c = it->second;
-		if(c && (c != QuestInitiator) && c->DistNoRoot(*sender) <= dist2)
+		if(c && (c != QuestInitiator) && DistanceSquared(c->GetPosition(), sender->GetPosition()) <= dist2)
 			c->Message_StringID(CC_Default, GENERIC_SAY, mobname, message);
 	}
 }
@@ -3636,51 +3624,54 @@ void EntityList::GroupMessage(uint32 gid, const char *from, const char *message)
 	}
 }
 
-uint16 EntityList::CreateGroundObject(uint32 itemid, float x, float y, float z,
-		float heading, uint32 decay_time)
+uint16 EntityList::CreateGroundObject(uint32 itemid, const glm::vec4& position, uint32 decay_time)
 {
 	const Item_Struct *is = database.GetItem(itemid);
-	if (is) {
-		ItemInst *i = new ItemInst(is, is->MaxCharges);
-		if (i) {
-			Object *object = new Object(i, x, y, z, heading,decay_time);
-			entity_list.AddObject(object, true);
+	if (!is)
+		return 0;
 
-			safe_delete(i);
-			if (object)
-				return object->GetID();
-		}
-		return 0; // fell through itemstruct
-	}
-	return 0; // fell through everything, this is bad/incomplete from perl
+	ItemInst *i = new ItemInst(is, is->MaxCharges);
+	if (!i)
+		return 0;
+
+	Object *object = new Object(i, position.x, position.y, position.z, position.w,decay_time);
+	entity_list.AddObject(object, true);
+
+	safe_delete(i);
+	if (!object)
+		return 0;
+
+	return object->GetID();
 }
 
-uint16 EntityList::CreateGroundObjectFromModel(const char *model, float x,
-		float y, float z, float heading, uint8 type, uint32 decay_time)
+uint16 EntityList::CreateGroundObjectFromModel(const char *model, const glm::vec4& position, uint8 type, uint32 decay_time)
 {
-	if (model) {
-			Object *object = new Object(model, x, y, z, heading, type);
-			entity_list.AddObject(object, true);
+	if (!model)
+		return 0;
 
-			if (object)
-				return object->GetID();
-	}
-	return 0; // fell through everything, this is bad/incomplete from perl
+	Object *object = new Object(model, position.x, position.y, position.z, position.w, type);
+	entity_list.AddObject(object, true);
+
+	if (!object)
+		return 0;
+
+	return object->GetID();
 }
 
-uint16 EntityList::CreateDoor(const char *model, float x, float y, float z,
-		float heading, uint8 opentype, uint16 size)
+uint16 EntityList::CreateDoor(const char *model, const glm::vec4& position, uint8 opentype, uint16 size)
 {
-	if (model) {
-			Doors *door = new Doors(model, x, y, z, heading, opentype, size);
-			RemoveAllDoors();
-			zone->LoadZoneDoors(zone->GetShortName(), zone->GetInstanceVersion());
-			entity_list.AddDoor(door);
-			entity_list.RespawnAllDoors();
+	if (!model)
+		return 0; // fell through everything, this is bad/incomplete from perl
 
-			if (door)
-				return door->GetEntityID();
-	}
+	Doors *door = new Doors(model, position, opentype, size);
+	RemoveAllDoors();
+	zone->LoadZoneDoors(zone->GetShortName(), zone->GetInstanceVersion());
+	entity_list.AddDoor(door);
+	entity_list.RespawnAllDoors();
+
+	if (door)
+		return door->GetEntityID();
+
 	return 0; // fell through everything, this is bad/incomplete from perl
 }
 
@@ -3710,7 +3701,7 @@ Mob *EntityList::GetTargetForMez(Mob *caster)
 				continue;
 			}
 
-			if (caster->DistNoRoot(*d) > 22250) { //only pick targets within 150 range
+			if (DistanceSquared(caster->GetPosition(), d->GetPosition()) > 22250) { //only pick targets within 150 range
 				++it;
 				continue;
 			}

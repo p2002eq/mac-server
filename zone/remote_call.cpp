@@ -184,10 +184,10 @@ void handle_rc_get_initial_entity_positions(const std::string &method, const std
 		res["ent_id"] = itoa(c->GetEntityID());
 		res["type"] = "Door";
 		res["name"] = c->GetDoorName();
-		res["x"] = itoa(c->GetX());
-		res["y"] = itoa(c->GetY());
-		res["z"] = itoa(c->GetZ());
-		res["h"] = itoa(c->GetHeading()); 
+		//res["x"] = itoa(c->GetX());
+		//res["y"] = itoa(c->GetY());
+		//res["z"] = itoa(c->GetZ());
+		//res["h"] = itoa(c->GetHeading()); 
 		RemoteCallResponse(connection_id, request_id, res, error);
 	}
 	std::list<Object*> object_list;

@@ -174,7 +174,8 @@ bool Client::CanFish() {
 	}
 
 	if(zone->zonemap != nullptr && zone->watermap != nullptr && RuleB(Watermap, CheckForWaterWhenFishing)) {
-		float RodX, RodY, RodZ;
+
+		glm::vec3 rodPosition;
 		// Tweak Rod and LineLength if required
 		const float RodLength = RuleR(Watermap, FishingRodLength);
 		const float LineLength = RuleR(Watermap, FishingLineLength);
@@ -183,25 +184,25 @@ bool Client::CanFish() {
 		HeadingDegrees = (int) ((GetHeading()*360)/256);
 		HeadingDegrees = HeadingDegrees % 360;
 
-		RodX = x_pos + RodLength * sin(HeadingDegrees * M_PI/180.0f);
-		RodY = y_pos + RodLength * cos(HeadingDegrees * M_PI/180.0f);
+		rodPosition.x = m_Position.x + RodLength * sin(HeadingDegrees * M_PI/180.0f);
+		rodPosition.y = m_Position.y + RodLength * cos(HeadingDegrees * M_PI/180.0f);
 
 		// Do BestZ to find where the line hanging from the rod intersects the water (if it is water).
 		// and go 1 unit into the water.
-		Map::Vertex dest;
-		dest.x = RodX;
-		dest.y = RodY;
-		dest.z = z_pos;//+10;
+		glm::vec3 dest;
+		dest.x = rodPosition.x;
+		dest.y = rodPosition.y;
+		dest.z = m_Position.z;//+10;
 
-		RodZ = zone->zonemap->FindBestZ(dest, nullptr)+5;
-		bool in_lava = zone->watermap->InLava(RodX, RodY, RodZ);
-		bool in_water = zone->watermap->InWater(RodX, RodY, RodZ) || zone->watermap->InVWater(RodX, RodY, RodZ);
+		rodPosition.z = zone->zonemap->FindBestZ(dest, nullptr) + 5;
+		bool in_lava = zone->watermap->InLava(rodPosition);
+		bool in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
 		//Message(0, "Rod is at %4.3f, %4.3f, %4.3f (dest.z: %4.3f), InWater says %d, InLava says %d RodLength: %f LineLength: %f", RodX, RodY, RodZ, dest.z, in_water, in_lava, RodLength, LineLength);
 		if (in_lava) {
 			Message_StringID(MT_Skills, FISHING_LAVA);	//Trying to catch a fire elemental or something?
 			return false;
 		}
-		if((!in_water) || (z_pos-RodZ)>LineLength) {	//Didn't hit the water OR the water is too far below us
+		if((!in_water) || (m_Position.z-rodPosition.z)>LineLength) {	//Didn't hit the water OR the water is too far below us
 			Message_StringID(MT_Skills, FISHING_LAND);	//Trying to catch land sharks perhaps?
 			return false;
 		}
@@ -271,7 +272,9 @@ void Client::GoFish()
 				if(npc_chance < zone->random.Int(0, 99)) {
 					const NPCType* tmp = database.GetNPCType(npc_id);
 					if(tmp != nullptr) {
-						NPC* npc = new NPC(tmp, nullptr, GetX()+3, GetY(), GetZ(), GetHeading(), FlyMode3);
+                        auto positionNPC = GetPosition();
+                        positionNPC.x = positionNPC.x + 3;
+						NPC* npc = new NPC(tmp, nullptr, positionNPC, FlyMode3);
 						npc->AddLootTable();
 
 						npc->AddToHateList(this, 1, 0, false);	//no help yelling

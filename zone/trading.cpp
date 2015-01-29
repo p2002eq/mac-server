@@ -341,7 +341,7 @@ void Client::ResetTrade() {
 				SendItemPacket(free_slot, inst, ItemPacketTrade);
 			}
 			else {
-				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 			}
 
 			DeleteItemInInventory(trade_slot);
@@ -441,7 +441,7 @@ void Client::ResetTrade() {
 				SendItemPacket(free_slot, inst, ItemPacketTrade);
 			}
 			else {
-				entity_list.CreateGroundObject(inst->GetID(),GetX(),GetY(),GetZ(),0,RuleI(Groundspawns,FullInvDecayTime));
+				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
 			}
 
 			DeleteItemInInventory(trade_slot);

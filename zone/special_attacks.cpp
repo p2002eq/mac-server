@@ -830,12 +830,13 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", range);
 	range *= range;
-	if(DistNoRootNoZ(*GetTarget()) > range) {
-		mlog(COMBAT__RANGED, "Ranged attack out of range... client should catch this. (%f > %f).\n", DistNoRootNoZ(*GetTarget()), range);
-		//target is out of range, client does a message
+	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
+	if(dist > range) {
+		mlog(COMBAT__RANGED, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
+		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
-	else if(DistNoRootNoZ(*GetTarget()) < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
+	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
 		return;
 	}
 
@@ -1059,12 +1060,9 @@ void NPC::RangedAttack(Mob* other)
 
 		mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", max_range);
 		max_range *= max_range;
-		if(DistNoRootNoZ(*other) > max_range) {
-			mlog(COMBAT__RANGED, "Ranged attack out of range...%.2f vs %.2f", DistNoRootNoZ(*other), max_range);
-			//target is out of range, client does a message
+		if (DistanceSquaredNoZ(m_Position, other->GetPosition()) > max_range)
 			return;
-		}
-		else if(DistNoRootNoZ(*other) < (min_range * min_range))
+		else if(DistanceSquaredNoZ(m_Position, other->GetPosition()) < (min_range * min_range))
 			return;
 	
 
@@ -1224,12 +1222,13 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	int range = item->Range +50/*Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0*/;
 	mlog(COMBAT__RANGED, "Calculated bow range to be %.1f", range);
 	range *= range;
-	if(DistNoRootNoZ(*GetTarget()) > range) {
-		mlog(COMBAT__RANGED, "Throwing attack out of range... client should catch this. (%f > %f).\n", DistNoRootNoZ(*GetTarget()), range);
-		//target is out of range, client does a message
+	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
+	if(dist > range) {
+		mlog(COMBAT__RANGED, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
+		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
-	else if(DistNoRootNoZ(*GetTarget()) < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
+	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
 		return;
 	}
 

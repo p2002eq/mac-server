@@ -152,24 +152,24 @@ Mob* HateList::GetDamageTop(Mob* hater)
 }
 
 Mob* HateList::GetClosest(Mob *hater) {
-	Mob* close = nullptr;
-	float closedist = 99999.9f;
-	float thisdist;
+	Mob* close_entity = nullptr;
+	float close_distance = 99999.9f;
+	float this_distance;
 
 	auto iterator = list.begin();
 	while(iterator != list.end()) {
-		thisdist = (*iterator)->ent->DistNoRootNoZ(*hater);
-		if((*iterator)->ent != nullptr && thisdist <= closedist) {
-			closedist = thisdist;
-			close = (*iterator)->ent;
+		this_distance = DistanceSquaredNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());;
+		if((*iterator)->ent != nullptr && this_distance <= close_distance) {
+			close_distance = this_distance;
+			close_entity = (*iterator)->ent;
 		}
 		++iterator;
 	}
 
-	if ((!close && hater->IsNPC()) || (close && close->DivineAura()))
-		close = hater->CastToNPC()->GetHateTop();
+	if ((!close_entity && hater->IsNPC()) || (close_entity && close_entity->DivineAura()))
+		close_entity = hater->CastToNPC()->GetHateTop();
 
-	return close;
+	return close_entity;
 }
 
 
@@ -202,7 +202,7 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 		parse->EventNPC(EVENT_HATE_LIST, owner->CastToNPC(), ent, "1", 0);
 
 		if (ent->IsClient()) {
-			if (owner->CastToNPC()->IsRaidTarget()) 
+			if (owner->CastToNPC()->IsRaidTarget())
 				ent->CastToClient()->SetEngagedRaidTarget(true);
 			ent->CastToClient()->IncrementAggroCount();
 		}
@@ -225,7 +225,7 @@ bool HateList::RemoveEnt(Mob *ent)
 			parse->EventNPC(EVENT_HATE_LIST, owner->CastToNPC(), ent, "0", 0);
 			found = true;
 
-			
+
 			if(ent && ent->IsClient())
 				ent->CastToClient()->DecrementAggroCount();
 
@@ -266,11 +266,11 @@ int HateList::SummonedPetCount(Mob *hater) {
 	auto iterator = list.begin();
 	while(iterator != list.end()) {
 
-		if((*iterator)->ent != nullptr && (*iterator)->ent->IsNPC() && 	((*iterator)->ent->CastToNPC()->IsPet() || ((*iterator)->ent->CastToNPC()->GetSwarmOwner() > 0))) 
+		if((*iterator)->ent != nullptr && (*iterator)->ent->IsNPC() && 	((*iterator)->ent->CastToNPC()->IsPet() || ((*iterator)->ent->CastToNPC()->GetSwarmOwner() > 0)))
 		{
 			++petcount;
 		}
-		
+
 		++iterator;
 	}
 
@@ -306,15 +306,16 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
+            auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ())) {
+				if(!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
 					continue;
 				}
 			}
 
-			if (cur->ent->Sanctuary()) { 
+			if (cur->ent->Sanctuary()) {
 				if(hate == -1)
 				{
 					top = cur->ent;
@@ -416,8 +417,8 @@ Mob *HateList::GetTop(Mob *center)
 		while(iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
-			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ())) {
+ 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
+				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition()))) {
 					skipped_count++;
 					++iterator;
 					continue;
@@ -576,8 +577,8 @@ void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_cent
 		tHateEntry *h = (*iterator);
 		if(range > 0)
 		{
-			dist_targ = center->DistNoRoot(*h->ent);
-			if(dist_targ <= range && dist_targ >= min_range2)
+			dist_targ = DistanceSquared(center->GetPosition(), h->ent->GetPosition());
+			if (dist_targ <= range && dist_targ >= min_range2)
 			{
 				id_list.push_back(h->ent->GetID());
 				h->ent->CalcSpellPowerDistanceMod(spell_id, dist_targ);

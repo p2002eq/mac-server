@@ -152,19 +152,17 @@ void Mob::CalculateNewFearpoint()
 	{
 		int Node = zone->pathing->GetRandomPathNode();
 
-		Map::Vertex Loc = zone->pathing->GetPathNodeCoordinates(Node);
+		glm::vec3 Loc = zone->pathing->GetPathNodeCoordinates(Node);
 
 		++Loc.z;
 
-		Map::Vertex CurrentPosition(GetX(), GetY(), GetZ());
+		glm::vec3 CurrentPosition(GetX(), GetY(), GetZ());
 
 		std::deque<int> Route = zone->pathing->FindRoute(CurrentPosition, Loc);
 
 		if(Route.size() > 0)
 		{
-			fear_walkto_x = Loc.x;
-			fear_walkto_y = Loc.y;
-			fear_walkto_z = Loc.z;
+            m_FearWalkTarget = glm::vec3(Loc.x, Loc.y, Loc.z);
 			curfp = true;
 
 			mlog(PATHING__DEBUG, "Feared to node %i (%8.3f, %8.3f, %8.3f)", Node, Loc.x, Loc.y, Loc.z);
@@ -194,14 +192,8 @@ void Mob::CalculateNewFearpoint()
 		}
 	}
 	if (curfp)
-	{
-		fear_walkto_x = ranx;
-		fear_walkto_y = rany;
-		fear_walkto_z = ranz;
-	}
+        m_FearWalkTarget = glm::vec3(ranx, rany, ranz);
 	else //Break fear
-	{
 		BuffFadeByEffect(SE_Fear);
-	}
 }
 
