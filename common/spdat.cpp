@@ -69,9 +69,10 @@
 	and not SpellFinished().
 
 */
+#include "../common/eqemu_logsys.h"
 
-#include "../common/logsys.h"
-#include "../common/logtypes.h"
+
+#include "../common/eqemu_logsys.h" 
 
 #include "classes.h"
 #include "races.h"
@@ -850,7 +851,7 @@ DmgShieldType GetDamageShieldType(uint16 spell_id, int32 DSType)
 	// If we have a DamageShieldType for this spell from the damageshieldtypes table, return that,
 	// else, make a guess, based on the resist type. Default return value is DS_THORNS
 	if (IsValidSpell(spell_id)) {
-		_log(SPELLS__EFFECT_VALUES, "DamageShieldType for spell %i (%s) is %X", spell_id,
+		Log.Out(Logs::Detail, Logs::Spells, "DamageShieldType for spell %i (%s) is %X\n", spell_id,
 			spells[spell_id].name, spells[spell_id].DamageShieldType);
 
 		if (spells[spell_id].DamageShieldType)

@@ -5,6 +5,7 @@
 #include "../common/eq_packet_structs.h"
 #include "position.h"
 #include "../common/faction.h"
+#include "../common/eqemu_logsys.h"
 
 class Client;
 class Corpse;
@@ -310,7 +311,7 @@ public:
 	uint8		GetGridType(uint32 grid, uint32 zoneid);
 	uint8		GetGridType2(uint32 grid, uint16 zoneid);
 	bool		GetWaypoints(uint32 grid, uint16 zoneid, uint32 num, wplist* wp);
-	void		AssignGrid(Client *client, const glm::vec2& location, uint32 id);
+	void        AssignGrid(Client *client, int grid, int spawn2id);
 	int			GetHighestGrid(uint32 zoneid);
 	int			GetHighestWaypoint(uint32 zoneid, uint32 gridid);
 

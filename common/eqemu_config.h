@@ -82,7 +82,6 @@ class EQEmuConfig : public XMLParser
 		// From <files/>
 		std::string SpellsFile;
 		std::string OpCodesFile;
-		std::string LogSettingsFile;
 		// From <directories/>
 		std::string MapDir;
 		std::string QuestDir;
@@ -152,9 +151,8 @@ class EQEmuConfig : public XMLParser
 			WebInterfaceCert = "";
 			WebInterfacePrivKey = "";
 			// Files
-			SpellsFile="spells_us.txt";
-			OpCodesFile="opcodes.conf";
-			LogSettingsFile="log.ini";
+			SpellsFile = "spells_us.txt";
+			OpCodesFile = "opcodes.conf";
 			// Dirs
 			MapDir="Maps";
 			QuestDir="quests";

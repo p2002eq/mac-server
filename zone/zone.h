@@ -68,6 +68,16 @@ struct item_tick_struct {
     std::string qglobal;
 };
 
+// static uint32 gmsay_log_message_colors[Logs::MaxLogID] = {
+// 	15, // "Status", - Yellow
+// 	15,	// "Normal", - Yellow
+// 	3,	// "Error", - Red
+// 	14,	// "Debug", - Light Green
+// 	4,	// "Quest", 
+// 	5,	// "Command", 
+// 	3	// "Crash" 
+// };
+
 class Client;
 class Map;
 class Mob;
@@ -232,13 +242,15 @@ public:
 
 	LinkedList<NPC_Emote_Struct*> NPCEmoteList;
 
-    void    LoadTickItems();
-    uint32  GetSpawnKillCount(uint32 in_spawnid);
-    void    UpdateHotzone();
+	void    LoadTickItems();
+	uint32  GetSpawnKillCount(uint32 in_spawnid);
+	void    UpdateHotzone();
 	std::unordered_map<int, item_tick_struct> tick_items;
 
 	// random object that provides random values for the zone
 	EQEmu::Random random;
+
+	static void GMSayHookCallBackProcess(uint16 log_category, const std::string& message){ entity_list.MessageStatus(0, 80, Log.GetGMSayColorFromCategory(log_category), "%s", message.c_str()); }
 
 	//MODDING HOOKS
 	void mod_init();

@@ -259,12 +259,11 @@ Mob* EntityList::GetTrapTrigger(Trap* trap) {
 //todo: rewrite this to not need direct access to trap members.
 bool ZoneDatabase::LoadTraps(const char* zonename, int16 version) {
 
-	std::string query = StringFormat("SELECT id, x, y, z, effect, effectvalue, effectvalue2, skill, "
-									"maxzdiff, radius, chance, message, respawn_time, respawn_var, level "
-									"FROM traps WHERE zone='%s' AND version=%u", zonename, version);
-	auto results = QueryDatabase(query);
-	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in LoadTraps query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+    std::string query = StringFormat("SELECT id, x, y, z, effect, effectvalue, effectvalue2, skill, "
+                                    "maxzdiff, radius, chance, message, respawn_time, respawn_var, level "
+                                    "FROM traps WHERE zone='%s' AND version=%u", zonename, version);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
 		return false;
 	}
 

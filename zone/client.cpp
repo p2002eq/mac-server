@@ -15,25 +15,23 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 // for windows compile
-#ifdef _WINDOWS
-	#define abs64 _abs64
-#else
+#ifndef _WINDOWS
 	#include <stdarg.h>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
 	#include "../common/unix.h"
-	#define abs64 abs
 #endif
 
 extern volatile bool RunLoops;
 
+#include "../common/eqemu_logsys.h"
 #include "../common/features.h"
 #include "../common/spdat.h"
 #include "../common/guilds.h"
@@ -47,7 +45,7 @@ extern volatile bool RunLoops;
 #include "petitions.h"
 #include "command.h"
 #include "string_ids.h"
-#include "client_logs.h"
+
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
 #include "../common/crc32.h"
@@ -276,7 +274,7 @@ Client::~Client() {
 		database.DeleteTraderItem(this->CharacterID());
 
 	if(conn_state != ClientConnectFinished) {
-		LogFile->write(EQEmuLog::Debug, "Client '%s' was destroyed before reaching the connected state:", GetName());
+		Log.Out(Logs::General, Logs::None, "Client '%s' was destroyed before reaching the connected state:", GetName());
 		ReportConnectingState();
 	}
 
@@ -285,11 +283,6 @@ Client::~Client() {
 		m_tradeskill_object = nullptr;
 	}
 
-#ifdef CLIENT_LOGS
-	client_logs.unsubscribeAll(this);
-#endif
-
-	ChangeSQLLog(nullptr);
 	if(IsDueling() && GetDuelTarget() != 0) {
 		Entity* entity = entity_list.GetID(GetDuelTarget());
 		if(entity != nullptr && entity->IsClient()) {
@@ -350,31 +343,31 @@ void Client::SendLogoutPackets() {
 void Client::ReportConnectingState() {
 	switch(conn_state) {
 	case NoPacketsReceived:		//havent gotten anything
-		LogFile->write(EQEmuLog::Debug, "Client has not sent us an initial zone entry packet.");
+		Log.Out(Logs::General, Logs::None, "Client has not sent us an initial zone entry packet.");
 		break;
 	case ReceivedZoneEntry:		//got the first packet, loading up PP
-		LogFile->write(EQEmuLog::Debug, "Client sent initial zone packet, but we never got their player info from the database.");
+		Log.Out(Logs::General, Logs::None, "Client sent initial zone packet, but we never got their player info from the database.");
 		break;
 	case PlayerProfileLoaded:	//our DB work is done, sending it
-		LogFile->write(EQEmuLog::Debug, "We were sending the player profile, spawns, time and weather, but never finished.");
+		Log.Out(Logs::General, Logs::None, "We were sending the player profile, spawns, time and weather, but never finished.");
 		break;
 	case ZoneInfoSent:		//includes PP, spawns, time and weather
-		LogFile->write(EQEmuLog::Debug, "We successfully sent player info and spawns, waiting for client to request new zone.");
+		Log.Out(Logs::General, Logs::None, "We successfully sent player info and spawns, waiting for client to request new zone.");
 		break;
 	case NewZoneRequested:	//received and sent new zone request
-		LogFile->write(EQEmuLog::Debug, "We received client's new zone request, waiting for client spawn request.");
+		Log.Out(Logs::General, Logs::None, "We received client's new zone request, waiting for client spawn request.");
 		break;
 	case ClientSpawnRequested:	//client sent ReqClientSpawn
-		LogFile->write(EQEmuLog::Debug, "We received the client spawn request, and were sending objects, doors, zone points and some other stuff, but never finished.");
+		Log.Out(Logs::General, Logs::None, "We received the client spawn request, and were sending objects, doors, zone points and some other stuff, but never finished.");
 		break;
 	case ZoneContentsSent:		//objects, doors, zone points
-		LogFile->write(EQEmuLog::Debug, "The rest of the zone contents were successfully sent, waiting for client ready notification.");
+		Log.Out(Logs::General, Logs::None, "The rest of the zone contents were successfully sent, waiting for client ready notification.");
 		break;
 	case ClientReadyReceived:	//client told us its ready, send them a bunch of crap like guild MOTD, etc
-		LogFile->write(EQEmuLog::Debug, "We received client ready notification, but never finished Client::CompleteConnect");
+		Log.Out(Logs::General, Logs::None, "We received client ready notification, but never finished Client::CompleteConnect");
 		break;
 	case ClientConnectFinished:	//client finally moved to finished state, were done here
-		LogFile->write(EQEmuLog::Debug, "Client is successfully connected.");
+		Log.Out(Logs::General, Logs::None, "Client is successfully connected.");
 		break;
 	};
 }
@@ -541,9 +534,7 @@ bool Client::SendAllPackets() {
 		if(eqs)
 			eqs->FastQueuePacket((EQApplicationPacket **)&cp->app, cp->ack_req);
 		iterator.RemoveCurrent();
-#if EQDEBUG >= 6
-		//LogFile->write(EQEmuLog::Normal, "Transmitting a packet");
-#endif
+		Log.Out(Logs::Moderate, Logs::Client_Server_Packet, "Transmitting a packet");
 	}
 	return true;
 }
@@ -622,10 +613,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 	char message[4096];
 	strn0cpy(message, orig_message, sizeof(message));
 
-
-	#if EQDEBUG >= 11
-		LogFile->write(EQEmuLog::Debug,"Client::ChannelMessageReceived() Channel:%i message:'%s'", chan_num, message);
-	#endif
+	Log.Out(Logs::Detail, Logs::Zone_Server, "Client::ChannelMessageReceived() Channel:%i message:'%s'", chan_num, message);
 
 	if (targetname == nullptr) {
 		targetname = (!GetTarget()) ? "" : GetTarget()->GetName();
@@ -1261,9 +1249,7 @@ void Client::UpdateAdmin(bool iFromDB) {
 
 	if(m_pp.gm)
 	{
-#if EQDEBUG >= 5
-		printf("%s is a GM\n", GetName());
-#endif
+		Log.Out(Logs::Moderate, Logs::Zone_Server, "%s - %s is a GM", __FUNCTION__ , GetName());
 // no need for this, having it set in pp you already start as gm
 // and it's also set in your spawn packet so other people see it too
 //		SendAppearancePacket(AT_GM, 1, false);
@@ -1292,7 +1278,6 @@ void Client::SendManaUpdatePacket() {
 	if (!Connected() || IsCasting())
 		return;
 
-	//std::cout << "Sending mana update: " << (cur_mana - last_reported_mana) << std::endl;
 	if (last_reported_mana != cur_mana || last_reported_endur != cur_end) {
 
 
@@ -1546,7 +1531,7 @@ void Client::ReadBook(BookRequest_Struct *book) {
 
 	if (booktxt2[0] != '\0') {
 #if EQDEBUG >= 6
-		LogFile->write(EQEmuLog::Normal,"Client::ReadBook() textfile:%s Text:%s", txtfile, booktxt2.c_str());
+		Log.Out(Logs::General, Logs::Normal, "Client::ReadBook() textfile:%s Text:%s", txtfile, booktxt2.c_str());
 #endif
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ReadBook, length + sizeof(BookText_Struct));
 
@@ -1582,7 +1567,7 @@ void Client::SendClientMoneyUpdate(uint8 type,uint32 amount){
 	mus->amount=amount;
 	mus->trader=0;
 	mus->type=type;
-	LogFile->write(EQEmuLog::Debug, "Client::SendClientMoneyUpdate() %s added %i coin of type: %i.",
+	Log.Out(Logs::Detail, Logs::Debug, "Client::SendClientMoneyUpdate() %s added %i coin of type: %i.",
 			GetName(), amount, type);
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -1607,7 +1592,7 @@ bool Client::TakeMoneyFromPP(uint64 copper, bool updateclient) {
 		copperpp -= copper;
 		if(copperpp <= 0)
 		{
-			copper = abs64(copperpp);
+			copper = std::abs(copperpp);
 			m_pp.copper = 0;
 		}
 		else
@@ -1620,7 +1605,7 @@ bool Client::TakeMoneyFromPP(uint64 copper, bool updateclient) {
 		silver -= copper;
 		if(silver <= 0)
 		{
-			copper = abs64(silver);
+			copper = std::abs(silver);
 			m_pp.silver = 0;
 		}
 		else
@@ -1635,7 +1620,7 @@ bool Client::TakeMoneyFromPP(uint64 copper, bool updateclient) {
 
 		if(gold <= 0)
 		{
-			copper = abs64(gold);
+			copper = std::abs(gold);
 			m_pp.gold = 0;
 		}
 		else
@@ -1717,7 +1702,7 @@ void Client::AddMoneyToPP(uint64 copper, bool updateclient){
 
 	SaveCurrency();
 
-	LogFile->write(EQEmuLog::Debug, "Client::AddMoneyToPP() %s should have: plat:%i gold:%i silver:%i copper:%i", GetName(), m_pp.platinum, m_pp.gold, m_pp.silver, m_pp.copper);
+	Log.Out(Logs::General, Logs::None, "Client::AddMoneyToPP() %s should have: plat:%i gold:%i silver:%i copper:%i", GetName(), m_pp.platinum, m_pp.gold, m_pp.silver, m_pp.copper);
 }
 
 void Client::EVENT_ITEM_ScriptStopReturn(){
@@ -1762,7 +1747,7 @@ void Client::AddMoneyToPP(uint32 copper, uint32 silver, uint32 gold, uint32 plat
 	SaveCurrency();
 
 #if (EQDEBUG>=5)
-		LogFile->write(EQEmuLog::Debug, "Client::AddMoneyToPP() %s should have: plat:%i gold:%i silver:%i copper:%i",
+		Log.Out(Logs::General, Logs::None, "Client::AddMoneyToPP() %s should have: plat:%i gold:%i silver:%i copper:%i",
 			GetName(), m_pp.platinum, m_pp.gold, m_pp.silver, m_pp.copper);
 #endif
 }
@@ -1819,7 +1804,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 		if(against_who->GetSpecialAbility(IMMUNE_AGGRO) || against_who->IsClient() ||
 			GetLevelCon(against_who->GetLevel()) == CON_GREEN)
 		{
-			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed to gain due to invalid target.", skillid, skillval);
 			return false; 
 		}
 	}
@@ -1840,13 +1825,13 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 		if(zone->random.Real(0, 99) < Chance)
 		{
 			SetSkill(skillid, GetRawSkill(skillid) + 1);
-			_log(SKILLS__GAIN, "Skill %d at value %d successfully gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d successfully gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
 			return true;
 		} else {
-			_log(SKILLS__GAIN, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
 		}
 	} else {
-		_log(SKILLS__GAIN, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
+		Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
 }
@@ -1867,10 +1852,10 @@ void Client::CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill) {
 
 		if(zone->random.Real(0,100) < Chance) {	// if they make the roll
 			IncreaseLanguageSkill(langid);	// increase the language skill by 1
-			_log(SKILLS__GAIN, "Language %d at value %d successfully gain with %.4f%%chance", langid, LangSkill, Chance);
+			Log.Out(Logs::Detail, Logs::Skills, "Language %d at value %d successfully gain with %.4f%%chance", langid, LangSkill, Chance);
 		}
 		else
-			_log(SKILLS__GAIN, "Language %d at value %d failed to gain with %.4f%%chance", langid, LangSkill, Chance);
+			Log.Out(Logs::Detail, Logs::Skills, "Language %d at value %d failed to gain with %.4f%%chance", langid, LangSkill, Chance);
 	}
 }
 
@@ -1979,7 +1964,7 @@ uint16 Client::GetMaxSkillAfterSpecializationRules(SkillUseTypes skillid, uint16
 
 				Save();
 
-				LogFile->write(EQEmuLog::Normal, "Reset %s's caster specialization skills to 1. "
+				Log.Out(Logs::General, Logs::Normal, "Reset %s's caster specialization skills to 1. "
 								"Too many specializations skills were above 50.", GetCleanName());
 			}
 
@@ -2289,7 +2274,7 @@ void Client::ServerFilter(SetServerFilter_Struct* filter){
 	uint32 *n = (uint32 *) filter;
 	for(r = 0; r < (sizeof(SetServerFilter_Struct)/4); r++) {
 		if(*o != *n)
-			LogFile->write(EQEmuLog::Debug, "Filter %d changed from %d to %d", r, *o, *n);
+			Log.Out(Logs::Detail, Logs::Debug, "Filter %d changed from %d to %d", r, *o, *n);
 		o++; n++;
 	}
 	memcpy(&ssss, filter, sizeof(SetServerFilter_Struct));
@@ -2773,37 +2758,6 @@ float Client::CalcPriceMod(Mob* other, bool reverse)
 	return chaformula; //Returns 1.10, expensive stuff!
 }
 
-void Client::ChangeSQLLog(const char *file) {
-	if(SQL_log != nullptr) {
-		fclose(SQL_log);
-		SQL_log = nullptr;
-	}
-	if(file != nullptr) {
-		if(strstr(file, "..") != nullptr) {
-			Message(CC_Red, ".. is forbibben in SQL log file names.");
-			return;
-		}
-		char buf[512];
-		snprintf(buf, 511, "%s%s", SQL_LOG_PATH, file);
-		buf[511] = '\0';
-		SQL_log = fopen(buf, "a");
-		if(SQL_log == nullptr) {
-			Message(CC_Red, "Unable to open SQL log file: %s\n", strerror(errno));
-		}
-	}
-}
-
-void Client::LogSQL(const char *fmt, ...) {
-	if(SQL_log == nullptr)
-		return;
-
-	va_list argptr;
-	va_start(argptr, fmt);
-	vfprintf(SQL_log, fmt, argptr );
-	fputc('\n', SQL_log);
-	va_end(argptr);
-}
-
 void Client::EnteringMessages(Client* client)
 {
 	//server rules
@@ -2995,10 +2949,9 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM keyring "
-									"WHERE char_id = '%i' ORDER BY item_id", character_id);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in Client::KeyRingLoad query '" << query << "' " << results.ErrorMessage() << std::endl;
+                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
 		return;
 	}
 
@@ -3034,11 +2987,10 @@ void Client::KeyRingList()
 bool Client::IsDiscovered(uint32 itemid) {
 
 	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in IsDiscovered query '" << query << "' " << results.ErrorMessage() << std::endl;
-		return false;
-	}
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        return false;
+    }
 
 	auto row = results.begin();
 	if (!atoi(row[0]))
@@ -4064,7 +4016,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 	PetRecord record;
 	if(!database.GetPetEntry(spells[spell_id].teleport_zone, &record))
 	{
-		LogFile->write(EQEmuLog::Error, "Unknown doppelganger spell id: %d, check pets table", spell_id);
+		Log.Out(Logs::General, Logs::Error, "Unknown doppelganger spell id: %d, check pets table", spell_id);
 		Message(CC_Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
 		return;
 	}
@@ -4078,7 +4030,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 	const NPCType *npc_type = database.GetNPCType(pet.npc_id);
 	if(npc_type == nullptr) {
-		LogFile->write(EQEmuLog::Error, "Unknown npc type for doppelganger spell id: %d", spell_id);
+		Log.Out(Logs::General, Logs::Error, "Unknown npc type for doppelganger spell id: %d", spell_id);
 		Message(0,"Unable to find pet!");
 		return;
 	}
@@ -5121,13 +5073,12 @@ void Client::LoadAccountFlags()
 
 	accountflags.clear();
 	std::string query = StringFormat("SELECT p_flag, p_value "
-									"FROM account_flags WHERE p_accid = '%d'",
-									account_id);
-	auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-		std::cerr << "Error in LoadAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
-		return;
-	}
+                                    "FROM account_flags WHERE p_accid = '%d'",
+                                    account_id);
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        return;
+    }
 
 	for (auto row = results.begin(); row != results.end(); ++row)
 		accountflags[row[0]] = row[1];
@@ -5140,7 +5091,6 @@ void Client::SetAccountFlag(std::string flag, std::string val) {
 									account_id, flag.c_str(), val.c_str());
 	auto results = database.QueryDatabase(query);
 	if(!results.Success()) {
-		std::cerr << "Error in SetAccountFlags query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return;
 	}
 
@@ -5388,7 +5338,7 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
 			entity_list.MessageClose_StringID(this, true, 50, 0, EATING_MESSAGE, GetName(), item->Name);
 
 #if EQDEBUG >= 5
-		LogFile->write(EQEmuLog::Debug, "Eating from slot:%i", (int)slot);
+       Log.Out(Logs::General, Logs::None, "Eating from slot:%i", (int)slot);
 #endif
 	}
 	else
@@ -5406,7 +5356,7 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
 			entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), item->Name);
 
 #if EQDEBUG >= 5
-		LogFile->write(EQEmuLog::Debug, "Drinking from slot:%i", (int)slot);
+        Log.Out(Logs::General, Logs::None, "Drinking from slot:%i", (int)slot);
 #endif
    }
 }

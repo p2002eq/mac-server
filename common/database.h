@@ -21,7 +21,8 @@
 #define AUTHENTICATION_TIMEOUT	60
 #define INVALID_ID				0xFFFFFFFF
 
-#include "debug.h"
+#include "global_define.h"
+#include "eqemu_logsys.h"
 #include "types.h"
 #include "dbcore.h"
 #include "linked_list.h"
@@ -595,6 +596,9 @@ public:
 	void	AddReport(std::string who, std::string against, std::string lines);
 	struct TimeOfDay_Struct		LoadTime(time_t &realtime);
 	bool	SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year);
+
+	/* EQEmuLogSys */
+	void	LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
 
 private:
 	void DBInitVars();

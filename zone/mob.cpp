@@ -1402,12 +1402,11 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 
 	entity_list.QueueClients(this, outapp);
 	safe_delete(outapp);
-	mlog(CLIENT__SPELLS, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
+	Log.Out(Logs::Detail, Logs::Spells, "Illusion: Race = %i, Gender = %i, Texture = %i, HelmTexture = %i, HairColor = %i, BeardColor = %i, EyeColor1 = %i, EyeColor2 = %i, HairStyle = %i, Face = %i, Size = %f",
 		this->race, this->gender, this->texture, this->helmtexture, this->haircolor, this->beardcolor, this->eyecolor1, this->eyecolor2, this->hairstyle, this->luclinface, this->size);
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
-//std::cout << "Gender in: " << (int)in_gender << std::endl; // undefined cout [CODEBUG]
 	if ((in_race > 0 && in_race <= GNOME )
 		|| in_race == IKSAR || in_race == VAHSHIR || in_race == FROGLOK
 		|| in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
@@ -1511,7 +1510,7 @@ const int32& Mob::SetMana(int32 amount)
 	cur_mana = amount < 0 ? 0 : (amount > mmana ? mmana : amount);
 /*
 	if(IsClient())
-		LogFile->write(EQEmuLog::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
+		Log.Out(Logs::Detail, Logs::Debug, "Setting mana for %s to %d (%4.1f%%)", GetName(), amount, GetManaRatio());
 */
 
 	return cur_mana;
@@ -2325,7 +2324,6 @@ int16 Mob::GetResist(uint8 type) const
 
 uint32 Mob::GetLevelHP(uint8 tlevel)
 {
-	//std::cout<<"Tlevel: "<<(int)tlevel<<std::endl; // cout undefined [CODEBUG]
 	int multiplier = 0;
 	if (tlevel < 10)
 	{
@@ -2387,7 +2385,7 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(!IsValidSpell(spell_id)) { // Check for a valid spell otherwise it will crash through the function
 		if(IsClient()){
 			Message(0, "Invalid spell proc %u", spell_id);
-			mlog(CLIENT__SPELLS, "Player %s, Weapon Procced invalid spell %u", this->GetName(), spell_id);
+			Log.Out(Logs::Detail, Logs::Spells, "Player %s, Weapon Procced invalid spell %u", this->GetName(), spell_id);
 		}
 		return;
 	}
@@ -2568,8 +2566,8 @@ int Mob::GetSnaredAmount()
 			{
 				int val = CalcSpellEffectValue_formula(spells[buffs[i].spellid].formula[j], spells[buffs[i].spellid].base[j], spells[buffs[i].spellid].max[j], buffs[i].casterlevel, buffs[i].spellid);
 				//int effect = CalcSpellEffectValue(buffs[i].spellid, spells[buffs[i].spellid].effectid[j], buffs[i].casterlevel);
-				if (val < 0 && abs(val) > worst_snare)
-					worst_snare = abs(val);
+				if (val < 0 && std::abs(val) > worst_snare)
+					worst_snare = std::abs(val);
 			}
 		}
 	}
@@ -3616,7 +3614,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 {
 	// This method should only be used for spell effects.
 
-	_log(SPELLS__CASTING, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
+	Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
 	float new_x = GetX();
 	float new_y = GetY();
 	float new_z = GetZ() + pushup;
@@ -3624,7 +3622,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		_log(SPELLS__CASTING, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
+		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		m_Position.x = new_x;
 		m_Position.y = new_y;
 		m_Position.z = new_z;
@@ -3660,7 +3658,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	}
 	else
 	{
-		_log(SPELLS__CASTING, "DoKnockback(): LOS check failed.");
+		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }
@@ -3993,7 +3991,7 @@ void Mob::MeleeLifeTap(int32 damage) {
 	if(lifetap_amt && damage > 0){
 
 		lifetap_amt = damage * lifetap_amt / 100;
-		mlog(COMBAT__DAMAGE, "Melee lifetap healing for %d damage.", damage);
+		Log.Out(Logs::Detail, Logs::Combat, "Melee lifetap healing for %d damage.", damage);
 
 		if (lifetap_amt > 0)
 			HealDamage(lifetap_amt); //Heal self for modified damage amount.
@@ -4052,7 +4050,8 @@ void Mob::DoGravityEffect()
 					if(value > 0)
 						away = 1;
 
-					amount = fabs(value) / (100.0f); // to bring the values in line, arbitarily picked
+					amount = std::abs(value) /
+						 (100.0f); // to bring the values in line, arbitarily picked
 
 					x_vector = cur_x - caster_x;
 					y_vector = cur_y - caster_y;
@@ -4071,7 +4070,7 @@ void Mob::DoGravityEffect()
 		}
 	}
 
-	if((fabs(my_x - cur_x) > 0.01) || (fabs(my_y - cur_y) > 0.01)) {
+	if ((std::abs(my_x - cur_x) > 0.01) || (std::abs(my_y - cur_y) > 0.01)) {
 		float new_ground = GetGroundZ(cur_x, cur_y);
 		// If we cant get LoS on our new spot then keep checking up to 5 units up.
 		if(!CheckLosFN(cur_x, cur_y, new_ground, GetSize())) {
@@ -4707,7 +4706,7 @@ bool Mob::IsFacingMob(Mob *other)
 	if (angle < 40.0 && heading > 472.0)
 		angle = heading;
 
-	if (fabs(angle - heading) <= 80.0)
+	if (std::abs(angle - heading) <= 80.0)
 		return true;
 
 	return false;
@@ -4721,8 +4720,8 @@ float Mob::HeadingAngleToMob(Mob *other)
 	float this_x = GetX();
 	float this_y = GetY();
 
-	float y_diff = fabs(this_y - mob_y);
-	float x_diff = fabs(this_x - mob_x);
+	float y_diff = std::abs(this_y - mob_y);
+	float x_diff = std::abs(this_x - mob_x);
 	if (y_diff < 0.0000009999999974752427)
 		y_diff = 0.0000009999999974752427;
 

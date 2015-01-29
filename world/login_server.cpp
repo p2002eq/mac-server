@@ -15,7 +15,7 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
@@ -97,8 +97,7 @@ bool LoginServer::Process() {
 	ServerPacket *pack = 0;
 	while((pack = tcpc->PopPacket()))
 	{
-		_log(WORLD__LS_TRACE,"Recevied ServerPacket from LS OpCode 0x04x",pack->opcode);
-		_hex(WORLD__LS_TRACE,pack->pBuffer,pack->size);
+		Log.Out(Logs::Detail, Logs::World_Server,"Recevied ServerPacket from LS OpCode 0x04x",pack->opcode);
 
 		switch(pack->opcode) {
 			case 0:
@@ -155,12 +154,12 @@ bool LoginServer::Process() {
 			case ServerOP_LSFatalError: {
 	#ifndef IGNORE_LS_FATAL_ERROR
 				WorldConfig::DisableLoginserver();
-				_log(WORLD__LS_ERR, "Login server responded with FatalError. Disabling reconnect.");
+				Log.Out(Logs::Detail, Logs::World_Server, "Login server responded with FatalError. Disabling reconnect.");
 	#else
-				_log(WORLD__LS_ERR, "Login server responded with FatalError.");
+			Log.Out(Logs::Detail, Logs::World_Server, "Login server responded with FatalError.");
 	#endif
 				if (pack->size > 1) {
-					_log(WORLD__LS_ERR, "     %s",pack->pBuffer);
+					Log.Out(Logs::Detail, Logs::World_Server, "     %s",pack->pBuffer);
 				}
 				database.LSDisconnect();
 				break;
@@ -173,18 +172,18 @@ bool LoginServer::Process() {
 			case ServerOP_LSRemoteAddr: {
 				if (!Config->WorldAddress.length()) {
 					WorldConfig::SetWorldAddress((char *)pack->pBuffer);
-					_log(WORLD__LS, "Loginserver provided %s as world address",pack->pBuffer);
+					Log.Out(Logs::Detail, Logs::World_Server, "Loginserver provided %s as world address",pack->pBuffer);
 				}
 				break;
 			}
 			case ServerOP_LSAccountUpdate: {
-				_log(WORLD__LS, "Received ServerOP_LSAccountUpdate packet from loginserver");
+				Log.Out(Logs::Detail, Logs::World_Server, "Received ServerOP_LSAccountUpdate packet from loginserver");
 				CanAccountUpdate = true;
 				break;
 			}
 			default:
 			{
-				_log(WORLD__LS_ERR, "Unknown LSOpCode: 0x%04x size=%d",(int)pack->opcode,pack->size);
+				Log.Out(Logs::Detail, Logs::World_Server, "Unknown LSOpCode: 0x%04x size=%d",(int)pack->opcode,pack->size);
 				DumpPacket(pack->pBuffer, pack->size);
 				database.LSDisconnect();
 				break;
@@ -199,10 +198,10 @@ bool LoginServer::Process() {
 bool LoginServer::InitLoginServer() {
 	if(Connected() == false) {
 		if(ConnectReady()) {
-			_log(WORLD__LS, "Connecting to login server: %s:%d",LoginServerAddress,LoginServerPort);
+			Log.Out(Logs::Detail, Logs::World_Server, "Connecting to login server: %s:%d",LoginServerAddress,LoginServerPort);
 			Connect();
 		} else {
-			_log(WORLD__LS_ERR, "Not connected but not ready to connect, this is bad: %s:%d",
+			Log.Out(Logs::Detail, Logs::World_Server, "Not connected but not ready to connect, this is bad: %s:%d",
 			LoginServerAddress, LoginServerPort);
 			database.LSDisconnect();
 		}
@@ -215,19 +214,19 @@ bool LoginServer::Connect() {
 
 	char errbuf[TCPConnection_ErrorBufferSize];
 	if ((LoginServerIP = ResolveIP(LoginServerAddress, errbuf)) == 0) {
-		_log(WORLD__LS_ERR, "Unable to resolve '%s' to an IP.", LoginServerAddress);
+		Log.Out(Logs::Detail, Logs::World_Server, "Unable to resolve '%s' to an IP.",LoginServerAddress);
 		database.LSDisconnect();
 		return false;
 	}
 
 	if (LoginServerIP == 0 || LoginServerPort == 0) {
-		_log(WORLD__LS_ERR, "Connect info incomplete, cannot connect: %s:%d",LoginServerAddress,LoginServerPort);
+		Log.Out(Logs::Detail, Logs::World_Server, "Connect info incomplete, cannot connect: %s:%d",LoginServerAddress,LoginServerPort);
 		database.LSDisconnect();
 		return false;
 	}
 
 	if (tcpc->ConnectIP(LoginServerIP, LoginServerPort, errbuf)) {
-		_log(WORLD__LS, "Connected to Loginserver: %s:%d",LoginServerAddress,LoginServerPort);
+		Log.Out(Logs::Detail, Logs::World_Server, "Connected to Loginserver: %s:%d",LoginServerAddress,LoginServerPort);
 		database.LSConnected(LoginServerPort);
 		SendNewInfo();
 		SendStatus();
@@ -235,7 +234,7 @@ bool LoginServer::Connect() {
 		return true;
 	}
 	else {
-		_log(WORLD__LS_ERR, "Could not connect to login server: %s:%d %s", LoginServerAddress, LoginServerPort, errbuf);
+		Log.Out(Logs::Detail, Logs::World_Server, "Could not connect to login server: %s:%d %s",LoginServerAddress,LoginServerPort,errbuf);
 		database.LSDisconnect();
 		return false;
 	}
@@ -312,7 +311,7 @@ void LoginServer::SendStatus() {
 void LoginServer::SendAccountUpdate(ServerPacket* pack) {
 	ServerLSAccountUpdate_Struct* s = (ServerLSAccountUpdate_Struct *) pack->pBuffer;
 	if(CanUpdate()) {
-		_log(WORLD__LS, "Sending ServerOP_LSAccountUpdate packet to loginserver: %s:%d",LoginServerAddress,LoginServerPort);
+		Log.Out(Logs::Detail, Logs::World_Server, "Sending ServerOP_LSAccountUpdate packet to loginserver: %s:%d",LoginServerAddress,LoginServerPort);
 		strn0cpy(s->worldaccount, LoginAccount, 30);
 		strn0cpy(s->worldpassword, LoginPassword, 30);
 		SendPacket(pack);

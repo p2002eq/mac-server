@@ -27,7 +27,7 @@
 
 #include "../common/features.h"
 #ifdef EMBPERL_XS_CLASSES
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "embperl.h"
 
 #ifdef seed
@@ -1176,9 +1176,9 @@ XS(XS_Client_MovePC)
 		}
 		else {
 			if (THIS->IsNPC())
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process a type NPC reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process a type NPC reference");
 			else
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePC) attempted to process an Unknown type reference");
 
 			Perl_croak(aTHX_ "THIS is not of type Client");
 		}
@@ -1216,9 +1216,9 @@ XS(XS_Client_MovePCInstance)
 		}
 		else {
 			if (THIS->IsNPC())
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process a type NPC reference");
 			else
-				_log(CLIENT__ERROR, "Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
+				Log.Out(Logs::Detail, Logs::None, "[CLIENT] Perl(XS_Client_MovePCInstance) attempted to process an Unknown type reference");
 
 			Perl_croak(aTHX_ "THIS is not of type Client");
 

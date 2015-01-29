@@ -15,7 +15,8 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/types.h"
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_factory.h"
@@ -39,6 +40,8 @@ ErrorLog *server_log;
 EQCrypto eq_crypto;
 bool run_server = true;
 
+EQEmuLogSys Log;
+
 void CatchSignal(int sig_num)
 {
 }
@@ -56,12 +59,6 @@ int main()
 #else
 	log_name << "./logs/login_" << (unsigned int)current_time << ".log";
 #endif
-
-	const char *log_ini_file = "./log.ini";
-	if(!load_log_settings(log_ini_file))
-		_log(ZONE__INIT, "Warning: Unable to read %s", log_ini_file);
-	else
-		_log(ZONE__INIT, "Log settings loaded from %s", log_ini_file);
 
 	server_log = new ErrorLog(log_name.str().c_str());
 	server_log->Log(log_debug, "Logging System Init.");

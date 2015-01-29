@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 
 #include <stdlib.h>
 #include <list>
@@ -42,7 +42,7 @@ static const SkillUseTypes TradeskillUnknown = Skill1HBlunt; /* an arbitrary non
 void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Object *worldo)
 {
 	if (!user || !in_combine) {
-		LogFile->write(EQEmuLog::Error, "Client or NewCombine_Struct not set in Object::HandleCombine");
+		Log.Out(Logs::General, Logs::Error, "Client or NewCombine_Struct not set in Object::HandleCombine");
 		return;
 	}
 	Inventory& user_inv = user->GetInv();
@@ -175,7 +175,7 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 	if(success && spec.replace_container) {
 		if(worldcontainer){
 			//should report this error, but we dont have the recipe ID, so its not very useful
-			LogFile->write(EQEmuLog::Error, "Replace container combine executed in a world container.");
+			Log.Out(Logs::General, Logs::Error, "Replace container combine executed in a world container.");
 		}
 		else
 			user->DeleteItemInInventory(in_combine->container_slot, 0, true);
@@ -265,7 +265,6 @@ void Client::TradeskillSearchResults(const std::string query, unsigned long objt
 
     auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in TradeskillSearchResults query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
@@ -273,7 +272,7 @@ void Client::TradeskillSearchResults(const std::string query, unsigned long objt
 		return; //search gave no results... not an error
 
 	if(results.ColumnCount() != 6) {
-		LogFile->write(EQEmuLog::Error, "Error in TradeskillSearchResults query '%s': Invalid column count in result", query.c_str());
+		Log.Out(Logs::General, Logs::Error, "Error in TradeskillSearchResults query '%s': Invalid column count in result", query.c_str());
 		return;
 	}
 
@@ -308,17 +307,16 @@ void Client::SendTradeskillDetails(uint32 recipe_id) {
                                     recipe_id);
     auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in SendTradeskillDetails query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
 	if(results.RowCount() < 1) {
-		LogFile->write(EQEmuLog::Error, "Error in SendTradeskillDetails: no components returned");
+		Log.Out(Logs::General, Logs::Error, "Error in SendTradeskillDetails: no components returned");
 		return;
 	}
 
 	if(results.RowCount() > 10) {
-		LogFile->write(EQEmuLog::Error, "Error in SendTradeskillDetails: too many components returned (%u)", results.RowCount());
+		Log.Out(Logs::General, Logs::Error, "Error in SendTradeskillDetails: too many components returned (%u)", results.RowCount());
 		return;
 	}
 
@@ -415,7 +413,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 	if(spec->nofail) 
 	{
 		chance = 100;	//cannot fail.
-		_log(TRADESKILLS__TRACE, "...This combine cannot fail.");
+		Log.Out(Logs::Detail, Logs::Tradeskills, "...This combine cannot fail.");
 	} 
 	else if(over_trivial >= 0) 
 	{
@@ -440,7 +438,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		chance = 95;
 	}
 
-	_log(TRADESKILLS__TRACE, "...Current skill: %d , Trivial: %d , Success chance: %f percent", user_skill , spec->trivial , chance);
+	Log.Out(Logs::Detail, Logs::Tradeskills, "...Current skill: %d , Trivial: %d , Success chance: %f percent", user_skill , spec->trivial , chance);
 
 	float res = zone->random.Real(0, 99);
 	int aa_chance = 0;
@@ -585,7 +583,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		Message_StringID(CC_Blue, TRADESKILL_SUCCEED, spec->name.c_str());
 
-		_log(TRADESKILLS__TRACE, "Tradeskill success");
+		Log.Out(Logs::Detail, Logs::Tradeskills, "Tradeskill success");
 
 		itr = spec->onsuccess.begin();
 		while(itr != spec->onsuccess.end() && !spec->quest) {
@@ -608,7 +606,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		Message_StringID(CC_Blue,TRADESKILL_FAILED);
 
-		_log(TRADESKILLS__TRACE, "Tradeskill failed");
+		Log.Out(Logs::Detail, Logs::Tradeskills, "Tradeskill failed");
 			if (this->GetGroup())
 		{
 			entity_list.MessageGroup(this,true,MT_Skills,"%s was unsuccessful in %s tradeskill attempt.",GetName(),this->GetGender() == 0 ? "his" : this->GetGender() == 1 ? "her" : "its");
@@ -705,7 +703,7 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 
 	bonusstat -= twoStatPenalty;
 
-	_log(TRADESKILLS__TRACE, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat, GetINT(), GetWIS(), GetDEX(), GetSTR());
+	Log.Out(Logs::Detail, Logs::Tradeskills, "...Bonusstat: %d , INT: %d , WIS: %d , DEX: %d , STR: %d", bonusstat, GetINT(), GetWIS(), GetDEX(), GetSTR());
 
 	uint16 current_raw_skill = GetRawSkill(tradeskill);
 
@@ -741,9 +739,9 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 			NotifyNewTitlesAvailable();
 	}
 
-	_log(TRADESKILLS__TRACE, "...skillup_modifier: %f , success_modifier: %d , twoStatPenalty: %d", skillup_modifier, success_modifier, twoStatPenalty);
-	_log(TRADESKILLS__TRACE, "...Stage1 chance was: %f percent", chance_stage1);
-	_log(TRADESKILLS__TRACE, "...Stage2 chance was: %f percent. 0 percent means stage1 failed", chance_stage2);
+	Log.Out(Logs::Detail, Logs::Tradeskills, "...skillup_modifier: %f , success_modifier: %d , twoStatPenalty: %d", skillup_modifier, success_modifier, twoStatPenalty);
+	Log.Out(Logs::Detail, Logs::Tradeskills, "...Stage1 chance was: %f percent", chance_stage1);
+	Log.Out(Logs::Detail, Logs::Tradeskills, "...Stage2 chance was: %f percent. 0 percent means stage1 failed", chance_stage2);
 }
 
 bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint32 some_id,
@@ -794,8 +792,8 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
                                     buf2.c_str(), containers.c_str(), count, sum);
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe search, query: %s", query.c_str());
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe search, error: %s", results.ErrorMessage().c_str());
+		Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe search, query: %s", query.c_str());
+		Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe search, error: %s", results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -816,7 +814,7 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
 
             //length limit on buf2
             if(index == 214) { //Maximum number of recipe matches (19 * 215 = 4096)
-                LogFile->write(EQEmuLog::Error, "GetTradeRecipe warning: Too many matches. Unable to search all recipe entries. Searched %u of %u possible entries.", index + 1, results.RowCount());
+                Log.Out(Logs::General, Logs::Error, "GetTradeRecipe warning: Too many matches. Unable to search all recipe entries. Searched %u of %u possible entries.", index + 1, results.RowCount());
                 break;
             }
         }
@@ -828,8 +826,8 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
                             "AND sum(tre.item_id * tre.componentcount) = %u", buf2.c_str(), count, sum);
 		results = QueryDatabase(query);
         if (!results.Success()) {
-            LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, re-query: %s", query.c_str());
-            LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
+            Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, re-query: %s", query.c_str());
+            Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
             return false;
         }
     }
@@ -854,18 +852,18 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
                             "AND tre.item_id = %u;", buf2.c_str(), containerId);
         results = QueryDatabase(query);
 		if (!results.Success()) {
-			LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, re-query: %s", query.c_str());
-			LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
+			Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, re-query: %s", query.c_str());
+			Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
 			return false;
 		}
 
 		if(results.RowCount() == 0) { //Recipe contents matched more than 1 recipe, but not in this container
-			LogFile->write(EQEmuLog::Error, "Combine error: Incorrect container is being used!");
+			Log.Out(Logs::General, Logs::Error, "Combine error: Incorrect container is being used!");
 			return false;
 		}
 
 		if (results.RowCount() > 1) //Recipe contents matched more than 1 recipe in this container
-			LogFile->write(EQEmuLog::Error, "Combine error: Recipe is not unique! %u matches found for container %u. Continuing with first recipe match.", results.RowCount(), containerId);
+			Log.Out(Logs::General, Logs::Error, "Combine error: Recipe is not unique! %u matches found for container %u. Continuing with first recipe match.", results.RowCount(), containerId);
 
 	}
 
@@ -882,7 +880,6 @@ bool ZoneDatabase::GetTradeRecipe(const ItemInst* container, uint8 c_type, uint3
                         recipe_id);
 	results = QueryDatabase(query);
     if (!results.Success()) {
-        LogFile->write(EQEmuLog::Error, "Error in tradeskill verify query: '%s': %s", query.c_str(), results.ErrorMessage().c_str());
         return GetTradeRecipe(recipe_id, c_type, some_id, char_id, spec);
     }
 
@@ -937,8 +934,8 @@ bool ZoneDatabase::GetTradeRecipe(uint32 recipe_id, uint8 c_type, uint32 some_id
                                     char_id, (unsigned long)recipe_id, containers.c_str());
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, query: %s", query.c_str());
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
+		Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, query: %s", query.c_str());
+		Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecipe, error: %s", results.ErrorMessage().c_str());
 		return false;
 	}
 
@@ -969,12 +966,11 @@ bool ZoneDatabase::GetTradeRecipe(uint32 recipe_id, uint8 c_type, uint32 some_id
                         "WHERE successcount > 0 AND recipe_id = %u", recipe_id);
     results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecept success query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 
 	if(results.RowCount() < 1) {
-		LogFile->write(EQEmuLog::Error, "Error in GetTradeRecept success: no success items returned");
+		Log.Out(Logs::General, Logs::Error, "Error in GetTradeRecept success: no success items returned");
 		return false;
 	}
 
@@ -1024,9 +1020,7 @@ void ZoneDatabase::UpdateRecipeMadecount(uint32 recipe_id, uint32 char_id, uint3
                                     "SET recipe_id = %u, char_id = %u, madecount = %u "
                                     "ON DUPLICATE KEY UPDATE madecount = %u;",
                                     recipe_id, char_id, madeCount, madeCount);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error in UpdateRecipeMadecount query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+    QueryDatabase(query);
 }
 
 void Client::LearnRecipe(uint32 recipeID)
@@ -1039,12 +1033,11 @@ void Client::LearnRecipe(uint32 recipeID)
                                     "WHERE tr.id = %u ;", CharacterID(), recipeID);
     auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in Client::LearnRecipe query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
 	}
 
 	if (results.RowCount() != 1) {
-		LogFile->write(EQEmuLog::Normal, "Client::LearnRecipe - RecipeID: %d had %d occurences.", recipeID, results.RowCount());
+		Log.Out(Logs::General, Logs::Normal, "Client::LearnRecipe - RecipeID: %d had %d occurences.", recipeID, results.RowCount());
 		return;
 	}
 
@@ -1064,9 +1057,6 @@ void Client::LearnRecipe(uint32 recipeID)
                         "ON DUPLICATE KEY UPDATE madecount = madecount;",
                         recipeID, CharacterID());
     results = database.QueryDatabase(query);
-    if (!results.Success())
-        LogFile->write(EQEmuLog::Error, "Error in LearnRecipe query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
-
 }
 
 bool Client::CanIncreaseTradeskill(SkillUseTypes tradeskill) {
@@ -1115,7 +1105,6 @@ bool ZoneDatabase::EnableRecipe(uint32 recipe_id)
                                     "WHERE id = %u;", recipe_id);
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error in EnableRecipe query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 	return results.RowsAffected() > 0;
 }
@@ -1126,7 +1115,6 @@ bool ZoneDatabase::DisableRecipe(uint32 recipe_id)
                                     "WHERE id = %u;", recipe_id);
     auto results = QueryDatabase(query);
 	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error in DisableRecipe query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 
 	return results.RowsAffected() > 0;
 }

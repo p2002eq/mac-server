@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "debug.h"
+#include "global_define.h"
 #include "string_util.h"
 #include "item.h"
 #include "database.h"
@@ -1127,7 +1127,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 	}
 
 	if (result == INVALID_INDEX) {
-		LogFile->write(EQEmuLog::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
+		Log.Out(Logs::General, Logs::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
 		Inventory::MarkDirty(inst); // Slot not found, clean up
 	}
 

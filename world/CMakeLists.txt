@@ -24,7 +24,6 @@ SET(world_sources
 	ucs.cpp
 	web_interface.cpp
 	wguild_mgr.cpp
-	world_logsys.cpp
 	world_config.cpp
 	worlddb.cpp
 	zonelist.cpp

@@ -49,8 +49,7 @@ void Client::SendGuildMOTD(bool GetGuildMOTDReply) {
 
 	}
 
-	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildMOTD of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildMOTD of length %d", outapp->size);
 
 	FastQueuePacket(&outapp);
 }
@@ -59,10 +58,10 @@ void Client::SendGuildSpawnAppearance() {
 	if (!IsInAGuild()) {
 		// clear guildtag
 		SendAppearancePacket(AT_GuildID, GUILD_NONE);
-		mlog(GUILDS__OUT_PACKETS, "Sending spawn appearance for no guild tag.");
+		Log.Out(Logs::Detail, Logs::Guilds, "Sending spawn appearance for no guild tag.");
 	} else {
 		uint8 rank = guild_mgr.GetDisplayedRank(GuildID(), GuildRank(), CharacterID());
-		mlog(GUILDS__OUT_PACKETS, "Sending spawn appearance for guild %d at rank %d", GuildID(), rank);
+		Log.Out(Logs::Detail, Logs::Guilds, "Sending spawn appearance for guild %d at rank %d", GuildID(), rank);
 		SendAppearancePacket(AT_GuildID, GuildID());
 		SendAppearancePacket(AT_GuildRank, rank);
 	}
@@ -78,12 +77,11 @@ void Client::SendGuildList() {
 	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
 
 	if(outapp->pBuffer == nullptr) {
-		mlog(GUILDS__ERROR, "Unable to make guild list!");
+		Log.Out(Logs::Detail, Logs::Guilds, "Unable to make guild list!");
 		return;
 	}
 
-	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildsList of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildsList of length %d", outapp->size);
 
 	FastQueuePacket(&outapp);
 }
@@ -113,8 +111,7 @@ void Client::SendPlayerGuild() {
 	gle->unknown1=0xFFFFFFFF;
 	gle->unknown3=0xFFFFFFFF;
 
-	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildAdded of length %d", outapp->size);
-	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildAdded of length %d", outapp->size);
 
 	FastQueuePacket(&outapp);
 }
@@ -128,7 +125,7 @@ void Client::RefreshGuildInfo()
 
 	CharGuildInfo info;
 	if(!guild_mgr.GetCharInfo(CharacterID(), info)) {
-		mlog(GUILDS__ERROR, "Unable to obtain guild char info for %s (%d)", GetName(), CharacterID());
+		Log.Out(Logs::Detail, Logs::Guilds, "Unable to obtain guild char info for %s (%d)", GetName(), CharacterID());
 		return;
 	}
 

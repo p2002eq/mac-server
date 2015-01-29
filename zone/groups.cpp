@@ -15,7 +15,8 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "masterentity.h"
 #include "npc_ai.h"
 #include "../common/packet_functions.h"
@@ -70,7 +71,7 @@ Group::Group(Mob* leader)
 	leader->SetGrouped(true);
 	SetLeader(leader);
 	SetOldLeaderName(leader->GetName());
-	_log(_GROUP__LOG, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
+	Log.Out(Logs::Detail, Logs::General, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
 	uint32 i;
 	for(i=0;i<MAX_GROUP_MEMBERS;i++)
 	{
@@ -440,7 +441,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 				memset(membername[i], 0, 64);
 				MemberRoles[i] = 0;
 				removed = true;
-				_log(_GROUP__LOG, "DelMemberOOZ: Removed Member: %s", Name);
+				Log.Out(Logs::Detail, Logs::General, "DelMemberOOZ: Removed Member: %s", Name);
 				break;
 			}
 		}
@@ -454,7 +455,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 
 	if(checkleader)
 	{
-		_log(_GROUP__LOG, "DelMemberOOZ: Checking leader...");
+		Log.Out(Logs::Detail, Logs::General, "DelMemberOOZ: Checking leader...");
 		if (strcmp(GetOldLeaderName(),Name) == 0 && GroupCount() >= 2)
 		{
 			for(uint32 nl = 0; nl < MAX_GROUP_MEMBERS; nl++)
@@ -489,7 +490,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 			membername[i][0] = '\0';
 			memset(membername[i],0,64);
 			MemberRoles[i] = 0;
-			_log(_GROUP__LOG, "DelMember: Removed Member: %s", oldmember->GetCleanName());
+			Log.Out(Logs::Detail, Logs::General, "DelMember: Removed Member: %s", oldmember->GetCleanName());
 			break;
 		}
 	}
@@ -538,7 +539,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] == nullptr) {
-			//if (DEBUG>=5) LogFile->write(EQEmuLog::Debug, "Group::DelMember() null member at slot %i", i);
+			//if (DEBUG>=5) Log.Out(Logs::Detail, Logs::Debug, "Group::DelMember() null member at slot %i", i);
 			continue;
 		}
 		if (members[i] != oldmember) {
@@ -607,7 +608,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 					caster->SpellOnTarget(spell_id, members[z]->GetPet());
 #endif
 			} else
-				_log(SPELLS__CASTING, "Group spell: %s is out of range %f at distance %f from %s", members[z]->GetName(), range, distance, caster->GetName());
+				Log.Out(Logs::Detail, Logs::Spells, "Group spell: %s is out of range %f at distance %f from %s", members[z]->GetName(), range, distance, caster->GetName());
 		}
 	}
 
@@ -650,7 +651,7 @@ void Group::GroupBardPulse(Mob* caster, uint16 spell_id) {
 			} 
 			else
 			{
-				_log(SPELLS__BARDS, "Group bard pulse: %s is out of range %f at distance %f from %s", members[z]->GetName(), range, distance, caster->GetName());
+				Log.Out(Logs::Detail, Logs::Spells, "Group bard pulse: %s is out of range %f at distance %f from %s", members[z]->GetName(), range, distance, caster->GetName());
 			}
 		}
 	}
@@ -863,7 +864,7 @@ bool Group::LearnMembers() {
         return false;
 
     if (results.RowCount() == 0) {
-        LogFile->write(EQEmuLog::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
+        Log.Out(Logs::General, Logs::Error, "Error getting group members for group %lu: %s", (unsigned long)GetID(), results.ErrorMessage().c_str());
 			return false;
     }
 
@@ -892,7 +893,7 @@ void Group::VerifyGroup() {
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (membername[i][0] == '\0') {
 #if EQDEBUG >= 7
-_log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
+	Log.Out(Logs::General, Logs::None, "Group %lu: Verify %d: Empty.\n", (unsigned long)GetID(), i);
 #endif
 			members[i] = nullptr;
 			continue;
@@ -903,7 +904,7 @@ _log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 		Mob *them = entity_list.GetMob(membername[i]);
 		if(them == nullptr && members[i] != nullptr) {	//they arnt here anymore....
 #if EQDEBUG >= 6
-		_log(_GROUP__LOG, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
 #endif
 			membername[i][0] = '\0';
 			members[i] = nullptr;
@@ -912,13 +913,13 @@ _log(_GROUP__LOG, "Group %lu: Verify %d: Empty.", (unsigned long)GetID(), i);
 
 		if(them != nullptr && members[i] != them) {	//our pointer is out of date... not so good.
 #if EQDEBUG >= 5
-		_log(_GROUP__LOG, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
 #endif
 			members[i] = them;
 			continue;
 		}
 #if EQDEBUG >= 8
-		_log(_GROUP__LOG, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
 #endif
 	}
 }
@@ -1166,12 +1167,12 @@ void Group::ChangeLeader(Mob* newleader)
 		if (members[i] && members[i]->IsClient())
 		{
 			members[i]->CastToClient()->QueuePacket(outapp);
-			_log(_GROUP__LOG, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
+			Log.Out(Logs::Detail, Logs::General, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
 		}
 	}
 	safe_delete(outapp);
 
-	_log(_GROUP__LOG, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
+	Log.Out(Logs::Detail, Logs::General, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
 
 	ServerPacket* pack = new ServerPacket(ServerOP_ChangeGroupLeader, sizeof(ServerGroupLeader_Struct));
 	ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;
