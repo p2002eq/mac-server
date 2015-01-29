@@ -346,10 +346,10 @@ public:
 
 	inline const char* GetLastName() const { return lastname; }
 
-	inline float ProximityX() const { return(proximity_x); }
-	inline float ProximityY() const { return(proximity_y); }
-	inline float ProximityZ() const { return(proximity_z); }
-	inline void ClearAllProximities() { entity_list.ProcessMove(this, FLT_MAX, FLT_MAX, FLT_MAX); proximity_x = FLT_MAX; proximity_y = FLT_MAX; proximity_z = FLT_MAX; }
+	inline float ProximityX() const { return m_Proximity.x; }
+	inline float ProximityY() const { return m_Proximity.y; }
+	inline float ProximityZ() const { return m_Proximity.z; }
+	inline void ClearAllProximities() { entity_list.ProcessMove(this, glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX)); m_Proximity = glm::vec3(FLT_MAX,FLT_MAX,FLT_MAX); }
 
 	/*
 			Begin client modifiers
@@ -436,8 +436,6 @@ public:
 	inline virtual int32 GetStringMod() const { return itembonuses.stringedMod; }
 	inline virtual int32 GetWindMod() const { return itembonuses.windMod; }
 
-	inline virtual int32 GetDelayDeath() const { return aabonuses.DelayDeath + spellbonuses.DelayDeath + itembonuses.DelayDeath + 11; }
-
 	float GetActSpellRange(uint16 spell_id, float range, bool IsBard = false);
 	int32 GetActSpellDamage(uint16 spell_id, int32 value, Mob* target = nullptr);
 	int32 GetActSpellHealing(uint16 spell_id, int32 value, Mob* target = nullptr);
@@ -514,7 +512,7 @@ public:
 	void GoToBind(uint8 bindnum = 0);
 	void GoToSafeCoords(uint16 zone_id, uint16 instance_id);
 	void Gate();
-	void SetBindPoint(int to_zone = -1, int to_instance = 0, float new_x = 0.0f, float new_y = 0.0f, float new_z = 0.0f);
+	void SetBindPoint(int to_zone = -1, int to_instance = 0, const glm::vec3& location = glm::vec3());
 	void SetStartZone(uint32 zoneid, float x = 0.0f, float y =0.0f, float z = 0.0f);
 	uint32 GetStartZone(void);
 	void MovePC(const char* zonename, float x, float y, float z, float heading, uint8 ignorerestrictions = 0, ZoneMode zm = ZoneSolicited);
@@ -657,6 +655,7 @@ public:
 #endif
 	uint32 GetEquipment(uint8 material_slot) const; // returns item id
 	uint32 GetEquipmentColor(uint8 material_slot) const;
+	virtual void UpdateEquipLightValue() { equip_light = m_inv.FindHighestLightValue(); }
 
 	inline bool AutoSplitEnabled() { return m_pp.autosplit != 0; }
 
@@ -850,7 +849,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	void DoItemEnterZone();
 	bool DoItemEnterZone(uint32 slot_x, uint32 slot_y); // behavior change: 'slot_y' is now [RANGE]_END and not [RANGE]_END + 1
 	void SummonAndRezzAllCorpses();
-	void SummonAllCorpses(float dest_x, float dest_y, float dest_z, float dest_heading);
+	void SummonAllCorpses(const glm::vec4& position);
 	void DepopAllCorpses();
 	void DepopPlayerCorpse(uint32 dbid);
 	void BuryPlayerCorpses();
@@ -971,11 +970,10 @@ protected:
 
 	Mob* bind_sight_target;
 
-	Map::Vertex aa_los_me;
-	Map::Vertex aa_los_them;
+	glm::vec4 m_AutoAttackPosition;
+	glm::vec3 m_AutoAttackTargetLocation;
 	Mob *aa_los_them_mob;
 	bool los_status;
-	float aa_los_me_heading;
 	bool los_status_facing;
 	QGlobalCache *qGlobals;
 
@@ -1102,9 +1100,8 @@ private:
 	void DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instance_id, float dest_x, float dest_y, float dest_z, float dest_h, int8 ignore_r);
 	void ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, uint8 ignorerestrictions, ZoneMode zm);
 	void ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, uint8 ignorerestrictions = 0, ZoneMode zm = ZoneSolicited);
-	float zonesummon_x;
-	float zonesummon_y;
-	float zonesummon_z;
+
+	glm::vec3 m_ZoneSummonLocation;
 	uint16 zonesummon_id;
 	uint8 zonesummon_ignorerestrictions;
 	ZoneMode zone_mode;
@@ -1136,10 +1133,7 @@ private:
 	Timer	qglobal_purge_timer;
 	Timer	TrackingTimer;
 
-	float proximity_x;
-	float proximity_y;
-	float proximity_z;
-
+    glm::vec3 m_Proximity;
 
 	void BulkSendInventoryItems();
 	void	BulkSendItems();

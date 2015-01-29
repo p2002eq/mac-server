@@ -56,7 +56,7 @@ struct NPCType
 	int32	npc_faction_id;
 	uint32	merchanttype;
 	uint32	trap_template;
-	uint8	light;		//not loaded from DB
+	uint8	light;
 	uint32	AC;
 	uint32	Mana;	//not loaded from DB
 	uint32	ATK;	//not loaded from DB

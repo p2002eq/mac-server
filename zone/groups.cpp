@@ -26,11 +26,6 @@
 extern EntityList entity_list;
 extern WorldServer worldserver;
 
-//
-// Xorlac: This will need proper synchronization to make it work correctly.
-//			Also, should investigate client ack for packet to ensure proper synch.
-//
-
 /*
 
 note about how groups work:
@@ -603,7 +598,7 @@ void Group::CastGroupSpell(Mob* caster, uint16 spell_id) {
 		}
 		else if(members[z] != nullptr)
 		{
-			distance = caster->DistNoRoot(*members[z]);
+			distance = DistanceSquared(caster->GetPosition(), members[z]->GetPosition());
 			if(distance <= range2 && distance >= min_range2) {
 				members[z]->CalcSpellPowerDistanceMod(spell_id, distance);
 				caster->SpellOnTarget(spell_id, members[z]);
@@ -643,7 +638,7 @@ void Group::GroupBardPulse(Mob* caster, uint16 spell_id) {
 		}
 		else if(members[z] != nullptr)
 		{
-			distance = caster->DistNoRoot(*members[z]);
+			distance = DistanceSquared(caster->GetPosition(), members[z]->GetPosition());
 			if(distance <= range2) 
 			{
 				members[z]->BardPulse(spell_id, caster);
@@ -986,7 +981,7 @@ void Group::HealGroup(uint32 heal_amt, Mob* caster, float range)
 	for(; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi]){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 				numMem += 1;
 			}
@@ -997,7 +992,7 @@ void Group::HealGroup(uint32 heal_amt, Mob* caster, float range)
 	for(gi = 0; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi]){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 				members[gi]->HealDamage(heal_amt, caster);
 				members[gi]->SendHPUpdate();
@@ -1024,7 +1019,7 @@ void Group::BalanceHP(int32 penalty, float range, Mob* caster, int32 limit)
 	for(; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi]){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 
 				dmgtaken_tmp = members[gi]->GetMaxHP() - members[gi]->GetHP();
@@ -1042,7 +1037,7 @@ void Group::BalanceHP(int32 penalty, float range, Mob* caster, int32 limit)
 	for(gi = 0; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi]){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 				if((members[gi]->GetMaxHP() - dmgtaken) < 1){ //this way the ability will never kill someone
 					members[gi]->SetHP(1);					//but it will come darn close
@@ -1073,7 +1068,7 @@ void Group::BalanceMana(int32 penalty, float range, Mob* caster, int32 limit)
 	for(; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi] && (members[gi]->GetMaxMana() > 0)){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 
 				manataken_tmp = members[gi]->GetMaxMana() - members[gi]->GetMana();
@@ -1095,7 +1090,7 @@ void Group::BalanceMana(int32 penalty, float range, Mob* caster, int32 limit)
 	for(gi = 0; gi < MAX_GROUP_MEMBERS; gi++)
 	{
 		if(members[gi]){
-			distance = caster->DistNoRoot(*members[gi]);
+			distance = DistanceSquared(caster->GetPosition(), members[gi]->GetPosition());
 			if(distance <= range2){
 				if((members[gi]->GetMaxMana() - manataken) < 1){
 					members[gi]->SetMana(1);
