@@ -1360,7 +1360,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					// Texture doesn't seem to be in our spell data :I
 					int8 texture = 0;
 					if(IsRacialIllusion(spell_id))
-						texture = caster->GetTarget()->GetTexture();
+						texture = GetTexture();
 					// Elemental Illusions (Earth is texture 0)
 					// Air
 					else if(spell_id == 597 || spell_id == 2789 || spell_id == 2790 || spell_id == 2791 || spell_id == 3854)
