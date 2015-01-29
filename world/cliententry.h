@@ -71,6 +71,7 @@ public:
 	inline uint32		GuildID() const	{ return pguild_id; }
 	inline void			SetGuild(uint32 guild_id) { pguild_id = guild_id; }
 	inline bool			LFG() const			{ return pLFG; }
+	inline bool			LD() const			{ return pLD; }
 	inline uint8			GetGM() const		{ return gm; }
 	inline void			SetGM(uint8 igm)	{ gm = igm; }
 	inline void			SetZone(uint32 zone) { pzone = zone; }
@@ -128,6 +129,7 @@ private:
 	uint8	pLFGToLevel;
 	bool	pLFGMatchFilter;
 	char	pLFGComments[64];
+	bool	pLD;
 
 	// Tell Queue -- really a vector :D
 	std::vector<ServerChannelMessage_Struct *> tell_queue;
