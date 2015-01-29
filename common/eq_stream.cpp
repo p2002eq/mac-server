@@ -1769,13 +1769,13 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	{
 		if (dwLastCACK == (unsigned int)pack->dwARQ - (unsigned int)1)
 		{
-			//_log(EQMAC__LOG, _L"Packet invalid seqstart? %i:%i"__L, pack->dwARQ, pack->dwSEQ);
+			Log.Out(Logs::Detail, Logs::EQMac, _L"Packet invalid seqstart? %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 			return true;
 		}
 		//      cout << "resetting SACK.dwGSQ1" << endl;
 		//      SACK.dwGSQ      = 0;            //Main sequence number SHORT#2
 		dwLastCACK      = pack->dwARQ-1;//0;
-		//_log(EQMAC__LOG, _L"Packet seqstart %i:%i"__L, pack->dwARQ, pack->dwSEQ);
+		Log.Out(Logs::Detail, Logs::EQMac, _L"Packet seqstart %i:%i"__L, pack->dwARQ, pack->dwSEQ);
 		//      CACK.dwGSQ = 0xFFFF; changed next if to else instead
 	}
 	// Agz: Moved this, was under packet resend before..., later changed to else statement...
@@ -1785,7 +1785,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		return true; //Invalid packet
 	}
 	CACK.dwGSQ = pack->dwSEQ; //Get current sequence #.
-	//_log(EQMAC__LOG, _L"Packet incoming arq%i:seq%i"__L, pack->dwARQ, pack->dwSEQ);
+	Log.Out(Logs::Detail, Logs::EQMac, _L"Packet incoming arq%i:seq%i"__L, pack->dwARQ, pack->dwSEQ);
 
 	/************ Process ack responds ************/
 	// Quagmire: Moved this to above "ack request" checking in case the packet is dropped in there

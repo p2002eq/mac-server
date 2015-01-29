@@ -490,21 +490,21 @@ void EntityList::MobProcess()
 		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
 		{
 			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-			//_log(EQMAC__LOG, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
+			Log.Out(Logs::General, Logs::EQMac, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
 		}
 		else if(numclients >= 1 && zone->idle)
 		{
 			if(zone->idle_timer.Enabled())
 				zone->idle_timer.Disable();
 			zone->idle = false;
-			//_log(EQMAC__LOG, "Entity Process: A player has entered the zone, leaving idle state.");
+			Log.Out(Logs::General, Logs::EQMac, "Entity Process: A player has entered the zone, leaving idle state.");
 		}
 
 		if(zone->idle_timer.Check())
 		{
 			zone->idle_timer.Disable();
 			zone->idle = true;
-			//_log(EQMAC__LOG, "Entity Process: Idle timer has expired, zone will now idle.");
+			Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, zone will now idle.");
 		}
 
 		if(zone->idle)
