@@ -271,7 +271,6 @@ XS(XS__unique_spawn)
 	if(items == 7)
 		heading = (float)SvNV(ST(6));
 
-
 	Mob *r =  quest_manager.unique_spawn(npc_type, grid, unused, glm::vec4(x, y, z, heading));
 	RETVAL = (r != nullptr) ? r->GetID() : 0;
 
@@ -2935,6 +2934,7 @@ EXTERN_C XS(boot_quest)
 		newXS(strcpy(buf, "signalwith"), XS__signalwith, file);
 		newXS(strcpy(buf, "setglobal"), XS__setglobal, file);
 		newXS(strcpy(buf, "targlobal"), XS__targlobal, file);
+		newXS(strcpy(buf, "debug"), XS__debug, file);
 		newXS(strcpy(buf, "debug"), XS__debug, file);
 		newXS(strcpy(buf, "delglobal"), XS__delglobal, file);
 		newXS(strcpy(buf, "ding"), XS__ding, file);

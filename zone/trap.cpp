@@ -144,7 +144,7 @@ void Trap::Trigger(Mob* trigger)
 			{
 				if ((tmp = database.GetNPCType(effectvalue)))
 				{
-					auto randomOffset = glm::vec4(zone->random.Int(-5, 5), zone->random.Int(-5, 5), zone->random.Int(-5, 5), zone->random.Int(0, 249));
+					auto randomOffset = glm::vec4(zone->random.Int(-5, 5),zone->random.Int(-5, 5),zone->random.Int(-5, 5), zone->random.Int(0, 249));
 					auto spawnPosition = randomOffset + glm::vec4(m_Position, 0.0f);
 					NPC* new_npc = new NPC(tmp, nullptr, spawnPosition, FlyMode3);
 					new_npc->AddLootTable();
@@ -259,11 +259,11 @@ Mob* EntityList::GetTrapTrigger(Trap* trap) {
 //todo: rewrite this to not need direct access to trap members.
 bool ZoneDatabase::LoadTraps(const char* zonename, int16 version) {
 
-    std::string query = StringFormat("SELECT id, x, y, z, effect, effectvalue, effectvalue2, skill, "
-                                    "maxzdiff, radius, chance, message, respawn_time, respawn_var, level "
-                                    "FROM traps WHERE zone='%s' AND version=%u", zonename, version);
-    auto results = QueryDatabase(query);
-    if (!results.Success()) {
+	std::string query = StringFormat("SELECT id, x, y, z, effect, effectvalue, effectvalue2, skill, "
+									"maxzdiff, radius, chance, message, respawn_time, respawn_var, level "
+									"FROM traps WHERE zone='%s' AND version=%u", zonename, version);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
 		return false;
 	}
 

@@ -40,7 +40,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		return;
 	}
 
-#if EQDEBUG >= 11
+#if EQDEBUG >= 5
 	Log.Out(Logs::General, Logs::None, "Zone request from %s", GetName());
 	DumpPacket(app);
 #endif

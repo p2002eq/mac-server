@@ -68,7 +68,7 @@ struct item_tick_struct {
     std::string qglobal;
 };
 
-// static uint32 gmsay_log_message_colors[Logs::MaxLogID] = {
+// static uint32 gmsay_log_message_colors[EQEmuLogSys::MaxLogID] = {
 // 	15, // "Status", - Yellow
 // 	15,	// "Normal", - Yellow
 // 	3,	// "Error", - Red

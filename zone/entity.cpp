@@ -71,7 +71,7 @@ Entity::~Entity()
 Client *Entity::CastToClient()
 {
 	if (this == 0x00) {
-		Log.Out(Logs::General, Logs::Error, "CastToClient error (not client)");
+		Log.Out(Logs::General, Logs::Error, "CastToClient error (nullptr)");
 		return 0;
 	}
 
@@ -79,6 +79,7 @@ Client *Entity::CastToClient()
 		Log.Out(Logs::General, Logs::Error, "CastToClient error (not client)"); 
 		return 0;
 	}
+
 
 	return static_cast<Client *>(this);
 }

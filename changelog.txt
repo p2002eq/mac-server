@@ -20,7 +20,7 @@ Uleat: Added equipment light source functionality to all mob derived classes (ma
 Akkadius: Massive Log System overhaul, see: http://wiki.eqemulator.org/p?Logging_System_Overhaul&frm=Main
 	
 == 01/21/2015 ==
-Uleat: Added `light` field to npctypes load query (all six clients tested positive for functionality.)
+Uleat: Added `light` field to npc_types load query (all six clients tested positive for functionality.)
 Note: This only affects 'innate' light. Equipment (other) light is still in-work.
 Optional SQL: utils/sql/git/optional/2015_01_21_NPC_Types_Light_Field_Primer.sql
 == 12/17/2014 ==
