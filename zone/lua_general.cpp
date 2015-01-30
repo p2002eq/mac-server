@@ -1049,6 +1049,10 @@ std::string lua_get_encounter() {
 	return quest_manager.GetEncounter();
 }
 
+void lua_debug(std::string message, int level)
+{
+	quest_manager.SendDebug(message, level);
+}
 
 void lua_map_opcodes() {
 	MapOpcodes();
@@ -1378,7 +1382,8 @@ luabind::scope lua_register_general() {
 		luabind::def("disable_recipe", &lua_disable_recipe),
 		luabind::def("clear_npctype_cache", &lua_clear_npctype_cache),
 		luabind::def("clock", &lua_clock),
-		luabind::def("create_npc", &lua_create_npc)
+		luabind::def("create_npc", &lua_create_npc),
+		luabind::def("debug", (void(*)(std::string, int))&lua_debug)
 	];
 }
 

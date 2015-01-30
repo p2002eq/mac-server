@@ -2546,6 +2546,25 @@ void QuestManager::CrossZoneSetEntityVariableByNPCTypeID(uint32 npctype_id, cons
 	safe_delete(pack);
 }
 
+void QuestManager::SendDebug(std::string message, int level)
+{
+	if (level > Logs::Detail)
+		return;
+
+	if (level == Logs::General)
+	{
+		Log.Out(Logs::General, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Moderate)
+	{
+		Log.Out(Logs::Moderate, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Detail)
+	{
+		Log.Out(Logs::Detail, Logs::QuestDebug, message);
+	}
+}
+
 bool QuestManager::EnableRecipe(uint32 recipe_id)
 {
 	bool success = false;
