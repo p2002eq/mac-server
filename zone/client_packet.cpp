@@ -4906,7 +4906,7 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 				gci.char_name.c_str(), gci.char_id, guild_mgr.GetGuildName(GuildID()), GuildID());
 		}
 
-		uint32 guid = client->GuildID();
+		uint32 guid = remover->GuildID();
 		if (!guild_mgr.SetGuild(char_id, GUILD_NONE, 0)) {
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_GuildRemove, sizeof(GuildRemove_Struct));
 			GuildRemove_Struct* gm = (GuildRemove_Struct*)outapp->pBuffer;
