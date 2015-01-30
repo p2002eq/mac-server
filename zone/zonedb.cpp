@@ -2292,14 +2292,14 @@ void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, flo
 		rquery = StringFormat(
 			"CREATE TABLE	`commands_log` (								"
 			"`entry_id`		int(11) NOT NULL AUTO_INCREMENT,				"
-			"`char_name`	varchar(30) DEFAULT NULL,						"
-			"`acct_name`	varchar(30) DEFAULT NULL,						"
+			"`char_name`	varchar(64) DEFAULT NULL,						"
+			"`acct_name`	varchar(64) DEFAULT NULL,						"
 			"`y`			float NOT NULL DEFAULT '0',						"
 			"`x`			float NOT NULL DEFAULT '0',						"
 			"`z`			float NOT NULL DEFAULT '0',						"
-			"`command`		varchar(30) DEFAULT NULL,						"
+			"`command`		varchar(100) DEFAULT NULL,						"
 			"`target_type`	varchar(30) DEFAULT NULL,						"
-			"`target`		varchar(30) DEFAULT NULL,						"
+			"`target`		varchar(64) DEFAULT NULL,						"
 			"`tar_y`		float NOT NULL DEFAULT '0',						"
 			"`tar_x`		float NOT NULL DEFAULT '0',						"
 			"`tar_z`		float NOT NULL DEFAULT '0',						"
@@ -3108,11 +3108,12 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 	auto results = QueryDatabase(query);
 	uint32 last_insert_id = results.LastInsertedID();
 
+	std::string corpse_items_query;
 	/* Dump Items from Inventory */
 	uint8 first_entry = 0;
 	for (unsigned int i = 0; i < dbpc->itemcount; i++) {
 		if (first_entry != 1){
-			query = StringFormat("REPLACE INTO `character_corpse_items` \n"
+			corpse_items_query = StringFormat("REPLACE INTO `character_corpse_items` \n"
 				" (corpse_id, equip_slot, item_id, charges, aug_1, aug_2, aug_3, aug_4, aug_5, attuned) \n"
 				" VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
 				last_insert_id,
@@ -3128,7 +3129,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 			first_entry = 1;
 		}
 		else{
-			query = query + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
+			corpse_items_query = corpse_items_query + StringFormat(", (%u, %u, %u, %u, %u, %u, %u, %u, %u, 0) \n",
 				last_insert_id,
 				dbpc->items[i].equip_slot,
 				dbpc->items[i].item_id,
@@ -3141,7 +3142,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 			);
 		}
 	}
-	auto sc_results = QueryDatabase(query);
+	auto sc_results = QueryDatabase(corpse_items_query);
 	return last_insert_id;
 }
 

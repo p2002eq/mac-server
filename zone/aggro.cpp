@@ -152,7 +152,7 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		return;
 	}
 
-	if(IsEngaged() && !GetSpecialAbility(PROX_AGGRO))
+	if(mob->IsEngaged() && (!mob->GetSpecialAbility(PROX_AGGRO) || (mob->GetSpecialAbility(PROX_AGGRO) && !towho->CombatRange(mob))))
 	{
 		towho->Message(0, "...%s is a new client and I am already in combat. ", mob->GetName());
 		return;
@@ -303,8 +303,9 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	}
 
 	// Don't aggro new clients if we are already engaged unless PROX_AGGRO is set
-	if(IsEngaged() && !GetSpecialAbility(PROX_AGGRO))
+	if(IsEngaged() && (!GetSpecialAbility(PROX_AGGRO) || (GetSpecialAbility(PROX_AGGRO) && !CombatRange(mob))))
 	{
+		Log.Out(Logs::Detail, Logs::Aggro, "%s is in combat, and does not have prox_aggro, or does and is out of combat range with %s", GetName(), mob->GetName()); 
 		return(false);
 	}
 
@@ -1374,7 +1375,7 @@ bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
 	{
 		// Assume this is a harmony/pacify spell
 		// If 'Lull' spell resists, do a second resist check with a charisma modifier AND regular resist checks. If resists agian you gain aggro.
-		resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster, true);
+		resist_check = spellTarget->ResistSpell(spells[spell_id].resisttype, spell_id, caster, 0, false, true);
 
 		if (resist_check == 100)
 			return true;

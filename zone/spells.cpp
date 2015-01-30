@@ -4374,7 +4374,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Minimum resist chance should be caclulated factoring in the RuleI(Spells, CharmBreakCheckChance)
 	if (CharmTick) {
 
-		int min_charmbreakchance = ((100/RuleI(Spells, CharmBreakCheckChance))/66 * 100)*2;
+		int min_charmbreakchance = ((100 / (float)RuleI(Spells, CharmBreakCheckChance)) / 66 * 100) * 2;
 
 		if (resist_chance < min_charmbreakchance)
 			resist_chance = min_charmbreakchance;
@@ -4384,7 +4384,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Minimum resist chance should be caclulated factoring in the RuleI(Spells, RootBreakCheckChance)
 	if (IsRoot) {
 
-		int min_rootbreakchance = ((100/RuleI(Spells, RootBreakCheckChance))/22 * 100)*2;
+		int min_rootbreakchance = ((100/(float)RuleI(Spells, RootBreakCheckChance))/22 * 100)*2;
 
 		if (resist_chance < min_rootbreakchance)
 			resist_chance = min_rootbreakchance;
