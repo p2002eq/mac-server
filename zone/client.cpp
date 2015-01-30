@@ -1210,6 +1210,7 @@ void Client::UpdateWho(uint8 remove) {
 	scl->tellsoff = tellsoff;
 	scl->guild_id = guild_id;
 	scl->LFG = this->LFG;
+	scl->LD = this->IsLD();
 
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
@@ -2660,6 +2661,7 @@ void Client::LinkDead()
 	SendAppearancePacket(AT_Linkdead, 1);
 	client_state = CLIENT_LINKDEAD;
 	AI_Start(CLIENT_LD_TIMEOUT);
+	UpdateWho();
 }
 
 uint8 Client::SlotConvert(uint8 slot,bool bracer){
