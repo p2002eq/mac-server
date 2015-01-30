@@ -465,9 +465,12 @@ public:
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inventory* inv);
 	bool	DeleteCharacter(char* name);
 
-	/*
-	* General Information Getting Queries
-	*/
+	/* General Information Queries */
+
+	bool	AddBannedIP(char* bannedIP, const char* notes); //Lieka Edit: Add IP address to the Banned_IPs table.
+	bool	AddGMIP(char* ip_address, char* name);
+	bool	CheckBannedIPs(const char* loginIP); //Lieka Edit: Check incoming connection against banned IP table.
+	bool	CheckGMIPs(const char* loginIP, uint32 account_id);
 	bool	CheckNameFilter(const char* name, bool surname = false);
 	bool	CheckUsedName(const char* name);
 	uint32	GetAccountIDByChar(const char* charname, uint32* oCharID = 0);
