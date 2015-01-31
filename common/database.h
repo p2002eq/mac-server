@@ -562,6 +562,7 @@ public:
 	bool DBSetup_PlayerCorpseBackup();
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
+	bool DBSetup_Rules();
 	bool GITInfo();
 
 	/*
