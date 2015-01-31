@@ -59,6 +59,7 @@ const char *QuestEventSubroutines[_LargestEventID] = {
 	"EVENT_CAST_ON",
 	"EVENT_AGGRO_SAY",
 	"EVENT_PLAYER_PICKUP",
+	"EVENT_ENVIRONMENTAL_DAMAGE",
 	"EVENT_PROXIMITY_SAY",
 	"EVENT_CAST",
 	"EVENT_CAST_BEGIN",
@@ -1249,6 +1250,15 @@ void PerlembParser::ExportEventVariables(std::string &package_name, QuestEventID
 			ExportVar(package_name.c_str(), "data", objid);
 			ExportVar(package_name.c_str(), "text", data);
 			ExportVar(package_name.c_str(), "langid", extradata);
+			break;
+		}
+
+
+		case EVENT_ENVIRONMENTAL_DAMAGE:{
+			Seperator sep(data);
+			ExportVar(package_name.c_str(), "env_damage", sep.arg[0]);
+			ExportVar(package_name.c_str(), "env_damage_type", sep.arg[1]);
+			ExportVar(package_name.c_str(), "env_final_damage", sep.arg[2]);
 			break;
 		}
 
