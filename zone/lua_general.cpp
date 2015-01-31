@@ -388,6 +388,10 @@ void lua_set_time(int hour, int min) {
 	quest_manager.settime(hour, min);
 }
 
+void lua_signal(int npc_id) {
+	quest_manager.signal(npc_id);
+}
+
 void lua_signal(int npc_id, int signal_id) {
 	quest_manager.signalwith(npc_id, signal_id);
 }
@@ -1279,6 +1283,7 @@ luabind::scope lua_register_general() {
 		luabind::def("set_guild", &lua_set_guild),
 		luabind::def("create_guild", &lua_create_guild),
 		luabind::def("set_time", &lua_set_time),
+		luabind::def("signal", (void(*)(int))&lua_signal),
 		luabind::def("signal", (void(*)(int,int))&lua_signal),
 		luabind::def("signal", (void(*)(int,int,int))&lua_signal),
 		luabind::def("set_global", &lua_set_global),
