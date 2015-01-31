@@ -3452,16 +3452,6 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 		return;
 	}
 	EnvDamage2_Struct* ed = (EnvDamage2_Struct*)app->pBuffer;
-	if (admin >= minStatusToAvoidFalling && GetGM()){
-		Message(CC_Red, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
-		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
-		return;
-	}
-	else if (GetInvul()) {
-		Message(CC_Red, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
-		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
-		return;
-	}
 
 	int damage = ed->damage;
 	if (ed->dmgtype == 252) {
@@ -3482,17 +3472,25 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	if (damage < 0)
 		damage = 31337;
 
-	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load)
+	if (admin >= minStatusToAvoidFalling && GetGM()){
+		Message(13, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
 		return;
-	else
-		SetHP(GetHP() - damage);
+	}
+	else if (GetInvul()) {
+		Message(13, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
+		return;
+	}
 
-	if (GetHP() <= 0)
-	{
-		mod_client_death_env();
-
+	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load){
+		return;
+	}
+	else{
+		SetHP(GetHP() - (damage * RuleR(Character, EnvironmentDamageMulipliter)));
 		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
 	}
+
 	SendHPUpdate();
 	return;
 }
