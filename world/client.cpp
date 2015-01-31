@@ -1012,6 +1012,8 @@ void Client::SendApproveWorld()
 
 bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 {
+	if (!RuleB(Character, CanCreate))
+		return false;
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
