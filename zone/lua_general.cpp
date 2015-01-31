@@ -1416,6 +1416,8 @@ luabind::scope lua_register_events() {
 			luabind::value("level_up", static_cast<int>(EVENT_LEVEL_UP)),
 			luabind::value("killed_merit ", static_cast<int>(EVENT_KILLED_MERIT )),
 			luabind::value("cast_on", static_cast<int>(EVENT_CAST_ON)),
+
+			luabind::value("environmental_damage", static_cast<int>(EVENT_ENVIRONMENTAL_DAMAGE)),
 			luabind::value("aggro_say", static_cast<int>(EVENT_AGGRO_SAY)),
 			luabind::value("player_pickup", static_cast<int>(EVENT_PLAYER_PICKUP)),
 			luabind::value("proximity_say", static_cast<int>(EVENT_PROXIMITY_SAY)),
