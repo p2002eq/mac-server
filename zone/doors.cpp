@@ -401,7 +401,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 void Doors::NPCOpen(NPC* sender, bool alt_mode)
 {
 	if(sender) {
-		if(GetTriggerType() == 255 || GetTriggerDoorID() > 0 || GetLockpick() != 0 || GetKeyItem() != 0 || opentype == 59 || opentype == 58 || !sender->IsNPC()) { // this object isnt triggered or door is locked - NPCs should not open locked doors!
+		if(GetTriggerType() == 255 || (GetTriggerDoorID() > 0 && IsDoorOpen()) || GetLockpick() != 0 || GetKeyItem() != 0 || opentype == 59 || opentype == 58 || !sender->IsNPC()) { // this object isnt triggered or door is locked - NPCs should not open locked doors!
 			return;
 		}
 
@@ -411,6 +411,7 @@ void Doors::NPCOpen(NPC* sender, bool alt_mode)
 		md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
 		entity_list.QueueCloseClients(sender,outapp,false,200);
 		safe_delete(outapp);
+
 
 		if(!alt_mode) { // original function
 			if(!isopen) {

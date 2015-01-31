@@ -518,7 +518,10 @@ void Client::AI_Start(uint32 iMoveDelay) {
 	SendAppearancePacket(AT_Anim, ANIM_FREEZE);	// this freezes the client
 	SendAppearancePacket(AT_Linkdead, 1); // Sending LD packet so *LD* appears by the player name when charmed/feared -Kasai
 	SetAttackTimer();
-	SetFeigned(false);
+	if(client_state != CLIENT_LINKDEAD)
+	{
+		SetFeigned(false);
+	}
 }
 
 void NPC::AI_Start(uint32 iMoveDelay) {

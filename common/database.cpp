@@ -2573,6 +2573,7 @@ bool Database::DBSetup() {
 	DBSetup_PlayerCorpseBackup();
 	DBSetup_CharacterSoulMarks();
 	DBSetup_MessageBoards();
+	DBSetup_Rules();
 	GITInfo();
 	return true;
 }
@@ -2975,4 +2976,35 @@ bool Database::DBSetup_MessageBoards() {
 		LogFile->write(EQEmuLog::Debug, "mb_messages table created.");
 	}
 	return true;
+}
+
+bool Database::DBSetup_Rules()
+{
+	// Placing ALL Rule creations in here, initial rule check as number in query and results, then increment by letter.
+	std::string check_query1 = StringFormat("SELECT * FROM `rule_values` WHERE `rule_name`='Character:CanCreate'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		std::string check_query1a = StringFormat("INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `Rule_value`, `notes`) VALUES ('1', 'Character:CanCreate', 'true', 'Toggles ability for players to create toons.')");
+		auto results1a = QueryDatabase(check_query1a);
+		if (!results1a.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error creating Character:CanCreate ruleset 1.");
+			return false;
+		}
+		std::string check_query1b = StringFormat("INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `Rule_value`, `notes`) VALUES ('2', 'Character:CanCreate', 'true', 'Toggles ability for players to create toons.')");
+		auto results1b = QueryDatabase(check_query1b);
+		if (!results1b.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error creating Character:CanCreate ruleset 2.");
+			return false;
+		}
+		std::string check_query1c = StringFormat("INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `Rule_value`, `notes`) VALUES ('11', 'Character:CanCreate', 'true', 'Toggles ability for players to create toons.')");
+		auto results1c = QueryDatabase(check_query1c);
+		if (!results1c.Success())
+		{
+			LogFile->write(EQEmuLog::Error, "Error creating Character:CanCreate ruleset 11.");
+			return false;
+		}
+	}
 }

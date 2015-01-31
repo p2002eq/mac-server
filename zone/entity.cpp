@@ -2947,8 +2947,11 @@ void EntityList::OpenDoorsNear(NPC *who)
 
 		float curdist = diff.x * diff.x + diff.y * diff.y;
 
-		if (diff.z * diff.z < 10 && curdist <= 100)
+		// Todo figure out what is up with door 2 in neriakb :( Possible map issue?
+		if (diff.z * diff.z < 10 && curdist <= 100 || (cdoor->GetDoorID() == 2 && zone->GetZoneID() == neriakb && curdist <= 244))
+		{
 			cdoor->NPCOpen(who);
+		}
 	}
 }
 
