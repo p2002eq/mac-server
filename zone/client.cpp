@@ -4347,7 +4347,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 {
 	bool repair = false;
 	bool change = false;
-	int32 faction_before_hit = *current_value - npc_value;
 
 	if (this->itembonuses.HeroicCHA)
 	{
@@ -4377,8 +4376,8 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 		repair = true;
 	}
 	else if ((m_pp.gm != 1) && (npc_value != 0) &&
-		((npc_value > 0 && faction_before_hit != this_faction_max) ||
-		((npc_value < 0 && faction_before_hit != this_faction_min))))
+		((npc_value > 0 && *current_value != this_faction_max) ||
+		((npc_value < 0 && *current_value != this_faction_min))))
 		change = true;
 
 	if (change || repair)
