@@ -79,6 +79,7 @@ namespace Logs{
 		EQMac,
 		QuestDebug,
 		Server_Client_Packet,
+		Client_Server_Packet_Unhandled,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -124,6 +125,7 @@ namespace Logs{
 		"EQMac",
 		"Quest Debug",
 		"Packet :: Server -> Client",
+		"Packet :: Client -> Server Unhandled",
 	};
 }
 
