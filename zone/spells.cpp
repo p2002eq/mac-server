@@ -3728,8 +3728,20 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 {
-	Log.Out(Logs::Detail, Logs::Spells, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i", spellid,IsRezzed(),rez_experience);
+	Log.Out(Logs::Detail, Logs::Spells, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i rez_timer enabled: %i", spellid,IsRezzed(),rez_experience, corpse_rez_timer.Enabled());
 
+	// Rez timer has expired, only GMs can rez at this point. (uses rezzable)
+	if(!IsRezzable())
+	{
+		if(Caster && Caster->IsClient() && !Caster->CastToClient()->GetGM())
+		{
+			Caster->Message_StringID(CC_Default, REZZ_ALREADY_PENDING);
+			Caster->Message_StringID(CC_Default, CORPSE_TOO_OLD);
+			return;
+		}
+	}
+
+	// Corpse has been rezzed, but timer is still active. Players can corpse gate, GMs can rez for XP. (uses is_rezzed)
 	if(IsRezzed())
 	{
 		if(Caster && Caster->IsClient())
@@ -3743,12 +3755,6 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 				rez_experience = 0;
 		}
 	}
-
-	/*if(!can_corpse_be_rezzed) {
-		if(Caster && Caster->IsClient())
-			Caster->Message_StringID(CC_Default, CORPSE_TOO_OLD);
-		return;
-	}*/
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_RezzRequest, sizeof(Resurrect_Struct));
 	Resurrect_Struct* rezz = (Resurrect_Struct*) outapp->pBuffer;

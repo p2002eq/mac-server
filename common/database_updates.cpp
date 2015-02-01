@@ -329,6 +329,7 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		" `wc_8` int(11) unsigned default '0',"
 		" `wc_9` int(11) unsigned default '0',"
 		" `killedby` tinyint(11) NOT NULL default '0',"
+		" `rezzable` tinyint(11) NOT NULL default '0',"
 		"PRIMARY KEY(`id`)		  "
 		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"
 		);
