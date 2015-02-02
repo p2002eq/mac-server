@@ -4102,14 +4102,6 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		return 0;
 	}
 
-	if(GetSpecialAbility(IMMUNE_CASTING_FROM_RANGE))
-	{
-		if(!caster->CombatRange(this))
-		{
-			return(0);
-		}
-	}
-
 	if(GetSpecialAbility(IMMUNE_MAGIC))
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to magic, so we fully resist the spell %d", spell_id);
@@ -4163,6 +4155,14 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Spell was unresistable");
 		return 100;
+	}
+
+	if (GetSpecialAbility(IMMUNE_CASTING_FROM_RANGE))
+	{
+		if (!caster->CombatRange(this))
+		{
+			return(0);
+		}
 	}
 
 	int target_resist;
@@ -4230,22 +4230,24 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	}
 
 	//Setup our base resist chance.
+	int caster_level = caster->GetLevel();
 	int resist_chance = 0;
 	int level_mod = 0;
 
 	//Adjust our resist chance based on level modifiers
-	int temp_level_diff = GetLevel() - caster->GetLevel();
+	int leveldiff = GetLevel() - caster_level;
+	int temp_level_diff = leveldiff;
 
 	//Physical Resists are calclated using their own formula derived from extensive parsing.
 	if (resist_type == RESIST_PHYSICAL) {
-		level_mod = ResistPhysical(temp_level_diff, caster->GetLevel());
+		level_mod = ResistPhysical(leveldiff, caster_level);
 	}
 
 	else {
 
 		if(IsNPC() && GetLevel() >= RuleI(Casting,ResistFalloff))
 		{
-			int a = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
+			int a = (RuleI(Casting,ResistFalloff)-1) - caster_level;
 			if(a > 0)
 			{
 				temp_level_diff = a;
@@ -4272,28 +4274,56 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			level_mod = -level_mod;
 		}
 
-		if(IsNPC() && (caster->GetLevel() - GetLevel()) < -20)
+		// set resist modifiers for targets well above caster's level
+		// this is a crude approximation of Sony's convoluted function
+		// it's far from precise but way better than nothing
+		if(IsNPC())
 		{
-			level_mod = 1000;
+			if (caster_level < 50)
+			{
+				// after a certain level above the caster, NPCs gain a significant resist bonus
+				// how many levels above the caster and how large the bonus is both increase with caster level
+				// It's not a flat 1000 resist mod as Sony's pseudocode stated.  Many parses were done to prove this
+				int bump_level = caster_level + 4 + caster_level / 6;
+				if (GetLevel() >= bump_level)
+					level_mod += 70 + caster_level * 6;
+			}
+			else
+			{
+				if (caster_level < 64)
+				{
+					if (leveldiff >= 13)
+						level_mod = caster_level * 5;
+				}
+				else
+				{
+					// note: if you use this for expacs beyond PoP, you may need to expand this
+					if (leveldiff >= 16)
+						level_mod = caster_level * 5;
+				}
+			}
 		}
 
 		//Even more level stuff this time dealing with damage spells
-		if(IsNPC() && IsDamageSpell(spell_id) && GetLevel() >= 17)
+		if(IsNPC() && IsDamageSpell(spell_id))
 		{
-			int level_diff;
-			if(GetLevel() >= RuleI(Casting,ResistFalloff))
+			if (GetLevel() >= RuleI(Casting, ResistFalloff))
 			{
-				level_diff = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
-				if(level_diff < 0)
+				temp_level_diff = (RuleI(Casting, ResistFalloff) - 1) - caster_level;
+				if (temp_level_diff < 0)
 				{
-					level_diff = 0;
+					temp_level_diff = 0;
 				}
 			}
 			else
 			{
-				level_diff = GetLevel() - caster->GetLevel();
+				temp_level_diff = GetLevel() - caster_level;
 			}
-			level_mod += (2 * level_diff);
+
+			if (temp_level_diff > 0 && GetLevel() >= 17)
+			{
+				level_mod += (2 * temp_level_diff);
+			}
 		}
 	}
 	
@@ -4333,7 +4363,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 			if(IsHarmonySpell(spell_id) || IsCharmSpell(spell_id))
 			{
-				int8 leveldiff = GetLevel() - caster->GetLevel();
+				// make yellows and reds resist more often
 				if(leveldiff >= 1)
 				{
 					resist_modifier += 20 * (leveldiff + leveldiff);
@@ -4349,13 +4379,13 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Regular resists are used when checking if mob will aggro off of a lull resist.
 	if(!CharismaCheck && IsHarmonySpell(spell_id))
 	{
-		int8 leveldiff = GetLevel() - caster->GetLevel();
+		// make yellows and reds resist more often
 		if(leveldiff >= 1)
 		{
 			resist_modifier += 20 * (leveldiff + leveldiff);
 		}
-		else
-			target_resist = 15;
+
+		target_resist = 15;				// first lull resist check uses 15 MR before mods, not target's actual MR
 
 		Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d  No Charisma check. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
 	}
@@ -4400,37 +4430,30 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
 	Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d roll %i > resist_chance %i", spell_id, roll, resist_chance);
-	if(roll > resist_chance)
+	if(roll >= resist_chance)
 	{
 		return 100;
 	}
 	else
 	{
-		//This is confusing but it's basically right
-		//It skews partial resists up over 100 more often than not
 		if(!IsPartialCapableSpell(spell_id))
 		{
 			return 0;
 		}
 		else
 		{
-			if(resist_chance < 1)
-			{
-				resist_chance = 1;
-			}
-
 			int partial_modifier = ((150 * (resist_chance - roll)) / resist_chance);
 
 			if(IsNPC())
 			{
-				if(GetLevel() > caster->GetLevel() && GetLevel() >= 17 && caster->GetLevel() <= 50)
+				if(GetLevel() > caster_level && GetLevel() >= 17 && caster_level <= 50)
 				{
 					partial_modifier += 5;
 				}
 
-				if(GetLevel() >= 30 && caster->GetLevel() < 50)
+				if(GetLevel() >= 30 && caster_level < 50)
 				{
-					partial_modifier += (caster->GetLevel() - 25);
+					partial_modifier += (caster_level - 25);
 				}
 
 				if(GetLevel() < 15)
@@ -4441,12 +4464,12 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 			if(caster->IsNPC())
 			{
-				if((GetLevel() - caster->GetLevel()) >= 20)
+				if((GetLevel() - caster_level) >= 20)
 				{
-					partial_modifier += (GetLevel() - caster->GetLevel()) * 1.5;
+					partial_modifier += (int)((GetLevel() - caster_level) * 1.5);
 				}
 			}
-
+			
 			if(partial_modifier <= 0)
 			{
 				return 100;

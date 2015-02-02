@@ -232,6 +232,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 					// take partial damage into account
 					dmg = (int32) (dmg * partial / 100);
+					if (dmg == 0)
+					{
+						dmg = -1;		// there are no zero damage non-full resists
+					}
 
 					//handles AAs and what not...
 					if(caster) {
@@ -771,20 +775,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					SendAppearancePacket(14, 100, true, true);
 				} else if(IsNPC()) {
 					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
-				}
-
-				bool bBreak = false;
-
-				// define spells with fixed duration
-				// charm spells with -1 in field 209 are all of fixed duration, so lets use that instead of spell_ids
-				if(spells[spell_id].powerful_flag == -1)
-					bBreak = true;
-
-				if (!bBreak)
-				{
-					int resistMod = static_cast<int>(partial) + (GetCHA()/25);
-					resistMod = resistMod > 100 ? 100 : resistMod;
-					buffs[buffslot].ticsremaining = resistMod * buffs[buffslot].ticsremaining / 100;
 				}
 
 				if(IsClient())
@@ -3794,6 +3784,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 			{
 				if(IsNPC())
 				{
+					InterruptSpell();
 					CastToNPC()->RestoreGuardSpotCharm();
 					SendAppearancePacket(AT_Pet, 0, true, true);
 					CastToNPC()->RestoreNPCFactionID();
