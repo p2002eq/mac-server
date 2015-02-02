@@ -845,12 +845,9 @@ EQRawApplicationPacket *EQOldPacket::MakeAppPacket() const {
 	EQRawApplicationPacket *res = new EQRawApplicationPacket(dwOpCode, pExtra, dwExtraSize);
 	return(res);
 }
-std::string DumpPacketToString(const EQApplicationPacket* app, bool iShowInfo){
+
+std::string DumpPacketToString(const EQApplicationPacket* app){
 	std::ostringstream out;
-	if (iShowInfo) {
-		out << "Dumping Applayer: 0x" << std::hex << std::setfill('0') << std::setw(4) << app->GetOpcode() << std::dec;
-		out << " size:" << app->size << std::endl;
-	}
 	out << DumpPacketHexToString(app->pBuffer, app->size);
 	return out.str();
 }
