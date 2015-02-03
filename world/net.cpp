@@ -85,7 +85,7 @@
 #include "ucs.h"
 #include "queryserv.h"
 #include "web_interface.h"
-#include "../zone/remote_call_subscribe.h"
+#include "../zone/remote_call.h"
 
 TimeoutManager timeout_manager;
 EQStreamFactory eqsf(WorldStream,9000);
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
 	RegisterExecutablePlatform(ExePlatformWorld);
 	Log.LoadLogSettingsDefaults();
 	set_exception_handler();
-//	register_remote_call_handlers();
+	register_remote_call_handlers();
 
 	/* Database Version Check */
 	uint32 Database_Version = CURRENT_BINARY_DATABASE_VERSION;

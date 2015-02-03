@@ -49,8 +49,8 @@
 #include "worldserver.h"
 #include "zone.h"
 #include "zone_config.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 extern EntityList entity_list;
 extern Zone* zone;
@@ -61,7 +61,7 @@ extern NetConnection net;
 extern PetitionList petition_list;
 extern uint32 numclients;
 extern volatile bool RunLoops;
-//extern std::map<std::string, RemoteCallHandler> remote_call_methods;
+extern std::map<std::string, RemoteCallHandler> remote_call_methods;
 
 WorldServer::WorldServer()
 : WorldConnection(EmuTCPConnection::packetModeZone)

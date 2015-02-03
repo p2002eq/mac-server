@@ -62,8 +62,8 @@
 #include "lua_parser.h"
 
 #include "questmgr.h"
-//#include "remote_call_subscribe.h"
-//#include "remote_call_subscribe.h"
+#include "remote_call.h"
+#include "remote_call_subscribe.h"
 
 #include <iostream>
 #include <string>
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 	Log.LoadLogSettingsDefaults();
 	set_exception_handler(); 
 	const char *zone_name; 
-	//register_remote_call_handlers();
+	register_remote_call_handlers();
 	QServ = new QueryServ;
 
 	if(argc == 3) {

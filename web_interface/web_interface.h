@@ -32,9 +32,9 @@
 #include "../common/shareddb.h"
 #include "worldserver.h"
 #include "../dependencies/libwebsockets/lib/libwebsockets.h"
-#include "../common/rapidjson/document.h"
-#include "../common/rapidjson/writer.h"
-#include "../common/rapidjson/stringbuffer.h"
+#include "../common/rapidjson/rapidjson/document.h"
+#include "../common/rapidjson/rapidjson/writer.h"
+#include "../common/rapidjson/rapidjson/stringbuffer.h"
 #include <signal.h>
 #include <list>
 #include <map>

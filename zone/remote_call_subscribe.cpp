@@ -1,4 +1,5 @@
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/md5.h"
 #include "../common/emu_tcp_connection.h"
 #include "../common/packet_functions.h"

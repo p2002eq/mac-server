@@ -2450,12 +2450,12 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
-		params.push_back(std::to_string((double)ppu->x_pos));
-		params.push_back(std::to_string((double)ppu->y_pos));
-		params.push_back(std::to_string((double)ppu->z_pos));
-		params.push_back(std::to_string((double)m_Position.w));
-		params.push_back(std::to_string((double)GetClass()));
-		params.push_back(std::to_string((double)GetRace())); 
+		params.push_back(std::to_string(ppu->x_pos));
+		params.push_back(std::to_string(ppu->y_pos));
+		params.push_back(std::to_string(ppu->z_pos));
+		params.push_back(std::to_string(m_Position.w));
+		params.push_back(std::to_string(GetClass()));
+		params.push_back(std::to_string(GetRace()));
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
 	}
 
