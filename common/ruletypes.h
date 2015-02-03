@@ -48,6 +48,7 @@ RULE_INT ( Character, ManaRegenMultiplier, 100)
 RULE_INT ( Character, EnduranceRegenMultiplier, 100)
 RULE_INT ( Character, ConsumptionValue, 6000) //How "full" each consumption of food or drink will make the player. EQEmu default is 6000.
 RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
+RULE_INT ( Character, FamishedLevel, 120) // When famished reaches this value, we lose endurance and stop regen on HP/mana
 RULE_BOOL( Character, HealOnLevel, false)
 RULE_BOOL( Character, ManaOnLevel, false)
 RULE_BOOL( Character, FeignKillsPet, false)

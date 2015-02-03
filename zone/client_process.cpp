@@ -1739,7 +1739,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 }
 
 void Client::DoHPRegen() {
-	if(m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500))
+	if(!GetGM() && GetEndurance() == 0)
 		return;
 
 	SetHP(GetHP() + CalcHPRegen() + RestRegenHP);
@@ -1747,7 +1747,7 @@ void Client::DoHPRegen() {
 }
 
 void Client::DoManaRegen() {
-	if (GetMana() >= max_mana || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
+	if (GetMana() >= max_mana || (!GetGM() && GetEndurance() == 0))
 		return;
 
 	SetMana(GetMana() + CalcManaRegen() + RestRegenMana);
@@ -1832,19 +1832,19 @@ void Client::DoStaminaUpdate() {
 
 		if(m_pp.hunger_level < 1 || m_pp.thirst_level < 1)
 			m_pp.famished++; //We're famished.
-		else if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000 && m_pp.famished > 0)
+		else if(!Hungry() && !Thirsty() && m_pp.famished > 0)
 			m_pp.famished--; //We were famished but are recovering. 
 
-		if(m_pp.famished >= 120)
+		if(m_pp.famished >= RuleI(Character, FamishedLevel))
 		{
-			if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000)
-				m_pp.famished = 60; //We are above the client's auto-consume threshold. Reduce us back down to stage 2.
+			if(!Hungry() && !Thirsty())
+				m_pp.famished = RuleI(Character, FamishedLevel)/2; //We are above the client's auto-consume threshold. Reduce us back down to stage 2.
 
-			else if(m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)
+			else if(m_pp.hunger_level < 1500 || m_pp.thirst_level < 1500)
 			{
 				if(GetEndurance() > 0)
 				{
-					//We are famished and are slowly losing endurance. (HP, mana, and end regen have all stopped in their respective methods.)
+					//We are famished and are slowly losing endurance. (End regen has stopped, and HP/mana will stop once end reaches 0.)
 					//Rate of End loss is 10 minutes regardless of race. Adjust SetEndurance() to compensate for different timers.
 					float endper = 0.0f;
 					if(stamina_timer.GetDuration() == 45000)
@@ -1858,7 +1858,7 @@ void Client::DoStaminaUpdate() {
 			}
 		}
 
-		//Message(CC_Yellow, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
+		Log.Out(Logs::Detail, Logs::None, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
 
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
@@ -1876,7 +1876,9 @@ void Client::DoStaminaUpdate() {
 
 void Client::DoEnduranceRegen()
 {
-	if(GetEndurance() >= GetMaxEndurance() || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
+	if(GetEndurance() >= GetMaxEndurance() || 
+		(!GetGM() && m_pp.famished >= RuleI(Character, FamishedLevel) && 
+		(m_pp.hunger_level < 1500 || m_pp.thirst_level < 1500)))
 		return;
 
 	SetEndurance(GetEndurance() + CalcEnduranceRegen() + RestRegenEndurance);

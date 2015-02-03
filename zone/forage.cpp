@@ -381,7 +381,25 @@ void Client::ForageItem(bool guarantee) {
 		uint32 stringid = FORAGE_NOEAT;
 
 		// If we're hungry or thirsty, we want to prefer food or water.
-		if(m_pp.hunger_level < 2000)
+		if(Hungry() && Thirsty())
+		{
+			// 50/50 chance of food or water.
+			if(zone->random.Roll(50))
+			{
+				if(GetZoneID() == poknowledge)
+					foragedfood = 13047; //PoK only has roots from the above array.
+				else
+				{
+					uint8 foodindex = zone->random.Int(0, 4);
+					foragedfood = food_ids[foodindex];
+				}
+			}
+			else
+				foragedfood = 13044;
+
+		}
+		// We only need food.
+		else if(Hungry())
 		{
 			if(GetZoneID() == poknowledge)
 				foragedfood = 13047; //PoK only has roots from the above array.
@@ -391,7 +409,8 @@ void Client::ForageItem(bool guarantee) {
 				foragedfood = food_ids[foodindex];
 			}
 		}
-		else if(m_pp.thirst_level < 2000)
+		// We only need water.
+		else if(Thirsty())
 		{
 			foragedfood = 13044;
 		}
