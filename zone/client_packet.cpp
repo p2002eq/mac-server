@@ -291,10 +291,14 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	}
 
 	if (Log.log_settings[Logs::Client_Server_Packet].is_category_enabled == 1)
-		Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size());
+		if(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth  && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate){
+			Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size());
+		}
 	
 	if (Log.log_settings[Logs::Client_Server_Packet_With_Dump].is_category_enabled == 1)
-		Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size(), DumpPacketToString(app).c_str());
+		if(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth  && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate){
+			Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size(), DumpPacketToString(app).c_str());
+		}
 	
 	EmuOpcode opcode = app->GetOpcode();
 

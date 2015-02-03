@@ -851,3 +851,9 @@ std::string DumpPacketToString(const EQApplicationPacket* app){
 	out << DumpPacketHexToString(app->pBuffer, app->size);
 	return out.str();
 }
+
+std::string DumpProtocolPacketToString(const EQProtocolPacket *app){
+	std::ostringstream out;
+	out << DumpPacketHexToString(app->pBuffer, app->size);
+	return out.str();
+}

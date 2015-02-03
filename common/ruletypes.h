@@ -500,6 +500,7 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
+RULE_BOOL ( EventLog, SkipCommonPacketLogging, true ) // Doesn't log OP_MobHealth or OP_ClientUpdate
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( AA )

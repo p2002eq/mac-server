@@ -246,5 +246,6 @@ protected:
 
 extern void DumpPacket(const EQApplicationPacket* app, bool iShowInfo = false);
 extern std::string DumpPacketToString(const EQApplicationPacket* app);
+extern std::string DumpProtocolPacketToString(const EQProtocolPacket* app);
 
 #endif
