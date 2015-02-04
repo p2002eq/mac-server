@@ -997,7 +997,7 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 	OldGuildsListEntry_Struct* gle = new struct OldGuildsListEntry_Struct;
 	memset(gle,0,sizeof(OldGuildsListEntry_Struct));
 
-	int16 c = 1;
+	int16 c = 0;
 	for (int16 r = 0; r < 512; r++) {
 		std::string tmp;
 		if(GetGuildNameByID(c,tmp))
@@ -1010,7 +1010,7 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 			gle->unknown3 = 0xFFFFFFFF;
 
 			Log.Out(Logs::Detail, Logs::Guilds, "Added Guild: %i (%s)", gle->guildID, gle->name);
-			memcpy(&gl->Guilds[c-1],gle,sizeof(OldGuildsListEntry_Struct));
+			memcpy(&gl->Guilds[r],gle,sizeof(OldGuildsListEntry_Struct));
 			size += sizeof(OldGuildsListEntry_Struct);
 			c++; //hehe
 		}

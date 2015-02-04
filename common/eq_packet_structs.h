@@ -1369,7 +1369,7 @@ struct GuildsListEntry_Struct {
 	char name[64];
 };
 
-static const uint32 MAX_NUMBER_GUILDS = 1500;
+static const uint32 MAX_NUMBER_GUILDS = 512;
 struct GuildsList_Struct {
 	uint8 head[64]; // First on guild list seems to be empty...
 	GuildsListEntry_Struct Guilds[MAX_NUMBER_GUILDS];
@@ -1390,8 +1390,8 @@ struct OldGuildsListEntry_Struct
 
 struct OldGuildPlayerEntry_Struct 
 {
-/*0000*/	uint32 guildID;				// Comment: empty = 0xFFFFFFFF
-/*0004*/	uint32 ID;
+/*0000*/	uint32 ID;				// Comment: empty = 0xFFFFFFFF
+/*0004*/	uint32 guildID;
 /*0008*/	char name[64];				// Comment: 
 /*0072*/	uint32 unknown1;			// Comment: = 0xFF
 /*0076*/	uint16 exists;				// Comment: = 1 if exists, 0 on empty

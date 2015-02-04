@@ -111,7 +111,7 @@ void Client::SendPlayerGuild() {
 	gle->unknown1=0xFFFFFFFF;
 	gle->unknown3=0xFFFFFFFF;
 
-	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildAdded of length %d", outapp->size);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildAdded of length %d guildID %d ID %d", outapp->size, gle->guildID, gle->ID);
 
 	FastQueuePacket(&outapp);
 }
