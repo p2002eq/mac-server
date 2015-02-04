@@ -354,12 +354,15 @@ uint32 BaseGuildManager::CreateGuild(const char* name, uint32 leader_char_id) {
 }
 
 bool BaseGuildManager::DeleteGuild(uint32 guild_id) {
-	if(!DBDeleteGuild(guild_id))
+	/*if(!DBDeleteGuild(guild_id))
 		return(false);
 
 	SendGuildDelete(guild_id);
 
-	return(true);
+	return(true);*/
+
+	// cavedude todo: Fix guild deletion!!!
+	return(false);
 }
 
 bool BaseGuildManager::RenameGuild(uint32 guild_id, const char* name) {
