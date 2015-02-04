@@ -1012,19 +1012,6 @@ bool Mob::CheckRegion(Mob* other) {
 }
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
-
-	glm::vec3 myloc;
-	glm::vec3 oloc;
-
-	myloc.x = GetX();
-	myloc.y = GetY();
-	myloc.z = GetZ();
-	oloc.x = posX;
-	oloc.y = posY;
-	oloc.z = posZ;
-	float mybestz = myloc.z;
-	float obestz = oloc.z;
-
 	if(zone->zonemap == nullptr) {
 		//not sure what the best return is on error
 		//should make this a database variable, but im lazy today
@@ -1034,17 +1021,19 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 		return(false);
 #endif
 	}
-	else
-	{
-		mybestz = zone->zonemap->FindBestZ(myloc, nullptr);
-		obestz = zone->zonemap->FindBestZ(oloc, nullptr);
-	}
+
+	glm::vec3 myloc;
+	glm::vec3 oloc;
 
 #define LOS_DEFAULT_HEIGHT 6.0f
 
+	myloc.x = GetX();
+	myloc.y = GetY();
+	myloc.z = GetZ() + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
 
-	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
-	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	oloc.x = posX;
+	oloc.y = posY;
+	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
 #if LOSDEBUG>=5
 	Log.Out(Logs::General, Logs::None, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
