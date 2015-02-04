@@ -143,7 +143,7 @@ bool IsDamageSpell(uint16 spellid)
 	for (int o = 0; o < EFFECT_COUNT; o++) {
 		uint32 tid = spells[spellid].effectid[o];
 		if ((tid == SE_CurrentHPOnce || tid == SE_CurrentHP) &&
-				spells[spellid].targettype != ST_Tap && spells[spellid].buffduration < 1 &&
+				spells[spellid].buffduration < 1 &&
 				spells[spellid].base[o] < 0)
 			return true;
 	}
@@ -419,10 +419,21 @@ bool IsPartialCapableSpell(uint16 spell_id)
 	if (spells[spell_id].no_partial_resist)
 		return false;
 	
-	if (IsPureNukeSpell(spell_id))
-		return true;
+	// return false if any spell includes an effect that isn't direct damage or dispel
+	// dragon AoEs have dispels but are partially resistable
+	for (int o = 0; o < EFFECT_COUNT; o++)
+	{
+		uint16 tid = spells[spell_id].effectid[o];
 
-	return false;
+		if (IsBlankSpellEffect(spell_id, o) || tid == SE_CancelMagic)
+			continue;
+
+		if ((tid != SE_CurrentHPOnce && tid != SE_CurrentHP )
+			|| spells[spell_id].buffduration > 0 || spells[spell_id].base[o] >= 0)
+			return false;
+	}
+
+	return true;
 }
 
 bool IsResistableSpell(uint16 spell_id)

@@ -3473,6 +3473,15 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 
 	//send damage packet...
 	if(!iBuffTic) { //buff ticks do not send damage, instead they just call SendHPUpdate(), which is done below
+
+		// hundreds of spells have the skill id set to tiger claw in the spell data
+		// without this, lots of stuff will 'strike' instead of give a proper spell damage message
+		uint8 skill_id = skill_used;
+		if (skill_used == SkillTigerClaw && spell_id > 0)
+		{
+			skill_id = SkillEvocation;
+		}
+
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
 		CombatDamage_Struct* a = (CombatDamage_Struct*)outapp->pBuffer;
 		a->target = GetID();
@@ -3482,10 +3491,10 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			a->source = 0;
 		else
 			a->source = attacker->GetID();
-		a->type = SkillDamageTypes[skill_used]; // was 0x1c
+		a->type = SkillDamageTypes[skill_id]; // was 0x1c
 		a->damage = damage;
 		a->spellid = spell_id;
-
+		
 		//Note: if players can become pets, they will not receive damage messages of their own
 		//this was done to simplify the code here (since we can only effectively skip one mob on queue)
 		eqFilterType filter;
