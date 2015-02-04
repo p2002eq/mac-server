@@ -1203,7 +1203,6 @@ bool IsRacialIllusion(uint16 spell_id)
 			spells[spell_id].base[i] == GNOME || spells[spell_id].base[i] == IKSAR || 
 			spells[spell_id].base[i] == VAHSHIR))
 			return true;
-		else
-			return false;
 	}
+	return false;
 }
