@@ -73,7 +73,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 	bool checked_los = false;	//we do not check LOS until we are absolutely sure we need to, and we only do it once.
 
-	float manaR = GetManaRatio();
 	for (int i = static_cast<int>(AIspells.size()) - 1; i >= 0; i--) {
 		if (AIspells[i].spellid <= 0 || AIspells[i].spellid >= SPDAT_RECORDS) {
 			// this is both to quit early to save cpu and to avoid casting bad spells
@@ -86,13 +85,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 			// recastdelay of 0 is recast time + variance. -1 recast time only. -2 is no recast time or variance (chain casting)
 			// All else is specified recast_delay + variance if the rule is enabled.
 			int32 mana_cost = AIspells[i].manacost;
-			int32 recast_delay = AIspells[i].recast_delay;
-			int32 cast_variance = 0;
-			if(RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
-			{
-				if(recast_delay >= 0)
-					cast_variance = zone->random.Int(0, 4) * 1000;
-			}
 
 			if (mana_cost == -1)
 				mana_cost = spells[AIspells[i].spellid].mana;
@@ -106,7 +98,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + cast_variance) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast) <= Timer::GetCurrentTime()
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -117,7 +109,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 					<< ", cancast[" << AIspells[i].time_cancast << "]<=" << Timer::GetCurrentTime()
 					<< ", type=" << AIspells[i].type << std::endl;
 #endif
-
+				
 				switch (AIspells[i].type) {
 					case SpellType_Heal: {
 						if (
@@ -196,7 +188,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-						if (debuffee && manaR >= 10 && zone->random.Roll(70) &&
+						if (debuffee && zone->random.Roll(70) &&
 								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
 							if (!checked_los) {
 								if (!CheckLosFN(debuffee))
@@ -209,13 +201,13 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 					case SpellType_Nuke: {
-						if (
-							manaR >= 10 && zone->random.Roll(70)
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
+						if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						{
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if (!CheckLosFN(tar))
+								{
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+								}
 								checked_los = true;
 							}
 							AIDoSpellCast(i, tar, mana_cost);
@@ -356,7 +348,6 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 		SendPosition();
 		SetMoving(false);
 	}
-
 	return CastSpell(AIspells[i].spellid, tar->GetID(), 1, AIspells[i].manacost == -2 ? 0 : -1, mana_cost, oDontDoAgainBefore, -1, -1, 0, 0, &(AIspells[i].resist_adjust));
 }
 
@@ -1934,28 +1925,50 @@ void Mob::AI_Event_NoLongerEngaged() {
 }
 
 //this gets called from InterruptSpell() for failure or SpellFinished() for success
-void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
-	if (slot == 1) {
+void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot)
+{
+	if (slot == 1)
+	{
 		uint32 recovery_time = 0;
-		if (iCastSucceeded) {
-			if (casting_spell_AIindex < AIspells.size()) {
-					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
-					if (AIspells[casting_spell_AIindex].recast_delay > 0)
-					{
-						if (AIspells[casting_spell_AIindex].recast_delay < 10000)
-							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
-					}
-					else if(AIspells[casting_spell_AIindex].recast_delay == -2)
-						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
-					else
-						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+		if (iCastSucceeded)
+		{
+			if (casting_spell_AIindex < AIspells.size())
+			{
+				int32 recast_delay = AIspells[casting_spell_AIindex].recast_delay;
+				int32 cast_variance = 0;
+
+				if (RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
+				{
+					if (recast_delay >= 0)
+						cast_variance = zone->random.Int(0, 4) * 1000;
+				}
+
+				recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
+
+				if (recast_delay > 0)
+				{
+					if (recast_delay < 10000)
+						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (recast_delay * 1000) + cast_variance;
+				}
+				else if (recast_delay == -1)
+					// editor default; no variance added
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+
+				else if (recast_delay == -2)
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
+
+				else
+					// 0; add variance
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time + cast_variance;
 			}
 			if (recovery_time < AIautocastspell_timer->GetSetAtTrigger())
 				recovery_time = AIautocastspell_timer->GetSetAtTrigger();
 			AIautocastspell_timer->Start(recovery_time, false);
 		}
 		else
+		{
 			AIautocastspell_timer->Start(AISpellVar.fail_recast, false);
+		}
 		casting_spell_AIindex = AIspells.size();
 	}
 }
