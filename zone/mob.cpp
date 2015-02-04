@@ -3667,14 +3667,25 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 {
 	// Use this method for stun/combat pushback.
 
-	float new_x = GetX();
-	float new_y = GetY();
+	glm::vec3 loc;
+	loc.x = GetX();
+	loc.y = GetY();
+	loc.z = GetZ();
+	float new_x = loc.x;
+	float new_y = loc.y;
+	float best_z = loc.z;
+
+	if(zone->zonemap != nullptr) 
+	{
+		best_z = zone->zonemap->FindBestZ(loc, nullptr);
+	}
 
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
-	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, GetZ()))
+	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
 	{
 		m_Position.x = new_x;
 		m_Position.y = new_y;
+		m_Position.z = best_z;
 
 		if(IsNPC())
 		{
@@ -3690,7 +3701,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 			spu->spawn_id	= GetID();
 			spu->x_pos		= new_x;
 			spu->y_pos		= new_y;
-			spu->z_pos		= GetZ();
+			spu->z_pos		= best_z;
 			spu->delta_x	= NewFloatToEQ13(0);
 			spu->delta_y	= NewFloatToEQ13(0);
 			spu->delta_z	= NewFloatToEQ13(0);
