@@ -1137,7 +1137,7 @@ bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Str
 
 bool ZoneDatabase::SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_languages` (id, lang_id, value) VALUES (%u, %u, %u)", character_id, lang_id, value); QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
 	return true;
 }
 
@@ -1149,7 +1149,7 @@ bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, uint32 zone_id, u
 	/* Save Home Bind Point */
 	std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
 		" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)", character_id, zone_id, instance_id, position.x, position.y, position.z, position.w, is_home);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u position: %s ishome: %u", character_id, zone_id, instance_id, to_string(position).c_str(), is_home);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u position: %s ishome: %u", character_id, zone_id, instance_id, to_string(position).c_str(), is_home);
 	auto results = QueryDatabase(query);
 	if (!results.RowsAffected()) {
 	}
@@ -1162,20 +1162,20 @@ bool ZoneDatabase::SaveCharacterMaterialColor(uint32 character_id, uint32 slot_i
 	uint8 blue = (color & 0x000000FF);
 
 	std::string query = StringFormat("REPLACE INTO `character_material` (id, slot, red, green, blue, color, use_tint) VALUES (%u, %u, %u, %u, %u, %u, 255)", character_id, slot_id, red, green, blue, color); auto results = QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterMaterialColor for character ID: %i, slot_id: %u color: %u done", character_id, slot_id, color);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterMaterialColor for character ID: %i, slot_id: %u color: %u done", character_id, slot_id, color);
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_skills` (id, skill_id, value) VALUES (%u, %u, %u)", character_id, skill_id, value); auto results = QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id){
 	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
 	return true;
 }
 
@@ -1452,7 +1452,7 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		m_epp->expended_aa
 	);
 	auto results = database.QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
+	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
 	return true;
 }
 
@@ -1488,7 +1488,7 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->silver_cursor,
 		pp->copper_cursor);
 	auto results = database.QueryDatabase(query);
-	Log.Out(Logs::General, Logs::None, "Saving Currency for character ID: %i, done", character_id);
+	Log.Out(Logs::General, Logs::Character, "Saving Currency for character ID: %i, done", character_id);
 	return true;
 }
 
@@ -1497,7 +1497,7 @@ bool ZoneDatabase::SaveCharacterAA(uint32 character_id, uint32 aa_id, uint32 cur
 		" VALUES (%u, %u, %u)",
 		character_id, aa_id, current_level);
 	auto results = QueryDatabase(rquery);
-	Log.Out(Logs::General, Logs::None, "Saving AA for character ID: %u, aa_id: %u current_level: %u", character_id, aa_id, current_level);
+	Log.Out(Logs::General, Logs::Character, "Saving AA for character ID: %u, aa_id: %u current_level: %u", character_id, aa_id, current_level);
 	return true;
 }
 

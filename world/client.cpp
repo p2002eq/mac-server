@@ -260,7 +260,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		expansion = database.GetExpansion(cle->AccountID());
 
 		if (!pZoning && ClientVersionBit != 0)
-			SendGuildList();
+			//SendGuildList();
 			SendLogServer();
 			SendApproveWorld();
 			SendEnterWorld(cle->name());
@@ -687,7 +687,7 @@ bool Client::Process() {
 		ZoneUnavail();
 	}
 	if(connect.Check()){
-		SendGuildList();// Send OPCode: OP_GuildsList
+		//SendGuildList();// Send OPCode: OP_GuildsList
 		SendApproveWorld();
 		connect.Disable();
 	}

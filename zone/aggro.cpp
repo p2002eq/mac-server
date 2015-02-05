@@ -764,7 +764,7 @@ type', in which case, the answer is yes.
 	}
 	while( reverse++ == 0 );
 
-	Log.Out(Logs::General, Logs::None, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Combat, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -900,7 +900,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	}
 	while( reverse++ == 0 );
 
-	Log.Out(Logs::General, Logs::None, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Spells, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -1003,9 +1003,11 @@ bool Mob::CheckRegion(Mob* other) {
 	ThisRegionType = zone->watermap->ReturnRegionType(position);
 	OtherRegionType = zone->watermap->ReturnRegionType(other_position);
 
-	//_log(SPELLS__CASTING, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
+	Log.Out(Logs::Detail, Logs::Maps, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
 
-	if(ThisRegionType == OtherRegionType)
+	if(ThisRegionType == OtherRegionType || 
+		(ThisRegionType == RegionTypeWater && OtherRegionType == RegionTypeVWater) ||
+		(OtherRegionType == RegionTypeWater && ThisRegionType == RegionTypeVWater))
 		return true;
 
 	return false;
@@ -1035,9 +1037,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 	oloc.y = posY;
 	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
-#if LOSDEBUG>=5
-	Log.Out(Logs::General, Logs::None, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
-#endif
+	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);
 }
 

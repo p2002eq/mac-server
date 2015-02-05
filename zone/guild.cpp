@@ -87,31 +87,30 @@ void Client::SendGuildList() {
 }
 
 void Client::SendPlayerGuild() {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildAdded);
-	OldGuildPlayerEntry_Struct* gle=(OldGuildPlayerEntry_Struct*)outapp->pBuffer;
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildAdded, sizeof(OldGuildUpdate_Struct));
+	OldGuildUpdate_Struct* gu=(OldGuildUpdate_Struct*)outapp->pBuffer;
 
 	int16 guid = this->GuildID();
 	std::string tmp;
 		
 	if(guild_mgr.GetGuildNameByID(guid,tmp))
 	{
-		const char * ctmp = tmp.c_str();
-		memcpy(gle->name,ctmp,64);
-		gle->guildID=guid;
-		gle->ID=guid;
-		gle->exists=1;
+		Log.Out(Logs::Detail, Logs::Guilds, "SendPlayerGuild(): GUID: %d Name: %s", guid, tmp.c_str());
+		gu->guildID=guid;
+		memcpy(gu->entry.name,tmp.c_str(),64);
+		gu->entry.guildID=guid;
+		gu->entry.exists=1;
 	}
 	else
 	{
-		gle->guildID=0xFFFFFFFF;
-		gle->ID=0xFFFFFFFF;
-		gle->exists=0;
+		gu->entry.guildID=0xFFFFFFFF;
+		gu->entry.exists=0;
 	}
 
-	gle->unknown1=0xFFFFFFFF;
-	gle->unknown3=0xFFFFFFFF;
+	gu->entry.unknown1=0xFFFFFFFF;
+	gu->entry.unknown3=0xFFFFFFFF;
 
-	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildAdded of length %d guildID %d ID %d", outapp->size, gle->guildID, gle->ID);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildAdded of length %d guildID %d", outapp->size, gu->entry.guildID);
 
 	FastQueuePacket(&outapp);
 }

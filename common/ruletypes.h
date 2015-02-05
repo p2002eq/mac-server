@@ -107,6 +107,7 @@ RULE_INT ( Guild, PlayerCreationLimit, 1)		// Only allow use of the UF+ window i
 RULE_INT ( Guild, PlayerCreationRequiredStatus, 0)	// Required admin status.
 RULE_INT ( Guild, PlayerCreationRequiredLevel, 0)	// Required Level of the player attempting to create the guild.
 RULE_INT ( Guild, PlayerCreationRequiredTime, 0)	// Required Time Entitled On Account (in Minutes) to create the guild.
+RULE_INT ( Guild, MaxGuilds, 32)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Skills )

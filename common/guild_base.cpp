@@ -19,13 +19,12 @@
 #include "global_define.h"
 #include "guild_base.h"
 #include "database.h"
+#include "rulesys.h"
 
 //#include "misc_functions.h"
 #include "string_util.h"
 #include <cstdlib>
 #include <cstring>
-
-//until we move MAX_NUMBER_GUILDS
 #include "eq_packet_structs.h"
 
 const char *const BaseGuildManager::GuildActionNames[_MaxGuildAction] =
@@ -319,7 +318,7 @@ uint32 BaseGuildManager::_GetFreeGuildID() {
 	// inserting, then getting the id. NOT getting a free id then inserting.
 	// could be a race condition.
 
-	for (auto index = 1; index < MAX_NUMBER_GUILDS; ++index)
+	for (auto index = 1; index < RuleI(Guild, MaxGuilds); ++index)
 	{
         query = StringFormat("SELECT id FROM guilds where id=%i;", index);
 		auto results = m_db->QueryDatabase(query);
@@ -354,15 +353,13 @@ uint32 BaseGuildManager::CreateGuild(const char* name, uint32 leader_char_id) {
 }
 
 bool BaseGuildManager::DeleteGuild(uint32 guild_id) {
-	/*if(!DBDeleteGuild(guild_id))
+	if(!DBDeleteGuild(guild_id))
 		return(false);
 
 	SendGuildDelete(guild_id);
 
-	return(true);*/
+	return(true);
 
-	// cavedude todo: Fix guild deletion!!!
-	return(false);
 }
 
 bool BaseGuildManager::RenameGuild(uint32 guild_id, const char* name) {
@@ -973,7 +970,7 @@ uint8 *BaseGuildManager::MakeGuildList(const char *head_name, uint32 &length) co
 
 	//a bit little better than memsetting the whole thing...
 	uint32 r,pos;
-	for(r = 0, pos = 0; r <= MAX_NUMBER_GUILDS; r++, pos += 64) {
+	for(r = 0, pos = 0; r <= RuleI(Guild, MaxGuilds); r++, pos += 64) {
 		//strcpy((char *) buffer+pos, "BAD GUILD");
 		// These 'BAD GUILD' entries were showing in the drop-downs for selecting guilds in the LFP window,
 		// so just fill unused entries with an empty string instead.
@@ -997,28 +994,26 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 	int32 size = 4;
 	OldGuildsList_Struct* gl = new struct OldGuildsList_Struct;
 	memset(gl,0,sizeof(OldGuildsList_Struct));
-	OldGuildsListEntry_Struct* gle = new struct OldGuildsListEntry_Struct;
-	memset(gle,0,sizeof(OldGuildsListEntry_Struct));
 
-	int16 c = 0;
-	for (int16 r = 0; r < 512; r++) {
+	for (int16 r = 0; r <= RuleI(Guild, MaxGuilds); r++) {
 		std::string tmp;
-		if(GetGuildNameByID(c,tmp))
+		if(GetGuildNameByID(r,tmp))
 		{
-			const char * ctmp = tmp.c_str();
-			memcpy(gle->name,ctmp,64);
-			gle->guildID = c;
-			gle->exists = 1;
-			gle->unknown1 = 0xFFFFFFFF;
-			gle->unknown3 = 0xFFFFFFFF;
-
-			Log.Out(Logs::Detail, Logs::Guilds, "Added Guild: %i (%s)", gle->guildID, gle->name);
-			memcpy(&gl->Guilds[r],gle,sizeof(OldGuildsListEntry_Struct));
-			size += sizeof(OldGuildsListEntry_Struct);
-			c++; //hehe
+			memcpy(gl->Guilds[r].name,tmp.c_str(),64);
+			gl->Guilds[r].guildID = r;
+			gl->Guilds[r].exists = 1;
+			Log.Out(Logs::Detail, Logs::Guilds, "Added Guild: %i (%s)", gl->Guilds[r].guildID, gl->Guilds[r].name);
 		}
+		else
+		{
+			gl->Guilds[r].guildID = r;
+			gl->Guilds[r].exists = 0;
+		}
+
+		gl->Guilds[r].unknown1 = 0xFFFFFFFF;
+		gl->Guilds[r].unknown3 = 0xFFFFFFFF;
+		size += sizeof(OldGuildsListEntry_Struct);
 	}
-	safe_delete(gle);
 	length = size;
 	return(gl);
 }
