@@ -5125,7 +5125,7 @@ void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Logout(const EQApplicationPacket *app)
 {
-	Log.Out(Logs::Detail, Logs::None, "%s sent a logout packet.", GetName());
+	Log.Out(Logs::Detail, Logs::Character, "%s sent a logout packet.", GetName());
 
 	SendLogoutPackets();
 

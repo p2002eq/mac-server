@@ -3622,7 +3622,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
+		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		m_Position.x = new_x;
 		m_Position.y = new_y;
 		m_Position.z = new_z;
@@ -3658,7 +3658,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): LOS check failed.");
+		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }
@@ -3667,10 +3667,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 {
 	// Use this method for stun/combat pushback.
 
-	glm::vec3 loc;
-	loc.x = GetX();
-	loc.y = GetY();
-	loc.z = GetZ();
+	glm::vec3 loc(GetX(), GetY(), GetZ());
 	float new_x = loc.x;
 	float new_y = loc.y;
 	float best_z = loc.z;

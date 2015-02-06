@@ -1950,3 +1950,11 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 
 	return false;
 }
+
+bool Zone::IsWaterZone()
+{
+	if(GetZoneID() == kedge || GetZoneID() == powater)
+		return true;
+
+	return false;
+}

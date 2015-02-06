@@ -6156,6 +6156,16 @@ void command_checklos(Client *c, const Seperator *sep){
 			c->Message(0, "You have LOS to %s", c->GetTarget()->GetName());
 		else
 			c->Message(0, "You do not have LOS to %s", c->GetTarget()->GetName());
+		if (c->CheckRegion(c->GetTarget(), false))
+			c->Message(0, "You are in the same region as %s", c->GetTarget()->GetName());
+		else
+		{
+			c->Message(0, "You are in a different region than %s", c->GetTarget()->GetName());
+			auto position = glm::vec3(c->GetX(), c->GetY(), c->GetZ());
+			auto other_position = glm::vec3(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+			c->Message(0,"Your region: %d Target region: %d", zone->watermap->ReturnRegionType(position), zone->watermap->ReturnRegionType(other_position));
+		}
+			
 	}
 	else
 	{

@@ -987,23 +987,23 @@ bool Mob::CheckLosFN(Mob* other) {
 	return Result;
 }
 
-bool Mob::CheckRegion(Mob* other) {
+bool Mob::CheckRegion(Mob* other, bool skipwater) {
 
 	if (zone->watermap == nullptr) 
 		return true;
 
 	//Hack for kedge and powater since we have issues with watermaps.
-	if(zone->GetZoneID() == kedge || zone->GetZoneID() == powater)
+	if(zone->IsWaterZone() && skipwater)
 		return true;
 
 	WaterRegionType ThisRegionType;
 	WaterRegionType OtherRegionType;
-	auto position = glm::vec3(GetX(), GetY(), GetZ() - 1);
-	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ() - 1);
+	auto position = glm::vec3(GetX(), GetY(), GetZ());
+	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ());
 	ThisRegionType = zone->watermap->ReturnRegionType(position);
 	OtherRegionType = zone->watermap->ReturnRegionType(other_position);
 
-	Log.Out(Logs::Detail, Logs::Maps, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
+	Log.Out(Logs::Moderate, Logs::Maps, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
 
 	if(ThisRegionType == OtherRegionType || 
 		(ThisRegionType == RegionTypeWater && OtherRegionType == RegionTypeVWater) ||
@@ -1014,6 +1014,12 @@ bool Mob::CheckRegion(Mob* other) {
 }
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
+
+	glm::vec3 myloc(GetX(), GetY(), GetZ());
+	glm::vec3 oloc(posX, posY, posZ);
+	float mybestz = myloc.z;
+	float obestz = oloc.z;
+
 	if(zone->zonemap == nullptr) {
 		//not sure what the best return is on error
 		//should make this a database variable, but im lazy today
@@ -1023,19 +1029,22 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 		return(false);
 #endif
 	}
-
-	glm::vec3 myloc;
-	glm::vec3 oloc;
+	else
+	{
+		if((zone->watermap && !zone->watermap->InWater(myloc) && !zone->watermap->InVWater(myloc)
+			&& !zone->watermap->InWater(oloc) && !zone->watermap->InVWater(oloc))
+			|| !zone->watermap)
+		{
+			mybestz = zone->zonemap->FindBestZ(myloc, nullptr);
+			obestz = zone->zonemap->FindBestZ(oloc, nullptr);
+		}
+	}
 
 #define LOS_DEFAULT_HEIGHT 6.0f
 
-	myloc.x = GetX();
-	myloc.y = GetY();
-	myloc.z = GetZ() + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
 
-	oloc.x = posX;
-	oloc.y = posY;
-	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
+	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
 	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);

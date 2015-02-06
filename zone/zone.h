@@ -200,6 +200,7 @@ public:
 	bool	IsDesertZone();
 	bool	IsBindArea(float x_coord, float y_coord);
 	bool	SkipLoS() const { return(skip_los); }
+	bool	IsWaterZone();
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 
 	time_t	weather_timer;
