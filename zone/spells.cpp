@@ -1940,6 +1940,77 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		spell_target->CalcSpellPowerDistanceMod(spell_id, dist2);
 	}
 
+	// Bolt spells - fail if caster is not aimed at the target
+	// this should be replaced by turning Bolts into projectiles
+	if (IsBoltSpell(spell_id))
+	{
+		if (!CheckLosFN(spell_target))
+		{
+			return false;
+		}
+		glm::vec2 targetPos2d;
+		glm::vec2 casterPos2d;
+		glm::vec2 aimedPos2d;
+		glm::vec2 casterToTargetV;
+		glm::vec2 casterHeadingV;
+
+		targetPos2d.x = -spell_target->GetX();
+		targetPos2d.y = spell_target->GetY();
+		casterPos2d.x = -GetX();
+		casterPos2d.y = GetY();
+		float distance2d = Distance(casterPos2d, targetPos2d);
+
+		float headingRadians = GetHeading();
+		headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+		if (headingRadians < 270)
+			headingRadians += 90;
+		else
+			headingRadians -= 270;
+
+		headingRadians = headingRadians * 3.1415f / 180.0f;
+
+		// direction vector of caster with magnitude of caster to target distance
+		casterHeadingV.x = cosf(headingRadians) * distance2d;
+		casterHeadingV.y = sinf(headingRadians) * distance2d;
+
+		// position vector of spot player is aimed at with distaince/magnitude of caster to target distance
+		aimedPos2d.x = casterHeadingV.x + casterPos2d.x;
+		aimedPos2d.y = casterHeadingV.y + casterPos2d.y;
+
+		// direction vector of caster to target
+		casterToTargetV.x = casterPos2d.x - targetPos2d.x;
+		casterToTargetV.y = casterPos2d.y - targetPos2d.y;
+
+		// dot product of unit vectors
+		float dotp = (casterHeadingV.x / distance2d) * (casterToTargetV.x / distance2d) +
+			(casterHeadingV.y / distance2d) * (casterToTargetV.y / distance2d);
+		dotp = -dotp;
+
+		// taken from Mob::CombatRange()
+		float sizeMod = spell_target->GetSize();
+		if (spell_target->GetRace() == 49 || spell_target->GetRace() == 158 || spell_target->GetRace() == 196) //For races with a fixed size
+			sizeMod = 60.0f;
+		if (sizeMod < 8.0f)
+			sizeMod = 8.0f;
+
+		if (sizeMod > 29)
+			sizeMod *= sizeMod;
+		else if (sizeMod > 19)
+			sizeMod *= sizeMod * 2;
+		else
+			sizeMod *= sizeMod * 4;
+
+		if (sizeMod > 10000)
+			sizeMod = sizeMod / 7;
+
+		// without this, bolt spell would hit targets behind caster if target was in melee range
+		if (dotp < 0.7f)
+			return false;
+
+		if (DistanceSquared(targetPos2d, aimedPos2d) > sizeMod)
+			return false;
+	}
+
 	//
 	// Switch #2 - execute the spell
 	//
@@ -3339,31 +3410,10 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	// Prevent double invising, which made you uninvised
-	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
+	// Prevent invis stacking
+	if (IsEffectInSpell(spell_id, SE_Invisibility) || IsEffectInSpell(spell_id, SE_InvisVsUndead) || IsEffectInSpell(spell_id, SE_InvisVsAnimals))
 	{
-		if(spelltar->invisible)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible || spelltar->invisible_undead || spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
