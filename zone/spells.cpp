@@ -3339,31 +3339,10 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	// Prevent double invising, which made you uninvised
-	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
+	// Prevent invis stacking
+	if (IsEffectInSpell(spell_id, SE_Invisibility) || IsEffectInSpell(spell_id, SE_InvisVsUndead) || IsEffectInSpell(spell_id, SE_InvisVsAnimals))
 	{
-		if(spelltar->invisible)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible || spelltar->invisible_undead || spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
