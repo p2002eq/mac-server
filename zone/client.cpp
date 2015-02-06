@@ -4611,7 +4611,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	}
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
-	client->Message(0, " Level: %i Class: %i Race: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
+	client->Message(0, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
 	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), IsLD(), GetClientVersionBit());
@@ -4946,8 +4946,11 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 
 int32 Client::GetCharacterFactionLevel(int32 faction_id)
 {
-	if (faction_id <= 0)
+	if (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0)
+	{
+		Log.Out(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction.", GetRace());
 		return 0;
+	}
 	faction_map::iterator res;
 	res = factionvalues.find(faction_id);
 	if (res == factionvalues.end())

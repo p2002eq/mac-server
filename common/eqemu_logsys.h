@@ -84,6 +84,7 @@ namespace Logs{
 		Client_Server_Packet_With_Dump,
 		Maps,
 		Character,
+		Faction,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -134,6 +135,7 @@ namespace Logs{
 		"Packet :: Client -> Server (Dump)",
 		"Maps",
 		"Character",
+		"Faction",
 	};
 }
 

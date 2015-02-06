@@ -2628,7 +2628,7 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 
 	fm->base = faction_array[faction_id]->base;
 
-	if(class_mod > 0) {
+	if(class_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
 		char str[32];
 		sprintf(str, "c%u", class_mod);
 
@@ -2656,7 +2656,7 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 		fm->race_mod = 0;
 	}
 
-	if(deity_mod > 0) {
+	if(deity_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
 		char str[32];
 		sprintf(str, "d%u", deity_mod);
 
@@ -2670,6 +2670,7 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 		fm->deity_mod = 0;
 	}
 
+	Log.Out(Logs::Detail, Logs::Faction, "Race: %d RaceBit: %d Class: %d Deity: %d BaseMod: %i RaceMod: %d ClassMod: %d DeityMod: %d", race_mod, GetRaceBitmask(race_mod), class_mod, deity_mod, fm->base, fm->race_mod, fm->class_mod, fm->deity_mod);  
 	return true;
 }
 
