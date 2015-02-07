@@ -3633,6 +3633,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 		}
 		else if(IsClient())
 		{
+			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
 			CastToClient()->SetKnockBackExemption(true);
 
 			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -3670,19 +3671,14 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	glm::vec3 loc(GetX(), GetY(), GetZ());
 	float new_x = loc.x;
 	float new_y = loc.y;
-	float best_z = loc.z;
-
-	if(zone->zonemap != nullptr) 
-	{
-		best_z = zone->zonemap->FindBestZ(loc, nullptr);
-	}
+	float new_z = loc.z;
 
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
 	{
 		m_Position.x = new_x;
 		m_Position.y = new_y;
-		m_Position.z = best_z;
+		m_Position.z = new_z;
 
 		if(IsNPC())
 		{
@@ -3690,6 +3686,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 		}
 		else if(IsClient())
 		{
+			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
 			CastToClient()->SetKnockBackExemption(true);
 
 			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -3698,7 +3695,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 			spu->spawn_id	= GetID();
 			spu->x_pos		= new_x;
 			spu->y_pos		= new_y;
-			spu->z_pos		= best_z;
+			spu->z_pos		= new_z;
 			spu->delta_x	= NewFloatToEQ13(0);
 			spu->delta_y	= NewFloatToEQ13(0);
 			spu->delta_z	= NewFloatToEQ13(0);
