@@ -3718,73 +3718,20 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 
 void Mob::GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float &y_coord)
 {
-	float heading = attacker->GetHeading();
-	float tmpx = 0.0f;
-	float tmpy = 0.0f;
-	bool reverse = false;
-
-	if(pushback < 0)
-	{
-		reverse = true;
-		pushback = abs(pushback);
-	}
-
-	//NW 32
-	if(heading >= 16 && heading <= 48)
-	{
-		tmpx = pushback;
-		tmpy = pushback;
-	}
-	//West 64
-	else if(heading >= 49 && heading <= 80)
-	{
-		tmpx = pushback;
-	}
-	//SW 96
-	else if(heading >= 81 && heading <= 112)
-	{
-		tmpx = pushback;
-		tmpy = -abs(pushback);
-	}
-	//South 128
-	else if(heading >= 113 && heading <= 144)
-	{
-		tmpy = -abs(pushback);
-	}
-	//SE 160
-	else if(heading >= 145 && heading <= 176)
-	{
-		tmpx = -abs(pushback);
-		tmpy = -abs(pushback);
-	}
-	//East 192
-	else if(heading >= 177 && heading <= 208)
-	{
-		tmpx = -abs(pushback);
-	}
-	//NE 224
-	else if(heading >= 209 && heading <= 240)
-	{
-		tmpx = -abs(pushback);
-		tmpy = pushback;
-	}
-	//North 0
+	float headingRadians = attacker->GetHeading();
+	headingRadians = (headingRadians * 360.0f) / 256.0f;
+	if (headingRadians < 270)
+		headingRadians += 90;
 	else
-	{
-		tmpy = pushback;
-	}
-	
-	if(reverse)
-	{
-		if(tmpx < 0)
-			tmpx = abs(tmpx);
-		else
-			tmpx = -abs(tmpx);
+		headingRadians -= 270;
+	headingRadians = headingRadians * 3.1415f / 180.0f;
 
-		if(tmpy < 0)
-			tmpy = abs(tmpy);
-		else
-			tmpy = -abs(tmpy);
+	float tmpx = -cosf(headingRadians) * pushback;
+	float tmpy = sinf(headingRadians) * pushback;
+	if (pushback < 0)
+	{
+		tmpx = -tmpx;
+		tmpy = -tmpy;
 	}
 
 	x_coord += tmpx;
