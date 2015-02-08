@@ -2793,10 +2793,6 @@ void command_heal(Client *c, const Seperator *sep)
 		c->Message(0, "No valid target selected, using command on self.");
 		c->CastToClient()->Heal();
 	}
-	//if (c->GetTarget() == 0)
-	//	c->Message(0, "Error: #Heal: No Target.");
-	//else
-	//	c->GetTarget()->Heal();
 }
 
 void command_appearance(Client *c, const Seperator *sep){
