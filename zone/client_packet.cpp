@@ -1502,7 +1502,15 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
-	sze->player.spawn.z += 2;	//arbitrary lift, seems to help spawning under zone.
+	if(zone->zonemap)
+	{
+		// This prevents hopping on logging in.
+		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
+		m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
+		if(size > 0)
+			m_Position.z += static_cast<int16>(size);
+		sze->player.spawn.z = m_Position.z;
+	}
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
@@ -2444,6 +2452,14 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 	}
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
+	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos+1, ppu->heading);
+
+/*	if(ppu->anim_type == 252 || ppu->anim_type == 248)
+	{
+		SetRunning(false);
+	}
+	else
+		SetRunning(true);*/
 
 	/* Web Interface */
 	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
@@ -2687,22 +2703,26 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = m_Position.y;
 
 	// Outgoing client packet
-	if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->heading != m_Position.w || ppu->anim_type != animation || (m_Delta.x != 0 || m_Delta.y != 0 || m_Delta.z != 0) && animation == 0)
-	{
+	//if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->z_pos != m_Position.z || ppu->heading != m_Position.w ||
+	//	ppu->delta_x != m_Delta.x || ppu->delta_y != m_Delta.y || ppu->delta_z != m_Delta.z || ppu->delta_heading != m_Delta.w ||
+	//	ppu->anim_type != animation)
+	//{
 		m_Position.x = ppu->x_pos;
 		m_Position.y = ppu->y_pos;
 		m_Position.z = ppu->z_pos;
+		//if(size > 0)
+		//	m_Position.z += size;
 		animation = ppu->anim_type;
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-		SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
-		MakeSpawnUpdate(ppu);
+		SpawnPositionUpdate_Struct* cup = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
+		MakeSpawnUpdate(cup);
 		if (gmhideme)
 			entity_list.QueueClientsStatus(this,outapp,true,Admin(),255);
 		else
-			entity_list.QueueCloseClients(this,outapp,true,300,nullptr,false);
+			entity_list.QueueCloseClients(this,outapp,true,225,nullptr,false);
 		safe_delete(outapp);
-	}
+	//}
 
 	if(zone->watermap)
 	{
@@ -8602,7 +8622,7 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 	}
 
-	//Message(CC_Yellow, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
+	Log.Out(Logs::Detail, Logs::Skills, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
 	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;

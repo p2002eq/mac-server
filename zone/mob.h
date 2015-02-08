@@ -395,6 +395,10 @@ public:
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
 	inline const float GetHeading() const { return m_Position.w; }
+	inline const float GetEQX() const { return m_EQPosition.x; }
+	inline const float GetEQY() const { return m_EQPosition.y; }
+	inline const float GetEQZ() const { return m_EQPosition.z; }
+	inline const float GetEQHeading() const { return m_EQPosition.w; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
 	inline const float GetTarX() const { return m_TargetLocation.x; }
@@ -1014,6 +1018,7 @@ protected:
 	uint8 orig_level;
 	uint32 npctype_id;
 	glm::vec4 m_Position;
+	glm::vec4 m_EQPosition;
 	uint16 animation;
 	float base_size;
 	float size;
@@ -1082,6 +1087,7 @@ protected:
 	int16 slow_mitigation; // Allows for a slow mitigation (100 = 100%, 50% = 50%)
 	Timer tic_timer;
 	Timer mana_timer;
+	Timer client_update_log;
 
 	//spell casting vars
 	Timer spellend_timer;

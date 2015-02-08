@@ -263,6 +263,8 @@ Client::Client(EQStreamInterface* ieqs)
 
 	active_light = innate_light;
 	spell_light = equip_light = NOT_USED;
+
+	clientupdate_log = false;
 }
 
 Client::~Client() {

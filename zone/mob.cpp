@@ -85,6 +85,7 @@ Mob::Mob(const char* in_name,
 		ranged_timer(2000),
 		tic_timer(6000),
 		mana_timer(2000),
+		client_update_log(10000),
 		spellend_timer(0),
 		rewind_timer(30000), //Timer used for determining amount of time between actual player position updates for /rewind.
 		bindwound_timer(10000),
@@ -1078,17 +1079,30 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.x;
-	spu->y_pos		= m_Position.y;
-	spu->z_pos		= m_Position.z;
+	if(m_Position.x >= 0)
+		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
+	else
+		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
+	if(m_Position.y >= 0)
+		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
+	else
+		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
+	if(m_Position.z >= 0)
+		spu->z_pos		= static_cast<int16>(m_Position.z + 0.5);
+	else
+		spu->z_pos		= static_cast<int16>(m_Position.z - 0.5);
+//	if(size > 0 && IsClient())
+//		spu->z_pos -= static_cast<int16>(size);
+	spu->heading	= static_cast<int8>(m_Position.w);
+
 	spu->delta_x	= 0;
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
-	spu->heading	= m_Position.w;
-	spu->anim_type	= 0;
 	spu->delta_heading = 0;
 	spu->spacer1	=0;
 	spu->spacer2	=0;
+
+	spu->anim_type	= 0;
 
 	if(IsNPC()) {
 		std::vector<std::string> params;
@@ -1106,21 +1120,45 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 // this is for SendPosUpdate()
 void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
+
+	if(IsClient())
+	{
+		if(CastToClient()->CheckCULog())
+		{
+			Log.Out(Logs::Detail, Logs::EQMac, "Pos: %0.2f, %0.2f, %0.2f, %0.2f. Deltas: %0.2f, %0.2f, %0.2f, %0.2f Anim: %d", m_Position.x, m_Position.y, m_Position.z, m_Position.w, m_Delta.x, m_Delta.y, m_Delta.z, m_Delta.w, animation);
+			CastToClient()->SetCULog(false);
+		}
+	}
+
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.x;
-	spu->y_pos		= m_Position.y;
-	spu->z_pos		= m_Position.z;
-	spu->delta_x	= m_Delta.x;
-	spu->delta_y	= m_Delta.y;
-	spu->delta_z	= m_Delta.z;
-	spu->heading	= m_Position.w;
+	if(m_Position.x >= 0)
+		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
+	else
+		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
+	if(m_Position.y >= 0)
+		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
+	else
+		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
+	if(m_Position.z >= 0)
+		spu->z_pos		= static_cast<int16>(m_Position.z + 0.5);
+	else
+		spu->z_pos		= static_cast<int16>(m_Position.z - 0.5);
+//	if(size > 0 && IsClient())
+//		spu->z_pos -= static_cast<int16>(size);
+	spu->heading	= static_cast<int8>(m_Position.w);
+
+	spu->delta_x	= static_cast<int32>(m_Delta.x);///125.0);
+	spu->delta_y	= static_cast<int32>(m_Delta.y);///125.0);
+	spu->delta_z	= static_cast<int32>(m_Delta.z);
+	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
+
 	if(this->IsClient())
 		spu->anim_type = animation;
 	else
 		spu->anim_type	= pRunAnimSpeed;
-	spu->delta_heading =static_cast<float>(m_Delta.w);
+	
 }
 
 void Mob::ShowStats(Client* client)

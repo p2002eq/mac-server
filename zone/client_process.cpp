@@ -477,6 +477,11 @@ bool Client::Process() {
 			DoEnduranceUpkeep();
 		}
 
+		if (client_update_log.Check() && !dead)
+		{
+			clientupdate_log = true;
+		}
+
 		if (tic_timer.Check() && !dead) {
 			CalcMaxHP();
 			CalcMaxMana();

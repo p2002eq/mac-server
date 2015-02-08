@@ -532,17 +532,17 @@ namespace Mac {
 	{
 		SETUP_DIRECT_ENCODE(SpawnPositionUpdates_Struct, structs::SpawnPositionUpdates_Struct);
 		eq->num_updates = 1; //hack - only one position update per packet
-		float anim_type = (float)emu->spawn_update.anim_type / 37.0f;
-		eq->spawn_update.anim_type = (uint8)emu->spawn_update.anim_type;
-		eq->spawn_update.delta_heading = (uint8)emu->spawn_update.delta_heading;
-		eq->spawn_update.delta_x = (uint32)emu->spawn_update.delta_x;
-		eq->spawn_update.delta_y = (uint32)emu->spawn_update.delta_y;
-		eq->spawn_update.delta_z = (uint32)emu->spawn_update.delta_z;
+		float anim_type = emu->spawn_update.anim_type / 37.0f;
+		eq->spawn_update.anim_type = emu->spawn_update.anim_type;
+		eq->spawn_update.delta_heading = emu->spawn_update.delta_heading;
+		eq->spawn_update.delta_x = emu->spawn_update.delta_x;
+		eq->spawn_update.delta_y = emu->spawn_update.delta_y;
+		eq->spawn_update.delta_z = emu->spawn_update.delta_z;
 		eq->spawn_update.spawn_id = emu->spawn_update.spawn_id;
-		eq->spawn_update.x_pos = (int16)emu->spawn_update.y_pos;
-		eq->spawn_update.y_pos = (int16)emu->spawn_update.x_pos;
-		eq->spawn_update.z_pos = (int16)emu->spawn_update.z_pos*10;
-		eq->spawn_update.heading = (int8)emu->spawn_update.heading;
+		eq->spawn_update.x_pos = emu->spawn_update.x_pos;
+		eq->spawn_update.y_pos = emu->spawn_update.y_pos;
+		eq->spawn_update.z_pos = emu->spawn_update.z_pos*10;
+		eq->spawn_update.heading = emu->spawn_update.heading;
 		eq->spawn_update.anim_type = anim_type * 7;
 		FINISH_ENCODE();
 	}
@@ -551,31 +551,15 @@ namespace Mac {
 	{
 		SETUP_DIRECT_ENCODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
 		OUT(spawn_id);
-		if(emu->y_pos >= 0)
-			eq->x_pos = int16(emu->y_pos + 0.5);
-		else
-			eq->x_pos = int16(emu->y_pos - 0.5);
-		if(emu->x_pos >= 0)
-			eq->y_pos = int16(emu->x_pos + 0.5);
-		else
-			eq->y_pos = int16(emu->x_pos - 0.5);
-		if(emu->z_pos >= 0)
-			eq->z_pos = int16(emu->z_pos + 0.5)*10-1;
-		else
-			eq->z_pos = int16(emu->z_pos - 0.5)*10-1;
-		/*OUT(delta_x);
-		OUT(delta_y);
-		OUT(delta_z);
-		if(emu->delta_heading >= 0)
-			eq->delta_heading = uint8(emu->delta_heading + 0.5);
-		else
-			eq->delta_heading = uint8(emu->delta_heading - 0.5);*/
+		OUT(x_pos);
+		OUT(y_pos);
+		eq->z_pos = emu->z_pos*10-1;
 		eq->delta_x = 0;
 		eq->delta_y = 0;
 		eq->delta_z = 0;
-		eq->delta_heading = 0;
-		eq->anim_type = (uint8)emu->anim_type;
-		eq->heading = (uint8)emu->heading;
+		OUT(delta_heading);
+		OUT(anim_type);
+		OUT(heading);
 		FINISH_ENCODE();
 	}
 
@@ -583,28 +567,14 @@ namespace Mac {
 	{
 		SETUP_DIRECT_DECODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
 		IN(spawn_id);
-	//	IN(sequence);
-		if(eq->y_pos >= 0)
-			emu->x_pos = int16(eq->y_pos + 0.5);
-		else
-			emu->x_pos = int16(eq->y_pos - 0.5);
-		if(eq->x_pos >= 0)
-			emu->y_pos = int16(eq->x_pos + 0.5);
-		else
-			emu->y_pos = int16(eq->x_pos - 0.5);
-		if(eq->z_pos >= 0)
-			emu->z_pos = int16(eq->z_pos + 0.5)/10-1;
-		else
-			emu->z_pos = int16(eq->z_pos - 0.5)/10-1;
-		emu->heading = (uint8)eq->heading;
-		/*emu->delta_x = 0;
-		emu->delta_y = 0;
-		emu->delta_z = 0;
-		emu->delta_heading = 0;*/
+		IN(x_pos);
+		IN(y_pos);
+		emu->z_pos = eq->z_pos/10-1;
+		IN(heading);
 		IN(delta_x);
 		IN(delta_y);
 		IN(delta_z);
-		emu->delta_heading = (uint8)eq->delta_heading;
+		IN(delta_heading);
 		IN(anim_type);
 		FINISH_DIRECT_DECODE();
 	}

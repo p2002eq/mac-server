@@ -152,6 +152,13 @@ uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, 
 
 //we need this function to immediately determine, after we receive OP_Fishing, if we can even try to fish, otherwise we have to wait a while to get the failure
 bool Client::CanFish() {
+
+	if(fishing_timer.Enabled())
+	{
+		Message_StringID(CC_Default, ALREADY_FISHING);	//You are already fishing!
+		return false;
+	}
+
 	//make sure we still have a fishing pole on:
 	const ItemInst* Pole = m_inv[MainPrimary];
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
@@ -216,11 +223,6 @@ bool Client::CanFish() {
 
 void Client::GoFish()
 {
-	//TODO: generate a message if we're already fishing
-	/*if (!fishing_timer.Check()) {	//this isn't the right check, may need to add something to the Client class like 'bool is_fishing'
-		Message_StringID(CC_Default, ALREADY_FISHING);	//You are already fishing!
-		return;
-	}*/
 
 	fishing_timer.Disable();
 
