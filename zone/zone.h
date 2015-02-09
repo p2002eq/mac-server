@@ -23,6 +23,7 @@
 #include "../common/random.h"
 #include "../common/rulesys.h"
 #include "../common/types.h"
+#include "../common/string_util.h"
 #include "qglobals.h"
 #include "spawn2.h"
 #include "spawngroup.h"
@@ -75,7 +76,7 @@ class PathManager;
 class WaterMap;
 extern EntityList entity_list;
 struct NPCType;
-struct ServerZoneIncommingClient_Struct;
+struct ServerZoneIncomingClient_Struct;
 
 class Zone
 {
@@ -141,7 +142,7 @@ public:
 	void	StartShutdownTimer(uint32 set_time = (RuleI(Zone, AutoShutdownDelay)));
 	void    ChangeWeather();
 	bool	HasWeather();
-	void	AddAuth(ServerZoneIncommingClient_Struct* szic);
+	void	AddAuth(ServerZoneIncomingClient_Struct* szic);
 	void	RemoveAuth(const char* iCharName);
 	void	ResetAuth();
 	bool	GetAuth(uint32 iIP, const char* iCharName, uint32* oWID = 0, uint32* oAccID = 0, uint32* oCharID = 0, int16* oStatus = 0, char* oLSKey = 0, bool* oTellsOff = 0, uint32* oVersionbit = 0);
@@ -199,6 +200,7 @@ public:
 	bool	IsDesertZone();
 	bool	IsBindArea(float x_coord, float y_coord);
 	bool	SkipLoS() const { return(skip_los); }
+	bool	IsWaterZone();
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 
 	time_t	weather_timer;
@@ -232,13 +234,33 @@ public:
 
 	LinkedList<NPC_Emote_Struct*> NPCEmoteList;
 
-    void    LoadTickItems();
-    uint32  GetSpawnKillCount(uint32 in_spawnid);
-    void    UpdateHotzone();
+	void    LoadTickItems();
+	uint32  GetSpawnKillCount(uint32 in_spawnid);
+	void    UpdateHotzone();
 	std::unordered_map<int, item_tick_struct> tick_items;
 
 	// random object that provides random values for the zone
 	EQEmu::Random random;
+
+	static void GMSayHookCallBackProcess(uint16 log_category, std::string message){
+		/* Cut messages down to 4000 max to prevent client crash */
+		if (!message.empty())
+			message = message.substr(0, 4000);
+
+		/* Replace Occurrences of % or MessageStatus will crash */
+		find_replace(message, std::string("%"), std::string("."));
+
+		if (message.find("\n") != std::string::npos){
+			auto message_split = SplitString(message, '\n');
+			entity_list.MessageStatus(0, 80, Log.GetGMSayColorFromCategory(log_category), "%s", message_split[0].c_str());
+			for (size_t iter = 1; iter < message_split.size(); ++iter) {
+				entity_list.MessageStatus(0, 80, Log.GetGMSayColorFromCategory(log_category), "--- %s", message_split[iter].c_str());
+			}
+		}
+		else{
+			entity_list.MessageStatus(0, 80, Log.GetGMSayColorFromCategory(log_category), "%s", message.c_str());
+		}
+	}
 
 	//MODDING HOOKS
 	void mod_init();

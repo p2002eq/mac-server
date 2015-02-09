@@ -773,8 +773,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	void SendZoneFlagInfo(Client *to) const;
 	void LoadZoneFlags();
 
-	void ChangeSQLLog(const char *file);
-	void LogSQL(const char *fmt, ...);
 	bool CanFish();
 	void GoFish();
 	void ForageItem(bool guarantee = false);
@@ -1132,6 +1130,12 @@ private:
 	Timer	charm_cast_timer;
 	Timer	qglobal_purge_timer;
 	Timer	TrackingTimer;
+
+	Timer anim_change_timer;
+	Timer anon_toggle_timer;
+	Timer afk_toggle_timer;
+	Timer helm_toggle_timer;
+	Timer light_update_timer;
 
     glm::vec3 m_Proximity;
 

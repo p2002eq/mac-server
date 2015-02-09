@@ -144,7 +144,7 @@ void Trap::Trigger(Mob* trigger)
 			{
 				if ((tmp = database.GetNPCType(effectvalue)))
 				{
-					auto randomOffset = glm::vec4(zone->random.Int(-5, 5), zone->random.Int(-5, 5), zone->random.Int(-5, 5), zone->random.Int(0, 249));
+					auto randomOffset = glm::vec4(zone->random.Int(-5, 5),zone->random.Int(-5, 5),zone->random.Int(-5, 5), zone->random.Int(0, 249));
 					auto spawnPosition = randomOffset + glm::vec4(m_Position, 0.0f);
 					NPC* new_npc = new NPC(tmp, nullptr, spawnPosition, FlyMode3);
 					new_npc->AddLootTable();
@@ -264,7 +264,6 @@ bool ZoneDatabase::LoadTraps(const char* zonename, int16 version) {
 									"FROM traps WHERE zone='%s' AND version=%u", zonename, version);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in LoadTraps query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return false;
 	}
 

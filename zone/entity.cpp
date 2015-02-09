@@ -15,7 +15,7 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -71,17 +71,17 @@ Entity::~Entity()
 Client *Entity::CastToClient()
 {
 	if (this == 0x00) {
-		std::cout << "CastToClient error (nullptr)" << std::endl;
-		DebugBreak();
+		Log.Out(Logs::General, Logs::Error, "CastToClient error (nullptr)");
 		return 0;
 	}
 #ifdef _EQDEBUG
 	if (!IsClient()) {
-		std::cout << "CastToClient error (not client?)" << std::endl;
-		DebugBreak();
+		Log.Out(Logs::General, Logs::Error, "CastToClient error (not client)"); 
 		return 0;
 	}
 #endif
+
+
 	return static_cast<Client *>(this);
 }
 
@@ -89,8 +89,7 @@ NPC *Entity::CastToNPC()
 {
 #ifdef _EQDEBUG
 	if (!IsNPC()) {
-		std::cout << "CastToNPC error" << std::endl;
-		DebugBreak();
+		Log.Out(Logs::General, Logs::Error, "CastToNPC error (Not NPC)");
 		return 0;
 	}
 #endif
@@ -102,7 +101,6 @@ Mob *Entity::CastToMob()
 #ifdef _EQDEBUG
 	if (!IsMob()) {
 		std::cout << "CastToMob error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -114,7 +112,6 @@ Trap *Entity::CastToTrap()
 {
 #ifdef DEBUG
 	if (!IsTrap()) {
-		//std::cout << "CastToTrap error" << std::endl;
 		return 0;
 	}
 #endif
@@ -126,7 +123,6 @@ Corpse *Entity::CastToCorpse()
 #ifdef _EQDEBUG
 	if (!IsCorpse()) {
 		std::cout << "CastToCorpse error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -138,7 +134,6 @@ Object *Entity::CastToObject()
 #ifdef _EQDEBUG
 	if (!IsObject()) {
 		std::cout << "CastToObject error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -149,7 +144,6 @@ Object *Entity::CastToObject()
 #ifdef _EQDEBUG
 	if(!IsGroup()) {
 		std::cout << "CastToGroup error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -170,13 +164,11 @@ const Client *Entity::CastToClient() const
 {
 	if (this == 0x00) {
 		std::cout << "CastToClient error (nullptr)" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #ifdef _EQDEBUG
 	if (!IsClient()) {
 		std::cout << "CastToClient error (not client?)" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -188,7 +180,6 @@ const NPC *Entity::CastToNPC() const
 #ifdef _EQDEBUG
 	if (!IsNPC()) {
 		std::cout << "CastToNPC error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -200,7 +191,6 @@ const Mob *Entity::CastToMob() const
 #ifdef _EQDEBUG
 	if (!IsMob()) {
 		std::cout << "CastToMob error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -211,7 +201,6 @@ const Trap *Entity::CastToTrap() const
 {
 #ifdef DEBUG
 	if (!IsTrap()) {
-		//std::cout << "CastToTrap error" << std::endl;
 		return 0;
 	}
 #endif
@@ -223,7 +212,6 @@ const Corpse *Entity::CastToCorpse() const
 #ifdef _EQDEBUG
 	if (!IsCorpse()) {
 		std::cout << "CastToCorpse error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -235,7 +223,6 @@ const Object *Entity::CastToObject() const
 #ifdef _EQDEBUG
 	if (!IsObject()) {
 		std::cout << "CastToObject error" << std::endl;
-		DebugBreak();
 		return 0;
 	}
 #endif
@@ -299,26 +286,10 @@ void EntityList::AddClient(Client *client)
 void EntityList::TrapProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -353,7 +324,7 @@ void EntityList::CheckGroupList (const char *fname, const int fline)
 	{
 		if (*it == nullptr)
 		{
-			LogFile->write(EQEmuLog::Error, "nullptr group, %s:%i", fname, fline);
+			Log.Out(Logs::General, Logs::Error, "nullptr group, %s:%i", fname, fline);
 		}
 	}
 }
@@ -394,26 +365,10 @@ void EntityList::RaidProcess()
 void EntityList::DoorProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -438,26 +393,10 @@ void EntityList::DoorProcess()
 void EntityList::ObjectProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -507,24 +446,34 @@ void EntityList::MobProcess()
 		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
 		{
 			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-			_log(EQMAC__LOG, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
+			Log.Out(Logs::General, Logs::EQMac, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
+			Log.log_settings[Logs::Server_Client_Packet_With_Dump].log_to_gmsay = 0;
+			Log.log_settings[Logs::Client_Server_Packet_With_Dump].log_to_gmsay = 0;
 		}
 		else if(numclients >= 1 && zone->idle)
 		{
 			if(zone->idle_timer.Enabled())
 				zone->idle_timer.Disable();
 			zone->idle = false;
-			_log(EQMAC__LOG, "Entity Process: A player has entered the zone, leaving idle state.");
+			Log.Out(Logs::General, Logs::EQMac, "Entity Process: A player has entered the zone, leaving idle state.");
 		}
 
 		if(zone->idle_timer.Check())
 		{
 			zone->idle_timer.Disable();
-			zone->idle = true;
-			_log(EQMAC__LOG, "Entity Process: Idle timer has expired, zone will now idle.");
+			if(numclients < 1)
+			{
+				zone->idle = true;
+				Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, zone will now idle.");
+			}
+			else
+			{
+				zone->idle = false;
+				Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, but there are players in the zone. Zone will not idle.");
+			}
 		}
 
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -558,17 +507,17 @@ void EntityList::MobProcess()
 #ifdef _WINDOWS
 				struct in_addr in;
 				in.s_addr = mob->CastToClient()->GetIP();
-				std::cout << "Dropping client: Process=false, ip=" << inet_ntoa(in) << ", port=" << mob->CastToClient()->GetPort() << std::endl;
+				Log.Out(Logs::General, Logs::Zone_Server, "Dropping client: Process=false, ip=%s port=%u", inet_ntoa(in), mob->CastToClient()->GetPort());
 #endif
 				zone->StartShutdownTimer();
 				Group *g = GetGroupByMob(mob);
 				if(g) {
-					LogFile->write(EQEmuLog::Error, "About to delete a client still in a group.");
+					Log.Out(Logs::General, Logs::Error, "About to delete a client still in a group.");
 					g->DelMember(mob);
 				}
 				Raid *r = entity_list.GetRaidByClient(mob->CastToClient());
 				if(r) {
-					LogFile->write(EQEmuLog::Error, "About to delete a client still in a raid.");
+					Log.Out(Logs::General, Logs::Error, "About to delete a client still in a raid.");
 					r->MemberZoned(mob->CastToClient());
 				}
 				entity_list.RemoveClient(id);
@@ -600,7 +549,7 @@ void EntityList::AddGroup(Group *group)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		LogFile->write(EQEmuLog::Error,
+		Log.Out(Logs::General, Logs::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
@@ -629,7 +578,7 @@ void EntityList::AddRaid(Raid *raid)
 
 	uint32 gid = worldserver.NextGroupID();
 	if (gid == 0) {
-		LogFile->write(EQEmuLog::Error,
+		Log.Out(Logs::General, Logs::Error, 
 				"Unable to get new group ID from world server. group is going to be broken.");
 		return;
 	}
@@ -2454,7 +2403,7 @@ char *EntityList::MakeNameUnique(char *name)
 			return name;
 		}
 	}
-	LogFile->write(EQEmuLog::Error, "Fatal error in EntityList::MakeNameUnique: Unable to find unique name for '%s'", name);
+	Log.Out(Logs::General, Logs::Error, "Fatal error in EntityList::MakeNameUnique: Unable to find unique name for '%s'", name);
 	char tmp[64] = "!";
 	strn0cpy(&tmp[1], name, sizeof(tmp) - 1);
 	strcpy(name, tmp);
@@ -3364,35 +3313,6 @@ bool EntityList::LimitCheckName(const char *npc_name)
 	return true;
 }
 
-void EntityList::RadialSetLogging(Mob *around, bool enabled, bool clients,
-		bool non_clients, float range)
-{
-	float range2 = range * range;
-
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-		Mob *mob = it->second;
-
-		++it;
-
-		if (mob->IsClient()) {
-			if (!clients)
-				continue;
-		} else {
-			if (!non_clients)
-				continue;
-		}
-
-		if (DistanceSquared(around->GetPosition(), mob->GetPosition()) > range2)
-			continue;
-
-		if (enabled)
-			mob->EnableLogging();
-		else
-			mob->DisableLogging();
-	}
-}
-
 void EntityList::DestroyTempPets(Mob *owner)
 {
 	auto it = npc_list.begin();
@@ -3578,7 +3498,7 @@ void EntityList::SendGroupLeader(uint32 gid, const char *lname, const char *oldl
 					strcpy(gj->membername, lname);
 					strcpy(gj->yourname, oldlname);
 					it->second->QueuePacket(outapp);
-					_log(_GROUP__LOG, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
+					Log.Out(Logs::Detail, Logs::General, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
 					safe_delete(outapp);
 				}
 			}

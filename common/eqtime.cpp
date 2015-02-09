@@ -17,7 +17,8 @@
 */
 
 #include <fstream>
-#include "../common/debug.h"
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/eqtime.h"
 #include "../common/eq_packet_structs.h"
 #include <memory.h>

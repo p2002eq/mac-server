@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/features.h"
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
@@ -164,7 +164,7 @@ void Client::AddQuestEXP(uint32 in_add_exp) {
 
 
 void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
-	_log(CLIENT__EXP, "Attempting to Set Exp for %s (XP: %u, AAXP: %u, Rez: %s)", this->GetCleanName(), set_exp, set_aaxp, isrezzexp ? "true" : "false");
+	Log.Out(Logs::Detail, Logs::None, "Attempting to Set Exp for %s (XP: %u, AAXP: %u, Rez: %s)", this->GetCleanName(), set_exp, set_aaxp, isrezzexp ? "true" : "false");
 	//max_AAXP = GetEXPForLevel(52) - GetEXPForLevel(51);	//GetEXPForLevel() doesn't depend on class/race, just level, so it shouldn't change between Clients
 	max_AAXP = max_AAXP = GetEXPForLevel(0, true);	//this may be redundant since we're doing this in Client::FinishConnState2()
 	if (max_AAXP == 0 || GetEXPForLevel(GetLevel()) == 0xFFFFFFFF) {
@@ -237,7 +237,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 
 		//figure out how many AA points we get from the exp were setting
 		m_pp.aapoints = set_aaxp / max_AAXP;
-		_log(CLIENT__EXP, "Calculating additional AA Points from AAXP for %s: %u / %u = %.1f points", this->GetCleanName(), set_aaxp, max_AAXP, (float)set_aaxp / (float)max_AAXP);
+		Log.Out(Logs::Detail, Logs::None, "Calculating additional AA Points from AAXP for %s: %u / %u = %.1f points", this->GetCleanName(), set_aaxp, max_AAXP, (float)set_aaxp / (float)max_AAXP);
 
 		//get remainder exp points, set in PP below
 		set_aaxp = set_aaxp - (max_AAXP * m_pp.aapoints);
@@ -361,7 +361,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 void Client::SetLevel(uint8 set_level, bool command)
 {
 	if (GetEXPForLevel(set_level) == 0xFFFFFFFF) {
-		LogFile->write(EQEmuLog::Error,"Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
+		Log.Out(Logs::General, Logs::Error, "Client::SetLevel() GetEXPForLevel(%i) = 0xFFFFFFFF", set_level);
 		return;
 	}
 
@@ -419,7 +419,7 @@ void Client::SetLevel(uint8 set_level, bool command)
 	safe_delete(outapp);
 	this->SendAppearancePacket(AT_WhoLevel, set_level); // who level change
 
-	LogFile->write(EQEmuLog::Normal,"Setting Level for %s to %i", GetName(), set_level);
+	Log.Out(Logs::General, Logs::Normal, "Setting Level for %s to %i", GetName(), set_level);
 
 	CalcBonuses();
 
@@ -650,7 +650,8 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if(splitgroupxp < 1)
 		splitgroupxp = 1;
 
-	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
+	for (i = 0; i < MAX_GROUP_MEMBERS; i++) 
+	{
 		if (members[i] != nullptr && members[i]->IsClient()) // If Group Member is Client
 		{
 			Client *cmember = members[i]->CastToClient();
@@ -665,21 +666,21 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					{
 						// NPCs that are green to some of the group do not split XP.
 						cmember->AddEXP(groupexp, cmember->GetLevelCon(other->GetLevel()));
-						_log(_GROUP__LOG, "%s gets non-split green XP worth: %i. You lucky dog.", cmember->GetName(), groupexp);
+						//_log(_GROUP__LOG, "%s gets non-split green XP worth: %i. You lucky dog.", cmember->GetName(), groupexp);
 					}
 					else
 					{
 						cmember->AddEXP(splitgroupxp, conlevel);
-						_log(_GROUP__LOG, "%s splits %i with the rest of the group. Their share: %i", cmember->GetName(), groupexp, splitgroupxp);
+						//_log(_GROUP__LOG, "%s splits %i with the rest of the group. Their share: %i", cmember->GetName(), groupexp, splitgroupxp);
 						//cmember->Message(CC_Yellow, "Group XP awarded is: %i Total XP is: %i for count: %i total count: %i in_exp is: %i", splitgroupxp, groupexp, close_membercount, membercount, exp);
 
 					}
 				}
 				else
-					_log(_GROUP__LOG, "%s is too low in level to gain XP from this group.", cmember->GetName());
+					Log.Out(Logs::Detail, Logs::General, "%s is too low in level to gain XP from this group.", cmember->GetName());
 			}
 			else
-				_log(_GROUP__LOG, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
+				Log.Out(Logs::Detail, Logs::General, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
 		}
 	}
 }
@@ -770,7 +771,7 @@ bool Client::IsInRange(Mob* defender)
 	//if(t3 < 0)
 	//	abs(t3);
 	if(( t1 > exprange) || ( t2 > exprange)) { //	|| ( t3 > 40) ) {
-		_log(CLIENT__EXP, "%s is out of range. distances (%.3f,%.3f,%.3f), range %.3f No XP will be awarded.", defender->GetName(), t1, t2, t3, exprange);
+		//_log(CLIENT__EXP, "%s is out of range. distances (%.3f,%.3f,%.3f), range %.3f No XP will be awarded.", defender->GetName(), t1, t2, t3, exprange);
 		return false;
 	}
 	else

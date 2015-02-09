@@ -1,5 +1,5 @@
 /*	EQEMu: Everquest Server Emulator
-	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
+	Copyright (C) 2001-2015 EQEMu Development Team (http://eqemu.org)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -15,31 +15,27 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#include "../common/debug.h"
 
-// Quagmire - i was really surprised, but i couldnt find the equivilent standard library function
-signed char sign(signed int tmp) {
-	if (tmp > 0)
-		return 1;
-	else if (tmp < 0)
-		return -1;
-	else
-		return 0;
-}
+#if defined(_DEBUG) && defined(WIN32)
+	#ifndef _CRTDBG_MAP_ALLOC
+		#include <stdlib.h>
+		#include <crtdbg.h>
+	#endif
+#endif
 
-signed char sign(double tmp) {
-	if (tmp > 0)
-		return 1;
-	else if (tmp < 0)
-		return -1;
-	else
-		return 0;
-}
+#ifndef EQDEBUG_H
+#define EQDEBUG_H
 
-uint32 pow32(uint32 base, uint32 exponet) {
-	uint32 ret = 1;
-	for (uint32 i=1; i<=exponet; i++)
-		ret *= base;
-	return ret;
-}
+#define _WINSOCKAPI_	//stupid windows, trying to fix the winsock2 vs. winsock issues
+#if defined(WIN32) && ( defined(PACKETCOLLECTOR) || defined(COLLECTOR) )
+	// Packet Collector on win32 requires winsock.h due to latest pcap.h
+	// winsock.h must come before windows.h
+	#include <winsock.h>
+#endif
 
+#ifdef _WINDOWS
+	#include <windows.h>
+	#include <winsock2.h>
+#endif
+
+#endif

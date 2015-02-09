@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "debug.h"
+#include "global_define.h"
 #include "string_util.h"
 #include "item.h"
 #include "database.h"
@@ -975,7 +975,8 @@ uint8 Inventory::FindHighestLightValue()
 		if (inst == nullptr) { continue; }
 		auto item = inst->GetItem();
 		if (item == nullptr) { continue; }
-		if (item->ItemType != ItemTypeMisc && item->ItemType != ItemTypeLight) { continue; }
+		// 'Gloomingdeep lantern' is ItemTypeArmor in the database..there may be others instances and/or types that need to be handled
+		if (item->ItemType != ItemTypeMisc && item->ItemType != ItemTypeLight && item->ItemType != ItemTypeArmor) { continue; }
 		if (item->Light & 0xF0) { continue; }
 		if (item->Light > light_value) { light_value = item->Light; }
 	}
@@ -1127,7 +1128,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 	}
 
 	if (result == INVALID_INDEX) {
-		LogFile->write(EQEmuLog::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
+		Log.Out(Logs::General, Logs::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
 		Inventory::MarkDirty(inst); // Slot not found, clean up
 	}
 

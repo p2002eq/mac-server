@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/string_util.h"
 #include "../common/types.h"
 
@@ -146,7 +146,6 @@ bool ZoneDatabase::LoadSpawnGroups(const char* zone_name, uint16 version, SpawnG
                                     "AND spawn2.version = %u and zone = '%s'", version, zone_name);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        _log(ZONE__SPAWNS, "Error2 in PopulateZoneLists query '%s' ", query.c_str());
 		return false;
     }
 
@@ -165,7 +164,7 @@ bool ZoneDatabase::LoadSpawnGroups(const char* zone_name, uint16 version, SpawnG
                         "AND zone = '%s'", zone_name);
     results = QueryDatabase(query);
     if (!results.Success()) {
-        _log(ZONE__SPAWNS, "Error2 in PopulateZoneLists query '%'", query.c_str());
+        Log.Out(Logs::General, Logs::Error, "Error2 in PopulateZoneLists query '%'", query.c_str());
 		return false;
     }
 
@@ -174,7 +173,6 @@ bool ZoneDatabase::LoadSpawnGroups(const char* zone_name, uint16 version, SpawnG
 		SpawnGroup *sg = spawn_group_list->GetSpawnGroup(atoi(row[0]));
 
 		if (!sg) {
-            _log(ZONE__SPAWNS, "Error in LoadSpawnGroups %s ", query.c_str());
             continue;
 		}
 
@@ -194,7 +192,7 @@ bool ZoneDatabase::LoadSpawnGroupsByID(int spawngroupid, SpawnGroupList* spawn_g
                                     "FROM spawngroup WHERE spawngroup.ID = '%i'", spawngroupid);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
-        _log(ZONE__SPAWNS, "Error2 in PopulateZoneLists query %s", query.c_str());
+        Log.Out(Logs::General, Logs::Error, "Error2 in PopulateZoneLists query %s", query.c_str());
 		return false;
     }
 
@@ -209,7 +207,7 @@ bool ZoneDatabase::LoadSpawnGroupsByID(int spawngroupid, SpawnGroupList* spawn_g
                         "ORDER BY chance", spawngroupid);
     results = QueryDatabase(query);
 	if (!results.Success()) {
-        _log(ZONE__SPAWNS, "Error3 in PopulateZoneLists query '%s'", query.c_str());
+        Log.Out(Logs::General, Logs::Error, "Error3 in PopulateZoneLists query '%s'", query.c_str());
 		return false;
 	}
 
@@ -217,7 +215,6 @@ bool ZoneDatabase::LoadSpawnGroupsByID(int spawngroupid, SpawnGroupList* spawn_g
         SpawnEntry* newSpawnEntry = new SpawnEntry( atoi(row[1]), atoi(row[2]), row[3]?atoi(row[3]):0);
         SpawnGroup *sg = spawn_group_list->GetSpawnGroup(atoi(row[0]));
         if (!sg) {
-            _log(ZONE__SPAWNS, "Error in SpawngroupID: %s ", row[0]);
             continue;
         }
 

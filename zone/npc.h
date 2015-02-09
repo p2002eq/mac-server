@@ -410,7 +410,7 @@ protected:
 
 	uint32	npc_spells_id;
 	uint8	casting_spell_AIindex;
-	Timer*	AIautocastspell_timer;
+	std::unique_ptr<Timer> AIautocastspell_timer;
 	uint32*	pDontCastBefore_casting_spell;
 	std::vector<AISpells_Struct> AIspells;
 	bool HasAISpell;

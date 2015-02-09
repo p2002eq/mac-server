@@ -5,6 +5,7 @@
 #include "../common/eq_packet_structs.h"
 #include "position.h"
 #include "../common/faction.h"
+#include "../common/eqemu_logsys.h"
 
 class Client;
 class Corpse;
@@ -295,7 +296,7 @@ public:
 	bool		PopulateZoneSpawnList(uint32 zoneid, LinkedList<Spawn2*> &spawn2_list, int16 version, uint32 repopdelay = 0);
 	Spawn2*		LoadSpawn2(LinkedList<Spawn2*> &spawn2_list, uint32 spawn2id, uint32 timeleft);
 	bool		CreateSpawn2(Client *c, uint32 spawngroup, const char* zone, const glm::vec4& position, uint32 respawn, uint32 variance, uint16 condition, int16 cond_value);
-	void		UpdateSpawn2Timeleft(uint32 id, uint16 instance_id,uint32 timeleft);
+	void		UpdateRespawnTime(uint32 id, uint16 instance_id,uint32 timeleft);
 	uint32		GetSpawnTimeLeft(uint32 id, uint16 instance_id);
 	void		UpdateSpawn2Status(uint32 id, uint8 new_status);
 
@@ -310,7 +311,7 @@ public:
 	uint8		GetGridType(uint32 grid, uint32 zoneid);
 	uint8		GetGridType2(uint32 grid, uint16 zoneid);
 	bool		GetWaypoints(uint32 grid, uint16 zoneid, uint32 num, wplist* wp);
-	void		AssignGrid(Client *client, const glm::vec2& location, uint32 id);
+	void        AssignGrid(Client *client, int grid, int spawn2id);
 	int			GetHighestGrid(uint32 zoneid);
 	int			GetHighestWaypoint(uint32 zoneid, uint32 gridid);
 

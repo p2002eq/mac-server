@@ -18,7 +18,9 @@
 	client_process.cpp:
 	Handles client login sequence and packets sent from client to zone
 */
-#include "../common/debug.h"
+
+#include "../common/eqemu_logsys.h"
+#include "../common/global_define.h"
 #include <iostream>
 #include <stdio.h>
 #include <zlib.h>
@@ -156,7 +158,7 @@ bool Client::Process() {
 				//The pulse should be prevented if this is a friendly target, but the song should not be stopped. 
 				if(IsDetrimentalSpell(bardsong) && !IsAttackAllowed(song_target, true, bardsong) && !GetGM())
 				{
-					mlog(SPELLS__CASTING_ERR, "Attempting to apply a detrimental song pulse on a player.");
+					Log.Out(Logs::Detail, Logs::Spells, "Attempting to apply a detrimental song pulse on a player.");
 					Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				}
 				else if(!ApplyNextBardPulse(bardsong, song_target, bardsong_slot))
@@ -188,6 +190,13 @@ bool Client::Process() {
 			if(qglobal_purge_timer.Check())
 			{
 				qGlobals->PurgeExpiredGlobals();
+			}
+		}
+
+		if(light_update_timer.Check()) {
+			UpdateEquipLightValue();
+			if(UpdateActiveLightValue()) {
+				SendAppearancePacket(AT_Light, GetActiveLightValue());
 			}
 		}
 
@@ -535,7 +544,7 @@ bool Client::Process() {
 
 	if (client_state != CLIENT_LINKDEAD && !eqs->CheckState(ESTABLISHED)) {
 		OnDisconnect(true);
-		std::cout << "Client linkdead: " << name << std::endl;
+		Log.Out(Logs::General, Logs::Zone_Server, "Client linkdead: %s", name);
 
 		if (GetGM()) 
 			return false;
@@ -651,7 +660,7 @@ void Client::OnDisconnect(bool hard_disconnect) {
 	Mob *Other = trade->With();
 	if(Other)
 	{
-		mlog(TRADING__CLIENT, "Client disconnected during a trade. Returning their items.");
+		Log.Out(Logs::Detail, Logs::Trading, "Client disconnected during a trade. Returning their items."); 
 		FinishTrade(this);
 
 		if(Other->IsClient())
@@ -755,7 +764,7 @@ void Client::BulkSendItems()
 		if(inst) {
 			bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
 			int16 free_slot_id = m_inv.FindFreeSlot(inst->IsType(ItemClassContainer), true, inst->GetItem()->Size, is_arrow);
-			mlog(INVENTORY__ERROR, "Incomplete Trade Transaction: Moving %s from slot %i to %i", inst->GetItem()->Name, slot_id, free_slot_id);
+			Log.Out(Logs::Detail, Logs::Inventory, "Incomplete Trade Transaction: Moving %s from slot %i to %i", inst->GetItem()->Name, slot_id, free_slot_id);
 			PutItemInInventory(free_slot_id, *inst, false);
 			database.SaveInventory(character_id, nullptr, slot_id);
 			safe_delete(inst);
@@ -875,7 +884,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		// Account for merchant lists with gaps.
 		if (ml.slot >= i) {
 			if (ml.slot > i)
-				LogFile->write(EQEmuLog::Debug, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
+				Log.Out(Logs::General, Logs::None, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
 			i = ml.slot + 1;
 		}
 	}
@@ -988,7 +997,7 @@ uint8 Client::WithCustomer(uint16 NewCustomer){
 	Client* c = entity_list.GetClientByID(CustomerID);
 
 	if(!c) {
-		_log(TRADING__CLIENT, "Previous customer has gone away.");
+		Log.Out(Logs::Detail, Logs::Trading, "Previous customer has gone away.");
 		CustomerID = NewCustomer;
 		return 1;
 	}
@@ -1000,7 +1009,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 {
 	if(PendingRezzXP < 0) {
 		// pendingrezexp is set to -1 if we are not expecting an OP_RezzAnswer
-		_log(SPELLS__REZ, "Unexpected OP_RezzAnswer. Ignoring it.");
+		Log.Out(Logs::Detail, Logs::Spells, "Unexpected OP_RezzAnswer. Ignoring it.");
 		Message(CC_Red, "You have already been resurrected.\n");
 		return;
 	}
@@ -1010,7 +1019,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 		// Mark the corpse as rezzed in the database, just in case the corpse has buried, or the zone the
 		// corpse is in has shutdown since the rez spell was cast.
 		database.MarkCorpseAsRezzed(PendingRezzDBID);
-		_log(SPELLS__REZ, "Player %s got a %i Rezz, spellid %i in zone%i, instance id %i",
+		Log.Out(Logs::Detail, Logs::Spells, "Player %s got a %i Rezz, spellid %i in zone%i, instance id %i",
 				this->name, (uint16)spells[SpellID].base[0],
 				SpellID, ZoneID, InstanceID);
 
@@ -1059,7 +1068,7 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 {
 	if(app->size != sizeof(MemorizeSpell_Struct))
 	{
-		LogFile->write(EQEmuLog::Error,"Wrong size on OP_MemorizeSpell. Got: %i, Expected: %i", app->size, sizeof(MemorizeSpell_Struct));
+		Log.Out(Logs::General, Logs::Error, "Wrong size on OP_MemorizeSpell. Got: %i, Expected: %i", app->size, sizeof(MemorizeSpell_Struct));
 		DumpPacket(app);
 		return;
 	}
@@ -1555,7 +1564,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// languages go here
 		if (gmskill->skill_id > 25)
 		{
-			mlog(CLIENT__ERROR, "Wrong Training Skill (languages)");
+			Log.Out(Logs::Detail, Logs::Combat, "Wrong Training Skill (languages)");
 			DumpPacket(app);
 			return;
 		}
@@ -1570,7 +1579,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// normal skills go here
 		if (gmskill->skill_id > HIGHEST_SKILL)
 		{
-			mlog(CLIENT__ERROR, "Wrong Training Skill (abilities)" );
+			Log.Out(Logs::Detail, Logs::Combat, "Wrong Training Skill (abilities)" );
 			DumpPacket(app);
 			return;
 		}
@@ -1578,12 +1587,12 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		SkillUseTypes skill = (SkillUseTypes) gmskill->skill_id;
 
 		if(!CanHaveSkill(skill)) {
-			mlog(CLIENT__ERROR, "Tried to train skill %d, which is not allowed.", skill);
+			Log.Out(Logs::Detail, Logs::Skills, "Tried to train skill %d, which is not allowed.", skill);
 			return;
 		}
 
 		if(MaxSkill(skill) == 0) {
-			mlog(CLIENT__ERROR, "Tried to train skill %d, but training is not allowed at this level.", skill);
+			Log.Out(Logs::Detail, Logs::Skills, "Tried to train skill %d, but training is not allowed at this level.", skill);
 			return;
 		}
 
@@ -1593,7 +1602,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			uint16 t_level = SkillTrainLevel(skill, GetClass());
 			if (t_level == 0)
 			{
-				mlog(CLIENT__ERROR, "Tried to train a new skill %d which is invalid for this race/class.", skill);
+				Log.Out(Logs::Detail, Logs::Combat, "Tried to train a new skill %d which is invalid for this race/class.", skill);
 				return;
 			}
 			SetSkill(skill, t_level);
@@ -1737,7 +1746,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 }
 
 void Client::DoHPRegen() {
-	if(m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500))
+	if(!GetGM() && GetEndurance() == 0)
 		return;
 
 	SetHP(GetHP() + CalcHPRegen() + RestRegenHP);
@@ -1745,7 +1754,7 @@ void Client::DoHPRegen() {
 }
 
 void Client::DoManaRegen() {
-	if (GetMana() >= max_mana || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
+	if (GetMana() >= max_mana || (!GetGM() && GetEndurance() == 0))
 		return;
 
 	SetMana(GetMana() + CalcManaRegen() + RestRegenMana);
@@ -1830,19 +1839,19 @@ void Client::DoStaminaUpdate() {
 
 		if(m_pp.hunger_level < 1 || m_pp.thirst_level < 1)
 			m_pp.famished++; //We're famished.
-		else if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000 && m_pp.famished > 0)
+		else if(!Hungry() && !Thirsty() && m_pp.famished > 0)
 			m_pp.famished--; //We were famished but are recovering. 
 
-		if(m_pp.famished >= 120)
+		if(m_pp.famished >= RuleI(Character, FamishedLevel))
 		{
-			if(m_pp.hunger_level >= 3000 && m_pp.thirst_level >= 3000)
-				m_pp.famished = 60; //We are above the client's auto-consume threshold. Reduce us back down to stage 2.
+			if(!Hungry() && !Thirsty())
+				m_pp.famished = RuleI(Character, FamishedLevel)/2; //We are above the client's auto-consume threshold. Reduce us back down to stage 2.
 
-			else if(m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)
+			else if(m_pp.hunger_level < 1500 || m_pp.thirst_level < 1500)
 			{
 				if(GetEndurance() > 0)
 				{
-					//We are famished and are slowly losing endurance. (HP, mana, and end regen have all stopped in their respective methods.)
+					//We are famished and are slowly losing endurance. (End regen has stopped, and HP/mana will stop once end reaches 0.)
 					//Rate of End loss is 10 minutes regardless of race. Adjust SetEndurance() to compensate for different timers.
 					float endper = 0.0f;
 					if(stamina_timer.GetDuration() == 45000)
@@ -1856,7 +1865,7 @@ void Client::DoStaminaUpdate() {
 			}
 		}
 
-		//Message(CC_Yellow, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
+		Log.Out(Logs::Detail, Logs::None, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
 
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
@@ -1874,7 +1883,9 @@ void Client::DoStaminaUpdate() {
 
 void Client::DoEnduranceRegen()
 {
-	if(GetEndurance() >= GetMaxEndurance() || (m_pp.famished >= 120 && (m_pp.hunger_level < 2500 || m_pp.thirst_level < 2500)))
+	if(GetEndurance() >= GetMaxEndurance() || 
+		(!GetGM() && m_pp.famished >= RuleI(Character, FamishedLevel) && 
+		(m_pp.hunger_level < 1500 || m_pp.thirst_level < 1500)))
 		return;
 
 	SetEndurance(GetEndurance() + CalcEnduranceRegen() + RestRegenEndurance);

@@ -16,8 +16,9 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
-#include "../common/logsys.h"
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
+
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
 
@@ -801,9 +802,9 @@ int32 Client::acmod() {
 		//seems about 21 agil per extra AC pt over 300...
 	return (65 + ((agility-300) / 21));
 	}
-#if EQDEBUG >= 11
-	LogFile->write(EQEmuLog::Error, "Error in Client::acmod(): Agility: %i, Level: %i",agility,level);
-#endif
+
+	Log.Out(Logs::Detail, Logs::Error, "Error in Client::acmod(): Agility: %i, Level: %i", agility, level);
+
 	return 0;
 };
 
@@ -911,7 +912,7 @@ int32 Client::CalcMaxMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			Log.Out(Logs::Detail, Logs::Spells, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_mana = 0;
 			break;
 		}
@@ -931,9 +932,7 @@ int32 Client::CalcMaxMana()
 			cur_mana = curMana_cap;
 	}
 
-#if EQDEBUG >= 11
-	LogFile->write(EQEmuLog::Debug, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
-#endif
+	Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
 	return max_mana;
 }
 
@@ -983,14 +982,14 @@ int32 Client::CalcBaseMana()
 			break;
 		}
 		default: {
-			LogFile->write(EQEmuLog::Debug, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			Log.Out(Logs::General, Logs::None, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
 			max_m = 0;
 			break;
 		}
 	}
 
 #if EQDEBUG >= 11
-	LogFile->write(EQEmuLog::Debug, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
+	Log.Out(Logs::General, Logs::None, "Client::CalcBaseMana() called for %s - returning %d", GetName(), max_m);
 #endif
 	return max_m;
 }
@@ -1816,7 +1815,7 @@ uint32 Mob::GetInstrumentMod(uint16 spell_id) const
 	if (effectmod > effectmodcap)
 		effectmod = effectmodcap;
 
-	_log(SPELLS__BARDS, "%s::GetInstrumentMod() spell=%d mod=%d modcap=%d",
+	Log.Out(Logs::Detail, Logs::Spells, "%s::GetInstrumentMod() spell=%d mod=%d modcap=%d\n",
 			GetName(), spell_id, effectmod, effectmodcap);
 
 	return effectmod;

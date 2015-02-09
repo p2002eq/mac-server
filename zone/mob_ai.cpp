@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/features.h"
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
@@ -45,7 +45,6 @@ extern Zone *zone;
 #else
 	#define MobAI_DEBUG_Spells	-1
 #endif
-#define ABS(x) ((x)<0?-(x):(x))
 
 //NOTE: do NOT pass in beneficial and detrimental spell types into the same call here!
 bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
@@ -73,7 +72,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 	bool checked_los = false;	//we do not check LOS until we are absolutely sure we need to, and we only do it once.
 
-	float manaR = GetManaRatio();
 	for (int i = static_cast<int>(AIspells.size()) - 1; i >= 0; i--) {
 		if (AIspells[i].spellid <= 0 || AIspells[i].spellid >= SPDAT_RECORDS) {
 			// this is both to quit early to save cpu and to avoid casting bad spells
@@ -86,13 +84,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 			// recastdelay of 0 is recast time + variance. -1 recast time only. -2 is no recast time or variance (chain casting)
 			// All else is specified recast_delay + variance if the rule is enabled.
 			int32 mana_cost = AIspells[i].manacost;
-			int32 recast_delay = AIspells[i].recast_delay;
-			int32 cast_variance = 0;
-			if(RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
-			{
-				if(recast_delay >= 0)
-					cast_variance = zone->random.Int(0, 4) * 1000;
-			}
 
 			if (mana_cost == -1)
 				mana_cost = spells[AIspells[i].spellid].mana;
@@ -106,7 +97,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + cast_variance) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast) <= Timer::GetCurrentTime()
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -117,7 +108,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 					<< ", cancast[" << AIspells[i].time_cancast << "]<=" << Timer::GetCurrentTime()
 					<< ", type=" << AIspells[i].type << std::endl;
 #endif
-
+				
 				switch (AIspells[i].type) {
 					case SpellType_Heal: {
 						if (
@@ -196,7 +187,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-						if (debuffee && manaR >= 10 && zone->random.Roll(70) &&
+						if (debuffee && zone->random.Roll(70) &&
 								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
 							if (!checked_los) {
 								if (!CheckLosFN(debuffee))
@@ -209,13 +200,13 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 					case SpellType_Nuke: {
-						if (
-							manaR >= 10 && zone->random.Roll(70)
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
+						if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						{
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if (!CheckLosFN(tar))
+								{
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+								}
 								checked_los = true;
 							}
 							AIDoSpellCast(i, tar, mana_cost);
@@ -356,7 +347,6 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 		SendPosition();
 		SetMoving(false);
 	}
-
 	return CastSpell(AIspells[i].spellid, tar->GetID(), 1, AIspells[i].manacost == -2 ? 0 : -1, mana_cost, oDontDoAgainBefore, -1, -1, 0, 0, &(AIspells[i].resist_adjust));
 }
 
@@ -367,7 +357,7 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 		// according to Rogean, Live NPCs will just cast through walls/floors, no problem..
 		//
 		// This check was put in to address an idle-mob CPU issue
-		_log(AI__ERROR, "Error: detrimental spells requested from AICheckCloseBeneficialSpells!!");
+		Log.Out(Logs::General, Logs::Error, "Error: detrimental spells requested from AICheckCloseBeneficialSpells!!");
 		return(false);
 	}
 
@@ -437,12 +427,12 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 
 void Mob::AI_Init() {
 	pAIControlled = false;
-	AIthink_timer = 0;
-	AIwalking_timer = 0;
-	AImovement_timer = 0;
-	AItarget_check_timer = 0;
-	AIfeignremember_timer = nullptr;
-	AIscanarea_timer = 0;
+	AIthink_timer.reset(nullptr);
+	AIwalking_timer.reset(nullptr);
+	AImovement_timer.reset(nullptr);
+	AItarget_check_timer.reset(nullptr);
+	AIfeignremember_timer.reset(nullptr);
+	AIscanarea_timer.reset(nullptr);
 	minLastFightingDelayMoving = RuleI(NPC, LastFightingDelayMovingMin);
 	maxLastFightingDelayMoving = RuleI(NPC, LastFightingDelayMovingMax);
 
@@ -454,10 +444,9 @@ void Mob::AI_Init() {
 	pDontCureMeBefore = 0;
 }
 
-void NPC::AI_Init() {
-	Mob::AI_Init();
-
-	AIautocastspell_timer = 0;
+void NPC::AI_Init()
+{
+	AIautocastspell_timer.reset(nullptr);
 	casting_spell_AIindex = static_cast<uint8>(AIspells.size());
 
 	roambox_max_x = 0;
@@ -487,13 +476,13 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 		pLastFightingDelayMoving = 0;
 
 	pAIControlled = true;
-	AIthink_timer = new Timer(AIthink_duration);
+	AIthink_timer = std::unique_ptr<Timer>(new Timer(AIthink_duration));
 	AIthink_timer->Trigger();
-	AIwalking_timer = new Timer(0);
-	AImovement_timer = new Timer(AImovement_duration);
-	AItarget_check_timer = new Timer(AItarget_check_duration);
-	AIfeignremember_timer = new Timer(AIfeignremember_delay);
-	AIscanarea_timer = new Timer(AIscanarea_delay);
+	AIwalking_timer = std::unique_ptr<Timer>(new Timer(0));
+	AImovement_timer = std::unique_ptr<Timer>(new Timer(AImovement_duration));
+	AItarget_check_timer = std::unique_ptr<Timer>(new Timer(AItarget_check_duration));
+	AIfeignremember_timer = std::unique_ptr<Timer>(new Timer(AIfeignremember_delay));
+	AIscanarea_timer = std::unique_ptr<Timer>(new Timer(AIscanarea_delay));
 	if(IsNPC() && !CastToNPC()->WillAggroNPCs())
 		AIscanarea_timer->Disable();
 
@@ -530,10 +519,10 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		return;
 
 	if (AIspells.size() == 0) {
-		AIautocastspell_timer = new Timer(1000);
+		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(1000));
 		AIautocastspell_timer->Disable();
 	} else {
-		AIautocastspell_timer = new Timer(750);
+		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
 		AIautocastspell_timer->Start(RandomTimer(0, 15000), false);
 	}
 
@@ -554,19 +543,19 @@ void Mob::AI_Stop() {
 
 	pAIControlled = false;
 
-	safe_delete(AIthink_timer);
-	safe_delete(AIwalking_timer);
-	safe_delete(AImovement_timer);
-	safe_delete(AItarget_check_timer);
-	safe_delete(AIscanarea_timer);
-	safe_delete(AIfeignremember_timer);
+	AIthink_timer.reset(nullptr);
+	AIwalking_timer.reset(nullptr);
+	AImovement_timer.reset(nullptr);
+	AItarget_check_timer.reset(nullptr);
+	AIscanarea_timer.reset(nullptr);
+	AIfeignremember_timer.reset(nullptr);
 
 	hate_list.Wipe();
 }
 
 void NPC::AI_Stop() {
 	Waypoints.clear();
-	safe_delete(AIautocastspell_timer);
+	AIautocastspell_timer.reset(nullptr);
 }
 
 void Client::AI_Stop() {
@@ -798,7 +787,7 @@ void Client::AI_Process()
 				if(AImovement_timer->Check()) {
 					animation = GetRunspeed() * 21;
 					// Check if we have reached the last fear point
-					if((ABS(GetX()-m_FearWalkTarget.x) < 0.1) && (ABS(GetY()-m_FearWalkTarget.y) <0.1)) {
+					if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
@@ -849,7 +838,7 @@ void Client::AI_Process()
 		}
 		else
 		{
-			LogFile->write(EQEmuLog::Error, "Preventing DivineAura() crash due to null this.");
+			Log.Out(Logs::Detail, Logs::Error, "Preventing DivineAura() crash due to null this.");
 			return;
 		}
 
@@ -1074,7 +1063,7 @@ void Mob::AI_Process() {
 			} else {
 				if(AImovement_timer->Check()) {
 					// Check if we have reached the last fear point
-					if((ABS(GetX()-m_FearWalkTarget.x) < 0.1) && (ABS(GetY()-m_FearWalkTarget.y) <0.1)) {
+					if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
@@ -1417,7 +1406,7 @@ void Mob::AI_Process() {
 				else if (AImovement_timer->Check())
 				{
 					if(!IsRooted()) {
-						mlog(AI__WAYPOINTS, "Pursuing %s while engaged.", target->GetName());
+						Log.Out(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", target->GetName());
 						if(!RuleB(Pathing, Aggro) || !zone->pathing)
 							CalculateNewPosition2(target->GetX(), target->GetY(), target->GetZ(), GetRunspeed());
 						else
@@ -1650,7 +1639,7 @@ void NPC::AI_DoMovement() {
 				roambox_movingto_y = zone->random.Real(roambox_min_y+1,roambox_max_y-1);
 		}
 
-		mlog(AI__WAYPOINTS, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
+		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
 			roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x, roambox_movingto_y);
 		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, GetZ(), walksp, true))
 		{
@@ -1703,11 +1692,11 @@ void NPC::AI_DoMovement() {
 				else {
 					movetimercompleted=false;
 
-					mlog(QUESTS__PATHING, "We are departing waypoint %d.", cur_wp);
+					Log.Out(Logs::Detail, Logs::Pathing, "We are departing waypoint %d.", cur_wp);
 
 					//if we were under quest control (with no grid), we are done now..
 					if(cur_wp == -2) {
-						mlog(QUESTS__PATHING, "Non-grid quest mob has reached its quest ordered waypoint. Leaving pathing mode.");
+						Log.Out(Logs::Detail, Logs::Pathing, "Non-grid quest mob has reached its quest ordered waypoint. Leaving pathing mode.");
 						roamer = false;
 						cur_wp = 0;
 					}
@@ -1738,7 +1727,7 @@ void NPC::AI_DoMovement() {
 			{	// currently moving
 				if (m_CurrentWayPoint.x == GetX() && m_CurrentWayPoint.y == GetY())
 				{	// are we there yet? then stop
-					mlog(AI__WAYPOINTS, "We have reached waypoint %d (%.3f,%.3f,%.3f) on grid %d", cur_wp, GetX(), GetY(), GetZ(), GetGrid());
+					Log.Out(Logs::Detail, Logs::AI, "We have reached waypoint %d (%.3f,%.3f,%.3f) on grid %d", cur_wp, GetX(), GetY(), GetZ(), GetGrid());
 					SetWaypointPause();
 					if(GetAppearance() != eaStanding)
 						SetAppearance(eaStanding, false);
@@ -1784,7 +1773,7 @@ void NPC::AI_DoMovement() {
 			if (movetimercompleted==true)
 			{ // time to pause has ended
 				SetGrid( 0 - GetGrid()); // revert to AI control
-				mlog(QUESTS__PATHING, "Quest pathing is finished. Resuming on grid %d", GetGrid());
+				Log.Out(Logs::Detail, Logs::Pathing, "Quest pathing is finished. Resuming on grid %d", GetGrid());
 
 				if(GetAppearance() != eaStanding)
 					SetAppearance(eaStanding, false);
@@ -1820,7 +1809,7 @@ void NPC::AI_DoMovement() {
 		if (!CP2Moved)
 		{
 			if(moved) {
-				mlog(AI__WAYPOINTS, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
+				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				ClearFeignMemory();
 				moved=false;
 				SetMoving(false);
@@ -1934,28 +1923,50 @@ void Mob::AI_Event_NoLongerEngaged() {
 }
 
 //this gets called from InterruptSpell() for failure or SpellFinished() for success
-void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
-	if (slot == 1) {
+void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot)
+{
+	if (slot == 1)
+	{
 		uint32 recovery_time = 0;
-		if (iCastSucceeded) {
-			if (casting_spell_AIindex < AIspells.size()) {
-					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
-					if (AIspells[casting_spell_AIindex].recast_delay > 0)
-					{
-						if (AIspells[casting_spell_AIindex].recast_delay < 10000)
-							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
-					}
-					else if(AIspells[casting_spell_AIindex].recast_delay == -2)
-						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
-					else
-						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+		if (iCastSucceeded)
+		{
+			if (casting_spell_AIindex < AIspells.size())
+			{
+				int32 recast_delay = AIspells[casting_spell_AIindex].recast_delay;
+				int32 cast_variance = 0;
+
+				if (RuleB(Spells, NPCUseRecastVariance) || recast_delay == 0)
+				{
+					if (recast_delay >= 0)
+						cast_variance = zone->random.Int(0, 4) * 1000;
+				}
+
+				recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
+
+				if (recast_delay > 0)
+				{
+					if (recast_delay < 10000)
+						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (recast_delay * 1000) + cast_variance;
+				}
+				else if (recast_delay == -1)
+					// editor default; no variance added
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+
+				else if (recast_delay == -2)
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
+
+				else
+					// 0; add variance
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time + cast_variance;
 			}
 			if (recovery_time < AIautocastspell_timer->GetSetAtTrigger())
 				recovery_time = AIautocastspell_timer->GetSetAtTrigger();
 			AIautocastspell_timer->Start(recovery_time, false);
 		}
 		else
+		{
 			AIautocastspell_timer->Start(AISpellVar.fail_recast, false);
+		}
 		casting_spell_AIindex = AIspells.size();
 	}
 }
@@ -1965,7 +1976,7 @@ bool NPC::AI_EngagedCastCheck() {
 	if (AIautocastspell_timer->Check(false)) {
 		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
 
-		mlog(AI__SPELLS, "Engaged autocast check triggered. Trying to cast healing spells then maybe offensive spells.");
+		Log.Out(Logs::Detail, Logs::AI, "Engaged autocast check triggered. Trying to cast healing spells then maybe offensive spells.");
 
 		// try casting a heal or gate
 		if (!AICastSpell(this, AISpellVar.engaged_beneficial_self_chance, SpellType_Heal | SpellType_Escape | SpellType_InCombatBuff)) {
@@ -1988,7 +1999,7 @@ bool NPC::AI_PursueCastCheck() {
 	if (AIautocastspell_timer->Check(false)) {
 		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
 
-		mlog(AI__SPELLS, "Engaged (pursuing) autocast check triggered. Trying to cast offensive spells.");
+		Log.Out(Logs::Detail, Logs::AI, "Engaged (pursuing) autocast check triggered. Trying to cast offensive spells.");
 		if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
 			//no spell cast, try again soon.
 			AIautocastspell_timer->Start(RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
@@ -2741,7 +2752,6 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
                                         "idle_b_chance FROM npc_spells WHERE id=%d", iDBSpellsID);
         auto results = QueryDatabase(query);
         if (!results.Success()) {
-            std::cerr << "Error in AddNPCSpells query1 '" << query << "' " << results.ErrorMessage() << std::endl;
 			return nullptr;
         }
 
@@ -2777,7 +2787,6 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
 
         if (!results.Success())
         {
-            std::cerr << "Error in AddNPCSpells query1 '" << query << "' " << results.ErrorMessage() << std::endl;
 			return nullptr;
         }
 
@@ -2834,7 +2843,6 @@ uint32 ZoneDatabase::GetMaxNPCSpellsID() {
 	std::string query = "SELECT max(id) from npc_spells";
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-        std::cerr << "Error in GetMaxNPCSpellsID query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -2849,15 +2857,16 @@ uint32 ZoneDatabase::GetMaxNPCSpellsID() {
     return atoi(row[0]);
 }
 
-DBnpcspellseffects_Struct* ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEffectsID) {
+DBnpcspellseffects_Struct *ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEffectsID)
+{
 	if (iDBSpellsEffectsID == 0)
 		return nullptr;
 
 	if (!npc_spellseffects_cache) {
 		npc_spellseffects_maxid = GetMaxNPCSpellsEffectsID();
-		npc_spellseffects_cache = new DBnpcspellseffects_Struct*[npc_spellseffects_maxid+1];
-		npc_spellseffects_loadtried = new bool[npc_spellseffects_maxid+1];
-		for (uint32 i=0; i<=npc_spellseffects_maxid; i++) {
+		npc_spellseffects_cache = new DBnpcspellseffects_Struct *[npc_spellseffects_maxid + 1];
+		npc_spellseffects_loadtried = new bool[npc_spellseffects_maxid + 1];
+		for (uint32 i = 0; i <= npc_spellseffects_maxid; i++) {
 			npc_spellseffects_cache[i] = 0;
 			npc_spellseffects_loadtried[i] = false;
 		}
@@ -2866,54 +2875,55 @@ DBnpcspellseffects_Struct* ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEff
 	if (iDBSpellsEffectsID > npc_spellseffects_maxid)
 		return nullptr;
 
-	if (npc_spellseffects_cache[iDBSpellsEffectsID])  // it's in the cache, easy =)
+	if (npc_spellseffects_cache[iDBSpellsEffectsID]) // it's in the cache, easy =)
 		return npc_spellseffects_cache[iDBSpellsEffectsID];
 
 	if (npc_spellseffects_loadtried[iDBSpellsEffectsID])
-        return nullptr;
+		return nullptr;
 
-    npc_spellseffects_loadtried[iDBSpellsEffectsID] = true;
+	npc_spellseffects_loadtried[iDBSpellsEffectsID] = true;
 
-    std::string query = StringFormat("SELECT id, parent_list FROM npc_spells_effects WHERE id=%d", iDBSpellsEffectsID);
-    auto results = QueryDatabase(query);
-    if (!results.Success()) {
-        std::cerr << "Error in AddNPCSpells query1 '" << query << "' " << results.ErrorMessage() << std::endl;
-        return nullptr;
-    }
+	std::string query =
+	    StringFormat("SELECT id, parent_list FROM npc_spells_effects WHERE id=%d", iDBSpellsEffectsID);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return nullptr;
+	}
 
-    if (results.RowCount() != 1)
-        return nullptr;
+	if (results.RowCount() != 1)
+		return nullptr;
 
-    auto row = results.begin();
-    uint32 tmpparent_list = atoi(row[1]);
+	auto row = results.begin();
+	uint32 tmpparent_list = atoi(row[1]);
 
-    query = StringFormat("SELECT spell_effect_id, minlevel, "
-                        "maxlevel,se_base, se_limit, se_max "
-                        "FROM npc_spells_effects_entries "
-                        "WHERE npc_spells_effects_id = %d ORDER BY minlevel", iDBSpellsEffectsID);
-    results = QueryDatabase(query);
-    if (!results.Success())
-        return nullptr;
+	query = StringFormat("SELECT spell_effect_id, minlevel, "
+			     "maxlevel,se_base, se_limit, se_max "
+			     "FROM npc_spells_effects_entries "
+			     "WHERE npc_spells_effects_id = %d ORDER BY minlevel",
+			     iDBSpellsEffectsID);
+	results = QueryDatabase(query);
+	if (!results.Success())
+		return nullptr;
 
-    uint32 tmpSize = sizeof(DBnpcspellseffects_Struct) + (sizeof(DBnpcspellseffects_entries_Struct) * results.RowCount());
-    npc_spellseffects_cache[iDBSpellsEffectsID] = (DBnpcspellseffects_Struct*) new uchar[tmpSize];
-    memset(npc_spellseffects_cache[iDBSpellsEffectsID], 0, tmpSize);
-    npc_spellseffects_cache[iDBSpellsEffectsID]->parent_list = tmpparent_list;
-    npc_spellseffects_cache[iDBSpellsEffectsID]->numentries = results.RowCount();
+	uint32 tmpSize =
+	    sizeof(DBnpcspellseffects_Struct) + (sizeof(DBnpcspellseffects_entries_Struct) * results.RowCount());
+	npc_spellseffects_cache[iDBSpellsEffectsID] = (DBnpcspellseffects_Struct *)new uchar[tmpSize];
+	memset(npc_spellseffects_cache[iDBSpellsEffectsID], 0, tmpSize);
+	npc_spellseffects_cache[iDBSpellsEffectsID]->parent_list = tmpparent_list;
+	npc_spellseffects_cache[iDBSpellsEffectsID]->numentries = results.RowCount();
 
-    int entryIndex = 0;
-    for (row = results.begin(); row != results.end(); ++row, ++entryIndex)
-    {
-        int spell_effect_id = atoi(row[0]);
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].spelleffectid =  spell_effect_id;
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].minlevel = atoi(row[1]);
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].maxlevel = atoi(row[2]);
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].base = atoi(row[3]);
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].limit = atoi(row[4]);
-        npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].max = atoi(row[5]);
-    }
+	int entryIndex = 0;
+	for (row = results.begin(); row != results.end(); ++row, ++entryIndex) {
+		int spell_effect_id = atoi(row[0]);
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].spelleffectid = spell_effect_id;
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].minlevel = atoi(row[1]);
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].maxlevel = atoi(row[2]);
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].base = atoi(row[3]);
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].limit = atoi(row[4]);
+		npc_spellseffects_cache[iDBSpellsEffectsID]->entries[entryIndex].max = atoi(row[5]);
+	}
 
-    return npc_spellseffects_cache[iDBSpellsEffectsID];
+	return npc_spellseffects_cache[iDBSpellsEffectsID];
 }
 
 uint32 ZoneDatabase::GetMaxNPCSpellsEffectsID() {
@@ -2921,7 +2931,6 @@ uint32 ZoneDatabase::GetMaxNPCSpellsEffectsID() {
 	std::string query = "SELECT max(id) FROM npc_spells_effects";
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
-        std::cerr << "Error in GetMaxNPCSpellsEffectsID query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 

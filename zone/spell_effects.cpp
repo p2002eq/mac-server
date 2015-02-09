@@ -1,7 +1,3 @@
-/*
- * vim: set noexpandtab tabstop=4 shiftwidth=4 syntax=cpp:
-*/
-
 /*	EQEMu: Everquest Server Emulator
 	Copyright (C) 2001-2004 EQEMu Development Team (http://eqemu.org)
 
@@ -20,9 +16,10 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
+#include "../common/eqemu_logsys.h"
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/item.h"
 #include "../common/rulesys.h"
 #include "../common/skills.h"
@@ -91,7 +88,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			buffslot = AddBuff(caster, spell_id, durat, caster_level);
 			if(buffslot == -1)	// stacking failure
 			{
-				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error from item click.", spell_id);
+				Log.Out(Logs::Detail, Logs::Spells, "Spell: %d stacking error from item click.", spell_id);
 				return false;
 			}
 		}
@@ -118,7 +115,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			}
 			if(buffslot == -1)	// stacking failure
 			{
-				mlog(SPELLS__CASTING_ERR, "Spell: %d stacking error.", spell_id);
+				Log.Out(Logs::Detail, Logs::Spells, "Spell: %d stacking error.", spell_id);
 				return false;
 			}
 		} else {
@@ -235,6 +232,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 					// take partial damage into account
 					dmg = (int32) (dmg * partial / 100);
+					if (dmg == 0)
+					{
+						dmg = -1;		// there are no zero damage non-full resists
+					}
 
 					//handles AAs and what not...
 					if(caster) {
@@ -373,8 +374,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						snprintf(effect_desc, _EDLEN, "Current Mana: %+i", effect_value);
 #endif
 						SetMana(GetMana() + effect_value);
-						caster->SetMana(caster->GetMana() + abs(effect_value));
-						
+						caster->SetMana(caster->GetMana() + std::abs(effect_value));
+
 						if (effect_value < 0)
 							TryTriggerOnValueAmount(false, true);
 #ifdef SPELL_EFFECT_SPAM
@@ -473,7 +474,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 					if(!target_zone) {
 #ifdef SPELL_EFFECT_SPAM
-						LogFile->write(EQEmuLog::Debug, "Succor/Evacuation Spell In Same Zone.");
+						Log.Out(Logs::General, Logs::None, "Succor/Evacuation Spell In Same Zone.");
 #endif
 							if(IsClient())
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
@@ -482,7 +483,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
-						LogFile->write(EQEmuLog::Debug, "Succor/Evacuation Spell To Another Zone.");
+						Log.Out(Logs::General, Logs::None, "Succor/Evacuation Spell To Another Zone.");
 #endif
 						if(IsClient())
 							CastToClient()->MovePC(target_zone, x, y, z, heading);
@@ -710,7 +711,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						stun_resist += aabonuses.StunResist;
 
 					if (stun_resist <= 0 || zone->random.Int(0,99) >= stun_resist) {
-						mlog(COMBAT__HITS, "Stunned. We had %d percent resist chance.", stun_resist);
+						Log.Out(Logs::Detail, Logs::Combat, "Stunned. We had %d percent resist chance.", stun_resist);
 
 						if (caster->IsClient())
 							effect_value += effect_value*caster->CastToClient()->GetFocusEffect(focusFcStunTimeMod, spell_id)/100;
@@ -720,7 +721,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						if (IsClient())
 							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 
-						mlog(COMBAT__HITS, "Stun Resisted. We had %d percent resist chance.", stun_resist);
+						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. We had %d percent resist chance.", stun_resist);
 					}
 				}
 				break;
@@ -774,20 +775,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					SendAppearancePacket(14, 100, true, true);
 				} else if(IsNPC()) {
 					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
-				}
-
-				bool bBreak = false;
-
-				// define spells with fixed duration
-				// charm spells with -1 in field 209 are all of fixed duration, so lets use that instead of spell_ids
-				if(spells[spell_id].powerful_flag == -1)
-					bBreak = true;
-
-				if (!bBreak)
-				{
-					int resistMod = static_cast<int>(partial) + (GetCHA()/25);
-					resistMod = resistMod > 100 ? 100 : resistMod;
-					buffs[buffslot].ticsremaining = resistMod * buffs[buffslot].ticsremaining / 100;
 				}
 
 				if(IsClient())
@@ -1614,7 +1601,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if (IsCorpse() && CastToCorpse()->IsPlayerCorpse()) {
 
 					if(caster)
-						mlog(SPELLS__REZ, " corpse being rezzed using spell %i by %s",
+						Log.Out(Logs::Detail, Logs::Spells, " corpse being rezzed using spell %i by %s",
 							spell_id, caster->GetName());
 
 					CastToCorpse()->CastRezz(spell_id, caster);
@@ -1736,7 +1723,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 					else {
 						Message_StringID(CC_Red, TARGET_NOT_FOUND);
-						LogFile->write(EQEmuLog::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
+						Log.Out(Logs::General, Logs::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
 					}
 				}
 
@@ -1941,7 +1928,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(toss_amt > 20.0)
 					toss_amt = 20.0;
 
-				_log(SPELLS__CASTING, "TossUp Spell: %d has a pushback (%0.1f) pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, toss_amt);
+				Log.Out(Logs::Detail, Logs::Spells, "TossUp Spell: %d has a pushback (%0.1f) pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, toss_amt);
 				DoKnockback(caster, spells[spell_id].pushback, toss_amt);
 
 				break;
@@ -2914,7 +2901,7 @@ int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, 
 		int mod = caster->GetInstrumentMod(spell_id);
 		mod = ApplySpellEffectiveness(caster, spell_id, mod, true);
 		effect_value = effect_value * mod / 10;
-		mlog(SPELLS__BARDS, "Effect value %d altered with bard modifier of %d to yeild %d", oval, mod, effect_value);
+		Log.Out(Logs::Detail, Logs::Spells, "Effect value %d altered with bard modifier of %d to yeild %d", oval, mod, effect_value);
 	}
 
 	effect_value = mod_effect_value(effect_value, spell_id, spells[spell_id].effectid[effect_id], caster);
@@ -2976,7 +2963,7 @@ snare has both of them negative, yet their range should work the same:
 		updownsign = 1;
 	}
 
-	mlog(SPELLS__EFFECT_VALUES, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
+	Log.Out(Logs::Detail, Logs::Spells, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
 		spell_id, formula, base, max, caster_level, updownsign);
 
 	switch(formula)
@@ -3058,7 +3045,7 @@ snare has both of them negative, yet their range should work the same:
 			break;
 		}
 		case 123:	// added 2/6/04
-			result = zone->random.Int(ubase, abs(max));
+			result = zone->random.Int(ubase, std::abs(max));
 			break;
 
 		case 124:	// check sign
@@ -3173,7 +3160,7 @@ snare has both of them negative, yet their range should work the same:
 				result = ubase * (caster_level * (formula - 2000) + 1);
 			}
 			else
-				LogFile->write(EQEmuLog::Debug, "Unknown spell effect value forumula %d", formula);
+				Log.Out(Logs::General, Logs::None, "Unknown spell effect value forumula %d", formula);
 		}
 	}
 
@@ -3198,7 +3185,7 @@ snare has both of them negative, yet their range should work the same:
 	if (base < 0 && result > 0)
 		result *= -1;
 
-	mlog(SPELLS__EFFECT_VALUES, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
+	Log.Out(Logs::Detail, Logs::Spells, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
 
 	return result;
 }
@@ -3230,18 +3217,18 @@ void Mob::BuffProcess()
 							IsMezSpell(buffs[buffs_i].spellid) ||
 							IsBlindSpell(buffs[buffs_i].spellid))
 						{
-							mlog(SPELLS__BUFFS, "Buff %d in slot %d has expired. Fading.", buffs[buffs_i].spellid, buffs_i);
+							Log.Out(Logs::Detail, Logs::Spells, "Buff %d in slot %d has expired. Fading.", buffs[buffs_i].spellid, buffs_i);
 							BuffFadeBySlot(buffs_i);
 						}
 					}
 					else if (buffs[buffs_i].ticsremaining < 0)
 					{
-						mlog(SPELLS__BUFFS, "Buff %d in slot %d has expired. Fading.", buffs[buffs_i].spellid, buffs_i);
+						Log.Out(Logs::Detail, Logs::Spells, "Buff %d in slot %d has expired. Fading.", buffs[buffs_i].spellid, buffs_i);
 						BuffFadeBySlot(buffs_i);
 					}
 					else
 					{
-						mlog(SPELLS__BUFFS, "Buff %d in slot %d has %d tics remaining.", buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining);
+						Log.Out(Logs::Detail, Logs::Spells, "Buff %d in slot %d has %d tics remaining.", buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining);
 					}
 				}
 				else if(IsClient())
@@ -3440,7 +3427,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 
 			case SE_Charm: {
-				if (!caster || !PassCharismaCheck(caster, this, spell_id)) {
+				if (!caster || !PassCharismaCheck(caster, spell_id)) {
 					BuffFadeByEffect(SE_Charm);
 				}
 
@@ -3612,7 +3599,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 	if (IsClient() && !CastToClient()->IsDead())
 		CastToClient()->MakeBuffFadePacket(buffs[slot].spellid, slot);
 
-	mlog(SPELLS__BUFFS, "Fading buff %d from slot %d", buffs[slot].spellid, slot);
+	Log.Out(Logs::Detail, Logs::Spells, "Fading buff %d from slot %d", buffs[slot].spellid, slot);
 
 	if(spells[buffs[slot].spellid].viral_targets > 0) {
 		bool last_virus = true;
@@ -3797,6 +3784,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 			{
 				if(IsNPC())
 				{
+					InterruptSpell();
 					CastToNPC()->RestoreGuardSpotCharm();
 					SendAppearancePacket(AT_Pet, 0, true, true);
 					CastToNPC()->RestoreNPCFactionID();
@@ -4651,7 +4639,7 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 						return 0;
 					break;
 				default:
-					LogFile->write(EQEmuLog::Normal, "CalcFocusEffect: unknown limit spelltype %d", focus_spell.base[i]);
+					Log.Out(Logs::General, Logs::Normal, "CalcFocusEffect: unknown limit spelltype %d", focus_spell.base[i]);
 			}
 			break;
 
@@ -4990,7 +4978,7 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 		//this spits up a lot of garbage when calculating spell focuses
 		//since they have all kinds of extra effects on them.
 		default:
-			LogFile->write(EQEmuLog::Normal, "CalcFocusEffect: unknown effectid %d", focus_spell.effectid[i]);
+			Log.Out(Logs::General, Logs::Normal, "CalcFocusEffect: unknown effectid %d", focus_spell.effectid[i]);
 #endif
 		}
 		

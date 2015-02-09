@@ -25,6 +25,7 @@
 #include "position.h"
 #include <set>
 #include <vector>
+#include <memory>
 
 #define INVIS_OFF 0
 #define INVIS_NORMAL 1
@@ -471,7 +472,7 @@ public:
 	std::list<tHateEntry*>& GetHateList() { return hate_list.GetHateList(); }
 	bool CheckLosFN(Mob* other);
 	bool CheckLosFN(float posX, float posY, float posZ, float mobSize);
-	bool CheckRegion(Mob* other);
+	bool CheckRegion(Mob* other, bool skipwater = true);
 	inline void SetChanged() { pLastChange = Timer::GetCurrentTime(); }
 	inline const uint32 LastChange() const { return pLastChange; }
 	inline void SetLastLosState(bool value) { last_los_check = value; }
@@ -520,12 +521,6 @@ public:
 	bool HasProcs() const;
 	bool IsCombatProc(uint16 spell_id);
 
-	//Logging
-	bool IsLoggingEnabled() const { return(logging_enabled); }
-	void EnableLogging() { logging_enabled = true; }
-	void DisableLogging() { logging_enabled = false; }
-
-
 	//More stuff to sort:
 	virtual bool IsRaidTarget() const { return false; };
 	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false, int16 spellid = 0);
@@ -572,7 +567,7 @@ public:
 	void WakeTheDead(uint16 spell_id, Mob *target, uint32 duration);
 	void Spin();
 	void Kill();
-	bool PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id);
+	bool PassCharismaCheck(Mob* caster, uint16 spell_id);
 	bool TryDeathSave();
 	bool TryDivineSave();
 	void DoBuffWearOffEffect(uint32 index);
@@ -868,8 +863,8 @@ public:
 	virtual FACTION_VALUE GetReverseFactionCon(Mob* iOther) { return FACTION_INDIFFERENT; }
 
 	inline bool IsTrackable() const { return(trackable); }
-	Timer* GetAIThinkTimer() { return AIthink_timer; }
-	Timer* GetAIMovementTimer() { return AImovement_timer; }
+	Timer* GetAIThinkTimer() { return AIthink_timer.get(); }
+	Timer* GetAIMovementTimer() { return AImovement_timer.get(); }
 	Timer GetAttackTimer() { return attack_timer; }
 	Timer GetAttackDWTimer() { return attack_dw_timer; }
 	inline bool IsFindable() { return findable; }
@@ -1167,14 +1162,14 @@ protected:
 	uint32 maxLastFightingDelayMoving;
 	float pAggroRange;
 	float pAssistRange;
-	Timer* AIthink_timer;
-	Timer* AImovement_timer;
-	Timer* AItarget_check_timer;
+	std::unique_ptr<Timer> AIthink_timer;
+	std::unique_ptr<Timer> AImovement_timer;
+	std::unique_ptr<Timer> AItarget_check_timer;
 	bool movetimercompleted;
 	bool permarooted;
-	Timer* AIscanarea_timer;
-	Timer* AIwalking_timer;
-	Timer* AIfeignremember_timer;
+	std::unique_ptr<Timer> AIscanarea_timer;
+	std::unique_ptr<Timer> AIwalking_timer;
+	std::unique_ptr<Timer> AIfeignremember_timer;
 	uint32 pLastFightingDelayMoving;
 	HateList hate_list;
 	std::set<uint32> feign_memory_list;

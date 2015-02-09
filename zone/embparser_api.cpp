@@ -21,8 +21,9 @@
 #ifdef EMBPERL
 #ifdef EMBPERL_XS
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/misc_functions.h"
+#include "../common/eqemu_logsys.h"
 
 #include "embparser.h"
 #include "embxs.h"
@@ -269,7 +270,6 @@ XS(XS__unique_spawn)
 	float	heading = 0;
 	if(items == 7)
 		heading = (float)SvNV(ST(6));
-
 
 	Mob *r =  quest_manager.unique_spawn(npc_type, grid, unused, glm::vec4(x, y, z, heading));
 	RETVAL = (r != nullptr) ? r->GetID() : 0;
@@ -2815,6 +2815,37 @@ XS(XS__crosszonesignalnpcbynpctypeid)
 	XSRETURN_EMPTY;
 }
 
+XS(XS__debug);
+XS(XS__debug)
+{
+	dXSARGS;
+	if (items != 1 && items != 2){
+		Perl_croak(aTHX_ "Usage: debug(message, [debug_level])");
+	}
+	else{
+		std::string log_message = (std::string)SvPV_nolen(ST(0));
+		uint8 debug_level = 1;
+
+		if (items == 2)
+			debug_level = (uint8)SvIV(ST(1));
+
+		if (debug_level > Logs::Detail)
+			return;
+
+		if (debug_level == Logs::General){
+			Log.Out(Logs::General, Logs::QuestDebug, log_message);
+		}
+		else if (debug_level == Logs::Moderate){
+			Log.Out(Logs::Moderate, Logs::QuestDebug, log_message);
+		}
+		else if (debug_level == Logs::Detail){
+			Log.Out(Logs::Detail, Logs::QuestDebug, log_message);
+		}
+	}
+	XSRETURN_EMPTY;
+}
+
+
 /*
 This is the callback perl will look for to setup the
 quest package's XSUBs
@@ -2828,7 +2859,7 @@ EXTERN_C XS(boot_quest)
 	file[255] = '\0';
 
 	if(items != 1)
-		LogFile->write(EQEmuLog::Error, "boot_quest does not take any arguments.");
+		Log.Out(Logs::General, Logs::Error, "boot_quest does not take any arguments.");
 
 	char buf[128];	//shouldent have any function names longer than this.
 
@@ -2903,6 +2934,8 @@ EXTERN_C XS(boot_quest)
 		newXS(strcpy(buf, "signalwith"), XS__signalwith, file);
 		newXS(strcpy(buf, "setglobal"), XS__setglobal, file);
 		newXS(strcpy(buf, "targlobal"), XS__targlobal, file);
+		newXS(strcpy(buf, "debug"), XS__debug, file);
+		newXS(strcpy(buf, "debug"), XS__debug, file);
 		newXS(strcpy(buf, "delglobal"), XS__delglobal, file);
 		newXS(strcpy(buf, "ding"), XS__ding, file);
 		newXS(strcpy(buf, "rebind"), XS__rebind, file);

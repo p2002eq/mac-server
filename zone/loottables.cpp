@@ -16,9 +16,10 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/loottable.h"
 #include "../common/misc_functions.h"
+#include "../common/data_verification.h"
 
 #include "client.h"
 #include "entity.h"
@@ -35,7 +36,7 @@
 
 // Queries the loottable: adds item & coin to the npc
 void ZoneDatabase::AddLootTableToNPC(NPC* npc,uint32 loottable_id, ItemList* itemlist, uint32* copper, uint32* silver, uint32* gold, uint32* plat) {
-	const LootTable_Struct* lts = 0;
+	const LootTable_Struct* lts = nullptr;
 	*copper = 0;
 	*silver = 0;
 	*gold = 0;
@@ -100,8 +101,8 @@ void ZoneDatabase::AddLootTableToNPC(NPC* npc,uint32 loottable_id, ItemList* ite
 				drop_chance = zone->random.Real(0.0, 100.0);
 			}
 
-			if (ltchance != 0.0 && (ltchance == 100.0 || drop_chance < ltchance)) {
-				AddLootDropToNPC(npc,lts->Entries[i].lootdrop_id, itemlist, droplimit, mindrop);
+			if (ltchance != 0.0 && (ltchance == 100.0 || drop_chance <= ltchance)) {
+				AddLootDropToNPC(npc, lts->Entries[i].lootdrop_id, itemlist, droplimit, mindrop);
 			}
 		}
 	}
@@ -114,73 +115,68 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 	if (!lds) {
 		return;
 	}
-	if(lds->NumEntries == 0)	//nothing possible to add
+	if (lds->NumEntries == 0)
 		return;
-
-	// Too long a list needs to be limited.
-	if(lds->NumEntries > 99 && droplimit < 1)
-		droplimit = lds->NumEntries/100;
-
-	uint8 limit = 0;
-	// Start at a random point in itemlist.
-	uint32 item = zone->random.Int(0, lds->NumEntries-1);
-	// Main loop.
-	for (uint32 i=0; i<lds->NumEntries;)
-	{
-		//Force the itemlist back to beginning.
-		if (item > (lds->NumEntries-1))
-			item = 0;
-
-		uint8 charges = lds->Entries[item].multiplier;
-		uint8 pickedcharges = 0;
-		// Loop to check multipliers.
-		for (uint32 x=1; x<=charges; x++)
-		{
-			// Actual roll.
-			float thischance = 0.0;
-			thischance = lds->Entries[item].chance;
-
-			float drop_chance = 0.0;
-			if(thischance != 100.0)
-				drop_chance = zone->random.Real(0.0, 100.0);
-
-#if EQDEBUG>=11
-			LogFile->write(EQEmuLog::Debug, "Drop chance for npc: %s, this chance:%f, drop roll:%f", npc->GetName(), thischance, drop_chance);
-#endif
-			if (thischance == 100.0 || drop_chance < thischance)
-			{
-				uint32 itemid = lds->Entries[item].item_id;
-				int8 charges = lds->Entries[item].item_charges;
-				const Item_Struct* dbitem = GetItem(itemid);
-
-				if(database.ItemQuantityType(itemid) == Quantity_Charges)
-				{
-					if(charges <= 1)
-						charges = dbitem->MaxCharges;
+	if (droplimit == 0 && mindrop == 0) {
+		for (uint32 i = 0; i < lds->NumEntries; ++i) {
+			int charges = lds->Entries[i].multiplier;
+			for (int j = 0; j < charges; ++j) {
+				if (zone->random.Real(0.0, 100.0) <= lds->Entries[i].chance) {
+					const Item_Struct* dbitem = GetItem(lds->Entries[i].item_id);
+					npc->AddLootDrop(dbitem, itemlist, lds->Entries[i].item_charges, lds->Entries[i].minlevel,
+						lds->Entries[i].maxlevel, lds->Entries[i].equip_item > 0 ? true : false, false);
 				}
-
-				npc->AddLootDrop(dbitem, itemlist, charges, lds->Entries[item].minlevel, lds->Entries[item].maxlevel, lds->Entries[item].equip_item, false);
-				pickedcharges++;
 			}
 		}
-		// Items with multipliers only count as 1 towards the limit.
-		if(pickedcharges > 0)
-			limit++;
-
-		// If true, limit reached.
-		if(limit >= droplimit && droplimit > 0)
-			break;
-
-		item++;
-		i++;
-
-		// We didn't reach our minimium, run loop again.
-		if(i == lds->NumEntries){
-			if(limit < mindrop){
-				i = 0;
+		return;
+	}
+	if (lds->NumEntries > 100 && droplimit == 0) {
+		droplimit = 10;
+	}
+	if (droplimit < mindrop) {
+		droplimit = mindrop;
+	}
+	float roll_t = 0.0f;
+	bool active_item_list = false;
+	for (uint32 i = 0; i < lds->NumEntries; ++i) {
+		const Item_Struct* db_item = GetItem(lds->Entries[i].item_id);
+		if (db_item) {
+			roll_t += lds->Entries[i].chance;
+			active_item_list = true;
+		}
+	}
+	roll_t = EQEmu::ClampLower(roll_t, 100.0f);
+	if (!active_item_list) {
+		return;
+	}
+	mindrop = EQEmu::ClampLower(mindrop, (uint8)1);
+	int item_count = zone->random.Int(mindrop, droplimit);
+	for (int i = 0; i < item_count; ++i) {
+		float roll = zone->random.Real(0.0, roll_t);
+		for (uint32 j = 0; j < lds->NumEntries; ++j) {
+			const Item_Struct* db_item = GetItem(lds->Entries[j].item_id);
+			if (db_item) {
+				if (roll < lds->Entries[j].chance) {
+					npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+						lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
+					int charges = (int)lds->Entries[i].multiplier;
+					charges = EQEmu::ClampLower(charges, 1);
+					for (int k = 1; k < charges; ++k) {
+						float c_roll = zone->random.Real(0.0, 100.0);
+						if (c_roll <= lds->Entries[i].chance) {
+							npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+								lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
+						}
+					}
+					j = lds->NumEntries;
+					break;
+				}
+				else {
+					roll -= lds->Entries[j].chance;
+				}
 			}
 		}
-	} // We either ran out of items or reached our limit.
+	}
 
 	npc->UpdateEquipLightValue();
 	// no wearchange associated with this function..so, this should not be needed
@@ -199,7 +195,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 
 	ServerLootItem_Struct* item = new ServerLootItem_Struct;
 #if EQDEBUG>=11
-		LogFile->write(EQEmuLog::Debug, "Adding drop to npc: %s, Item: %i", GetName(), item2->ID);
+		Log.Out(Logs::General, Logs::None, "Adding drop to npc: %s, Item: %i", GetName(), item2->ID);
 #endif
 
 	EQApplicationPacket* outapp = nullptr;

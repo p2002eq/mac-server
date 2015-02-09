@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/classes.h"
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/item.h"
 #include "../common/rulesys.h"
 #include "../common/skills.h"
@@ -77,9 +77,9 @@ void Client::CalcBonuses()
 
 	CalcSpellBonuses(&spellbonuses);
 
-	_log(AA__BONUSES, "Calculating AA Bonuses for %s.", this->GetCleanName());
+	Log.Out(Logs::Detail, Logs::AA, "Calculating AA Bonuses for %s.", this->GetCleanName());
 	CalcAABonuses(&aabonuses);	//we're not quite ready for this
-	_log(AA__BONUSES, "Finished calculating AA Bonuses for %s.", this->GetCleanName());
+	Log.Out(Logs::Detail, Logs::AA, "Finished calculating AA Bonuses for %s.", this->GetCleanName());
 
 	RecalcWeight();
 
@@ -515,11 +515,7 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon, bool isAu
 }
 
 void Client::CalcEdibleBonuses(StatBonuses* newbon) {
-//#if EQDEBUG >= 11
-//	std::cout<<"Client::CalcEdibleBonuses(StatBonuses* newbon)"<<std::endl;
-//#endif
-	// Search player slots for skill=14(food) and skill=15(drink)
-		uint32 i;
+	uint32 i;
 
 	bool food = false;
 	bool drink = false;
@@ -615,7 +611,7 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 		if (effect == SE_Blank || (effect == SE_CHA && base1 == 0) || effect == SE_StackingCommand_Block || effect == SE_StackingCommand_Overwrite)
 			continue;
 
-		_log(AA__BONUSES, "Applying Effect %d from AA %u in slot %d (base1: %d, base2: %d) on %s", effect, aaid, slot, base1, base2, this->GetCleanName());
+		Log.Out(Logs::Detail, Logs::AA, "Applying Effect %d from AA %u in slot %d (base1: %d, base2: %d) on %s", effect, aaid, slot, base1, base2, this->GetCleanName());
 			
 		uint8 focus = IsFocusEffect(0, 0, true,effect);
 		if (focus)
@@ -2951,7 +2947,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 			//Special custom cases for loading effects on to NPC from 'npc_spels_effects' table
 			if (IsAISpellEffect) {
 				
-				//Non-Focused Effect to modify incomming spell damage by resist type.
+				//Non-Focused Effect to modify incoming spell damage by resist type.
 				case SE_FcSpellVulnerability: 
 					ModVulnerability(base2, effect_value);
 				break;

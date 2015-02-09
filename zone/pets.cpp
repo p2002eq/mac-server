@@ -1,6 +1,3 @@
-/*
- * vim: set noexpandtab tabstop=4 shiftwidth=4 syntax=cpp:
-*/
 /*	EQEMu: Everquest Server Emulator
 	Copyright (C) 2001-2004 EQEMu Development Team (http://eqemu.org)
 
@@ -19,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
 #include "../common/types.h"
@@ -190,7 +187,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	PetRecord record;
 	if(!database.GetPoweredPetEntry(pettype, petpower, &record)) {
 		Message(CC_Red, "Unable to find data for pet %s", pettype);
-		LogFile->write(EQEmuLog::Error, "Unable to find data for pet %s, check pets table.", pettype);
+		Log.Out(Logs::General, Logs::Error, "Unable to find data for pet %s, check pets table.", pettype);
 		return;
 	}
 
@@ -198,7 +195,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	const NPCType *base = database.GetNPCType(record.npc_type);
 	if(base == nullptr) {
 		Message(CC_Red, "Unable to load NPC data for pet %s", pettype);
-		LogFile->write(EQEmuLog::Error, "Unable to load NPC data for pet %s (NPC ID %d), check pets and npc_types tables.", pettype, record.npc_type);
+		Log.Out(Logs::General, Logs::Error, "Unable to load NPC data for pet %s (NPC ID %d), check pets and npc_types tables.", pettype, record.npc_type);
 		return;
 	}
 
@@ -413,7 +410,6 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			// if the database query failed
-			LogFile->write(EQEmuLog::Error, "Error querying database for monster summoning pet in zone %s (%s)", zone->GetShortName(), results.ErrorMessage().c_str());
 		}
 
 		if (results.RowCount() != 0) {
@@ -435,7 +431,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 			npc_type->luclinface = monster->luclinface;
 			npc_type->helmtexture = monster->helmtexture;
 		} else
-			LogFile->write(EQEmuLog::Error, "Error loading NPC data for monster summoning pet (NPC ID %d)", monsterid);
+			Log.Out(Logs::General, Logs::Error, "Error loading NPC data for monster summoning pet (NPC ID %d)", monsterid);
 
 	}
 
@@ -496,13 +492,12 @@ bool ZoneDatabase::GetPoweredPetEntry(const char *pet_type, int16 petpower, PetR
 							"FROM pets WHERE type='%s' AND petpower<=0", pet_type);
 	else
 		query = StringFormat("SELECT npcID, temp, petpower, petcontrol, petnaming, monsterflag, equipmentset "
-							"FROM pets WHERE type='%s' AND petpower<=%d ORDER BY petpower DESC LIMIT 1",
-							pet_type, petpower);
-	auto results = QueryDatabase(query);
-	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in GetPoweredPetEntry query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
-		return false;
-	}
+                            "FROM pets WHERE type='%s' AND petpower<=%d ORDER BY petpower DESC LIMIT 1",
+                            pet_type, petpower);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        return false;
+    }
 
 	if (results.RowCount() != 1)
 		return false;
@@ -716,27 +711,24 @@ bool ZoneDatabase::GetBasePetItems(int32 equipmentset, uint32 *items) {
 		std::string  query = StringFormat("SELECT nested_set FROM pets_equipmentset WHERE set_id = '%s'", curset);
 		auto results = QueryDatabase(query);
 		if (!results.Success()) {
-			LogFile->write(EQEmuLog::Error, "Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 			return false;
 		}
 
-		if (results.RowCount() != 1) {
-			// invalid set reference, it doesn't exist
-			LogFile->write(EQEmuLog::Error, "Error in GetBasePetItems equipment set '%d' does not exist", curset);
-			return false;
-		}
+        if (results.RowCount() != 1) {
+            // invalid set reference, it doesn't exist
+            Log.Out(Logs::General, Logs::Error, "Error in GetBasePetItems equipment set '%d' does not exist", curset);
+            return false;
+        }
 
 		auto row = results.begin();
 		nextset = atoi(row[0]);
 
-		query = StringFormat("SELECT slot, item_id FROM pets_equipmentset_entries WHERE set_id='%s'", curset);
-		results = QueryDatabase(query);
-		if (!results.Success())
-			LogFile->write(EQEmuLog::Error, "Error in GetBasePetItems query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
-		else {
-			for (row = results.begin(); row != results.end(); ++row)
-			{
-				slot = atoi(row[0]);
+        query = StringFormat("SELECT slot, item_id FROM pets_equipmentset_entries WHERE set_id='%s'", curset);
+        results = QueryDatabase(query);
+        if (results.Success()){
+            for (row = results.begin(); row != results.end(); ++row)
+            {
+                slot = atoi(row[0]);
 
 				if (slot >= EmuConstants::EQUIPMENT_SIZE)
 					continue;

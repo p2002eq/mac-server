@@ -16,7 +16,8 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/faction.h"
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
@@ -304,6 +305,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	// Don't aggro new clients if we are already engaged unless PROX_AGGRO is set
 	if(IsEngaged() && (!GetSpecialAbility(PROX_AGGRO) || (GetSpecialAbility(PROX_AGGRO) && !CombatRange(mob))))
 	{
+		Log.Out(Logs::Detail, Logs::Aggro, "%s is in combat, and does not have prox_aggro, or does and is out of combat range with %s", GetName(), mob->GetName()); 
 		return(false);
 	}
 
@@ -364,22 +366,18 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
 		if(CheckLosFN(mob)) {
-
-			// Aggro
-			#if EQDEBUG>=11
-				LogFile->write(EQEmuLog::Debug, "Check aggro for %s target %s.", GetName(), mob->GetName());
-			#endif
+			Log.Out(Logs::Detail, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
 			return( mod_will_aggro(mob, this) );
 		}
 	}
-#if EQDEBUG >= 11
-	printf("Is In zone?:%d\n", mob->InZone());
-	printf("Dist^2: %f\n", dist2);
-	printf("Range^2: %f\n", iAggroRange2);
-	printf("Faction: %d\n", fv);
-	printf("Int: %d\n", GetINT());
-	printf("Con: %d\n", GetLevelCon(mob->GetLevel()));
-#endif
+
+	Log.Out(Logs::Detail, Logs::Aggro, "Is In zone?:%d\n", mob->InZone());
+	Log.Out(Logs::Detail, Logs::Aggro, "Dist^2: %f\n", dist2);
+	Log.Out(Logs::Detail, Logs::Aggro, "Range^2: %f\n", iAggroRange2);
+	Log.Out(Logs::Detail, Logs::Aggro, "Faction: %d\n", fv);
+	Log.Out(Logs::Detail, Logs::Aggro, "Int: %d\n", GetINT());
+	Log.Out(Logs::Detail, Logs::Aggro, "Con: %d\n", GetLevelCon(mob->GetLevel()));
+
 	return(false);
 }
 
@@ -397,7 +395,7 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 			return mob;
 		++it;
 	}
-	//LogFile->write(EQEmuLog::Debug, "Check aggro for %s no target.", sender->GetName());
+	//Log.Out(Logs::Detail, Logs::Debug, "Check aggro for %s no target.", sender->GetName());
 	return nullptr;
 }
 
@@ -546,8 +544,8 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 					//Father Nitwit: make sure we can see them.
 					if(mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
-						LogFile->write(EQEmuLog::Debug, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
-						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), fabs(sender->GetZ()+mob->GetZ()));
+						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
+						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
 #endif
 						mob->AddToHateList(attacker, 1, 0, false);
 					}
@@ -766,7 +764,7 @@ type', in which case, the answer is yes.
 	}
 	while( reverse++ == 0 );
 
-	LogFile->write(EQEmuLog::Debug, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Combat, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -902,7 +900,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	}
 	while( reverse++ == 0 );
 
-	LogFile->write(EQEmuLog::Debug, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Spells, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -989,31 +987,39 @@ bool Mob::CheckLosFN(Mob* other) {
 	return Result;
 }
 
-bool Mob::CheckRegion(Mob* other) {
+bool Mob::CheckRegion(Mob* other, bool skipwater) {
 
 	if (zone->watermap == nullptr) 
 		return true;
 
 	//Hack for kedge and powater since we have issues with watermaps.
-	if(zone->GetZoneID() == kedge || zone->GetZoneID() == powater)
+	if(zone->IsWaterZone() && skipwater)
 		return true;
 
 	WaterRegionType ThisRegionType;
 	WaterRegionType OtherRegionType;
-	auto position = glm::vec3(GetX(), GetY(), GetZ() - 1);
-	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ() - 1);
+	auto position = glm::vec3(GetX(), GetY(), GetZ());
+	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ());
 	ThisRegionType = zone->watermap->ReturnRegionType(position);
 	OtherRegionType = zone->watermap->ReturnRegionType(other_position);
 
-	//_log(SPELLS__CASTING, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
+	Log.Out(Logs::Moderate, Logs::Maps, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
 
-	if(ThisRegionType == OtherRegionType)
+	if(ThisRegionType == OtherRegionType || 
+		(ThisRegionType == RegionTypeWater && OtherRegionType == RegionTypeVWater) ||
+		(OtherRegionType == RegionTypeWater && ThisRegionType == RegionTypeVWater))
 		return true;
 
 	return false;
 }
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
+
+	glm::vec3 myloc(GetX(), GetY(), GetZ());
+	glm::vec3 oloc(posX, posY, posZ);
+	float mybestz = myloc.z;
+	float obestz = oloc.z;
+
 	if(zone->zonemap == nullptr) {
 		//not sure what the best return is on error
 		//should make this a database variable, but im lazy today
@@ -1023,23 +1029,24 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 		return(false);
 #endif
 	}
-
-	glm::vec3 myloc;
-	glm::vec3 oloc;
+	else
+	{
+		if((zone->watermap && !zone->watermap->InWater(myloc) && !zone->watermap->InVWater(myloc)
+			&& !zone->watermap->InWater(oloc) && !zone->watermap->InVWater(oloc))
+			|| !zone->watermap)
+		{
+			mybestz = zone->zonemap->FindBestZ(myloc, nullptr);
+			obestz = zone->zonemap->FindBestZ(oloc, nullptr);
+		}
+	}
 
 #define LOS_DEFAULT_HEIGHT 6.0f
 
-	myloc.x = GetX();
-	myloc.y = GetY();
-	myloc.z = GetZ() + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
 
-	oloc.x = posX;
-	oloc.y = posY;
-	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
+	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
-#if LOSDEBUG>=5
-	LogFile->write(EQEmuLog::Debug, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
-#endif
+	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);
 }
 
@@ -1324,7 +1331,7 @@ void Mob::ClearFeignMemory() {
 		AIfeignremember_timer->Disable();
 }
 
-bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
+bool Mob::PassCharismaCheck(Mob* caster, uint16 spell_id) {
 
 	/*
 	Charm formula is correct based on over 50 hours of personal live parsing - Kayen
@@ -1351,9 +1358,9 @@ bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
 			return true;
 
 		if (RuleB(Spells, CharismaCharmDuration))
-			resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster,0,0,true,true);
+			resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster,false,0,true,true);
 		else
-			resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster, 0,0, false, true);
+			resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster, false,0, false, true);
 
 		//2: The mob makes a resistance check against the charm
 		if (resist_check == 100) 
@@ -1377,8 +1384,7 @@ bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
 	{
 		// Assume this is a harmony/pacify spell
 		// If 'Lull' spell resists, do a second resist check with a charisma modifier AND regular resist checks. If resists agian you gain aggro.
-		resist_check = spellTarget->ResistSpell(spells[spell_id].resisttype, spell_id, caster, 0, false, true);
-
+		resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster, false,0,true);
 		if (resist_check == 100)
 			return true;
 	}

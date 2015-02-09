@@ -61,6 +61,7 @@ const char *LuaEvents[_LargestEventID] = {
 	"event_cast_on",
 	"event_aggro_say",
 	"event_player_pickup",
+	"event_environmental_damage",
 	"event_proximity_say",
 	"event_cast",
 	"event_cast_begin",
@@ -154,6 +155,7 @@ LuaParser::LuaParser() {
 	NPCArgumentDispatch[EVENT_LEAVE_AREA] = handle_npc_area;
 
 	PlayerArgumentDispatch[EVENT_SAY] = handle_player_say;
+	PlayerArgumentDispatch[EVENT_ENVIRONMENTAL_DAMAGE] = handle_player_environmental_damage;
 	PlayerArgumentDispatch[EVENT_DEATH] = handle_player_death;
 	PlayerArgumentDispatch[EVENT_DEATH_COMPLETE] = handle_player_death;
 	PlayerArgumentDispatch[EVENT_TIMER] = handle_player_timer;

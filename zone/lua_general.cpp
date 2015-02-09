@@ -388,6 +388,10 @@ void lua_set_time(int hour, int min) {
 	quest_manager.settime(hour, min);
 }
 
+void lua_signal(int npc_id) {
+	quest_manager.signal(npc_id);
+}
+
 void lua_signal(int npc_id, int signal_id) {
 	quest_manager.signalwith(npc_id, signal_id);
 }
@@ -1049,6 +1053,10 @@ std::string lua_get_encounter() {
 	return quest_manager.GetEncounter();
 }
 
+void lua_debug(std::string message, int level)
+{
+	quest_manager.SendDebug(message, level);
+}
 
 void lua_map_opcodes() {
 	MapOpcodes();
@@ -1275,6 +1283,7 @@ luabind::scope lua_register_general() {
 		luabind::def("set_guild", &lua_set_guild),
 		luabind::def("create_guild", &lua_create_guild),
 		luabind::def("set_time", &lua_set_time),
+		luabind::def("signal", (void(*)(int))&lua_signal),
 		luabind::def("signal", (void(*)(int,int))&lua_signal),
 		luabind::def("signal", (void(*)(int,int,int))&lua_signal),
 		luabind::def("set_global", &lua_set_global),
@@ -1378,7 +1387,8 @@ luabind::scope lua_register_general() {
 		luabind::def("disable_recipe", &lua_disable_recipe),
 		luabind::def("clear_npctype_cache", &lua_clear_npctype_cache),
 		luabind::def("clock", &lua_clock),
-		luabind::def("create_npc", &lua_create_npc)
+		luabind::def("create_npc", &lua_create_npc),
+		luabind::def("debug", (void(*)(std::string, int))&lua_debug)
 	];
 }
 
@@ -1406,6 +1416,8 @@ luabind::scope lua_register_events() {
 			luabind::value("level_up", static_cast<int>(EVENT_LEVEL_UP)),
 			luabind::value("killed_merit ", static_cast<int>(EVENT_KILLED_MERIT )),
 			luabind::value("cast_on", static_cast<int>(EVENT_CAST_ON)),
+
+			luabind::value("environmental_damage", static_cast<int>(EVENT_ENVIRONMENTAL_DAMAGE)),
 			luabind::value("aggro_say", static_cast<int>(EVENT_AGGRO_SAY)),
 			luabind::value("player_pickup", static_cast<int>(EVENT_PLAYER_PICKUP)),
 			luabind::value("proximity_say", static_cast<int>(EVENT_PROXIMITY_SAY)),

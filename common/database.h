@@ -21,7 +21,8 @@
 #define AUTHENTICATION_TIMEOUT	60
 #define INVALID_ID				0xFFFFFFFF
 
-#include "debug.h"
+#include "global_define.h"
+#include "eqemu_logsys.h"
 #include "types.h"
 #include "dbcore.h"
 #include "linked_list.h"
@@ -52,9 +53,9 @@ struct EventLogDetails_Struct {
 };
 
 struct CharacterEventLog_Struct {
-uint32	count;
-uint8	eventid;
-EventLogDetails_Struct eld[255];
+	uint32	count;
+	uint8	eventid;
+	EventLogDetails_Struct eld[255];
 };
 
 struct npcDecayTimes_Struct {
@@ -464,9 +465,8 @@ public:
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inventory* inv);
 	bool	DeleteCharacter(char* name);
 
-	/*
-	* General Information Getting Queries
-	*/
+	/* General Information Queries */
+
 	bool	CheckNameFilter(const char* name, bool surname = false);
 	bool	CheckUsedName(const char* name);
 	uint32	GetAccountIDByChar(const char* charname, uint32* oCharID = 0);
@@ -562,6 +562,7 @@ public:
 	bool DBSetup_PlayerCorpseBackup();
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
+	bool DBSetup_Rules();
 	bool GITInfo();
 
 	/*
@@ -596,6 +597,9 @@ public:
 	struct TimeOfDay_Struct		LoadTime(time_t &realtime);
 	bool	SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year);
 
+	/* EQEmuLogSys */
+	void	LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
+
 private:
 	void DBInitVars();
 
@@ -606,17 +610,11 @@ private:
 	VarCache_Struct**	varcache_array;
 	uint32				varcache_lastupdate;
 
-
-	/*
-	* Groups, utility methods.
-	*/
+	/* Groups, utility methods. */
 	void    ClearAllGroupLeaders();
 	void    ClearAllGroups();
 
-
-	/*
-	* Raid, utility methods.
-	*/
+	/* Raid, utility methods. */
 	void ClearAllRaids();
 	void ClearAllRaidDetails();
 };

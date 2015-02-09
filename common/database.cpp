@@ -1,5 +1,5 @@
 /*	EQEMu: Everquest Server Emulator
-	Copyright (C) 2001-2003 EQEMu Development Team (http://eqemulator.net)
+	Copyright (C) 2001-2015 EQEMu Development Team (http://eqemulator.net)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/debug.h"
+#include "../common/global_define.h"
 #include "../common/rulesys.h"
 
 #include <ctype.h>
@@ -58,15 +58,7 @@ extern Client client;
 #	define _ISNAN_(a) std::isnan(a)
 #endif
 
-/*
-Establish a connection to a mysql database with the supplied parameters
-
-	Added a very simple .ini file parser - Bounce
-
-	Modify to use for win32 & linux - misanthropicfiend
-*/
-Database::Database ()
-{
+Database::Database () {
 	DBInitVars();
 }
 
@@ -84,12 +76,11 @@ bool Database::Connect(const char* host, const char* user, const char* passwd, c
 	uint32 errnum= 0;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	if (!Open(host, user, passwd, database, port, &errnum, errbuf)) {
-		LogFile->write(EQEmuLog::Error, "Failed to connect to database: Error: %s", errbuf);
-
+		Log.Out(Logs::General, Logs::Error, "Failed to connect to database: Error: %s", errbuf); 
 		return false; 
 	}
 	else {
-		LogFile->write(EQEmuLog::Status, "Using database '%s' at %s:%d",database,host,port);
+		Log.Out(Logs::General, Logs::Status, "Using database '%s' at %s:%d", database, host,port);
 		return true;
 	}
 }
@@ -99,10 +90,11 @@ void Database::DBInitVars() {
 	varcache_max = 0;
 	varcache_lastupdate = 0;
 }
-/*
 
-Close the connection to the database
+/*
+	Close the connection to the database
 */
+
 Database::~Database()
 {
 	unsigned int x;
@@ -115,9 +107,9 @@ Database::~Database()
 }
 
 /*
-Check if there is an account with name "name" and password "password"
-Return the account id or zero if no account matches.
-Zero will also be returned if there is a database error.
+	Check if there is an account with name "name" and password "password"
+	Return the account id or zero if no account matches.
+	Zero will also be returned if there is a database error.
 */
 uint32 Database::CheckLogin(const char* name, const char* password, int16* oStatus) {
 
@@ -137,7 +129,6 @@ uint32 Database::CheckLogin(const char* name, const char* password, int16* oStat
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in CheckLogin query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -163,7 +154,6 @@ bool Database::CheckBannedIPs(const char* loginIP)
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in CheckBannedIPs query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return true;
 	}
 
@@ -177,7 +167,6 @@ bool Database::AddBannedIP(char* bannedIP, const char* notes) {
 	std::string query = StringFormat("INSERT into Banned_IPs SET ip_address='%s', notes='%s'", bannedIP, notes); 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		std::cerr << "Error in Database::AddBannedIP query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	} 
 	return true;
@@ -204,9 +193,7 @@ bool Database::AddGMIP(char* ip_address, char* name) {
 
 void Database::LoginIP(uint32 AccountID, const char* LoginIP) {
 	std::string query = StringFormat("INSERT INTO account_ip SET accid=%i, ip='%s' ON DUPLICATE KEY UPDATE count=count+1, lastused=now()", AccountID, LoginIP); 
-	auto results = QueryDatabase(query); 
-	if (!results.Success())
-		std::cerr << "Error in Log IP query '" << query << "' " << results.ErrorMessage() << std::endl;
+	QueryDatabase(query); 
 }
 
 int16 Database::CheckStatus(uint32 account_id) {
@@ -215,7 +202,6 @@ int16 Database::CheckStatus(uint32 account_id) {
 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		std::cerr << "Error in CheckStatus query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -247,17 +233,15 @@ uint32 Database::CreateAccount(const char* name, const char* password, int16 sta
 	else
 		query = StringFormat("INSERT INTO account SET name='%s', status=%i, lsaccount_id=%i, time_creation=UNIX_TIMESTAMP();",name, status, lsaccount_id);
 
-	std::cerr << "Account Attempting to be created:" << name << " " << (int16) status << std::endl; 
+	Log.Out(Logs::General, Logs::World_Server, "Account Attempting to be created: '%s' status: %i", name, status);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in CreateAccount query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
 	if (results.LastInsertedID() == 0)
 	{
-		std::cerr << "Error in CreateAccount query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -266,13 +250,10 @@ uint32 Database::CreateAccount(const char* name, const char* password, int16 sta
 
 bool Database::DeleteAccount(const char* name) {
 	std::string query = StringFormat("DELETE FROM account WHERE name='%s';",name); 
-	std::cout << "Account Attempting to be deleted:" << name << std::endl;
+	Log.Out(Logs::General, Logs::World_Server, "Account Attempting to be deleted:'%s'", name);
 
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-	{
-		std::cerr << "Error in DeleteAccount query '" << query << "' " << results.ErrorMessage() << std::endl;
+	auto results = QueryDatabase(query); 
+	if (!results.Success()) {
 		return false;
 	}
 
@@ -285,7 +266,6 @@ bool Database::SetLocalPassword(uint32 accid, const char* password) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in SetLocalPassword query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -313,8 +293,17 @@ bool Database::SetAccountStatus(const char* name, int16 status) {
 
 /* This initially creates the character during character create */
 bool Database::ReserveName(uint32 account_id, char* name) {
-	std::string query = StringFormat("INSERT INTO `character_data` SET `account_id` = %i, `name` = '%s'", account_id, name); 
+	std::string query = StringFormat("SELECT `account_id`, `name` FROM `character_data` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query);
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		if (row[0] && atoi(row[0]) > 0){
+			Log.Out(Logs::General, Logs::World_Server, "Account: %i tried to request name: %s, but it is already taken...", account_id, name);
+			return false;
+		}
+	}
+
+	query = StringFormat("INSERT INTO `character_data` SET `account_id` = %i, `name` = '%s'", account_id, name); 
+	results = QueryDatabase(query);
 	if (!results.Success() || results.ErrorMessage() != ""){ return false; } 
 	return true;
 }
@@ -325,11 +314,11 @@ bool Database::ReserveName(uint32 account_id, char* name) {
 */
 bool Database::DeleteCharacter(char *name) {
 	uint32 charid = 0;
-	printf("Database::DeleteCharacter name : %s \n", name);
 	if(!name ||	!strlen(name)) {
-		std::cerr << "DeleteCharacter: request to delete without a name (empty char slot)" << std::endl;
+		Log.Out(Logs::General, Logs::World_Server, "DeleteCharacter: request to delete without a name (empty char slot)");
 		return false;
 	}
+	Log.Out(Logs::General, Logs::World_Server, "Database::DeleteCharacter name : '%s'", name);
 
 	/* Get id from character_data before deleting record so we can clean up the rest of the tables */
 	std::string query = StringFormat("SELECT `id` from `character_data` WHERE `name` = '%s'", name);
@@ -337,36 +326,36 @@ bool Database::DeleteCharacter(char *name) {
 	for (auto row = results.begin(); row != results.end(); ++row) { charid = atoi(row[0]); }
 	if (charid <= 0){ std::cerr << "Database::DeleteCharacter :: Character not found, stopping delete...\n"; return false; }
 
-	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_activities` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_enabledtasks` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `completed_tasks` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);					  
-	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `inventory` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `keyring` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `faction_values` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); results = QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_data` WHERE `id` = '%d'", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_skills` WHERE `id` = %u", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_languages` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_bind` WHERE `id` = %u", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", charid); results = QueryDatabase(query);  
-	query = StringFormat("DELETE FROM `character_currency` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_data` WHERE `id` = %u", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_spells` WHERE `id` = %u", charid); results = QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); results = QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", charid); results = QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); results = QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", charid); results = QueryDatabase(query); 
-	query = StringFormat("DELETE FROM `character_alt_currency` WHERE `char_id` = '%d'", charid); results = QueryDatabase(query);  
+	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);			  
+	query = StringFormat("DELETE FROM `character_activities` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
+	query = StringFormat("DELETE FROM `character_enabledtasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
+	query = StringFormat("DELETE FROM `completed_tasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);					  
+	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `inventory` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `keyring` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `faction_values` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
+	query = StringFormat("DELETE FROM `character_data` WHERE `id` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `character_skills` WHERE `id` = %u", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `character_languages` WHERE `id` = %u", charid); QueryDatabase(query);			  
+	query = StringFormat("DELETE FROM `character_bind` WHERE `id` = %u", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", charid); QueryDatabase(query);  
+	query = StringFormat("DELETE FROM `character_currency` WHERE `id` = %u", charid); QueryDatabase(query);			  
+	query = StringFormat("DELETE FROM `character_data` WHERE `id` = %u", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `character_spells` WHERE `id` = %u", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); QueryDatabase(query);			  
+	query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", charid); QueryDatabase(query);			  
+	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); QueryDatabase(query);	  
+	query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", charid); QueryDatabase(query); 
+	query = StringFormat("DELETE FROM `character_alt_currency` WHERE `char_id` = '%d'", charid); QueryDatabase(query);  
 	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid);
 	QueryDatabase(query);
 	
@@ -669,7 +658,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 	charid = GetCharacterID(pp->name);
 
 	if(!charid) {
-		LogFile->write(EQEmuLog::Error, "StoreCharacter: no character id");
+		Log.Out(Logs::General, Logs::Error, "StoreCharacter: no character id");
 		return false;
 	}
 
@@ -698,13 +687,6 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 				charid, i, newinv->GetItem()->ID, newinv->GetCharges(), newinv->GetColor()); 
 			
 			auto results = QueryDatabase(invquery); 
-
-			if (!results.RowsAffected())
-				LogFile->write(EQEmuLog::Error, "StoreCharacter inventory failed. Query '%s' %s", invquery.c_str(), results.ErrorMessage().c_str());
-#if EQDEBUG >= 9
-			else
-				LogFile->write(EQEmuLog::Debug, "StoreCharacter inventory succeeded. Query '%s'", invquery.c_str());
-#endif
 		}
 
 		if (i == EmuConstants::GENERAL_END) {
@@ -754,7 +736,6 @@ uint32 Database::GetAccountIDByChar(const char* charname, uint32* oCharID) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in GetAccountIDByChar query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -776,7 +757,6 @@ uint32 Database::GetAccountIDByChar(uint32 char_id) {
 	std::string query = StringFormat("SELECT `account_id` FROM `character_data` WHERE `id` = %i LIMIT 1", char_id); 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		LogFile->write(EQEmuLog::Error, "Error in GetAccountIDByChar query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return 0;
 	}
 
@@ -795,7 +775,6 @@ uint32 Database::GetAccountIDByName(const char* accname, int16* status, uint32* 
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetAccountIDByAcc query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -824,7 +803,6 @@ void Database::GetAccountName(uint32 accountid, char* name, uint32* oLSAccountID
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetAccountName query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return;
 	}
 
@@ -845,7 +823,6 @@ void Database::GetCharName(uint32 char_id, char* name) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetCharName query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return; 
 	}
 
@@ -872,7 +849,6 @@ bool Database::LoadVariables() {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in LoadVariables query '" << query << "' " << results.ErrorMessage() << std::endl;
 		safe_delete_array(query);
 		return false;
 	}
@@ -984,7 +960,6 @@ bool Database::SetVariable(const char* varname_in, const char* varvalue_in) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in SetVariable query '" << query << "' " << results.ErrorMessage() << std::endl;
 		free(varname);
 		free(varvalue);
 		return false;
@@ -1018,14 +993,7 @@ bool Database::GetSafePoints(const char* short_name, uint32 version, float* safe
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-	{
-		std::cerr << "Error in GetSafePoint query '" << query << "' " << results.ErrorMessage() << std::endl;
-		std::cerr << "If it errors, run the following querys:\n";
-		std::cerr << "ALTER TABLE `zone` CHANGE `minium_level` `min_level` TINYINT(3)  UNSIGNED DEFAULT \"0\" NOT NULL;\n";
-		std::cerr << "ALTER TABLE `zone` CHANGE `minium_status` `min_status` TINYINT(3)  UNSIGNED DEFAULT \"0\" NOT NULL;\n";
-		std::cerr << "ALTER TABLE `zone` ADD flag_needed VARCHAR(128) NOT NULL DEFAULT '';\n";
 		return false;
-	}
 
 	if (results.RowCount() == 0)
 		return false;
@@ -1054,7 +1022,6 @@ bool Database::GetZoneLongName(const char* short_name, char** long_name, char* f
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetZoneLongName query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1094,7 +1061,6 @@ uint32 Database::GetZoneGraveyardID(uint32 zone_id, uint32 version) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in GetZoneGraveyardID query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -1111,7 +1077,6 @@ bool Database::GetZoneGraveyard(const uint32 graveyard_id, uint32* graveyard_zon
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()){
-		std::cerr << "Error in GetZoneGraveyard query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1141,7 +1106,6 @@ bool Database::LoadZoneNames() {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in LoadZoneNames query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1184,9 +1148,7 @@ uint8 Database::GetPEQZone(uint32 zoneID, uint32 version){
 	std::string query = StringFormat("SELECT peqzone from zone where zoneidnumber='%i' AND (version=%i OR version=0) ORDER BY version DESC", zoneID, version);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		std::cerr << "Error in GetPEQZone query '" << query << "' " << results.ErrorMessage() << std::endl;
+	if (!results.Success()) {
 		return 0;
 	}
 
@@ -1256,7 +1218,6 @@ bool Database::CheckNameFilter(const char* name, bool surname)
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in CheckNameFilter query '" << query << "' " << results.ErrorMessage() << std::endl;
 		// false through to true? shouldn't it be falls through to false?
 		return true;
 	}
@@ -1282,7 +1243,6 @@ bool Database::AddToNameFilter(const char* name) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in AddToNameFilter query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1297,9 +1257,7 @@ uint32 Database::GetAccountIDFromLSID(uint32 iLSID, char* oAccountName, int16* o
 	std::string query = StringFormat("SELECT id, name, status FROM account WHERE lsaccount_id=%i", iLSID);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		std::cerr << "Error in GetAccountIDFromLSID query '" << query << "' " << results.ErrorMessage() << std::endl;
+	if (!results.Success()) {
 		return 0;
 	}
 
@@ -1323,9 +1281,7 @@ void Database::GetAccountFromID(uint32 id, char* oAccountName, int16* oStatus) {
 	std::string query = StringFormat("SELECT name, status FROM account WHERE id=%i", id);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		std::cerr << "Error in GetAccountFromID query '" << query << "' " << results.ErrorMessage() << std::endl;
+	if (!results.Success()){
 		return;
 	}
 
@@ -1341,12 +1297,7 @@ void Database::GetAccountFromID(uint32 id, char* oAccountName, int16* oStatus) {
 }
 
 void Database::ClearMerchantTemp(){
-
-	std::string query("delete from merchantlist_temp");
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-		std::cerr << "Error in ClearMerchantTemp query '" << query << "' " << results.ErrorMessage() << std::endl;
+	QueryDatabase("DELETE FROM merchantlist_temp");
 }
 
 bool Database::UpdateName(const char* oldname, const char* newname) { 
@@ -1368,7 +1319,6 @@ bool Database::CheckUsedName(const char* name) {
 	std::string query = StringFormat("SELECT `id` FROM `character_data` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		std::cerr << "Error in CheckUsedName query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1382,7 +1332,6 @@ uint8 Database::GetServerType() {
 	std::string query("SELECT `value` FROM `variables` WHERE `varname` = 'ServerType' LIMIT 1");
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
-		std::cerr << "Error in GetServerType query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -1401,7 +1350,6 @@ bool Database::MoveCharacterToZone(const char* charname, const char* zonename, u
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in MoveCharacterToZone(name) query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1420,7 +1368,6 @@ bool Database::MoveCharacterToZone(uint32 iCharID, const char* iZonename) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in MoveCharacterToZone(id) query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1432,7 +1379,6 @@ bool Database::SetHackerFlag(const char* accountname, const char* charactername,
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in SetHackerFlag query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1446,7 +1392,6 @@ bool Database::SetMQDetectionFlag(const char* accountname, const char* character
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in SetMQDetectionFlag query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1526,7 +1471,6 @@ uint32 Database::GetCharacterInfo(const char* iName, uint32* oAccID, uint32* oZo
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
-		std::cerr << "Error in GetCharacterInfo query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return 0;
 	}
 
@@ -1550,7 +1494,6 @@ bool Database::UpdateLiveChar(char* charname,uint32 lsaccount_id) {
 	std::string query = StringFormat("UPDATE account SET charname='%s' WHERE id=%i;",charname, lsaccount_id);
 	auto results = QueryDatabase(query);
 	if (!results.Success()){
-		std::cerr << "Error in UpdateLiveChar query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 	return true;
@@ -1580,10 +1523,9 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	_log(DATABASE__LOG, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating character_data table from CharacterJoin.");
 		return false;
 	}
 	return true;
@@ -1592,12 +1534,14 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Debug, "Error updating character_data table from CharacterQuit.");
+		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	_log(DATABASE__LOG, "CharacterQuit should have wrote to database for %i...", char_id);
+	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -1620,10 +1564,11 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	_log(DATABASE__LOG, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
 		return false;
 	}
 	return true;
@@ -1632,12 +1577,13 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-		_log(DATABASE__LOG, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from ZoneConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
 	}
-	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from ZoneDisconnected.");
+	Log.Out(Logs::Detail, Logs::Error, "Updated webdata_servers table from ZoneDisconnected.");
 	return true;
 }
 
@@ -1657,10 +1603,11 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	_log(DATABASE__LOG, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
 		return false;
 	}
 	return true;
@@ -1669,12 +1616,12 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	_log(DATABASE__LOG, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
-		LogFile->write(EQEmuLog::Error, "Error updating webdata_servers table from LSDisconnect.");
+		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
 	}
-	LogFile->write(EQEmuLog::Error, "Updated webdata_servers table from LSDisconnect.");
+	Log.Out(Logs::Detail, Logs::Error, "Updated webdata_servers table from LSDisconnect.");
 	return true;
 }
 
@@ -1685,7 +1632,6 @@ bool Database::GetLiveChar(uint32 account_id, char* cname) {
 
 	if (!results.Success())
 	{
-		std::cerr << "Error in GetLiveChar query '" << query << "' " << results.ErrorMessage() << std::endl;
 		return false;
 	}
 
@@ -1700,9 +1646,7 @@ bool Database::GetLiveChar(uint32 account_id, char* cname) {
 
 void Database::SetFirstLogon(uint32 CharID, uint8 firstlogon) { 
 	std::string query = StringFormat( "UPDATE `character_data` SET `firstlogon` = %i WHERE `id` = %i",firstlogon, CharID);
-	auto results = QueryDatabase(query); 
-	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error updating firstlogon for character %i : %s", CharID, results.ErrorMessage().c_str());
+	QueryDatabase(query); 
 }
 
 void Database::AddReport(std::string who, std::string against, std::string lines) { 
@@ -1710,11 +1654,8 @@ void Database::AddReport(std::string who, std::string against, std::string lines
 	DoEscapeString(escape_str, lines.c_str(), lines.size());
 
 	std::string query = StringFormat("INSERT INTO reports (name, reported, reported_text) VALUES('%s', '%s', '%s')", who.c_str(), against.c_str(), escape_str);
-	auto results = QueryDatabase(query);
+	QueryDatabase(query);
 	safe_delete_array(escape_str);
-
-	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error adding a report for %s: %s", who.c_str(), results.ErrorMessage().c_str());
 }
 
 void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
@@ -1726,27 +1667,20 @@ void Database::SetGroupID(const char* name, uint32 id, uint32 charid){
 		auto results = QueryDatabase(query);
 
 		if (!results.Success())
-			LogFile->write(EQEmuLog::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
+			Log.Out(Logs::General, Logs::Error, "Error deleting character from group id: %s", results.ErrorMessage().c_str());
 
 		return;
 	}
 
 	/* Add to the Group */
 	query = StringFormat("REPLACE INTO  `group_id` SET `charid` = %i, `groupid` = %i, `name` = '%s'", charid, id, name);
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-		LogFile->write(EQEmuLog::Error, "Error adding character to group id: %s", results.ErrorMessage().c_str());
+	QueryDatabase(query);
 }
 
 void Database::ClearAllGroups(void)
 {
-	std::string query("delete from group_id");
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-		std::cout << "Unable to clear groups: " << results.ErrorMessage() << std::endl;
-
+	std::string query("DELETE FROM `group_id`");
+	QueryDatabase(query);
 	return;
 }
 
@@ -1762,26 +1696,21 @@ void Database::ClearGroup(uint32 gid) {
 
 	//clear a specific group
 	std::string query = StringFormat("delete from group_id where groupid = %lu", (unsigned long)gid);
-	auto results = QueryDatabase(query);
-
-	if (!results.Success())
-		std::cout << "Unable to clear groups: " << results.ErrorMessage() << std::endl;
+	QueryDatabase(query);
 }
 
-uint32 Database::GetGroupID(const char* name){
-
+uint32 Database::GetGroupID(const char* name){ 
 	std::string query = StringFormat("SELECT groupid from group_id where name='%s'", name);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		LogFile->write(EQEmuLog::Error, "Error getting group id: %s", results.ErrorMessage().c_str());
+	if (!results.Success()) {
 		return 0;
 	}
 
 	if (results.RowCount() == 0)
 	{
-		LogFile->write(EQEmuLog::Debug, "Character not in a group: %s", name);
+		// Commenting this out until logging levels can prevent this from going to console
+		//Log.Out(Logs::General, Logs::None,, "Character not in a group: %s", name);
 		return 0;
 	}
 
@@ -1820,7 +1749,7 @@ void Database::SetGroupLeaderName(uint32 gid, const char* name) {
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-		std::cout << "Unable to set group leader: " << results.ErrorMessage() << std::endl;
+		Log.Out(Logs::General, Logs::None, "Unable to set group leader:", results.ErrorMessage().c_str());
 }
 
 char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 
@@ -1988,22 +1917,17 @@ void Database::ClearRaidDetails(uint32 rid) {
 
 // returns 0 on error or no raid for that character, or
 // the raid id that the character is a member of.
-uint32 Database::GetRaidID(const char* name){
-
-	std::string query = StringFormat("SELECT raidid from raid_members where name='%s'", name);
+uint32 Database::GetRaidID(const char* name)
+{ 
+	std::string query = StringFormat("SELECT `raidid` FROM `raid_members` WHERE `name` = '%s'", name);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		std::cout << "Unable to get raid id: " << results.ErrorMessage() << std::endl;
+	if (!results.Success()) {
 		return 0;
 	}
 
-	auto row = results.begin();
-
-	if (row == results.end())
-	{
-		std::cout << "Unable to get raid id, char not found!" << std::endl;
+	auto row = results.begin(); 
+	if (row == results.end()) {
 		return 0;
 	}
 
@@ -2013,7 +1937,7 @@ uint32 Database::GetRaidID(const char* name){
 	return 0;
 }
 
-const char* Database::GetRaidLeaderName(uint32 rid)
+const char* Database::GetRaidLeaderName(uint32 raid_id)
 {
 	// Would be a good idea to fix this to be a passed in variable and
 	// make the caller responsible. static local variables like this are
@@ -2022,20 +1946,17 @@ const char* Database::GetRaidLeaderName(uint32 rid)
 	// but may not be fully supported in some compilers.
 	static char name[128];
 	
-	std::string query = StringFormat("SELECT name FROM raid_members WHERE raidid=%u AND israidleader=1",rid);
+	std::string query = StringFormat("SELECT `name` FROM `raid_members` WHERE `raidid` = %u AND `israidleader` = 1", raid_id);
 	auto results = QueryDatabase(query);
 
-	if (!results.Success())
-	{
-		std::cout << "Unable to get raid id: " << results.ErrorMessage() << std::endl;
+	if (!results.Success()) {
+		Log.Out(Logs::General, Logs::Debug, "Unable to get Raid Leader Name for Raid ID: %u", raid_id);
 		return "UNKNOWN";
 	}
 
 	auto row = results.begin();
 
-	if (row == results.end())
-	{
-		std::cout << "Unable to get raid id, char not found!" << std::endl;
+	if (row == results.end()) {
 		return "UNKNOWN";
 	}
 
@@ -2371,11 +2292,24 @@ uint16 Database::GetInstanceVersion(uint16 instance_id) {
 	return atoi(row[0]);
 }
 
-uint16 Database::GetInstanceID(const char* zone, uint32 charid, int16 version) {
+uint16 Database::GetInstanceID(const char* zone, uint32 character_id, int16 version) {
 
-	std::string query = StringFormat("SELECT instance_list.id FROM instance_list, instance_list_player "
-		"WHERE instance_list.zone=%u AND instance_list.version=%u AND instance_list.id=instance_list_player.id AND "
-		"instance_list_player.charid=%u LIMIT 1;", GetZoneID(zone), version, charid, charid);
+	std::string query = StringFormat(
+		"SELECT "
+		"instance_list.id "
+		"FROM "
+		"instance_list, "
+		"instance_list_player "
+		"WHERE "
+		"instance_list.zone = %u "
+		"AND instance_list.version = %u "
+		"AND instance_list.id = instance_list_player.id "
+		"AND instance_list_player.charid = %u "
+		"LIMIT 1 ", 
+		GetZoneID(zone), 
+		version, 
+		character_id
+	);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -2388,14 +2322,27 @@ uint16 Database::GetInstanceID(const char* zone, uint32 charid, int16 version) {
 	return atoi(row[0]);
 }
 
-uint16 Database::GetInstanceID(uint32 zone, uint32 charid, int16 version)
+uint16 Database::GetInstanceID(uint32 zone, uint32 character_id, int16 version)
 {
 	if(!zone)
 		return 0;
 
-	std::string query = StringFormat("SELECT instance_list.id FROM instance_list, instance_list_player "
-		"WHERE instance_list.zone=%u AND instance_list.version=%u AND instance_list.id=instance_list_player.id AND "
-		"instance_list_player.charid=%u LIMIT 1;", zone, version, charid);
+	std::string query = StringFormat(
+		"SELECT "
+		"instance_list.id "
+		"FROM "
+		"instance_list, "
+		"instance_list_player "
+		"WHERE "
+		"instance_list.zone = %u "
+		"AND instance_list.version = %u "
+		"AND instance_list.id = instance_list_player.id "
+		"AND instance_list_player.charid = %u "
+		"LIMIT 1; ", 
+		zone, 
+		version, 
+		character_id
+	);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -2411,55 +2358,52 @@ uint16 Database::GetInstanceID(uint32 zone, uint32 charid, int16 version)
 
 void Database::GetCharactersInInstance(uint16 instance_id, std::list<uint32> &charid_list) {
 
-	std::string query = StringFormat("SELECT charid FROM instance_list_player WHERE id=%u", instance_id);
+	std::string query = StringFormat("SELECT `charid` FROM `instance_list_playe`r WHERE `id` = %u", instance_id);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
-	{
-		LogFile->write(EQEmuLog::Error, "Error in GetCharactersInInstace query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 		return;
-	}
 
-	for(auto row=results.begin();row != results.end();++row)
+	for (auto row = results.begin(); row != results.end(); ++row)
 		charid_list.push_back(atoi(row[0]));
 }
 
-void Database::AssignGroupToInstance(uint32 gid, uint32 instance_id)
+void Database::AssignGroupToInstance(uint32 group_id, uint32 instance_id)
 {
 	
 	uint32 zone_id = ZoneIDFromInstanceID(instance_id);
 	uint16 version = VersionFromInstanceID(instance_id);
 
-	std::string query = StringFormat("SELECT charid FROM group_id WHERE groupid=%u", gid);
+	std::string query = StringFormat("SELECT `charid` FROM `group_id` WHERE `groupid` = %u", group_id);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
 		return;
 
-	for (auto row=results.begin();row != results.end();++row)
+	for (auto row = results.begin(); row != results.end(); ++row)
 	{
 		uint32 charid = atoi(row[0]);
-		if(GetInstanceID(zone_id, charid, version) == 0)
+		if (GetInstanceID(zone_id, charid, version) == 0)
 			AddClientToInstance(instance_id, charid);
 	}
 }
 
-void Database::AssignRaidToInstance(uint32 rid, uint32 instance_id)
+void Database::AssignRaidToInstance(uint32 raid_id, uint32 instance_id)
 {
 	
 	uint32 zone_id = ZoneIDFromInstanceID(instance_id);
 	uint16 version = VersionFromInstanceID(instance_id);
 
-	std::string query = StringFormat("SELECT charid FROM raid_members WHERE raidid=%u", rid);
+	std::string query = StringFormat("SELECT `charid` FROM `raid_members` WHERE `raidid` = %u", raid_id);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
 		return;
 
-	for (auto row=results.begin();row!=results.end();++row)
+	for (auto row = results.begin(); row != results.end(); ++row)
 	{
 		uint32 charid = atoi(row[0]);
-		if(GetInstanceID(zone_id, charid, version) == 0)
+		if (GetInstanceID(zone_id, charid, version) == 0)
 			AddClientToInstance(instance_id, charid);
 	}
 }
@@ -2499,7 +2443,6 @@ void Database::FlagInstanceByRaidLeader(uint32 zone, int16 version, uint32 chari
 
 void Database::SetInstanceDuration(uint16 instance_id, uint32 new_duration)
 {
-
 	std::string query = StringFormat("UPDATE `instance_list` SET start_time=UNIX_TIMESTAMP(), "
 		"duration=%u WHERE id=%u", new_duration, instance_id);
 	auto results = QueryDatabase(query);
@@ -2507,8 +2450,16 @@ void Database::SetInstanceDuration(uint16 instance_id, uint32 new_duration)
 
 bool Database::GlobalInstance(uint16 instance_id)
 {
-	
-	std::string query = StringFormat("SELECT is_global from instance_list where id=%u LIMIT 1", instance_id);
+	std::string query = StringFormat(
+		"SELECT "
+		"is_global "
+		"FROM "
+		"instance_list "
+		"WHERE "
+		"id = %u "
+		"LIMIT 1 ", 
+		instance_id
+	);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -2531,7 +2482,7 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 
 	if (!results.Success() || results.RowCount() == 0)
 	{
-		_log(WORLD__INIT, "Loading EQ time of day failed. Using defaults.");
+		Log.Out(Logs::Detail, Logs::World_Server, "Loading EQ time of day failed. Using defaults.");
 		eqTime.minute = 0;
 		eqTime.hour = 9;
 		eqTime.day = 1;
@@ -2561,418 +2512,44 @@ bool Database::SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year
 
 }
 
-/*	This section past here is for setting up the database in bootstrap ONLY.
-	Please put regular server changes and additions above this. 
-	Don't use this for the login server. It should never have access to the game database. */
+void Database::LoadLogSettings(EQEmuLogSys::LogSettings* log_settings){
+	std::string query = 
+		"SELECT "
+		"log_category_id, "
+		"log_category_description, "
+		"log_to_console, "
+		"log_to_file, "
+		"log_to_gmsay "
+		"FROM "
+		"logsys_categories "
+		"ORDER BY log_category_id";
+	auto results = QueryDatabase(query);
 
-bool Database::DBSetup() {
-	LogFile->write(EQEmuLog::Debug, "Database setup started..");
-	DBSetup_webdata_character();
-	DBSetup_webdata_servers();
-	DBSetup_feedback();
-	DBSetup_PlayerCorpseBackup();
-	DBSetup_CharacterSoulMarks();
-	DBSetup_MessageBoards();
-	GITInfo();
-	return true;
-}
+	int log_category = 0;
+	Log.file_logs_enabled = false;
 
-bool Database::GITInfo()
-{
-	std::string check_query1 = StringFormat("SELECT * FROM `variables` WHERE `varname`='git-HEAD-hash'");
-	auto results1 = QueryDatabase(check_query1);
-	if (results1.RowCount() == 0)
-	{
-		std::string check_query2 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-HEAD-hash', '', 'git rev-parse HEAD', '')");
-		auto results2 = QueryDatabase(check_query2);
-		if (!results2.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error creating git-HEAD-hash field.");
-			return false;
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		log_category = atoi(row[0]);
+		log_settings[log_category].log_to_console = atoi(row[2]);
+		log_settings[log_category].log_to_file = atoi(row[3]);
+		log_settings[log_category].log_to_gmsay = atoi(row[4]);
+
+		/* Determine if any output method is enabled for the category 
+			and set it to 1 so it can used to check if category is enabled */
+		const bool log_to_console = log_settings[log_category].log_to_console > 0;
+		const bool log_to_file = log_settings[log_category].log_to_file > 0;
+		const bool log_to_gmsay = log_settings[log_category].log_to_gmsay > 0;
+		const bool is_category_enabled = log_to_console || log_to_file || log_to_gmsay;
+
+		if (is_category_enabled)
+			log_settings[log_category].is_category_enabled = 1;
+
+		/* 
+			This determines whether or not the process needs to actually file log anything.
+			If we go through this whole loop and nothing is set to any debug level, there is no point to create a file or keep anything open
+		*/
+		if (log_settings[log_category].log_to_file > 0){
+			Log.file_logs_enabled = true;
 		}
 	}
-	std::string check_query3 = StringFormat("SELECT * FROM `variables` WHERE `varname`='git-BRANCH'");
-	auto results3 = QueryDatabase(check_query3);
-	if (results3.RowCount() == 0)
-	{
-		std::string check_query4 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-BRANCH', '', 'git rev-parse --abbrev-ref HEAD', '')");
-		auto results4 = QueryDatabase(check_query4);
-		if (!results4.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error creating git-BRANCH field.");
-			return false;
-		}
-	}
-	const char* hash;
-	const char* branch;
-	FILE *fhash;
-	FILE *fbranch;
-#ifdef _WINDOWS
-	char buf[1024];
-	fhash = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse HEAD", "r");
-	while (fgets(buf, 1024, fhash))
-	{
-		const char * output = (const char *)buf;
-		hash = output;
-
-		std::string hashstring = std::string(hash); int pos;
-		if ((pos = hashstring.find('\n')) != std::string::npos)
-			hashstring.erase(pos);
-
-		const char * hash = hashstring.c_str();
-
-		std::string queryhash = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-HEAD-hash')", hash);
-		auto resultshash = QueryDatabase(queryhash);
-		if (!resultshash.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
-			fclose(fhash);
-			return false;
-		}
-	}
-	fclose(fhash);
-
-	char buf2[1024];
-	fbranch = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse --abbrev-ref HEAD", "r");
-	while (fgets(buf2, 1024, fbranch))
-	{
-		const char * output = (const char *)buf2;
-		branch = output;
-
-		std::string branchstring = std::string(branch); int pos;
-		if ((pos = branchstring.find('\n')) != std::string::npos)
-			branchstring.erase(pos);
-
-		const char * branch = branchstring.c_str();
-
-		std::string querybranch = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-BRANCH')", branch);
-		auto resultsbranch = QueryDatabase(querybranch);
-		if (!resultsbranch.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
-			fclose(fbranch);
-			return false;
-		}
-	}
-	fclose(fbranch);
-#else
-	char* buf = NULL;
-	size_t len = 0;
-	fflush(NULL);
-	fhash = popen("git --git-dir=./source/.git rev-parse HEAD", "r");
-
-	while (getline(&buf, &len, fhash) != -1)
-	{
-		const char * output = (const char *)buf;
-		hash = output;
-
-		std::string hashstring = std::string(hash); int pos;
-		if ((pos = hashstring.find('\n')) != std::string::npos)
-			hashstring.erase(pos);
-
-		const char * hash = hashstring.c_str();
-
-
-		std::string queryhash = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-HEAD-hash')", hash);
-		auto resultshash = QueryDatabase(queryhash);
-		if (!resultshash.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error entering hash to variables.");
-			free(buf);
-			fflush(fhash);
-			return false;
-		}
-	}
-	free(buf);
-	fflush(fhash);
-
-	char* buf2 = NULL;
-	len = 0;
-	fbranch = popen("git --git-dir=./source/.git rev-parse --abbrev-ref HEAD", "r");
-	while (getline(&buf2, &len, fbranch) != -1)
-	{
-		const char * output = (const char *)buf2;
-		branch = output;
-
-		std::string branchstring = std::string(branch); int pos;
-		if ((pos = branchstring.find('\n')) != std::string::npos)
-			branchstring.erase(pos);
-
-		const char * branch = branchstring.c_str();
-
-		std::string querybranch = StringFormat("UPDATE `variables` SET `value`='%s' WHERE(`varname`='git-BRANCH')", branch);
-		auto resultsbranch = QueryDatabase(querybranch);
-		if (!resultsbranch.Success())
-		{
-			LogFile->write(EQEmuLog::Error, "Error entering branch to variables.");
-			free(buf2);
-			fflush(fbranch);
-			return false;
-		}
-	}
-	free(buf2);
-	fflush(fbranch);
-#endif
-	return true;
-}
-
-bool Database::DBSetup_webdata_character() {
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'webdata_character'");
-	auto results = QueryDatabase(check_query);
-	if (results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"Create TABLE `webdata_character` (								"
-			"`id` int(11) NOT NULL,											"
-			"`name` varchar(32) NULL,										"
-			"`last_login` int(11) NULL,										"
-			"`last_seen` int(11) NULL,										"
-			"PRIMARY KEY(`id`)												"
-			") ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = latin1;	"
-			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_character..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating webdata_character table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "webdata_character table created.");
-	}
-	return true;
-}
-
-bool Database::DBSetup_webdata_servers() {
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'webdata_servers'");
-	auto results = QueryDatabase(check_query);
-	if (results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"Create TABLE `webdata_servers` (								"
-			"`id` int(11) NOT NULL,											"
-			"`name` varchar(32) NULL,										"
-			"`connected` tinyint(3) NULL DEFAULT 0,							"
-			"PRIMARY KEY(`id`)												"
-			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
-			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table webdata_servers..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating webdata_servers table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "webdata_servers table created.");
-	}
-	return true;
-}
-
-bool Database::DBSetup_feedback() {
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'feedback'");
-	auto results = QueryDatabase(check_query);
-	if (results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"Create TABLE `feedback` (										"
-			"`id` int(11) NOT NULL AUTO_INCREMENT,							"
-			"`name` varchar(64) NULL,										"
-			"`message` varchar(1024) NULL,									"
-			"`zone` varchar(32) NULL,										"
-			"`date` date NOT NULL,											"
-			"PRIMARY KEY(`id`)												"
-			") ENGINE = InnoDB DEFAULT CHARSET = latin1;					"
-			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table feedback..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating feedback table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "feedback table created.");
-	}
-	return true;
-}
-
-bool Database::DBSetup_PlayerCorpseBackup(){
-
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'character_corpse_items_backup'");
-	auto check_results = QueryDatabase(check_query);
-	if (check_results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"CREATE TABLE `character_corpse_items_backup` (	  "
-			"`corpse_id` int(11) unsigned NOT NULL,		  "
-			"`equip_slot` int(11) unsigned NOT NULL,	  "
-			"`item_id` int(11) unsigned DEFAULT NULL,	  "
-			"`charges` int(11) unsigned DEFAULT NULL,	  "
-			"`aug_1` int(11) unsigned DEFAULT '0',		  "
-			"`aug_2` int(11) unsigned DEFAULT '0',		  "
-			"`aug_3` int(11) unsigned DEFAULT '0',		  "
-			"`aug_4` int(11) unsigned DEFAULT '0',		  "
-			"`aug_5` int(11) unsigned DEFAULT '0',		  "
-			"`attuned` smallint(5) NOT NULL DEFAULT '0',  "
-			"PRIMARY KEY(`corpse_id`, `equip_slot`)		  "
-			") ENGINE = InnoDB DEFAULT CHARSET = latin1;  "
-		);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_corpse_items_backup..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_corpse_items_backup table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "character_corpse_items_backup table created.");
-	}
-
-	std::string cb_check_query = StringFormat("SHOW TABLES LIKE 'character_corpses_backup'");
-	auto cb_check_results = QueryDatabase(cb_check_query);
-	if (cb_check_results.RowCount() == 0){
-		std::string cb_create_query = StringFormat(
-		"CREATE TABLE `character_corpses_backup` (	  "
-		"`id` int(11) unsigned NOT NULL default 0,"
-		"`charid` int(11) unsigned NOT NULL default '0',"
-		"`charname` varchar(64) NOT NULL default '',"
-		"`zone_id` smallint(5) NOT NULL default '0',"
-		"`instance_id` smallint(5) unsigned NOT NULL default '0',"
-		"`x` float NOT NULL default '0',"
-		"`y` float NOT NULL default '0',"
-		"`z` float NOT NULL default '0',"
-		"`heading` float NOT NULL default '0',"
-		"`time_of_death` datetime NOT NULL default '0000-00-00 00:00:00',"
-		"`is_rezzed` tinyint(3) unsigned default '0',"
-		"`is_buried` tinyint(3) NOT NULL default '0',"
-		"`was_at_graveyard` tinyint(3) NOT NULL default '0',"
-		"`is_locked` tinyint(11) default '0',"
-		"`exp` int(11) unsigned default '0',"
-		"`gmexp` int(11) NOT NULL default '0',"
-		"`size` int(11) unsigned default '0',"
-		"`level` int(11) unsigned default '0',"
-		"`race` int(11) unsigned default '0',"
-		"`gender` int(11) unsigned default '0',"
-		"`class` int(11) unsigned default '0',"
-		"`deity` int(11) unsigned default '0',"
-		" `texture` int(11) unsigned default '0',"
-		" `helm_texture` int(11) unsigned default '0',"
-		" `copper` int(11) unsigned default '0',"
-		" `silver` int(11) unsigned default '0',"
-		" `gold` int(11) unsigned default '0',"
-		" `platinum` int(11) unsigned default '0',"
-		" `hair_color` int(11) unsigned default '0',"
-		" `beard_color` int(11) unsigned default '0',"
-		" `eye_color_1` int(11) unsigned default '0',"
-		" `eye_color_2` int(11) unsigned default '0',"
-		" `hair_style` int(11) unsigned default '0',"
-		" `face` int(11) unsigned default '0',"
-		" `beard` int(11) unsigned default '0',"
-		" `drakkin_heritage` int(11) unsigned default '0',"
-		" `drakkin_tattoo` int(11) unsigned default '0',"
-		" `drakkin_details` int(11) unsigned default '0',"
-		" `wc_1` int(11) unsigned default '0',"
-		" `wc_2` int(11) unsigned default '0',"
-		" `wc_3` int(11) unsigned default '0',"
-		" `wc_4` int(11) unsigned default '0',"
-		" `wc_5` int(11) unsigned default '0',"
-		" `wc_6` int(11) unsigned default '0',"
-		" `wc_7` int(11) unsigned default '0',"
-		" `wc_8` int(11) unsigned default '0',"
-		" `wc_9` int(11) unsigned default '0',"
-		" `killedby` tinyint(11) NOT NULL default '0',"
-		"PRIMARY KEY(`id`)		  "
-		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"
-		);
-		LogFile->write(EQEmuLog::Debug, "Attepting to create table character_corpses_backup..");
-		auto cb_create_results = QueryDatabase(cb_create_query);
-		if (!cb_create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_corpses_backup table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "character_corpses_backup table created.");
-	}
-
-	if(cb_check_results.RowCount() == 0 || check_results.RowCount() == 0)
-	{
-		std::string cbp_query = StringFormat("INSERT INTO `character_corpses_backup` SELECT * from `character_corpses`");
-		auto cbp_results = QueryDatabase(cbp_query);
-		if (!cbp_results.Success()){ 
-			LogFile->write(EQEmuLog::Error, "Error populating character_corpses_backup table.");
-			return false;
-		}
-		std::string cip_query = StringFormat("INSERT INTO `character_corpse_items_backup` SELECT * from `character_corpse_items`");
-		auto cip_results = QueryDatabase(cip_query);
-		if (!cip_results.Success()){ 
-			LogFile->write(EQEmuLog::Error, "Error populating character_corpse_items_backup table.");
-			return false;
-		}
-
-		LogFile->write(EQEmuLog::Debug, "Corpse backup tables populated.");
-
-		std::string delcheck_query = StringFormat(
-			"SELECT id FROM `character_corpses_backup`");
-		auto delcheck_results = QueryDatabase(delcheck_query);
-		for (auto row = delcheck_results.begin(); row != delcheck_results.end(); ++row) {
-			uint32 corpse_id = atoi(row[0]);
-			std::string del_query = StringFormat(
-				"DELETE from character_corpses_backup where id = %d AND ( "
-				"SELECT COUNT(*) from character_corpse_items_backup where corpse_id = %d) "
-				" = 0", corpse_id, corpse_id);
-			auto del_results = QueryDatabase(del_query);
-			if(!del_results.Success())
-				return false;
-		}
-
-		LogFile->write(EQEmuLog::Debug, "Corpse backup tables cleaned of empty corpses.");
-	}
-
-	return true;
-}
-
-bool Database::DBSetup_CharacterSoulMarks() {
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'character_soulmarks'");
-	auto results = QueryDatabase(check_query);
-	if (results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"Create TABLE `character_soulmarks` (								"
-			"`id` int(11) NOT NULL AUTO_INCREMENT,								"
-			"`charid` int(11) NOT NULL DEFAULT '0',								"
-			"`charname` varchar(64) NOT NULL DEFAULT '',						"
-			"`acctname` varchar(32) NOT NULL DEFAULT '',						"
-			"`gmname` varchar(64) NOT NULL DEFAULT '',							"
-			"`gmacctname` varchar(32) NOT NULL DEFAULT '',						"
-			"`utime` int(11) NOT NULL DEFAULT '0',								"
-			"`type` int(11) NOT NULL DEFAULT '0',								"
-			"`desc` varchar(256) NOT NULL DEFAULT '',							"
-			"PRIMARY KEY(`id`)													"
-			") ENGINE = InnoDB AUTO_INCREMENT = 263 DEFAULT CHARSET = latin1;	"
-			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table character_soulmarks..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating character_soulmarks table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "character_soulmarks table created.");
-	}
-	return true;
-}
-
-bool Database::DBSetup_MessageBoards() {
-	std::string check_query = StringFormat("SHOW TABLES LIKE 'mb_messages'");
-	auto results = QueryDatabase(check_query);
-	if (results.RowCount() == 0){
-		std::string create_query = StringFormat(
-			"Create TABLE `mb_messages` (														"
-			"`id` int(11) NOT NULL AUTO_INCREMENT,												"
-			"`category` smallint(7) NOT NULL DEFAULT '0',										"
-			"`date` varchar(16) NOT NULL DEFAULT '',											"
-			"`author` varchar(64) NOT NULL DEFAULT '',											"
-			"`time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,	"
-			"`subject` varchar(29) NOT NULL DEFAULT '',											"
-			"`charid` int(11) NOT NULL DEFAULT '0',												"
-			"`language` tinyint(3) NOT NULL DEFAULT '0',										"
-			"`message` varchar(2048) NOT NULL DEFAULT '',										"
-			"PRIMARY KEY(`id`)																	"
-			") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;						"
-			);
-		LogFile->write(EQEmuLog::Debug, "Attempting to create table mb_messages..");
-		auto create_results = QueryDatabase(create_query);
-		if (!create_results.Success()){
-			LogFile->write(EQEmuLog::Error, "Error creating mb_messages table.");
-			return false;
-		}
-		LogFile->write(EQEmuLog::Debug, "mb_messages table created.");
-	}
-	return true;
 }
