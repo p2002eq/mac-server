@@ -1583,7 +1583,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		case ST_AEBard:
 		case ST_AECaster:
 		{
-			spell_target = nullptr;
 			ae_center = this;
 			CastAction = AECaster;
 			break;
@@ -1919,7 +1918,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		&& CastToClient()->CheckAAEffect(aaEffectProjectIllusion)){
 		range = 100;
 	}
-	if(spell_target != nullptr && spell_target != this) {
+	if (!isproc && CastAction != AECaster && spell_target != nullptr && spell_target != this) {
 		//casting a spell on somebody but ourself, make sure they are in range
 		float dist2 = DistanceSquared(m_Position, spell_target->GetPosition());
 		float range2 = range * range;
@@ -2011,6 +2010,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			return false;
 	}
 
+	// NPC innate procs that are AoE spells only hit the target they are attacking
+	if (IsNPC() && isproc && (CastAction == AETarget || CastAction == AECaster))
+	{
+		CastAction = SingleTarget;
+	}
+
 	//
 	// Switch #2 - execute the spell
 	//
@@ -2061,8 +2066,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
 			}
 			else {
-				// regular PB AE or targeted AE spell - spell_target is null if PB
-				if (spell_target)	// this must be an AETarget spell
+				if (CastAction == AETarget)
 				{
 					// affect the target too
 					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
