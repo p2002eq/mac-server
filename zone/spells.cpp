@@ -2057,8 +2057,8 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				{
 					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, false);
 				}
-				break;
 			}
+			break;
 		}
 
 		case AECaster:
