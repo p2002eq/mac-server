@@ -764,7 +764,7 @@ type', in which case, the answer is yes.
 	}
 	while( reverse++ == 0 );
 
-	Log.Out(Logs::General, Logs::None, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Combat, "Mob::IsAttackAllowed: don't have a rule for this - %s vs %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -900,7 +900,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	}
 	while( reverse++ == 0 );
 
-	Log.Out(Logs::General, Logs::None, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
+	Log.Out(Logs::General, Logs::Spells, "Mob::IsBeneficialAllowed: don't have a rule for this - %s to %s\n", this->GetName(), target->GetName());
 	return false;
 }
 
@@ -987,25 +987,27 @@ bool Mob::CheckLosFN(Mob* other) {
 	return Result;
 }
 
-bool Mob::CheckRegion(Mob* other) {
+bool Mob::CheckRegion(Mob* other, bool skipwater) {
 
 	if (zone->watermap == nullptr) 
 		return true;
 
 	//Hack for kedge and powater since we have issues with watermaps.
-	if(zone->GetZoneID() == kedge || zone->GetZoneID() == powater)
+	if(zone->IsWaterZone() && skipwater)
 		return true;
 
 	WaterRegionType ThisRegionType;
 	WaterRegionType OtherRegionType;
-	auto position = glm::vec3(GetX(), GetY(), GetZ() - 1);
-	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ() - 1);
+	auto position = glm::vec3(GetX(), GetY(), GetZ());
+	auto other_position = glm::vec3(other->GetX(), other->GetY(), other->GetZ());
 	ThisRegionType = zone->watermap->ReturnRegionType(position);
 	OtherRegionType = zone->watermap->ReturnRegionType(other_position);
 
-	//_log(SPELLS__CASTING, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
+	Log.Out(Logs::Moderate, Logs::Maps, "Caster Region: %d Other Region: %d", ThisRegionType, OtherRegionType);
 
-	if(ThisRegionType == OtherRegionType)
+	if(ThisRegionType == OtherRegionType || 
+		(ThisRegionType == RegionTypeWater && OtherRegionType == RegionTypeVWater) ||
+		(OtherRegionType == RegionTypeWater && ThisRegionType == RegionTypeVWater))
 		return true;
 
 	return false;
@@ -1013,15 +1015,8 @@ bool Mob::CheckRegion(Mob* other) {
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 
-	glm::vec3 myloc;
-	glm::vec3 oloc;
-
-	myloc.x = GetX();
-	myloc.y = GetY();
-	myloc.z = GetZ();
-	oloc.x = posX;
-	oloc.y = posY;
-	oloc.z = posZ;
+	glm::vec3 myloc(GetX(), GetY(), GetZ());
+	glm::vec3 oloc(posX, posY, posZ);
 	float mybestz = myloc.z;
 	float obestz = oloc.z;
 
@@ -1036,8 +1031,13 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 	}
 	else
 	{
-		mybestz = zone->zonemap->FindBestZ(myloc, nullptr);
-		obestz = zone->zonemap->FindBestZ(oloc, nullptr);
+		if((zone->watermap && !zone->watermap->InWater(myloc) && !zone->watermap->InVWater(myloc)
+			&& !zone->watermap->InWater(oloc) && !zone->watermap->InVWater(oloc))
+			|| !zone->watermap)
+		{
+			mybestz = zone->zonemap->FindBestZ(myloc, nullptr);
+			obestz = zone->zonemap->FindBestZ(oloc, nullptr);
+		}
 	}
 
 #define LOS_DEFAULT_HEIGHT 6.0f
@@ -1046,9 +1046,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
 	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
-#if LOSDEBUG>=5
-	Log.Out(Logs::General, Logs::None, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
-#endif
+	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);
 }
 

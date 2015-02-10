@@ -782,6 +782,9 @@ bool Zone::Init(bool iStaticZone) {
 		Log.Out(Logs::General, Logs::Error, "Loading World Objects failed. continuing.");
 	}
 
+	Log.Out(Logs::General, Logs::Status, "Flushing old respawn timers...");
+	database.QueryDatabase("DELETE FROM `respawn_times` WHERE (`start` + `duration`) < UNIX_TIMESTAMP(NOW())");
+
 	//load up the zone's doors (prints inside)
 	zone->LoadZoneDoors(zone->GetShortName(), zone->GetInstanceVersion());
 	zone->LoadBlockedSpells(zone->GetZoneID());
@@ -1947,6 +1950,14 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 		else
 			return true;
 	}
+
+	return false;
+}
+
+bool Zone::IsWaterZone()
+{
+	if(GetZoneID() == kedge || GetZoneID() == powater)
+		return true;
 
 	return false;
 }
