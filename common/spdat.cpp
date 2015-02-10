@@ -414,6 +414,20 @@ bool IsAERainNukeSpell(uint16 spell_id)
 	return false;
 }
 
+bool IsPureDispelSpell(uint16 spell_id)
+{
+	int i;
+
+	if (!IsValidSpell(spell_id))
+		return false;
+
+	for (i = 0; i < EFFECT_COUNT; i++)
+		if (!IsBlankSpellEffect(spell_id, i) && spells[spell_id].effectid[i] != SE_CancelMagic)
+			return false;
+
+	return true;
+}
+
 bool IsPartialCapableSpell(uint16 spell_id)
 {
 	if (spells[spell_id].no_partial_resist)
@@ -440,7 +454,8 @@ bool IsResistableSpell(uint16 spell_id)
 {
 	// for now only detrimental spells are resistable. later on i will
 	// add specific exceptions for the beneficial spells that are resistable
-	if (IsDetrimentalSpell(spell_id))
+	// Torven: dispels do not have a MR check; they have a different check that is entirely level based
+	if (IsDetrimentalSpell(spell_id) && !IsPureDispelSpell(spell_id))
 		return true;
 
 	return false;

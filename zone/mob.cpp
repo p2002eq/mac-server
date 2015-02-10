@@ -3741,11 +3741,6 @@ void Mob::GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float
 
 	float tmpx = -cosf(headingRadians) * pushback;
 	float tmpy = sinf(headingRadians) * pushback;
-	if (pushback < 0)
-	{
-		tmpx = -tmpx;
-		tmpy = -tmpy;
-	}
 
 	x_coord += tmpx;
 	y_coord += tmpy;
