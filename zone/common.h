@@ -549,6 +549,7 @@ typedef enum {
 
 typedef enum {
 	SingleTarget,	// causes effect to spell_target
+	Projectile,		// bolt spells, flare
 	AETarget,			// causes effect in aerange of target + target
 	AECaster,			// causes effect in aerange of 'this'
 	GroupSpell,		// causes effect to caster + target's group

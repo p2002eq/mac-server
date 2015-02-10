@@ -1449,7 +1449,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 
 	switch (targetType)
 	{
-// single target spells
+		// single target spells
 		case ST_Self:
 		{
 			spell_target = this;
@@ -1457,11 +1457,10 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			break;
 		}
 
+		// bolt spells and flare
 		case ST_TargetOptional:
 		{
-			if(!spell_target)
-				spell_target = this;
-			CastAction = SingleTarget;
+			CastAction = Projectile;
 			ProjectileAnimation(this, spell_id, false, 1.5);
 			break;
 		}
@@ -1583,7 +1582,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		case ST_AEBard:
 		case ST_AECaster:
 		{
-			spell_target = nullptr;
 			ae_center = this;
 			CastAction = AECaster;
 			break;
@@ -1919,7 +1917,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		&& CastToClient()->CheckAAEffect(aaEffectProjectIllusion)){
 		range = 100;
 	}
-	if(spell_target != nullptr && spell_target != this) {
+	if (!isproc && CastAction != AECaster && spell_target != nullptr && spell_target != this) {
 		//casting a spell on somebody but ourself, make sure they are in range
 		float dist2 = DistanceSquared(m_Position, spell_target->GetPosition());
 		float range2 = range * range;
@@ -1938,6 +1936,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		}
 
 		spell_target->CalcSpellPowerDistanceMod(spell_id, dist2);
+	}
+
+	// NPC innate procs that are AoE spells only hit the target they are attacking
+	if (IsNPC() && isproc && (CastAction == AETarget || CastAction == AECaster))
+	{
+		CastAction = SingleTarget;
 	}
 
 	//
@@ -1979,6 +1983,84 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 
+		case Projectile:
+		{
+			if (spell_target == nullptr)
+			{
+				// no target.  If projectile code were in, this should still launch a bolt
+				// but for now, bolts are just DD spells with LOS and angle checks at the end of the cast
+				return false;
+			}
+			else if (isproc)
+			{
+				SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, true);
+			}
+			else if (CheckLosFN(spell_target))
+			{
+				glm::vec2 targetPos2d;
+				glm::vec2 casterPos2d;
+				glm::vec2 aimedPos2d;
+				glm::vec2 casterToTargetV;
+				glm::vec2 casterHeadingV;
+
+				targetPos2d.x = -spell_target->GetX();
+				targetPos2d.y = spell_target->GetY();
+				casterPos2d.x = -GetX();
+				casterPos2d.y = GetY();
+				float distance2d = Distance(casterPos2d, targetPos2d);
+
+				float headingRadians = GetHeading();
+				headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+				if (headingRadians < 270)
+					headingRadians += 90;
+				else
+					headingRadians -= 270;
+
+				headingRadians = headingRadians * 3.1415f / 180.0f;
+
+				// direction vector of caster with magnitude of caster to target distance
+				casterHeadingV.x = cosf(headingRadians) * distance2d;
+				casterHeadingV.y = sinf(headingRadians) * distance2d;
+
+				// position vector of spot player is aimed at with distaince/magnitude of caster to target distance
+				aimedPos2d.x = casterHeadingV.x + casterPos2d.x;
+				aimedPos2d.y = casterHeadingV.y + casterPos2d.y;
+
+				// direction vector of caster to target
+				casterToTargetV.x = casterPos2d.x - targetPos2d.x;
+				casterToTargetV.y = casterPos2d.y - targetPos2d.y;
+
+				// dot product of unit vectors
+				float dotp = (casterHeadingV.x / distance2d) * (casterToTargetV.x / distance2d) +
+					(casterHeadingV.y / distance2d) * (casterToTargetV.y / distance2d);
+				dotp = -dotp;
+
+				// taken from Mob::CombatRange()
+				float sizeMod = spell_target->GetSize();
+				if (spell_target->GetRace() == 49 || spell_target->GetRace() == 158 || spell_target->GetRace() == 196) //For races with a fixed size
+					sizeMod = 60.0f;
+				if (sizeMod < 8.0f)
+					sizeMod = 8.0f;
+
+				if (sizeMod > 29)
+					sizeMod *= sizeMod;
+				else if (sizeMod > 19)
+					sizeMod *= sizeMod * 2;
+				else
+					sizeMod *= sizeMod * 4;
+
+				if (sizeMod > 10000)
+					sizeMod = sizeMod / 7;
+
+				// dotp of 1 means facing directly at target, -1 means target behind you
+				if (dotp > 0.7f && DistanceSquared(targetPos2d, aimedPos2d) < sizeMod)
+				{
+					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, false);
+				}
+			}
+			break;
+		}
+
 		case AECaster:
 		case AETarget:
 		{
@@ -1990,8 +2072,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
 			}
 			else {
-				// regular PB AE or targeted AE spell - spell_target is null if PB
-				if (spell_target)	// this must be an AETarget spell
+				if (CastAction == AETarget)
 				{
 					// affect the target too
 					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
@@ -3339,31 +3420,10 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	// Prevent double invising, which made you uninvised
-	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
+	// Prevent invis stacking
+	if (IsEffectInSpell(spell_id, SE_Invisibility) || IsEffectInSpell(spell_id, SE_InvisVsUndead) || IsEffectInSpell(spell_id, SE_InvisVsAnimals))
 	{
-		if(spelltar->invisible)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible || spelltar->invisible_undead || spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);

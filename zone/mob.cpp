@@ -3633,6 +3633,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 		}
 		else if(IsClient())
 		{
+			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
 			CastToClient()->SetKnockBackExemption(true);
 
 			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -3670,19 +3671,14 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	glm::vec3 loc(GetX(), GetY(), GetZ());
 	float new_x = loc.x;
 	float new_y = loc.y;
-	float best_z = loc.z;
-
-	if(zone->zonemap != nullptr) 
-	{
-		best_z = zone->zonemap->FindBestZ(loc, nullptr);
-	}
+	float new_z = loc.z;
 
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
 	{
 		m_Position.x = new_x;
 		m_Position.y = new_y;
-		m_Position.z = best_z;
+		m_Position.z = new_z;
 
 		if(IsNPC())
 		{
@@ -3690,6 +3686,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 		}
 		else if(IsClient())
 		{
+			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
 			CastToClient()->SetKnockBackExemption(true);
 
 			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
@@ -3698,7 +3695,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 			spu->spawn_id	= GetID();
 			spu->x_pos		= new_x;
 			spu->y_pos		= new_y;
-			spu->z_pos		= best_z;
+			spu->z_pos		= new_z;
 			spu->delta_x	= NewFloatToEQ13(0);
 			spu->delta_y	= NewFloatToEQ13(0);
 			spu->delta_z	= NewFloatToEQ13(0);
@@ -3718,74 +3715,16 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 
 void Mob::GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float &y_coord)
 {
-	float heading = attacker->GetHeading();
-	float tmpx = 0.0f;
-	float tmpy = 0.0f;
-	bool reverse = false;
-
-	if(pushback < 0)
-	{
-		reverse = true;
-		pushback = abs(pushback);
-	}
-
-	//NW 32
-	if(heading >= 16 && heading <= 48)
-	{
-		tmpx = pushback;
-		tmpy = pushback;
-	}
-	//West 64
-	else if(heading >= 49 && heading <= 80)
-	{
-		tmpx = pushback;
-	}
-	//SW 96
-	else if(heading >= 81 && heading <= 112)
-	{
-		tmpx = pushback;
-		tmpy = -abs(pushback);
-	}
-	//South 128
-	else if(heading >= 113 && heading <= 144)
-	{
-		tmpy = -abs(pushback);
-	}
-	//SE 160
-	else if(heading >= 145 && heading <= 176)
-	{
-		tmpx = -abs(pushback);
-		tmpy = -abs(pushback);
-	}
-	//East 192
-	else if(heading >= 177 && heading <= 208)
-	{
-		tmpx = -abs(pushback);
-	}
-	//NE 224
-	else if(heading >= 209 && heading <= 240)
-	{
-		tmpx = -abs(pushback);
-		tmpy = pushback;
-	}
-	//North 0
+	float headingRadians = attacker->GetHeading();
+	headingRadians = (headingRadians * 360.0f) / 256.0f;
+	if (headingRadians < 270)
+		headingRadians += 90;
 	else
-	{
-		tmpy = pushback;
-	}
-	
-	if(reverse)
-	{
-		if(tmpx < 0)
-			tmpx = abs(tmpx);
-		else
-			tmpx = -abs(tmpx);
+		headingRadians -= 270;
+	headingRadians = headingRadians * 3.1415f / 180.0f;
 
-		if(tmpy < 0)
-			tmpy = abs(tmpy);
-		else
-			tmpy = -abs(tmpy);
-	}
+	float tmpx = -cosf(headingRadians) * pushback;
+	float tmpy = sinf(headingRadians) * pushback;
 
 	x_coord += tmpx;
 	y_coord += tmpy;
