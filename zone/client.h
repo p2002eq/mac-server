@@ -952,8 +952,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	virtual int32 Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
 	int32 GetMeleeDamage(Mob* other, bool GetMinDamage = false);
 
-	bool CheckCULog() { return clientupdate_log; }
-	void SetCULog(bool value) { clientupdate_log = value; }
+	bool has_zomm;
 
 protected:
 	friend class Mob;
@@ -1223,7 +1222,6 @@ private:
 	void InterrogateInventory_(bool errorcheck, Client* requester, int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, bool log, bool silent, bool &error, int depth);
 	bool InterrogateInventory_error(int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, int depth);
 
-	bool clientupdate_log;
 };
 
 #endif

@@ -85,7 +85,6 @@ Mob::Mob(const char* in_name,
 		ranged_timer(2000),
 		tic_timer(6000),
 		mana_timer(2000),
-		client_update_log(10000),
 		spellend_timer(0),
 		rewind_timer(30000), //Timer used for determining amount of time between actual player position updates for /rewind.
 		bindwound_timer(10000),
@@ -1033,6 +1032,11 @@ void Mob::SendHPUpdate()
 // this one just warps the mob to the current location
 void Mob::SendPosition()
 {
+
+	// Don't process position updates for the player while we are the eye.
+	if(IsClient() && CastToClient()->has_zomm)
+		return;
+
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1044,6 +1048,11 @@ void Mob::SendPosition()
 
 // this one is for mobs on the move, with deltas - this makes them walk
 void Mob::SendPosUpdate(uint8 iSendToSelf) {
+
+	// Don't process position updates for the player while we are the eye.
+	if(IsClient() && CastToClient()->has_zomm)
+		return;
+
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1055,27 +1064,32 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 	}
 	else
 	{
-		uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
-	/*	if(this->IsNPC())
+		if(IsClient())
 		{
-			if(this->GetBaseRace() == SHIP)
-				position_update = RuleI(Zone, NPCPositonUpdateTicCount)/2;
-		}*/
-		if(move_tic_count == position_update)
-		{
-			entity_list.QueueClients(this, app, (iSendToSelf==0), false);
-			move_tic_count = 0;
+			if(CastToClient()->gmhideme)
+				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
+			else
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
-			entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 800, nullptr, false);
-			move_tic_count++;
+			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
+			if(move_tic_count == position_update)
+			{
+				entity_list.QueueClients(this, app, (iSendToSelf==0), false);
+				move_tic_count = 0;
+			}
+			else
+			{
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 800, nullptr, false);
+				move_tic_count++;
+			}
 		}
 	}
 	safe_delete(app);
 }
 
-// this is for SendPosition()
+// this is for SendPosition() It shouldn't be used for player updates, only NPCs that haven't moved.
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
@@ -1088,11 +1102,11 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	else
 		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
 	if(m_Position.z >= 0)
-		spu->z_pos		= static_cast<int16>(m_Position.z + 0.5);
+		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
 	else
-		spu->z_pos		= static_cast<int16>(m_Position.z - 0.5);
-//	if(size > 0 && IsClient())
-//		spu->z_pos -= static_cast<int16>(size);
+		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
+	if(IsClient())
+		spu->z_pos -= static_cast<int8>(size);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1121,43 +1135,45 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 // this is for SendPosUpdate()
 void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 
-	if(IsClient())
-	{
-		if(CastToClient()->CheckCULog())
-		{
-			Log.Out(Logs::Detail, Logs::EQMac, "Pos: %0.2f, %0.2f, %0.2f, %0.2f. Deltas: %0.2f, %0.2f, %0.2f, %0.2f Anim: %d", m_Position.x, m_Position.y, m_Position.z, m_Position.w, m_Delta.x, m_Delta.y, m_Delta.z, m_Delta.w, animation);
-			CastToClient()->SetCULog(false);
-		}
-	}
+	auto currentloc = glm::vec4(GetX(), GetY(), GetZ(), GetHeading());
+
+	// Send other players our original loc if we have an eye out. (Updates of the player entity need
+	// to occur, otherwise they will disappear to other players.)
+	if(IsClient() && CastToClient()->has_zomm)
+		currentloc = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
 
 	spu->spawn_id	= GetID();
-	if(m_Position.x >= 0)
-		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
+	if(currentloc.x >= 0)
+		spu->x_pos		= static_cast<int16>(currentloc.x + 0.5);
 	else
-		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
-	if(m_Position.y >= 0)
-		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
+		spu->x_pos		= static_cast<int16>(currentloc.x - 0.5);
+	if(currentloc.y >= 0)
+		spu->y_pos		= static_cast<int16>(currentloc.y + 0.5);
 	else
-		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
-	if(m_Position.z >= 0)
-		spu->z_pos		= static_cast<int16>(m_Position.z + 0.5);
+		spu->y_pos		= static_cast<int16>(currentloc.y - 0.5);
+	if(currentloc.z >= 0)
+		spu->z_pos		= static_cast<int16>((currentloc.z + 0.5)*10);
 	else
-		spu->z_pos		= static_cast<int16>(m_Position.z - 0.5);
-//	if(size > 0 && IsClient())
-//		spu->z_pos -= static_cast<int16>(size);
-	spu->heading	= static_cast<int8>(m_Position.w);
+		spu->z_pos		= static_cast<int16>((currentloc.z - 0.5)*10);
+	spu->heading	= static_cast<int8>(currentloc.w);
 
-	spu->delta_x	= static_cast<int32>(m_Delta.x);///125.0);
-	spu->delta_y	= static_cast<int32>(m_Delta.y);///125.0);
-	spu->delta_z	= static_cast<int32>(m_Delta.z);
+	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
+	spu->delta_y	= static_cast<int32>(m_Delta.y/125);
+	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
 
 	if(this->IsClient())
+	{
+		spu->z_pos -= static_cast<int8>(size);
 		spu->anim_type = animation;
-	else
-		spu->anim_type	= pRunAnimSpeed;
+	}
+	else if(this->IsNPC())
+	{
+		float anim = pRunAnimSpeed / 37.0f;
+		spu->anim_type = static_cast<int8>(anim * 7);
+	}
 	
 }
 
@@ -2649,10 +2665,6 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 	}
 }
 
-void Mob::SetDelta(const glm::vec4& delta) {
-	m_Delta = delta;
-}
-
 void Mob::SetEntityVariable(const char *id, const char *m_var)
 {
 	std::string n_m_var = m_var;
@@ -3665,34 +3677,18 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 		m_Position.y = new_y;
 		m_Position.z = new_z;
 
-		if(IsNPC())
+		uint8 self_update = 0;
+		if(IsClient())
 		{
-			SendPosition();
-		}
-		else if(IsClient())
-		{
-			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
+			self_update = 1;
 			CastToClient()->SetKnockBackExemption(true);
-
-			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-			spu->spawn_id	= GetID();
-			spu->x_pos		= new_x;
-			spu->y_pos		= new_y;
-			spu->z_pos		= new_z;
-			spu->delta_x	= NewFloatToEQ13(0);
-			spu->delta_y	= NewFloatToEQ13(0);
-			spu->delta_z	= NewFloatToEQ13(0);
-			spu->heading	= GetHeading();
-			spu->spacer1	=0;
-			spu->spacer2	=0;
-			spu->anim_type = 0;
-			spu->delta_heading = NewFloatToEQ13(0);
-			outapp_push->priority = 6;
-			entity_list.QueueClients(this, outapp_push, true);
-			CastToClient()->FastQueuePacket(&outapp_push, false);
 		}
+
+		if(IsNPC() && !IsMoving())
+			SendPosition();
+		else
+			SendPosUpdate(self_update);
+	
 		return true;
 	}
 	else
@@ -3709,43 +3705,25 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	glm::vec3 loc(GetX(), GetY(), GetZ());
 	float new_x = loc.x;
 	float new_y = loc.y;
-	float new_z = loc.z;
 
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
 	{
 		m_Position.x = new_x;
 		m_Position.y = new_y;
-		m_Position.z = new_z;
 
-		if(IsNPC())
+		uint8 self_update = 0;
+		if(IsClient())
 		{
-			SendPosition();
-		}
-		else if(IsClient())
-		{
-			new_z += 2;		// temporary to prevent Z sinking.  Remove once Z sinking issue is resolved
+			self_update = 1;
 			CastToClient()->SetKnockBackExemption(true);
-
-			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-			spu->spawn_id	= GetID();
-			spu->x_pos		= new_x;
-			spu->y_pos		= new_y;
-			spu->z_pos		= new_z;
-			spu->delta_x	= NewFloatToEQ13(0);
-			spu->delta_y	= NewFloatToEQ13(0);
-			spu->delta_z	= NewFloatToEQ13(0);
-			spu->heading	= GetHeading();
-			spu->spacer1	=0;
-			spu->spacer2	=0;
-			spu->anim_type = 0;
-			spu->delta_heading = NewFloatToEQ13(0);
-			outapp_push->priority = 6;
-			entity_list.QueueClients(this, outapp_push, true);
-			CastToClient()->FastQueuePacket(&outapp_push);
 		}
+
+		if(IsNPC() && !IsMoving())
+			SendPosition();
+		else
+			SendPosUpdate(self_update);
+
 		return true;
 	}
 	return false;

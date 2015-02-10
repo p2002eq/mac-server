@@ -2338,27 +2338,25 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 	range = range * range;
 
 	EQApplicationPacket *outapp = 0;
-	SpawnPositionUpdate_Struct *ppu = 0;
+	SpawnPositionUpdates_Struct *ppu = 0;
 	Mob *mob = 0;
 
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		if (outapp == 0) {
-			outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
+			outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+			ppu = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
 		}
 		mob = it->second;
 		if (mob && !mob->IsCorpse() && (it->second != client)
 			&& (mob->IsClient() || iSendEvenIfNotChanged || (mob->LastChange() >= cLastUpdate))
 			&& (!it->second->IsClient() || !it->second->CastToClient()->GMHideMe(client))) {
 
-			//bool Grouped = client->HasGroup() && mob->IsClient() && (client->GetGroup() == mob->CastToClient()->GetGroup());
-
-			//if (range == 0 || (iterator.GetData() == alwayssend) || Grouped || (mob->DistNoRootNoZ(*client) <= range)) {
 			if (range == 0 || (it->second == alwayssend) || mob->IsClient() || (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range)) {
-				mob->MakeSpawnUpdate(ppu);
+				mob->MakeSpawnUpdate(&ppu->spawn_update);
+				ppu->num_updates = 1;
 			}
-			if(mob && mob->IsClient() && mob->GetID()>0) {
+			if(mob && mob->IsClient() && mob->GetID()>0 && !client->has_zomm) {
 				client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 			}
 		}
@@ -3344,6 +3342,23 @@ int16 EntityList::CountTempPets(Mob *owner)
 	owner->SetTempPetCount(count);
 
 	return count;
+}
+
+bool EntityList::GetZommPet(Mob *owner, NPC* &pet)
+{
+	int16 count = 0;
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID() && n->GetRace() == EYE_OF_ZOMM) {
+				pet = it->second;
+				return true;
+			}
+		}
+		++it;
+	}
+	return false;
 }
 
 void EntityList::AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy)

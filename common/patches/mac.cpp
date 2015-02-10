@@ -528,57 +528,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	ENCODE(OP_MobUpdate)
-	{
-		SETUP_DIRECT_ENCODE(SpawnPositionUpdates_Struct, structs::SpawnPositionUpdates_Struct);
-		eq->num_updates = 1; //hack - only one position update per packet
-		float anim_type = emu->spawn_update.anim_type / 37.0f;
-		eq->spawn_update.anim_type = emu->spawn_update.anim_type;
-		eq->spawn_update.delta_heading = emu->spawn_update.delta_heading;
-		eq->spawn_update.delta_x = emu->spawn_update.delta_x;
-		eq->spawn_update.delta_y = emu->spawn_update.delta_y;
-		eq->spawn_update.delta_z = emu->spawn_update.delta_z;
-		eq->spawn_update.spawn_id = emu->spawn_update.spawn_id;
-		eq->spawn_update.x_pos = emu->spawn_update.x_pos;
-		eq->spawn_update.y_pos = emu->spawn_update.y_pos;
-		eq->spawn_update.z_pos = emu->spawn_update.z_pos*10;
-		eq->spawn_update.heading = emu->spawn_update.heading;
-		eq->spawn_update.anim_type = anim_type * 7;
-		FINISH_ENCODE();
-	}
-
-	ENCODE(OP_ClientUpdate)
-	{
-		SETUP_DIRECT_ENCODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
-		OUT(spawn_id);
-		OUT(x_pos);
-		OUT(y_pos);
-		eq->z_pos = emu->z_pos*10-1;
-		eq->delta_x = 0;
-		eq->delta_y = 0;
-		eq->delta_z = 0;
-		OUT(delta_heading);
-		OUT(anim_type);
-		OUT(heading);
-		FINISH_ENCODE();
-	}
-
-	DECODE(OP_ClientUpdate)
-	{
-		SETUP_DIRECT_DECODE(SpawnPositionUpdate_Struct, structs::SpawnPositionUpdate_Struct);
-		IN(spawn_id);
-		IN(x_pos);
-		IN(y_pos);
-		emu->z_pos = eq->z_pos/10-1;
-		IN(heading);
-		IN(delta_x);
-		IN(delta_y);
-		IN(delta_z);
-		IN(delta_heading);
-		IN(anim_type);
-		FINISH_DIRECT_DECODE();
-	}
-
 	DECODE(OP_TargetMouse)
 	{
 		SETUP_DIRECT_DECODE(ClientTarget_Struct, structs::ClientTarget_Struct);

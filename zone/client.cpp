@@ -110,7 +110,7 @@ Client::Client(EQStreamInterface* ieqs)
 
 	),
 	//these must be listed in the order they appear in client.h
-	position_timer(100), //WAS 250 CAVEDUDE
+	position_timer(250),
 	hpupdate_timer(1800),
 	camp_timer(29000),
 	process_timer(100),
@@ -263,8 +263,7 @@ Client::Client(EQStreamInterface* ieqs)
 
 	active_light = innate_light;
 	spell_light = equip_light = NOT_USED;
-
-	clientupdate_log = false;
+	has_zomm = false;
 }
 
 Client::~Client() {
@@ -421,7 +420,7 @@ bool Client::Save(uint8 iCommitNow) {
 	/* Wrote current basics to PP for saves */
 	m_pp.x = m_Position.x;
 	m_pp.y = m_Position.y;
-	m_pp.z = m_Position.z + 2;
+	m_pp.z = m_Position.z;
 	m_pp.guildrank = guildrank;
 	m_pp.heading = m_Position.w;
 
@@ -4646,7 +4645,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 		client->Message(0, " GroupID: %i Count: %i GroupLeader: %s GroupLeaderCached: %s", g->GetID(), g->GroupCount(), g->GetLeaderName(), g->GetOldLeaderName());
 	}
 	client->Message(0, " Hidden: %i ImpHide: %i Sneaking: %i Invisible: %i InvisVsUndead: %i InvisVsAnimals: %i", hidden, improved_hidden, sneaking, invisible, invisible_undead, invisible_animals);
-	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i", feigned, invulnerable, see_invis);
+	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i", feigned, invulnerable, see_invis, has_zomm);
 
 	Extra_Info:
 
@@ -4659,7 +4658,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 		if(GetLevel() < 10)
 			exploss = 0;
 		client->Message(0, "  CurrentXP: %i XP Needed: %i ExpLoss: %i CurrentAA: %i", GetEXP(), xpneeded, exploss, GetAAXP());
-
+		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate);
 	}
 }
 

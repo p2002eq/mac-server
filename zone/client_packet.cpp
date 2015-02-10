@@ -291,12 +291,14 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	}
 
 	if (Log.log_settings[Logs::Client_Server_Packet].is_category_enabled == 1)
-		if(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth  && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate){
+		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
+			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
 			Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size());
 		}
 	
 	if (Log.log_settings[Logs::Client_Server_Packet_With_Dump].is_category_enabled == 1)
-		if(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth  && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate){
+		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
+			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
 			Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size(), DumpPacketToString(app).c_str());
 		}
 	
@@ -2452,14 +2454,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 	}
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
-	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos+1, ppu->heading);
 
-/*	if(ppu->anim_type == 252 || ppu->anim_type == 248)
-	{
-		SetRunning(false);
-	}
-	else
-		SetRunning(true);*/
+	ppu->z_pos /= 10;
 
 	/* Web Interface */
 	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
@@ -2475,6 +2471,30 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
 	}
 
+	if(has_zomm)
+	{
+		NPC* zommnpc = nullptr;
+		if(entity_list.GetZommPet(this, zommnpc))
+		{
+			if(zommnpc)
+			{
+				if(abs(ppu->x_pos - zommnpc->GetX()) > 2 || abs(ppu->y_pos - zommnpc->GetY()) > 2)
+				{
+					auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+					zommnpc->SetPosition(zommPos);
+
+					// Update internal position so we don't warp back to our body. (Self updates don't occur while zomm is out, 
+					// and other players will be given the player's original coords on timeout updates.)
+					m_Position = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+					zommnpc->SendPosUpdate(1);
+					pLastUpdate = Timer::GetCurrentTime();
+					entity_list.OpenDoorsNear(zommnpc);
+					return;
+				}
+			}
+		}
+	}
+
 	if(ppu->spawn_id != GetID()) {
 		// check if the id is for a boat the player is controlling
 		if (ppu->spawn_id == BoatID) {
@@ -2488,17 +2508,21 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			auto boatDelta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 			boat->SetDelta(boatDelta);
 			// send an update to everyone nearby except the client controlling the boat
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* ppus = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
-			boat->MakeSpawnUpdate(ppus);
+			EQApplicationPacket* outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+			SpawnPositionUpdates_Struct* ppus = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
+			boat->MakeSpawnUpdate(&ppus->spawn_update);
+			ppus->num_updates = 1;
 			entity_list.QueueCloseClients(boat,outapp,true,300,this,false);
 			safe_delete(outapp);
+			pLastUpdate = Timer::GetCurrentTime();
 			// update the boat's position on the server, without sending an update
 			boat->GMMove(ppu->x_pos, ppu->y_pos, ppu->z_pos, EQ19toFloat(ppu->heading), false);
 			return;
 		}
 		else return;	// if not a boat, do nothing
 	}
+
+	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
 
 	float dist = 0;
 	float tmp;
@@ -2701,28 +2725,14 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
+	m_Position.x = ppu->x_pos;
+	m_Position.y = ppu->y_pos;
+	m_Position.z = ppu->z_pos;
+	animation = ppu->anim_type;
 
-	// Outgoing client packet
-	//if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->z_pos != m_Position.z || ppu->heading != m_Position.w ||
-	//	ppu->delta_x != m_Delta.x || ppu->delta_y != m_Delta.y || ppu->delta_z != m_Delta.z || ppu->delta_heading != m_Delta.w ||
-	//	ppu->anim_type != animation)
-	//{
-		m_Position.x = ppu->x_pos;
-		m_Position.y = ppu->y_pos;
-		m_Position.z = ppu->z_pos;
-		//if(size > 0)
-		//	m_Position.z += size;
-		animation = ppu->anim_type;
-
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-		SpawnPositionUpdate_Struct* cup = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
-		MakeSpawnUpdate(cup);
-		if (gmhideme)
-			entity_list.QueueClientsStatus(this,outapp,true,Admin(),255);
-		else
-			entity_list.QueueCloseClients(this,outapp,true,225,nullptr,false);
-		safe_delete(outapp);
-	//}
+	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
+	SendPosUpdate();
+	pLastUpdate = Timer::GetCurrentTime();
 
 	if(zone->watermap)
 	{

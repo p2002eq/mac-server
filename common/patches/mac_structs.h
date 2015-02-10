@@ -692,6 +692,13 @@ struct SpawnPositionUpdates_Struct
 						spawn_update;
 };
 
+struct PlayerPositionUpdates_Struct
+{
+	/*0000*/ uint32  num_updates;               // Number of SpawnUpdates
+	/*0004*/ struct SpawnPositionUpdate_Struct // Spawn Position Update
+						spawn_update[0];
+};
+
 struct SpawnHPUpdate_Struct
 {
 	/*000*/ uint32  spawn_id;		// Comment: Id of spawn to update

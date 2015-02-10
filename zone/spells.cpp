@@ -5010,7 +5010,6 @@ bool Client::SpellGlobalCheck(uint16 spell_ID, uint32 char_ID) {
     return false;
 }
 
-// TODO get rid of this
 int16 Mob::GetBuffSlotFromType(uint16 type) {
 	uint32 buff_count = GetMaxTotalSlots();
 	for (int i = 0; i < buff_count; i++) {

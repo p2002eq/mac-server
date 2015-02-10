@@ -546,6 +546,10 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			}
 			SetLooting(0);
 		}
+		if(Trader)
+		{
+			Trader_EndTrader();
+		}
 
 		zone_mode = zm;
 

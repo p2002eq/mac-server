@@ -437,7 +437,8 @@ public:
 	bool IsCurrentlyRunning() const { return m_running; }
 	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
-	void SetDelta(const glm::vec4& delta);
+	void SetDelta(const glm::vec4& delta) { m_Delta = delta; }
+	void SetPosition(const glm::vec4& pos) { m_Position = pos; }
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
 	void SendPosUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct* spu);
@@ -445,7 +446,8 @@ public:
 	void SendPosition();
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
-		m_Position.z = NewPosition.z; };
+		m_Position.z = NewPosition.z; }
+	void SetAnimation(uint8 anim) { animation = anim; } // For Eye of Zomm. It's a NPC, but uses PC position updates.
 
 	//AI
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
@@ -1018,7 +1020,7 @@ protected:
 	uint8 orig_level;
 	uint32 npctype_id;
 	glm::vec4 m_Position;
-	glm::vec4 m_EQPosition;
+	glm::vec4 m_EQPosition; // This acts as a home/backup set of coords. It is currently used to set a home point for Eye of Zomm.
 	uint16 animation;
 	float base_size;
 	float size;
@@ -1087,7 +1089,6 @@ protected:
 	int16 slow_mitigation; // Allows for a slow mitigation (100 = 100%, 50% = 50%)
 	Timer tic_timer;
 	Timer mana_timer;
-	Timer client_update_log;
 
 	//spell casting vars
 	Timer spellend_timer;
