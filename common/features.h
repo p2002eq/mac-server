@@ -226,8 +226,8 @@ enum {
 	commandToggleAI = 250,			//can turn NPC AI on and off
 	commandCastSpecials = 100,		//can cast special spells
 	commandInstacast = 100,			//insta-cast all #casted spells
-	commandLevelAboveCap = 100,		//can #level players above level cap
-	commandLevelNPCAboveCap = 100,	//can #level NPCs above level cap
+	commandLevelAboveCap = 250,		//can #level players above level cap
+	commandLevelNPCAboveCap = 250,	//can #level NPCs above level cap
 	commandSetSkillsOther = 100,	//ability to setskills on others
 	commandRaceOthers = 100,	//ability to #race on others
 	commandGenderOthers = 100,	//ability to #gender on others
