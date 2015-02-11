@@ -1841,6 +1841,14 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			}
 		}
 
+	if (spell_id == SPELL_CAZIC_TOUCH && IsNPC())
+	{
+		char shoutStr[sizeof name[0] + 1];
+		strcpy(shoutStr, spell_target->name);
+		strcat(shoutStr, "!");
+		Shout(shoutStr);
+	}
+
 	if(IsClient() && !CastToClient()->GetGM()){
 
 		if(zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))){
@@ -3388,9 +3396,19 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	{
 		GM = false;
 	}
-	// invuln mobs can't be affected by any spells, good or bad
-	if(spelltar->GetInvul() || spelltar->DivineAura()) {
-		if(!GM || IsDetrimentalSpell(spell_id))
+	// invuln: cazic touch penetrates DA for non-GMs; allow beneficial if GM mode only
+	if (spelltar->GetInvul() || spelltar->DivineAura())
+	{
+		bool spellHit = false;
+		if (IsDetrimentalSpell(spell_id))
+		{
+			if (spell_id == SPELL_CAZIC_TOUCH && !GM)
+				spellHit = true;
+		}
+		else if (GM)
+			spellHit = true;		// beneficial on GMs only
+
+		if (!spellHit)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
 			safe_delete(action_packet);
