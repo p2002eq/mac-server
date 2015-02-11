@@ -2329,6 +2329,34 @@ void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, flo
 		Log.Out(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 }
 
+uint8 ZoneDatabase::GetCommandAccess(const char* command) {
+	std::string check_query = StringFormat("SELECT command FROM `commands` WHERE `command`='%s'", command);
+	auto check_results = QueryDatabase(check_query);
+	if (check_results.RowCount() == 0)
+	{
+		std::string insert_query = StringFormat("INSERT INTO `commands` (`command`, `access`) VALUES ('%s', %i)", command, 250);
+		auto insert_results = QueryDatabase(insert_query);
+		if (!insert_results.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating command %s in commands table.", command);
+			return 250;
+		}
+	}
+
+	std::string query = StringFormat("SELECT access FROM commands WHERE command = '%s'", command);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return 250;
+	}
+
+	if (results.RowCount() != 1)
+		return 250;
+
+	auto row = results.begin();
+
+	return atoi(row[0]);
+}
+
 void ZoneDatabase::SaveBuffs(Client *client) {
 
 	std::string query = StringFormat("DELETE FROM `character_buffs` WHERE `character_id` = '%u'", client->CharacterID());
@@ -2776,7 +2804,7 @@ bool ZoneDatabase::LoadFactionData()
 
     auto row = results.begin();
 
-	max_faction = atoi(row[0]);
+	max_faction = row[0] ? atoi(row[0]) : 0;
     faction_array = new Faction*[max_faction+1];
     for(unsigned int index=0; index<max_faction; index++)
         faction_array[index] = nullptr;
