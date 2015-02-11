@@ -2478,19 +2478,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		{
 			if(zommnpc)
 			{
-				if(abs(ppu->x_pos - zommnpc->GetX()) > 2 || abs(ppu->y_pos - zommnpc->GetY()) > 2)
-				{
-					auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
-					zommnpc->SetPosition(zommPos);
-
-					// Update internal position so we don't warp back to our body. (Self updates don't occur while zomm is out, 
-					// and other players will be given the player's original coords on timeout updates.)
-					m_Position = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
-					zommnpc->SendPosUpdate(1);
-					pLastUpdate = Timer::GetCurrentTime();
-					entity_list.OpenDoorsNear(zommnpc);
-					return;
-				}
+				auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+				zommnpc->SetPosition(zommPos);
+				// Update internal position so we don't warp back to our body. (Self updates don't occur while zomm is out, 
+				// and other players will be given the player's original coords on timeout updates.)
+				m_Position = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+				zommnpc->SendPosUpdate(1);
+				pLastUpdate = Timer::GetCurrentTime();
+				entity_list.OpenDoorsNear(zommnpc);
+				return;
 			}
 		}
 	}
