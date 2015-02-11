@@ -159,7 +159,7 @@ bool Client::CheckLoreConflict(const Item_Struct* item) {
 	return (m_inv.HasItemByLoreGroup(item->LoreGroup, ~invWhereUnused) != INVALID_INDEX);
 }
 
-bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2, uint32 aug3, uint32 aug4, uint32 aug5, bool attuned, uint16 to_slot) {
+bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_slot) {
 	this->EVENT_ITEM_ScriptStopReturn();
 
 	// TODO: update calling methods and script apis to handle a failure return
@@ -169,8 +169,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	// make sure the item exists
 	if(item == nullptr) {
 		Message(CC_Red, "Item %u does not exist.", item_id);
-		Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to create an item with an invalid id.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
-			GetName(), account_name, item_id, aug1, aug2, aug3, aug4, aug5);
+		Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to create an item with an invalid id.\n(Item: %u)\n",
+			GetName(), account_name, item_id);
 
 		return false;
 	} 
@@ -236,8 +236,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 	if(inst == nullptr) {
 		Message(CC_Red, "An unknown server error has occurred and your item was not created.");
 		// this goes to logfile since this is a major error
-		Log.Out(Logs::General, Logs::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
-			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5);
+		Log.Out(Logs::General, Logs::Error, "Player %s on account %s encountered an unknown item creation error.\n(Item: %u)\n",
+			GetName(), account_name, item->ID);
 
 		return false;
 	}
@@ -248,8 +248,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, uint32 aug1, uint32 aug2
 
 		if(!(slots & ((uint32)1 << slottest))) {
 			Message(0, "This item is not equipable at slot %u - moving to cursor.", to_slot);
-			Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to equip an item unusable in slot %u - moved to cursor.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u)\n",
-				GetName(), account_name, to_slot, item->ID, aug1, aug2, aug3, aug4, aug5);
+			Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to equip an item unusable in slot %u - moved to cursor.\n(Item: %u)\n",
+				GetName(), account_name, to_slot, item->ID);
 
 			to_slot = MainCursor;
 		}

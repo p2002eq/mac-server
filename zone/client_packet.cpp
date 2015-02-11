@@ -7198,11 +7198,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		qsaudit->items[0].charges = mpo->quantity;
 
 		if (freeslotid == INVALID_INDEX) {
-			qsaudit->items[0].aug_1 = 0;
-			qsaudit->items[0].aug_2 = 0;
-			qsaudit->items[0].aug_3 = 0;
-			qsaudit->items[0].aug_4 = 0;
-			qsaudit->items[0].aug_5 = 0;
 		}
 
 		qspack->Deflate();
