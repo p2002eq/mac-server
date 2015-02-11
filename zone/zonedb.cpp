@@ -2329,7 +2329,7 @@ void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, flo
 		Log.Out(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
 }
 
-uint8 ZoneDatabase::GetCommandAccess(std::string command) {
+uint8 ZoneDatabase::GetCommandAccess(const char* command) {
 	std::string check_query = StringFormat("SELECT command FROM `commands` WHERE `command`='%s'", command);
 	auto check_results = QueryDatabase(check_query);
 	if (check_results.RowCount() == 0)
@@ -2804,7 +2804,7 @@ bool ZoneDatabase::LoadFactionData()
 
     auto row = results.begin();
 
-	max_faction = atoi(row[0]);
+	max_faction = row[0] ? atoi(row[0]) : 0;
     faction_array = new Faction*[max_faction+1];
     for(unsigned int index=0; index<max_faction; index++)
         faction_array[index] = nullptr;

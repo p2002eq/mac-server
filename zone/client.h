@@ -1131,7 +1131,6 @@ private:
 	Timer	qglobal_purge_timer;
 	Timer	TrackingTimer;
 
-	Timer anim_change_timer;
 	Timer anon_toggle_timer;
 	Timer afk_toggle_timer;
 	Timer helm_toggle_timer;
