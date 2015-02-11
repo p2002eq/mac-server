@@ -1032,6 +1032,11 @@ void Mob::SendHPUpdate()
 // this one just warps the mob to the current location
 void Mob::SendPosition()
 {
+
+	// Don't process position updates for the player while we are the eye.
+	if(IsClient() && CastToClient()->has_zomm)
+		return;
+
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1043,6 +1048,11 @@ void Mob::SendPosition()
 
 // this one is for mobs on the move, with deltas - this makes them walk
 void Mob::SendPosUpdate(uint8 iSendToSelf) {
+
+	// Don't process position updates for the player while we are the eye.
+	if(IsClient() && CastToClient()->has_zomm)
+		return;
+
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1054,41 +1064,59 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 	}
 	else
 	{
-		uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
-	/*	if(this->IsNPC())
+		if(IsClient())
 		{
-			if(this->GetBaseRace() == SHIP)
-				position_update = RuleI(Zone, NPCPositonUpdateTicCount)/2;
-		}*/
-		if(move_tic_count == position_update)
-		{
-			entity_list.QueueClients(this, app, (iSendToSelf==0), false);
-			move_tic_count = 0;
+			if(CastToClient()->gmhideme)
+				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
+			else
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
-			entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 800, nullptr, false);
-			move_tic_count++;
+			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
+			if(move_tic_count == position_update)
+			{
+				entity_list.QueueClients(this, app, (iSendToSelf==0), false);
+				move_tic_count = 0;
+			}
+			else
+			{
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 800, nullptr, false);
+				move_tic_count++;
+			}
 		}
 	}
 	safe_delete(app);
 }
 
-// this is for SendPosition()
+// this is for SendPosition() It shouldn't be used for player updates, only NPCs that haven't moved.
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.x;
-	spu->y_pos		= m_Position.y;
-	spu->z_pos		= m_Position.z;
+	if(m_Position.x >= 0)
+		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
+	else
+		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
+	if(m_Position.y >= 0)
+		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
+	else
+		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
+	if(m_Position.z >= 0)
+		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
+	else
+		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
+	if(IsClient())
+		spu->z_pos -= static_cast<int8>(size);
+	spu->heading	= static_cast<int8>(m_Position.w);
+
 	spu->delta_x	= 0;
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
-	spu->heading	= m_Position.w;
-	spu->anim_type	= 0;
 	spu->delta_heading = 0;
 	spu->spacer1	=0;
 	spu->spacer2	=0;
+
+	spu->anim_type	= 0;
 
 	if(IsNPC()) {
 		std::vector<std::string> params;
@@ -1106,21 +1134,47 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 // this is for SendPosUpdate()
 void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
+
+	auto currentloc = glm::vec4(GetX(), GetY(), GetZ(), GetHeading());
+
+	// Send other players our original loc if we have an eye out. (Updates of the player entity need
+	// to occur, otherwise they will disappear to other players.)
+	if(IsClient() && CastToClient()->has_zomm)
+		currentloc = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
+
 	spu->spawn_id	= GetID();
-	spu->x_pos		= m_Position.x;
-	spu->y_pos		= m_Position.y;
-	spu->z_pos		= m_Position.z;
-	spu->delta_x	= m_Delta.x;
-	spu->delta_y	= m_Delta.y;
-	spu->delta_z	= m_Delta.z;
-	spu->heading	= m_Position.w;
+	if(currentloc.x >= 0)
+		spu->x_pos		= static_cast<int16>(currentloc.x + 0.5);
+	else
+		spu->x_pos		= static_cast<int16>(currentloc.x - 0.5);
+	if(currentloc.y >= 0)
+		spu->y_pos		= static_cast<int16>(currentloc.y + 0.5);
+	else
+		spu->y_pos		= static_cast<int16>(currentloc.y - 0.5);
+	if(currentloc.z >= 0)
+		spu->z_pos		= static_cast<int16>((currentloc.z + 0.5)*10);
+	else
+		spu->z_pos		= static_cast<int16>((currentloc.z - 0.5)*10);
+	spu->heading	= static_cast<int8>(currentloc.w);
+
+	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
+	spu->delta_y	= static_cast<int32>(m_Delta.y/125);
+	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
+	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
+
 	if(this->IsClient())
+	{
+		spu->z_pos -= static_cast<int8>(size);
 		spu->anim_type = animation;
-	else
-		spu->anim_type	= pRunAnimSpeed;
-	spu->delta_heading =static_cast<float>(m_Delta.w);
+	}
+	else if(this->IsNPC())
+	{
+		float anim = pRunAnimSpeed / 37.0f;
+		spu->anim_type = static_cast<int8>(anim * 7);
+	}
+	
 }
 
 void Mob::ShowStats(Client* client)
@@ -2494,8 +2548,8 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 	if (zone->zonemap != nullptr)
 	{
 		glm::vec3 me;
-		me.x = m_Position.x;
-		me.y = m_Position.y;
+		me.x = new_x;
+		me.y = new_y;
 		me.z = m_Position.z + z_offset;
 		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
@@ -2514,8 +2568,8 @@ float Mob::GetGroundZ(float new_x, float new_y, float z_offset)
 	if (zone->zonemap != 0)
 	{
 		glm::vec3 me;
-		me.x = m_Position.x;
-		me.y = m_Position.y;
+		me.x = new_x;
+		me.y = new_y;
 		me.z = m_Position.z+z_offset;
 		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
@@ -2609,10 +2663,6 @@ void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, in
 		if (on->HasSkillProcSuccess())
 			on->TrySkillProc(this, skillinuse, 0, true, hand, true);
 	}
-}
-
-void Mob::SetDelta(const glm::vec4& delta) {
-	m_Delta = delta;
 }
 
 void Mob::SetEntityVariable(const char *id, const char *m_var)
@@ -3622,43 +3672,28 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, new_x, new_y);
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
 	{
-		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
+		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
 		m_Position.x = new_x;
 		m_Position.y = new_y;
 		m_Position.z = new_z;
 
-		if(IsNPC())
+		uint8 self_update = 0;
+		if(IsClient())
 		{
-			SendPosition();
-		}
-		else if(IsClient())
-		{
+			self_update = 1;
 			CastToClient()->SetKnockBackExemption(true);
-
-			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-			spu->spawn_id	= GetID();
-			spu->x_pos		= new_x;
-			spu->y_pos		= new_y;
-			spu->z_pos		= new_z;
-			spu->delta_x	= NewFloatToEQ13(0);
-			spu->delta_y	= NewFloatToEQ13(0);
-			spu->delta_z	= NewFloatToEQ13(0);
-			spu->heading	= GetHeading();
-			spu->spacer1	=0;
-			spu->spacer2	=0;
-			spu->anim_type = 0;
-			spu->delta_heading = NewFloatToEQ13(0);
-			outapp_push->priority = 6;
-			entity_list.QueueClients(this, outapp_push, true);
-			CastToClient()->FastQueuePacket(&outapp_push, false);
 		}
+
+		if(IsNPC() && !IsMoving())
+			SendPosition();
+		else
+			SendPosUpdate(self_update);
+	
 		return true;
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::Combat, "DoKnockback(): LOS check failed.");
+		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }
@@ -3667,42 +3702,28 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 {
 	// Use this method for stun/combat pushback.
 
-	float new_x = GetX();
-	float new_y = GetY();
+	glm::vec3 loc(GetX(), GetY(), GetZ());
+	float new_x = loc.x;
+	float new_y = loc.y;
 
 	GetPushHeadingMod(attacker, pushback, new_x, new_y);
-	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, GetZ()))
+	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
 	{
 		m_Position.x = new_x;
 		m_Position.y = new_y;
 
-		if(IsNPC())
+		uint8 self_update = 0;
+		if(IsClient())
 		{
-			SendPosition();
-		}
-		else if(IsClient())
-		{
+			self_update = 1;
 			CastToClient()->SetKnockBackExemption(true);
-
-			EQApplicationPacket* outapp_push = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* spu = (SpawnPositionUpdate_Struct*)outapp_push->pBuffer;
-
-			spu->spawn_id	= GetID();
-			spu->x_pos		= new_x;
-			spu->y_pos		= new_y;
-			spu->z_pos		= GetZ();
-			spu->delta_x	= NewFloatToEQ13(0);
-			spu->delta_y	= NewFloatToEQ13(0);
-			spu->delta_z	= NewFloatToEQ13(0);
-			spu->heading	= GetHeading();
-			spu->spacer1	=0;
-			spu->spacer2	=0;
-			spu->anim_type = 0;
-			spu->delta_heading = NewFloatToEQ13(0);
-			outapp_push->priority = 6;
-			entity_list.QueueClients(this, outapp_push, true);
-			CastToClient()->FastQueuePacket(&outapp_push);
 		}
+
+		if(IsNPC() && !IsMoving())
+			SendPosition();
+		else
+			SendPosUpdate(self_update);
+
 		return true;
 	}
 	return false;
@@ -3710,74 +3731,16 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 
 void Mob::GetPushHeadingMod(Mob* attacker, float pushback, float &x_coord, float &y_coord)
 {
-	float heading = attacker->GetHeading();
-	float tmpx = 0.0f;
-	float tmpy = 0.0f;
-	bool reverse = false;
-
-	if(pushback < 0)
-	{
-		reverse = true;
-		pushback = abs(pushback);
-	}
-
-	//NW 32
-	if(heading >= 16 && heading <= 48)
-	{
-		tmpx = pushback;
-		tmpy = pushback;
-	}
-	//West 64
-	else if(heading >= 49 && heading <= 80)
-	{
-		tmpx = pushback;
-	}
-	//SW 96
-	else if(heading >= 81 && heading <= 112)
-	{
-		tmpx = pushback;
-		tmpy = -abs(pushback);
-	}
-	//South 128
-	else if(heading >= 113 && heading <= 144)
-	{
-		tmpy = -abs(pushback);
-	}
-	//SE 160
-	else if(heading >= 145 && heading <= 176)
-	{
-		tmpx = -abs(pushback);
-		tmpy = -abs(pushback);
-	}
-	//East 192
-	else if(heading >= 177 && heading <= 208)
-	{
-		tmpx = -abs(pushback);
-	}
-	//NE 224
-	else if(heading >= 209 && heading <= 240)
-	{
-		tmpx = -abs(pushback);
-		tmpy = pushback;
-	}
-	//North 0
+	float headingRadians = attacker->GetHeading();
+	headingRadians = (headingRadians * 360.0f) / 256.0f;
+	if (headingRadians < 270)
+		headingRadians += 90;
 	else
-	{
-		tmpy = pushback;
-	}
-	
-	if(reverse)
-	{
-		if(tmpx < 0)
-			tmpx = abs(tmpx);
-		else
-			tmpx = -abs(tmpx);
+		headingRadians -= 270;
+	headingRadians = headingRadians * 3.1415f / 180.0f;
 
-		if(tmpy < 0)
-			tmpy = abs(tmpy);
-		else
-			tmpy = -abs(tmpy);
-	}
+	float tmpx = -cosf(headingRadians) * pushback;
+	float tmpy = sinf(headingRadians) * pushback;
 
 	x_coord += tmpx;
 	y_coord += tmpy;

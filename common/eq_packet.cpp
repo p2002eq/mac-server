@@ -24,6 +24,8 @@
 #include "misc.h"
 #include "op_codes.h"
 #include "platform.h"
+
+#include <sstream>
 #ifndef STATIC_OPCODE
 #include "opcodemgr.h"
 #endif
@@ -842,4 +844,16 @@ EQRawApplicationPacket *EQOldPacket::MakeAppPacket() const {
 
 	EQRawApplicationPacket *res = new EQRawApplicationPacket(dwOpCode, pExtra, dwExtraSize);
 	return(res);
+}
+
+std::string DumpPacketToString(const EQApplicationPacket* app){
+	std::ostringstream out;
+	out << DumpPacketHexToString(app->pBuffer, app->size);
+	return out.str();
+}
+
+std::string DumpProtocolPacketToString(const EQProtocolPacket *app){
+	std::ostringstream out;
+	out << DumpPacketHexToString(app->pBuffer, app->size);
+	return out.str();
 }

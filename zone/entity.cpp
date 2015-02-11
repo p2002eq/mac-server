@@ -74,11 +74,12 @@ Client *Entity::CastToClient()
 		Log.Out(Logs::General, Logs::Error, "CastToClient error (nullptr)");
 		return 0;
 	}
-
+#ifdef _EQDEBUG
 	if (!IsClient()) {
 		Log.Out(Logs::General, Logs::Error, "CastToClient error (not client)"); 
 		return 0;
 	}
+#endif
 
 
 	return static_cast<Client *>(this);
@@ -86,10 +87,12 @@ Client *Entity::CastToClient()
 
 NPC *Entity::CastToNPC()
 {
+#ifdef _EQDEBUG
 	if (!IsNPC()) {
 		Log.Out(Logs::General, Logs::Error, "CastToNPC error (Not NPC)");
 		return 0;
 	}
+#endif
 	return static_cast<NPC *>(this);
 }
 
@@ -283,26 +286,10 @@ void EntityList::AddClient(Client *client)
 void EntityList::TrapProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -378,26 +365,10 @@ void EntityList::RaidProcess()
 void EntityList::DoorProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -422,26 +393,10 @@ void EntityList::DoorProcess()
 void EntityList::ObjectProcess()
 {
 
+	// MobProcess is the master and sets/disables the timers.
 	if(zone && RuleB(Zone, IdleWhenEmpty) && !zone->IsBoatZone())
 	{
-		if (numclients < 1 && !zone->idle_timer.Enabled() && !zone->idle)
-		{
-			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
-		}
-		else if(numclients >= 1 && zone->idle)
-		{
-			if(zone->idle_timer.Enabled())
-				zone->idle_timer.Disable();
-			zone->idle = false;
-		}
-
-		if(zone->idle_timer.Check())
-		{
-			zone->idle_timer.Disable();
-			zone->idle = true;
-		}
-
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -492,6 +447,8 @@ void EntityList::MobProcess()
 		{
 			zone->idle_timer.Start(RuleI(Zone, IdleTimer)); // idle timer from when the last player left the zone.
 			Log.Out(Logs::General, Logs::EQMac, "Entity Process: Number of clients has dropped to 0. Setting idle timer.");
+			Log.log_settings[Logs::Server_Client_Packet_With_Dump].log_to_gmsay = 0;
+			Log.log_settings[Logs::Client_Server_Packet_With_Dump].log_to_gmsay = 0;
 		}
 		else if(numclients >= 1 && zone->idle)
 		{
@@ -504,11 +461,19 @@ void EntityList::MobProcess()
 		if(zone->idle_timer.Check())
 		{
 			zone->idle_timer.Disable();
-			zone->idle = true;
-			Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, zone will now idle.");
+			if(numclients < 1)
+			{
+				zone->idle = true;
+				Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, zone will now idle.");
+			}
+			else
+			{
+				zone->idle = false;
+				Log.Out(Logs::General, Logs::EQMac, "Entity Process: Idle timer has expired, but there are players in the zone. Zone will not idle.");
+			}
 		}
 
-		if(zone->idle)
+		if(numclients < 1 && zone->idle)
 		{
 			return;
 		}
@@ -2373,27 +2338,25 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 	range = range * range;
 
 	EQApplicationPacket *outapp = 0;
-	SpawnPositionUpdate_Struct *ppu = 0;
+	SpawnPositionUpdates_Struct *ppu = 0;
 	Mob *mob = 0;
 
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		if (outapp == 0) {
-			outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
+			outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+			ppu = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
 		}
 		mob = it->second;
 		if (mob && !mob->IsCorpse() && (it->second != client)
 			&& (mob->IsClient() || iSendEvenIfNotChanged || (mob->LastChange() >= cLastUpdate))
 			&& (!it->second->IsClient() || !it->second->CastToClient()->GMHideMe(client))) {
 
-			//bool Grouped = client->HasGroup() && mob->IsClient() && (client->GetGroup() == mob->CastToClient()->GetGroup());
-
-			//if (range == 0 || (iterator.GetData() == alwayssend) || Grouped || (mob->DistNoRootNoZ(*client) <= range)) {
 			if (range == 0 || (it->second == alwayssend) || mob->IsClient() || (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range)) {
-				mob->MakeSpawnUpdate(ppu);
+				mob->MakeSpawnUpdate(&ppu->spawn_update);
+				ppu->num_updates = 1;
 			}
-			if(mob && mob->IsClient() && mob->GetID()>0) {
+			if(mob && mob->IsClient() && mob->GetID()>0 && !client->has_zomm) {
 				client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 			}
 		}
@@ -3379,6 +3342,23 @@ int16 EntityList::CountTempPets(Mob *owner)
 	owner->SetTempPetCount(count);
 
 	return count;
+}
+
+bool EntityList::GetZommPet(Mob *owner, NPC* &pet)
+{
+	int16 count = 0;
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		NPC* n = it->second;
+		if (n->GetSwarmInfo()) {
+			if (n->GetSwarmInfo()->owner_id == owner->GetID() && n->GetRace() == EYE_OF_ZOMM) {
+				pet = it->second;
+				return true;
+			}
+		}
+		++it;
+	}
+	return false;
 }
 
 void EntityList::AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy)

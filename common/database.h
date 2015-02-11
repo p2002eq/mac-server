@@ -465,9 +465,8 @@ public:
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inventory* inv);
 	bool	DeleteCharacter(char* name);
 
-	/*
-	* General Information Getting Queries
-	*/
+	/* General Information Queries */
+
 	bool	CheckNameFilter(const char* name, bool surname = false);
 	bool	CheckUsedName(const char* name);
 	uint32	GetAccountIDByChar(const char* charname, uint32* oCharID = 0);
@@ -563,6 +562,7 @@ public:
 	bool DBSetup_PlayerCorpseBackup();
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
+	bool DBSetup_Rules();
 	bool GITInfo();
 
 	/*

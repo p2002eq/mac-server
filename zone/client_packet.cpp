@@ -284,12 +284,24 @@ void ClearMappedOpcode(EmuOpcode op)
 // client methods
 int Client::HandlePacket(const EQApplicationPacket *app)
 {
-	if(Log.log_settings[Logs::LogCategory::Netcode].log_to_console > 0) {
+	if (Log.log_settings[Logs::LogCategory::Netcode].is_category_enabled == 1) {
 		char buffer[64];
 		app->build_header_dump(buffer);
 		Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Dispatch opcode: %s", buffer);
 	}
 
+	if (Log.log_settings[Logs::Client_Server_Packet].is_category_enabled == 1)
+		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
+			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
+			Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size());
+		}
+	
+	if (Log.log_settings[Logs::Client_Server_Packet_With_Dump].is_category_enabled == 1)
+		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
+			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
+			Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size(), DumpPacketToString(app).c_str());
+		}
+	
 	EmuOpcode opcode = app->GetOpcode();
 
 	#if EQDEBUG >= 11
@@ -338,23 +350,16 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	case CLIENT_CONNECTED: {
 		ClientPacketProc p;
 		p = ConnectedOpcodes[opcode];
-		if(p == nullptr) {
+		if(p == nullptr) { 
 			std::vector<EQEmu::Any> args;
 			args.push_back(const_cast<EQApplicationPacket*>(app));
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 0, &args);
 
-			char buffer[64]; 
-			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Unhandled incoming opcode: %s - 0x%04x", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode());
-			if (Log.log_settings[Logs::Client_Server_Packet].log_to_console > 0){
+			if (Log.log_settings[Logs::Client_Server_Packet_Unhandled].is_category_enabled == 1){
+				char buffer[64];
 				app->build_header_dump(buffer);
-				if (app->size < 1000)
-					DumpPacket(app, app->size);
-				else{
-					std::cout << "Dump limited to 1000 characters:\n";
-					DumpPacket(app, 1000);
-				}
+				Log.Out(Logs::General, Logs::Client_Server_Packet_Unhandled, "%s %s", buffer, DumpPacketToString(app).c_str());
 			}
-
 			break;
 		}
 
@@ -1499,7 +1504,15 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	FillSpawnStruct(&sze->player, CastToMob());
 	sze->player.spawn.curHp = 1;
 	sze->player.spawn.NPC = 0;
-	sze->player.spawn.z += 2;	//arbitrary lift, seems to help spawning under zone.
+	if(zone->zonemap)
+	{
+		// This prevents hopping on logging in.
+		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
+		m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
+		if(size > 0)
+			m_Position.z += static_cast<int16>(size);
+		sze->player.spawn.z = m_Position.z;
+	}
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
@@ -2442,6 +2455,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
 
+	ppu->z_pos /= 10;
+
 	/* Web Interface */
 	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
 		std::vector<std::string> params;
@@ -2454,6 +2469,30 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		params.push_back(std::to_string((double)GetClass()));
 		params.push_back(std::to_string((double)GetRace())); 
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
+	}
+
+	if(has_zomm)
+	{
+		NPC* zommnpc = nullptr;
+		if(entity_list.GetZommPet(this, zommnpc))
+		{
+			if(zommnpc)
+			{
+				if(abs(ppu->x_pos - zommnpc->GetX()) > 2 || abs(ppu->y_pos - zommnpc->GetY()) > 2)
+				{
+					auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+					zommnpc->SetPosition(zommPos);
+
+					// Update internal position so we don't warp back to our body. (Self updates don't occur while zomm is out, 
+					// and other players will be given the player's original coords on timeout updates.)
+					m_Position = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+					zommnpc->SendPosUpdate(1);
+					pLastUpdate = Timer::GetCurrentTime();
+					entity_list.OpenDoorsNear(zommnpc);
+					return;
+				}
+			}
+		}
 	}
 
 	if(ppu->spawn_id != GetID()) {
@@ -2469,17 +2508,21 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			auto boatDelta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 			boat->SetDelta(boatDelta);
 			// send an update to everyone nearby except the client controlling the boat
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-			SpawnPositionUpdate_Struct* ppus = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
-			boat->MakeSpawnUpdate(ppus);
+			EQApplicationPacket* outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+			SpawnPositionUpdates_Struct* ppus = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
+			boat->MakeSpawnUpdate(&ppus->spawn_update);
+			ppus->num_updates = 1;
 			entity_list.QueueCloseClients(boat,outapp,true,300,this,false);
 			safe_delete(outapp);
+			pLastUpdate = Timer::GetCurrentTime();
 			// update the boat's position on the server, without sending an update
 			boat->GMMove(ppu->x_pos, ppu->y_pos, ppu->z_pos, EQ19toFloat(ppu->heading), false);
 			return;
 		}
 		else return;	// if not a boat, do nothing
 	}
+
+	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
 
 	float dist = 0;
 	float tmp;
@@ -2682,24 +2725,14 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
+	m_Position.x = ppu->x_pos;
+	m_Position.y = ppu->y_pos;
+	m_Position.z = ppu->z_pos;
+	animation = ppu->anim_type;
 
-	// Outgoing client packet
-	if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->heading != m_Position.w || ppu->anim_type != animation || (m_Delta.x != 0 || m_Delta.y != 0 || m_Delta.z != 0) && animation == 0)
-	{
-		m_Position.x = ppu->x_pos;
-		m_Position.y = ppu->y_pos;
-		m_Position.z = ppu->z_pos;
-		animation = ppu->anim_type;
-
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(SpawnPositionUpdate_Struct));
-		SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)outapp->pBuffer;
-		MakeSpawnUpdate(ppu);
-		if (gmhideme)
-			entity_list.QueueClientsStatus(this,outapp,true,Admin(),255);
-		else
-			entity_list.QueueCloseClients(this,outapp,true,300,nullptr,false);
-		safe_delete(outapp);
-	}
+	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
+	SendPosUpdate();
+	pLastUpdate = Timer::GetCurrentTime();
 
 	if(zone->watermap)
 	{
@@ -2896,22 +2929,32 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 		}
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
-		if(tcorpse->IsRezzed()){
-			//CORPSE_TOO_OLD doesn't match our logs :(
-			Message(0, "This corpse is too old to be resurrected.");
-		}
 		uint32 day, hour, min, sec, ttime;
+		if ((ttime = tcorpse->GetRezTime()) != 0) {
+			sec = (ttime / 1000) % 60; // Total seconds
+			min = (ttime / 60000) % 60; // Total seconds
+			hour = (ttime / 3600000) % 24; // Total hours
+			if (hour)
+				Message(0, "This corpse's resurrection time will expire in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
+			else
+				Message(0, "This corpse's resurrection time will expire in %i minute(s) and %i seconds.", min, sec);
+
+			hour = 0;
+		}
+		else
+			Message(0, "This corpse is too old to be resurrected.");
+
 		if ((ttime = tcorpse->GetDecayTime()) != 0) {
 			sec = (ttime / 1000) % 60; // Total seconds
 			min = (ttime / 60000) % 60; // Total seconds
 			hour = (ttime / 3600000) % 24; // Total hours
 			day = ttime / 86400000; // Total Days
 			if (day)
-				Message(0, "This corpse will decay in %i days, %i hours, %i minutes and %i seconds.", day, hour, min, sec);
+				Message(0, "This corpse will decay in %i day(s) %i hour(s) %i minute(s) and %i seconds.", day, hour, min, sec);
 			else if (hour)
-				Message(0, "This corpse will decay in %i hours, %i minutes and %i seconds.", hour, min, sec);
+				Message(0, "This corpse will decay in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
 			else
-				Message(0, "This corpse will decay in %i minutes and %i seconds.", min, sec);
+				Message(0, "This corpse will decay in %i minute(s) and %i seconds.", min, sec);
 
 			hour = 0;
 		}
@@ -3442,16 +3485,6 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 		return;
 	}
 	EnvDamage2_Struct* ed = (EnvDamage2_Struct*)app->pBuffer;
-	if (admin >= minStatusToAvoidFalling && GetGM()){
-		Message(CC_Red, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
-		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
-		return;
-	}
-	else if (GetInvul()) {
-		Message(CC_Red, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
-		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
-		return;
-	}
 
 	int damage = ed->damage;
 	if (ed->dmgtype == 252) {
@@ -3472,16 +3505,38 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	if (damage < 0)
 		damage = 31337;
 
-	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load)
-		return;
-	else
-		SetHP(GetHP() - damage);
-
-	if (GetHP() <= 0)
+	if (admin >= minStatusToAvoidFalling && GetGM())
 	{
-		mod_client_death_env();
+		Message(13, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
+		return;
+	}
+	else if (GetInvul()) 
+	{
+		Message(13, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
+		return;
+	}
 
-		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand, Killed_ENV);
+	else if (zone->GetZoneID() == tutorial || zone->GetZoneID() == load)
+	{
+		return;
+	}
+	else
+	{
+		SetHP(GetHP() - (damage * RuleR(Character, EnvironmentDamageMulipliter)));
+
+		/* EVENT_ENVIRONMENTAL_DAMAGE */
+		int final_damage = (damage * RuleR(Character, EnvironmentDamageMulipliter));
+		char buf[24];
+		snprintf(buf, 23, "%u %u %i", ed->damage, ed->dmgtype, final_damage); 
+		parse->EventPlayer(EVENT_ENVIRONMENTAL_DAMAGE, this, buf, 0);
+	}
+
+	if (GetHP() <= 0) 
+	{
+		mod_client_death_env(); 
+		Death(0, 32000, SPELL_UNKNOWN, SkillHandtoHand);
 	}
 	SendHPUpdate();
 	return;
@@ -5100,7 +5155,7 @@ void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Logout(const EQApplicationPacket *app)
 {
-	Log.Out(Logs::Detail, Logs::None, "%s sent a logout packet.", GetName());
+	Log.Out(Logs::Detail, Logs::Character, "%s sent a logout packet.", GetName());
 
 	SendLogoutPackets();
 
@@ -7489,6 +7544,7 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	else if (sa->type == AT_Anim) {
 		if (IsAIControlled())
 			return;
+
 		if (sa->parameter == ANIM_STAND) {
 			SetAppearance(eaStanding);
 			playeraction = 0;
@@ -7522,15 +7578,6 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 			SetFeigned(false);
 		}
 
-		// This is from old code
-		// I have no clue what it's for
-		/*
-		else if (sa->parameter == 0x05) {
-		// Illusion
-		std::cout << "Illusion packet recv'd:" << std::endl;
-		DumpPacket(app);
-		}
-		*/
 		else {
 			std::cerr << "Client " << name << " unknown apperance " << (int)sa->parameter << std::endl;
 			return;
@@ -7539,6 +7586,10 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 		entity_list.QueueClients(this, app, true);
 	}
 	else if (sa->type == AT_Anon) {
+		if(!anon_toggle_timer.Check()) {
+			return;
+		}
+
 		// For Anon/Roleplay
 		if (sa->parameter == 1) { // Anon
 			m_pp.anon = 1;
@@ -7560,13 +7611,18 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 		return;
 	}
 	else if (sa->type == AT_AFK) {
-		this->AFK = (sa->parameter == 1);
-		entity_list.QueueClients(this, app, true);
+		if(afk_toggle_timer.Check()) {
+			AFK = (sa->parameter == 1);
+			entity_list.QueueClients(this, app, true);
+		}
 	}
 	else if (sa->type == AT_Split) {
 		m_pp.autosplit = (sa->parameter == 1);
 	}
 	else if (sa->type == AT_Sneak) {
+		if(sneaking == 0)
+			return;
+
 		if (sa->parameter != 0)
 		{
 			if (!HasSkill(SkillSneak))
@@ -7578,7 +7634,7 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 			}
 			return;
 		}
-		this->sneaking = 0;
+		sneaking = 0;
 		entity_list.QueueClients(this, app, true);
 	}
 	else if (sa->type == AT_Size)
@@ -7590,7 +7646,7 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	}
 	else if (sa->type == AT_Light)	// client emitting light (lightstone, shiny shield)
 	{
-		entity_list.QueueClients(this, app, false);
+		//don't do anything with this
 	}
 	else if (sa->type == AT_Levitate)
 	{
@@ -7599,8 +7655,10 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	}
 	else if (sa->type == AT_ShowHelm)
 	{
-		m_pp.showhelm = (sa->parameter == 1);
-		entity_list.QueueClients(this, app, true);
+		if(helm_toggle_timer.Check()) {
+			m_pp.showhelm = (sa->parameter == 1);
+			entity_list.QueueClients(this, app, true);
+		}
 	}
 	else {
 		std::cout << "Unknown SpawnAppearance type: 0x" << std::hex << std::setw(4) << std::setfill('0') << sa->type << std::dec
@@ -8577,7 +8635,7 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 	}
 
-	//Message(CC_Yellow, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
+	Log.Out(Logs::Detail, Logs::Skills, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
 	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;

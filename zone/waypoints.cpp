@@ -912,7 +912,7 @@ void NPC::AssignWaypoints(int32 grid)
 		if(zone->HasMap() && RuleB(Map, FixPathingZWhenLoading) )
 		{
 			auto positon = glm::vec3(newwp.x,newwp.y,newwp.z);
-			if(!RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
+			if(RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
 				(zone->HasWaterMap() && !zone->watermap->InWater(positon)))
 			{
 				glm::vec3 dest(newwp.x, newwp.y, newwp.z);

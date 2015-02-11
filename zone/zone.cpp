@@ -782,6 +782,9 @@ bool Zone::Init(bool iStaticZone) {
 		Log.Out(Logs::General, Logs::Error, "Loading World Objects failed. continuing.");
 	}
 
+	Log.Out(Logs::General, Logs::Status, "Flushing old respawn timers...");
+	database.QueryDatabase("DELETE FROM `respawn_times` WHERE (`start` + `duration`) < UNIX_TIMESTAMP(NOW())");
+
 	//load up the zone's doors (prints inside)
 	zone->LoadZoneDoors(zone->GetShortName(), zone->GetInstanceVersion());
 	zone->LoadBlockedSpells(zone->GetZoneID());
@@ -925,7 +928,7 @@ bool Zone::SaveZoneCFG() {
 	return database.SaveZoneCFG(GetZoneID(), GetInstanceVersion(), &newzone_data);
 }
 
-void Zone::AddAuth(ServerZoneIncommingClient_Struct* szic) {
+void Zone::AddAuth(ServerZoneIncomingClient_Struct* szic) {
 	ZoneClientAuth_Struct* zca = new ZoneClientAuth_Struct;
 	memset(zca, 0, sizeof(ZoneClientAuth_Struct));
 	zca->ip = szic->ip;
@@ -1905,12 +1908,19 @@ bool Zone::IsBoatZone()
 bool Zone::IsDesertZone()
 {
 
-	static const int16 desertzones[] = { nro, sro, oasis, fieldofbone, scarlet };
-
-	int8 desertzonessize = sizeof(desertzones) / sizeof(desertzones[0]);
-	for (int i = 0; i < desertzonessize; i++) {
-		if (GetZoneID() == desertzones[i]) {
+	if(GetZoneID() != oot && GetZoneID() < codecay)
+	{
+		if(!HasWeather() && CanCastOutdoor() && !IsCity())
 			return true;
+
+		// This are zones that do get weather, but with a very little chance (<10%).
+		static const int16 desertzones[] = { nro, sro, oasis, lavastorm, shadeweaver, skyfire };
+
+		int8 desertzonessize = sizeof(desertzones) / sizeof(desertzones[0]);
+		for (int i = 0; i < desertzonessize; i++) {
+			if (GetZoneID() == desertzones[i]) {
+				return true;
+			}
 		}
 	}
 
@@ -1921,6 +1931,7 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 {
 	if(CanBindOthers())
 	{
+		// NK gypsies
 		if(GetZoneID() == northkarana)
 		{
 			if(x_coord >= -215 && x_coord <= -109 &&  y_coord >= -688 && y_coord <= -600)
@@ -1928,6 +1939,7 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 			else
 				return false;
 		}
+		// RM gypsies
 		else if(GetZoneID() == rathemtn)
 		{
 			if(x_coord >= 1395 && x_coord <= 1474 && y_coord >= 3918 && y_coord <= 4008)
@@ -1938,6 +1950,14 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 		else
 			return true;
 	}
+
+	return false;
+}
+
+bool Zone::IsWaterZone()
+{
+	if(GetZoneID() == kedge || GetZoneID() == powater)
+		return true;
 
 	return false;
 }

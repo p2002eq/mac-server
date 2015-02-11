@@ -71,6 +71,7 @@
 #define gnome_1			2048
 #define iksar_1			4096
 #define vahshir_1		8192
+#define allraces_1		16383
 #define rall_1			16384 //froglok?
 
 const char* GetRaceName(uint16 race);

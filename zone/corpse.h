@@ -41,7 +41,7 @@ class Corpse : public Mob {
 
 	Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NPCType** in_npctypedata, uint32 in_decaytime = 600000);
 	Corpse(Client* client, int32 in_rezexp, uint8 killedby = 0);
-	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool wasAtGraveyard = false);
+	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool in_rezzable, bool wasAtGraveyard = false);
 	~Corpse();
 	static Corpse* LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const glm::vec4& position, std::string time_of_death, bool rezzed, bool was_at_graveyard);
 
@@ -100,6 +100,7 @@ class Corpse : public Mob {
 	void	IsRezzed(bool in_rez) { rez = in_rez; }
 	void	CastRezz(uint16 spellid, Mob* Caster);
 	void	CompleteResurrection();
+	bool	IsRezzable() { return rezzable; }
 
 	/* Corpse: Loot */
 	void	QueryLoot(Client* to);
@@ -150,8 +151,7 @@ private:
 	uint32		being_looted_by; /* Determines what the corpse is being looted by internally for logic */
 	uint32		rez_experience; /* Amount of experience that the corpse would rez for */
 	uint32		gm_rez_experience; /* Amount of experience that the corpse would rez for from a GM*/
-	bool		rez; /*Sets if a corpse has been rezzed or not to determine if XP should be given or not */
-	bool		can_corpse_be_rezzed; /* Bool declaring whether or not a corpse can be rezzed. Shouldn't be used as corpses can always be rezzed.*/
+	bool		rez; /*Sets if a corpse has been rezzed or not to determine if XP should be given*/
 	bool		become_npc;
 	int			allowed_looters[MAX_LOOTERS]; // People allowed to loot the corpse, character id
 	Timer		corpse_decay_timer; /* The amount of time in millseconds in which a corpse will take to decay (Depop/Poof) */
@@ -160,6 +160,7 @@ private:
 	Timer		corpse_graveyard_timer;
 	Timer		loot_cooldown_timer; /* Delay between loot actions on the corpse entity */
 	uint8		killedby;
+	bool		rezzable; /* Determines if the corpse is still rezzable*/
 	Color_Struct item_tint[9];
 
 };

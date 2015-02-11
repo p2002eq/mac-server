@@ -395,6 +395,10 @@ public:
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
 	inline const float GetHeading() const { return m_Position.w; }
+	inline const float GetEQX() const { return m_EQPosition.x; }
+	inline const float GetEQY() const { return m_EQPosition.y; }
+	inline const float GetEQZ() const { return m_EQPosition.z; }
+	inline const float GetEQHeading() const { return m_EQPosition.w; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
 	inline const float GetTarX() const { return m_TargetLocation.x; }
@@ -433,7 +437,8 @@ public:
 	bool IsCurrentlyRunning() const { return m_running; }
 	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
-	void SetDelta(const glm::vec4& delta);
+	void SetDelta(const glm::vec4& delta) { m_Delta = delta; }
+	void SetPosition(const glm::vec4& pos) { m_Position = pos; }
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
 	void SendPosUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct* spu);
@@ -441,7 +446,8 @@ public:
 	void SendPosition();
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
-		m_Position.z = NewPosition.z; };
+		m_Position.z = NewPosition.z; }
+	void SetAnimation(uint8 anim) { animation = anim; } // For Eye of Zomm. It's a NPC, but uses PC position updates.
 
 	//AI
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
@@ -472,7 +478,7 @@ public:
 	std::list<tHateEntry*>& GetHateList() { return hate_list.GetHateList(); }
 	bool CheckLosFN(Mob* other);
 	bool CheckLosFN(float posX, float posY, float posZ, float mobSize);
-	bool CheckRegion(Mob* other);
+	bool CheckRegion(Mob* other, bool skipwater = true);
 	inline void SetChanged() { pLastChange = Timer::GetCurrentTime(); }
 	inline const uint32 LastChange() const { return pLastChange; }
 	inline void SetLastLosState(bool value) { last_los_check = value; }
@@ -567,7 +573,7 @@ public:
 	void WakeTheDead(uint16 spell_id, Mob *target, uint32 duration);
 	void Spin();
 	void Kill();
-	bool PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id);
+	bool PassCharismaCheck(Mob* caster, uint16 spell_id);
 	bool TryDeathSave();
 	bool TryDivineSave();
 	void DoBuffWearOffEffect(uint32 index);
@@ -1014,6 +1020,7 @@ protected:
 	uint8 orig_level;
 	uint32 npctype_id;
 	glm::vec4 m_Position;
+	glm::vec4 m_EQPosition; // This acts as a home/backup set of coords. It is currently used to set a home point for Eye of Zomm.
 	uint16 animation;
 	float base_size;
 	float size;

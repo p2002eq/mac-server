@@ -1449,7 +1449,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 
 	switch (targetType)
 	{
-// single target spells
+		// single target spells
 		case ST_Self:
 		{
 			spell_target = this;
@@ -1457,11 +1457,10 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 			break;
 		}
 
+		// bolt spells and flare
 		case ST_TargetOptional:
 		{
-			if(!spell_target)
-				spell_target = this;
-			CastAction = SingleTarget;
+			CastAction = Projectile;
 			ProjectileAnimation(this, spell_id, false, 1.5);
 			break;
 		}
@@ -1583,7 +1582,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		case ST_AEBard:
 		case ST_AECaster:
 		{
-			spell_target = nullptr;
 			ae_center = this;
 			CastAction = AECaster;
 			break;
@@ -1919,7 +1917,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		&& CastToClient()->CheckAAEffect(aaEffectProjectIllusion)){
 		range = 100;
 	}
-	if(spell_target != nullptr && spell_target != this) {
+	if (!isproc && CastAction != AECaster && spell_target != nullptr && spell_target != this) {
 		//casting a spell on somebody but ourself, make sure they are in range
 		float dist2 = DistanceSquared(m_Position, spell_target->GetPosition());
 		float range2 = range * range;
@@ -1938,6 +1936,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 		}
 
 		spell_target->CalcSpellPowerDistanceMod(spell_id, dist2);
+	}
+
+	// NPC innate procs that are AoE spells only hit the target they are attacking
+	if (IsNPC() && isproc && (CastAction == AETarget || CastAction == AECaster))
+	{
+		CastAction = SingleTarget;
 	}
 
 	//
@@ -1979,6 +1983,84 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 
+		case Projectile:
+		{
+			if (spell_target == nullptr)
+			{
+				// no target.  If projectile code were in, this should still launch a bolt
+				// but for now, bolts are just DD spells with LOS and angle checks at the end of the cast
+				return false;
+			}
+			else if (isproc)
+			{
+				SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, true);
+			}
+			else if (CheckLosFN(spell_target))
+			{
+				glm::vec2 targetPos2d;
+				glm::vec2 casterPos2d;
+				glm::vec2 aimedPos2d;
+				glm::vec2 casterToTargetV;
+				glm::vec2 casterHeadingV;
+
+				targetPos2d.x = -spell_target->GetX();
+				targetPos2d.y = spell_target->GetY();
+				casterPos2d.x = -GetX();
+				casterPos2d.y = GetY();
+				float distance2d = Distance(casterPos2d, targetPos2d);
+
+				float headingRadians = GetHeading();
+				headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+				if (headingRadians < 270)
+					headingRadians += 90;
+				else
+					headingRadians -= 270;
+
+				headingRadians = headingRadians * 3.1415f / 180.0f;
+
+				// direction vector of caster with magnitude of caster to target distance
+				casterHeadingV.x = cosf(headingRadians) * distance2d;
+				casterHeadingV.y = sinf(headingRadians) * distance2d;
+
+				// position vector of spot player is aimed at with distaince/magnitude of caster to target distance
+				aimedPos2d.x = casterHeadingV.x + casterPos2d.x;
+				aimedPos2d.y = casterHeadingV.y + casterPos2d.y;
+
+				// direction vector of caster to target
+				casterToTargetV.x = casterPos2d.x - targetPos2d.x;
+				casterToTargetV.y = casterPos2d.y - targetPos2d.y;
+
+				// dot product of unit vectors
+				float dotp = (casterHeadingV.x / distance2d) * (casterToTargetV.x / distance2d) +
+					(casterHeadingV.y / distance2d) * (casterToTargetV.y / distance2d);
+				dotp = -dotp;
+
+				// taken from Mob::CombatRange()
+				float sizeMod = spell_target->GetSize();
+				if (spell_target->GetRace() == 49 || spell_target->GetRace() == 158 || spell_target->GetRace() == 196) //For races with a fixed size
+					sizeMod = 60.0f;
+				if (sizeMod < 8.0f)
+					sizeMod = 8.0f;
+
+				if (sizeMod > 29)
+					sizeMod *= sizeMod;
+				else if (sizeMod > 19)
+					sizeMod *= sizeMod * 2;
+				else
+					sizeMod *= sizeMod * 4;
+
+				if (sizeMod > 10000)
+					sizeMod = sizeMod / 7;
+
+				// dotp of 1 means facing directly at target, -1 means target behind you
+				if (dotp > 0.7f && DistanceSquared(targetPos2d, aimedPos2d) < sizeMod)
+				{
+					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, false);
+				}
+			}
+			break;
+		}
+
 		case AECaster:
 		case AETarget:
 		{
@@ -1990,8 +2072,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
 			}
 			else {
-				// regular PB AE or targeted AE spell - spell_target is null if PB
-				if (spell_target)	// this must be an AETarget spell
+				if (CastAction == AETarget)
 				{
 					// affect the target too
 					SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
@@ -3339,31 +3420,10 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	// Prevent double invising, which made you uninvised
-	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
+	// Prevent invis stacking
+	if (IsEffectInSpell(spell_id, SE_Invisibility) || IsEffectInSpell(spell_id, SE_InvisVsUndead) || IsEffectInSpell(spell_id, SE_InvisVsAnimals))
 	{
-		if(spelltar->invisible)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
-		{
-			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
-			safe_delete(action_packet);
-			return false;
-		}
-	}
-
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible || spelltar->invisible_undead || spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
@@ -3583,7 +3643,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 						if(!IsHarmonySpell(spell_id))
 						spelltar->AddToHateList(this, aggro);
 						else
-							if(!PassCharismaCheck(this, spelltar, spell_id))
+							if(!spelltar->PassCharismaCheck(this, spell_id))
 								spelltar->AddToHateList(this, aggro);
 					}
 					else{
@@ -3728,8 +3788,20 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 {
-	Log.Out(Logs::Detail, Logs::Spells, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i", spellid,IsRezzed(),rez_experience);
+	Log.Out(Logs::Detail, Logs::Spells, "Corpse::CastRezz spellid %i, Rezzed() is %i, rezzexp is %i rez_timer enabled: %i", spellid,IsRezzed(),rez_experience, corpse_rez_timer.Enabled());
 
+	// Rez timer has expired, only GMs can rez at this point. (uses rezzable)
+	if(!IsRezzable())
+	{
+		if(Caster && Caster->IsClient() && !Caster->CastToClient()->GetGM())
+		{
+			Caster->Message_StringID(CC_Default, REZZ_ALREADY_PENDING);
+			Caster->Message_StringID(CC_Default, CORPSE_TOO_OLD);
+			return;
+		}
+	}
+
+	// Corpse has been rezzed, but timer is still active. Players can corpse gate, GMs can rez for XP. (uses is_rezzed)
 	if(IsRezzed())
 	{
 		if(Caster && Caster->IsClient())
@@ -3743,12 +3815,6 @@ void Corpse::CastRezz(uint16 spellid, Mob* Caster)
 				rez_experience = 0;
 		}
 	}
-
-	/*if(!can_corpse_be_rezzed) {
-		if(Caster && Caster->IsClient())
-			Caster->Message_StringID(CC_Default, CORPSE_TOO_OLD);
-		return;
-	}*/
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_RezzRequest, sizeof(Resurrect_Struct));
 	Resurrect_Struct* rezz = (Resurrect_Struct*) outapp->pBuffer;
@@ -4096,14 +4162,6 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		return 0;
 	}
 
-	if(GetSpecialAbility(IMMUNE_CASTING_FROM_RANGE))
-	{
-		if(!caster->CombatRange(this))
-		{
-			return(0);
-		}
-	}
-
 	if(GetSpecialAbility(IMMUNE_MAGIC))
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to magic, so we fully resist the spell %d", spell_id);
@@ -4157,6 +4215,14 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Spell was unresistable");
 		return 100;
+	}
+
+	if (GetSpecialAbility(IMMUNE_CASTING_FROM_RANGE))
+	{
+		if (!caster->CombatRange(this))
+		{
+			return(0);
+		}
 	}
 
 	int target_resist;
@@ -4224,22 +4290,24 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	}
 
 	//Setup our base resist chance.
+	int caster_level = caster->GetLevel();
 	int resist_chance = 0;
 	int level_mod = 0;
 
 	//Adjust our resist chance based on level modifiers
-	int temp_level_diff = GetLevel() - caster->GetLevel();
+	int leveldiff = GetLevel() - caster_level;
+	int temp_level_diff = leveldiff;
 
 	//Physical Resists are calclated using their own formula derived from extensive parsing.
 	if (resist_type == RESIST_PHYSICAL) {
-		level_mod = ResistPhysical(temp_level_diff, caster->GetLevel());
+		level_mod = ResistPhysical(leveldiff, caster_level);
 	}
 
 	else {
 
 		if(IsNPC() && GetLevel() >= RuleI(Casting,ResistFalloff))
 		{
-			int a = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
+			int a = (RuleI(Casting,ResistFalloff)-1) - caster_level;
 			if(a > 0)
 			{
 				temp_level_diff = a;
@@ -4266,31 +4334,59 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			level_mod = -level_mod;
 		}
 
-		if(IsNPC() && (caster->GetLevel() - GetLevel()) < -20)
+		// set resist modifiers for targets well above caster's level
+		// this is a crude approximation of Sony's convoluted function
+		// it's far from precise but way better than nothing
+		if(IsNPC())
 		{
-			level_mod = 1000;
+			if (caster_level < 50)
+			{
+				// after a certain level above the caster, NPCs gain a significant resist bonus
+				// how many levels above the caster and how large the bonus is both increase with caster level
+				// It's not a flat 1000 resist mod as Sony's pseudocode stated.  Many parses were done to prove this
+				int bump_level = caster_level + 4 + caster_level / 6;
+				if (GetLevel() >= bump_level)
+					level_mod += 70 + caster_level * 6;
+			}
+			else
+			{
+				if (caster_level < 64)
+				{
+					if (leveldiff >= 13)
+						level_mod = caster_level * 5;
+				}
+				else
+				{
+					// note: if you use this for expacs beyond PoP, you may need to expand this
+					if (leveldiff >= 16)
+						level_mod = caster_level * 5;
+				}
+			}
 		}
 
 		//Even more level stuff this time dealing with damage spells
-		if(IsNPC() && IsDamageSpell(spell_id) && GetLevel() >= 17)
+		if(IsNPC() && IsDamageSpell(spell_id))
 		{
-			int level_diff;
-			if(GetLevel() >= RuleI(Casting,ResistFalloff))
+			if (GetLevel() >= RuleI(Casting, ResistFalloff))
 			{
-				level_diff = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
-				if(level_diff < 0)
+				temp_level_diff = (RuleI(Casting, ResistFalloff) - 1) - caster_level;
+				if (temp_level_diff < 0)
 				{
-					level_diff = 0;
+					temp_level_diff = 0;
 				}
 			}
 			else
 			{
-				level_diff = GetLevel() - caster->GetLevel();
+				temp_level_diff = GetLevel() - caster_level;
 			}
-			level_mod += (2 * level_diff);
+
+			if (temp_level_diff > 0 && GetLevel() >= 17)
+			{
+				level_mod += (2 * temp_level_diff);
+			}
 		}
 	}
-
+	
 	if (CharismaCheck)
 	{
 		/*
@@ -4304,7 +4400,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		*/
 		int16 charisma = caster->GetCHA();
 
-		if (IsFear && (spells[spell_id].targettype != 10)){
+		if (IsFear && (spells[spell_id].targettype != ST_Undead)){
 
 			if (charisma < 100)
 				resist_modifier -= 20;
@@ -4327,7 +4423,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 			if(IsHarmonySpell(spell_id) || IsCharmSpell(spell_id))
 			{
-				int8 leveldiff = GetLevel() - caster->GetLevel();
+				// make yellows and reds resist more often
 				if(leveldiff >= 1)
 				{
 					resist_modifier += 20 * (leveldiff + leveldiff);
@@ -4335,19 +4431,21 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
 			}
 		}
+
 	}
+
 
 	//Lull spells DO NOT use regular resists on initial cast, instead they use a flat +15 modifier. Live parses confirm this.
 	//Regular resists are used when checking if mob will aggro off of a lull resist.
 	if(!CharismaCheck && IsHarmonySpell(spell_id))
 	{
-		int8 leveldiff = GetLevel() - caster->GetLevel();
+		// make yellows and reds resist more often
 		if(leveldiff >= 1)
 		{
 			resist_modifier += 20 * (leveldiff + leveldiff);
 		}
-		else
-			target_resist = 15;
+
+		target_resist = 15;				// first lull resist check uses 15 MR before mods, not target's actual MR
 
 		Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d  No Charisma check. target_resist is: %i resist_modifier is: %i", spell_id, target_resist, resist_modifier);
 	}
@@ -4374,9 +4472,8 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Minimum resist chance should be caclulated factoring in the RuleI(Spells, CharmBreakCheckChance)
 	if (CharmTick) {
 
-		int min_charmbreakchance = ((100 / (float)RuleI(Spells, CharmBreakCheckChance)) / 66 * 100) * 2;
-
-		if (resist_chance < min_charmbreakchance)
+		float min_charmbreakchance = ((100.0f/static_cast<float>(RuleI(Spells, CharmBreakCheckChance)))/66.0f * 100.0f)*2.0f;
+		if (resist_chance < static_cast<int>(min_charmbreakchance))
 			resist_chance = min_charmbreakchance;
 	}
 
@@ -4384,46 +4481,39 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	//Minimum resist chance should be caclulated factoring in the RuleI(Spells, RootBreakCheckChance)
 	if (IsRoot) {
 
-		int min_rootbreakchance = ((100/(float)RuleI(Spells, RootBreakCheckChance))/22 * 100)*2;
+		float min_rootbreakchance = ((100.0f/static_cast<float>(RuleI(Spells, RootBreakCheckChance)))/22.0f * 100.0f)*2.0f;
 
-		if (resist_chance < min_rootbreakchance)
+		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
 	}
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
 	Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d roll %i > resist_chance %i", spell_id, roll, resist_chance);
-	if(roll > resist_chance)
+	if(roll >= resist_chance)
 	{
 		return 100;
 	}
 	else
 	{
-		//This is confusing but it's basically right
-		//It skews partial resists up over 100 more often than not
 		if(!IsPartialCapableSpell(spell_id))
 		{
 			return 0;
 		}
 		else
 		{
-			if(resist_chance < 1)
-			{
-				resist_chance = 1;
-			}
-
 			int partial_modifier = ((150 * (resist_chance - roll)) / resist_chance);
 
 			if(IsNPC())
 			{
-				if(GetLevel() > caster->GetLevel() && GetLevel() >= 17 && caster->GetLevel() <= 50)
+				if(GetLevel() > caster_level && GetLevel() >= 17 && caster_level <= 50)
 				{
 					partial_modifier += 5;
 				}
 
-				if(GetLevel() >= 30 && caster->GetLevel() < 50)
+				if(GetLevel() >= 30 && caster_level < 50)
 				{
-					partial_modifier += (caster->GetLevel() - 25);
+					partial_modifier += (caster_level - 25);
 				}
 
 				if(GetLevel() < 15)
@@ -4434,12 +4524,12 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 			if(caster->IsNPC())
 			{
-				if((GetLevel() - caster->GetLevel()) >= 20)
+				if((GetLevel() - caster_level) >= 20)
 				{
-					partial_modifier += (GetLevel() - caster->GetLevel()) * 1.5;
+					partial_modifier += (int)((GetLevel() - caster_level) * 1.5);
 				}
 			}
-
+			
 			if(partial_modifier <= 0)
 			{
 				return 100;
@@ -4926,7 +5016,6 @@ bool Client::SpellGlobalCheck(uint16 spell_ID, uint32 char_ID) {
     return false;
 }
 
-// TODO get rid of this
 int16 Mob::GetBuffSlotFromType(uint16 type) {
 	uint32 buff_count = GetMaxTotalSlots();
 	for (int i = 0; i < buff_count; i++) {

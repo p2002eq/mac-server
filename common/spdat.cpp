@@ -143,7 +143,7 @@ bool IsDamageSpell(uint16 spellid)
 	for (int o = 0; o < EFFECT_COUNT; o++) {
 		uint32 tid = spells[spellid].effectid[o];
 		if ((tid == SE_CurrentHPOnce || tid == SE_CurrentHP) &&
-				spells[spellid].targettype != ST_Tap && spells[spellid].buffduration < 1 &&
+				spells[spellid].buffduration < 1 &&
 				spells[spellid].base[o] < 0)
 			return true;
 	}
@@ -414,22 +414,48 @@ bool IsAERainNukeSpell(uint16 spell_id)
 	return false;
 }
 
+bool IsPureDispelSpell(uint16 spell_id)
+{
+	int i;
+
+	if (!IsValidSpell(spell_id))
+		return false;
+
+	for (i = 0; i < EFFECT_COUNT; i++)
+		if (!IsBlankSpellEffect(spell_id, i) && spells[spell_id].effectid[i] != SE_CancelMagic)
+			return false;
+
+	return true;
+}
+
 bool IsPartialCapableSpell(uint16 spell_id)
 {
 	if (spells[spell_id].no_partial_resist)
 		return false;
 	
-	if (IsPureNukeSpell(spell_id))
-		return true;
+	// return false if any spell includes an effect that isn't direct damage or dispel
+	// dragon AoEs have dispels but are partially resistable
+	for (int o = 0; o < EFFECT_COUNT; o++)
+	{
+		uint16 tid = spells[spell_id].effectid[o];
 
-	return false;
+		if (IsBlankSpellEffect(spell_id, o) || tid == SE_CancelMagic)
+			continue;
+
+		if ((tid != SE_CurrentHPOnce && tid != SE_CurrentHP )
+			|| spells[spell_id].buffduration > 0 || spells[spell_id].base[o] >= 0)
+			return false;
+	}
+
+	return true;
 }
 
 bool IsResistableSpell(uint16 spell_id)
 {
 	// for now only detrimental spells are resistable. later on i will
 	// add specific exceptions for the beneficial spells that are resistable
-	if (IsDetrimentalSpell(spell_id))
+	// Torven: dispels do not have a MR check; they have a different check that is entirely level based
+	if (IsDetrimentalSpell(spell_id) && !IsPureDispelSpell(spell_id))
 		return true;
 
 	return false;
@@ -1192,7 +1218,6 @@ bool IsRacialIllusion(uint16 spell_id)
 			spells[spell_id].base[i] == GNOME || spells[spell_id].base[i] == IKSAR || 
 			spells[spell_id].base[i] == VAHSHIR))
 			return true;
-		else
-			return false;
 	}
+	return false;
 }

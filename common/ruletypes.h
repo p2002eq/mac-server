@@ -20,7 +20,8 @@
 
 
 
-RULE_CATEGORY( Character )
+RULE_CATEGORY(Character)
+RULE_BOOL(Character, CanCreate, true)
 RULE_INT ( Character, MaxLevel, 65 )
 RULE_BOOL ( Character, PerCharacterQglobalMaxLevel, false) // This will check for qglobal 'CharMaxLevel' character qglobal (Type 5), if player tries to level beyond that point, it will not go beyond that level
 RULE_INT ( Character, MaxExpLevel, 0 ) //Sets the Max Level attainable via Experience
@@ -47,6 +48,7 @@ RULE_INT ( Character, ManaRegenMultiplier, 100)
 RULE_INT ( Character, EnduranceRegenMultiplier, 100)
 RULE_INT ( Character, ConsumptionValue, 6000) //How "full" each consumption of food or drink will make the player. EQEmu default is 6000.
 RULE_REAL ( Character, FoodLossPerUpdate, 75) // How much food/water you lose per stamina update
+RULE_INT ( Character, FamishedLevel, 120) // When famished reaches this value, we lose endurance and stop regen on HP/mana
 RULE_BOOL( Character, HealOnLevel, false)
 RULE_BOOL( Character, ManaOnLevel, false)
 RULE_BOOL( Character, FeignKillsPet, false)
@@ -95,6 +97,7 @@ RULE_INT ( Character, BaseInstrumentSoftCap, 36) // Softcap for instrument mods,
 RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 158% which will give you a runspeed of 1.580 hard capped to 225.
 RULE_REAL (Character, BaseRunSpeed, 0.7)
 RULE_REAL (Character, BaseWalkSpeed, 0.46)
+RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -104,6 +107,7 @@ RULE_INT ( Guild, PlayerCreationLimit, 1)		// Only allow use of the UF+ window i
 RULE_INT ( Guild, PlayerCreationRequiredStatus, 0)	// Required admin status.
 RULE_INT ( Guild, PlayerCreationRequiredLevel, 0)	// Required Level of the player attempting to create the guild.
 RULE_INT ( Guild, PlayerCreationRequiredTime, 0)	// Required Time Entitled On Account (in Minutes) to create the guild.
+RULE_INT ( Guild, MaxGuilds, 32)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Skills )
@@ -249,7 +253,7 @@ RULE_BOOL ( Watermap, CheckForWaterWhenMoving, false)		// Checks if a mob has mo
 RULE_BOOL ( Watermap, CheckForWaterOnSendTo, false)		// Checks if a mob has moved into/out of water on SendTo
 RULE_BOOL ( Watermap, CheckForWaterWhenFishing, true)		// Only lets a player fish near water (if a water map exists for the zone)
 RULE_REAL ( Watermap, FishingRodLength, 30)			// How far in front of player water must be for fishing to work
-RULE_REAL ( Watermap, FishingLineLength, 40)			// If water is more than this far below the player, it is considered too far to fish
+RULE_REAL ( Watermap, FishingLineLength, 28)			// If water is more than this far below the player, it is considered too far to fish
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Spells )
@@ -498,6 +502,7 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( EventLog )
 RULE_BOOL ( EventLog, RecordSellToMerchant, false ) // Record sales from a player to an NPC merchant in eventlog table
 RULE_BOOL ( EventLog, RecordBuyFromMerchant, false ) // Record purchases by a player from an NPC merchant in eventlog table
+RULE_BOOL ( EventLog, SkipCommonPacketLogging, true ) // Doesn't log OP_MobHealth or OP_ClientUpdate
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( AA )

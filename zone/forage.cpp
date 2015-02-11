@@ -152,6 +152,13 @@ uint32 ZoneDatabase::GetZoneFishing(uint32 ZoneID, uint8 skill, uint32 &npc_id, 
 
 //we need this function to immediately determine, after we receive OP_Fishing, if we can even try to fish, otherwise we have to wait a while to get the failure
 bool Client::CanFish() {
+
+	if(fishing_timer.Enabled())
+	{
+		Message_StringID(CC_Default, ALREADY_FISHING);	//You are already fishing!
+		return false;
+	}
+
 	//make sure we still have a fishing pole on:
 	const ItemInst* Pole = m_inv[MainPrimary];
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
@@ -186,24 +193,29 @@ bool Client::CanFish() {
 		rodPosition.x = m_Position.x + RodLength * sin(HeadingDegrees * M_PI/180.0f);
 		rodPosition.y = m_Position.y + RodLength * cos(HeadingDegrees * M_PI/180.0f);
 
-		// Do BestZ to find where the line hanging from the rod intersects the water (if it is water).
-		// and go 1 unit into the water.
 		glm::vec3 dest;
 		dest.x = rodPosition.x;
 		dest.y = rodPosition.y;
-		dest.z = m_Position.z;//+10;
+		dest.z = m_Position.z;
+		rodPosition.z = dest.z - LineLength;
 
-		rodPosition.z = zone->zonemap->FindBestZ(dest, nullptr) + 5;
 		bool in_lava = zone->watermap->InLava(rodPosition);
 		bool in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
-		//Message(0, "Rod is at %4.3f, %4.3f, %4.3f (dest.z: %4.3f), InWater says %d, InLava says %d RodLength: %f LineLength: %f", RodX, RodY, RodZ, dest.z, in_water, in_lava, RodLength, LineLength);
+		Log.Out(Logs::General, Logs::Maps, "Fishing Rod is at %4.3f, %4.3f, %4.3f (dest.z: %4.3f), InWater says %d, InLava says %d Region is: %d RodLength: %f LineLength: %f", rodPosition.x, rodPosition.y, rodPosition.z, dest.z, in_water, in_lava, zone->watermap->ReturnRegionType(rodPosition), RodLength, LineLength);
 		if (in_lava) {
 			Message_StringID(MT_Skills, FISHING_LAVA);	//Trying to catch a fire elemental or something?
 			return false;
 		}
-		if((!in_water) || (m_Position.z-rodPosition.z)>LineLength) {	//Didn't hit the water OR the water is too far below us
-			Message_StringID(MT_Skills, FISHING_LAND);	//Trying to catch land sharks perhaps?
-			return false;
+		if(!in_water) {
+			// Our line may be too long, and we are going underworld. Reel our line in, and try again.
+			rodPosition.z = dest.z - (LineLength/2);
+			in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
+			Log.Out(Logs::General, Logs::Maps, "Trying again with new Z %4.3f InWater now says %d", rodPosition.z, in_water);
+
+			if(!in_water) {
+				Message_StringID(MT_Skills, FISHING_LAND);	//Trying to catch land sharks perhaps?
+				return false;
+			}
 		}
 	}
 	return true;
@@ -211,11 +223,6 @@ bool Client::CanFish() {
 
 void Client::GoFish()
 {
-	//TODO: generate a message if we're already fishing
-	/*if (!fishing_timer.Check()) {	//this isn't the right check, may need to add something to the Client class like 'bool is_fishing'
-		Message_StringID(CC_Default, ALREADY_FISHING);	//You are already fishing!
-		return;
-	}*/
 
 	fishing_timer.Disable();
 
@@ -381,7 +388,25 @@ void Client::ForageItem(bool guarantee) {
 		uint32 stringid = FORAGE_NOEAT;
 
 		// If we're hungry or thirsty, we want to prefer food or water.
-		if(m_pp.hunger_level < 2000)
+		if(Hungry() && Thirsty())
+		{
+			// 50/50 chance of food or water.
+			if(zone->random.Roll(50))
+			{
+				if(GetZoneID() == poknowledge)
+					foragedfood = 13047; //PoK only has roots from the above array.
+				else
+				{
+					uint8 foodindex = zone->random.Int(0, 4);
+					foragedfood = food_ids[foodindex];
+				}
+			}
+			else
+				foragedfood = 13044;
+
+		}
+		// We only need food.
+		else if(Hungry())
 		{
 			if(GetZoneID() == poknowledge)
 				foragedfood = 13047; //PoK only has roots from the above array.
@@ -391,7 +416,8 @@ void Client::ForageItem(bool guarantee) {
 				foragedfood = food_ids[foodindex];
 			}
 		}
-		else if(m_pp.thirst_level < 2000)
+		// We only need water.
+		else if(Thirsty())
 		{
 			foragedfood = 13044;
 		}

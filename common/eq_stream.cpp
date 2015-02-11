@@ -23,6 +23,8 @@
 #include "op_codes.h"
 #include "crc16.h"
 #include "platform.h"
+#include "string_util.h"
+#include "rulesys.h"
 
 #include <string>
 #include <iostream>
@@ -546,8 +548,20 @@ void EQStream::FastQueuePacket(EQApplicationPacket **p, bool ack_req)
 
 void EQStream::SendPacket(uint16 opcode, EQApplicationPacket *p)
 {
-	uint32 chunksize,used;
+	uint32 chunksize, used;
 	uint32 length;
+
+	if (Log.log_settings[Logs::Server_Client_Packet].is_category_enabled == 1){
+		if (p->GetOpcode() != OP_SpecialMesg){
+			Log.Out(Logs::General, Logs::Server_Client_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(p->GetOpcode()), p->GetOpcode(), p->Size());
+		}
+	}
+
+	if (Log.log_settings[Logs::Server_Client_Packet_With_Dump].is_category_enabled == 1){
+		if (p->GetOpcode() != OP_SpecialMesg){
+			Log.Out(Logs::General, Logs::Server_Client_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(p->GetOpcode()), p->GetOpcode(), p->Size(), DumpPacketToString(p).c_str());
+		}
+	}
 
 	// Convert the EQApplicationPacket to 1 or more EQProtocolPackets
 	if (p->size>(MaxLen-8)) { // proto-op(2), seq(2), app-op(2) ... data ... crc(2)
@@ -942,14 +956,12 @@ EQRawApplicationPacket *p=nullptr;
 	}
 	MInboundQueue.unlock();
 
-	//resolve the opcode if we can.
-	if(p) {
-		if(OpMgr != nullptr && *OpMgr != nullptr) {
+	if (p) {
+		if (OpMgr != nullptr && *OpMgr != nullptr) {
 			EmuOpcode emu_op = (*OpMgr)->EQToEmu(p->opcode);
 			if (emu_op == OP_Unknown) {
-				Log.Out(Logs::General, Logs::Netcode, "[ERROR] Unable to convert EQ opcode 0x%.4x to an Application opcode.", p->opcode);
-			}
-
+				// Log.Out(Logs::General, Logs::Client_Server_Packet_Unhandled, "Unknown :: [%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(p->GetOpcode()), p->opcode, p->Size(), DumpPacketToString(p).c_str());
+			} 
 			p->SetOpcode(emu_op);
 		}
 	}
@@ -1769,13 +1781,13 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 	{
 		if (dwLastCACK == (unsigned int)pack->dwARQ - (unsigned int)1)
 		{
-			Log.Out(Logs::Detail, Logs::EQMac, _L "Packet invalid seqstart? %i:%i" __L, pack->dwARQ, pack->dwSEQ);
+			Log.Out(Logs::Detail, Logs::Netcode, _L "Packet invalid seqstart? %i:%i" __L, pack->dwARQ, pack->dwSEQ);
 			return true;
 		}
 		//      cout << "resetting SACK.dwGSQ1" << endl;
 		//      SACK.dwGSQ      = 0;            //Main sequence number SHORT#2
 		dwLastCACK      = pack->dwARQ-1;//0;
-		Log.Out(Logs::Detail, Logs::EQMac, _L "Packet seqstart %i:%i" __L, pack->dwARQ, pack->dwSEQ);
+		Log.Out(Logs::Detail, Logs::Netcode, _L "Packet seqstart %i:%i" __L, pack->dwARQ, pack->dwSEQ);
 		//      CACK.dwGSQ = 0xFFFF; changed next if to else instead
 	}
 	// Agz: Moved this, was under packet resend before..., later changed to else statement...
@@ -1785,7 +1797,7 @@ bool EQOldStream::ProcessPacket(EQOldPacket* pack, bool from_buffer)
 		return true; //Invalid packet
 	}
 	CACK.dwGSQ = pack->dwSEQ; //Get current sequence #.
-	Log.Out(Logs::Detail, Logs::EQMac, _L "Packet incoming arq%i:seq%i" __L, pack->dwARQ, pack->dwSEQ);
+	Log.Out(Logs::Detail, Logs::Netcode, _L "Packet incoming arq%i:seq%i" __L, pack->dwARQ, pack->dwSEQ);
 
 	/************ Process ack responds ************/
 	// Quagmire: Moved this to above "ack request" checking in case the packet is dropped in there
@@ -2083,6 +2095,24 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 
 			if(app->size && app->pBuffer)
 			{
+				EmuOpcode app_opcode = (*OpMgr)->EQToEmu(app->opcode);
+
+				if (Log.log_settings[Logs::Server_Client_Packet].is_category_enabled == 1){
+					if (app_opcode != OP_SpecialMesg && 
+						(!RuleB(EventLog, SkipCommonPacketLogging) ||
+						(RuleB(EventLog, SkipCommonPacketLogging) && app_opcode != OP_MobHealth && app_opcode != OP_MobUpdate && app_opcode != OP_ClientUpdate))){
+					Log.Out(Logs::General, Logs::Server_Client_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app_opcode), app_opcode, app->size);
+					}
+				}
+
+				if (Log.log_settings[Logs::Server_Client_Packet_With_Dump].is_category_enabled == 1){
+					if (app_opcode != OP_SpecialMesg && 
+						(!RuleB(EventLog, SkipCommonPacketLogging) ||
+						(RuleB(EventLog, SkipCommonPacketLogging) && app_opcode != OP_MobHealth && app_opcode != OP_MobUpdate && app_opcode != OP_ClientUpdate))){
+						Log.Out(Logs::General, Logs::Server_Client_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app_opcode), app_opcode, app->size, DumpProtocolPacketToString(app).c_str());
+					}
+				}
+
 				if(pack->HDR.a3_Fragment)
 				{
 					// If this is the last packet in the fragment group

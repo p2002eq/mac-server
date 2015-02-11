@@ -232,6 +232,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 					// take partial damage into account
 					dmg = (int32) (dmg * partial / 100);
+					if (dmg == 0)
+					{
+						dmg = -1;		// there are no zero damage non-full resists
+					}
 
 					//handles AAs and what not...
 					if(caster) {
@@ -771,20 +775,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					SendAppearancePacket(14, 100, true, true);
 				} else if(IsNPC()) {
 					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
-				}
-
-				bool bBreak = false;
-
-				// define spells with fixed duration
-				// charm spells with -1 in field 209 are all of fixed duration, so lets use that instead of spell_ids
-				if(spells[spell_id].powerful_flag == -1)
-					bBreak = true;
-
-				if (!bBreak)
-				{
-					int resistMod = static_cast<int>(partial) + (GetCHA()/25);
-					resistMod = resistMod > 100 ? 100 : resistMod;
-					buffs[buffslot].ticsremaining = resistMod * buffs[buffslot].ticsremaining / 100;
 				}
 
 				if(IsClient())
@@ -1501,6 +1491,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					snprintf(eye_name, sizeof(eye_name), "Eye_of_%s", caster->GetCleanName());
 					int duration = CalcBuffDuration(caster, this, spell_id) * 6;
 					caster->TemporaryPets(spell_id, nullptr, eye_name, duration);
+					caster->CastToClient()->has_zomm = true;
 				}
 				break;
 			}
@@ -3437,7 +3428,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 
 			case SE_Charm: {
-				if (!caster || !PassCharismaCheck(caster, this, spell_id)) {
+				if (!caster || !PassCharismaCheck(caster, spell_id)) {
 					BuffFadeByEffect(SE_Charm);
 				}
 
@@ -3794,6 +3785,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 			{
 				if(IsNPC())
 				{
+					InterruptSpell();
 					CastToNPC()->RestoreGuardSpotCharm();
 					SendAppearancePacket(AT_Pet, 0, true, true);
 					CastToNPC()->RestoreNPCFactionID();
@@ -3964,6 +3956,16 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					}
 					my_c->m_TimeSinceLastPositionCheck = cur_time;
 					my_c->m_DistanceSinceLastPositionCheck = 0.0f;
+				}
+			}
+
+			case SE_EyeOfZomm:
+			{
+				if(IsClient())
+				{
+					CastToClient()->has_zomm = false;
+					// The client handles this as well on the first OP_ClientUpdate sent after Zomm fades, but we can't trust the client.
+					m_Position = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
 				}
 			}
 		}

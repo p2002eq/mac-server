@@ -260,7 +260,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 		expansion = database.GetExpansion(cle->AccountID());
 
 		if (!pZoning && ClientVersionBit != 0)
-			SendGuildList();
+			//SendGuildList();
 			SendLogServer();
 			SendApproveWorld();
 			SendEnterWorld(cle->name());
@@ -687,7 +687,7 @@ bool Client::Process() {
 		ZoneUnavail();
 	}
 	if(connect.Check()){
-		SendGuildList();// Send OPCode: OP_GuildsList
+		//SendGuildList();// Send OPCode: OP_GuildsList
 		SendApproveWorld();
 		connect.Disable();
 	}
@@ -728,9 +728,6 @@ void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
 		return;
 
-	if(!cle)
-		return;
-
 	ZoneServer* zs = nullptr;
 	if(instanceID > 0)
 	{
@@ -765,7 +762,7 @@ void Client::EnterWorld(bool TryBootup) {
 	const char *zone_name=database.GetZoneName(zoneID, true);
 	if (zs) {
 		// warn the world we're comming, so it knows not to shutdown
-		zs->IncommingClient(this);
+		zs->IncomingClient(this);
 	}
 	else {
 		if (TryBootup) {
@@ -779,12 +776,16 @@ void Client::EnterWorld(bool TryBootup) {
 			return;
 		}
 		else {
-			Log.Out(Logs::Detail, Logs::World_Server,"Requested zone %s is no running.",zone_name);
+			Log.Out(Logs::Detail, Logs::World_Server,"Requested zone %s is not running.",zone_name);
 			ZoneUnavail();
 			return;
 		}
 	}
 	pwaitingforbootup = 0;
+
+	if(!cle) {
+		return;
+	}
 
 	cle->SetChar(charid, char_name);
 
@@ -1012,6 +1013,8 @@ void Client::SendApproveWorld()
 
 bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 {
+	if (!RuleB(Character, CanCreate))
+		return false;
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
