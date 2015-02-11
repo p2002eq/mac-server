@@ -1672,34 +1672,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					else
 						TargetClient = this->CastToClient();
 
-					// We now have a valid target for this spell. Either the caster himself or a targetted player. Lets see if the target is in the group.
-					Group* group = entity_list.GetGroupByClient(TargetClient);
-					if(group) {
-						if(!group->IsGroupMember(TargetClient)) {
-							Message(CC_Red, "Your target must be a group member for this spell.");
-							break;
-						}
-					}
-					else {
-						Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
-						if(r)
-						{
-							uint32 gid = r->GetGroup(caster->GetName());
-							if(gid < 11)
-							{
-								if(r->GetGroup(TargetClient->GetName()) != gid) {
-									Message(CC_Red, "Your target must be a group member for this spell.");
-									break;
-								}
-							}
-						} else {
-							if(TargetClient != this->CastToClient()) {
-								Message(CC_Red, "Your target must be a group member for this spell.");
-								break;
-							}
-						}
-					}
-
 					// Now we should either be casting this on self or its being cast on a valid group member
 					if(TargetClient) {
 
@@ -1717,13 +1689,18 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							else {
 								// No corpse found in the zone
 								Message_StringID(CC_User_Spells, CORPSE_CANT_SENSE);
+								this->CastToClient()->SummonItem(spells[spell_id].components[0]);
 							}
 						}
 						else
+						{
 							caster->Message_StringID(MT_SpellFailure, SPELL_LEVEL_REQ);
+							this->CastToClient()->SummonItem(spells[spell_id].components[0]);
+						}
 					}
 					else {
 						Message_StringID(CC_Red, TARGET_NOT_FOUND);
+						this->CastToClient()->SummonItem(spells[spell_id].components[0]);
 						Log.Out(Logs::General, Logs::Error, "%s attempted to cast spell id %u with spell effect SE_SummonCorpse, but could not cast target into a Client object.", GetCleanName(), spell_id);
 					}
 				}
