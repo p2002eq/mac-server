@@ -622,6 +622,7 @@ void Client::CompleteConnect()
 	zoneinpacket_timer.Start();
 
 	conn_state = ClientConnectFinished;
+	database.SetAccountActive(AccountID());
 
 	if (GetGroup())
 	{

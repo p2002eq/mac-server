@@ -5545,3 +5545,34 @@ void Client::SendSoulMarks(SoulMarkList_Struct* SMS)
 	QueuePacket(outapp);
 	safe_delete(outapp);	
 }
+
+bool Client::FoodFamished()
+{
+	if(GetGM())
+	{
+		return false;
+	}
+	else
+	{
+		if(m_pp.hunger_level <= 0 && m_pp.famished >= RuleI(Character, FamishedLevel))
+			return true;
+	}
+
+	return false;
+}
+
+bool Client::WaterFamished()
+{
+	if(GetGM())
+	{
+		return false;
+	}
+	else
+	{
+		if(m_pp.thirst_level <= 0 && m_pp.famished >= RuleI(Character, FamishedLevel))
+			return true;
+	}
+
+	return false;
+}
+
