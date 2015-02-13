@@ -371,6 +371,7 @@ Mob::Mob(const char* in_name,
 	walkspeed = 0;
 	combat_hp_regen = 0;
 	combat_mana_regen = 0;
+	iszomm = false;
 }
 
 Mob::~Mob()
@@ -1164,7 +1165,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->spacer1	=0;
 	spu->spacer2	=0;
 
-	if(this->IsClient())
+	if(this->IsClient() || this->iszomm)
 	{
 		spu->z_pos -= static_cast<int8>(size);
 		spu->anim_type = animation;

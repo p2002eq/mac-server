@@ -315,7 +315,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	}
 
 	// Summoned pets are indifferent
-	if(mob->IsPet() && !mob->IsCharmed())
+	if((mob->IsPet() && !mob->IsCharmed()) || mob->iszomm)
 	{
 		return(false);
 	}

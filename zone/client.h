@@ -743,6 +743,8 @@ public:
 
 	bool Hungry() const {if (GetGM()) return false; return m_pp.hunger_level <= 3000;}
 	bool Thirsty() const {if (GetGM()) return false; return m_pp.thirst_level <= 3000;}
+	bool FoodFamished(); 
+	bool WaterFamished();
 int32 GetHunger() const { return m_pp.hunger_level; }
 int32 GetThirst() const { return m_pp.thirst_level; }
 int32 GetFamished() const { return m_pp.famished; }

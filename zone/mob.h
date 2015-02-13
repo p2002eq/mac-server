@@ -1261,6 +1261,7 @@ protected:
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
+	bool iszomm;
 
 private:
 	void _StopSong(); //this is not what you think it is

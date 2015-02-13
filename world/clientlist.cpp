@@ -57,13 +57,31 @@ void ClientList::Process() {
 			struct in_addr in;
 			in.s_addr = iterator.GetData()->GetIP();
 			Log.Out(Logs::Detail, Logs::World_Server,"Removing client from %s:%d", inet_ntoa(in), iterator.GetData()->GetPort());
-//the client destructor should take care of this.
-//			iterator.GetData()->Free();
+			uint32 accountid = iterator.GetData()->GetAccountID();
 			iterator.RemoveCurrent();
+
+			if(!ActiveConnection(accountid))
+				database.ClearAccountActive(accountid);
 		}
 		else
 			iterator.Advance();
 	}
+}
+
+bool ClientList::ActiveConnection(uint32 account_id) {
+	LinkedListIterator<ClientListEntry*> iterator(clientlist);
+
+	iterator.Reset();
+	while(iterator.MoreElements()) {
+		if (iterator.GetData()->AccountID() == account_id && iterator.GetData()->Online() > CLE_Status_Offline) {
+			struct in_addr in;
+			in.s_addr = iterator.GetData()->GetIP();
+			Log.Out(Logs::Detail, Logs::World_Server,"Client with account %d exists on %s", iterator.GetData()->AccountID(), inet_ntoa(in));
+			return true;
+		}
+		iterator.Advance();
+	}
+	return false;
 }
 
 void ClientList::CLERemoveZSRef(ZoneServer* iZS) {
@@ -331,7 +349,13 @@ void ClientList::CLCheckStale() {
 	iterator.Reset();
 	while(iterator.MoreElements()) {
 		if (iterator.GetData()->CheckStale()) {
+			struct in_addr in;
+			in.s_addr = iterator.GetData()->GetIP();
+			Log.Out(Logs::Detail, Logs::World_Server,"Removing stale client on account %d from %s", iterator.GetData()->AccountID(), inet_ntoa(in));
+			uint32 accountid = iterator.GetData()->AccountID();
 			iterator.RemoveCurrent();
+			if(!ActiveConnection(accountid))
+				database.ClearAccountActive(accountid);
 		}
 		else
 			iterator.Advance();

@@ -1030,6 +1030,53 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		}
 	}
 
+	if(IsCorpseSummon(spell_id))
+	{
+		if(!GetTarget() || !GetTarget()->IsClient() || !IsClient())
+		{
+			InterruptSpell();
+			return;
+		}
+
+		Client* clienttarget = GetTarget()->CastToClient();
+		Group* group = entity_list.GetGroupByClient(clienttarget);
+		if(group) 
+		{
+			if(!group->IsGroupMember(clienttarget)) 
+			{
+				Message_StringID(CC_User_SpellFailure,CORPSE_SUMMON_TAR);
+				InterruptSpell();
+				return;
+			}
+		}
+		else 
+		{
+			Raid *r = entity_list.GetRaidByClient(this->CastToClient());
+			if(r)
+			{
+				uint32 gid = r->GetGroup(GetName());
+				if(gid < 11)
+				{
+					if(r->GetGroup(clienttarget->GetName()) != gid) 
+					{
+						Message_StringID(CC_User_SpellFailure,CORPSE_SUMMON_TAR);
+						InterruptSpell();
+						return;
+					}
+				}
+			} 
+			else 
+			{
+				if(clienttarget != this->CastToClient()) 
+				{
+					Message_StringID(CC_User_SpellFailure,CORPSE_SUMMON_TAR);
+					InterruptSpell();
+					return;
+				}
+			}
+		}
+	}
+
 	// Check for consumables and Reagent focus items
 	// first check for component reduction
 	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && RequiresComponents(spell_id)) {
@@ -1840,6 +1887,14 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				}
 			}
 		}
+
+	if (spell_id == SPELL_CAZIC_TOUCH && IsNPC())
+	{
+		char shoutStr[sizeof name[0] + 1];
+		strcpy(shoutStr, spell_target->name);
+		strcat(shoutStr, "!");
+		Shout(shoutStr);
+	}
 
 	if(IsClient() && !CastToClient()->GetGM()){
 
@@ -3388,9 +3443,19 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	{
 		GM = false;
 	}
-	// invuln mobs can't be affected by any spells, good or bad
-	if(spelltar->GetInvul() || spelltar->DivineAura()) {
-		if(!GM || IsDetrimentalSpell(spell_id))
+	// invuln: cazic touch penetrates DA for non-GMs; allow beneficial if GM mode only
+	if (spelltar->GetInvul() || spelltar->DivineAura())
+	{
+		bool spellHit = false;
+		if (IsDetrimentalSpell(spell_id))
+		{
+			if (spell_id == SPELL_CAZIC_TOUCH && !GM)
+				spellHit = true;
+		}
+		else if (GM)
+			spellHit = true;		// beneficial on GMs only
+
+		if (!spellHit)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
 			safe_delete(action_packet);

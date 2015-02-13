@@ -68,6 +68,7 @@
 #define CAST_NIGHTTIME              209		//Spell can only be cast during the night.
 #define CANNOT_AFFECT_PC			210		//That spell can not affect this target PC.
 #define SPELL_NEED_TAR				214		//You must first select a target for this spell!
+#define CORPSE_SUMMON_TAR			215		//You must first target a living group member whose corpse you wish to summon.
 #define ONLY_ON_CORPSES				221		//This spell only works on corpses.
 #define CANT_DRAIN_SELF				224		//You can't drain yourself!
 #define CORPSE_NOT_VALID			230		//This corpse is not valid.

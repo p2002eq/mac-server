@@ -2356,7 +2356,7 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 				mob->MakeSpawnUpdate(&ppu->spawn_update);
 				ppu->num_updates = 1;
 			}
-			if(mob && mob->IsClient() && mob->GetID()>0 && !client->has_zomm) {
+			if(mob && mob->IsClient() && mob->GetID()>0) {
 				client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 			}
 		}
@@ -2894,8 +2894,7 @@ void EntityList::OpenDoorsNear(NPC *who)
 
 		float curdist = diff.x * diff.x + diff.y * diff.y;
 
-		// Todo figure out what is up with door 2 in neriakb :( Possible map issue?
-		if (diff.z * diff.z < 10 && curdist <= 100 || (cdoor->GetDoorID() == 2 && zone->GetZoneID() == neriakb && curdist <= 244))
+		if (diff.z * diff.z < 20 && curdist <= 250)
 		{
 			cdoor->NPCOpen(who);
 		}

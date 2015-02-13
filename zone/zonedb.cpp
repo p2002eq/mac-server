@@ -3750,10 +3750,10 @@ bool ZoneDatabase::CopyBackupCorpse(uint32 corpse_id) {
 	if (!tod_results.Success()){ 
 		return false;
 	}
-	std::string ci_query = StringFormat("INSERT INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
+	std::string ci_query = StringFormat("REPLACE INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
 	auto ci_results = QueryDatabase(ci_query);
 	if (!ci_results.Success()){ 
-		Log.Out(Logs::Detail, Logs::Error, "CopyBackupCorpse() Error inserting items. They probably already exist, so continue on...");
+		Log.Out(Logs::Detail, Logs::Error, "CopyBackupCorpse() Error replacing items.");
 	}
 
 	return true;
