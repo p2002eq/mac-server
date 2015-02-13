@@ -362,11 +362,6 @@ namespace Convert {
 			int16	equipSlot;
 			uint8	charges;
 			uint16	lootslot;
-			uint32 aug1;
-			uint32 aug2;
-			uint32 aug3;
-			uint32 aug4;
-			uint32 aug5;
 		};
 	}
 
