@@ -3306,12 +3306,8 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->FactionAmt3);
 	if (id == "factionamt4")
 		stat = int32(item->FactionAmt4);
-	if (id == "augtype")
-		stat = int32(item->AugType);
 	if (id == "banedmgraceamt")
 		stat = int32(item->BaneDmgRaceAmt);
-	if (id == "augrestrict")
-		stat = int32(item->AugRestrict);
 	if (id == "endur")
 		stat = int32(item->Endur);
 	if (id == "dotshielding")
@@ -3332,8 +3328,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")
 		stat = int32(item->RecastType);
-	if (id == "augdistiller")
-		stat = int32(item->AugDistiller);
 	if (id == "attuneable")
 		stat = int32(item->Attuneable);
 	if (id == "nopet")

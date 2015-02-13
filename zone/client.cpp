@@ -5435,7 +5435,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if (itemid > 0)
-		SummonItem(itemid, 1, 0, 0, 0, 0, 0, false, MainQuest);
+		SummonItem(itemid, 1, false, MainQuest);
 
 	if (faction)
 	{
@@ -5522,7 +5522,7 @@ bool Client::Disarm(Client* client)
 		if(freeslotid != INVALID_INDEX)
 		{
 			client->DeleteItemInInventory(MainPrimary,0,true);
-			client->SummonItem(weapon->GetID(),charges,0,0,0,0,0,false,freeslotid);
+			client->SummonItem(weapon->GetID(),charges,false,freeslotid);
 			client->WearChange(MaterialPrimary,0,0);
 
 			return true;

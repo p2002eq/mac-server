@@ -33,7 +33,6 @@ enum ItemAttributes : uint32
 	ItemAttrArtifact		= 0x00000002,
 	ItemAttrSummoned		= 0x00000004,
 	ItemAttrMagic			= 0x00000008,
-	ItemAttrAugment			= 0x00000010,
 	ItemAttrPendingLore		= 0x00000020,
 	ItemAttrUnknown			= 0xFFFFFFFF
 };
@@ -113,16 +112,12 @@ enum ItemUseTypes : uint8
 /*5750*/	ItemTypeAllInstrumentTypes,
 /*5776*/	ItemTypeCharm,
 /*----*/	ItemTypeDye,
-/*----*/	ItemTypeAugmentation,
-/*----*/	ItemTypeAugmentationSolvent,
-/*----*/	ItemTypeAugmentationDistiller,
 /*----*/	ItemTypeUnknown12,
 /*----*/	ItemTypeFellowshipKit,
 /*----*/	ItemTypeUnknown13,
 /*----*/	ItemTypeRecipe,
 /*----*/	ItemTypeAdvancedRecipe,
 /*----*/	ItemTypeJournal,		// only one(1) database entry
-/*5881*/	ItemTypePerfectedAugmentationDistiller,
 /*----*/	_ItemTypeCount
 
 /*
@@ -198,7 +193,6 @@ enum ContainerUseTypes : uint8
 /*3446*/	BagTypeErudForge,
 /*----*/	BagTypeTradersSatchel,			// <*Database Reference Only> (db: Yellow Trader's Satchel Token?)
 /*5785*/	BagTypeGuktaForge,				// Froglok (no database entries as of peq rev 69)
-/*3359*/	BagTypeAugmentationSealer,
 /*----*/	BagTypeIceCreamChurn,			// <*Database Reference Only>
 /*6325*/	BagTypeTransformationmold,		// Ornamentation
 /*6340*/	BagTypeDetransformationmold,	// Ornamentation Stripper
@@ -769,7 +763,6 @@ enum InventoryMainTypes : int16 {
 #define MAP_BEGIN	0
 #define MAIN_BEGIN	0
 #define SUB_BEGIN	0
-#define AUG_BEGIN	0
 
 namespace legacy {
 	// this is for perl and other legacy systems
@@ -811,7 +804,6 @@ namespace legacy {
 		MainCursor			= 30,
 		MainCursor_END		= (int16)0xFFFE, // I hope no one is using this...
 		SLOT_TRADESKILL		= 1000,
-		SLOT_AUGMENT		= 1001,
 		SLOT_INVALID		= (int16)0xFFFF,
 
 		SLOT_POSSESSIONS_BEGIN	= 0,

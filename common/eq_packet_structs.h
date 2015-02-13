@@ -3365,11 +3365,6 @@ struct ServerLootItem_Struct {
 	int16	equip_slot;	  // int16	equip_slot;
 	uint16	charges;	  // uint8	charges; 
 	uint16	lootslot;	  // uint16	lootslot;
-	uint32	aug_1;		  // uint32	aug_1;
-	uint32	aug_2;		  // uint32	aug_2;
-	uint32	aug_3;		  // uint32	aug_3;
-	uint32	aug_4;		  // uint32	aug_4;
-	uint32	aug_5;		  // uint32	aug_5;
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
 };

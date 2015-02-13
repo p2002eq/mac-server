@@ -5848,16 +5848,6 @@ void command_summonitem(Client *c, const Seperator *sep){
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
-		else if (sep->argnum == 3)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]));
-		else if (sep->argnum == 4)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]));
-		else if (sep->argnum == 5)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]));
-		else if (sep->argnum == 6)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]));
-		else if (sep->argnum == 7)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]), atoi(sep->arg[7]));
 		else
 			c->SummonItem(itemid, charges);
 	}
@@ -5890,16 +5880,6 @@ void command_giveitem(Client *c, const Seperator *sep){
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
-		else if (sep->argnum == 3)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]));
-		else if (sep->argnum == 4)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]));
-		else if (sep->argnum == 5)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]));
-		else if (sep->argnum == 6)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]));
-		else if (sep->argnum == 7)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]), atoi(sep->arg[7]));
 		else
 			t->SummonItem(itemid, charges);
 	}
