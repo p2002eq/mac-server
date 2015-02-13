@@ -10,9 +10,9 @@ script:
 branches:
   only:
     - master
-    - stable
+    - Dev
 notifications:
   email: false
   irc:
-    channels: "irc.eqemulator.net#eqemucoders"
+    channels: "irc.eqemulator.net#takp-dev"
 os: linux
