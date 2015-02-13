@@ -950,11 +950,6 @@ struct QSTradeItems_Struct {
 	uint16 to_slot;
 	uint32 item_id;
 	uint16 charges;
-	uint32 aug_1;
-	uint32 aug_2;
-	uint32 aug_3;
-	uint32 aug_4;
-	uint32 aug_5;
 };
 
 struct QSPlayerLogTrade_Struct {
@@ -973,11 +968,6 @@ struct QSHandinItems_Struct {
 	uint16 char_slot;
 	uint32 item_id;
 	uint16 charges;
-	uint32 aug_1;
-	uint32 aug_2;
-	uint32 aug_3;
-	uint32 aug_4;
-	uint32 aug_5;
 };
 
 struct QSPlayerLogHandin_Struct {
@@ -1011,11 +1001,6 @@ struct QSDeleteItems_Struct {
 	uint16 char_slot;
 	uint32 item_id;
 	uint16 charges;
-	uint32 aug_1;
-	uint32 aug_2;
-	uint32 aug_3;
-	uint32 aug_4;
-	uint32 aug_5;
 };
 
 struct QSPlayerLogDelete_Struct {
@@ -1030,11 +1015,6 @@ struct QSMoveItems_Struct {
 	uint16 to_slot;
 	uint32 item_id;
 	uint16 charges;
-	uint32 aug_1;
-	uint32 aug_2;
-	uint32 aug_3;
-	uint32 aug_4;
-	uint32 aug_5;
 };
 
 struct QSPlayerLogMove_Struct {
@@ -1051,11 +1031,6 @@ struct QSTransactionItems_Struct {
 	uint16 char_slot;
 	uint32 item_id;
 	uint16 charges;
-	uint32 aug_1;
-	uint32 aug_2;
-	uint32 aug_3;
-	uint32 aug_4;
-	uint32 aug_5;
 };
 
 struct QSMerchantLogTransaction_Struct {
