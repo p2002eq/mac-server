@@ -865,9 +865,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 					case ItemTypePercussionInstrument:
 						newbon->percussionMod += base1;
 						break;
-					case ItemTypeSinging:
-						newbon->singingMod += base1;
-						break;
 				}
 				break;
 			case SE_SongModCap:
@@ -2570,9 +2567,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 						break;
 					case ItemTypePercussionInstrument:
 						new_bonus->percussionMod += effect_value;
-						break;
-					case ItemTypeSinging:
-						new_bonus->singingMod += effect_value;
 						break;
 				}
 				break;

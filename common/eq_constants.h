@@ -104,20 +104,6 @@ enum ItemUseTypes : uint8
 /*----*/	ItemTypeUnknown6,
 /*----*/	ItemTypeUnknown7,
 /*5522*/	ItemTypeMartial,
-/*----*/	ItemTypeUnknown8,
-/*----*/	ItemTypeUnknown9,
-/*----*/	ItemTypeUnknown10,
-/*----*/	ItemTypeUnknown11,
-/*----*/	ItemTypeSinging,
-/*5750*/	ItemTypeAllInstrumentTypes,
-/*5776*/	ItemTypeCharm,
-/*----*/	ItemTypeDye,
-/*----*/	ItemTypeUnknown12,
-/*----*/	ItemTypeFellowshipKit,
-/*----*/	ItemTypeUnknown13,
-/*----*/	ItemTypeRecipe,
-/*----*/	ItemTypeAdvancedRecipe,
-/*----*/	ItemTypeJournal,		// only one(1) database entry
 /*----*/	_ItemTypeCount
 
 /*
@@ -192,13 +178,6 @@ enum ContainerUseTypes : uint8
 /*3444*/	BagTypeValeForge,				// Halfling
 /*3446*/	BagTypeErudForge,
 /*----*/	BagTypeTradersSatchel,			// <*Database Reference Only> (db: Yellow Trader's Satchel Token?)
-/*5785*/	BagTypeGuktaForge,				// Froglok (no database entries as of peq rev 69)
-/*----*/	BagTypeIceCreamChurn,			// <*Database Reference Only>
-/*6325*/	BagTypeTransformationmold,		// Ornamentation
-/*6340*/	BagTypeDetransformationmold,	// Ornamentation Stripper
-/*5400*/	BagTypeUnattuner,
-/*7684*/	BagTypeTradeskillBag,
-/*7692*/	BagTypeCollectibleBag,
 /*----*/	_BagTypeCount
 };
 
