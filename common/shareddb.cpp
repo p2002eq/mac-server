@@ -847,6 +847,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		strcpy(item.WornName, row[ItemField::wornname]);
 		strcpy(item.FocusName, row[ItemField::focusname]);
 		strcpy(item.ScrollName, row[ItemField::scrollname]);
+		item.GMFlag = (int8)atoi(row[ItemField::gmflag]);
 
         try {
             hash.insert(item.ID, item);

@@ -1859,6 +1859,9 @@ namespace Mac {
 		structs::Item_Struct *mac_pop_item = new structs::Item_Struct;
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
+		if(item->GMFlag == -1)
+			Log.Out(Logs::Detail, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
+
 		// General items
   		if(type == 0)
   		{
@@ -1957,6 +1960,7 @@ namespace Mac {
 			mac_pop_item->common.Mana = item->Mana;           
 			mac_pop_item->common.AC = item->AC;		
 			mac_pop_item->common.MaxCharges = item->MaxCharges;    
+			mac_pop_item->common.GMFlag = item->GMFlag;
 			mac_pop_item->common.Light = item->Light;          
 			mac_pop_item->common.Delay = item->Delay;          
 			mac_pop_item->common.Damage = item->Damage;               

@@ -127,7 +127,7 @@ RULE_CATEGORY(GM)
 RULE_INT(GM, GMWhoList, 80)
 RULE_INT(GM, NoCombatLow, 2)
 RULE_INT(GM, NoCombatHigh, 2)	// effectively disables this for now
-RULE_INT ( GM, MinStatusToSummonItem, 250)
+RULE_INT ( GM, MinStatusToUseGMItem, 80)
 RULE_INT ( GM, MinStatusToZoneAnywhere, 250 )
 RULE_CATEGORY_END()
 

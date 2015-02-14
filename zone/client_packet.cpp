@@ -7134,11 +7134,13 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	std::string packet;
 	if (!stacked && inst) {
-		PutItemInInventory(freeslotid, *inst);
-		if (freeslotid == MainCursor)
-			SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
-		else
-			SendItemPacket(freeslotid, inst, ItemPacketTrade);
+		if(PutItemInInventory(freeslotid, *inst))
+		{
+			if (freeslotid == MainCursor)
+				SendItemPacket(freeslotid, inst, ItemPacketSummonItem);
+			else
+				SendItemPacket(freeslotid, inst, ItemPacketTrade);
+		}
 	}
 	else if (!stacked){
 		Log.Out(Logs::General, Logs::Error, "OP_ShopPlayerBuy: item->ItemClass Unknown! Type: %i", item->ItemClass);
