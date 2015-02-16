@@ -915,7 +915,10 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 
 	CreateSpawnPacket(outapp);
 	outapp->priority = 6;
-	if (!GetHideMe()) entity_list.QueueClients(this, outapp, true);
+	if(GetHideMe())
+		entity_list.QueueClientsStatus(this, outapp, true, Admin(), 255);
+	else
+		entity_list.QueueCloseClients(this, outapp, true);
 	safe_delete(outapp);
 	if (GetPVP())	//force a PVP update until we fix the spawn struct
 		SendAppearancePacket(AT_PVP, GetPVP(), true, false);

@@ -1111,13 +1111,17 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	}
 
 	// Check for GM only items.
-	if(src_inst->GetItem()->GMFlag == -1 && this->Admin() < RuleI(GM, MinStatusToUseGMItem)) {
-		Message(CC_Red, "You are not a GM or do not have the status to this item. Please relog to avoid a desync.");
-		Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to create a GM-only item with a status of %i.\n(Item: %u, GMFlag: %u)\n",
-			GetName(), account_name, this->Admin(), src_inst->GetID(), src_inst->GetItem()->GMFlag);
+	if(src_inst)
+	{
+		if(src_inst->GetItem()->GMFlag == -1 && this->Admin() < RuleI(GM, MinStatusToUseGMItem)) 
+		{
+			Message(CC_Red, "You are not a GM or do not have the status to this item. Please relog to avoid a desync.");
+			Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to create a GM-only item with a status of %i.\n(Item: %u, GMFlag: %u)\n",
+				GetName(), account_name, this->Admin(), src_inst->GetID(), src_inst->GetItem()->GMFlag);
 
-		DeleteItemInInventory(src_slot_id,1,true);
-		return false;
+			DeleteItemInInventory(src_slot_id,1,true);
+			return false;
+		}
 	}
 	// Check for No Drop Hacks
 	Mob* with = trade->With();
