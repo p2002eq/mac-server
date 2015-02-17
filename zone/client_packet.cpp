@@ -293,13 +293,13 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 	if (Log.log_settings[Logs::Client_Server_Packet].is_category_enabled == 1)
 		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
 			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
-			Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size());
+			Log.Out(Logs::General, Logs::Client_Server_Packet, "[%s - 0x%04x] [Size: %u]", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size()-2);
 		}
 	
 	if (Log.log_settings[Logs::Client_Server_Packet_With_Dump].is_category_enabled == 1)
 		if (!RuleB(EventLog, SkipCommonPacketLogging) ||
 			(RuleB(EventLog, SkipCommonPacketLogging) && app->GetOpcode() != OP_MobHealth && app->GetOpcode() != OP_MobUpdate && app->GetOpcode() != OP_ClientUpdate)){
-			Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size(), DumpPacketToString(app).c_str());
+			Log.Out(Logs::General, Logs::Client_Server_Packet_With_Dump, "[%s - 0x%04x] [Size: %u] %s", OpcodeManager::EmuToName(app->GetOpcode()), app->GetOpcode(), app->Size()-2, DumpPacketToString(app).c_str());
 		}
 	
 	EmuOpcode opcode = app->GetOpcode();
@@ -390,6 +390,7 @@ void Client::CompleteConnect()
 	hpupdate_timer.Start();
 	position_timer.Start();
 	autosave_timer.Start();
+	position_update_timer.Start();
 	SetDuelTarget(0);
 	SetDueling(false);
 
@@ -2458,6 +2459,12 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 	}
 	SpawnPositionUpdate_Struct* ppu = (SpawnPositionUpdate_Struct*)app->pBuffer;
+
+	if(client_position_update)
+	{
+		Log.Out(Logs::Detail, Logs::EQMac, "PositionUpdate for %s(%d): loc: %d,%d,%d,%d delta: %d,%d,%d,%d anim: %d", GetName(), ppu->spawn_id, ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading, ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading, ppu->anim_type);
+		client_position_update = false;
+	}
 
 	ppu->z_pos /= 10;
 
@@ -8495,7 +8502,7 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app)
 void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(WearChange_Struct)) {
-		std::cout << "Wrong size: OP_WearChange, size=" << app->size << ", expected " << sizeof(WearChange_Struct) << std::endl;
+		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_WearChange, size %i expected %i", app->size, sizeof(WearChange_Struct));
 		return;
 	}
 
@@ -8511,7 +8518,7 @@ void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Who_All_Struct)) {
-		std::cout << "Wrong size on OP_WhoAll. Got: " << app->size << ", Expected: " << sizeof(Who_All_Struct) << std::endl;
+		Log.Out(Logs::General, Logs::Error, "Wrong size on OP_WhoAll. Got: %i, Expected: %i", app->size, sizeof(Who_All_Struct));
 		return;
 	}
 	Who_All_Struct* whoall = (Who_All_Struct*)app->pBuffer;

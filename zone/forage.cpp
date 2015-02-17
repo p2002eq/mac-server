@@ -161,7 +161,7 @@ bool Client::CanFish() {
 
 	if(m_inv.GetItem(MainCursor))
 	{
-		Message_StringID(CC_Default, FISHING_HANDS_FULL);
+		Message_StringID(CC_User_Skills, FISHING_HANDS_FULL);
 		return false;
 	}
 
@@ -283,8 +283,7 @@ void Client::GoFish()
 	if (zone->random.Int(0,175) < fishing_skill) {
 		uint32 food_id = 0;
 
-		//25% chance to fish an item.
-		if (zone->random.Int(0, 399) <= fishing_skill ) {
+		if (zone->random.Int(0, 299) <= fishing_skill ) {
 			uint32 npc_id = 0;
 			uint8 npc_chance = 0;
 			food_id = database.GetZoneFishing(m_pp.zone_id, fishing_skill, npc_id, npc_chance);
@@ -326,7 +325,7 @@ void Client::GoFish()
 				Message_StringID(CC_Default, DUP_LORE);
 				safe_delete(inst);
 			}
-			else if(!m_inv.HasItem(MainCursor))
+			else
 			{
 				Message_StringID(MT_Skills, FISHING_SUCCESS);
 				PushItemOnCursor(*inst);
@@ -335,8 +334,6 @@ void Client::GoFish()
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
 			}
-			else
-				Message_StringID(CC_Default, FISHING_HANDS_FULL);
 
 			if(inst) {
 				std::vector<EQEmu::Any> args;
@@ -363,7 +360,10 @@ void Client::GoFish()
 	}
 
 	//chance to break fishing pole...
-	if (zone->random.Int(0, 49) == 1) {
+	uint16 break_chance = 49;
+	if(fishing_skill > 49)
+		break_chance = fishing_skill;
+	if (zone->random.Int(0, break_chance) == 1) {
 		Message_StringID(MT_Skills, FISHING_POLE_BROKE);	//Your fishing pole broke!
 		DeleteItemInInventory(MainPrimary, 0, true);
 	}
@@ -495,7 +495,7 @@ void Client::ForageItem(bool guarantee) {
 				Message_StringID(CC_Default, DUP_LORE);
 				safe_delete(inst);
 			}
-			else if(!m_inv.GetItem(MainCursor))
+			else
 			{
 				Message_StringID(MT_Skills, stringid);
 				PushItemOnCursor(*inst);
@@ -504,8 +504,6 @@ void Client::ForageItem(bool guarantee) {
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
 			}
-			else
-				Message(CC_User_Skills, "You can't forage while holding something.");
 
 			if(inst) {
 				std::vector<EQEmu::Any> args;

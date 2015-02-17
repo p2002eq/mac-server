@@ -432,6 +432,10 @@ bool Client::Process() {
 			}
 		}
 
+		if (position_update_timer.Check()) {
+			client_position_update = true;
+		}
+
 		if(HasVirus()) {
 			if(viral_timer.Check()) {
 				viral_timer_counter++;

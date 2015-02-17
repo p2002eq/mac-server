@@ -138,6 +138,7 @@ Client::Client(EQStreamInterface* ieqs)
 	afk_toggle_timer(250),
 	helm_toggle_timer(250),
 	light_update_timer(600),
+	position_update_timer(10000),
 	m_Proximity(FLT_MAX, FLT_MAX, FLT_MAX), //arbitrary large number
 	m_ZoneSummonLocation(-2.0f,-2.0f,-2.0f),
 	m_AutoAttackPosition(0.0f, 0.0f, 0.0f, 0.0f),
@@ -268,6 +269,7 @@ Client::Client(EQStreamInterface* ieqs)
 	active_light = innate_light;
 	spell_light = equip_light = NOT_USED;
 	has_zomm = false;
+	client_position_update = false;
 }
 
 Client::~Client() {

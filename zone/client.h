@@ -955,6 +955,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	int32 GetMeleeDamage(Mob* other, bool GetMinDamage = false);
 
 	bool has_zomm;
+	bool client_position_update;
 
 protected:
 	friend class Mob;
@@ -1139,6 +1140,7 @@ private:
 	Timer afk_toggle_timer;
 	Timer helm_toggle_timer;
 	Timer light_update_timer;
+	Timer position_update_timer;
 
     glm::vec3 m_Proximity;
 
