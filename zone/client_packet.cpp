@@ -2462,7 +2462,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(client_position_update)
 	{
-		Log.Out(Logs::Detail, Logs::EQMac, "PositionUpdate for %s(%d): loc: %d,%d,%d,%d delta: %d,%d,%d,%d anim: %d", GetName(), ppu->spawn_id, ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading, ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading, ppu->anim_type);
+		Log.Out(Logs::Detail, Logs::Pathing, "PositionUpdate for %s(%d): loc: %d,%d,%d,%d delta: %d,%d,%d,%d anim: %d", GetName(), ppu->spawn_id, ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading, ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading, ppu->anim_type);
 		client_position_update = false;
 	}
 

@@ -280,6 +280,10 @@
 #define CORPSEDRAG_STOPALL			4065	//You stop dragging the corpses.
 #define CORPSEDRAG_STOP				4066	//You stop dragging the corpse.
 #define	TARGET_TOO_CLOSE			4602	//You are too close to your target. Get farther away.
+#define	WHOALL_GM					5022	//%T1[ANON (%2 %3)] %4 (%5) %6 %7 %8
+#define WHOALL_ROLE					5023	//%T1[ANONYMOUS] %2 %3 %4
+#define WHOALL_ANON					5024	//%T1[ANONYMOUS] %2 %3
+#define WHOALL_ALL					5025	//%T1[%2 %3] %4 (%5) %6 %7 %8 %9
 #define WHOALL_NO_RESULTS			5029	//There are no players in EverQuest that match those who filters.
 #define TELL_QUEUED_MESSAGE			5045	//You told %1 '%T2. %3'
 #define TOLD_NOT_ONLINE				5046	//%1 is not online at this time.

@@ -1227,6 +1227,7 @@ void Client::WhoAll(Who_All_Struct* whom) {
 		whoall->gmlookup = whom->gmlookup;
 		whoall->wclass = whom->wclass;
 		whoall->wrace = whom->wrace;
+		whoall->guildid = whom->guildid;
 		worldserver.SendPacket(pack);
 		safe_delete(pack);
 	}
@@ -2598,7 +2599,7 @@ void Client::SetHideMe(bool flag)
 	{
 		if(!GetGM())
 			SetGM(true);
-		if(!GetAnon())
+		if(GetAnon() != 1) // 1 is anon, 2 is role
 			SetAnon(true);
 		database.SetHideMe(AccountID(),true);
 		CreateDespawnPacket(&app, false);
