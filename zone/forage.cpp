@@ -159,6 +159,12 @@ bool Client::CanFish() {
 		return false;
 	}
 
+	if(m_inv.GetItem(MainCursor))
+	{
+		Message_StringID(CC_Default, FISHING_HANDS_FULL);
+		return false;
+	}
+
 	//make sure we still have a fishing pole on:
 	const ItemInst* Pole = m_inv[MainPrimary];
 	int32 bslot = m_inv.HasItemByUse(ItemTypeFishingBait, 1, invWhereWorn|invWherePersonal);
@@ -185,6 +191,7 @@ bool Client::CanFish() {
 		// Tweak Rod and LineLength if required
 		const float RodLength = RuleR(Watermap, FishingRodLength);
 		const float LineLength = RuleR(Watermap, FishingLineLength);
+		const float LineExtension = RuleR(Watermap, FishingLineExtension);
 		int HeadingDegrees;
 
 		HeadingDegrees = (int) ((GetHeading()*360)/256);
@@ -212,9 +219,18 @@ bool Client::CanFish() {
 			in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
 			Log.Out(Logs::General, Logs::Maps, "Trying again with new Z %4.3f InWater now says %d", rodPosition.z, in_water);
 
-			if(!in_water) {
-				Message_StringID(MT_Skills, FISHING_LAND);	//Trying to catch land sharks perhaps?
-				return false;
+			if(!in_water)
+			{
+				// Our line may be too short. Reel our line out using extension, and try again
+				rodPosition.z = dest.z - (LineLength+LineExtension);
+				in_water = zone->watermap->InWater(rodPosition) || zone->watermap->InVWater(rodPosition);
+				Log.Out(Logs::General, Logs::Maps, "Trying again with new Z %4.3f InWater now says %d", rodPosition.z, in_water);
+
+				if(!in_water) 
+				{
+					Message_StringID(MT_Skills, FISHING_LAND);	//Trying to catch land sharks perhaps?
+					return false;
+				}
 			}
 		}
 	}
@@ -303,7 +319,6 @@ void Client::GoFish()
 
 		const Item_Struct* food_item = database.GetItem(food_id);
 
-		Message_StringID(MT_Skills, FISHING_SUCCESS);
 		ItemInst* inst = database.CreateItem(food_item, 1);
 		if(inst != nullptr) {
 			if(CheckLoreConflict(inst->GetItem()))
@@ -311,14 +326,17 @@ void Client::GoFish()
 				Message_StringID(CC_Default, DUP_LORE);
 				safe_delete(inst);
 			}
-			else
+			else if(!m_inv.HasItem(MainCursor))
 			{
+				Message_StringID(MT_Skills, FISHING_SUCCESS);
 				PushItemOnCursor(*inst);
 				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
 			}
+			else
+				Message_StringID(CC_Default, FISHING_HANDS_FULL);
 
 			if(inst) {
 				std::vector<EQEmu::Any> args;
@@ -345,8 +363,6 @@ void Client::GoFish()
 	}
 
 	//chance to break fishing pole...
-	//this is potentially exploitable in that they can fish
-	//and then swap out items in primary slot... too lazy to fix right now
 	if (zone->random.Int(0, 49) == 1) {
 		Message_StringID(MT_Skills, FISHING_POLE_BROKE);	//Your fishing pole broke!
 		DeleteItemInInventory(MainPrimary, 0, true);
@@ -360,6 +376,13 @@ void Client::GoFish()
 }
 
 void Client::ForageItem(bool guarantee) {
+
+	if(m_inv.GetItem(MainCursor))
+	{
+		Message(CC_User_Skills, "You can't forage while holding something.");
+		return;
+	}
+
 	int skill_level = GetSkill(SkillForage);
 
 	//be wary of the string ids in switch below when changing this.
@@ -390,8 +413,7 @@ void Client::ForageItem(bool guarantee) {
 		// If we're hungry or thirsty, we want to prefer food or water.
 		if(Hungry() && Thirsty())
 		{
-			// 50/50 chance of food or water.
-			if(zone->random.Roll(50))
+			if(m_pp.hunger_level <= m_pp.thirst_level)
 			{
 				if(GetZoneID() == poknowledge)
 					foragedfood = 13047; //PoK only has roots from the above array.
@@ -403,7 +425,6 @@ void Client::ForageItem(bool guarantee) {
 			}
 			else
 				foragedfood = 13044;
-
 		}
 		// We only need food.
 		else if(Hungry())
@@ -466,7 +487,6 @@ void Client::ForageItem(bool guarantee) {
 			}
 		}
 
-		Message_StringID(MT_Skills, stringid);
 		ItemInst* inst = database.CreateItem(food_item, 1);
 		if(inst != nullptr) {
 			// check to make sure it isn't a foraged lore item
@@ -475,13 +495,17 @@ void Client::ForageItem(bool guarantee) {
 				Message_StringID(CC_Default, DUP_LORE);
 				safe_delete(inst);
 			}
-			else {
+			else if(!m_inv.GetItem(MainCursor))
+			{
+				Message_StringID(MT_Skills, stringid);
 				PushItemOnCursor(*inst);
 				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
 			}
+			else
+				Message(CC_User_Skills, "You can't forage while holding something.");
 
 			if(inst) {
 				std::vector<EQEmu::Any> args;

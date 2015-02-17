@@ -1106,8 +1106,7 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
 	else
 		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
-	if(IsClient())
-		spu->z_pos -= static_cast<int8>(size);
+	spu->z_pos -= static_cast<int8>(size);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1164,10 +1163,9 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
-
+	spu->z_pos -= static_cast<int8>(size);
 	if(this->IsClient() || this->iszomm)
 	{
-		spu->z_pos -= static_cast<int8>(size);
 		spu->anim_type = animation;
 	}
 	else if(this->IsNPC())
@@ -3659,18 +3657,21 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 {
 	// This method should only be used for spell effects.
 
-	Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): caster %s: target: %s pushback %0.1f pushup %0.1f", caster->GetCleanName(), GetCleanName(), pushback, pushup);
-	float new_x = GetX();
-	float new_y = GetY();
-	float new_z = GetZ() + pushup;
-
-	GetPushHeadingMod(caster, pushback, new_x, new_y);
-	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), new_x, new_y, new_z))
+	glm::vec3 newloc(GetX(), GetY(), GetZ() + pushup);
+	
+	GetPushHeadingMod(caster, pushback, newloc.x, newloc.y);
+	if(pushup == 0 && zone->zonemap)
 	{
-		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): Old coords %0.2f,%0.2f,%0.2f New coords %0.2f,%0.2f,%0.2f ", GetX(), GetY(), GetZ(), new_x, new_y, new_z);
-		m_Position.x = new_x;
-		m_Position.y = new_y;
-		m_Position.z = new_z;
+		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
+		newloc.z += 1;
+		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+	}
+
+	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), newloc.x, newloc.y, newloc.z))
+	{
+		m_Position.x = newloc.x;
+		m_Position.y = newloc.y;
+		m_Position.z = newloc.z;
 
 		uint8 self_update = 0;
 		if(IsClient())
@@ -3688,7 +3689,6 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::Spells, "DoKnockback(): LOS check failed.");
 		return false;
 	}
 }
@@ -3697,15 +3697,23 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 {
 	// Use this method for stun/combat pushback.
 
-	glm::vec3 loc(GetX(), GetY(), GetZ());
-	float new_x = loc.x;
-	float new_y = loc.y;
+	glm::vec3 newloc(GetX(), GetY(), GetZ());
 
-	GetPushHeadingMod(attacker, pushback, new_x, new_y);
-	if(CheckCoordLosNoZLeaps(loc.x, loc.y, loc.z, new_x, new_y, loc.z))
+	GetPushHeadingMod(attacker, pushback, newloc.x, newloc.y);
+	if(zone->zonemap)
 	{
-		m_Position.x = new_x;
-		m_Position.y = new_y;
+		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
+		newloc.z += 1;
+		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+		Log.Out(Logs::Detail, Logs::Combat, "Push: BestZ returned %0.2f for %0.2f,%0.2f,%0.2f", newloc.z, newloc.x, newloc.y, m_Position.z);
+	}
+
+	if(CheckCoordLosNoZLeaps(m_Position.x, m_Position.y, m_Position.z, newloc.x, newloc.y, newloc.z))
+	{
+		Log.Out(Logs::Detail, Logs::Combat, "Push: X: %0.2f -> %0.2f Y: %0.2f -> %0.2f Z: %0.2f -> %0.2f", m_Position.x, newloc.x, m_Position.y, newloc.y, m_Position.z, newloc.z);
+		m_Position.x = newloc.x;
+		m_Position.y = newloc.y;
+		m_Position.z = newloc.z;
 
 		uint8 self_update = 0;
 		if(IsClient())

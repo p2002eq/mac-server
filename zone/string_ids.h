@@ -38,6 +38,7 @@
 #define FORAGE_NOEAT				154		//You have scrounged up something that doesn't look edible.
 #define FORAGE_FAILED				155		//You fail to locate any food nearby.
 #define ALREADY_FISHING				156		//You are already fishing!
+#define	FISHING_HANDS_FULL			158		//You can't fish while holding something.
 #define FISHING_NO_POLE				160		//You can't fish without a fishing pole, go buy one.
 #define FISHING_EQUIP_POLE			161		//You need to put your fishing pole in your primary hand.
 #define FISHING_NO_BAIT				162		//You can't fish without fishing bait, go buy some.

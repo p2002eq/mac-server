@@ -83,7 +83,7 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result) const {
 	
 	// Find nearest Z above us
 	
-	to.z = -BEST_Z_INVALID;
+	to.z = abs(BEST_Z_INVALID);
 	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
 	if (hit)
 	{
