@@ -3663,7 +3663,7 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	if(pushup == 0 && zone->zonemap)
 	{
 		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 1;
+		newloc.z += 4;
 		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
 	}
 
@@ -3703,7 +3703,7 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	if(zone->zonemap)
 	{
 		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 1;
+		newloc.z += 4;
 		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
 		Log.Out(Logs::Detail, Logs::Combat, "Push: BestZ returned %0.2f for %0.2f,%0.2f,%0.2f", newloc.z, newloc.x, newloc.y, m_Position.z);
 	}

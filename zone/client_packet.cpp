@@ -2437,9 +2437,6 @@ void Client::Handle_OP_ClickObjectAction(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ClientError(const EQApplicationPacket *app)
 {
-	ClientError_Struct* error = (ClientError_Struct*)app->pBuffer;
-	Log.Out(Logs::General, Logs::Error, "Client error: %s", error->character_name);
-	Log.Out(Logs::General, Logs::Error, "Error message:%s", error->message);
 	return;
 }
 
@@ -2727,6 +2724,13 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		}
 		if(Trader)
 			Trader_EndTrader();
+
+		if(fishing_timer.Enabled() && GetBoatNPCID() == 0)
+		{
+			Message_StringID(CC_User_Skills, FISHING_STOP);
+			fishing_timer.Disable();
+		}
+
 		rewind_timer.Start(30000, true);
 	}
 

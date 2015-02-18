@@ -211,7 +211,7 @@ RULE_BOOL ( Map, UseClosestZ, true)			// Move mobs to the nearest Z above or bel
 							// Only set UseClosestZ true if all your .map files generated from EQGs were created
 							// with azone2.
 							//
-RULE_INT ( Map, FindBestZHeightAdjust, 4)		// Adds this to the current Z before seeking the best Z position. If this is too high, mobs bounce when pathing.
+RULE_INT ( Map, FindBestZHeightAdjust, 1)		// Adds this to the current Z before seeking the best Z position. If this is too high, mobs bounce when pathing.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Pathing )

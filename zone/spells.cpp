@@ -2263,14 +2263,6 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 
-	// Set and send the nimbus effect if this spell has one
-	int NimbusEffect = GetNimbusEffect(spell_id);
-	if(NimbusEffect) {
-		if(!IsNimbusEffectActive(NimbusEffect)) {
-			SendSpellEffect(NimbusEffect, 500, 0, 1, 3000, true);
-		}
-	}
-
 	// if this was a spell slot or an ability use up the mana for it
 	// CastSpell already reduced the cost for it if we're a client with focus
 	if(slot != USE_ITEM_SPELL_SLOT && mana_used > 0)
