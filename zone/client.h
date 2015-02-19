@@ -189,7 +189,7 @@ public:
 	float GetQuiverHaste();
 
 	void	AI_Init();
-	void	AI_Start(uint32 iMoveDelay = 0);
+	void	AI_Start(uint32 iMoveDelay = 0, bool zomm = false);
 	void	AI_Stop();
 	void	AI_Process();
 	void	AI_SpellCast();

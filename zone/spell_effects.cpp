@@ -1492,6 +1492,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					int duration = CalcBuffDuration(caster, this, spell_id) * 6;
 					caster->TemporaryPets(spell_id, nullptr, eye_name, duration);
 					caster->CastToClient()->has_zomm = true;
+					CastToClient()->AI_Start(0, true);
 				}
 				break;
 			}
@@ -3940,6 +3941,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 			{
 				if(IsClient())
 				{
+					CastToClient()->AI_Stop();
 					CastToClient()->has_zomm = false;
 					// The client handles this as well on the first OP_ClientUpdate sent after Zomm fades, but we can't trust the client.
 					m_Position = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
