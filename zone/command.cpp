@@ -3535,10 +3535,17 @@ void command_corpse(Client *c, const Seperator *sep)
 	}
 	else if (strcasecmp(sep->arg[1], "list") == 0)
 	{
-		if (!target->IsClient())
+		if(!target || (target && target->IsNPC()))
+		{
 			entity_list.ListNPCCorpses(c);
-		if (target->IsClient())
+		}
+		else if(target && target->IsClient())
+		{
 			entity_list.ListPlayerCorpses(c);
+		}
+		else
+			c->Message(CC_Yellow, "Please select a NPC or Client to list corpses of that type.");
+			
 	}
 	else if (strcasecmp(sep->arg[1], "locate") == 0)
 	{
@@ -4536,7 +4543,7 @@ void command_loc(Client *c, const Seperator *sep)
 {
 	Mob *t = c->GetTarget() ? c->GetTarget() : c->CastToMob();
 
-	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f; heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
 }
 
 void command_goto(Client *c, const Seperator *sep)
@@ -5848,16 +5855,6 @@ void command_summonitem(Client *c, const Seperator *sep){
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
-		else if (sep->argnum == 3)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]));
-		else if (sep->argnum == 4)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]));
-		else if (sep->argnum == 5)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]));
-		else if (sep->argnum == 6)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]));
-		else if (sep->argnum == 7)
-			c->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]), atoi(sep->arg[7]));
 		else
 			c->SummonItem(itemid, charges);
 	}
@@ -5890,16 +5887,6 @@ void command_giveitem(Client *c, const Seperator *sep){
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
-		else if (sep->argnum == 3)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]));
-		else if (sep->argnum == 4)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]));
-		else if (sep->argnum == 5)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]));
-		else if (sep->argnum == 6)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]));
-		else if (sep->argnum == 7)
-			t->SummonItem(itemid, charges, atoi(sep->arg[3]), atoi(sep->arg[4]), atoi(sep->arg[5]), atoi(sep->arg[6]), atoi(sep->arg[7]));
 		else
 			t->SummonItem(itemid, charges);
 	}

@@ -199,8 +199,18 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						}
 						break;
 					}
-					case SpellType_Nuke: {
-						if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+					case SpellType_Nuke:
+					{
+						if (AIspells[i].spellid == SPELL_CAZIC_TOUCH)
+						{
+							if (tar->IsPet() && tar->GetOwner())
+							{
+								AIDoSpellCast(i, tar->GetOwner(), 0);
+							}
+							else
+								AIDoSpellCast(i, tar, 0);
+						}
+						else if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
 							if(!checked_los) {
 								if (!CheckLosFN(tar))

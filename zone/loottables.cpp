@@ -218,11 +218,6 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 
 	item->item_id = item2->ID;
 	item->charges = charges;
-	item->aug_1 = 0;
-	item->aug_2 = 0;
-	item->aug_3 = 0;
-	item->aug_4 = 0;
-	item->aug_5 = 0;
 	item->min_level = minlevel;
 	item->max_level = maxlevel;
 	if (equipit) {
