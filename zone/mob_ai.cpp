@@ -507,15 +507,18 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 	pLastChange = Timer::GetCurrentTime();
 }
 
-void Client::AI_Start(uint32 iMoveDelay) {
+void Client::AI_Start(uint32 iMoveDelay, bool zomm) {
 	Mob::AI_Start(iMoveDelay);
 
 	if (!pAIControlled)
 		return;
 
 	pClientSideTarget = GetTarget() ? GetTarget()->GetID() : 0;
-	SendAppearancePacket(AT_Anim, ANIM_FREEZE);	// this freezes the client
-	SendAppearancePacket(AT_Linkdead, 1); // Sending LD packet so *LD* appears by the player name when charmed/feared -Kasai
+	if(!zomm)
+	{
+		SendAppearancePacket(AT_Anim, ANIM_FREEZE);	// this freezes the client
+		SendAppearancePacket(AT_Linkdead, 1); // Sending LD packet so *LD* appears by the player name when charmed/feared -Kasai
+	}
 	SetAttackTimer();
 	if(client_state != CLIENT_LINKDEAD)
 	{

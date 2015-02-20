@@ -372,6 +372,7 @@ Mob::Mob(const char* in_name,
 	combat_hp_regen = 0;
 	combat_mana_regen = 0;
 	iszomm = false;
+	adjustedz = 0;
 }
 
 Mob::~Mob()
@@ -1106,7 +1107,7 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
 	else
 		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
-	spu->z_pos -= static_cast<int8>(size);
+	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1119,6 +1120,9 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	spu->anim_type	= 0;
 
 	if(IsNPC()) {
+		//adjustedz = m_Position.z + 0.65 * size;
+		//spu->z_pos = static_cast<int16>(adjustedz*10);
+
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
@@ -1151,25 +1155,23 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 		spu->y_pos		= static_cast<int16>(currentloc.y + 0.5);
 	else
 		spu->y_pos		= static_cast<int16>(currentloc.y - 0.5);
-	if(currentloc.z >= 0)
-		spu->z_pos		= static_cast<int16>((currentloc.z + 0.5)*10);
-	else
-		spu->z_pos		= static_cast<int16>((currentloc.z - 0.5)*10);
+	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(currentloc.w);
-
 	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
 	spu->delta_y	= static_cast<int32>(m_Delta.y/125);
 	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
-	spu->z_pos -= static_cast<int8>(size);
+
 	if(this->IsClient() || this->iszomm)
 	{
 		spu->anim_type = animation;
 	}
 	else if(this->IsNPC())
 	{
+		//adjustedz = m_Position.z + 0.65 * size;
+		//spu->z_pos = static_cast<int16>(adjustedz*10);
 		float anim = pRunAnimSpeed / 37.0f;
 		spu->anim_type = static_cast<int8>(anim * 7);
 	}
@@ -1200,7 +1202,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightValue(), GetActiveLightValue());
 		if (client->Admin() >= 100)
-			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), IsAIControlled(), targeted);
+			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();

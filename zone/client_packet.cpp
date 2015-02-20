@@ -919,7 +919,7 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	if(GetHideMe())
 		entity_list.QueueClientsStatus(this, outapp, true, Admin(), 255);
 	else
-		entity_list.QueueCloseClients(this, outapp, true);
+		entity_list.QueueClients(this, outapp, true);
 	safe_delete(outapp);
 	if (GetPVP())	//force a PVP update until we fix the spawn struct
 		SendAppearancePacket(AT_PVP, GetPVP(), true, false);
@@ -2442,7 +2442,7 @@ void Client::Handle_OP_ClientError(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 {
-	if (IsAIControlled())
+	if (IsAIControlled() && !has_zomm)
 		return;
 
 	if(dead)
@@ -2727,7 +2727,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 		if(fishing_timer.Enabled() && GetBoatNPCID() == 0)
 		{
-			Message_StringID(CC_User_Skills, FISHING_STOP);
+			//Message_StringID(CC_User_Skills, FISHING_STOP);
 			fishing_timer.Disable();
 		}
 
