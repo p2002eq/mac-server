@@ -190,7 +190,7 @@ public:
 
 	void	AI_Init();
 	void	AI_Start(uint32 iMoveDelay = 0, bool zomm = false);
-	void	AI_Stop();
+	void	AI_Stop(bool zomm = false);
 	void	AI_Process();
 	void	AI_SpellCast();
 	void	Trader_ShowItems();

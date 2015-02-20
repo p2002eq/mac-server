@@ -571,17 +571,21 @@ void NPC::AI_Stop() {
 	AIautocastspell_timer.reset(nullptr);
 }
 
-void Client::AI_Stop() {
+void Client::AI_Stop(bool zomm) {
 	Mob::AI_Stop();
-	this->Message_StringID(CC_Red,PLAYER_REGAIN);
+	
+	if(!zomm)
+	{
+		this->Message_StringID(CC_Red,PLAYER_REGAIN);
 
-	EQApplicationPacket *app = new EQApplicationPacket(OP_Charm, sizeof(Charm_Struct));
-	Charm_Struct *ps = (Charm_Struct*)app->pBuffer;
-	ps->owner_id = 0;
-	ps->pet_id = this->GetID();
-	ps->command = 0;
-	entity_list.QueueClients(this, app);
-	safe_delete(app);
+		EQApplicationPacket *app = new EQApplicationPacket(OP_Charm, sizeof(Charm_Struct));
+		Charm_Struct *ps = (Charm_Struct*)app->pBuffer;
+		ps->owner_id = 0;
+		ps->pet_id = this->GetID();
+		ps->command = 0;
+		entity_list.QueueClients(this, app);
+		safe_delete(app);
+	}
 
 	SetTarget(entity_list.GetMob(pClientSideTarget));
 	SendAppearancePacket(AT_Anim, GetAppearanceValue(GetAppearance()));

@@ -2707,12 +2707,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
 
-	// Break Hide and Trader mode if moving without sneaking and set rewind timer if moved
-	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x){
-		if((hidden || improved_hidden) && !sneaking){
+	// Break Hide, Trader, and fishing mode if moving and set rewind timer
+	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
+	{
+		if((hidden || improved_hidden) && !sneaking)
+		{
 			hidden = false;
 			improved_hidden = false;
-			if(!invisible) {
+			if(!invisible) 
+			{
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 				SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
 				sa_out->spawn_id = GetID();
@@ -2725,10 +2728,11 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(Trader)
 			Trader_EndTrader();
 
-		if(fishing_timer.Enabled() && GetBoatNPCID() == 0)
+		if(fishing_timer.Enabled())
 		{
-			//Message_StringID(CC_User_Skills, FISHING_STOP);
-			fishing_timer.Disable();
+			// Todo: Figure out how to stop fishing on a moving boat. (Perhaps deltas?)
+			if(GetBoatNPCID() == 0)
+				fishing_timer.Disable();
 		}
 
 		rewind_timer.Start(30000, true);

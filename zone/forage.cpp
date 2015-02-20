@@ -377,12 +377,6 @@ void Client::GoFish()
 
 void Client::ForageItem(bool guarantee) {
 
-	if(m_inv.GetItem(MainCursor))
-	{
-		Message(CC_User_Skills, "You can't forage while holding something.");
-		return;
-	}
-
 	int skill_level = GetSkill(SkillForage);
 
 	//be wary of the string ids in switch below when changing this.
@@ -498,9 +492,7 @@ void Client::ForageItem(bool guarantee) {
 			else
 			{
 				Message_StringID(MT_Skills, stringid);
-				PushItemOnCursor(*inst);
-				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
-
+				SummonItem(inst->GetID(), inst->GetCharges());
 				safe_delete(inst);
 				inst = m_inv.GetItem(MainCursor);
 			}
