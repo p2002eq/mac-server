@@ -1890,19 +1890,17 @@ struct Petition_Struct {
 	char gmtext[1024];
 };
 
-
-struct Who_All_Struct { // 76 length total
-/*000*/	char	whom[64];
-/*064*/	uint32	wrace;		// FF FF = no race
-
-/*068*/	uint32	wclass;		// FF FF = no class
-/*072*/	uint32	lvllow;		// FF FF = no numbers
-/*076*/	uint32	lvlhigh;	// FF FF = no numbers
-/*080*/	uint32	gmlookup;	// FF FF = not doing /who all gm
-/*084*/	uint32	guildid;
-/*088*/	uint8	unknown076[64];
-/*152*/	uint32	type;		// New for SoF. 0 = /who 3 = /who all
-/*156*/
+struct Who_All_Struct 
+{ 
+	/*000*/	char	whom[64];
+	/*064*/	int16	wrace;		// FF FF = no race
+	/*066*/	int16	wclass;		// FF FF = no class
+	/*068*/	int16	lvllow;		// FF FF = no numbers
+	/*070*/	int16	lvlhigh;	// FF FF = no numbers
+	/*072*/	int16	gmlookup;	// FF FF = not doing /who all gm
+	/*074*/	int16	guildid;
+	/*076*/	int8	unknown076[64];
+	/*140*/
 };
 
 struct Stun_Struct { // 4 bytes total

@@ -432,6 +432,10 @@ bool Client::Process() {
 			}
 		}
 
+		if (position_update_timer.Check()) {
+			client_position_update = true;
+		}
+
 		if(HasVirus()) {
 			if(viral_timer.Check()) {
 				viral_timer_counter++;
@@ -640,9 +644,9 @@ bool Client::Process() {
 /* Just a set of actions preformed all over in Client::Process */
 void Client::OnDisconnect(bool hard_disconnect) {
 	database.CharacterQuit(this->CharacterID());
-	database.ClearAccountActive(this->AccountID());
 	if(hard_disconnect)
 	{
+		database.ClearAccountActive(this->AccountID());
 		LeaveGroup();
 		Raid *MyRaid = entity_list.GetRaidByClient(this);
 

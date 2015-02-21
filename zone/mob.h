@@ -448,6 +448,7 @@ public:
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
 	void SetAnimation(uint8 anim) { animation = anim; } // For Eye of Zomm. It's a NPC, but uses PC position updates.
+	float adjustedz; // Fixes NPCs z coord.
 
 	//AI
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);

@@ -372,6 +372,7 @@ Mob::Mob(const char* in_name,
 	combat_hp_regen = 0;
 	combat_mana_regen = 0;
 	iszomm = false;
+	adjustedz = 0;
 }
 
 Mob::~Mob()
@@ -1093,20 +1094,11 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 // this is for SendPosition() It shouldn't be used for player updates, only NPCs that haven't moved.
 void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
+
 	spu->spawn_id	= GetID();
-	if(m_Position.x >= 0)
-		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
-	else
-		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
-	if(m_Position.y >= 0)
-		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
-	else
-		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
-	if(m_Position.z >= 0)
-		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
-	else
-		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
-	spu->z_pos -= static_cast<int8>(size);
+	spu->x_pos = static_cast<int16>(m_Position.x);
+	spu->y_pos = static_cast<int16>(m_Position.y);
+	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1118,7 +1110,8 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 	spu->anim_type	= 0;
 
-	if(IsNPC()) {
+	if(IsNPC()) 
+	{
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
@@ -1143,18 +1136,9 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 		currentloc = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
 
 	spu->spawn_id	= GetID();
-	if(currentloc.x >= 0)
-		spu->x_pos		= static_cast<int16>(currentloc.x + 0.5);
-	else
-		spu->x_pos		= static_cast<int16>(currentloc.x - 0.5);
-	if(currentloc.y >= 0)
-		spu->y_pos		= static_cast<int16>(currentloc.y + 0.5);
-	else
-		spu->y_pos		= static_cast<int16>(currentloc.y - 0.5);
-	if(currentloc.z >= 0)
-		spu->z_pos		= static_cast<int16>((currentloc.z + 0.5)*10);
-	else
-		spu->z_pos		= static_cast<int16>((currentloc.z - 0.5)*10);
+	spu->x_pos = static_cast<int16>(m_Position.x);
+	spu->y_pos = static_cast<int16>(m_Position.y);
+	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
 	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
@@ -1163,7 +1147,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
 	spu->spacer2	=0;
-	spu->z_pos -= static_cast<int8>(size);
+
 	if(this->IsClient() || this->iszomm)
 	{
 		spu->anim_type = animation;
@@ -1200,7 +1184,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightValue(), GetActiveLightValue());
 		if (client->Admin() >= 100)
-			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), IsAIControlled(), targeted);
+			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
@@ -3662,9 +3646,8 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	GetPushHeadingMod(caster, pushback, newloc.x, newloc.y);
 	if(pushup == 0 && zone->zonemap)
 	{
-		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 1;
 		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+		newloc.z += 0.65 * size;
 	}
 
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), newloc.x, newloc.y, newloc.z))
@@ -3702,9 +3685,8 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	GetPushHeadingMod(attacker, pushback, newloc.x, newloc.y);
 	if(zone->zonemap)
 	{
-		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 1;
 		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+		newloc.z += 0.65 * size;
 		Log.Out(Logs::Detail, Logs::Combat, "Push: BestZ returned %0.2f for %0.2f,%0.2f,%0.2f", newloc.z, newloc.x, newloc.y, m_Position.z);
 	}
 

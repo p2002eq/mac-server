@@ -189,8 +189,8 @@ public:
 	float GetQuiverHaste();
 
 	void	AI_Init();
-	void	AI_Start(uint32 iMoveDelay = 0);
-	void	AI_Stop();
+	void	AI_Start(uint32 iMoveDelay = 0, bool zomm = false);
+	void	AI_Stop(bool zomm = false);
 	void	AI_Process();
 	void	AI_SpellCast();
 	void	Trader_ShowItems();
@@ -955,6 +955,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	int32 GetMeleeDamage(Mob* other, bool GetMinDamage = false);
 
 	bool has_zomm;
+	bool client_position_update;
 
 protected:
 	friend class Mob;
@@ -1139,6 +1140,7 @@ private:
 	Timer afk_toggle_timer;
 	Timer helm_toggle_timer;
 	Timer light_update_timer;
+	Timer position_update_timer;
 
     glm::vec3 m_Proximity;
 

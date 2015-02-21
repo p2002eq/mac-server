@@ -3535,10 +3535,17 @@ void command_corpse(Client *c, const Seperator *sep)
 	}
 	else if (strcasecmp(sep->arg[1], "list") == 0)
 	{
-		if (!target->IsClient())
+		if(!target || (target && target->IsNPC()))
+		{
 			entity_list.ListNPCCorpses(c);
-		if (target->IsClient())
+		}
+		else if(target && target->IsClient())
+		{
 			entity_list.ListPlayerCorpses(c);
+		}
+		else
+			c->Message(CC_Yellow, "Please select a NPC or Client to list corpses of that type.");
+			
 	}
 	else if (strcasecmp(sep->arg[1], "locate") == 0)
 	{
@@ -4536,7 +4543,20 @@ void command_loc(Client *c, const Seperator *sep)
 {
 	Mob *t = c->GetTarget() ? c->GetTarget() : c->CastToMob();
 
-	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+	c->Message(CC_Default, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+		
+	if(c->GetGM())
+	{
+		glm::vec3 newloc(t->GetX(), t->GetY(), t->GetZ());
+		float newz;
+		if(zone->zonemap)
+		{
+			newz = zone->zonemap->FindBestZ(newloc, nullptr);
+			newloc.z = newz + 0.65 * t->GetSize();
+		}
+
+		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
+	}
 }
 
 void command_goto(Client *c, const Seperator *sep)

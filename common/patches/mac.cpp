@@ -1445,21 +1445,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	DECODE(OP_WhoAllRequest) 
-	{
-		DECODE_LENGTH_EXACT(structs::Who_All_Struct);
-		SETUP_DIRECT_DECODE(Who_All_Struct, structs::Who_All_Struct);
-		strcpy(emu->whom,eq->whom);
-		IN(wrace);
-		IN(wclass);
-		IN(lvllow);
-		IN(lvlhigh);
-		IN(gmlookup);
-		IN(guildid);
-		emu->type = 3;
-		FINISH_DIRECT_DECODE();
-	}
-
 	ENCODE(OP_GroupInvite2) { ENCODE_FORWARD(OP_GroupInvite); }
 	ENCODE(OP_GroupInvite)
 	{

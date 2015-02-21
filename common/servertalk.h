@@ -570,14 +570,15 @@ struct ServerPetitionUpdate_Struct {
 
 struct ServerWhoAll_Struct {
 	int16 admin;
-	uint32 fromid;
+	uint16 fromid;
 	char from[64];
 	char whom[64];
-	uint16 wrace; // FF FF = no race
-	uint16 wclass; // FF FF = no class
-	uint16 lvllow; // FF FF = no numbers
-	uint16 lvlhigh; // FF FF = no numbers
-	uint16 gmlookup; // FF FF = not doing /who all gm
+	int16 wrace; // FF FF = no race
+	int16 wclass; // FF FF = no class
+	int16 lvllow; // FF FF = no numbers
+	int16 lvlhigh; // FF FF = no numbers
+	int16 gmlookup; // FF FF = not doing /who all gm
+	int16 guildid; // FF FF = not doing /who all guild
 };
 
 struct ServerFriendsWho_Struct {
