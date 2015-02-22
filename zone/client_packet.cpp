@@ -1064,15 +1064,15 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	strcpy(name, cze->char_name);
 	/* Check for Client Spoofing */
-	if (client != 0) {
-		struct in_addr ghost_addr;
-		ghost_addr.s_addr = eqs->GetRemoteIP();
+	//if (client != 0) {
+		//struct in_addr ghost_addr;
+		//ghost_addr.s_addr = eqs->GetRemoteIP();
 
-		Log.Out(Logs::General, Logs::Error, "Ghosting client: Account ID:%i Name:%s Character:%s IP:%s",
-			client->AccountID(), client->AccountName(), client->GetName(), inet_ntoa(ghost_addr));
-		client->Save();
-		client->Disconnect();
-	}
+		//Log.Out(Logs::General, Logs::Error, "Ghosting client: Account ID:%i Name:%s Character:%s IP:%s",
+			//client->AccountID(), client->AccountName(), client->GetName(), inet_ntoa(ghost_addr));
+		//client->Save();
+		//client->Disconnect();
+	//}
 
 	uint32 pplen = 0;
 	EQApplicationPacket* outapp = 0;
