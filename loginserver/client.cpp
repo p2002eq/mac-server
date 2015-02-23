@@ -426,8 +426,8 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 	outapp->pBuffer;
 	memset(buf, 0, sizeof(buf));
 
-	strcpy(buf, "Welcome to The Al'Kabor Project!");
-	outapp->size += strlen("Welcome to The Al'Kabor Project!");
+	strcpy(buf, "Welcome to Project 2002!");
+	outapp->size += strlen("Welcome to Project 2002!");
 
 	if (strlen(buf) == 0)
 	{
