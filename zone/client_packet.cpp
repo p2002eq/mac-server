@@ -2750,7 +2750,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 		if(fishing_timer.Enabled())
 		{
-			if(GetBoatID() == 0 || (GetBoatID() != 0 && ppu->anim_type != 0))
+			if(GetBoatNPCID() == 0 || (GetBoatNPCID() != 0 && ppu->anim_type != 0))
 			{
 				fishing_timer.Disable();
 			}
