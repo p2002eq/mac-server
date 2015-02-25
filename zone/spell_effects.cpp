@@ -1112,8 +1112,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							quantity = 1;
 
 						if (SummonedItem) {
-							c->PushItemOnCursor(*SummonedItem);
-							c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
+							c->SummonItem(SummonedItem->GetID(), SummonedItem->GetCharges());
 							safe_delete(SummonedItem);
 						}
 						SummonedItem = database.CreateItem(spell.base[i], quantity);
@@ -3935,17 +3934,22 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					my_c->m_TimeSinceLastPositionCheck = cur_time;
 					my_c->m_DistanceSinceLastPositionCheck = 0.0f;
 				}
+
+				break;
 			}
 
 			case SE_EyeOfZomm:
 			{
 				if(IsClient())
 				{
-					CastToClient()->AI_Stop();
+					CastToClient()->AI_Stop(true);
 					CastToClient()->has_zomm = false;
+					
 					// The client handles this as well on the first OP_ClientUpdate sent after Zomm fades, but we can't trust the client.
 					m_Position = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
 				}
+
+				break;
 			}
 		}
 	}

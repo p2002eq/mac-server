@@ -224,7 +224,9 @@ void NPC::UpdateWaypoint(int wp_index)
 			float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
 			if ((newz > -2000) && std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaWaypoint))
-				m_CurrentWayPoint.z = newz + 1;
+			{
+				m_CurrentWayPoint.z = SetBestZ(newz);
+			}
 		}
 	}
 
@@ -560,10 +562,14 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 						if (std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
 							m_Position.z = z;
 						else
-							m_Position.z = newz + 1;
+						{
+							m_Position.z = SetBestZ(newz);
+						}
 					}
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 			}
 		}
@@ -688,11 +694,15 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 					if(std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
 						m_Position.z = z;
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 				else
-					m_Position.z = newz+1;
+				{
+					m_Position.z = SetBestZ(newz);
 				}
+			}
 		}
 	}
 
@@ -722,7 +732,7 @@ float Mob::SetRunAnimation(float speed)
 	float newspeed;
 	if(IsNPC()) 
 	{
-		if(speed == GetRunspeed())
+		if(speed >= GetRunspeed())
 		{
 			SetCurrentlyRunning(true);
 			newspeed = speed * RuleR(NPC, SpeedMultiplier);
@@ -830,10 +840,14 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 					if(std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
 						m_Position.z = z;
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 				else
-					m_Position.z = newz+1;
+				{
+					m_Position.z = SetBestZ(newz);
+				}
 			}
 		}
 	}
@@ -920,7 +934,9 @@ void NPC::AssignWaypoints(int32 grid)
 				float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
 				if( (newz > -2000) && std::abs(newz-dest.z) < RuleR(Map, FixPathingZMaxDeltaLoading))
-					newwp.z = newz + 1;
+				{
+					newwp.z = SetBestZ(newz);
+				}
 			}
 		}
 
@@ -969,7 +985,9 @@ void Mob::SendTo(float new_x, float new_y, float new_z) {
 
 			if ((newz > -2000) &&
 			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaSendTo)) // Sanity check.
-				m_Position.z = newz + 1;
+			{
+				m_Position.z = SetBestZ(newz);
+			}
 		}
 	}
 	else
@@ -1001,7 +1019,9 @@ void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 
 			if ((newz > -2000) &&
 			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaSendTo)) // Sanity check.
-				m_Position.z = newz + 1;
+			{
+				m_Position.z = SetBestZ(newz);
+			}
 		}
 	}
 }
