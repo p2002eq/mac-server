@@ -4552,7 +4552,7 @@ void command_loc(Client *c, const Seperator *sep)
 		if(zone->zonemap)
 		{
 			newz = zone->zonemap->FindBestZ(newloc, nullptr);
-			newloc.z = newz + 0.65 * t->GetSize();
+			newloc.z = t->SetBestZ(newz);
 		}
 
 		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
