@@ -208,7 +208,7 @@ RULE_REAL ( Map, FixPathingZMaxDeltaWaypoint, 20 )	//at runtime at each waypoint
 RULE_REAL ( Map, FixPathingZMaxDeltaSendTo, 20 )	//at runtime in SendTo: max change in Z to allow the BestZ code to apply.
 RULE_REAL ( Map, FixPathingZMaxDeltaLoading, 45 )	//while loading each waypoint: max change in Z to allow the BestZ code to apply.
 RULE_INT ( Map, FindBestZHeightAdjust, 1)		// Adds this to the current Z before seeking the best Z position. If this is too high, mobs bounce when pathing.
-RULE_REAL ( Map, BestZSizeMax, 15.0) // When calculating bestz using size, this is our size cap. Setting this too high causes dragons and giants to hop.
+RULE_REAL ( Map, BestZSizeMax, 10.0) // When calculating bestz using size, this is our size cap. Setting this too high causes dragons and giants to hop.
 RULE_REAL ( Map, BestZMultiplier, 0.65) // This is our multiplier for the bestz calculation.
 RULE_CATEGORY_END()
 
