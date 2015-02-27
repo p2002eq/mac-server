@@ -2576,6 +2576,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				break;
 			}
+			
+			case SE_MovementSpeed: {
+				if(IsNPC() && IsSpeedBuff(spell_id))
+					SetRunning(true);
+
+				break;
+			}
 
 			// Handled Elsewhere
 			case SE_ImmuneFleeing:
@@ -2656,7 +2663,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_DamageShield:
 			case SE_TrueNorth:
 			case SE_WaterBreathing:
-			case SE_MovementSpeed:
 			case SE_HealOverTime:
 			case SE_PercentXPIncrease:
 			case SE_DivineSave:
@@ -3881,6 +3887,10 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 
 			case SE_MovementSpeed:
 			{
+				if(IsNPC() && IsRunning() && !IsEngaged())
+				{
+					SetRunning(false);
+				}
 				if(IsClient())
 				{
 					Client *my_c = CastToClient();

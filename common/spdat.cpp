@@ -1226,3 +1226,16 @@ bool IsCorpseSummon(uint16 spell_id)
 {
 	return IsEffectInSpell(spell_id, SE_SummonCorpse);
 }
+
+bool IsSpeedBuff(uint16 spell_id)
+{
+	if(IsBeneficialSpell(spell_id))
+	{
+		for (int i = 0; i < EFFECT_COUNT; i++)
+		{
+			if(spells[spell_id].effectid[i] == SE_MovementSpeed && spells[spell_id].base[i] > 0)
+				return true;
+		}
+	}
+	return false;
+}
