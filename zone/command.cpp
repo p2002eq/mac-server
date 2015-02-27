@@ -4543,11 +4543,20 @@ void command_loc(Client *c, const Seperator *sep)
 {
 	Mob *t = c->GetTarget() ? c->GetTarget() : c->CastToMob();
 
-	float bestz = t->GetZ();
-	//if(t->IsNPC())
-	//	bestz = t->adjustedz;
+	c->Message(CC_Default, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), t->GetHeading());
+		
+	if(c->GetGM())
+	{
+		glm::vec3 newloc(t->GetX(), t->GetY(), t->GetZ());
+		float newz;
+		if(zone->zonemap)
+		{
+			newz = zone->zonemap->FindBestZ(newloc, nullptr);
+			newloc.z = t->SetBestZ(newz);
+		}
 
-	c->Message(0, "%s's Location (XYZ): %1.2f, %1.2f, %1.2f (%1.2f) heading=%1.1f", t->GetName(), t->GetX(), t->GetY(), t->GetZ(), bestz, t->GetHeading());
+		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
+	}
 }
 
 void command_goto(Client *c, const Seperator *sep)

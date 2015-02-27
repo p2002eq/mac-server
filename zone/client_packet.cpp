@@ -2459,11 +2459,18 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	if(client_position_update)
 	{
-		Log.Out(Logs::Detail, Logs::Pathing, "PositionUpdate for %s(%d): loc: %d,%d,%d,%d delta: %d,%d,%d,%d anim: %d", GetName(), ppu->spawn_id, ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading, ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading, ppu->anim_type);
+		std::string name = GetName();
+		if(ppu->spawn_id != GetID())
+		{
+			if(has_zomm)
+				name = "Eye_Of_Zomm";
+			else if(GetBoatID() != 0)
+				name = GetBoatName();
+		}
+
+		Log.Out(Logs::Detail, Logs::EQMac, "PositionUpdate for %s(%d): loc: %d,%d,%d,%d delta: %d,%d,%d,%d anim: %d", name.c_str(), ppu->spawn_id, ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading, ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading, ppu->anim_type);
 		client_position_update = false;
 	}
-
-	ppu->z_pos /= 10;
 
 	/* Web Interface */
 	if (IsClient() && RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Client.Position")) {
@@ -2479,31 +2486,35 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("Client.Position", params);
 	}
 
-	if(has_zomm)
+	if(ppu->spawn_id != GetID()) 
 	{
-		NPC* zommnpc = nullptr;
-		if(entity_list.GetZommPet(this, zommnpc))
+		if(has_zomm)
 		{
-			if(zommnpc)
+			NPC* zommnpc = nullptr;
+			if(entity_list.GetZommPet(this, zommnpc))
 			{
-				auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
-				zommnpc->SetPosition(zommPos);
-				// Update internal position so we don't warp back to our body. (Self updates don't occur while zomm is out, 
-				// and other players will be given the player's original coords on timeout updates.)
-				m_Position = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
-				zommnpc->SendPosUpdate(1);
-				pLastUpdate = Timer::GetCurrentTime();
-				entity_list.OpenDoorsNear(zommnpc);
-				return;
+				if(zommnpc)
+				{
+					EQApplicationPacket* outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+					SpawnPositionUpdates_Struct* ppus = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
+					zommnpc->SetSpawnUpdate(ppu, &ppus->spawn_update);
+					ppus->num_updates = 1;
+					entity_list.QueueCloseClients(zommnpc,outapp,true,300,this,false);
+					safe_delete(outapp);
+
+					pLastUpdate = Timer::GetCurrentTime();
+					auto zommPos = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos/10, ppu->heading);
+					entity_list.OpenDoorsNearCoords(zommnpc, zommPos);
+					return;
+				}
 			}
 		}
-	}
-
-	if(ppu->spawn_id != GetID()) {
 		// check if the id is for a boat the player is controlling
-		if (ppu->spawn_id == BoatID) {
+		else if (ppu->spawn_id == BoatID) 
+		{
 			Mob* boat = entity_list.GetMob(BoatID);
-			if (boat == 0) {	// if the boat ID is invalid, reset the id and abort
+			if (boat == 0) 
+			{	// if the boat ID is invalid, reset the id and abort
 				BoatID = 0;
 				return;
 			}
@@ -2526,6 +2537,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		else return;	// if not a boat, do nothing
 	}
 
+	// Send our original position to others so we don't disappear.
+	if(has_zomm)
+	{
+		SendPosUpdate();
+		pLastUpdate = Timer::GetCurrentTime();
+		return;
+	}
+
+	ppu->z_pos /= 10;
 	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
 
 	float dist = 0;
@@ -2707,12 +2727,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
 
-	// Break Hide and Trader mode if moving without sneaking and set rewind timer if moved
-	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x){
-		if((hidden || improved_hidden) && !sneaking){
+	// Break Hide, Trader, and fishing mode if moving and set rewind timer
+	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
+	{
+		if((hidden || improved_hidden) && !sneaking)
+		{
 			hidden = false;
 			improved_hidden = false;
-			if(!invisible) {
+			if(!invisible) 
+			{
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 				SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
 				sa_out->spawn_id = GetID();
@@ -2725,10 +2748,12 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(Trader)
 			Trader_EndTrader();
 
-		if(fishing_timer.Enabled() && GetBoatNPCID() == 0)
+		if(fishing_timer.Enabled())
 		{
-			//Message_StringID(CC_User_Skills, FISHING_STOP);
-			fishing_timer.Disable();
+			if(GetBoatNPCID() == 0 || (GetBoatNPCID() != 0 && ppu->anim_type != 0))
+			{
+				fishing_timer.Disable();
+			}
 		}
 
 		rewind_timer.Start(30000, true);

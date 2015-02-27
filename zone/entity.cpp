@@ -2901,6 +2901,25 @@ void EntityList::OpenDoorsNear(NPC *who)
 	}
 }
 
+void EntityList::OpenDoorsNearCoords(NPC *who, glm::vec4 position)
+{
+
+	for (auto it = door_list.begin();it != door_list.end(); ++it) {
+		Doors *cdoor = it->second;
+		if (!cdoor || cdoor->IsDoorOpen())
+			continue;
+
+		auto diff = position - cdoor->GetPosition();
+
+		float curdist = diff.x * diff.x + diff.y * diff.y;
+
+		if (diff.z * diff.z < 20 && curdist <= 250)
+		{
+			cdoor->NPCOpen(who);
+		}
+	}
+}
+
 void EntityList::SendAlarm(Trap *trap, Mob *currenttarget, uint8 kos)
 {
 	float preSquareDistance = trap->effectvalue * trap->effectvalue;

@@ -1034,11 +1034,6 @@ void Mob::SendHPUpdate()
 // this one just warps the mob to the current location
 void Mob::SendPosition()
 {
-
-	// Don't process position updates for the player while we are the eye.
-	if(IsClient() && CastToClient()->has_zomm)
-		return;
-
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1048,13 +1043,9 @@ void Mob::SendPosition()
 	safe_delete(app);
 }
 
-// this one is for mobs on the move, with deltas - this makes them walk
-void Mob::SendPosUpdate(uint8 iSendToSelf) {
-
-	// Don't process position updates for the player while we are the eye.
-	if(IsClient() && CastToClient()->has_zomm)
-		return;
-
+// this one is for mobs on the move, and clients.
+void Mob::SendPosUpdate(uint8 iSendToSelf) 
+{
 	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
 	spu->num_updates = 1; // hack - only one spawn position per update
@@ -1092,21 +1083,13 @@ void Mob::SendPosUpdate(uint8 iSendToSelf) {
 }
 
 // this is for SendPosition() It shouldn't be used for player updates, only NPCs that haven't moved.
-void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
+void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
+{
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
+
 	spu->spawn_id	= GetID();
-	if(m_Position.x >= 0)
-		spu->x_pos		= static_cast<int16>(m_Position.x + 0.5);
-	else
-		spu->x_pos		= static_cast<int16>(m_Position.x - 0.5);
-	if(m_Position.y >= 0)
-		spu->y_pos		= static_cast<int16>(m_Position.y + 0.5);
-	else
-		spu->y_pos		= static_cast<int16>(m_Position.y - 0.5);
-	if(m_Position.z >= 0)
-		spu->z_pos		= static_cast<int16>((m_Position.z + 0.5)*10);
-	else
-		spu->z_pos		= static_cast<int16>((m_Position.z - 0.5)*10);
+	spu->x_pos = static_cast<int16>(m_Position.x);
+	spu->y_pos = static_cast<int16>(m_Position.y);
 	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
@@ -1119,10 +1102,8 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 
 	spu->anim_type	= 0;
 
-	if(IsNPC()) {
-		//adjustedz = m_Position.z + 0.65 * size;
-		//spu->z_pos = static_cast<int16>(adjustedz*10);
-
+	if(IsNPC()) 
+	{
 		std::vector<std::string> params;
 		params.push_back(std::to_string((long)GetID()));
 		params.push_back(GetCleanName());
@@ -1137,26 +1118,16 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu){
 }
 
 // this is for SendPosUpdate()
-void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
-
+void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) 
+{
 	auto currentloc = glm::vec4(GetX(), GetY(), GetZ(), GetHeading());
 
-	// Send other players our original loc if we have an eye out. (Updates of the player entity need
-	// to occur, otherwise they will disappear to other players.)
-	if(IsClient() && CastToClient()->has_zomm)
-		currentloc = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
-
 	spu->spawn_id	= GetID();
-	if(currentloc.x >= 0)
-		spu->x_pos		= static_cast<int16>(currentloc.x + 0.5);
-	else
-		spu->x_pos		= static_cast<int16>(currentloc.x - 0.5);
-	if(currentloc.y >= 0)
-		spu->y_pos		= static_cast<int16>(currentloc.y + 0.5);
-	else
-		spu->y_pos		= static_cast<int16>(currentloc.y - 0.5);
+	spu->x_pos = static_cast<int16>(m_Position.x);
+	spu->y_pos = static_cast<int16>(m_Position.y);
 	spu->z_pos = static_cast<int16>(m_Position.z*10);
 	spu->heading	= static_cast<int8>(currentloc.w);
+
 	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
 	spu->delta_y	= static_cast<int32>(m_Delta.y/125);
 	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
@@ -1170,12 +1141,26 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu) {
 	}
 	else if(this->IsNPC())
 	{
-		//adjustedz = m_Position.z + 0.65 * size;
-		//spu->z_pos = static_cast<int16>(adjustedz*10);
 		float anim = pRunAnimSpeed / 37.0f;
 		spu->anim_type = static_cast<int8>(anim * 7);
 	}
 	
+}
+
+void Mob::SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing) 
+{
+	outgoing->spawn_id	= incoming->spawn_id;
+	outgoing->x_pos = incoming->x_pos;
+	outgoing->y_pos = incoming->y_pos;
+	outgoing->z_pos = incoming->z_pos;
+	outgoing->heading	= incoming->heading;
+	outgoing->delta_x	= incoming->delta_x;
+	outgoing->delta_y	= incoming->delta_y;
+	outgoing->delta_z	= incoming->delta_z;
+	outgoing->delta_heading = incoming->delta_heading;
+	outgoing->spacer1	= incoming->spacer1;
+	outgoing->spacer2	= incoming->spacer2;
+	outgoing->anim_type = incoming->anim_type;
 }
 
 void Mob::ShowStats(Client* client)
@@ -3660,13 +3645,13 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	// This method should only be used for spell effects.
 
 	glm::vec3 newloc(GetX(), GetY(), GetZ() + pushup);
+	float newz = GetZ();
 	
 	GetPushHeadingMod(caster, pushback, newloc.x, newloc.y);
 	if(pushup == 0 && zone->zonemap)
 	{
-		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 4;
-		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+		newz = zone->zonemap->FindBestZ(newloc, nullptr);
+		newloc.z = SetBestZ(newz);
 	}
 
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), newloc.x, newloc.y, newloc.z))
@@ -3700,13 +3685,13 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	// Use this method for stun/combat pushback.
 
 	glm::vec3 newloc(GetX(), GetY(), GetZ());
+	float newz = GetZ();
 
 	GetPushHeadingMod(attacker, pushback, newloc.x, newloc.y);
 	if(zone->zonemap)
 	{
-		// This helps bestz find a proper z, preventing NPCs from hopping and players from going underworld.
-		newloc.z += 4;
-		newloc.z = zone->zonemap->FindBestZ(newloc, nullptr);
+		newz = zone->zonemap->FindBestZ(newloc, nullptr);
+		newloc.z = SetBestZ(newz);
 		Log.Out(Logs::Detail, Logs::Combat, "Push: BestZ returned %0.2f for %0.2f,%0.2f,%0.2f", newloc.z, newloc.x, newloc.y, m_Position.z);
 	}
 
@@ -4975,4 +4960,15 @@ void Mob::Disarm()
 	}
 	can_dual_wield = false;
 	WearChange(MaterialPrimary, 0, 0);
+}
+
+float Mob::SetBestZ(float zcoord)
+{
+
+	float mysize = GetSize();
+	if(mysize > RuleR(Map, BestZSizeMax))
+		mysize = RuleR(Map, BestZSizeMax);
+
+	return (zcoord + RuleR(Map, BestZMultiplier) * mysize);
+
 }
