@@ -130,7 +130,7 @@ class Corpse : public Mob {
 	inline int	GetGMRezExp() { return gm_rez_experience; } 
 	uint8		GetKilledBy() { return killedby; }
 
-	virtual void UpdateEquipLightValue();
+	virtual void UpdateEquipmentLight();
 
 protected:
 	std::list<uint32> MoveItemToCorpse(Client *client, ItemInst *item, int16 equipslot);

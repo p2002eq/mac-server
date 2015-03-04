@@ -144,9 +144,13 @@ Mob::Mob(const char* in_name,
 	if (runspeed < 0 || runspeed > 20)
 		runspeed = 1.25f;
 
-	active_light = innate_light = in_light;
-	spell_light = equip_light = NOT_USED;
-
+	m_Light.Type.Innate = in_light;
+	m_Light.Level.Innate = m_Light.TypeToLevel(m_Light.Type.Innate);
+	m_Light.Level.Equipment = m_Light.Type.Equipment = 0;
+	m_Light.Level.Spell = m_Light.Type.Spell = 0;
+	m_Light.Type.Active = m_Light.Type.Innate;
+	m_Light.Level.Active = m_Light.Level.Innate;
+	
 	texture		= in_texture;
 	helmtexture	= in_helmtexture;
 	haircolor	= in_haircolor;
@@ -854,8 +858,8 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.animation	= animation;
 	ns->spawn.findable	= findable?1:0;
 
-	UpdateActiveLightValue();
-	ns->spawn.light		= active_light;
+	UpdateActiveLight();
+	ns->spawn.light		= m_Light.Type.Active;
 
 	ns->spawn.showhelm = 1;
 
@@ -1185,7 +1189,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
 		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
-		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightValue(), GetActiveLightValue());
+		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
 		if (client->Admin() >= 100)
 			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
@@ -1566,37 +1570,20 @@ void Mob::SetAppearance(EmuAppearance app, bool iIgnoreSelf) {
 	}
 }
 
-bool Mob::UpdateActiveLightValue()
+bool Mob::UpdateActiveLight()
 {
-	/*	This is old information...
-		0 - "None"
-		1 - "Candle"
-		2 - "Torch"
-		3 - "Tiny Glowing Skull"
-		4 - "Small Lantern"
-		5 - "Stein of Moggok"
-		6 - "Large Lantern"
-		7 - "Flameless Lantern"
-		8 - "Globe of Stars"
-		9 - "Light Globe"
-		10 - "Lightstone"
-		11 - "Greater Lightstone"
-		12 - "Fire Beatle Eye"
-		13 - "Coldlight"
-		14 - "Unknown"
-		15 - "Unknown"
-	*/
-	
-	uint8 old_light = (active_light & 0x0F);
-	active_light = (innate_light & 0x0F);
+	uint8 old_light_level = m_Light.Level.Active;
 
-	if (equip_light > active_light) { active_light = equip_light; } // limiter in property handler
-	if (spell_light > active_light) { active_light = spell_light; } // limiter in property handler
+	m_Light.Type.Active = 0;
+	m_Light.Level.Active = 0;
 
-	if (active_light != old_light)
-		return true;
+	if (m_Light.IsLevelGreater((m_Light.Type.Innate & 0x0F), m_Light.Type.Active)) { m_Light.Type.Active = m_Light.Type.Innate; }
+	if (m_Light.Level.Equipment > m_Light.Level.Active) { m_Light.Type.Active = m_Light.Type.Equipment; } // limiter in property handler
+	if (m_Light.Level.Spell > m_Light.Level.Active) { m_Light.Type.Active = m_Light.Type.Spell; } // limiter in property handler
 
-	return false;
+	m_Light.Level.Active = m_Light.TypeToLevel(m_Light.Type.Active);
+
+	return (m_Light.Level.Active != old_light_level);
 }
 
 void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
