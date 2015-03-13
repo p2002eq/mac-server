@@ -5844,7 +5844,7 @@ void command_d1(Client *c, const Seperator *sep){
 	a->source = c->GetID();
 	a->type = atoi(sep->arg[1]);
 	a->spell = atoi(sep->arg[2]);
-	a->sequence = atof(sep->arg[3]);
+	a->sequence = atoi(sep->arg[3]);
 	app.priority = 1;
 	entity_list.QueueCloseClients(c, &app);
 }

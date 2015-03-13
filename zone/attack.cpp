@@ -3494,45 +3494,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		a->type = SkillDamageTypes[skill_id]; // was 0x1c
 		a->damage = damage;
 		a->spellid = spell_id;
-
-		if (damage > 0 && IsClient() && !IsRooted() && skill_used < 75) {
-			// Push magnitudes in unknown11 are from client decompile
-			switch (skill_used) {
-			case Skill1HBlunt:
-			case Skill1HSlashing:
-			case SkillHandtoHand:
-			case SkillThrowing:
-				a->unknown11 = 0.1f;
-				break;
-			case Skill2HBlunt:
-			case Skill2HSlashing:
-			case SkillEagleStrike:
-			case SkillKick:
-				a->unknown11 = 0.2f;
-				break;
-			case SkillArchery:
-				a->unknown11 = 0.15f;
-				break;
-			case SkillBackstab:
-			case SkillBash:
-				a->unknown11 = 0.3f;
-				break;
-			case SkillDragonPunch:
-				a->unknown11 = 0.25f;
-				break;
-			case SkillFlyingKick:
-				a->unknown11 = 0.4f;
-				break;
-			case Skill1HPiercing:
-			case SkillFrenzy:
-				a->unknown11 = 0.05f;
-				break;
-			default:
-				a->unknown11 = 0.0f;
-			}
-			if (a->unknown11 > 0.0f)
-				a->sequence = attacker->GetHeading() * 2.0f;
-		}
 		
 		//Note: if players can become pets, they will not receive damage messages of their own
 		//this was done to simplify the code here (since we can only effectively skip one mob on queue)

@@ -268,8 +268,8 @@ struct CombatDamage_Struct
 	/*005*/	uint8   unknown;
 	/*006*/	uint16	spellid;
 	/*008*/	int32	damage;
-	/*012*/	int32	unknown12;
-	/*016*/	float	sequence;
+	/*012*/	uint8	unknown12[4];
+	/*016*/	uint32	sequence;
 	/*020*/	uint8	unknown20[4];
 	/*024*/
 };
