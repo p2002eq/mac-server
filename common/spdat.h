@@ -868,6 +868,7 @@ uint32 GetPartialMeleeRuneAmount(uint32 spell_id);
 uint32 GetPartialMagicRuneAmount(uint32 spell_id);
 bool IsRacialIllusion(uint16 spell_id);
 bool IsCorpseSummon(uint16 spell_id);
+bool IsSpeedBuff(uint16 spell_id);
 
 int CalcPetHp(int levelb, int classb, int STA = 75);
 const char *GetRandPetName();
