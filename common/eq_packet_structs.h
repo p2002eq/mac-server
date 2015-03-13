@@ -1079,7 +1079,7 @@ struct Action_Struct
  /* 12 */	uint16 unknown16;
 // some kind of sequence that's the same in both actions
 // as well as the combat damage, to tie em together?
- /* 14 */	uint32 sequence;
+ /* 14 */	float sequence;
  /* 18 */	uint32 unknown18;
  /* 22 */	uint8 type;		// 231 (0xE7) for spells
  /* 23 */	uint32 unknown23;
@@ -1100,8 +1100,8 @@ struct CombatDamage_Struct
 /* 04 */	uint8	type; //slashing, etc. 231 (0xE7) for spells
 /* 05 */	uint16	spellid;
 /* 07 */	uint32	damage;
-/* 11 */	uint32 unknown11;
-/* 15 */	uint32 sequence;	// see above notes in Action_Struct
+/* 11 */	int32 unknown11;
+/* 15 */	float sequence;	// see above notes in Action_Struct
 /* 19 */	uint32	unknown19;
 /* 23 */
 };
