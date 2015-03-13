@@ -2508,7 +2508,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (uint32) (GetHeading() * 2);	// just some random number
+			action->sequence = (GetHeading() * 2);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3399,7 +3399,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->level = caster_level;	// caster level, for animation only
 	action->type = 231;	// 231 means a spell
 	action->spell = spell_id;
-	action->sequence = (uint32) (GetHeading() * 2);	// just some random number
+	action->sequence = (GetHeading() * 2);	// just some random number
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
@@ -4766,10 +4766,10 @@ void Mob::Stun(int duration, Mob* attacker)
 		stunned_timer.Start(duration);
 	}
 
-	if(attacker)
-	{
-		CombatPush(attacker, RuleR(Combat, PushBackAmount));
-	}
+	//if(attacker)
+	//{
+	//	CombatPush(attacker, RuleR(Combat, PushBackAmount));
+	//}
 }
 
 void Mob::UnStun() {

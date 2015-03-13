@@ -266,8 +266,6 @@ Client::Client(EQStreamInterface* ieqs)
 
 	interrogateinv_flag = false;
 
-	active_light = innate_light;
-	spell_light = equip_light = NOT_USED;
 	has_zomm = false;
 	client_position_update = false;
 }
@@ -1432,9 +1430,9 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	//filling in some unknowns to make the client happy
 //	ns->spawn.unknown0002[2] = 3;
 
-	UpdateEquipLightValue();
-	UpdateActiveLightValue();
-	ns->spawn.light = active_light;
+	UpdateEquipmentLight();
+	UpdateActiveLight();
+	ns->spawn.light = m_Light.Type.Active;
 }
 
 bool Client::GMHideMe(Client* client) {

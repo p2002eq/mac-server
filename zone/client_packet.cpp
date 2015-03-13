@@ -605,8 +605,8 @@ void Client::CompleteConnect()
 		SendWearChange(x);
 	}
 	// added due to wear change above
-	UpdateActiveLightValue();
-	SendAppearancePacket(AT_Light, GetActiveLightValue());
+	UpdateActiveLight();
+	SendAppearancePacket(AT_Light, GetActiveLightType());
 
 	Mob *pet = GetPet();
 	if (pet != nullptr) {
@@ -614,8 +614,8 @@ void Client::CompleteConnect()
 			pet->SendWearChange(x);
 		}
 		// added due to wear change above
-		pet->UpdateActiveLightValue();
-		pet->SendAppearancePacket(AT_Light, pet->GetActiveLightValue());
+		pet->UpdateActiveLight();
+		pet->SendAppearancePacket(AT_Light, pet->GetActiveLightType());
 	}
 
 	entity_list.SendTraders(this);

@@ -138,9 +138,9 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 	pc->IsRezzed(rezzed);
 	pc->become_npc = false;
 
-	pc->spell_light = pc->innate_light = NOT_USED;
-	pc->UpdateEquipLightValue();
-	//pc->UpdateActiveLightValue();
+	pc->m_Light.Level.Innate = pc->m_Light.Type.Innate = 0;
+	pc->UpdateEquipmentLight(); // itemlist populated above..need to determine actual values
+	pc->m_Light.Level.Spell = pc->m_Light.Type.Spell = 0;
 
 	safe_delete_array(pcs);
 
@@ -162,7 +162,7 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	in_npc->GetSize(),			// float		in_size,
 	0,							// float		in_runspeed,
 	in_npc->GetPosition(),		// float		in_position
-	in_npc->GetInnateLightValue(),	// uint8		in_light,
+	in_npc->GetInnateLightType(),	// uint8		in_light,
 	in_npc->GetTexture(),		// uint8		in_texture,
 	in_npc->GetHelmTexture(),	// uint8		in_helmtexture,
 	0,							// uint16		in_ac,
@@ -242,8 +242,8 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	}
 	this->rez_experience = 0;
 	this->gm_rez_experience = 0;
-	spell_light = NOT_USED;
-	UpdateActiveLightValue();
+	UpdateEquipmentLight();
+	UpdateActiveLight();
 }
 
 Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
@@ -261,7 +261,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	client->GetSize(),				  // float		in_size,
 	0,								  // float		in_runspeed,
 	client->GetPosition(),
-	0,								  // uint8		in_light, - verified for client innate_light value
+	client->GetInnateLightType(),	  // uint8		in_light, - verified for client innate_light value
 	client->GetTexture(),			  // uint8		in_texture,
 	client->GetHelmTexture(),		  // uint8		in_helmtexture,
 	0,								  // uint16		in_ac,
@@ -415,9 +415,8 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 		return;
 	} //end "not leaving naked corpses"
 
-	UpdateEquipLightValue();
-	spell_light = NOT_USED;
-	UpdateActiveLightValue();
+	UpdateEquipmentLight();
+	UpdateActiveLight();
 
 	IsRezzed(false);
 	Save();
@@ -556,9 +555,9 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	}
 	SetPlayerKillItemID(0);
 
-	UpdateEquipLightValue();
-	spell_light = NOT_USED;
-	UpdateActiveLightValue();
+	UpdateEquipmentLight();
+	m_Light.Level.Spell = m_Light.Type.Spell = 0;
+	UpdateActiveLight();
 }
 
 Corpse::~Corpse() {
@@ -712,7 +711,7 @@ void Corpse::AddItem(uint32 itemnum, uint16 charges, int16 slot) {
 	item->equip_slot = slot;
 	itemlist.push_back(item);
 
-	UpdateEquipLightValue();
+	UpdateEquipmentLight();
 }
 
 ServerLootItem_Struct* Corpse::GetItem(uint16 lootslot, ServerLootItem_Struct** bag_item_data) {
@@ -787,9 +786,9 @@ void Corpse::RemoveItem(ServerLootItem_Struct* item_data)
 		if (material != _MaterialInvalid)
 			SendWearChange(material);
 
-		UpdateEquipLightValue();
-		if (UpdateActiveLightValue())
-			SendAppearancePacket(AT_Light, GetActiveLightValue());
+		UpdateEquipmentLight();
+		if (UpdateActiveLight())
+			SendAppearancePacket(AT_Light, GetActiveLightType());
 
 		safe_delete(sitem);
 		return;
@@ -1290,8 +1289,8 @@ void Corpse::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho) {
 	else
 		ns->spawn.NPC = 2;
 
-	UpdateActiveLightValue();
-	ns->spawn.light = active_light;
+	UpdateActiveLight();
+	ns->spawn.light = m_Light.Type.Active;
 }
 
 void Corpse::QueryLoot(Client* to) {
@@ -1438,18 +1437,40 @@ uint32 Corpse::GetEquipmentColor(uint8 material_slot) const {
 	return 0;
 }
 
-void Corpse::UpdateEquipLightValue()
+void Corpse::UpdateEquipmentLight()
 {
-	equip_light = NOT_USED;
+	m_Light.Type.Equipment = 0;
+	m_Light.Level.Equipment = 0;
 
 	for (auto iter = itemlist.begin(); iter != itemlist.end(); ++iter) {
-		if (((*iter)->equip_slot < EmuConstants::EQUIPMENT_BEGIN || (*iter)->equip_slot > EmuConstants::GENERAL_END) && (*iter)->equip_slot != MainPowerSource) { continue; }
+		if (((*iter)->equip_slot < EmuConstants::EQUIPMENT_BEGIN || (*iter)->equip_slot > EmuConstants::EQUIPMENT_END) && (*iter)->equip_slot != MainPowerSource) { continue; }
+		if ((*iter)->equip_slot == MainAmmo) { continue; }
+		
 		auto item = database.GetItem((*iter)->item_id);
 		if (item == nullptr) { continue; }
-		if (item->ItemType != ItemTypeMisc && item->ItemType != ItemTypeLight) { continue; }
-		if (item->Light & 0xF0) { continue; }
-		if (item->Light > equip_light) { equip_light = item->Light; }
+		
+		if (m_Light.IsLevelGreater(item->Light, m_Light.Type.Equipment))
+			m_Light.Type.Equipment = item->Light;
 	}
+	
+	uint8 general_light_type = 0;
+	for (auto iter = itemlist.begin(); iter != itemlist.end(); ++iter) {
+		if ((*iter)->equip_slot < EmuConstants::GENERAL_BEGIN || (*iter)->equip_slot > EmuConstants::GENERAL_END) { continue; }
+		
+		auto item = database.GetItem((*iter)->item_id);
+		if (item == nullptr) { continue; }
+		
+		if (item->ItemClass != ItemClassCommon) { continue; }
+		if (item->Light < 9 || item->Light > 13) { continue; }
+
+		if (m_Light.TypeToLevel(item->Light))
+			general_light_type = item->Light;
+	}
+
+	if (m_Light.IsLevelGreater(general_light_type, m_Light.Type.Equipment))
+		m_Light.Type.Equipment = general_light_type;
+
+	m_Light.Level.Equipment = m_Light.TypeToLevel(m_Light.Type.Equipment);
 }
 
 void Corpse::AddLooter(Mob* who) {
