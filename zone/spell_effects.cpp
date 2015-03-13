@@ -853,7 +853,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						action->source = caster ? caster->GetID() : GetID();
 						action->level = 65;
 						action->instrument_mod = 10;
-						action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+						action->sequence = ((GetHeading() * 12345 / 2));
 						action->type = 231;
 						action->spell = spell_id;
 						action->buff_unknown = 4;
@@ -903,7 +903,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 								action->source = caster ? caster->GetID() : GetID();
 								action->level = 65;
 								action->instrument_mod = 10;
-								action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+								action->sequence = ((GetHeading() * 12345 / 2));
 								action->type = 231;
 								action->spell = spell_id;
 								action->buff_unknown = 4;
@@ -939,7 +939,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							action->source = caster ? caster->GetID() : GetID();
 							action->level = 65;
 							action->instrument_mod = 10;
-							action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+							action->sequence = ((GetHeading() * 12345 / 2));
 							action->type = 231;
 							action->spell = spell_id;
 							action->buff_unknown = 4;
