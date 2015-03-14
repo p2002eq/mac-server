@@ -143,6 +143,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	swarmInfoPtr = nullptr;
 	spellscale = d->spellscale;
 	healscale = d->healscale;
+	z_offset = 0.0f;
 
 	logging_enabled = NPC_DEFAULT_LOGGING_ENABLED;
 
