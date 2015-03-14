@@ -394,6 +394,7 @@ public:
 	inline const float GetX() const { return m_Position.x; }
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
+	inline const float GetZOffset() const { return z_offset; }
 	inline const float GetHeading() const { return m_Position.w; }
 	inline const float GetEQX() const { return m_EQPosition.x; }
 	inline const float GetEQY() const { return m_EQPosition.y; }
@@ -1031,6 +1032,7 @@ protected:
 	uint16 animation;
 	float base_size;
 	float size;
+	float z_offset;
 	float runspeed;
 	float walkspeed;
 	uint32 pLastChange;
