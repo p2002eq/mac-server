@@ -1295,6 +1295,19 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 		SendPosition();
 }
 
+void Mob::SetCurrentSpeed(float speed) {
+	if (cursp != speed)
+	{ 
+		cursp = speed; 
+		tar_ndx = 20;
+		if (speed == 0) {
+			SetRunAnimSpeed(0);
+			SetMoving(false);
+			SendPosition();
+		}
+	} 
+}
+
 void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, uint8 in_helmtexture, uint8 in_haircolor, uint8 in_beardcolor, uint8 in_eyecolor1, uint8 in_eyecolor2, uint8 in_hairstyle, uint8 in_luclinface, uint8 in_beard, uint8 in_aa_title, float in_size) {
 
 	uint16 BaseRace = GetBaseRace();
