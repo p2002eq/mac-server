@@ -1516,17 +1516,28 @@ void Mob::AI_Process() {
 							float speed = GetWalkspeed();
 							if (dist >= 5625)
 								speed = GetRunspeed();
-							CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
-						}
-						else
-						{
-							if(moved)
-							{
-								moved=false;
-								SetMoving(false);
-								SendPosition();
+							SetCurrentSpeed(speed);
+							animation = 21 * speed;
+							if(!zone->pathing) {
+								CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
+							} else {
+								bool WaypointChanged, NodeReached;
+								glm::vec3 Goal = UpdatePath(owner->GetX(), owner->GetY(), owner->GetZ(), speed, WaypointChanged, NodeReached);
+
+								if(WaypointChanged)
+									tar_ndx = 20;
+
+								CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetRunspeed());
 							}
+						} else if(IsMoving()) {
+							SetHeading(CalculateHeadingToTarget(owner->GetX(), owner->GetY()));
+							SetCurrentSpeed(0.0f);
+							moved=false;
 						}
+
+
+						//CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
+
 
 						/*
 						//fix up Z
