@@ -981,7 +981,7 @@ bool Mob::CheckLosFN(Mob* other) {
 	bool Result = false;
 
 	if(other)
-		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ(), other->GetSize());
+		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ() - other->GetZOffset(), other->GetSize());
 
 	SetLastLosState(Result);
 	
@@ -1016,7 +1016,7 @@ bool Mob::CheckRegion(Mob* other, bool skipwater) {
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 
-	glm::vec3 myloc(GetX(), GetY(), GetZ());
+	glm::vec3 myloc(GetX(), GetY(), GetZ()-GetZOffset());
 	glm::vec3 oloc(posX, posY, posZ);
 	float mybestz = myloc.z;
 	float obestz = oloc.z;
@@ -1044,8 +1044,8 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 #define LOS_DEFAULT_HEIGHT 6.0f
 
 
-	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
-	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize()) * HEAD_POSITION;
+	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize) * SEE_POSITION;
 
 	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);

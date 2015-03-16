@@ -1094,7 +1094,7 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
 	spu->spawn_id	= GetID();
 	spu->x_pos = static_cast<int16>(m_Position.x);
 	spu->y_pos = static_cast<int16>(m_Position.y);
-	spu->z_pos = static_cast<int16>(m_Position.z*10);
+	spu->z_pos = static_cast<int16>((m_Position.z-GetZOffset())*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1129,7 +1129,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	spu->spawn_id	= GetID();
 	spu->x_pos = static_cast<int16>(m_Position.x);
 	spu->y_pos = static_cast<int16>(m_Position.y);
-	spu->z_pos = static_cast<int16>(m_Position.z*10);
+	spu->z_pos = static_cast<int16>((m_Position.z-GetZOffset())*10);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
 	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
@@ -1295,6 +1295,19 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 		SendPosition();
 }
 
+void Mob::SetCurrentSpeed(float speed) {
+	if (cursp != speed)
+	{ 
+		cursp = speed; 
+		tar_ndx = 20;
+		if (speed == 0) {
+			SetRunAnimSpeed(0);
+			SetMoving(false);
+			SendPosition();
+		}
+	} 
+}
+
 void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, uint8 in_helmtexture, uint8 in_haircolor, uint8 in_beardcolor, uint8 in_eyecolor1, uint8 in_eyecolor2, uint8 in_hairstyle, uint8 in_luclinface, uint8 in_beard, uint8 in_aa_title, float in_size) {
 
 	uint16 BaseRace = GetBaseRace();
@@ -1425,6 +1438,8 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 				break;
 		}
 	}
+	if (this->IsClient())
+		this->z_offset = this->size * 0.625f;
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Illusion, sizeof(Illusion_Struct));
 	Illusion_Struct* is = (Illusion_Struct*) outapp->pBuffer;
@@ -1608,6 +1623,8 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 		in_size = 255.0;
 	//End of Size Code
 	this->size = in_size;
+	if (this->IsClient())
+		this->z_offset = in_size * 0.625f;
 	uint32 newsize = floor(in_size + 0.5);
 	SendAppearancePacket(AT_Size, newsize);
 }

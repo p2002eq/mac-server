@@ -394,6 +394,7 @@ public:
 	inline const float GetX() const { return m_Position.x; }
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
+	inline const float GetZOffset() const { return z_offset; }
 	inline const float GetHeading() const { return m_Position.w; }
 	inline const float GetEQX() const { return m_EQPosition.x; }
 	inline const float GetEQY() const { return m_EQPosition.y; }
@@ -436,6 +437,7 @@ public:
 	void SetRunning(bool val) { m_is_running = val; } // Toggle to force the NPC to run or walk on their next update.
 	bool IsCurrentlyRunning() const { return m_running; }
 	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
+	void SetCurrentSpeed(float speed);
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDelta(const glm::vec4& delta) { m_Delta = delta; }
 	void SetPosition(const glm::vec4& pos) { m_Position = pos; }
@@ -954,6 +956,7 @@ protected:
 
 	bool IsFullHP;
 	bool moved;
+	float cursp;
 
 	std::vector<uint16> RampageArray;
 	std::map<std::string, std::string> m_EntityVariables;
@@ -1031,6 +1034,7 @@ protected:
 	uint16 animation;
 	float base_size;
 	float size;
+	float z_offset;
 	float runspeed;
 	float walkspeed;
 	uint32 pLastChange;

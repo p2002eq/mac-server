@@ -431,19 +431,63 @@ void NPC::SaveGuardSpot(bool iClearGuardSpot) {
 }
 
 void NPC::NextGuardPosition() {
-	if (!CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, GetMovespeed())) {
-		SetHeading(m_GuardPoint.w);
-		Log.Out(Logs::Detail, Logs::AI, "Unable to move to next guard position. Probably rooted.");
-	}
-	else if((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z))
+	float walksp = GetMovespeed();
+	SetCurrentSpeed(walksp);
+	if(walksp <= 0.0f)
+		return;
+	bool CP2Moved;
+	if(!RuleB(Pathing, Guard) || !zone->pathing)
+		CP2Moved = CalculateNewPosition2( m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+	else
 	{
-		if(moved)
+		if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
 		{
+			bool WaypointChanged, NodeReached;
+			glm::vec3 Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
+			if(WaypointChanged)
+				tar_ndx = 20;
+
+			if(NodeReached)
+				entity_list.OpenDoorsNear(CastToNPC());
+
+			CP2Moved = CalculateNewPosition2(Goal.x, Goal.y, Goal.z, walksp);
+		}
+		else
+			CP2Moved = false;
+
+	}
+	if (!CP2Moved)
+	{
+		if(moved) {
+			Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 			moved=false;
 			SetMoving(false);
+			if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
+			{
+				SetHeading(m_GuardPoint.w);
+			} else {
+				FaceTarget(GetTarget());
+			}
 			SendPosition();
+			SetAppearance(GetGuardPointAnim());
 		}
 	}
+
+
+
+	//if (!CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, GetMovespeed())) {
+	//	SetHeading(m_GuardPoint.w);
+	//	Log.Out(Logs::Detail, Logs::AI, "Unable to move to next guard position. Probably rooted.");
+	//}
+	//else if((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z))
+	//{
+	//	if(moved)
+	//	{
+	//		moved=false;
+	//		SetMoving(false);
+	//		SendPosition();
+	//	}
+	//}
 }
 
 /*
