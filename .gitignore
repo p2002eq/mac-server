@@ -36,3 +36,5 @@ build_64/
 log/
 logs/
 dependencies/.gitignore
+*.cmake
+bin/
