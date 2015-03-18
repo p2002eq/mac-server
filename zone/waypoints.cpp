@@ -773,7 +773,7 @@ bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool che
 
 float Mob::SetRunAnimation(float speed)
 {
-	float newspeed;
+	float newspeed = speed * 57;
 	if(IsNPC()) 
 	{
 		if(speed >= GetRunspeed())
