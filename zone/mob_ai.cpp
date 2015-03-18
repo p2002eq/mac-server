@@ -802,7 +802,7 @@ void Client::AI_Process()
 				engaged = true;
 			} else {
 				if(AImovement_timer->Check()) {
-					animation = GetRunspeed() * 21;
+					animation = GetRunspeed() * 8.4f;
 					// Check if we have reached the last fear point
 					if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
@@ -972,19 +972,21 @@ void Client::AI_Process()
 		{
 			if(!IsRooted())
 			{
-				animation = 21 * GetRunspeed();
-				if(!RuleB(Pathing, Aggro) || !zone->pathing)
-					CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetRunspeed());
-				else
-				{
-					bool WaypointChanged, NodeReached;
-					glm::vec3 Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
-						GetRunspeed(), WaypointChanged, NodeReached);
+				if(AImovement_timer->Check()) {
+					animation = 8.4f * GetRunspeed();
+					if(!RuleB(Pathing, Aggro) || !zone->pathing)
+						CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetRunspeed());
+					else
+					{
+						bool WaypointChanged, NodeReached;
+						glm::vec3 Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
+							GetRunspeed(), WaypointChanged, NodeReached);
 
-					if(WaypointChanged)
-						tar_ndx = 20;
+						if(WaypointChanged)
+							tar_ndx = 20;
 
-					CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetRunspeed());
+						CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetRunspeed());
+					}
 				}
 			}
 			else if(IsMoving())
