@@ -2750,6 +2750,16 @@ XS(XS__clear_npctype_cache)
 	XSRETURN_EMPTY;
 }
 
+XS(XS__reloadzonestaticdata);
+XS(XS__reloadzonestaticdata)
+{
+	dXSARGS;
+
+	quest_manager.ReloadZoneStaticData();
+
+	XSRETURN_EMPTY;
+}
+
 XS(XS__qs_send_query);
 XS(XS__qs_send_query)
 {
@@ -2987,6 +2997,7 @@ EXTERN_C XS(boot_quest)
 		newXS(strcpy(buf, "ze"), XS__ze, file);
 		newXS(strcpy(buf, "we"), XS__we, file);
 		newXS(strcpy(buf, "getlevel"), XS__getlevel, file);
+		newXS(strcpy(buf, "reloadzonestaticdata"), XS__reloadzonestaticdata, file);
 		newXS(strcpy(buf, "creategroundobject"), XS__CreateGroundObject, file);
 		newXS(strcpy(buf, "creategroundobjectfrommodel"), XS__CreateGroundObjectFromModel, file);
 		newXS(strcpy(buf, "createdoor"), XS__CreateDoor, file);
