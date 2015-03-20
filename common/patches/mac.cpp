@@ -2099,7 +2099,20 @@ namespace Mac {
 		if(eq->GuildID == 0)
 			eq->GuildID = 0xFFFF;
 		eq->helm = emu->helm;
-		eq->race = emu->race;
+		if (emu->race >= 209 && emu->race <= 212)
+		{
+			eq->race = 75;
+			if (emu->race == 210)
+				eq->texture = 3;
+			else if (emu->race == 211)
+				eq->texture = 2;
+			else if (emu->race == 212)
+				eq->texture = 1;
+			else
+				eq->texture = 0;
+		}
+		else
+			eq->race = emu->race;
 		strncpy(eq->Surname, emu->lastName, 32);
 		eq->walkspeed = emu->walkspeed;
 		eq->light = emu->light;
