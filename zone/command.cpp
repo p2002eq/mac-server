@@ -279,7 +279,7 @@ int command_init(void){
 		command_add("merchant_open_shop", "Opens a merchants shop.", 250, command_merchantopenshop) ||
 		command_add("modifynpcstat", "- Modifys a NPC's stats.", 250, command_modifynpcstat) ||
 		command_add("motd", "[new motd] - Set message of the day.", 170, command_motd) ||
-		command_add("movechar", "[charname] [zonename] - Move charname to zonename.", 95, command_movechar) ||
+		command_add("movechar", "[charname] [zonename] - Move charname to zonename.", 80, command_movechar) ||
 		//command_add("myskills","- Show details about your current skill levels.",50,command_myskills) ||
 		command_add("mysql", "Mysql CLI, see 'help' for options.", 250, command_mysql) ||
 		command_add("mysqltest", "Akkadius MySQL Bench Test.", 250, command_mysqltest) ||
@@ -401,7 +401,7 @@ int command_init(void){
 		command_add("stun", "[duration] - Stuns you or your target for duration.", 160, command_stun) ||
 		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified.", 90, command_summon) ||
 		command_add("summonitem", "[itemid] [charges] - Summon an item onto your cursor. Charges are optional.", 160, command_summonitem) ||
-		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days.", 90, command_suspend) ||
+		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days.", 80, command_suspend) ||
 		command_add("synctod", "- Send a time of day update to every client in zone.", 100, command_synctod) ||
 
 		command_add("testcopy", "Sends a copy of the targets loginserver/game account/characters to a backup file.", 250, command_testcopy) ||
