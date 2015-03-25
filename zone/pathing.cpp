@@ -1,5 +1,4 @@
 #include "../common/global_define.h"
-#include "../common/string_util.h"
 
 #include "client.h"
 #include "doors.h"
@@ -547,8 +546,9 @@ void PathManager::SpawnPathNodes()
 
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
-		NPCType* npc_type = new NPCType;
-		memset(npc_type, 0, sizeof(NPCType));
+		//NPCType* npc_type = new NPCType;
+		//memset(npc_type, 0, sizeof(NPCType));
+		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (PathNodes[i].id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(PathNodes[i].id));
@@ -585,9 +585,11 @@ void PathManager::SpawnPathNodes()
 		npc_type->CHA = 150;
 
 		npc_type->findable = 1;
+		strcpy(npc_type->special_abilities, "19,1^20,1^24,1^35,1");
+
 		auto position = glm::vec4(PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0.0f);
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-		npc->GiveNPCTypeData(npc_type);
+		//npc->GiveNPCTypeData(npc_type);
 
 		entity_list.AddNPC(npc, true, true);
 	}
@@ -2098,14 +2100,7 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 			}
 		}
 	}
-	try
-	{
-		std::string newfile = StringFormat("./newmaps/%s.path", filename.c_str());
-		DumpPath(newfile);
-	}
-	catch (std::exception &ex)
-	{
-	}
+	DumpPath(filename);
 }
 
 void PathManager::ResortConnections()
