@@ -366,7 +366,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	)
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
-		if(CheckLosFN(mob)) {
+		if(zone->SkipLoS() || CheckLosFN(mob)) {
 			Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
 			return( mod_will_aggro(mob, this) );
 		}
@@ -543,7 +543,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				{
 					//attacking someone on same faction, or a friend
 					//Father Nitwit: make sure we can see them.
-					if(mob->CheckLosFN(sender)) {
+					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
 						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
