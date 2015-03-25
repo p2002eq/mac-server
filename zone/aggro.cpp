@@ -543,7 +543,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				{
 					//attacking someone on same faction, or a friend
 					//Father Nitwit: make sure we can see them.
-					if(mob->CheckLosFN(sender)) {
+					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
 						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
