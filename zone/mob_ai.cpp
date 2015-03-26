@@ -2522,6 +2522,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 	if (spell_list->attack_proc >= 0) {
 		attack_proc_spell = spell_list->attack_proc;
 		proc_chance = spell_list->proc_chance;
+		this->innateProcSpellId = attack_proc_spell;
 	}
 
 	if (spell_list->range_proc >= 0) {
