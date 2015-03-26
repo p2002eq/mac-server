@@ -1396,7 +1396,7 @@ bool Mob::HasReagent(uint16 spell_id, int component, int component_count, bool m
 	return true;
 }
 
-bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center, CastAction_type &CastAction) {
+bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center, CastAction_type &CastAction, bool isproc) {
 
 /*
 	The basic types of spells:
@@ -1499,7 +1499,10 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		// single target spells
 		case ST_Self:
 		{
-			spell_target = this;
+			// innate NPC procs always hit the target, even self-only spells (like scareling step)
+			if (!isproc || !IsNPC() || CastToNPC()->GetInnateProcSpellId() != spell_id)
+				spell_target = this;
+
 			CastAction = SingleTarget;
 			break;
 		}
@@ -1933,7 +1936,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 	//determine the type of spell target we have
 	CastAction_type CastAction;
-	if(!DetermineSpellTargets(spell_id, spell_target, ae_center, CastAction))
+	if(!DetermineSpellTargets(spell_id, spell_target, ae_center, CastAction, isproc))
 		return(false);
 
 	Log.Out(Logs::Detail, Logs::Spells, "Spell %d: target type %d, target %s, AE center %s", spell_id, CastAction, spell_target?spell_target->GetName():"NONE", ae_center?ae_center->GetName():"NONE");
@@ -1994,7 +1997,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	}
 
 	// NPC innate procs that are AoE spells only hit the target they are attacking
-	if (IsNPC() && isproc && (CastAction == AETarget || CastAction == AECaster))
+	if (IsNPC() && isproc && CastToNPC()->GetInnateProcSpellId() == spell_id && (CastAction == AETarget || CastAction == AECaster))
 	{
 		CastAction = SingleTarget;
 	}

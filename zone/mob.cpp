@@ -2453,7 +2453,9 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(twinproc_chance && zone->random.Roll(twinproc_chance))
 		twinproc = true;
 
-	if (IsBeneficialSpell(spell_id)) {
+	if (IsBeneficialSpell(spell_id)
+		&& !IsNPC() && CastToNPC()->GetInnateProcSpellId() != spell_id)		// innate NPC procs always hit the target
+	{
 		SpellFinished(spell_id, this, 10, 0, -1, spells[spell_id].ResistDiff, true);
 		if(twinproc)
 			SpellOnTarget(spell_id, this, false, false, 0, true);
