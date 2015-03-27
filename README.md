@@ -1,8 +1,4 @@
-Alkabor Database: https://drive.google.com/folderview?id=0B5FZHGN6aazfVEh0d1czZmw5MUU&usp=sharing
-
-Alkabor Quests: http://code.google.com/p/peqmacquests/
-
-Maps: https://code.google.com/p/eqmacemu-maps/
+Alkabor Database: https://drive.google.com/folderview?id=0B3zT6wvZcAZIfkMyay1hUUt3S0FRNVZsaUczTlY0VWRJRnJFeGxTUEhKQkFfdk5pRVVmYVE&usp=sharing
 
 Our login server requires OpenSSL: https://www.openssl.org/related/binaries.html
 

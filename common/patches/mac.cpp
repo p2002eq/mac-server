@@ -159,9 +159,10 @@ namespace Mac {
 			strncpy(eq->name, emu->player.spawn.name, 64);
 			eq->deity = emu->player.spawn.deity;
 			eq->race = emu->player.spawn.race;
-			eq->size = emu->player.spawn.size;
-			if(emu->player.spawn.race == 42)
+			if (emu->player.spawn.race == 42 && emu->player.spawn.gender == 2)
 				eq->size = emu->player.spawn.size + 2.0f;
+			else
+				eq->size = emu->player.spawn.size;
 			eq->NPC = emu->player.spawn.NPC;
 			eq->invis = emu->player.spawn.invis;
 			eq->max_hp = emu->player.spawn.max_hp;
@@ -2062,8 +2063,8 @@ namespace Mac {
 		eq->anon = emu->anon;
 		memcpy(eq->name, emu->name, 64);
 		eq->deity = emu->deity;
-		if(emu->race == 42)
-			eq->size = emu->size + 2.0f;
+		if (emu->race == 42 && emu->gender == 2)
+				eq->size = emu->size + 2.0f;
 		else
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;
