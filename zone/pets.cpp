@@ -383,7 +383,6 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 			npc_type->race = WOLF;
 			npc_type->texture = 0;
 			npc_type->gender = 1;
-			npc_type->size *= 2.0f;
 			npc_type->luclinface = 0;
 			break;
 		default:
