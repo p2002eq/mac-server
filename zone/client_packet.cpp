@@ -5341,10 +5341,12 @@ void Client::Handle_OP_MemorizeSpell(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Mend(const EQApplicationPacket *app) 
 {
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) { return; }
 
 	if (GetClass() != MONK)
+    {
 		return;
+    }
 
 	if (!p_timers.Expired(&database, pTimerMend, false)) {
 		Message(CC_Red, "Ability recovery time not yet met.");
@@ -5354,7 +5356,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 	int mendhp = GetMaxHP() / 4;
 	int currenthp = GetHP();
-	if (zone->random.Int(0, 199) < (int)GetSkill(SkillMend)) {
+	if (zone->random.Int(0, 99) < (int)GetSkill(SkillMend)) {
 
 		int criticalchance = spellbonuses.CriticalMend + itembonuses.CriticalMend + aabonuses.CriticalMend;
 
@@ -5373,14 +5375,17 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		0 skill - 25% chance to worsen
 		20 skill - 23% chance to worsen
 		50 skill - 16% chance to worsen */
-		if ((GetSkill(SkillMend) <= 75) && (zone->random.Int(GetSkill(SkillMend), 100) < 75) && (zone->random.Int(1, 3) == 1))
+        int cricical_failures_dont_happen = 50;
+		if ((GetSkill(SkillMend) <= cricical_failures_dont_happen) && (zone->random.Int(GetSkill(SkillMend), 100) < cricical_failures_dont_happen) && (zone->random.Int(1, 3) == 1))
 		{
 			SetHP(currenthp > mendhp ? (GetHP() - mendhp) : 1);
 			SendHPUpdate();
 			Message_StringID(CC_Blue, MEND_WORSEN);
 		}
 		else
+        {
 			Message_StringID(CC_Blue, MEND_FAIL);
+        }
 	}
 
 	CheckIncreaseSkill(SkillMend, nullptr, 10);
