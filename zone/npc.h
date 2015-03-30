@@ -277,7 +277,6 @@ public:
 	int32 GetHPRegen();
 	int32 GetManaRegen();
 	inline const char* GetAmmoIDfile() const { return ammo_idfile; }
-	uint16	GetInnateProcSpellId() const { return innateProcSpellId;  }
 
 	//waypoint crap
 	int					GetMaxWp() const { return max_wp; }
@@ -422,7 +421,6 @@ protected:
 	uint32	npc_spells_effects_id;
 	std::vector<AISpellsEffects_Struct> AIspellsEffects;
 	bool HasAISpellEffects;
-	uint16	innateProcSpellId;		// store the innate proc spell id so we can distinguish between item procs and innate procs
 
 	uint32	max_dmg;
 	uint32	min_dmg;
