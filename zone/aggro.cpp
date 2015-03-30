@@ -596,11 +596,10 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				if(useprimfaction || sender->GetReverseFactionCon(mob) <= FACTION_AMIABLE )
 				{
 					//attacking someone on same faction, or a friend
-					//make sure we can see them.
-					if(zone->SkipLoS() || mob->CheckLosFN(sender)) 
-					{
-
-						Log.Out(Logs::Detail, Logs::Aggro, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
+					//Father Nitwit: make sure we can see them.
+					if(mob->CheckLosFN(sender)) {
+#if (EQDEBUG>=11)
+						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
 
 						mob->AddToHateList(attacker, 20, 0, false);
