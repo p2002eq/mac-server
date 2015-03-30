@@ -1833,17 +1833,14 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	if (!GetTarget())
 		return true; //We killed them
 
-	if(!bRiposte && !other->HasDied())
-	{
+	if(!bRiposte && !other->HasDied()) {
 		TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
 
-		if (damage > 0)			// NPCs only proc innate procs on a hit
-		{
+		if (!other->HasDied())
 			TrySpellProc(nullptr, weapon, other, Hand);
 
-			if (HasSkillProcSuccess())
-				TrySkillProc(other, skillinuse, 0, true, Hand);
-		}
+		if (damage > 0 && HasSkillProcSuccess() && !other->HasDied())
+			TrySkillProc(other, skillinuse, 0, true, Hand);
 	}
 
 	if(GetHP() > 0 && !other->HasDied())
