@@ -415,7 +415,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 				Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
 				return(mod_will_aggro(mob, this));
 			}
-		}
+        }
 	}
 
 	Log.Out(Logs::Detail, Logs::Aggro, "Is In zone?:%d\n", mob->InZone());
@@ -598,10 +598,6 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 					//attacking someone on same faction, or a friend
 					//Father Nitwit: make sure we can see them.
 					if(mob->CheckLosFN(sender)) {
-#if (EQDEBUG>=11)
-						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
-						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
-
 						mob->AddToHateList(attacker, 20, 0, false);
 						sender->AddAssistCap();
 					}

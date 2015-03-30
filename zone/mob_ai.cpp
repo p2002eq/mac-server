@@ -72,9 +72,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 	bool checked_los = false;	//we do not check LOS until we are absolutely sure we need to, and we only do it once.
 
-	if (zone->SkipLoS())
-		checked_los = true;		// ignore LoS checks in zones with LoS disabled
-
 	for (int i = static_cast<int>(AIspells.size()) - 1; i >= 0; i--) {
 		if (AIspells[i].spellid <= 0 || AIspells[i].spellid >= SPDAT_RECORDS) {
 			// this is both to quit early to save cpu and to avoid casting bad spells
@@ -417,6 +414,8 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 			|| t2 > iRange
 			|| t3 > iRange
 			|| DistanceSquared(mob->GetPosition(), caster->GetPosition()) > iRange2
+				//this call should seem backwards:
+			|| !mob->CheckLosFN(caster)
 			|| mob->GetReverseFactionCon(caster) >= FACTION_KINDLY
 		) {
 			continue;
