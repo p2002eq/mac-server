@@ -366,7 +366,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	)
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
-		if(zone->SkipLoS() || CheckLosFN(mob)) {
+		if(CheckLosFN(mob)) {
 			Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
 			return( mod_will_aggro(mob, this) );
 		}
