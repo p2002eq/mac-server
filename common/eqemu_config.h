@@ -156,7 +156,7 @@ class EQEmuConfig : public XMLParser
 			// Dirs
 			MapDir="Maps";
 			QuestDir="quests";
-			PluginDir="plugins";
+			PluginDir="quests/plugins";
 			// Launcher
 			LogPrefix = "logs/zone-";
 			LogSuffix = ".log";
