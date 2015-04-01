@@ -184,11 +184,11 @@ void Embperl::DoInit() {
 		//should probably read the directory in c, instead, so that
 		//I can echo filenames as I do it, but c'mon... I'm lazy and this 1 line reads in all the plugins
 		eval_pv(
-			"if(opendir(D,'plugins')) { "
+			"if(opendir(D,'quests/plugins')) { "
 			"	my @d = readdir(D);"
 			"	closedir(D);"
 			"	foreach(@d){ "
-			"		main::eval_file('plugin','plugins/'.$_)if/\\.pl$/;"
+			"		main::eval_file('plugin','quests/plugins/'.$_)if/\\.pl$/;"
 			"	}"
 			"}"
 		,FALSE);
