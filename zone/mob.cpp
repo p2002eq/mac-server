@@ -4924,19 +4924,24 @@ uint32 Mob::GetClassStringID() {
 	}
 }
 
+// Double attack chances based on this data: http://www.eqemulator.org/forums/showthread.php?t=38708
 uint8 Mob::DoubleAttackChance()
 {
-	uint8 mod = GetLevel();
+	uint8 level = GetLevel();
 
-	if (GetLevel() >= 51 && GetLevel() <= 65)
-		mod = 51;
-	else if (GetLevel() > 65)
-		mod = 54;
+	if (level > 59)
+		return (level - 59) / 4 + 61;
 	
-	float chance = (mod*3.8f + mod) / 4;
-	uint8 finalval = (uint8)floor(chance + 0.5);
+	else if (level > 50)
+		return 61;
 
-	return finalval;
+	else if (level > 35)
+		return (level - 35) / 2 + 44;
+
+	else if (level < 6)
+		return 0;
+
+	else return level;
 }
 
 void Mob::Disarm()
