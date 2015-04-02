@@ -546,8 +546,6 @@ void PathManager::SpawnPathNodes()
 
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
-		//NPCType* npc_type = new NPCType;
-		//memset(npc_type, 0, sizeof(NPCType));
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (PathNodes[i].id < 10)
@@ -589,7 +587,6 @@ void PathManager::SpawnPathNodes()
 
 		auto position = glm::vec4(PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0.0f);
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-		//npc->GiveNPCTypeData(npc_type);
 
 		entity_list.AddNPC(npc, true, true);
 	}
@@ -1507,9 +1504,8 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		delete[] PathNodes;
 		PathNodes = t_PathNodes;
 
-		//NPCType* npc_type = new NPCType;
-		//memset(npc_type, 0, sizeof(NPCType));
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
+
 		if (new_id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(new_id));
 		else if (new_id < 100)
@@ -1547,7 +1543,6 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		auto position = glm::vec4(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-		//npc->GiveNPCTypeData(npc_type);
 		entity_list.AddNPC(npc, true, true);
 
 		safe_delete_array(ClosedListFlag);
@@ -1570,8 +1565,6 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 			PathNodes[0].Neighbours[n].Teleport = new_node.Neighbours[n].Teleport;
 		}
 
-		//NPCType* npc_type = new NPCType;
-		//memset(npc_type, 0, sizeof(NPCType));
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (new_id < 10)
@@ -1611,7 +1604,6 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		auto position = glm::vec4(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-		//npc->GiveNPCTypeData(npc_type);
 		entity_list.AddNPC(npc, true, true);
 
 		ClosedListFlag = new int[Head.PathNodeCount];
