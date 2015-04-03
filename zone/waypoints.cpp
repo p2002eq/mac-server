@@ -763,6 +763,8 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	}
 	else
 	{
+		// force an update now
+		move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		SendPosUpdate();
 		SetAppearance(eaStanding, false);
 	}		
