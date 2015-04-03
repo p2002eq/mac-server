@@ -1301,6 +1301,7 @@ void Mob::SendPosition()
 	spu->num_updates = 1; // hack - only one spawn position per update
 	MakeSpawnUpdateNoDelta(&spu->spawn_update);
 	move_tic_count = 0;
+	tar_ndx = 20;
 	entity_list.QueueClients(this, app, true, false);
 	safe_delete(app);
 }
