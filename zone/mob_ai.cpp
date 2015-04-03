@@ -802,25 +802,26 @@ void Client::AI_Process()
 				engaged = true;
 			} else {
 				if(AImovement_timer->Check()) {
-					animation = GetRunspeed() * 8.4f;
+					float f_speed = GetFearSpeed();
+					animation = static_cast<uint16>(f_speed * 10.0f);
 					// Check if we have reached the last fear point
 					if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
 					if(!RuleB(Pathing, Fear) || !zone->pathing)
-						CalculateNewPosition2(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z, GetFearSpeed(), true);
+						CalculateNewPosition2(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z, f_speed, true);
 					else
 					{
 						bool WaypointChanged, NodeReached;
 
 						glm::vec3 Goal = UpdatePath(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z,
-									GetFearSpeed(), WaypointChanged, NodeReached);
+									f_speed, WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
 							tar_ndx = 20;
 
-						CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetFearSpeed());
+						CalculateNewPosition2(Goal.x, Goal.y, Goal.z, f_speed);
 					}
 				}
 				return;
@@ -973,7 +974,7 @@ void Client::AI_Process()
 			if(!IsRooted())
 			{
 				if(AImovement_timer->Check()) {
-					animation = 8.4f * GetRunspeed();
+					animation = static_cast<uint16>(GetRunspeed() * 10.0f);
 					if(!RuleB(Pathing, Aggro) || !zone->pathing)
 						CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetRunspeed());
 					else
@@ -1031,7 +1032,7 @@ void Client::AI_Process()
 			if (dist >= 100)
 			{
 				float speed = dist >= 225 ? GetRunspeed() : GetWalkspeed();
-				animation = 21 * speed;
+				animation = static_cast<uint16>(10.0f * speed);
 				CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
 			}
 			else
@@ -1519,7 +1520,6 @@ void Mob::AI_Process() {
 							if (dist >= 5625)
 								speed = GetRunspeed();
 							SetCurrentSpeed(speed);
-							animation = 21 * speed;
 							if(!zone->pathing) {
 								CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
 							} else {
@@ -1636,6 +1636,7 @@ void Mob::AI_Process() {
 
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
+	SetCurrentSpeed(walksp);
 	if(walksp <= 0.0f)
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
 
@@ -1692,92 +1693,42 @@ void NPC::AI_DoMovement() {
 
 		if (gridno > 0 || cur_wp==-2) {
 			if (movetimercompleted==true) { // time to pause at wp is over
-
-				int32 spawn_id = this->GetSpawnPointID();
-				LinkedListIterator<Spawn2*> iterator(zone->spawn2_list);
-				iterator.Reset();
-				Spawn2 *found_spawn = nullptr;
-
-				while(iterator.MoreElements())
-				{
-					Spawn2* cur = iterator.GetData();
-					iterator.Advance();
-					if(cur->GetID() == spawn_id)
-					{
-						found_spawn = cur;
-						break;
-					}
-				}
-
-				if (wandertype == 4 && cur_wp == CastToNPC()->GetMaxWp()) {
-					CastToNPC()->Depop(true); //depop and resart spawn timer
-					if(found_spawn)
-						found_spawn->SetNPCPointerNull();
-				}
-				else if (wandertype == 6 && cur_wp == CastToNPC()->GetMaxWp()) {
-					CastToNPC()->Depop(false);//depop without spawn timer
-					if(found_spawn)
-						found_spawn->SetNPCPointerNull();
-				}
-				else {
-					movetimercompleted=false;
-
-					Log.Out(Logs::Detail, Logs::Pathing, "We are departing waypoint %d.", cur_wp);
-
-					//if we were under quest control (with no grid), we are done now..
-					if(cur_wp == -2) {
-						Log.Out(Logs::Detail, Logs::Pathing, "Non-grid quest mob has reached its quest ordered waypoint. Leaving pathing mode.");
-						roamer = false;
-						cur_wp = 0;
-					}
-
-					if(GetAppearance() != eaStanding)
-						SetAppearance(eaStanding, false);
-
-					entity_list.OpenDoorsNear(CastToNPC());
-
-					if(!DistractedFromGrid) {
-						//kick off event_waypoint depart
-						char temp[16];
-						sprintf(temp, "%d", cur_wp);
-						parse->EventNPC(EVENT_WAYPOINT_DEPART, CastToNPC(), nullptr, temp, 0);
-
-						//setup our next waypoint, if we are still on our normal grid
-						//remember that the quest event above could have done anything it wanted with our grid
-						if(gridno > 0) {
-							CastToNPC()->CalculateNewWaypoint();
-						}
-					}
-					else {
-						DistractedFromGrid = false;
-					}
-				}
+				AI_SetupNextWaypoint();
 			}	// endif (movetimercompleted==true)
 			else if (!(AIwalking_timer->Enabled()))
 			{	// currently moving
+				bool doMove = true;
 				if (m_CurrentWayPoint.x == GetX() && m_CurrentWayPoint.y == GetY())
 				{	// are we there yet? then stop
 					Log.Out(Logs::Detail, Logs::AI, "We have reached waypoint %d (%.3f,%.3f,%.3f) on grid %d", cur_wp, GetX(), GetY(), GetZ(), GetGrid());
-					SetWaypointPause();
-					if(GetAppearance() != eaStanding)
-						SetAppearance(eaStanding, false);
-					SetMoving(false);
-					if (m_CurrentWayPoint.w >= 0.0) {
-						SetHeading(m_CurrentWayPoint.w);
+					if (cur_wp_pause != 0) {
+						SetWaypointPause();
+						if(GetAppearance() != eaStanding)
+							SetAppearance(eaStanding, false);
+						SetMoving(false);
+						if (m_CurrentWayPoint.w >= 0.0) {
+							SetHeading(m_CurrentWayPoint.w);
+						}
+						SendPosition();
 					}
-					SendPosition();
 
 					//kick off event_waypoint arrive
 					char temp[16];
 					sprintf(temp, "%d", cur_wp);
 					parse->EventNPC(EVENT_WAYPOINT_ARRIVE, CastToNPC(), nullptr, temp, 0);
 
+					// start moving directly to next waypoint if we're at a 0 pause waypoint and we didn't get quest halted.
+					if (!AIwalking_timer->Enabled()) 
+						AI_SetupNextWaypoint();
+					else
+						doMove = false;
+
 					// wipe feign memory since we reached our first waypoint
 					if(cur_wp == 1)
 						ClearFeignMemory();
 				}
-				else
-				{	// not at waypoint yet, so keep moving
+				if (doMove)
+				{	// not at waypoint yet or at 0 pause WP, so keep moving
 					if(!RuleB(Pathing, AggroReturnToGrid) || !zone->pathing || (DistractedFromGrid == 0))
 						CalculateNewPosition2(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, walksp, true);
 					else
@@ -1852,6 +1803,68 @@ void NPC::AI_DoMovement() {
 				SendPosition();
 				SetAppearance(GetGuardPointAnim());
 			}
+		}
+	}
+}
+
+void NPC::AI_SetupNextWaypoint() {
+	int32 spawn_id = this->GetSpawnPointID();
+	LinkedListIterator<Spawn2*> iterator(zone->spawn2_list);
+	iterator.Reset();
+	Spawn2 *found_spawn = nullptr;
+
+	while(iterator.MoreElements())
+	{
+		Spawn2* cur = iterator.GetData();
+		iterator.Advance();
+		if(cur->GetID() == spawn_id)
+		{
+			found_spawn = cur;
+			break;
+		}
+	}
+
+	if (wandertype == 4 && cur_wp == CastToNPC()->GetMaxWp()) {
+		CastToNPC()->Depop(true); //depop and resart spawn timer
+		if(found_spawn)
+			found_spawn->SetNPCPointerNull();
+	}
+	else if (wandertype == 6 && cur_wp == CastToNPC()->GetMaxWp()) {
+		CastToNPC()->Depop(false);//depop without spawn timer
+		if(found_spawn)
+			found_spawn->SetNPCPointerNull();
+	}
+	else {
+		movetimercompleted=false;
+
+		Log.Out(Logs::Detail, Logs::Pathing, "We are departing waypoint %d.", cur_wp);
+
+		//if we were under quest control (with no grid), we are done now..
+		if(cur_wp == -2) {
+			Log.Out(Logs::Detail, Logs::Pathing, "Non-grid quest mob has reached its quest ordered waypoint. Leaving pathing mode.");
+			roamer = false;
+			cur_wp = 0;
+		}
+
+		if(GetAppearance() != eaStanding)
+			SetAppearance(eaStanding, false);
+
+		entity_list.OpenDoorsNear(CastToNPC());
+
+		if(!DistractedFromGrid) {
+			//kick off event_waypoint depart
+			char temp[16];
+			sprintf(temp, "%d", cur_wp);
+			parse->EventNPC(EVENT_WAYPOINT_DEPART, CastToNPC(), nullptr, temp, 0);
+
+			//setup our next waypoint, if we are still on our normal grid
+			//remember that the quest event above could have done anything it wanted with our grid
+			if(GetGrid() > 0) {
+				CastToNPC()->CalculateNewWaypoint();
+			}
+		}
+		else {
+			DistractedFromGrid = false;
 		}
 	}
 }

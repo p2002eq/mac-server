@@ -93,7 +93,7 @@ Mob::Mob(const char* in_name,
 		bardsong_timer(6000),
 		gravity_timer(1000),
 		viral_timer(0),
-		m_FearWalkTarget(-999999.0f,-999999.0f,-999999.0f),
+		m_FearWalkTarget(BEST_Z_INVALID,BEST_Z_INVALID,BEST_Z_INVALID),
 		m_TargetLocation(glm::vec3()),
 		m_TargetV(glm::vec3()),
 		flee_timer(FLEE_CHECK_TIMER),
@@ -142,7 +142,32 @@ Mob::Mob(const char* in_name,
 
 	// sanity check
 	if (runspeed < 0 || runspeed > 20)
-		runspeed = 1.25f;
+		runspeed = 1.3f; // mob speeds on mac client, only support increments of 0.1
+
+	int_runspeed = (int)((float)runspeed * 40.0f) + 2; // add the +2 to give a round behavior - int speeds are increments of 4
+	
+	// clients - these look low, compared to mobs.  But player speeds translate different in client, with respect to NPCs.
+	// in game a 0.7 speed for client, is same as a 1.4 speed for NPCs.
+	if (runspeed == 0.7f) {
+		int_runspeed = 28;
+		walkspeed = 0.3f;
+		int_walkspeed = 12;
+		fearspeed = 0.6f;
+		int_fearspeed = 24;
+	// npcs
+	} else {
+		int_walkspeed = int_runspeed * 100 / 265;
+		walkspeed = (float)int_walkspeed / 40.0f;
+		int_fearspeed = int_runspeed * 100 / 127;
+		fearspeed = (float)int_fearspeed / 40.0f;
+	}
+	// adjust speeds to round to 0.100
+	int_runspeed = (int_runspeed >> 2) << 2; // equivalent to divide by 4, then multiply by 4
+	runspeed = (float)int_runspeed / 40.0f;
+	int_walkspeed = (int_walkspeed >> 2) << 2;
+	walkspeed = (float)int_walkspeed / 40.0f;
+	int_fearspeed = (int_fearspeed >> 2) << 2;
+	fearspeed = (float)int_fearspeed / 40.0f;
 
 	m_Light.Type.Innate = in_light;
 	m_Light.Level.Innate = m_Light.TypeToLevel(m_Light.Type.Innate);
@@ -340,12 +365,10 @@ Mob::Mob(const char* in_name,
 	if(race == SHIP && RuleB(NPC, BoatsRunByDefault))
 	{
 		m_is_running = true;
-		m_running = true;
 	}
 	else
 	{
 		m_is_running = false;
-		m_running = false;
 	}
 
 	nimbus_effect1 = 0;
@@ -372,7 +395,6 @@ Mob::Mob(const char* in_name,
 
 	emoteid = 0;
 	endur_upkeep = false;
-	walkspeed = 0;
 	combat_hp_regen = 0;
 	combat_mana_regen = 0;
 	iszomm = false;
@@ -507,83 +529,319 @@ bool Mob::IsInvisible(Mob* other) const
 	return(false);
 }
 
-float Mob::_GetMovementSpeed(int mod, bool iswalking) const
-{
-	// List of movement speed modifiers, including AAs & spells:
-	// http://everquest.allakhazam.com/db/item.html?item=1721;page=1;howmany=50#m10822246245352
-	if (IsRooted())
-		return 0.0f;
-
-	float speed_mod = 0.0f;
+int Mob::_GetWalkSpeed() const {
+ 
+    if (IsRooted() || IsStunned() || IsMezzed())
+		return 0;
 	
-	if(iswalking)
-		speed_mod = walkspeed;
-	else
-		speed_mod = runspeed;
-
-	// These two cases ignore the cap, be wise in the DB for horses.
-	if (IsClient()) {
-		if (CastToClient()->GetGMSpeed()) {
-			speed_mod = 3.125f;
-			if (mod != 0)
-				speed_mod += speed_mod * static_cast<float>(mod) / 100.0f;
-			return speed_mod;
+	int aa_mod = 0;
+	int speed_mod = int_walkspeed;
+	int base_run = int_runspeed;
+	bool has_horse = false;
+	if (IsClient())
+	{
+		Mob* horse = entity_list.GetMob(CastToClient()->GetHorseId());
+		if(horse)
+		{
+			speed_mod = horse->int_walkspeed;
+			base_run = horse->int_runspeed;
+			has_horse = true;
 		} else {
-			Mob *horse = entity_list.GetMob(CastToClient()->GetHorseId());
-			if (horse) {
-				speed_mod = horse->GetBaseRunspeed();
-				if (mod != 0)
-					speed_mod += speed_mod * static_cast<float>(mod) / 100.0f;
-				return speed_mod;
+			aa_mod += ((CastToClient()->GetAA(aaInnateRunSpeed))
+				+ (CastToClient()->GetAA(aaFleetofFoot))
+				+ (CastToClient()->GetAA(aaSwiftJourney))
+			);
+		}
+		//Selo's Enduring Cadence should be +7% per level
+	}
+	
+	int spell_mod = spellbonuses.movementspeed + itembonuses.movementspeed;
+	int movemod = 0;
+
+	if(spell_mod < 0)
+	{
+		movemod += spell_mod;
+	}
+	else if(spell_mod > aa_mod)
+	{
+		movemod = spell_mod;
+	}
+	else
+	{
+		movemod = aa_mod;
+	}
+	
+	if(movemod < -85) //cap it at moving very very slow
+		movemod = -85;
+	
+	if (!has_horse && movemod != 0)
+		speed_mod += (base_run * movemod / 100);
+
+	if(speed_mod < 4)
+		return(0);
+
+	//runspeed cap.
+	if(IsClient())
+	{
+		if(GetClass() == BARD) {
+			//this extra-high bard cap should really only apply if they have AAs
+			if(speed_mod > 72)
+				speed_mod = 72;
+		} else {
+			if(speed_mod > 64)
+				speed_mod = 64;
+		}
+	}
+	speed_mod = (speed_mod >> 2) << 2;
+	return speed_mod;
+}
+
+int Mob::_GetRunSpeed() const {
+	if (IsRooted() || IsStunned() || IsMezzed())
+		return 0;
+	
+	int aa_mod = 0;
+	int speed_mod = int_runspeed;
+	int base_walk = int_walkspeed;
+	bool has_horse = false;
+	if (IsClient())
+	{
+		if(CastToClient()->GetGMSpeed())
+		{
+			speed_mod = 124; // this is same as speed of 3.1f
+		}
+		else
+		{
+			Mob* horse = entity_list.GetMob(CastToClient()->GetHorseId());
+			if(horse)
+			{
+				speed_mod = horse->int_runspeed;
+				base_walk = horse->int_walkspeed;
+				has_horse = true;
+			}
+		}
+		aa_mod += itembonuses.BaseMovementSpeed + spellbonuses.BaseMovementSpeed + aabonuses.BaseMovementSpeed;
+
+	}
+	
+	int spell_mod = spellbonuses.movementspeed + itembonuses.movementspeed;
+	int movemod = 0;
+
+	if(spell_mod < 0)
+	{
+		movemod += spell_mod;
+	}
+	else if(spell_mod > aa_mod)
+	{
+		movemod = spell_mod;
+	}
+	else
+	{
+		movemod = aa_mod;
+	}
+	
+	if(movemod < -85) //cap it at moving very very slow
+		movemod = -85;
+	
+	if (!has_horse && movemod != 0)
+	{
+		if (IsClient())
+		{
+			speed_mod += (speed_mod * movemod / 100);
+		} else {
+			if (movemod < 0) {
+
+				speed_mod += (50 * movemod / 100);
+
+				// basically stoped
+				if(speed_mod < 4)
+					return(0);
+				// moving slowly
+				if (speed_mod < 8)
+					return(8);
+			} else {
+				speed_mod += int_walkspeed;
+				if (movemod > 50)
+					speed_mod += 4;
+				if (movemod > 40)
+					speed_mod += 3;
 			}
 		}
 	}
 
-	int aa_mod = 0;
-	int spell_mod = 0;
-	int runspeedcap = RuleI(Character,BaseRunSpeedCap);
-	int movemod = 0;
-	float frunspeedcap = 0.0f;
+	if(speed_mod < 4)
+		return(0);
 
-	runspeedcap += itembonuses.IncreaseRunSpeedCap + spellbonuses.IncreaseRunSpeedCap + aabonuses.IncreaseRunSpeedCap;
-	aa_mod += itembonuses.BaseMovementSpeed + spellbonuses.BaseMovementSpeed + aabonuses.BaseMovementSpeed;
-	spell_mod += spellbonuses.movementspeed + itembonuses.movementspeed;
+	//runspeed cap.
+	if(IsClient())
+	{
+		if(GetClass() == BARD) {
+			//this extra-high bard cap should really only apply if they have AAs
+			if(speed_mod > 72)
+				speed_mod = 72;
+		} else {
+			if(speed_mod > 64)
+				speed_mod = 64;
+		}
+	}
+	speed_mod = (speed_mod >> 2) << 2;
+	return (speed_mod);
+}
+
+
+int Mob::_GetFearSpeed() const {
+
+	if (IsRooted() || IsStunned() || IsMezzed())
+		return 0;
+	
+	//float speed_mod = fearspeed;
+	int speed_mod = int_fearspeed;
+
+	// use a max of 1.8f in calcs.
+	int base_run = std::min(int_runspeed, 72);
+
+	int spell_mod = spellbonuses.movementspeed + itembonuses.movementspeed;
+
+	int movemod = 0;
+
+	if(spell_mod < 0)
+	{
+		movemod += spell_mod;
+	}
+	
+	if(movemod < -85) //cap it at moving very very slow
+		movemod = -85;
+	
+	if (IsClient()) {
+		if (CastToClient()->GetRunMode())
+			speed_mod = int_fearspeed;
+		else
+			speed_mod = int_walkspeed;
+		if (movemod < 0)
+			return int_walkspeed;
+		speed_mod += (base_run * movemod / 100);
+		speed_mod = (speed_mod >> 2) << 2;
+		return (speed_mod);
+	} else {
+		float hp_ratio = GetHPRatio();
+		// very large snares 50% or higher
+		if (movemod < -49)
+		{
+			if (hp_ratio < 25)
+				return (0);
+			if (hp_ratio < 50)
+				return (8);
+			else
+				return (12);
+		}
+		if (hp_ratio < 5) {
+			speed_mod = int_walkspeed / 3 + 4;
+		} else if (hp_ratio < 15) {
+			speed_mod = int_walkspeed / 2 + 4;
+ 		} else if (hp_ratio < 25) {
+			speed_mod = int_walkspeed + 4; // add this, so they are + 0.1 so they do the run animation
+		} else if (hp_ratio < 50) {
+			speed_mod *= 82;
+			speed_mod /= 100;
+		}
+		if (movemod > 0) {
+			speed_mod += int_walkspeed;
+			if (movemod > 50)
+				speed_mod += 4;
+			if (movemod > 40)
+				speed_mod += 3;
+			speed_mod = (speed_mod >> 2) << 2;
+			return speed_mod;
+		}
+		else if (movemod < 0) {
+			speed_mod += (base_run * movemod / 100);
+		}
+	}
+	if (speed_mod < 4)
+		return (0);
+	if (speed_mod < 12)
+		return (8); // 0.2f is slow walking - this should be the slowest walker for fleeing, if not snared enough to stop
+	speed_mod = (speed_mod >> 2) << 2;
+	return speed_mod;
+}
+
+//float Mob::_GetMovementSpeed(int mod, bool iswalking) const
+//{
+//	// List of movement speed modifiers, including AAs & spells:
+//	// http://everquest.allakhazam.com/db/item.html?item=1721;page=1;howmany=50#m10822246245352
+//	if (IsRooted())
+//		return 0.0f;
+
+//	float speed_mod = 0.0f;
+	
+//	if(iswalking)
+//		speed_mod = walkspeed;
+//	else
+//		speed_mod = runspeed;
+
+	// These two cases ignore the cap, be wise in the DB for horses.
+//	if (IsClient()) {
+//		if (CastToClient()->GetGMSpeed()) {
+//			speed_mod = 3.125f;
+//			if (mod != 0)
+//				speed_mod += speed_mod * static_cast<float>(mod) / 100.0f;
+//			return speed_mod;
+//		} else {
+//			Mob *horse = entity_list.GetMob(CastToClient()->GetHorseId());
+//			if (horse) {
+//				speed_mod = horse->GetBaseRunspeed();
+//				if (mod != 0)
+//					speed_mod += speed_mod * static_cast<float>(mod) / 100.0f;
+//				return speed_mod;
+//			}
+//		}
+//	}
+
+//	int aa_mod = 0;
+//	int spell_mod = 0;
+//	int runspeedcap = RuleI(Character,BaseRunSpeedCap);
+//	int movemod = 0;
+//	float frunspeedcap = 0.0f;
+
+//	runspeedcap += itembonuses.IncreaseRunSpeedCap + spellbonuses.IncreaseRunSpeedCap + aabonuses.IncreaseRunSpeedCap;
+//	aa_mod += itembonuses.BaseMovementSpeed + spellbonuses.BaseMovementSpeed + aabonuses.BaseMovementSpeed;
+//	spell_mod += spellbonuses.movementspeed + itembonuses.movementspeed;
 
 	// hard cap
-	if (runspeedcap > 150)
-		runspeedcap = 150;
+//	if (runspeedcap > 150)
+//		runspeedcap = 150;
 
-	if (spell_mod < 0)
-		movemod += spell_mod;
-	else if (spell_mod > aa_mod)
-		movemod = spell_mod;
-	else
-		movemod = aa_mod;
+//	if (spell_mod < 0)
+//		movemod += spell_mod;
+//	else if (spell_mod > aa_mod)
+//		movemod = spell_mod;
+//	else
+//		movemod = aa_mod;
 
 	// cap negative movemods from snares mostly
-	if (movemod < -85)
-		movemod = -85;
+//	if (movemod < -85)
+//		movemod = -85;
 
-	if (movemod != 0)
-		speed_mod += speed_mod * static_cast<float>(movemod) / 100.0f;
+//	if (movemod != 0)
+//		speed_mod += speed_mod * static_cast<float>(movemod) / 100.0f;
 
 	// runspeed caps
-	frunspeedcap = static_cast<float>(runspeedcap) / 100.0f;
-	if (IsClient() && speed_mod > frunspeedcap)
-		speed_mod = frunspeedcap;
+//	frunspeedcap = static_cast<float>(runspeedcap) / 100.0f;
+//	if (IsClient() && speed_mod > frunspeedcap)
+//		speed_mod = frunspeedcap;
 
 	// apply final mod such as the -47 for walking
 	// use runspeed since it should stack with snares
 	// and if we get here, we know runspeed was the initial
 	// value before we applied movemod.
-	if (mod != 0)
-		speed_mod += runspeed * static_cast<float>(mod) / 100.0f;
+//	if (mod != 0)
+//		speed_mod += runspeed * static_cast<float>(mod) / 100.0f;
 
-	if (speed_mod <= 0.0f)
-		speed_mod = IsClient() ? 0.0001f : 0.0f;
+//	if (speed_mod <= 0.0f)
+//		speed_mod = IsClient() ? 0.0001f : 0.0f;
 
-	return speed_mod;
-}
+//	return speed_mod;
+//}
 
 int32 Mob::CalcMaxMana() {
 	switch (GetCasterClass()) {
@@ -1094,7 +1352,7 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
 	spu->spawn_id	= GetID();
 	spu->x_pos = static_cast<int16>(m_Position.x);
 	spu->y_pos = static_cast<int16>(m_Position.y);
-	spu->z_pos = static_cast<int16>((m_Position.z-GetZOffset())*10);
+	spu->z_pos = static_cast<int16>((m_Position.z)*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
 	spu->delta_x	= 0;
@@ -1129,11 +1387,11 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	spu->spawn_id	= GetID();
 	spu->x_pos = static_cast<int16>(m_Position.x);
 	spu->y_pos = static_cast<int16>(m_Position.y);
-	spu->z_pos = static_cast<int16>((m_Position.z-GetZOffset())*10);
+	spu->z_pos = static_cast<int16>((m_Position.z)*10);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
-	spu->delta_x	= static_cast<int32>(m_Delta.x/125);
-	spu->delta_y	= static_cast<int32>(m_Delta.y/125);
+	spu->delta_x	= static_cast<int32>(m_Delta.x/128);
+	spu->delta_y	= static_cast<int32>(m_Delta.y/128);
 	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
 	spu->spacer1	=0;
@@ -1145,8 +1403,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	}
 	else if(this->IsNPC())
 	{
-		float anim = pRunAnimSpeed / 37.0f;
-		spu->anim_type = static_cast<int8>(anim * 7);
+		spu->anim_type = pRunAnimSpeed;
 	}
 	
 }
@@ -1204,7 +1461,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
 			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture());
-			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i Running: %i MovementSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), IsCurrentlyRunning(), GetSpeed());
+			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
@@ -1296,9 +1553,9 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 }
 
 void Mob::SetCurrentSpeed(float speed) {
-	if (cursp != speed)
+	if (current_speed != speed)
 	{ 
-		cursp = speed; 
+		current_speed = speed; 
 		tar_ndx = 20;
 		if (speed == 0) {
 			SetRunAnimSpeed(0);
@@ -1438,8 +1695,6 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 				break;
 		}
 	}
-	if (this->IsClient())
-		this->z_offset = this->size * 0.625f;
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Illusion, sizeof(Illusion_Struct));
 	Illusion_Struct* is = (Illusion_Struct*) outapp->pBuffer;
@@ -1495,6 +1750,7 @@ uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
 void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool iIgnoreSelf, Client *specific_target) {
 	if (!GetID())
 		return;
+
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 	SpawnAppearance_Struct* appearance = (SpawnAppearance_Struct*)outapp->pBuffer;
 	appearance->spawn_id = this->GetID();
@@ -1623,8 +1879,6 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 		in_size = 255.0;
 	//End of Size Code
 	this->size = in_size;
-	if (this->IsClient())
-		this->z_offset = in_size * 0.625f;
 	uint32 newsize = floor(in_size + 0.5);
 	SendAppearancePacket(AT_Size, newsize);
 }
@@ -2534,7 +2788,7 @@ void Mob::SetTarget(Mob* mob) {
 
 float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 {
-	float ret = -999999;
+	float ret = BEST_Z_INVALID;
 	if (zone->zonemap != nullptr)
 	{
 		glm::vec3 me;
@@ -2543,7 +2797,7 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 		me.z = m_Position.z + z_offset;
 		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
-		if (best_z != -999999)
+		if (best_z != BEST_Z_INVALID)
 		{
 			ret = best_z;
 		}
@@ -2554,16 +2808,16 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 // Copy of above function that isn't protected to be exported to Perl::Mob
 float Mob::GetGroundZ(float new_x, float new_y, float z_offset)
 {
-	float ret = -999999;
+	float ret = BEST_Z_INVALID;
 	if (zone->zonemap != 0)
 	{
 		glm::vec3 me;
 		me.x = new_x;
 		me.y = new_y;
-		me.z = m_Position.z+z_offset;
+		me.z = m_Position.z + z_offset;
 		glm::vec3 hit;
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
-		if (best_z != -999999)
+		if (best_z != BEST_Z_INVALID)
 		{
 			ret = best_z;
 		}
@@ -3655,7 +3909,8 @@ bool Mob::DoKnockback(Mob *caster, float pushback, float pushup)
 	if(pushup == 0 && zone->zonemap)
 	{
 		newz = zone->zonemap->FindBestZ(newloc, nullptr);
-		newloc.z = SetBestZ(newz);
+		if (newz != BEST_Z_INVALID)
+			newloc.z = SetBestZ(newz);
 	}
 
 	if(CheckCoordLosNoZLeaps(GetX(), GetY(), GetZ(), newloc.x, newloc.y, newloc.z))
@@ -3695,7 +3950,9 @@ bool Mob::CombatPush(Mob* attacker, float pushback)
 	if(zone->zonemap)
 	{
 		newz = zone->zonemap->FindBestZ(newloc, nullptr);
-		newloc.z = SetBestZ(newz);
+		if (newz != BEST_Z_INVALID)
+			newloc.z = SetBestZ(newz);
+
 		Log.Out(Logs::Detail, Logs::Combat, "Push: BestZ returned %0.2f for %0.2f,%0.2f,%0.2f", newloc.z, newloc.x, newloc.y, m_Position.z);
 	}
 

@@ -209,7 +209,7 @@ RULE_REAL ( Map, FixPathingZMaxDeltaSendTo, 20 )	//at runtime in SendTo: max cha
 RULE_REAL ( Map, FixPathingZMaxDeltaLoading, 45 )	//while loading each waypoint: max change in Z to allow the BestZ code to apply.
 RULE_INT ( Map, FindBestZHeightAdjust, 1)		// Adds this to the current Z before seeking the best Z position. If this is too high, mobs bounce when pathing.
 RULE_REAL ( Map, BestZSizeMax, 10.0) // When calculating bestz using size, this is our size cap. Setting this too high causes dragons and giants to hop.
-RULE_REAL ( Map, BestZMultiplier, 0.65) // This is our multiplier for the bestz calculation.
+RULE_REAL ( Map, BestZMultiplier, 0.625) // This is our multiplier for the bestz calculation.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Pathing )
@@ -431,9 +431,9 @@ RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on N
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
 RULE_REAL ( NPC, SpeedMultiplier, 50.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
-RULE_INT ( NPC, RunAnimRatio, 37 )	//This changes their animation based on their movement speed.
-RULE_REAL ( NPC, WalkSpeedMultiplier, 30.0 ) //Same as above for walking.
-RULE_INT ( NPC, WalkAnimRatio, 37 ) //Same as above for walking. Probably okay to combine with the runspeed rule.
+RULE_INT ( NPC, RunAnimRatio, 10 )	//This changes their animation based on their movement speed.
+RULE_REAL ( NPC, WalkSpeedMultiplier, 50.0 ) //Same as above for walking.
+RULE_INT ( NPC, WalkAnimRatio, 10 ) //Same as above for walking. Probably okay to combine with the runspeed rule.
 RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT ( NPC, NPCTemplateID, 153076)
 RULE_BOOL ( NPC, BoatsRunByDefault, true) // Mainly to make it easier to adjust boats' timing on the fly.

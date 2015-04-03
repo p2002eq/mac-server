@@ -1203,12 +1203,12 @@ bool PathManager::NoHazardsAccurate(glm::vec3 From, glm::vec3 To)
 				glm::vec3 TestPointWaterDest = TestPointWater;
 				glm::vec3 hit;
 				TestPointWaterDest.z -= 500;
-				float best_z2 = -999990;
+				float best_z2 = BEST_Z_INVALID;
 				if (zone->zonemap->LineIntersectsZone(TestPointWater, TestPointWaterDest, 1.0f, &hit))
 				{
 					best_z2 = hit.z;
 				}
-				if (best_z2 == -999990)
+				if (best_z2 == BEST_Z_INVALID)
 				{
 					Log.Out(Logs::Detail, Logs::Pathing, "  HAZARD DETECTED, really deep water/lava!");
 					return false;

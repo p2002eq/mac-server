@@ -771,7 +771,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if (IsClient())
 				{
-					AI_Start();
+					CastToClient()->AI_Start();
 					SendAppearancePacket(14, 100, true, true);
 				} else if(IsNPC()) {
 					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
@@ -818,8 +818,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(RuleB(Combat, EnableFearPathing)){
 					if(IsClient())
 					{
-						AI_Start();
-						animation = static_cast<uint16>(GetRunspeed() * 21.0f); //set our animation to match our speed about
+						CastToClient()->AI_Start();
 					}
 
 					CalculateNewFearpoint();
@@ -3812,7 +3811,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					{
 						bool feared = FindType(SE_Fear);
 						if(!feared)
-							AI_Stop();
+							CastToClient()->AI_Stop();
 					}
 				}
 				break;
@@ -3837,7 +3836,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					{
 						bool charmed = FindType(SE_Charm);
 						if(!charmed)
-							AI_Stop();
+							CastToClient()->AI_Stop();
 					}
 
 					if(curfp) {
