@@ -169,7 +169,7 @@ namespace Mac {
 			eq->curHP = emu->player.spawn.curHp;
 			eq->x_pos = (float)emu->player.spawn.x;
 			eq->y_pos = (float)emu->player.spawn.y;
-			eq->z_pos = (float)emu->player.spawn.z + (eq->size * 0.625f - 4);
+			eq->z_pos = (float)emu->player.spawn.z + 0.5f;
 			eq->animation = emu->player.spawn.animation;
 			eq->heading = (float)emu->player.spawn.heading;
 			eq->haircolor = emu->player.spawn.haircolor;

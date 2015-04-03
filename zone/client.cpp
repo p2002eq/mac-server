@@ -181,6 +181,7 @@ Client::Client(EQStreamInterface* ieqs)
 	SetTarget(0);
 	auto_attack = false;
 	auto_fire = false;
+	runmode = true;
 	linkdead_timer.Disable();
 	zonesummon_id = 0;
 	zonesummon_ignorerestrictions = 0;
@@ -259,7 +260,7 @@ Client::Client(EQStreamInterface* ieqs)
 
 	initial_respawn_selection = 0;
 
-	walkspeed = RuleR(Character, BaseWalkSpeed);
+	//walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
 	SavedRaidRestTimer = 0;
@@ -1358,7 +1359,7 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		ns->spawn.guildrank = guild_mgr.GetDisplayedRank(GuildID(), GuildRank(), AccountID());
 	}
 	ns->spawn.size			= 0; // Changing size works, but then movement stops! (wth?)
-	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.125f;
+	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.1f;
 	if (!m_pp.showhelm) ns->spawn.showhelm = 0;
 
 	// pp also hold this info; should we pull from there or inventory?

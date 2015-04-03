@@ -1355,7 +1355,7 @@ ZonePoint* Zone::GetClosestZonePoint(const glm::vec3& location, uint32 to, Clien
 		if (zp->target_zone_id == to)
 		{
             auto dist = Distance(glm::vec2(zp->x, zp->y), glm::vec2(location));
-			if ((zp->x == 999999 || zp->x == -999999) && (zp->y == 999999 || zp->y == -999999))
+			if ((zp->x == -BEST_Z_INVALID || zp->x == BEST_Z_INVALID) && (zp->y == -BEST_Z_INVALID || zp->y == BEST_Z_INVALID))
 				dist = 0;
 
 			if (dist < closest_dist)
@@ -1409,9 +1409,9 @@ ZonePoint* Zone::GetClosestZonePointWithoutZone(float x, float y, float z, Clien
 
 		float delta_x = zp->x - x;
 		float delta_y = zp->y - y;
-		if(zp->x == 999999 || zp->x == -999999)
+		if(zp->x == -BEST_Z_INVALID || zp->x == BEST_Z_INVALID)
 			delta_x = 0;
-		if(zp->y == 999999 || zp->y == -999999)
+		if(zp->y == -BEST_Z_INVALID || zp->y == BEST_Z_INVALID)
 			delta_y = 0;
 
 		float dist = delta_x*delta_x+delta_y*delta_y;///*+(zp->z-z)*(zp->z-z)*/;

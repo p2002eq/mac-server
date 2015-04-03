@@ -981,7 +981,7 @@ bool Mob::CheckLosFN(Mob* other) {
 	bool Result = false;
 
 	if(other)
-		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ() - other->GetZOffset(), other->GetSize());
+		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ(), other->GetSize());
 
 	SetLastLosState(Result);
 	
@@ -1016,7 +1016,7 @@ bool Mob::CheckRegion(Mob* other, bool skipwater) {
 
 bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 
-	glm::vec3 myloc(GetX(), GetY(), GetZ()-GetZOffset());
+	glm::vec3 myloc(GetX(), GetY(), GetZ());
 	glm::vec3 oloc(posX, posY, posZ);
 	float mybestz = myloc.z;
 	float obestz = oloc.z;

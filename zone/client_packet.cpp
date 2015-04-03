@@ -1242,7 +1242,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0; base_size = 0;
 	}
-	z_offset = base_size * 0.625f;
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
 	query = StringFormat(
@@ -1513,9 +1512,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
-		if(size > 0)
-			m_Position.z += static_cast<int16>(size);
+		float newz;
+		newz = zone->zonemap->FindBestZ(loc, nullptr);
+		if (newz != BEST_Z_INVALID)
+			m_Position.z = SetBestZ(newz);
+
 		sze->player.spawn.z = m_Position.z;
 	}
 	sze->player.spawn.zoneID = zone->GetZoneID();
@@ -2555,6 +2556,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	tmp = m_Position.y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
+	// Haynar was looking at delta's, which look like velocities.  This converts the incoming formats.  Might be useful later.
+	//Message(13,"Animation %d dx %d dy %d",ppu->anim_type, static_cast<int16>(64*ppu->delta_x), static_cast<int16>(64*ppu->delta_y));
 
 	//the purpose of this first block may not be readily apparent
 	//basically it's so people don't do a moderate warp every 2.5 seconds
@@ -5563,6 +5566,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			mypet->Say_StringID(MT_PetResponse, PET_CALMING);
 			mypet->WipeHateList();
 			mypet->SetTarget(nullptr);
+			tar_ndx = 20;
 		}
 		break;
 	}
@@ -6855,6 +6859,18 @@ void Client::Handle_OP_SetGuildMOTDCon(const EQApplicationPacket *app)
 
 void Client::Handle_OP_SetRunMode(const EQApplicationPacket *app)
 {
+	if (app->size != sizeof(SetRunMode_Struct)) {
+		Log.Out(Logs::General, Logs::Error, "Received invalid sized "
+		"OP_SetRunMode: got %d, expected %d", app->size,
+		sizeof(SetRunMode_Struct));
+		DumpPacket(app);
+		return;
+	}
+	SetRunMode_Struct* rms = (SetRunMode_Struct*)app->pBuffer;
+	if (rms->mode)
+		runmode = true;
+	else
+		runmode = false;
 }
 
 void Client::Handle_OP_SetServerFilter(const EQApplicationPacket *app)

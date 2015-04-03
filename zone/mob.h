@@ -394,7 +394,6 @@ public:
 	inline const float GetX() const { return m_Position.x; }
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
-	inline const float GetZOffset() const { return z_offset; }
 	inline const float GetHeading() const { return m_Position.w; }
 	inline const float GetEQX() const { return m_EQPosition.x; }
 	inline const float GetEQY() const { return m_EQPosition.y; }
@@ -427,17 +426,16 @@ public:
 	virtual void SetMoving(bool move) { moving = move; m_Delta = glm::vec4(); }
 	virtual void GoToBind(uint8 bindnum = 0) { }
 	virtual void Gate();
-	float GetWalkspeed() const { return(_GetMovementSpeed(0, true)); }
-	void  SetWalkSpeed(float speed) { walkspeed = speed; }
-	float GetRunspeed() const { return(_GetMovementSpeed(0)); }
+	float GetFearSpeed() const { return(0.025f * (float)_GetFearSpeed()); }
+	float GetWalkspeed() const { return(0.025f * (float)_GetWalkSpeed()); }
+	float GetRunspeed() const { return(0.025f * (float)_GetRunSpeed()); }
 	float GetBaseRunspeed() const { return runspeed; }
+	void  SetWalkSpeed(float speed) { int_walkspeed = (int)(speed * 40.0f); int_walkspeed = (int_walkspeed >> 2)<<2; walkspeed = (float)int_walkspeed / 40.0f; }
 	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by grids roamboxes, and roamers to determine how fast the NPC *should* move.
-	float GetSpeed() const { return IsCurrentlyRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by #showstats to show how fast the NPC currently *is* moving.
 	bool IsRunning() const { return m_is_running; } 
 	void SetRunning(bool val) { m_is_running = val; } // Toggle to force the NPC to run or walk on their next update.
-	bool IsCurrentlyRunning() const { return m_running; }
-	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
 	void SetCurrentSpeed(float speed);
+	float GetCurrentSpeed() { return current_speed; }
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDelta(const glm::vec4& delta) { m_Delta = delta; }
 	void SetPosition(const glm::vec4& pos) { m_Position = pos; }
@@ -783,7 +781,6 @@ public:
 
 	//old fear function
 	//void SetFeared(Mob *caster, uint32 duration, bool flee = false);
-	float GetFearSpeed();
 	bool IsFeared() { return curfp; } // This returns true if the mob is feared or fleeing due to low HP
 	//old fear: inline void StartFleeing() { SetFeared(GetHateTop(), FLEE_RUN_DURATION, true); }
 	inline void StartFleeing() { flee_mode = true; CalculateNewFearpoint(); }
@@ -946,7 +943,10 @@ protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
 	static uint16 GetProcID(uint16 spell_id, uint8 effect_index);
-	float _GetMovementSpeed(int mod, bool iswalking = false) const;
+	//float _GetMovementSpeed(int mod, bool iswalking = false) const;
+	int _GetRunSpeed() const;
+	int _GetWalkSpeed() const;
+	int _GetFearSpeed() const;
 	virtual bool MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, bool checkZ);
 
 	virtual bool AI_EngagedCastCheck() { return(false); }
@@ -956,7 +956,7 @@ protected:
 
 	bool IsFullHP;
 	bool moved;
-	float cursp;
+	float current_speed;
 
 	std::vector<uint16> RampageArray;
 	std::map<std::string, std::string> m_EntityVariables;
@@ -1034,9 +1034,9 @@ protected:
 	uint16 animation;
 	float base_size;
 	float size;
-	float z_offset;
 	float runspeed;
 	float walkspeed;
+	float fearspeed;
 	uint32 pLastChange;
 	bool held;
 	bool nocast;
@@ -1088,7 +1088,6 @@ protected:
 	EmuAppearance _appearance;
 	uint8 pRunAnimSpeed;
 	bool m_is_running; // This bool tells us if the NPC *should* be running or walking, to calculate speed.
-	bool m_running; // This bool is used to tell us if the NPC is currently running or walking.
 
 	Timer attack_timer;
 	Timer attack_dw_timer;
@@ -1273,6 +1272,9 @@ protected:
 
 private:
 	void _StopSong(); //this is not what you think it is
+	int int_runspeed;
+	int int_walkspeed;
+	int int_fearspeed;
 	Mob* target;
 };
 
