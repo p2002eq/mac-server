@@ -2545,9 +2545,10 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		pLastUpdate = Timer::GetCurrentTime();
 		return;
 	}
-
-	ppu->z_pos /= 10;
+	
 	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+	m_EQPosition.z = (float)ppu->z_pos / 10.0f;
+	ppu->z_pos /= 10;
 
 	float dist = 0;
 	float tmp;
@@ -2764,9 +2765,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
-	m_Position.x = ppu->x_pos;
-	m_Position.y = ppu->y_pos;
-	m_Position.z = ppu->z_pos;
+	//m_Position.x = ppu->x_pos;
+	//m_Position.y = ppu->y_pos;
+	//m_Position.z = ppu->z_pos;
 	animation = ppu->anim_type;
 
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.

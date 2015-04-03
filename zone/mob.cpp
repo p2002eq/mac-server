@@ -1387,7 +1387,7 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	spu->spawn_id	= GetID();
 	spu->x_pos = static_cast<int16>(m_Position.x);
 	spu->y_pos = static_cast<int16>(m_Position.y);
-	spu->z_pos = static_cast<int16>((m_Position.z)*10);
+	spu->z_pos = static_cast<int16>(10.0f * m_Position.z);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
 	spu->delta_x	= static_cast<int32>(m_Delta.x/128);
