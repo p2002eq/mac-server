@@ -1196,7 +1196,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_Position.x = m_pp.x;
 	m_Position.y = m_pp.y;
 	m_Position.z = m_pp.z;
-	m_Position.w = m_pp.heading;
+	m_Position.w = m_pp.heading / 2.0f;
 	race = m_pp.race;
 	base_race = m_pp.race;
 	gender = m_pp.gender;
@@ -1453,7 +1453,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	PlayerProfile_Struct* pps = (PlayerProfile_Struct*) new uchar[sizeof(PlayerProfile_Struct) - 4];
 	memcpy(pps, &m_pp, sizeof(PlayerProfile_Struct) - 4);
-
+	pps->heading /= 2.0f;
 	pps->perAA = m_epp.perAA;
 	int r = 0;
 	for (r = 0; r < MAX_PP_AA_ARRAY; r++)
@@ -1518,6 +1518,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 		sze->player.spawn.z = m_Position.z;
 	}
+	sze->player.spawn.heading *= 2;
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
@@ -2544,7 +2545,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		pLastUpdate = Timer::GetCurrentTime();
 		return;
 	}
-	
+
 	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
 	m_EQPosition.z = (float)ppu->z_pos / 10.0f;
 	ppu->z_pos /= 10;
@@ -2764,9 +2765,10 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
-	//m_Position.x = ppu->x_pos;
-	//m_Position.y = ppu->y_pos;
-	//m_Position.z = ppu->z_pos;
+	m_Position.x = ppu->x_pos;
+	m_Position.y = ppu->y_pos;
+	m_Position.z = m_EQPosition.z;
+
 	animation = ppu->anim_type;
 
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.

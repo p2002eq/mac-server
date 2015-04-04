@@ -1099,7 +1099,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		strn0cpy(ns->spawn.lastName, lastname, sizeof(ns->spawn.lastName));
 	}
 
-	ns->spawn.heading	= m_Position.w;
+	ns->spawn.heading	= static_cast<uint16>(m_Position.w);
 	ns->spawn.x			= m_Position.x;//((int32)x_pos)<<3;
 	ns->spawn.y			= m_Position.y;//((int32)y_pos)<<3;
 	ns->spawn.z			= m_Position.z;//((int32)z_pos)<<3;

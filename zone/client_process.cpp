@@ -90,6 +90,7 @@ bool Client::Process() {
 			m_pp.x = m_pp.binds[0].x;
 			m_pp.y = m_pp.binds[0].y;
 			m_pp.z = m_pp.binds[0].z;
+			m_pp.heading = m_pp.binds[0].heading;
 			Save();
 
 			Group *mygroup = GetGroup();

@@ -1893,10 +1893,10 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 	if (spell_id == SPELL_CAZIC_TOUCH && IsNPC())
 	{
-		char shoutStr[sizeof name[0] + 1];
-		strcpy(shoutStr, spell_target->name);
-		strcat(shoutStr, "!");
-		Shout(shoutStr);
+		char shoutStr[65];
+		strncpy(shoutStr, spell_target->name, strlen(target->name));
+		strncat(shoutStr, "!", 1);
+		Shout("%s",shoutStr);
 	}
 
 	if(IsClient() && !CastToClient()->GetGM()){
