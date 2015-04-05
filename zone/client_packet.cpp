@@ -1760,6 +1760,8 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app)
 	eid = (EntityId_Struct*)outapp->pBuffer;
 	if (RuleB(Combat, AssistNoTargetSelf))
 		eid->entity_id = GetID();
+	else
+		eid->entity_id = -1;
 	if (entity && entity->IsMob()) {
 		Mob *assistee = entity->CastToMob();
 		if (assistee->GetTarget()) {

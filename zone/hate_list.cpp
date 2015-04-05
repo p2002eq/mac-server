@@ -325,7 +325,7 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || cur->ent->IsFeared()){
+			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing())){
 				if(hate == -1)
 				{
 					top = cur->ent;

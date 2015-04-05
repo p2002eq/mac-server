@@ -536,7 +536,7 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer->Disable();
 	} else {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
-		AIautocastspell_timer->Start(RandomTimer(0, 15000), false);
+		AIautocastspell_timer->Start(RandomTimer(2000, 15000), false);
 	}
 
 	if (NPCTypedata) {

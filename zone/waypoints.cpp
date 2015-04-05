@@ -758,14 +758,12 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
 
 	if (IsClient()) {
-		SendPosUpdate(1);
+		SendPositionNearby(1);
 		CastToClient()->ResetPositionTimer();
 	}
 	else
 	{
-		// force an update now
-		move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
-		SendPosUpdate();
+		SendPositionNearby();
 		SetAppearance(eaStanding, false);
 	}		
 	pLastChange = Timer::GetCurrentTime();
