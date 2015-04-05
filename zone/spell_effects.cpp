@@ -2577,7 +2577,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			}
 			
 			case SE_MovementSpeed: {
-				if(IsNPC() && IsSpeedBuff(spell_id))
+				if (IsNPC() && IsSpeedBuff(spell_id) && RuleB(NPC, CheckSoWBuff))
 					SetRunning(true);
 
 				break;

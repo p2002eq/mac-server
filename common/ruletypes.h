@@ -437,6 +437,7 @@ RULE_INT ( NPC, WalkAnimRatio, 10 ) //Same as above for walking. Probably okay t
 RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT ( NPC, NPCTemplateID, 153076)
 RULE_BOOL ( NPC, BoatsRunByDefault, true) // Mainly to make it easier to adjust boats' timing on the fly.
+RULE_BOOL(NPC, CheckSoWBuff, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Aggro )
