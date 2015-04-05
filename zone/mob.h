@@ -445,6 +445,7 @@ public:
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
+	void SendPositionNearby(uint8 iSendToSelf = 0);
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
@@ -784,6 +785,7 @@ public:
 	bool IsFeared() { return curfp; } // This returns true if the mob is feared or fleeing due to low HP
 	//old fear: inline void StartFleeing() { SetFeared(GetHateTop(), FLEE_RUN_DURATION, true); }
 	inline void StartFleeing() { flee_mode = true; CalculateNewFearpoint(); }
+	inline bool IsFleeing() { return flee_mode; }
 	void ProcessFlee();
 	void CheckFlee();
 	inline bool IsBlind() { return spellbonuses.IsBlind; }
