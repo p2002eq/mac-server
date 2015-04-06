@@ -581,6 +581,11 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 
 		softcap += shield_ac;
 		armor += shield_ac;
+
+		// anti-twink code
+		if (IsClient() && (GetLevel() < 50) && (armor > (25 + GetLevel() * 6)))
+			armor = 25 + GetLevel() * 6;
+
 		if (RuleB(Combat, OldACSoftcapRules))
 			softcap += (softcap * (aa_mit * RuleR(Combat, AAMitigationACFactor)));
 		if (armor > softcap) {
@@ -639,6 +644,9 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 			attack_rating = (attacker->GetATK() + (attacker->GetSkill(SkillOffense)*1.345) + ((attacker->GetSTR()-66) * 0.9));
 
 		attack_rating = attacker->mod_attack_rating(attack_rating, this);
+
+		if (attack_rating < 1.0)
+			attack_rating = 1.0f;
 
 		damage = GetMeleeMitDmg(attacker, damage, minhit, mitigation_rating, attack_rating);
 	} else {
@@ -757,33 +765,78 @@ int32 Client::GetMeleeMitDmg(Mob *attacker, int32 damage, int32 minhit,
 	dmg_bonus -= dmg_bonus * (itembonuses.MeleeMitigation / 100.0);
 	dmg_interval -= dmg_interval * spellMeleeMit;
 
-	float mit_roll = zone->random.Real(0, mit_rating);
-	float atk_roll = zone->random.Real(0, atk_rating);
+	if (RuleB(Combat, NewACCurves)) {
+		float mit_adj = 4.0f;
+		if (GetLevel() < 65.0f)
+			mit_adj = 2.0f + 2.0f * (GetLevel()/ 65);
 
-	if (atk_roll > mit_roll) {
-		float a_diff = atk_roll - mit_roll;
-		float thac0 = atk_rating * RuleR(Combat, ACthac0Factor);
-		float thac0cap = attacker->GetLevel() * 9 + 20;
-		if (thac0 > thac0cap)
-			thac0 = thac0cap;
+		const float combatRating = 1.0f - (mit_adj * mit_rating / atk_rating);
 
-		d += 10 * (a_diff / thac0);
-	} else if (mit_roll > atk_roll) {
-		float m_diff = mit_roll - atk_roll;
-		float thac20 = mit_rating * RuleR(Combat, ACthac20Factor);
-		float thac20cap = GetLevel() * 9 + 20;
-		if (thac20 > thac20cap)
-			thac20 = thac20cap;
+		float minHit = 0.25f;
+		if (combatRating < 0.95f)
+			minHit = 7.314f - combatRating * 11.712f + 4.448 * combatRating * combatRating;
+		float maxHit = 0.25f;
+		if (combatRating > -1.632f)
+			maxHit = 27.463f + combatRating * 30.177f + 8.273f * combatRating * combatRating;
 
-		d -= 10 * (m_diff / thac20);
-	}
+		if (minHit > 95.0f)
+			minHit = 95.0f;
+		if (maxHit > 95.0f)
+			maxHit = 95.0f;
 
-	if (d < 1)
+		float d2_d19_chance = 100 - (maxHit + minHit);
+		const float d2_d19_dist = d2_d19_chance / 18.0f;
+
+		if(minHit < d2_d19_dist) {
+			minHit = (100 - maxHit) / 19.0f;
+			d2_d19_chance = 100 - (maxHit + minHit);
+		}
+		if(maxHit < d2_d19_dist) {
+			maxHit = (100 - minHit) / 19.0f;
+			d2_d19_chance = 100 - (maxHit + minHit);
+		}
+
+		const float d1_chance = minHit;
+		const float dice = zone->random.Real(0, 100);
+	
 		d = 1;
-	else if (d > 20)
-		d = 20;
+		if(dice <= d1_chance)
+			d = 1;
+		else if(dice <= (d2_d19_chance + d1_chance))
+			d = 2 + (int)((dice-d1_chance) * 18.0f / d2_d19_chance);
+		else
+			d = 20;
 
-	return static_cast<int32>((dmg_bonus + dmg_interval * d));
+	} else {
+
+		float mit_roll = zone->random.Real(0, mit_rating);
+		float atk_roll = zone->random.Real(0, atk_rating);
+
+		if (atk_roll > mit_roll) {
+			float a_diff = atk_roll - mit_roll;
+			float thac0 = atk_rating * RuleR(Combat, ACthac0Factor);
+			float thac0cap = attacker->GetLevel() * 9 + 20;
+			if (thac0 > thac0cap)
+				thac0 = thac0cap;
+
+			d += 10 * (a_diff / thac0);
+		} else if (mit_roll > atk_roll) {
+			float m_diff = mit_roll - atk_roll;
+			float thac20 = mit_rating * RuleR(Combat, ACthac20Factor);
+			float thac20cap = GetLevel() * 9 + 20;
+			if (thac20 > thac20cap)
+				thac20 = thac20cap;
+
+			d -= 10 * (m_diff / thac20);
+		}
+
+		if (d < 1)
+			d = 1;
+		else if (d > 20)
+			d = 20;
+	}	
+	return (static_cast<int32>(dmg_bonus + dmg_interval * d));
+
 }
 
 //Returns the weapon damage against the input mob
