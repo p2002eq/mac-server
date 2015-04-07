@@ -189,7 +189,7 @@ bool ZoneServer::Process() {
 						Log.Out(Logs::Detail, Logs::World_Server,"Zone authorization failed.");
 						auto pack = new ServerPacket(ServerOP_ZAAuthFailed);
 						SendPacket(pack);
-						delete pack;
+						safe_delete(pack);
 						Disconnect();
 						return false;
 					}
@@ -200,7 +200,7 @@ bool ZoneServer::Process() {
 					Log.Out(Logs::Detail, Logs::World_Server,"Zone authorization failed.");
 					auto pack = new ServerPacket(ServerOP_ZAAuthFailed);
 					SendPacket(pack);
-					delete pack;
+					safe_delete(pack);
 					Disconnect();
 					return false;
 				}
@@ -780,7 +780,7 @@ bool ZoneServer::Process() {
 				whom->guildid = whoall->guildid;
 				strcpy(whom->whom,whoall->whom);
 				client_list.SendWhoAll(whoall->fromid,whoall->from, whoall->admin, whom, this);
-				delete whom;
+				safe_delete(whom);
 				break;
 			}
 			case ServerOP_RequestOnlineGuildMembers: {
@@ -941,7 +941,7 @@ bool ZoneServer::Process() {
 				tod->start_eqtime=zoneserver_list.worldclock.getStartEQTime();
 				tod->start_realtime=zoneserver_list.worldclock.getStartRealTime();
 				SendPacket(pack);
-				delete pack;
+				safe_delete(pack);
 				break;
 			}
 			case ServerOP_SetWorldTime: {
@@ -1042,8 +1042,7 @@ bool ZoneServer::Process() {
 						}
 						else
 						{
-							delete pack;
-							pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+							auto pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
 							ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
 							strcpy(scs->grantname, s->grantname);
 							strcpy(scs->ownername, s->ownername);
@@ -1059,6 +1058,7 @@ bool ZoneServer::Process() {
 							else {
 								Log.Out(Logs::Detail, Logs::World_Server, "Unable to locate zone record for instance id %u in zoneserver list for ServerOP_Consent_Response operation.", s->instance_id);
 							}
+							safe_delete(pack);
 						}
 					}
 					else
@@ -1074,8 +1074,7 @@ bool ZoneServer::Process() {
 						}
 						else {
 							// send target not found back to requester
-							delete pack;
-							pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+							auto pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
 							ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
 							strcpy(scs->grantname, s->grantname);
 							strcpy(scs->ownername, s->ownername);
@@ -1090,13 +1089,13 @@ bool ZoneServer::Process() {
 							else {
 								Log.Out(Logs::Detail, Logs::World_Server, "Unable to locate zone record for zone id %u in zoneserver list for ServerOP_Consent_Response operation.", s->zone_id);
 							}
+							safe_delete(pack);
 						}
 					}
 				}
 				else {
 					// send target not found back to requester
-					delete pack;
-					pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+					auto pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
 					ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
 					strcpy(scs->grantname, s->grantname);
 					strcpy(scs->ownername, s->ownername);
@@ -1111,6 +1110,7 @@ bool ZoneServer::Process() {
 					else {
 						Log.Out(Logs::Detail, Logs::World_Server, "Unable to locate zone record for zone id %u in zoneserver list for ServerOP_Consent_Response operation.", s->zone_id);
 					}
+					safe_delete(pack);
 				}
 				break;
 			}
@@ -1263,15 +1263,17 @@ bool ZoneServer::Process() {
 			}
 			default:
 			{
-				Log.Out(Logs::Detail, Logs::World_Server,"Unknown ServerOPcode from zone 0x%04x, size %d",pack->opcode,pack->size);
+				Log.Out(Logs::Detail, Logs::World_Server, "Unknown ServerOPcode from zone 0x%04x, size %d", pack->opcode, pack->size);
 				DumpPacket(pack->pBuffer, pack->size);
 				break;
 			}
 		}
-		if (pack)
-			delete pack;
-		else
-			Log.Out(Logs::Detail, Logs::World_Server, "Zoneserver process tried to delete pack when pack does not exist.");
+		if (pack) {
+			safe_delete(pack);
+		}
+		else {
+			Log.Out(Logs::Detail, Logs::World_Server, "Zoneserver process attempted to delete pack when pack does not exist.");
+		}
 	}
 	return true;
 }
