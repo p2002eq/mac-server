@@ -436,6 +436,7 @@ void NPC::NextGuardPosition() {
 	SetCurrentSpeed(walksp);
 	if(walksp <= 0.0f)
 		return;
+
 	bool CP2Moved;
 	if(!RuleB(Pathing, Guard) || !zone->pathing)
 		CP2Moved = CalculateNewPosition2( m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
