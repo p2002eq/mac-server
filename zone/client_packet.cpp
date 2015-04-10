@@ -5426,7 +5426,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 	MoveItem_Struct* mi = (MoveItem_Struct*)app->pBuffer;
 	Log.Out(Logs::Detail, Logs::Inventory, "Moveitem from_slot: %i, to_slot: %i, number_in_stack: %i", mi->from_slot, mi->to_slot, mi->number_in_stack);
 
-	if (spellend_timer.Enabled() && casting_spell_id && !IsBardSong(casting_spell_id))
+	if (spellend_timer.Enabled() && casting_spell_id && !IsBardSong(casting_spell_id) && mi->from_slot != MainCursor)
 	{
 		if (mi->from_slot != mi->to_slot && (mi->from_slot <= EmuConstants::GENERAL_END || mi->from_slot > 39) && IsValidSlot(mi->from_slot) && IsValidSlot(mi->to_slot))
 		{
