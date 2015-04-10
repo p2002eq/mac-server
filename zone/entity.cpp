@@ -1276,6 +1276,21 @@ void EntityList::Save()
 	}
 }
 
+void EntityList::InterruptTargeted(Mob* mob)
+{
+	if (!mob)
+		return;
+	Mob* Cur = nullptr;
+
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		Cur = it->second;
+		if (Cur->GetTarget() == mob && (!Cur->GetOwner() || !Cur->GetOwner()->IsClient()) && Cur->IsCasting()) 
+			Cur->InterruptSpell();
+		++it;
+	}	
+}
+
 void EntityList::ReplaceWithTarget(Mob *pOldMob, Mob *pNewTarget)
 {
 	if (!pNewTarget)
