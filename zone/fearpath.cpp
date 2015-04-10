@@ -20,6 +20,7 @@
 
 #include "map.h"
 #include "pathing.h"
+#include "water_map.h"
 #include "zone.h"
 
 #ifdef _WINDOWS
@@ -123,29 +124,6 @@ void Mob::ProcessFlee()
 	}
 }
 
-float Mob::GetFearSpeed()
-{
-	if (flee_mode) {
-		//we know ratio < FLEE_HP_RATIO
-		float speed = GetBaseRunspeed();
-		float ratio = GetHPRatio();
-		float multiplier = RuleR(Combat, FleeMultiplier);
-
-		if (GetSnaredAmount() > 40)
-			multiplier = multiplier / 6.0f;
-
-		speed = speed * ratio * multiplier / 100;
-
-		//NPC will eventually stop. Snares speeds this up. Below this speed, NPCs warp.
-		if (speed < 0.1667)
-			speed = 0.0001f;
-
-		return speed;
-	}
-	// fear and blind use their normal run speed
-	return GetRunspeed();
-}
-
 void Mob::CalculateNewFearpoint()
 {
 	if(RuleB(Pathing, Fear) && zone->pathing)
@@ -172,6 +150,9 @@ void Mob::CalculateNewFearpoint()
 		Log.Out(Logs::Detail, Logs::Pathing, "No path found to selected node. Falling through to old fear point selection.");
 	}
 
+	bool inliquid = (zone->HasWaterMap() && zone->watermap->InLiquid(glm::vec3(GetPosition())));
+	bool stay_inliquid = (inliquid && IsNPC() && CastToNPC()->IsUnderwaterOnly());
+
 	int loop = 0;
 	float ranx, rany, ranz;
 	curfp = false;
@@ -181,8 +162,22 @@ void Mob::CalculateNewFearpoint()
 		loop++;
 		ranx = GetX()+zone->random.Int(0, ran-1)-zone->random.Int(0, ran-1);
 		rany = GetY()+zone->random.Int(0, ran-1)-zone->random.Int(0, ran-1);
-		ranz = FindGroundZ(ranx,rany);
-		if (ranz == -999999)
+		ranz = BEST_Z_INVALID;
+		glm::vec3 newloc(ranx, rany, GetZ());
+		glm::vec3 myloc(GetX(), GetY(), GetZ());
+
+		if (stay_inliquid) {
+			if(zone->zonemap->CheckLoS(myloc, newloc)) {
+				ranz = GetZ();
+				curfp = true;
+				break;
+			}
+		} else {
+			ranz = FindGroundZ(ranx,rany);
+			if (ranz != BEST_Z_INVALID)
+				ranz = SetBestZ(ranz);
+		}
+		if (ranz == BEST_Z_INVALID)
 			continue;
 		float fdist = ranz - GetZ();
 		if (fdist >= -12 && fdist <= 12 && CheckCoordLosNoZLeaps(GetX(),GetY(),GetZ(),ranx,rany,ranz))

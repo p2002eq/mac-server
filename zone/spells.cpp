@@ -1888,12 +1888,9 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			}
 		}
 
-	if (spell_id == SPELL_CAZIC_TOUCH && IsNPC())
+	if ( spell_target && spell_id == SPELL_CAZIC_TOUCH && IsNPC())
 	{
-		char shoutStr[sizeof name[0] + 1];
-		strcpy(shoutStr, spell_target->name);
-		strcat(shoutStr, "!");
-		Shout(shoutStr);
+		Shout("%s!",spell_target->name);
 	}
 
 	if(IsClient() && !CastToClient()->GetGM()){
@@ -3743,7 +3740,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			}
 		}
 	}
-	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id))
+	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
+		&& (!IsNPC() || !isproc || CastToNPC()->GetInnateProcSpellId() != spell_id )		// NPC innate procs always hit the target, even if beneficial
+	)																						// we don't want beneficial procs aggroing nearby NPCs
 		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, (spelltar->GetMaxHP() - spelltar->GetHP())));
 
 	// make sure spelltar is high enough level for the buff

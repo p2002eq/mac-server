@@ -4552,7 +4552,8 @@ void command_loc(Client *c, const Seperator *sep)
 		if(zone->zonemap)
 		{
 			newz = zone->zonemap->FindBestZ(newloc, nullptr);
-			newloc.z = t->SetBestZ(newz);
+			if (newz != BEST_Z_INVALID)
+				newloc.z = t->SetBestZ(newz);
 		}
 
 		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
@@ -7526,7 +7527,7 @@ void command_bestz(Client *c, const Seperator *sep){
 
 		float best_z = zone->zonemap->FindBestZ(me, &hit);
 
-		if (best_z != -999999)
+		if (best_z != BEST_Z_INVALID)
 		{
 			c->Message(0, "Z is %.3f at (%.3f, %.3f).", best_z, me.x, me.y);
 		}

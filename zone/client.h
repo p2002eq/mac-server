@@ -262,6 +262,7 @@ public:
 	inline uint16	GetPort()		const { return port; }
 	bool			IsDead() const { return(dead); }
 	bool			IsUnconscious() const { return ((cur_hp <= 0) ? true : false); }
+	inline bool		GetRunMode() const { return runmode; }
 
 	virtual bool Save() { return Save(0); }
 					bool Save(uint8 iCommitNow); // 0 = delayed, 1=async now, 2=sync now
@@ -883,6 +884,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	inline bool IsDraggingCorpse() { return (DraggedCorpses.size() > 0); }
 	void DragCorpses();
 	inline void ClearDraggedCorpses() { DraggedCorpses.clear(); }
+	inline void ResetPositionTimer() { position_timer_counter = 0; }
 
 	const char* GetRacePlural(Client* client);
 	const char* GetClassPlural(Client* client);
@@ -1057,6 +1059,7 @@ private:
 	bool				LFG;
 	bool				auto_attack;
 	bool				auto_fire;
+	bool				runmode;
 	uint8				gmspeed;
 	bool				medding;
 	uint16				horseId;
