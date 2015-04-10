@@ -143,7 +143,6 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	swarmInfoPtr = nullptr;
 	spellscale = d->spellscale;
 	healscale = d->healscale;
-	z_offset = 0.0f;
 
 	logging_enabled = NPC_DEFAULT_LOGGING_ENABLED;
 
@@ -267,7 +266,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	reface_timer->Disable();
 	qGlobals = nullptr;
 	SetEmoteID(d->emoteid);
-	SetWalkSpeed(d->walkspeed);
+	if (d->walkspeed > 0.0f)
+		SetWalkSpeed(d->walkspeed);
 	SetCombatHPRegen(d->combat_hp_regen);
 	SetCombatManaRegen(d->combat_mana_regen);
 
@@ -824,7 +824,7 @@ NPC* NPC::SpawnNPC(const char* spawncommand, const glm::vec4& position, Client* 
 		npc_type->loottable_id = 0;
 		npc_type->texture = atoi(sep.arg[3]);
 		npc_type->light = 0; // spawncommand needs update
-		npc_type->runspeed = 1.25;
+		npc_type->runspeed = 1.3f;
 		npc_type->d_melee_texture1 = atoi(sep.arg[7]);
 		npc_type->d_melee_texture2 = atoi(sep.arg[8]);
 		npc_type->merchanttype = atoi(sep.arg[9]);

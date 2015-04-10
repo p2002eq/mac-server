@@ -43,7 +43,7 @@
 
 const int Z_AGGRO=10;
 
-const int MobAISpellRange=100; // max range of buffs
+const int MobAISpellRange=80; // max range of buffs
 const int SpellType_Nuke=1;
 const int SpellType_Heal=2;
 const int SpellType_Root=4;

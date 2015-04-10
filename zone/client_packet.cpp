@@ -1196,7 +1196,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_Position.x = m_pp.x;
 	m_Position.y = m_pp.y;
 	m_Position.z = m_pp.z;
-	m_Position.w = m_pp.heading;
+	m_Position.w = m_pp.heading / 2.0f;
 	race = m_pp.race;
 	base_race = m_pp.race;
 	gender = m_pp.gender;
@@ -1242,7 +1242,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0; base_size = 0;
 	}
-	z_offset = base_size * 0.625f;
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
 	query = StringFormat(
@@ -1454,7 +1453,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	PlayerProfile_Struct* pps = (PlayerProfile_Struct*) new uchar[sizeof(PlayerProfile_Struct) - 4];
 	memcpy(pps, &m_pp, sizeof(PlayerProfile_Struct) - 4);
-
+	pps->heading /= 2.0f;
 	pps->perAA = m_epp.perAA;
 	int r = 0;
 	for (r = 0; r < MAX_PP_AA_ARRAY; r++)
@@ -1513,11 +1512,16 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
-		if(size > 0)
-			m_Position.z += static_cast<int16>(size);
+		if (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc))
+		{
+			m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
+			if(size > 0)
+				m_Position.z += static_cast<int16>(size);
+		}
+
 		sze->player.spawn.z = m_Position.z;
 	}
+	sze->player.spawn.heading *= 2;
 	sze->player.spawn.zoneID = zone->GetZoneID();
 	outapp->priority = 6;
 	FastQueuePacket(&outapp);
@@ -1759,6 +1763,8 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app)
 	eid = (EntityId_Struct*)outapp->pBuffer;
 	if (RuleB(Combat, AssistNoTargetSelf))
 		eid->entity_id = GetID();
+	else
+		eid->entity_id = -1;
 	if (entity && entity->IsMob()) {
 		Mob *assistee = entity->CastToMob();
 		if (assistee->GetTarget()) {
@@ -2545,8 +2551,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		return;
 	}
 
-	ppu->z_pos /= 10;
 	m_EQPosition = glm::vec4(ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+	m_EQPosition.z = (float)ppu->z_pos / 10.0f;
+	ppu->z_pos /= 10;
 
 	float dist = 0;
 	float tmp;
@@ -2555,6 +2562,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	tmp = m_Position.y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
+	// Haynar was looking at delta's, which look like velocities.  This converts the incoming formats.  Might be useful later.
+	//Message(13,"Animation %d dx %d dy %d",ppu->anim_type, static_cast<int16>(64*ppu->delta_x), static_cast<int16>(64*ppu->delta_y));
 
 	//the purpose of this first block may not be readily apparent
 	//basically it's so people don't do a moderate warp every 2.5 seconds
@@ -2763,7 +2772,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	float water_y = m_Position.y;
 	m_Position.x = ppu->x_pos;
 	m_Position.y = ppu->y_pos;
-	m_Position.z = ppu->z_pos;
+	m_Position.z = m_EQPosition.z;
+
 	animation = ppu->anim_type;
 
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
@@ -5339,7 +5349,7 @@ void Client::Handle_OP_MemorizeSpell(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Mend(const EQApplicationPacket *app) 
+void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 {
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) { return; }
 
@@ -5568,6 +5578,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			mypet->Say_StringID(MT_PetResponse, PET_CALMING);
 			mypet->WipeHateList();
 			mypet->SetTarget(nullptr);
+			tar_ndx = 20;
 		}
 		break;
 	}
@@ -6860,6 +6871,18 @@ void Client::Handle_OP_SetGuildMOTDCon(const EQApplicationPacket *app)
 
 void Client::Handle_OP_SetRunMode(const EQApplicationPacket *app)
 {
+	if (app->size != sizeof(SetRunMode_Struct)) {
+		Log.Out(Logs::General, Logs::Error, "Received invalid sized "
+		"OP_SetRunMode: got %d, expected %d", app->size,
+		sizeof(SetRunMode_Struct));
+		DumpPacket(app);
+		return;
+	}
+	SetRunMode_Struct* rms = (SetRunMode_Struct*)app->pBuffer;
+	if (rms->mode)
+		runmode = true;
+	else
+		runmode = false;
 }
 
 void Client::Handle_OP_SetServerFilter(const EQApplicationPacket *app)

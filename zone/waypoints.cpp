@@ -397,6 +397,7 @@ void NPC::SetWaypointPause()
 
 	if (cur_wp_pause == 0) {
 		AIwalking_timer->Start(100);
+		AIwalking_timer->Trigger();
 	}
 	else
 	{
@@ -435,6 +436,7 @@ void NPC::NextGuardPosition() {
 	SetCurrentSpeed(walksp);
 	if(walksp <= 0.0f)
 		return;
+
 	bool CP2Moved;
 	if(!RuleB(Pathing, Guard) || !zone->pathing)
 		CP2Moved = CalculateNewPosition2( m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
@@ -562,8 +564,9 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		m_Position.z = z;
 		return true;
 	}
-
+	bool send_update = false;
 	int compare_steps = IsBoat() ? 1 : 20;
+
 	if(tar_ndx < compare_steps && m_TargetLocation.x==x && m_TargetLocation.y==y) {
 
 		float new_x = m_Position.x + m_TargetV.x*tar_vector;
@@ -651,7 +654,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	tar_vector = speed / mag;
 
 // mob move fix
-	int numsteps = (int) ( mag * 20 / speed) + 1;
+	int numsteps = (int) ( mag * 20.0f / speed);
 
 
 // mob move fix
@@ -660,7 +663,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	{
 		if (numsteps>1)
 		{
-			tar_vector=1.0f	;
+			tar_vector=1.0f ;
 			m_TargetV.x = m_TargetV.x/numsteps;
 			m_TargetV.y = m_TargetV.y/numsteps;
 			m_TargetV.z = m_TargetV.z/numsteps;
@@ -688,14 +691,13 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			m_Position.x = x;
 			m_Position.y = y;
 			m_Position.z = z;
-
+			tar_ndx = 20;
 			Log.Out(Logs::Detail, Logs::AI, "Only a single step to get there... jumping.");
-
 		}
 	}
 
 	else {
-		tar_vector/=20;
+		tar_vector/=20.0f;
 
 		float new_x = m_Position.x + m_TargetV.x*tar_vector;
 		float new_y = m_Position.y + m_TargetV.y*tar_vector;
@@ -710,6 +712,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		m_Position.w = CalculateHeadingToTarget(x, y);
 		Log.Out(Logs::Detail, Logs::AI, "Next position2 (%.3f, %.3f, %.3f) (%d steps)", m_Position.x, m_Position.y, m_Position.z, numsteps);
 	}
+
 
 	uint8 NPCFlyMode = 0;
 
@@ -755,13 +758,17 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 
 	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
 
-	if (IsClient())
-		SendPosUpdate(1);
+	if (IsClient()) {
+		SendPositionNearby(1);
+		CastToClient()->ResetPositionTimer();
+	}
 	else
-		SendPosUpdate();
-
-	SetAppearance(eaStanding, false);
+	{
+		SendPositionNearby();
+		SetAppearance(eaStanding, false);
+	}		
 	pLastChange = Timer::GetCurrentTime();
+	
 	return true;
 }
 
@@ -773,8 +780,14 @@ bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool che
 
 float Mob::SetRunAnimation(float speed)
 {
-	float newspeed = speed * 57;
-	if(IsNPC()) 
+	SetCurrentSpeed(speed);
+	float newspeed = speed * 50.0f;
+	pRunAnimSpeed = static_cast<uint8>(speed * 10.0f);
+	if (IsClient()) {
+		newspeed = speed * 100.0f;
+		animation = static_cast<uint16>(speed * 10.0f);
+	}
+	/*if(IsNPC()) 
 	{
 		if(speed >= GetRunspeed())
 		{
@@ -788,7 +801,7 @@ float Mob::SetRunAnimation(float speed)
 			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
 			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
 		}
-	}
+	}*/
 
 	return newspeed;
 }
@@ -802,7 +815,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 	float nz = m_Position.z;
 
 	// if NPC is rooted
-	if (speed == 0.0) {
+	if (speed <= 0.0) {
 		SetHeading(CalculateHeadingToTarget(x, y));
 		if(moved){
 			SendPosition();
@@ -1040,12 +1053,12 @@ void Mob::SendTo(float new_x, float new_y, float new_z) {
 
 void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 	if(IsNPC()) {
-		entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z + 0.1);
+		entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z + 0.5f);
 	}
 
 	m_Position.x = new_x;
 	m_Position.y = new_y;
-	m_Position.z = new_z + 0.1;
+	m_Position.z = new_z + 0.5f;
 
 	//fix up pathing Z, this shouldent be needed IF our waypoints
 	//are corrected instead

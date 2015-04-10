@@ -181,6 +181,7 @@ Client::Client(EQStreamInterface* ieqs)
 	SetTarget(0);
 	auto_attack = false;
 	auto_fire = false;
+	runmode = true;
 	linkdead_timer.Disable();
 	zonesummon_id = 0;
 	zonesummon_ignorerestrictions = 0;
@@ -259,7 +260,7 @@ Client::Client(EQStreamInterface* ieqs)
 
 	initial_respawn_selection = 0;
 
-	walkspeed = RuleR(Character, BaseWalkSpeed);
+	//walkspeed = RuleR(Character, BaseWalkSpeed);
 
 	EngagedRaidTarget = false;
 	SavedRaidRestTimer = 0;
@@ -426,7 +427,7 @@ bool Client::Save(uint8 iCommitNow) {
 	m_pp.y = m_Position.y;
 	m_pp.z = m_Position.z;
 	m_pp.guildrank = guildrank;
-	m_pp.heading = m_Position.w;
+	m_pp.heading = m_Position.w * 2.0f;
 
 	/* Mana and HP */
 	if (GetHP() <= 0) {
@@ -443,8 +444,8 @@ bool Client::Save(uint8 iCommitNow) {
 	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
 	/* Save Current Bind Points */
-	auto regularBindPosition = glm::vec4(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0.0f);
-	auto homeBindPosition = glm::vec4(m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, 0.0f);
+	auto regularBindPosition = glm::vec4(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
+	auto homeBindPosition = glm::vec4(m_pp.binds[4].x, m_pp.binds[4].y, m_pp.binds[4].z, m_pp.binds[4].heading);
 	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, regularBindPosition, 0); /* Regular bind */
 	database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[4].zoneId, m_pp.binds[4].instance_id, homeBindPosition, 1); /* Home Bind */
 
@@ -1358,7 +1359,7 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		ns->spawn.guildrank = guild_mgr.GetDisplayedRank(GuildID(), GuildRank(), AccountID());
 	}
 	ns->spawn.size			= 0; // Changing size works, but then movement stops! (wth?)
-	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.125f;
+	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.1f;
 	if (!m_pp.showhelm) ns->spawn.showhelm = 0;
 
 	// pp also hold this info; should we pull from there or inventory?

@@ -383,7 +383,6 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 			npc_type->race = WOLF;
 			npc_type->texture = 0;
 			npc_type->gender = 1;
-			npc_type->size *= 2.0f;
 			npc_type->luclinface = 0;
 			break;
 		default:
@@ -459,8 +458,6 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	// finally, override size if one was provided
 	if (in_size > 0.0f)
 		npc->size = in_size;
-
-	npc->z_offset = 0.0f;
 
 	entity_list.AddNPC(npc, true, true);
 	SetPetID(npc->GetID());
