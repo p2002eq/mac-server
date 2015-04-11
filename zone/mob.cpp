@@ -1472,7 +1472,7 @@ void Mob::SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpda
 void Mob::ShowStats(Client* client)
 {
 	if (IsClient()) {
-		CastToClient()->SendStatsWindow(client, RuleB(Character, UseNewStatsWindow));
+		CastToClient()->SendStats(client);
 	}
 	else if (IsCorpse()) {
 		if (IsPlayerCorpse()) {
