@@ -526,8 +526,10 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 			spellbonuses.CombatStability) / 100.0f;
 
 	if (RuleB(Combat, UseIntervalAC)) {
-		float softcap = (GetSkill(SkillDefense) + GetLevel()) *
-			RuleR(Combat, SoftcapFactor) * (1.0 + aa_mit);
+		float softcap = GetSkill(SkillDefense) + GetLevel() - 2;
+		softcap *= (1.0 + aa_mit);
+		if (softcap < 1.0f)
+			softcap = 1.0f;
 		float mitigation_rating = 0.0;
 		float attack_rating = 0.0;
 		int shield_ac = 0;
