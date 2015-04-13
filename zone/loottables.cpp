@@ -119,11 +119,18 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc, uint32 lootdrop_id, ItemList* item
 
 	if (droplimit == 0 && mindrop == 0) {
 		for (uint32 i = 0; i < lds->NumEntries; ++i) {
-			int charges = lds->Entries[i].multiplier;
-			for (int j = 0; j < charges; ++j) {
+			int multiplier = lds->Entries[i].multiplier;
+			for (int j = 0; j < multiplier; ++j) {
 				if (zone->random.Real(0.0, 100.0) <= lds->Entries[i].chance) {
-					const Item_Struct* dbitem = GetItem(lds->Entries[i].item_id);
-					npc->AddLootDrop(dbitem, itemlist, lds->Entries[i].item_charges, lds->Entries[i].minlevel,
+					uint32 itemid = lds->Entries[i].item_id;
+					int8 charges = lds->Entries[i].item_charges;
+					const Item_Struct* db_item = GetItem(itemid);
+					if (database.ItemQuantityType(itemid) == Quantity_Charges)
+					{
+						if (charges <= 1)
+							charges = db_item->MaxCharges;
+					}
+					npc->AddLootDrop(db_item, itemlist, charges, lds->Entries[i].minlevel,
 						lds->Entries[i].maxlevel, lds->Entries[i].equip_item > 0 ? true : false, false);
 				}
 			}
@@ -143,7 +150,14 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc, uint32 lootdrop_id, ItemList* item
 	float roll_t_min = 0.0f;
 	bool active_item_list = false;
 	for (uint32 i = 0; i < lds->NumEntries; ++i) {
-		const Item_Struct* db_item = GetItem(lds->Entries[i].item_id);
+		uint32 itemid = lds->Entries[i].item_id;
+		int8 charges = lds->Entries[i].item_charges;
+		const Item_Struct* db_item = GetItem(itemid);
+		if (database.ItemQuantityType(itemid) == Quantity_Charges)
+		{
+			if (charges <= 1)
+				charges = db_item->MaxCharges;
+		}
 		if (db_item) {
 			roll_t += lds->Entries[i].chance;
 			active_item_list = true;
@@ -160,19 +174,26 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc, uint32 lootdrop_id, ItemList* item
 	for(int i = 0; i < mindrop; ++i) {
 		float roll = (float)zone->random.Real(0.0, roll_t_min);
 		for(uint32 j = 0; j < lds->NumEntries; ++j) {
-			const Item_Struct* db_item = GetItem(lds->Entries[j].item_id);
-			if(db_item) {
+			uint32 itemid = lds->Entries[j].item_id;
+			int8 charges = lds->Entries[j].item_charges;
+			const Item_Struct* db_item = GetItem(itemid);
+			if (database.ItemQuantityType(itemid) == Quantity_Charges)
+			{
+				if (charges <= 1)
+					charges = db_item->MaxCharges;
+			}
+			if (db_item) {
 				if(roll < lds->Entries[j].chance) {
-					npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+					npc->AddLootDrop(db_item, itemlist, charges, lds->Entries[j].minlevel,
 									 lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
 
-					int charges = (int)lds->Entries[i].multiplier;
-					charges = EQEmu::ClampLower(charges, 1);
+					int multiplier = (int)lds->Entries[i].multiplier;
+					multiplier = EQEmu::ClampLower(multiplier, 1);
 
-					for(int k = 1; k < charges; ++k) {
+					for (int k = 1; k < multiplier; ++k) {
 						float c_roll = (float)zone->random.Real(0.0, 100.0);
 						if(c_roll <= lds->Entries[i].chance) {
-							npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+							npc->AddLootDrop(db_item, itemlist, charges, lds->Entries[j].minlevel,
 											 lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
 						}
 					}
@@ -190,19 +211,26 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc, uint32 lootdrop_id, ItemList* item
 	for(int i = mindrop; i < droplimit; ++i) {
 		float roll = (float)zone->random.Real(0.0, roll_t);
 		for (uint32 j = 0; j < lds->NumEntries; ++j) {
-			const Item_Struct* db_item = GetItem(lds->Entries[j].item_id);
+			uint32 itemid = lds->Entries[j].item_id;
+			int8 charges = lds->Entries[j].item_charges;
+			const Item_Struct* db_item = GetItem(itemid);
+			if (database.ItemQuantityType(itemid) == Quantity_Charges)
+			{
+				if (charges <= 1)
+					charges = db_item->MaxCharges;
+			}
 			if (db_item) {
 				if (roll < lds->Entries[j].chance) {
-					npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+					npc->AddLootDrop(db_item, itemlist, charges, lds->Entries[j].minlevel,
 						lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
 
-					int charges = (int)lds->Entries[i].multiplier;
-					charges = EQEmu::ClampLower(charges, 1);
+					int multiplier = (int)lds->Entries[i].multiplier;
+					multiplier = EQEmu::ClampLower(multiplier, 1);
 
-					for (int k = 1; k < charges; ++k) {
+					for (int k = 1; k < multiplier; ++k) {
 						float c_roll = (float)zone->random.Real(0.0, 100.0);
 						if (c_roll <= lds->Entries[i].chance) {
-							npc->AddLootDrop(db_item, itemlist, lds->Entries[j].item_charges, lds->Entries[j].minlevel,
+							npc->AddLootDrop(db_item, itemlist, charges, lds->Entries[j].minlevel,
 								lds->Entries[j].maxlevel, lds->Entries[j].equip_item > 0 ? true : false, false);
 						}
 					}
