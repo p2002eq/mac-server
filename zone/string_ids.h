@@ -363,6 +363,7 @@
 #define NOT_IN_CONTROL				12368	//You do not have control of yourself right now.
 #define TOO_DISTRACTED				12440   //You are too distracted to cast a spell now!
 #define ALREADY_CASTING				12442	//You are already casting a spell!
+#define ABORTED_SCRIBING_SPELL		12044   //Aborting scribing of spell.
 #define SENSE_CORPSE_NOT_NAME		12446	//You don't sense any corpses of that name.
 #define SENSE_CORPSE_NONE			12447	//You don't sense any corpses.
 #define SCREECH_BUFF_BLOCK			12448	//Your immunity buff protected you from the spell %1!

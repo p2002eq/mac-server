@@ -1112,11 +1112,15 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 					ScribeSpell(memspell->spell_id, memspell->slot);
 					DeleteItemInInventory(MainCursor, 0, true);
 				}
-				else
-					Message(0,"Scribing spell: inst exists but item does not or spell ids do not match.");
+				else {
+					Message_StringID(MT_Spells, ABORTED_SCRIBING_SPELL);
+					SendSpellBarEnable(0); // if we don't send this, the client locks up
+				}
 			}
-			else
-				Message(0,"Scribing a spell without an inst on your cursor?");
+			else {
+				Message_StringID(MT_Spells, ABORTED_SCRIBING_SPELL);
+				SendSpellBarEnable(0);
+			}
 			break;
 		}
 		case memSpellMemorize:	{	// memming spell

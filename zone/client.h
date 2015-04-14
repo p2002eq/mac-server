@@ -612,7 +612,7 @@ public:
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
-	void	SendStatsWindow(Client* client, bool use_window);
+	void	SendStats(Client* client);
 
 	uint16 MaxSkill(SkillUseTypes skillid, uint16 class_, uint16 level) const;
 	inline uint16 MaxSkill(SkillUseTypes skillid) const { return MaxSkill(skillid, GetClass(), GetLevel()); }

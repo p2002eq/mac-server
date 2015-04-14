@@ -39,17 +39,7 @@ int Mob::GetKickDamage() {
 	}
 	else if(IsNPC())
 	{
-		int16 mindmg = CastToNPC()->GetMinDMG();
-		int16 maxdmg = CastToNPC()->GetMaxDMG();
-		int8 modifier = 6;
-		if(GetLevel() >= 15 && GetLevel() <= 24)
-			modifier = 8;
-		else if(GetLevel() >= 25 && GetLevel() <=34)
-			modifier = 10;
-		else if(GetLevel() >= 35)
-			modifier = 12;
-
-		dmg =  mindmg - ( maxdmg - mindmg)/19 + modifier;
+		return CastToNPC()->GetMaxBashKickDmg();
 	}
 
 	if(GetClass() == WARRIOR || GetClass() == WARRIORGM) {
@@ -93,18 +83,7 @@ int Mob::GetBashDamage() {
 	}
 	else if(IsNPC())
 	{
-		//NPC Bash
-		int16 mindmg = CastToNPC()->GetMinDMG();
-		int16 maxdmg = CastToNPC()->GetMaxDMG();
-		int8 modifier = 6;
-		if(GetLevel() >= 15 && GetLevel() <= 24)
-			modifier = 8;
-		else if(GetLevel() >= 25 && GetLevel() <=34)
-			modifier = 10;
-		else if(GetLevel() >= 35)
-			modifier = 12;
-
-		dmg =  mindmg - ( maxdmg - mindmg)/19 + modifier;
+		return CastToNPC()->GetMaxBashKickDmg();
 	}
 
 	if(dmg == 0)
@@ -116,6 +95,35 @@ int Mob::GetBashDamage() {
 	dmg = mod_bash_damage(dmg);
 
 	return(dmg);
+}
+
+int NPC::GetMinBashKickDmg()
+{
+	int16 mindmg = GetMinDMG();
+	int16 maxdmg = GetMaxDMG();
+	int32 dmg;
+
+	if (mindmg >= maxdmg)
+		dmg = mindmg;
+	else
+		dmg = mindmg - (maxdmg - mindmg) / 19;
+
+	if (dmg < 1)
+		dmg = 1;
+
+	return dmg;
+}
+
+int NPC::GetMaxBashKickDmg()
+{
+	if (GetLevel() >= 15 && GetLevel() <= 24)
+		return GetMinBashKickDmg() + 7;
+	else if (GetLevel() >= 25 && GetLevel() <= 34)
+		return GetMinBashKickDmg() + 9;
+	else if (GetLevel() >= 35)
+		return GetMinBashKickDmg() + 11;
+	else
+		return GetMinBashKickDmg() + 5;
 }
 
 void Mob::ApplySpecialAttackMod(SkillUseTypes skill, int32 &dmg, int32 &mindmg) {
@@ -1548,15 +1556,15 @@ void NPC::DoClassAttacks(Mob *target) {
 					else{
 						if(target->CheckHitChance(this, SkillKick, 0)) {
 							if(RuleB(Combat, UseIntervalAC))
-								dmg = GetKickDamage();
+								dmg = GetMaxBashKickDmg();
 							else
-								dmg = zone->random.Int(1, GetKickDamage());
+								dmg = zone->random.Int(1, GetMaxBashKickDmg());
 
 						}
 					}
 
 					reuse = (KickReuseTime + 3) * 1000;
-					DoSpecialAttackDamage(target, SkillKick, dmg, 1, -1, reuse);
+					DoSpecialAttackDamage(target, SkillKick, dmg, GetMinBashKickDmg(), -1, reuse);
 					did_attack = true;
 				}
 				else {
@@ -1564,11 +1572,11 @@ void NPC::DoClassAttacks(Mob *target) {
 					int32 dmg = 0;
 
 					if(target->CheckHitChance(this, SkillBash, 0)) {
-						dmg = GetBashDamage();
+						dmg = GetMaxBashKickDmg();
 					}
 
 					reuse = (BashReuseTime + 3) * 1000;
-					DoSpecialAttackDamage(target, SkillBash, dmg, 1, -1, reuse);
+					DoSpecialAttackDamage(target, SkillBash, dmg, GetMinBashKickDmg(), -1, reuse);
 					did_attack = true;
 				}
 			}
@@ -1587,14 +1595,14 @@ void NPC::DoClassAttacks(Mob *target) {
 				else{
 					if(target->CheckHitChance(this, SkillKick, 0)) {
 						if(RuleB(Combat, UseIntervalAC))
-							dmg = GetKickDamage();
+							dmg = GetMaxBashKickDmg();
 						else
-							dmg = zone->random.Int(1, GetKickDamage());
+							dmg = zone->random.Int(1, GetMaxBashKickDmg());
 					}
 				}
 
 				reuse = (KickReuseTime + 3) * 1000;
-				DoSpecialAttackDamage(target, SkillKick, dmg, 1, -1, reuse);
+				DoSpecialAttackDamage(target, SkillKick, dmg, GetMinBashKickDmg(), -1, reuse);
 				did_attack = true;
 			}
 			break;
@@ -1607,11 +1615,11 @@ void NPC::DoClassAttacks(Mob *target) {
 				int32 dmg = 0;
 
 				if(target->CheckHitChance(this, SkillBash, 0)) {
-					dmg = GetBashDamage();
+					dmg = GetMaxBashKickDmg();
 				}
 
 				reuse = (BashReuseTime + 3) * 1000;
-				DoSpecialAttackDamage(target, SkillBash, dmg, 1, -1, reuse);
+				DoSpecialAttackDamage(target, SkillBash, dmg, GetMinBashKickDmg(), -1, reuse);
 				did_attack = true;
 			}
 			break;

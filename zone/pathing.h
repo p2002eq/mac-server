@@ -67,14 +67,16 @@ public:
 	glm::vec3 GetPathNodeCoordinates(int NodeNumber, bool BestZ = true);
 	bool CheckLosFN(glm::vec3 a, glm::vec3 b);
 	void SpawnPathNodes();
+	void SpawnNode(PathNode *node);
 	void MeshTest();
-	void SimpleMeshTest();
+	void SimpleMeshTest(Client *c);
 	int FindNearestPathNode(glm::vec3 Position);
 	bool NoHazards(glm::vec3 From, glm::vec3 To);
 	bool NoHazardsAccurate(glm::vec3 From, glm::vec3 To);
 	void OpenDoors(int Node1, int Node2, Mob* ForWho);
 
 	PathNode* FindPathNodeByCoordinates(float x, float y, float z);
+	PathNode* FindPathNodeById(uint16 nodeid);
 	void ShowPathNodeNeighbours(Client *c);
 	int GetRandomPathNode();
 
@@ -96,6 +98,7 @@ public:
 	void ResortConnections();
 	void QuickConnect(Client *c, bool set = false);
 	void SortNodes();
+	void CheckNodeErrors(Client *c);
 
 private:
 	PathFileHeader Head;
