@@ -84,7 +84,6 @@ RULE_INT ( Character, KillsPerRaidLeadershipAA, 250) // Number of dark blues or 
 RULE_INT ( Character, MaxFearDurationForPlayerCharacter, 4) //4 tics, each tic calculates every 6 seconds.
 RULE_INT ( Character, MaxCharmDurationForPlayerCharacter, 15)
 RULE_INT ( Character, BaseHPRegenBonusRaces, 4352)	//a bitmask of race(s) that receive the regen bonus. Iksar (4096) & Troll (256) = 4352. see common/races.h for the bitmask values
-RULE_BOOL ( Character, UseNewStatsWindow, false)		// New stats window shows everything
 RULE_BOOL ( Character, ItemCastsUseFocus, false) // If true, this allows item clickies to use focuses that have limited max levels on them
 RULE_INT ( Character, MinStatusForNoDropExemptions, 80) // This allows status x and higher to trade no drop items.
 RULE_INT ( Character, SkillCapMaxLevel, 65 )	// Sets the Max Level used for Skill Caps (from skill_caps table). -1 makes it use MaxLevel rule value. It is set to 75 because PEQ only has skillcaps up to that level, and grabbing the players' skill past 75 will return 0, breaking all skills past that level. This helps servers with obsurd level caps (75+ level cap) function without any modifications.

@@ -3787,6 +3787,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					// clear the hate list of the mobs
 					entity_list.ReplaceWithTarget(this, tempmob);
 					WipeHateList();
+					entity_list.InterruptTargeted(this);
 					if(tempmob)
 						AddToHateList(tempmob, 1, 0);
 					SendAppearancePacket(AT_Anim, ANIM_STAND);

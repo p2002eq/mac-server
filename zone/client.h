@@ -362,7 +362,7 @@ public:
 	inline virtual int32 GetATK() const { return ATK + itembonuses.ATK + spellbonuses.ATK + ((GetSTR() + GetSkill(SkillOffense)) * 9 / 10); }
 	inline virtual int32 GetATKBonus() const { return itembonuses.ATK + spellbonuses.ATK; }
 	inline virtual int GetHaste() const { return Haste; }
-	int GetRawACNoShield(int &shield_ac) const;
+	int GetRawACNoShield(int &shield_ac, int spell_mod = 1) const;
 
 	inline virtual int32 GetSTR() const { return STR; }
 	inline virtual int32 GetSTA() const { return STA; }
@@ -612,7 +612,7 @@ public:
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
-	void	SendStatsWindow(Client* client, bool use_window);
+	void	SendStats(Client* client);
 
 	uint16 MaxSkill(SkillUseTypes skillid, uint16 class_, uint16 level) const;
 	inline uint16 MaxSkill(SkillUseTypes skillid) const { return MaxSkill(skillid, GetClass(), GetLevel()); }
