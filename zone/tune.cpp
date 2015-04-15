@@ -255,10 +255,10 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 	}
 
 	if (RuleB(Combat, UseIntervalAC)) {
-		float softcap = GetSkill(SkillDefense) + GetLevel() - 2;
+		float lvl_adj = GetLevel() + 50;
+		float softcap = (GetSkill(SkillDefense) + lvl_adj) * RuleR(Combat, SoftcapFactor) / 3;
+		softcap += lvl_adj;
 		softcap *= (1.0 + aa_mit);
-		if (softcap < 1.0f)
-			softcap = 1.0f;
 
 		float mitigation_rating = 0.0;
 		float attack_rating = 0.0;
@@ -282,8 +282,14 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		float monkweight = RuleI(Combat, MonkACBonusWeight);
 		monkweight = mod_monk_weight(monkweight, attacker);
 
+		// for spell AC contribution, cloth wearers get / 3, others get /4
+		int adj_mod = 4;
+		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
+			GetClass() == NECROMANCER || GetClass() == ENCHANTER)
+			adj_mod = 3;
+
 		if (IsClient()) {
-			armor = CastToClient()->GetRawACNoShield(shield_ac) + add_ac;
+			armor = CastToClient()->GetRawACNoShield(shield_ac, adj_mod) + add_ac;
 			weight = (CastToClient()->CalcCurrentWeight() / 10.0);
 
 			if (ac_override)
@@ -292,7 +298,7 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 			if (Msg >=2 ){
 				GM->Message(0, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
 				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) AA Bonus", aabonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC);
+				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC / adj_mod);
 				GM->Message(0, "# %i #### DEFENDER Shield AC", shield_ac);
 				GM->Message(0, "# %i #### DEFENDER Total Client Armor - NO shield", armor);
 			}
@@ -363,6 +369,10 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		}
 		softcap += shield_ac;
 		armor += shield_ac;
+		armor = armor * 4 / 3;
+
+		if (armor < 1)
+			armor = 1;
 
 		// anti-twink code
 		if (IsClient() && (GetLevel() < 50) && (armor > (25 + GetLevel() * 6)))
@@ -417,12 +427,12 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		int tmp_armor = armor;
 		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
 				GetClass() == NECROMANCER || GetClass() == ENCHANTER){
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 4.0) + armor + 1;
+			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 2.0) + armor;
 			if (Msg >= 2)
 				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
 		}
 		else{
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + (armor * 1.333333) + 1;
+			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + armor;
 			if (Msg >= 2)
 				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
 
@@ -558,9 +568,9 @@ int32 Client::Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 mi
 	dmg_interval -= dmg_interval * spellMeleeMit;
 
 	if (RuleB(Combat, NewACCurves)) {
-		float mit_adj = 4.0f;
+		float mit_adj = 3.0f;
 		if (GetLevel() < 65.0f)
-			mit_adj = 2.0f + 2.0f * (GetLevel()/ 65);
+			mit_adj = 2.0f + 1.0f * ((float)GetLevel()/ 65.0f);
 
 		const float combatRating = 1.0f - (mit_adj * mit_rating / atk_rating);
 

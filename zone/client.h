@@ -362,7 +362,7 @@ public:
 	inline virtual int32 GetATK() const { return ATK + itembonuses.ATK + spellbonuses.ATK + ((GetSTR() + GetSkill(SkillOffense)) * 9 / 10); }
 	inline virtual int32 GetATKBonus() const { return itembonuses.ATK + spellbonuses.ATK; }
 	inline virtual int GetHaste() const { return Haste; }
-	int GetRawACNoShield(int &shield_ac) const;
+	int GetRawACNoShield(int &shield_ac, int spell_mod = 1) const;
 
 	inline virtual int32 GetSTR() const { return STR; }
 	inline virtual int32 GetSTA() const { return STA; }
