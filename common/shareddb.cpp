@@ -1045,7 +1045,8 @@ ItemInst* SharedDatabase::CreateItem(uint32 item_id, int16 charges)
 		inst = CreateBaseItem(item, charges);
 
 		if (inst == nullptr) {
-			LogFile->write(EQEMuLog::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
 			return nullptr;
 		}
 	}
@@ -1062,7 +1063,8 @@ ItemInst* SharedDatabase::CreateItem(const Item_Struct* item, int16 charges)
 		inst = CreateBaseItem(item, charges);
 
 		if (inst == nullptr) {
-			LogFile->write(EQEMuLog::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
 			return nullptr;
 		}
 	}
@@ -1081,7 +1083,8 @@ ItemInst* SharedDatabase::CreateBaseItem(const Item_Struct* item, int16 charges)
 		inst = new ItemInst(item, charges);
 
 		if (inst == nullptr) {
-			LogFile->write(EQEMuLog::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateBaseItem()");
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateBaseItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
 			return nullptr;
 		}
 

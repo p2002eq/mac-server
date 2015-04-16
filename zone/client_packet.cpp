@@ -7368,16 +7368,12 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 			}
 			inst2->SetMerchantCount(MerchantQuantity);
 
-			SendItemPacket(freeslot - 1, inst2, ItemPacketMerchant);
+			BulkSendMerchantInventory(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID());
+
 			safe_delete(inst2);
 
 			break;
 		}
-		inst2->SetMerchantCount(MerchantQuantity);
-
-		BulkSendMerchantInventory(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID());
-
-		safe_delete(inst2);
 	}
 
 	// start QS code
