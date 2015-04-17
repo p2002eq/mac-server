@@ -3285,10 +3285,12 @@ void command_equipitem(Client *c, const Seperator *sep){
 			if (partialmove) { // remove this con check if someone can figure out removing charges from cursor stack issue below
 				// mi->number_in_stack is always from_inst->GetCharges() when partialmove is false
 				c->Message(CC_Red, "Error: Partial stack added to existing stack exceeds allowable stacksize");
+				safe_delete(outapp);
 				return;
 			}
 			else if (c->SwapItem(mi) == 1) {
 				c->FastQueuePacket(&outapp);
+				return;
 
 				// if the below code is still needed..just send an an item trade packet to each slot..it should overwrite the client instance
 

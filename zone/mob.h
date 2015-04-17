@@ -473,7 +473,7 @@ public:
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
-	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { pLastChange = Timer::GetCurrentTime();
+	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
 		m_Position.w = iHeading; } }
 	void WipeHateList();
 	void AddFeignMemory(Client* attacker);
@@ -650,7 +650,7 @@ public:
 	void SetAppearance(EmuAppearance app, bool iIgnoreSelf = true);
 	inline EmuAppearance GetAppearance() const { return _appearance; }
 	inline const uint8 GetRunAnimSpeed() const { return pRunAnimSpeed; }
-	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; pLastChange = Timer::GetCurrentTime(); } }
+	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; SetChanged(); } }
 	float SetRunAnimation(float speed);
 
 	inline uint8 GetInnateLightType() { return m_Light.Type.Innate; }
