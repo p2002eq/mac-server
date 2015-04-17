@@ -97,7 +97,7 @@ int Mob::GetBashDamage() {
 	return(dmg);
 }
 
-int NPC::GetMinBashKickDmg()
+int32 NPC::GetMinBashKickDmg()
 {
 	int16 mindmg = GetMinDMG();
 	int16 maxdmg = GetMaxDMG();
@@ -114,7 +114,7 @@ int NPC::GetMinBashKickDmg()
 	return dmg;
 }
 
-int NPC::GetMaxBashKickDmg()
+int32 NPC::GetMaxBashKickDmg()
 {
 	if (GetLevel() >= 15 && GetLevel() <= 24)
 		return GetMinBashKickDmg() + 7;

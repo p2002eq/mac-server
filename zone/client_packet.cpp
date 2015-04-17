@@ -8685,7 +8685,9 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 		else if(target->IsNPC())
 		{
-			target->Disarm();
+			if (!target->Disarm())
+				success = 0;
+
 			if(!GetGM())
 				AddToHateList(target, 1);
 		}

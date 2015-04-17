@@ -1505,7 +1505,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  Attack Speed: %i Accuracy: %i LootTable: %u SpellsID: %u MerchantID: %i", n->GetAttackTimer(), n->GetAccuracyRating(), n->GetLoottableID(), n->GetNPCSpellsID(), n->MerchantType);
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
-			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture());
+			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
 			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
@@ -5226,53 +5226,115 @@ uint32 Mob::GetClassStringID() {
 	}
 }
 
-// Double attack chances based on this data: http://www.eqemulator.org/forums/showthread.php?t=38708
+// Double attack and dual wield chances based on this data: http://www.eqemulator.org/forums/showthread.php?t=38708
 uint8 Mob::DoubleAttackChance()
 {
 	uint8 level = GetLevel();
 
-	if (level > 59)
+	if (!IsPet() || !GetOwner())
+	{
+		if (level > 59)
 		return (level - 59) / 4 + 61;
 	
-	else if (level > 50)
-		return 61;
+		else if (level > 50)
+			return 61;
 
-	else if (level > 35)
-		return (level - 35) / 2 + 44;
+		else if (level > 35)
+			return (level - 35) / 2 + 44;
 
-	else if (level < 6)
-		return 0;
+		else if (level < 6)
+			return 0;
 
-	else return level;
+		else return level;
+	}
+	else
+	{
+		// beastlord and shaman pets have different double attack and dual wield rates
+		if (GetOwner()->GetClass() == BEASTLORD || GetOwner()->GetClass() == SHAMAN)
+		{
+			if (level < 36)
+				return level;
+			else if (level < 42)
+				return level * 1.2f;
+			else
+				return 48 + (level - 41) / 4;
+		}
+		else
+		{
+			if (level > 45)
+				return (level - 45) / 4 + 53;
+			else
+				return level * 1.2f;
+		}
+	}
+
 }
 
-void Mob::Disarm()
+uint8 Mob::DualWieldChance()
+{
+	if (!IsPet() || !GetOwner())
+	{
+		return DoubleAttackChance() * 1.333f;
+	}
+	else
+	{
+		// dual wield chance is always about 1 and 1/3 times double attack chance except for these low level pets
+		if (GetOwner()->GetClass() == BEASTLORD || GetOwner()->GetClass() == SHAMAN)
+		{
+			if (GetLevel() > 35)
+				return DoubleAttackChance() * 1.333f;
+			else if (GetLevel() < 25)
+				return 0;
+			else
+				return (GetLevel() - 20) * 2;
+		}
+		else
+		{
+			return DoubleAttackChance() * 1.333f;
+		}
+	}
+}
+
+bool Mob::Disarm()
 {
 	if(this->IsNPC())
 	{
-		CastToNPC()->SetPrimSkill(SkillHandtoHand);
-
 		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
 		if(weapon)
 		{
 			uint16 weaponid = weapon->item_id;
 			const ItemInst* inst = database.CreateItem(weaponid);
-			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-			if(inst->GetItem()->NoDrop == 0 || inst->GetItem()->Magic)
+
+			if (inst->GetItem()->Magic)
 			{
-				const Item_Struct* item = inst->GetItem();
-				int8 charges = item->MaxCharges;
-				CastToNPC()->AddLootDrop(item,&CastToNPC()->itemlist,charges,1,127,false,true);
+				safe_delete(inst);
+				return false;				// magic weapons cannot be disarmed
+			}
+
+			const Item_Struct* item = inst->GetItem();
+			int8 charges = item->MaxCharges;
+			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+
+			if (inst->GetItem()->NoDrop == 0)
+			{
+				CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
 			}
 			else
 			{
 				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
 			}
+
+			CastToNPC()->SetPrimSkill(SkillHandtoHand);
+			if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
+				can_dual_wield = false;
+
+			WearChange(MaterialPrimary, 0, 0);
+
 			safe_delete(inst);
+			return true;
 		}
 	}
-	can_dual_wield = false;
-	WearChange(MaterialPrimary, 0, 0);
+	return false;
 }
 
 float Mob::SetBestZ(float zcoord)

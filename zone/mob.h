@@ -143,6 +143,8 @@ public:
 	// 13 = Primary (default), 14 = secondary
 	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
 		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
+	void DoMainHandRound(Mob* victim = nullptr, ExtraAttackOptions *opts = nullptr);
+	void DoOffHandRound(Mob* victim = nullptr, ExtraAttackOptions *opts = nullptr);
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
 	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
@@ -927,7 +929,8 @@ public:
 	bool	CanDualWield() { return can_dual_wield; }
 	void	SetCanDualWield(bool value) { can_dual_wield = value; }
 	uint8	DoubleAttackChance();
-	void	Disarm();
+	uint8	DualWieldChance();
+	bool	Disarm();
 
 	//Command #Tune functions
 	int32 Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg =0,	int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
