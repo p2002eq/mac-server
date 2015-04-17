@@ -1213,6 +1213,8 @@ void QuestManager::itemlink(int item_id) {
 	if (initiator) {
 		const ItemInst* inst = database.CreateItem(item_id);
 		char* link = 0;
+		if (inst == nullptr)
+			return;
 		if (initiator->MakeItemLink(link, inst))
 			initiator->Message(0, "%s tells you, %c%s%s%c", owner->GetCleanName(),
 					0x12, link, inst->GetItem()->Name, 0x12);
@@ -1995,7 +1997,7 @@ int QuestManager::collectitems_processSlot(int16 slot_id, uint32 item_id,
 	bool remove)
 {
 	QuestManagerCurrentQuestVars();
-	ItemInst *item;
+	ItemInst *item = nullptr;
 	int quantity = 0;
 
 	item = initiator->GetInv().GetItem(slot_id);
