@@ -541,54 +541,61 @@ const char* DigitToWord(int i)
 	return "";
 }
 
+void PathManager::SpawnNode(PathNode *node)
+{
+	if (!node)
+		return;
+
+	NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
+
+	if(node->id < 10)
+		sprintf(npc_type->name, "%s", DigitToWord(node->id));
+	else if(node->id < 100)
+		sprintf(npc_type->name, "%s_%s", DigitToWord(node->id/10), DigitToWord(node->id % 10));
+	else
+		sprintf(npc_type->name, "%s_%s_%s", DigitToWord(node->id/100), DigitToWord((node->id % 100)/10), 
+			DigitToWord(((node->id % 100) %10)));
+
+	npc_type->cur_hp = 4000000;
+	npc_type->max_hp = 4000000;
+	npc_type->race = 151;
+	npc_type->gender = 2;
+	npc_type->class_ = 9;
+	npc_type->deity = 1;
+	npc_type->level = 75;
+	npc_type->npc_id = 0;
+	npc_type->loottable_id = 0;
+	npc_type->texture = 1;
+	npc_type->light = 0;
+	npc_type->runspeed = 0;
+	npc_type->d_melee_texture1 = 1;
+	npc_type->d_melee_texture2 = 1;
+	npc_type->merchanttype = 1;
+	npc_type->bodytype = 1;
+
+	npc_type->STR = 150;
+	npc_type->STA = 150;
+	npc_type->DEX = 150;
+	npc_type->AGI = 150;
+	npc_type->INT = 150;
+	npc_type->WIS = 150;
+	npc_type->CHA = 150;
+
+	npc_type->findable = 1;
+	strcpy(npc_type->special_abilities, "19,1^20,1^24,1^35,1");
+
+	auto position = glm::vec4(node->v.x, node->v.y, node->v.z, 0.0f);
+	NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
+
+	entity_list.AddNPC(npc, true, true);
+}
+
 void PathManager::SpawnPathNodes()
 {
 
-	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+	for(int i = 0; i < Head.PathNodeCount; ++i)
 	{
-		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
-
-		if (PathNodes[i].id < 10)
-			sprintf(npc_type->name, "%s", DigitToWord(PathNodes[i].id));
-		else if (PathNodes[i].id < 100)
-			sprintf(npc_type->name, "%s_%s", DigitToWord(PathNodes[i].id / 10), DigitToWord(PathNodes[i].id % 10));
-		else
-			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(PathNodes[i].id / 100), DigitToWord((PathNodes[i].id % 100) / 10),
-			DigitToWord(((PathNodes[i].id % 100) % 10)));
-
-		sprintf(npc_type->lastname, "%i", PathNodes[i].id);
-		npc_type->cur_hp = 4000000;
-		npc_type->max_hp = 4000000;
-		npc_type->race = 151;
-		npc_type->gender = 2;
-		npc_type->class_ = 9;
-		npc_type->deity = 1;
-		npc_type->level = 75;
-		npc_type->npc_id = 0;
-		npc_type->loottable_id = 0;
-		npc_type->texture = 1;
-		npc_type->light = 0;
-		npc_type->runspeed = 0;
-		npc_type->d_melee_texture1 = 1;
-		npc_type->d_melee_texture2 = 1;
-		npc_type->merchanttype = 1;
-		npc_type->bodytype = 1;
-
-		npc_type->STR = 150;
-		npc_type->STA = 150;
-		npc_type->DEX = 150;
-		npc_type->AGI = 150;
-		npc_type->INT = 150;
-		npc_type->WIS = 150;
-		npc_type->CHA = 150;
-
-		npc_type->findable = 1;
-		strcpy(npc_type->special_abilities, "19,1^20,1^24,1^35,1");
-
-		auto position = glm::vec4(PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0.0f);
-		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
-
-		entity_list.AddNPC(npc, true, true);
+		SpawnNode(&PathNodes[i]);
 	}
 }
 
@@ -623,7 +630,7 @@ void PathManager::MeshTest()
 	fflush(stdout);
 }
 
-void PathManager::SimpleMeshTest()
+void PathManager::SimpleMeshTest(Client* c)
 {
 	// This will test connectivity between the first path node and all other nodes
 
@@ -632,7 +639,7 @@ void PathManager::SimpleMeshTest()
 
 	printf("Beginning Pathmanager connectivity tests.\n");
 	fflush(stdout);
-
+	c->Message(0,"Beginning Pathmanager connectivity tests.");
 	for (uint32 j = 1; j < Head.PathNodeCount; ++j)
 	{
 		std::deque<int> Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
@@ -641,12 +648,15 @@ void PathManager::SimpleMeshTest()
 		{
 			++NoConnections;
 			printf("FindRoute(%i, %i) **** NO ROUTE FOUND ****\n", PathNodes[0].id, PathNodes[j].id);
+			c->Message(0,"FindRoute(%i, %i) **** NO ROUTE FOUND ****", PathNodes[0].id, PathNodes[j].id);
 		}
 		++TotalTests;
 	}
 	printf("Executed %i route searches.\n", TotalTests);
 	printf("Failed to find %i routes.\n", NoConnections);
 	fflush(stdout);
+	c->Message(0,"Executed %i route searches.", TotalTests);
+	c->Message(0,"Failed to find %i routes.", NoConnections);
 }
 
 glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &WaypointChanged, bool &NodeReached)
@@ -1306,6 +1316,15 @@ PathNode* PathManager::FindPathNodeByCoordinates(float x, float y, float z)
 	return nullptr;
 }
 
+PathNode* PathManager::FindPathNodeById(uint16 nodeid)
+{
+	for(int i = 0; i < Head.PathNodeCount; ++i)
+		if(PathNodes[i].id == nodeid)
+			return &PathNodes[i];
+
+	return NULL;
+}
+
 int PathManager::GetRandomPathNode()
 {
 	return zone->random.Int(0, Head.PathNodeCount - 1);
@@ -1612,6 +1631,34 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 	}
 }
 
+void PathManager::CheckNodeErrors(Client *c)
+{
+	if(!c)
+	{
+		return;
+	}
+	bool badnodes = false;
+	if (Head.PathNodeCount > 0 && PathNodes[Head.PathNodeCount-1].id != (Head.PathNodeCount-1)) {
+		c->Message(15, "The path (Head.NodeCount - 1) %d, does not match the highest node number %d.", Head.PathNodeCount - 1, PathNodes[Head.PathNodeCount-1].id);
+	}
+	for (int j=0;j<Head.PathNodeCount;j++) {
+		bool badid = false;
+		bool badv = false;
+		if (PathNodes[j].id != j) {
+			c->Message(15, "Suspect Node: Pathnode[%d].id (%d) != %d",j,PathNodes[j].id, j);
+			badnodes = true;
+		}
+		if (PathNodes[j].v.x > 10000 || PathNodes[j].v.x < -10000 || PathNodes[j].v.y > 10000 || PathNodes[j].v.y < -10000 || PathNodes[j].v.z > 5000 || PathNodes[j].v.z < -2000) {
+			c->Message(15, "Suspect Node Coordinates: nodeid (%d) (x=%.2f) (y=%.2f) (z=%.2f)", PathNodes[j].id, PathNodes[j].v.x, PathNodes[j].v.y, PathNodes[j].v.z);
+			badnodes = true;
+		}
+	}
+	if (badnodes)
+		c->Message(13, "You must run \"#path resort nodes\" before using the path or the zone may crash.");
+
+	return;
+}
+
 bool PathManager::DeleteNode(Client *c)
 {
 	if (!c)
@@ -1630,7 +1677,7 @@ bool PathManager::DeleteNode(Client *c)
 	{
 		return false;
 	}
-
+	c->GetTarget()->Depop(false);
 	return DeleteNode(Node->id);
 }
 
@@ -1969,6 +2016,34 @@ void PathManager::MoveNode(Client *c)
 	{
 		Node->bestz = Node->v.z;
 	}
+	c->Message(0,"Node Moved.");
+	c->GetTarget()->Teleport(Node->v);
+	c->GetTarget()->SendPosition();
+
+	// update distances to neighbours
+	for (int j = 0;j<PATHNODENEIGHBOURS; j++) {
+		if (Node->Neighbours[j].id != -1) {
+			PathNode *Neighbour = FindPathNodeById(Node->Neighbours[j].id);
+			if (Neighbour != NULL) {
+				Node->Neighbours[j].distance = VectorDistance(Node->v, Neighbour->v);
+			}
+		}
+	}
+
+	for(int i = 0; i < Head.PathNodeCount; ++i)
+	{
+		if(PathNodes[i].id == Node->id)
+			continue;
+
+		for(int j=0; j<PATHNODENEIGHBOURS; j++) {
+			if(PathNodes[i].Neighbours[j].id == Node->id) {
+				PathNodes[i].Neighbours[j].distance = VectorDistance(Node->v, PathNodes[i].v);
+			}
+		}
+
+	}
+
+
 }
 
 void PathManager::DisconnectAll(Client *c)
@@ -2096,6 +2171,8 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 				}
 			}
 		}
+		zone->pathing->SortNodes();
+		zone->pathing->ResortConnections();
 	}
 	DumpPath(filename);
 }

@@ -1890,9 +1890,9 @@ int32 Client::CalcEnduranceRegenCap() {
 	return (cap * RuleI(Character, EnduranceRegenMultiplier) / 100);
 }
 
-int Client::GetRawACNoShield(int &shield_ac) const
+int Client::GetRawACNoShield(int &shield_ac, int spell_mod) const
 {
-	int ac = itembonuses.AC + spellbonuses.AC + aabonuses.AC;
+	int ac = itembonuses.AC + spellbonuses.AC / spell_mod + aabonuses.AC;
 	shield_ac = 0;
 	const ItemInst *inst = m_inv.GetItem(MainSecondary);
 	if(inst)
