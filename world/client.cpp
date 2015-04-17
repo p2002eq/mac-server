@@ -935,9 +935,9 @@ void Client::SendGuildList() {
 	//safe_delete_array(guildstruct);
 
 	if(outapp->pBuffer == nullptr) {
+		safe_delete(outapp);
 		return;
 	}
-
 
 	eqs->FastQueuePacket((EQApplicationPacket **)&outapp);
 }

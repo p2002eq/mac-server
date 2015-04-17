@@ -3134,7 +3134,6 @@ void Client::Handle_OP_ControlBoat(const EQApplicationPacket *app)
 	cbs2->unknown5 = unknown5;
 
 	FastQueuePacket(&outapp);
-	safe_delete(outapp);
 	// have the boat signal itself, so quests can be triggered by boat use
 	boat->CastToNPC()->SignalNPC(0);
 }
@@ -6655,10 +6654,12 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 	Entity* entity = entity_list.GetID(ds->duel_target);
 	if (GetID() != ds->duel_target && entity->IsClient() && (entity->CastToClient()->IsDueling() && entity->CastToClient()->GetDuelTarget() != 0)) {
 		Message_StringID(CC_Default, DUEL_CONSIDERING, entity->GetName());
+		safe_delete(outapp);
 		return;
 	}
 	if (IsDueling()) {
 		Message_StringID(CC_Default, DUEL_INPROGRESS);
+		safe_delete(outapp);
 		return;
 	}
 
@@ -6669,9 +6670,10 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 		entity->CastToClient()->FastQueuePacket(&outapp);
 		entity->CastToClient()->SetDueling(false);
 		SetDueling(false);
+		return;
 	}
-	else
-		safe_delete(outapp);
+	
+	safe_delete(outapp);
 	return;
 }
 
@@ -8388,14 +8390,12 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_TradeReset, 0);
 		FastQueuePacket(&outapp);
-		safe_delete(outapp);
 
 		outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
 		TradeRequest_Struct* acc = (TradeRequest_Struct*)outapp->pBuffer;
 		acc->from_mob_id = msg->to_mob_id;
 		acc->to_mob_id = msg->from_mob_id;
 		FastQueuePacket(&outapp);
-		safe_delete(outapp);
 	}
 	return;
 }

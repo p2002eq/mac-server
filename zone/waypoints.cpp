@@ -767,7 +767,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		SendPositionNearby();
 		SetAppearance(eaStanding, false);
 	}		
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 	
 	return true;
 }
@@ -921,7 +921,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 
 	// now get new heading
 	SetAppearance(eaStanding, false); // make sure they're standing
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 	return true;
 }
 

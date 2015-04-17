@@ -518,6 +518,8 @@ bool Client::AddPacket(EQApplicationPacket** pApp, bool bAckreq) {
 		return false;
 	if(!zoneinpacket_timer.Enabled()) {
 		//drop the packet because it will never get sent.
+		if (pApp && (*pApp))
+			delete *pApp;
 		return(false);
 	}
 	CLIENTPACKET *c = new CLIENTPACKET;
