@@ -505,7 +505,7 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 
 	m_Delta = glm::vec4();
 	pRunAnimSpeed = 0;
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 }
 
 void Client::AI_Start(uint32 iMoveDelay, bool zomm) {
