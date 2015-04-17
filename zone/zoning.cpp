@@ -573,7 +573,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-			safe_delete(outapp);
 		}
 		else if (zm == ZoneToBindPoint) {
 			//TODO: Find a better packet that works with EQMac on death. Sending OP_RequestClientZoneChange here usually does not zone the
@@ -590,8 +589,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->z = z;
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-	
-			safe_delete(outapp);
 		}
 		else if (zm == GateToBindPoint) {			
 			// we hide the real zoneid we want to evac/succor to here
@@ -622,7 +619,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 				gmg->type = 0x01;	//an observed value, not sure of meaning
 				outapp->priority = 6;
 				FastQueuePacket(&outapp);
-				safe_delete(outapp);
 			}
 		}
 		else if(zm == EvacToSafeCoords)
@@ -651,7 +647,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-			safe_delete(outapp);
 		}
 		else {
 			if(zoneID == GetZoneID()) {
@@ -676,7 +671,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->type = 0x01;	//an observed value, not sure of meaning
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-			safe_delete(outapp);
 		}
 
 		Log.Out(Logs::Detail, Logs::None, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
