@@ -440,12 +440,13 @@ void Client::ForageItem(bool guarantee) {
 			}
 		}
 
-		// Do a roll to check if we pull an item from the DB.
-		if (zone->random.Roll(25) && foragedfood == 0)
-			foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
 
 		if (RuleB(Character, ForageCommonFoodorDrink))
 		{
+			// Do a roll to check if we pull an item from the DB.
+			if (zone->random.Roll(25) && foragedfood == 0)
+				foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
+
 			//not an else in case theres no DB food
 			if (foragedfood == 0) 
 			{
@@ -457,6 +458,8 @@ void Client::ForageItem(bool guarantee) {
 					foragedfood = common_food_ids[index];
 			}
 		}
+		else
+			foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
 
 		const Item_Struct* food_item = database.GetItem(foragedfood);
 
