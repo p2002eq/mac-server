@@ -97,6 +97,8 @@ RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 
 RULE_REAL (Character, BaseRunSpeed, 0.7)
 RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
+RULE_BOOL(Character, ForageNeedFoodorDrink, false)
+RULE_BOOL(Character, ForageCommonFoodorDrink, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )

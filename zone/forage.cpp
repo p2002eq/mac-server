@@ -404,10 +404,26 @@ void Client::ForageItem(bool guarantee) {
 		uint32 foragedfood = 0;
 		uint32 stringid = FORAGE_NOEAT;
 
-		// If we're hungry or thirsty, we want to prefer food or water.
-		if(Hungry() && Thirsty())
+		if (RuleB(Character, ForageNeedFoodorDrink))
 		{
-			if(m_pp.hunger_level <= m_pp.thirst_level)
+			// If we're hungry or thirsty, we want to prefer food or water.
+			if(Hungry() && Thirsty())
+			{
+				if(m_pp.hunger_level <= m_pp.thirst_level)
+				{
+					if(GetZoneID() == poknowledge)
+						foragedfood = 13047; //PoK only has roots from the above array.
+					else
+					{
+						uint8 foodindex = zone->random.Int(0, 4);
+						foragedfood = food_ids[foodindex];
+					}
+				}
+				else
+					foragedfood = 13044;
+			}
+			// We only need food.
+			else if(Hungry())
 			{
 				if(GetZoneID() == poknowledge)
 					foragedfood = 13047; //PoK only has roots from the above array.
@@ -417,44 +433,35 @@ void Client::ForageItem(bool guarantee) {
 					foragedfood = food_ids[foodindex];
 				}
 			}
-			else
-				foragedfood = 13044;
-		}
-		// We only need food.
-		else if(Hungry())
-		{
-			if(GetZoneID() == poknowledge)
-				foragedfood = 13047; //PoK only has roots from the above array.
-			else
+			// We only need water.
+			else if(Thirsty())
 			{
-				uint8 foodindex = zone->random.Int(0, 4);
-				foragedfood = food_ids[foodindex];
+				foragedfood = 13044;
 			}
-		}
-		// We only need water.
-		else if(Thirsty())
-		{
-			foragedfood = 13044;
 		}
 
 		// Do a roll to check if we pull an item from the DB.
-		if (zone->random.Roll(25) && foragedfood == 0) {
+		if (zone->random.Roll(25) && foragedfood == 0)
 			foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
-		}
 
-		//not an else in case theres no DB food
-		if(foragedfood == 0) {
-			uint8 index = 0;
-			index = zone->random.Int(0, MAX_COMMON_FOOD_IDS-1);
-			if(GetZoneID() == poknowledge)
-				foragedfood = 13047; //PoK only has roots from the above array.
-			else
-				foragedfood = common_food_ids[index];
+		if (RuleB(Character, ForageCommonFoodorDrink))
+		{
+			//not an else in case theres no DB food
+			if (foragedfood == 0) 
+			{
+				uint8 index = 0;
+				index = zone->random.Int(0, MAX_COMMON_FOOD_IDS - 1);
+				if (GetZoneID() == poknowledge)
+					foragedfood = 13047; //PoK only has roots from the above array.
+				else
+					foragedfood = common_food_ids[index];
+			}
 		}
 
 		const Item_Struct* food_item = database.GetItem(foragedfood);
 
-		if(!food_item) {
+		if(!food_item)
+		{
 			Log.Out(Logs::General, Logs::Error, "nullptr returned from database.GetItem in ClientForageItem");
 			return;
 		}
@@ -482,7 +489,8 @@ void Client::ForageItem(bool guarantee) {
 		}
 
 		ItemInst* inst = database.CreateItem(food_item, 1);
-		if(inst != nullptr) {
+		if(inst != nullptr) 
+		{
 			// check to make sure it isn't a foraged lore item
 			if(CheckLoreConflict(inst->GetItem()))
 			{
@@ -505,12 +513,15 @@ void Client::ForageItem(bool guarantee) {
 		}
 
 		int ChanceSecondForage = aabonuses.ForageAdditionalItems + itembonuses.ForageAdditionalItems + spellbonuses.ForageAdditionalItems;
-		if(!guarantee && zone->random.Roll(ChanceSecondForage)) {
+		if(!guarantee && zone->random.Roll(ChanceSecondForage))
+		{
 			Message_StringID(MT_Skills, FORAGE_MASTERY);
 			ForageItem(true);
 		}
 
-	} else {
+	} 
+	else
+	{
 		Message_StringID(MT_Skills, FORAGE_FAILED);
 		parse->EventPlayer(EVENT_FORAGE_FAILURE, this, "", 0);
 	}
