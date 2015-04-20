@@ -69,10 +69,9 @@ uint32 ZoneDatabase::GetZoneForage(uint32 ZoneID, uint8 skill) {
 
         item[index] = atoi(row[0]);
         chance[index] = atoi(row[1]) + chancepool;
-        Log.Out(Logs::General, Logs::Error, "Possible Forage: %d with a %d chance", item[index], chance[index]);
+		Log.Out(Logs::General, Logs::General, "Possible Forage: %d with a %d chance total to %d chancepool", item[index], chance[index] - chancepool, chance[index]);
         chancepool = chance[index];
     }
-
 
 	if(chancepool == 0 || index < 1)
 		return 0;
