@@ -458,7 +458,10 @@ void Client::ForageItem(bool guarantee) {
 			}
 		}
 		else
-			foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
+		{
+			if (foragedfood == 0)
+				foragedfood = database.GetZoneForage(m_pp.zone_id, skill_level);
+		}
 
 		const Item_Struct* food_item = database.GetItem(foragedfood);
 
