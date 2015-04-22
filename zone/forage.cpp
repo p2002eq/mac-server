@@ -389,14 +389,6 @@ void Client::ForageItem(bool guarantee) {
 		13106 // Fishing Grubs
 	};
 
-	uint32 food_ids[5] = {
-		13046, // Fruit
-		13045, // Berries
-		13419, // Vegetables
-		13048, // Rabbit Meat
-		13047  // Roots
-	};
-
 	// these may need to be fine tuned, I am just guessing here
 	if (guarantee || zone->random.Int(0,199) < skill_level) 
 	{
