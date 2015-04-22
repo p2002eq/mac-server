@@ -213,7 +213,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							else
 								AIDoSpellCast(i, tar, 0);
 						}
-						else if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						else if (mana_cost == 0 || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
 							if(!checked_los) {
 								if (!CheckLosFN(tar))
