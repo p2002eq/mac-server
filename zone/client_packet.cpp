@@ -1550,12 +1550,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		BulkSendItems();
 		BulkSendInventoryItems();
 		/* Send stuff on the cursor which isnt sent in bulk */
-		iter_queue it;
-		for (it = m_inv.cursor_begin(); it != m_inv.cursor_end(); ++it) {
+		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
 			/* First item cursor is sent in bulk inventory packet */
-			if (it == m_inv.cursor_begin())
+			if (iter == m_inv.cursor_cbegin())
 				continue;
-			const ItemInst *inst = *it;
+			const ItemInst *inst = *iter;
 			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
 
@@ -8685,7 +8684,9 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 		else if(target->IsNPC())
 		{
-			target->Disarm();
+			if (!target->Disarm())
+				success = 0;
+
 			if(!GetGM())
 				AddToHateList(target, 1);
 		}

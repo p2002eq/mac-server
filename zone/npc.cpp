@@ -272,6 +272,12 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	SetCombatHPRegen(d->combat_hp_regen);
 	SetCombatManaRegen(d->combat_mana_regen);
 
+	// Innate Quad attack for NPCs is merely dual wield enabled with no weapon required
+	// these two special ability flags are redundant
+	// NPCs of all classes gain the ability to dual wield two weapons starting at level 4 on Live as of 2014
+	if (GetSpecialAbility(SPECATK_INNATE_DW) || GetSpecialAbility(SPECATK_QUAD))
+		can_dual_wield = true;
+
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;

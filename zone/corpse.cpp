@@ -392,15 +392,9 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 			database.QueryDatabase(ss.str().c_str());
 		}
 
-		if (cursor) { // all cursor items should be on corpse (client < SoF or RespawnFromHover = false)
-			while (!client->GetInv().CursorEmpty())
-				client->DeleteItemInInventory(MainCursor, 0, false, false);
-		}
-		else { // only visible cursor made it to corpse (client >= Sof and RespawnFromHover = true)
-			std::list<ItemInst*>::const_iterator start = client->GetInv().cursor_begin();
-			std::list<ItemInst*>::const_iterator finish = client->GetInv().cursor_end();
-			database.SaveCursor(client->CharacterID(), start, finish);
-		}
+		auto start = client->GetInv().cursor_cbegin();
+		auto finish = client->GetInv().cursor_cend();
+		database.SaveCursor(client->CharacterID(), start, finish);
 
 		client->CalcBonuses(); // will only affect offline profile viewing of dead characters..unneeded overhead
 		client->Save();

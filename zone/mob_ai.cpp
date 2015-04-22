@@ -213,7 +213,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							else
 								AIDoSpellCast(i, tar, 0);
 						}
-						else if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						else if (mana_cost == 0 || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
 							if(!checked_los) {
 								if (!CheckLosFN(tar))
@@ -1064,6 +1064,73 @@ void Client::AI_Process()
 	}
 }
 
+void Mob::DoMainHandRound(Mob* victim, ExtraAttackOptions *opts)
+{
+	if (!victim)
+		victim = target;
+
+	if (IsNPC())
+	{
+		int16 n_atk = CastToNPC()->GetNumberOfAttacks();
+
+		if (n_atk <= 1)
+		{
+			Attack(victim, MainPrimary);
+		}
+		else
+		{
+			for (int i = 0; i < n_atk; ++i)
+			{
+				Attack(victim, MainPrimary);
+			}
+		}
+	}
+	else
+	{
+		Attack(victim, MainPrimary, false, false, false, opts);
+	}
+
+	if (victim)
+	{
+		if (zone->random.Roll(DoubleAttackChance()))
+		{
+			Attack(victim, MainPrimary);
+
+			// triple attack chance for level 60+ war, monk seems to be 10% on rounds that successfully double
+			if (GetSpecialAbility(SPECATK_TRIPLE) && !IsPet() && zone->random.Roll(10))
+			{
+				Attack(victim, MainPrimary, false, false, false, opts);
+			}
+		}
+	}
+}
+
+void Mob::DoOffHandRound(Mob* victim, ExtraAttackOptions *opts)
+{
+	if (!victim)
+		victim = target;
+
+	int myclass = GetClass();
+
+	// NPC monks do not get innate dual wield
+	if (CanDualWield() || (IsClient() && myclass == MONK))
+	{
+		if (zone->random.Roll(DualWieldChance()))
+		{
+			Attack(victim, MainSecondary, false, false, false, opts);
+
+			// NPCs cannot double attack the off-hand until level 36
+			if (IsNPC() && GetLevel() > 35)
+			{
+				if (zone->random.Roll(DoubleAttackChance()))
+				{
+					Attack(victim, MainSecondary, false, false, false, opts);
+				}
+			}
+		}
+	}
+}
+
 void Mob::AI_Process() {
 	if (!IsAIControlled())
 		return;
@@ -1212,46 +1279,19 @@ void Mob::AI_Process() {
 				//crap of checking target for null was not gunna cut it
 
 				//try main hand first
-				if(attack_timer.Check()) {
-					if(IsNPC()) {
-						int16 n_atk = CastToNPC()->GetNumberOfAttacks();
-						if(n_atk <= 1) {
-							Attack(target, MainPrimary);
-						} else {
-							for(int i = 0; i < n_atk; ++i) {
-								Attack(target, MainPrimary);
-							}
-						}
-					} else {
-						Attack(target, MainPrimary);
-					}
+				if(attack_timer.Check())
+				{
+					bool specialed = false;				// NPCs may only do one special attack per round
 
-					if (target) {
-						//we use this random value in three comparisons with different
-						//thresholds, and if its truely random, then this should work
-						//out reasonably and will save us compute resources.
-						uint8 random = zone->random.Int(0, 99);
-						if (zone->random.Roll(DoubleAttackChance())) {
-							Attack(target, MainPrimary);
-							// lets see if we can do a triple attack with the main hand
-							//pets are excluded from triple and quads...
-							if ((GetSpecialAbility(SPECATK_TRIPLE) || GetSpecialAbility(SPECATK_QUAD))
-									&& !IsPet() && random < (GetLevel() + NPCTripleAttackModifier)) {
-								Attack(target, MainPrimary);
-								// now lets check the quad attack
-								if (GetSpecialAbility(SPECATK_QUAD)
-										&& random < (GetLevel() + NPCQuadAttackModifier)) {
-									Attack(target, MainPrimary);
-								}
-							}
-						}
-					}
+					DoMainHandRound();
 
-					if (GetSpecialAbility(SPECATK_FLURRY)) {
+					if (GetSpecialAbility(SPECATK_FLURRY))
+					{
 						int flurry_chance = GetSpecialAbilityParam(SPECATK_FLURRY, 0);
 						flurry_chance = flurry_chance > 0 ? flurry_chance : RuleI(Combat, NPCFlurryChance);
 
-						if (zone->random.Roll(flurry_chance)) {
+						if (zone->random.Roll(flurry_chance))
+						{
 							ExtraAttackOptions opts;
 							int cur = GetSpecialAbilityParam(SPECATK_FLURRY, 2);
 							if (cur > 0)
@@ -1278,10 +1318,12 @@ void Mob::AI_Process() {
 								opts.crit_flat = cur;
 
 							Flurry(&opts);
+							specialed = true;
 						}
 					}
 
-					if (IsPet() || (IsNPC() && CastToNPC()->GetSwarmOwner())) {
+					if (IsPet() || (IsNPC() && CastToNPC()->GetSwarmOwner()))
+					{
 						Mob *owner = nullptr;
 
 						if (IsPet())
@@ -1289,20 +1331,23 @@ void Mob::AI_Process() {
 						else
 							owner = entity_list.GetMobID(CastToNPC()->GetSwarmOwner());
 
-						if (owner) {
-						int16 flurry_chance = owner->aabonuses.PetFlurry +
-							owner->spellbonuses.PetFlurry + owner->itembonuses.PetFlurry;
+						if (owner)
+						{
+							int16 flurry_chance = owner->aabonuses.PetFlurry +
+								owner->spellbonuses.PetFlurry + owner->itembonuses.PetFlurry;
 
 							if (flurry_chance && zone->random.Roll(flurry_chance))
 								Flurry(nullptr);
 						}
 					}
 
-					if (GetSpecialAbility(SPECATK_RAMPAGE))
+					if (GetSpecialAbility(SPECATK_RAMPAGE) && !specialed)
 					{
 						int rampage_chance = GetSpecialAbilityParam(SPECATK_RAMPAGE, 0);
 						rampage_chance = rampage_chance > 0 ? rampage_chance : 20;
-						if(zone->random.Roll(rampage_chance)) {
+
+						if(zone->random.Roll(rampage_chance))
+						{
 							ExtraAttackOptions opts;
 							int cur = GetSpecialAbilityParam(SPECATK_RAMPAGE, 2);
 							if(cur > 0) {
@@ -1333,15 +1378,19 @@ void Mob::AI_Process() {
 							if(cur > 0) {
 								opts.crit_flat = cur;
 							}
+
 							Rampage(&opts);
+							specialed = true;
 						}
 					}
 
-					if (GetSpecialAbility(SPECATK_AREA_RAMPAGE))
+					if (GetSpecialAbility(SPECATK_AREA_RAMPAGE) && !specialed)
 					{
 						int rampage_chance = GetSpecialAbilityParam(SPECATK_AREA_RAMPAGE, 0);
 						rampage_chance = rampage_chance > 0 ? rampage_chance : 20;
-						if(zone->random.Roll(rampage_chance)) {
+
+						if(zone->random.Roll(rampage_chance))
+						{
 							ExtraAttackOptions opts;
 							int cur = GetSpecialAbilityParam(SPECATK_AREA_RAMPAGE, 2);
 							if(cur > 0) {
@@ -1374,6 +1423,7 @@ void Mob::AI_Process() {
 							}
 
 							AreaRampage(&opts);
+							specialed = true;
 						}
 					}
 				}
@@ -1381,26 +1431,7 @@ void Mob::AI_Process() {
 				//now off hand
 				if (attack_dw_timer.Check())
 				{
-					int myclass = GetClass();
-					//can only dual wield without a weapon if your a monk
-
-					if(GetSpecialAbility(SPECATK_INNATE_DW) ||
-						(CanDualWield() && GetLevel() >= DUAL_WIELD_LEVEL) ||
-						myclass == MONK || myclass == MONKGM) {
-						if(zone->random.Roll(DoubleAttackChance()))
-						{
-							Attack(target, MainSecondary);
-
-							// Try for double attack
-							if (GetLevel() > 35)
-							{
-								if (zone->random.Roll(DoubleAttackChance()))
-								{
-									Attack(target, MainSecondary);
-								}
-							}
-						}
-					}
+					DoOffHandRound();
 				}
 
 				//now special attacks (kick, etc)
@@ -2155,17 +2186,34 @@ bool Mob::Flurry(ExtraAttackOptions *opts)
 {
 	// this is wrong, flurry is extra attacks on the current target
 	Mob *target = GetTarget();
-	if (target) {
-		if (!IsPet()) {
+	if (target)
+	{
+		if (!IsPet())
+		{
 			entity_list.MessageClose_StringID(this, true, 200, MT_NPCFlurry, NPC_FLURRY, GetCleanName(), target->GetCleanName());
-		} else {
+		} else
+		{
 			entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, NPC_FLURRY, GetCleanName(), target->GetCleanName());
 		}
 
 		int num_attacks = GetSpecialAbilityParam(SPECATK_FLURRY, 1);
 		num_attacks = num_attacks > 0 ? num_attacks : RuleI(Combat, MaxFlurryHits);
-		for (int i = 0; i < num_attacks; i++)
-			Attack(target, MainPrimary, false, false, false, opts);
+
+		// NPC flurries are merely an extra attack round
+		// Sony's flurry does not always do the same number of attacks; double attacking NPCs only flurry 1-2 hits
+		// so doing the same number of attacks for every NPC would be incorrect
+		DoMainHandRound(target, opts);
+		DoOffHandRound(target, opts);
+
+		if (num_attacks > 4)
+		{
+			for (int i = 3; i < num_attacks; i++)
+				Attack(target, MainPrimary, false, false, false, opts);
+		}
+
+		// flurries always kick/bash
+		if (IsNPC())
+			CastToNPC()->TriggerClassAtkTimer();
 	}
 	return true;
 }
@@ -2201,27 +2249,46 @@ bool Mob::Rampage(ExtraAttackOptions *opts)
 		entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, NPC_RAMPAGE, GetCleanName());
 
 	int rampage_targets = GetSpecialAbilityParam(SPECATK_RAMPAGE, 1);
+
 	if (rampage_targets == 0) // if set to 0 or not set in the DB
 		rampage_targets = RuleI(Combat, DefaultRampageTargets);
+
 	if (rampage_targets > RuleI(Combat, MaxRampageTargets))
 		rampage_targets = RuleI(Combat, MaxRampageTargets);
-	for (int i = 0; i < RampageArray.size(); i++) {
+
+	for (int i = 0; i < RampageArray.size(); i++)
+	{
 		if (index_hit >= rampage_targets)
 			break;
-		// range is important
+
 		Mob *m_target = entity_list.GetMob(RampageArray[i]);
-		if (m_target) {
+		if (m_target)
+		{
 			if (m_target == GetTarget())
 				continue;
-			if (CombatRange(m_target)) {
-				Attack(m_target, MainPrimary, false, false, false, opts);
+
+			// Note: Some (most?) rampage NPCs could hit their ramp target from any distance.  Some required a certain
+			// distance which might be equal to melee range or might be larger.
+			// Disabling the range check to err on the side of harder.  Uncomment this to add it back.
+
+			//if (CombatRange(m_target))
+			//{
+				DoMainHandRound(m_target, opts);
+				DoOffHandRound(m_target, opts);
 				index_hit++;
-			}
+			//}
 		}
 	}
 
 	if (RuleB(Combat, RampageHitsTarget) && index_hit < rampage_targets)
-		Attack(GetTarget(), MainPrimary, false, false, false, opts);
+	{
+		DoMainHandRound(target, opts);
+		DoOffHandRound(target, opts);
+	}
+
+	// rampages always kick/bash
+	if (IsNPC())
+		CastToNPC()->TriggerClassAtkTimer();
 
 	return true;
 }
@@ -2229,18 +2296,26 @@ bool Mob::Rampage(ExtraAttackOptions *opts)
 void Mob::AreaRampage(ExtraAttackOptions *opts)
 {
 	int index_hit = 0;
-	if (!IsPet()) { // do not know every pet AA so thought it safer to add this
-		entity_list.MessageClose_StringID(this, true, 200, MT_NPCRampage, AE_RAMPAGE, GetCleanName());
-	} else {
-		entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, AE_RAMPAGE, GetCleanName());
+	if (!IsPet())	// do not know every pet AA so thought it safer to add this
+	{
+		// older clients did not have 'wild rampage' string
+		entity_list.MessageClose_StringID(this, true, 200, MT_NPCRampage, NPC_RAMPAGE, GetCleanName());
+		//entity_list.MessageClose_StringID(this, true, 200, MT_NPCRampage, AE_RAMPAGE, GetCleanName());
+	}
+	else
+	{
+		entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, NPC_RAMPAGE, GetCleanName());
+		//entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, AE_RAMPAGE, GetCleanName());
 	}
 
 	int rampage_targets = GetSpecialAbilityParam(SPECATK_AREA_RAMPAGE, 1);
-	rampage_targets = rampage_targets > 0 ? rampage_targets : 1;
+	rampage_targets = rampage_targets > 0 ? rampage_targets : 250;					// default to unlimited targets hit
 	index_hit = hate_list.AreaRampage(this, GetTarget(), rampage_targets, opts);
 
-	if(index_hit == 0) {
-		Attack(GetTarget(), MainPrimary, false, false, false, opts);
+	if(index_hit == 0)
+	{
+		DoMainHandRound(GetTarget(), opts);
+		DoOffHandRound(GetTarget(), opts);
 	}
 }
 
