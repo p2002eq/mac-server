@@ -2346,3 +2346,154 @@ int32 NPC::GetManaRegen()
 	else
 		return 0;
 }
+
+void NPC::AddPush(float heading, float magnitude)
+{
+	float headingRadians = heading;
+	headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+	if (headingRadians < 270)
+		headingRadians += 90;
+	else
+		headingRadians -= 270;
+	headingRadians = headingRadians * 3.1415f / 180.0f;
+
+	push_vector.x += cosf(headingRadians) * magnitude;
+	push_vector.y += sinf(headingRadians) * magnitude;
+}
+
+void NPC::ApplyPushVector()
+{
+	if (!zone->zonemap)
+	{
+		return;
+	}
+
+	if (push_vector.x == 0.0f && push_vector.y == 0.0f)
+		return;
+
+	// ---- double vector for test purposes only. DELETE THIS ------------------------
+	push_vector.x *= 2;
+	push_vector.y *= 2;
+	// -------------------------------------------------------------------------------
+
+	glm::vec3 currentLoc(GetX(), GetY(), GetZ());
+	glm::vec3 newLoc(GetX(), GetY(), GetZ());
+	glm::vec3 sizeLoc, hitLocation, hitNormal;
+	float hitDistance;
+	float magnitude = sqrtf(push_vector.x * push_vector.x + push_vector.y * push_vector.y);
+	glm::vec2 pushUnitV(push_vector.x == 0.0f ? 0.0f : push_vector.x / magnitude,
+						push_vector.y == 0.0f ? 0.0f : push_vector.y / magnitude);
+	float sizeCushion = GetSize() / 2.0f;
+	float newz = GetZ();
+
+	newLoc.x -= push_vector.x;
+	newLoc.y += push_vector.y;
+	newLoc.z = newz;
+
+	newz = zone->zonemap->FindBestZ(newLoc, nullptr);
+	if (newz != BEST_Z_INVALID)
+		newLoc.z = SetBestZ(newz);
+
+	// extend the point to check collision of by half the NPC's size so it does not get half its body pushed into the wall
+	if (push_vector.x != 0.0f)
+		sizeLoc.x = newLoc.x - pushUnitV.x * sizeCushion;		// scale the unit vector
+	else
+		sizeLoc.x = newLoc.x;
+
+	if (push_vector.y != 0.0f)
+		sizeLoc.y = newLoc.y + pushUnitV.y * sizeCushion;
+	else
+		sizeLoc.y = newLoc.y;
+
+	sizeLoc.z = newLoc.z;
+
+	if (!zone->zonemap->LineIntersectsZone(currentLoc, sizeLoc, 0.0f, &hitLocation, &hitNormal, &hitDistance))
+	{
+		// hit nothing
+		m_Position.x = newLoc.x;
+		m_Position.y = newLoc.y;
+		m_Position.z = newLoc.z;
+
+		SendPosition();
+		Say("Hit Nothing; push magnitude: %.5f", magnitude);
+	}
+	else
+	{
+		// hit a wall.  change vector to push NPC against it instead of getting 'stuck' on it
+		Say("Hit Wall; dist: %.5f hitLoc.x %.5f hitLoc.y %.5f pushx: %.5f pushy: %.5f; normalx: %.5f normaly: %.5f; perp normalx: %.5f perp normaly: %.5f",
+			hitDistance, hitLocation.x, hitLocation.y, push_vector.x, push_vector.y, hitNormal.x, hitNormal.y, 1.0f / -hitNormal.y, 1.0f / hitNormal.x);
+		Say("newLoc.x %.5f newLoc.y %.5f sizeLoc.x %.5f sizeLoc.y %.5f", newLoc.x, newLoc.y, sizeLoc.x, sizeLoc.y);
+
+		// z > 0 means NPC hit an inclined floor.  z < 0 means NPC hit an inclined ceiling
+		if (hitNormal.z > 0.0f && hitNormal.z < 0.25f)		// z == 0.25f is about 75 degrees
+		{
+			push_vector.x = 0.0f;
+			push_vector.y = 0.0f;
+			Say("Wall/Floor too steep");
+			return;						// wall/floor too steep
+		}
+
+		// rotate vector to where x, y would be if z were 0; i.e. make it level with flat ground
+		// perfectly 90 degree walls won't require this
+		if (hitNormal.z != 0.0f)
+		{
+			// 'rotate' by extending the x and y to a 2d unit vector
+			float normal2dMag = sqrt(hitNormal.x * hitNormal.x + hitNormal.y * hitNormal.y);
+			hitNormal.x /= normal2dMag;
+			hitNormal.y /= normal2dMag;
+		}
+
+		// angle between wall normal and push vector
+		float hitNormalDotp = hitNormal.x * pushUnitV.x +
+			hitNormal.y * pushUnitV.y;
+		if (hitNormalDotp < 0)
+			hitNormalDotp = -hitNormalDotp;
+
+		// create perpendicular vector of wall normal
+		glm::vec2 perpNormal(-hitNormal.y, hitNormal.x);
+
+		float perpDotp = perpNormal.x * pushUnitV.x +
+			perpNormal.y * pushUnitV.y;
+
+		// two possible perpendicular vectors; figure out which one to use
+		if (perpDotp < 0)
+		{
+			perpNormal.x = -perpNormal.x;
+			perpNormal.y = -perpNormal.y;
+		}
+
+		// reduce push magnitude the more the push vector is perpendicular to wall
+		newLoc.x = currentLoc.x - perpNormal.x * magnitude * (1.0f - hitNormalDotp);
+		newLoc.y = currentLoc.y + perpNormal.y * magnitude * (1.0f - hitNormalDotp);
+
+		newz = zone->zonemap->FindBestZ(newLoc, nullptr);
+		if (newz != BEST_Z_INVALID)
+			newLoc.z = SetBestZ(newz);
+
+		// extend loc to check by half size of NPC so mob doesn't end up halfway into wall
+		sizeLoc.x = newLoc.x - -hitNormal.y * sizeCushion;
+		sizeLoc.y = newLoc.y + hitNormal.x * sizeCushion;
+		sizeLoc.z = newLoc.z;
+
+		if (!zone->zonemap->LineIntersectsZone(currentLoc, sizeLoc, 0.0f, &hitLocation, &hitNormal, &hitDistance))
+		{
+			// hit nothing
+			m_Position.x = newLoc.x;
+			m_Position.y = newLoc.y;
+			m_Position.z = newLoc.z;
+
+			SendPosition();
+			Say("Glancing the wall; push magnitude == %.5f  perpNormal.x: %.5f  perNormal.y: %.5f  hitNormal.x: %.5f  hitNormal.y: %.5f  hitNormalDotp: %.5f",
+				(magnitude * (1.0f - hitNormalDotp)), perpNormal.x, perpNormal.y, hitNormal.x, hitNormal.y, hitNormalDotp);
+		}
+		else
+		{
+			Say("In Corner; dist: %.5f hitLoc.x %.5f hitLoc.y %.5f pushx: %.5f pushy: %.5f; normalx: %.5f normaly: %.5f; perp normalx: %.5f perp normaly: %.5f",
+				hitDistance, hitLocation.x, hitLocation.y, push_vector.x, push_vector.y, hitNormal.x, hitNormal.y, 1.0f / -hitNormal.y, 1.0f / hitNormal.x);
+			Say("newLoc.x %.5f newLoc.y %.5f sizeLoc.x %.5f sizeLoc.y %.5f", newLoc.x, newLoc.y, sizeLoc.x, sizeLoc.y);
+		}
+	}
+
+	push_vector.x = 0.0f;
+	push_vector.y = 0.0f;
+}

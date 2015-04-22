@@ -522,7 +522,7 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 
 	int targetsHit = 0;
 	auto iterator = list.begin();
-	tHateEntry* h;
+	tHateEntry* h = nullptr;
 
 	while (iterator != list.end() && targetsHit < count)
 	{

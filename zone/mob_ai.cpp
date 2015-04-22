@@ -213,7 +213,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							else
 								AIDoSpellCast(i, tar, 0);
 						}
-						else if (tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						else if (mana_cost == 0 || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
 							if(!checked_los) {
 								if (!CheckLosFN(tar))
@@ -1220,6 +1220,12 @@ void Mob::AI_Process() {
 			}
 		}
 
+		if (IsNPC() && CastToNPC()->CheckPushTimer())
+		{
+			CastToNPC()->ApplyPushVector();
+			CastToNPC()->ResetPushTimer();
+		}
+
 		if (!target)
 			return;
 
@@ -1965,7 +1971,10 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 					uint16 emoteid = GetEmoteID();
 					if(emoteid != 0)
 						CastToNPC()->DoNPCEmote(ENTERCOMBAT,emoteid);
+
 					CastToNPC()->SetCombatEvent(true);
+					CastToNPC()->ResetPushTimer();
+					Say("AddToHateList()");
 
 					/* Web Interface: Combat State NPC */
 					if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
