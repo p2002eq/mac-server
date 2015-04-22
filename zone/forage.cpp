@@ -409,28 +409,14 @@ void Client::ForageItem(bool guarantee) {
 			if(Hungry() && Thirsty())
 			{
 				if(m_pp.hunger_level <= m_pp.thirst_level)
-				{
-					if(GetZoneID() == poknowledge)
-						foragedfood = 13047; //PoK only has roots from the above array.
-					else
-					{
-						uint8 foodindex = zone->random.Int(0, 4);
-						foragedfood = food_ids[foodindex];
-					}
-				}
+					foragedfood = 13047;
 				else
 					foragedfood = 13044;
 			}
 			// We only need food.
 			else if(Hungry())
 			{
-				if(GetZoneID() == poknowledge)
-					foragedfood = 13047; //PoK only has roots from the above array.
-				else
-				{
-					uint8 foodindex = zone->random.Int(0, 4);
-					foragedfood = food_ids[foodindex];
-				}
+				foragedfood = 13047;
 			}
 			// We only need water.
 			else if(Thirsty())
