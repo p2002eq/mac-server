@@ -4290,6 +4290,10 @@ void Client::GarbleMessage(char *message, uint8 variance)
 	// Garble message by variance%
 	const char alpha_list[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // only change alpha characters for now
 
+	// Don't garble # commands
+	if (message[0] == '#')
+		return;
+
 	for (size_t i = 0; i < strlen(message); i++) {
 		uint8 chance = (uint8)zone->random.Int(0, 115); // variation just over worst possible scrambling
 		if (isalpha((unsigned char)message[i]) && (chance <= variance)) {
