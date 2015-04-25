@@ -677,10 +677,10 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					}
 				}
 				else
-					Log.Out(Logs::Detail, Logs::General, "%s is too low in level to gain XP from this group.", cmember->GetName());
+					Log.Out(Logs::Detail, Logs::Group, "%s is too low in level to gain XP from this group.", cmember->GetName());
 			}
 			else
-				Log.Out(Logs::Detail, Logs::General, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
+				Log.Out(Logs::Detail, Logs::Group, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
 		}
 	}
 }

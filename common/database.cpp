@@ -1523,7 +1523,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	Log.Out(Logs::Detail, Logs::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		return false;
@@ -1534,14 +1534,14 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i...", char_id);
+	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -1564,8 +1564,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::Debug, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
@@ -1577,8 +1577,8 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
@@ -1603,8 +1603,8 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
+	Log.Out(Logs::Detail, Logs::Debug, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
@@ -1616,7 +1616,7 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	Log.Out(Logs::Detail, Logs::Debug, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;

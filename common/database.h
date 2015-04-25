@@ -563,6 +563,7 @@ public:
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
 	bool DBSetup_Rules();
+	bool DBSetup_Logs();
 	bool GITInfo();
 
 	/*

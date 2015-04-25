@@ -8597,7 +8597,7 @@ void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(LFG_Struct)) {
-		Log.Out(Logs::General, Logs::None, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		Log.Out(Logs::General, Logs::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
 		return;
 	}
 
@@ -8612,7 +8612,7 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::General, "Invalid LFG value sent. %i", lfg->value);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid LFG value sent. %i", lfg->value);
 	}
 
 	UpdateWho();
