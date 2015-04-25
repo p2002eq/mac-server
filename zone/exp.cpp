@@ -780,13 +780,11 @@ bool Client::IsInRange(Mob* defender)
 
 bool Client::IsInLevelRange(uint8 maxlevel)
 {
-	int16 diff = GetLevel() - maxlevel;
-	int16 maxdiff = -(GetLevel()*15/10 - GetLevel());
+	uint8 max_level = GetLevel()*1.5 + 0.5;
+	if(max_level < 6)
+		max_level = 6;
 
-	if(maxdiff > -5)
-		maxdiff = -5;
-
-	if (diff >= (maxdiff)) 
+	if (max_level >= maxlevel) 
 		return true;
 	else
 		return false;
