@@ -1569,24 +1569,24 @@ void Mob::AI_Process() {
 						//	printf("Pet start pos: (%f, %f, %f)\n", GetX(), GetY(), GetZ());
 
 						float dist = DistanceSquared(m_Position, owner->GetPosition());
-						if (dist >= 400)
+						if ((dist >= 2500 && GetCurrentSpeed() <= 0.0f) || (dist >= 400 && GetCurrentSpeed() > 0.0f))
 						{
-							float speed = GetWalkspeed();
+							float speed = owner->GetWalkspeed();
 							if (dist >= 5625)
 								speed = GetRunspeed();
 							SetCurrentSpeed(speed);
 							if (speed > 0.0f)
 							{
 								if(!zone->pathing) {
-									CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
+									CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ() - owner->GetZOffset() + GetZOffset(), speed);
 								} else {
 									bool WaypointChanged, NodeReached;
-									glm::vec3 Goal = UpdatePath(owner->GetX(), owner->GetY(), owner->GetZ(), speed, WaypointChanged, NodeReached);
+									glm::vec3 Goal = UpdatePath(owner->GetX(), owner->GetY(), owner->GetZ() - owner->GetZOffset() + GetZOffset(), speed, WaypointChanged, NodeReached);
 
 									if(WaypointChanged)
 										tar_ndx = 20;
 
-									CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetRunspeed());
+									CalculateNewPosition2(Goal.x, Goal.y, Goal.z, speed);
 								}
 							}
 						} else if(IsMoving()) {
@@ -1701,6 +1701,7 @@ void NPC::AI_DoMovement() {
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
 
 	if (roambox_distance > 0) {
+		float roam_z = GetZ();
 		if (
 			roambox_movingto_x > roambox_max_x
 			|| roambox_movingto_x < roambox_min_x
@@ -1728,11 +1729,24 @@ void NPC::AI_DoMovement() {
 				roambox_movingto_x = zone->random.Real(roambox_min_x+1,roambox_max_x-1);
 			if (roambox_movingto_y > roambox_max_y || roambox_movingto_y < roambox_min_y)
 				roambox_movingto_y = zone->random.Real(roambox_min_y+1,roambox_max_y-1);
+
+			if (zone->HasMap()){
+				glm::vec3 dest(roambox_movingto_x, roambox_movingto_y, GetZ());
+
+
+				if (!zone->HasWaterMap() || !zone->watermap->InLiquid(dest)) {
+
+					float newz = zone->zonemap->FindBestZ(dest, nullptr);
+
+					if (newz > -5000)
+						roam_z = SetBestZ(newz);
+				}
+			}
 		}
 
 		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
 			roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x, roambox_movingto_y);
-		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, GetZ(), walksp, true))
+		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, roam_z, walksp, true))
 		{
 			roambox_movingto_x = roambox_max_x + 1; // force update
 			pLastFightingDelayMoving = Timer::GetCurrentTime() + RandomTimer(roambox_min_delay, roambox_delay);

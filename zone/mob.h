@@ -403,6 +403,8 @@ public:
 	inline const float GetEQHeading() const { return m_EQPosition.w; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
+	inline const float GetZOffset() const { return z_offset; }
+	inline const float SetBestZ(float z_coord) const { return z_coord + z_offset; }
 	inline const float GetTarX() const { return m_TargetLocation.x; }
 	inline const float GetTarY() const { return m_TargetLocation.y; }
 	inline const float GetTarZ() const { return m_TargetLocation.z; }
@@ -941,8 +943,7 @@ public:
 	float Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod, int Msg = 1,int acc_override=0, int avoid_override=0, int add_acc=0, int add_avoid = 0);
 	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
 	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
-
-	float SetBestZ(float z_coord);
+	float CalcZOffset();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1039,6 +1040,7 @@ protected:
 	uint16 animation;
 	float base_size;
 	float size;
+	float z_offset;
 	float runspeed;
 	float walkspeed;
 	float fearspeed;
