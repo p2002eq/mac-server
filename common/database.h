@@ -142,35 +142,10 @@ namespace Convert {
 		};
 	};
 
-	struct RaidLeadershipAA_Struct {
-		union {
-			struct {
-				uint32 raidAAMarkNPC;
-				uint32 raidAANPCHealth;
-				uint32 raidAADelegateMainAssist;
-				uint32 raidAADelegateMarkNPC;
-				uint32 raidAA4;
-				uint32 raidAA5;
-				uint32 raidAA6;
-				uint32 raidAASpellAwareness;
-				uint32 raidAAOffenseEnhancement;
-				uint32 raidAAManaEnhancement;
-				uint32 raidAAHealthEnhancement;
-				uint32 raidAAHealthRegeneration;
-				uint32 raidAAFindPathToPC;
-				uint32 raidAAHealthOfTargetsTarget;
-				uint32 raidAA14;
-				uint32 raidAA15;
-			};
-			uint32 ranks[MAX_RAID_LEADERSHIP_AA_ARRAY];
-		};
-	};
-
 	struct LeadershipAA_Struct {
 		union {
 			struct {
 				Convert::GroupLeadershipAA_Struct group;
-				Convert::RaidLeadershipAA_Struct raid;
 			};
 			uint32 ranks[MAX_LEADERSHIP_AA_ARRAY];
 		};

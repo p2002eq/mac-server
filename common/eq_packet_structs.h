@@ -680,9 +680,6 @@ struct LeadershipAA_Struct {
 struct GroupLeadershipAA_Struct {
 	uint32 ranks[MAX_GROUP_LEADERSHIP_AA_ARRAY];
 };
-struct RaidLeadershipAA_Struct {
-	uint32 ranks[MAX_RAID_LEADERSHIP_AA_ARRAY];
-};
 
  /**
 * A bind point.

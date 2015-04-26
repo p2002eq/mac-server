@@ -522,7 +522,6 @@ public:
 	bool CheckLoreConflict(const Item_Struct* item);
 	void ChangeLastName(const char* in_lastname);
 	void GetGroupAAs(GroupLeadershipAA_Struct *into) const;
-	void GetRaidAAs(RaidLeadershipAA_Struct *into) const;
 	void ClearGroupAAs();
 	void UpdateGroupAAs(int32 points, uint32 type);
 	void SacrificeConfirm(Client* caster);
