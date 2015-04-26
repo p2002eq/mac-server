@@ -320,10 +320,6 @@ namespace Convert {
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7744*/	char							unknown7780[160];
 		/*7904*/	uint32							endurance;
-		/*7908*/	uint32							group_leadership_exp;	//0-1000
-		/*7912*/	uint32							raid_leadership_exp;	//0-2000
-		/*7916*/	uint32							group_leadership_points;
-		/*7920*/	uint32							raid_leadership_points;
 		/*7924*/	Convert::LeadershipAA_Struct	leader_abilities;
 		/*8052*/	uint8							unknown8088[132];
 		/*8184*/	uint32							air_remaining;

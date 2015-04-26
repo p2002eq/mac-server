@@ -423,10 +423,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"leadership_exp_on,"
 		"show_helm,"
 		"endurance,"
-		"group_leadership_exp,"
-		"raid_leadership_exp,"
-		"group_leadership_points,"
-		"raid_leadership_points,"
 		"air_remaining,"
 		"pvp_kills,"
 		"pvp_deaths,"
@@ -504,10 +500,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // leadership_exp_on		
 		"%u,"  // show_helm				
 		"%u,"  // endurance				
-		"%u,"  // group_leadership_exp	
-		"%u,"  // raid_leadership_exp	
-		"%u,"  // group_leadership_point
-		"%u,"  // raid_leadership_points
 		"%u,"  // air_remaining			
 		"%u,"  // pvp_kills				
 		"%u,"  // pvp_deaths			
@@ -585,10 +577,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->leadAAActive,				  // " leadership_exp_on,         "
 		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
-		pp->group_leadership_exp,		  // " group_leadership_exp,      "
-		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
-		pp->group_leadership_points,	  // " group_leadership_points,   "
-		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->PVPKills,					  // " pvp_kills,                 "
 		pp->PVPDeaths,					  // " pvp_deaths,                "

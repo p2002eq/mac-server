@@ -845,16 +845,6 @@ void Lua_Client::QuestReadBook(const char *text, int type) {
 	self->QuestReadBook(text, type);
 }
 
-uint32 Lua_Client::GetGroupPoints() {
-	Lua_Safe_Call_Int();
-	return self->GetGroupPoints();
-}
-
-uint32 Lua_Client::GetRaidPoints() {
-	Lua_Safe_Call_Int();
-	return self->GetRaidPoints();
-}
-
 void Lua_Client::LearnRecipe(uint32 recipe) {
 	Lua_Safe_Call_Void();
 	self->LearnRecipe(recipe);
@@ -1300,8 +1290,6 @@ luabind::scope lua_register_client() {
 		.def("KeyRingAdd", (void(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
 		.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 		.def("QuestReadBook", (void(Lua_Client::*)(const char *,int))&Lua_Client::QuestReadBook)
-		.def("GetGroupPoints", (uint32(Lua_Client::*)(void))&Lua_Client::GetGroupPoints)
-		.def("GetRaidPoints", (uint32(Lua_Client::*)(void))&Lua_Client::GetRaidPoints)
 		.def("LearnRecipe", (void(Lua_Client::*)(uint32))&Lua_Client::LearnRecipe)
 		.def("GetEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetEndurance)
 		.def("GetMaxEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetMaxEndurance)

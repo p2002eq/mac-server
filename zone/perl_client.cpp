@@ -4059,58 +4059,6 @@ XS(XS_Client_ReadBook)
 XSRETURN_EMPTY;
 }
 
-XS(XS_Client_GetGroupPoints); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Client_GetGroupPoints)
-{
-	dXSARGS;
-	if (items != 1)
-		Perl_croak(aTHX_ "Usage: Client::GetGroupPoints(THIS)");
-	{
-		Client *		THIS;
-		uint32		RETVAL;
-		dXSTARG;
-
-		if (sv_derived_from(ST(0), "Client")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Client *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Client");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		RETVAL = THIS->GetGroupPoints();
-		XSprePUSH; PUSHu((UV)RETVAL);
-	}
-	XSRETURN(1);
-}
-
-XS(XS_Client_GetRaidPoints); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Client_GetRaidPoints)
-{
-	dXSARGS;
-	if (items != 1)
-		Perl_croak(aTHX_ "Usage: Client::GetRaidPoints(THIS)");
-	{
-		Client *		THIS;
-		uint32		RETVAL;
-		dXSTARG;
-
-		if (sv_derived_from(ST(0), "Client")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Client *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Client");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		RETVAL = THIS->GetRaidPoints();
-		XSprePUSH; PUSHu((UV)RETVAL);
-	}
-	XSRETURN(1);
-}
-
 XS(XS_Client_LearnRecipe);
 XS(XS_Client_LearnRecipe)
 {
@@ -5375,8 +5323,6 @@ XS(boot_Client)
 		newXSproto(strcpy(buf, "KeyRingAdd"), XS_Client_KeyRingAdd, file, "$$");
 		newXSproto(strcpy(buf, "KeyRingCheck"), XS_Client_KeyRingCheck, file, "$$");
 		newXSproto(strcpy(buf, "ReadBook"), XS_Client_ReadBook, file, "$$$");
-		newXSproto(strcpy(buf, "GetGroupPoints"), XS_Client_GetGroupPoints, file, "$");
-		newXSproto(strcpy(buf, "GetRaidPoints"), XS_Client_GetRaidPoints, file, "$");
 		newXSproto(strcpy(buf, "LearnRecipe"), XS_Client_LearnRecipe, file, "$$");
 		newXSproto(strcpy(buf, "GetEndurance"), XS_Client_GetEndurance, file, "$");
 		newXSproto(strcpy(buf, "GetMaxEndurance"), XS_Client_GetMaxEndurance, file, "$");
