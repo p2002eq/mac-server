@@ -1317,16 +1317,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (group){
-		// If the group leader is not set, pull the group leader infomrmation from the database.
+		// If the group leader is not set, pull the group leader information from the database.
 		if (!group->GetLeader()){
 			char ln[64];
-			char MainTankName[64];
-			char AssistName[64];
-			char PullerName[64];
-			char NPCMarkerName[64];
-			GroupLeadershipAA_Struct GLAA;
 			memset(ln, 0, 64);
-			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);

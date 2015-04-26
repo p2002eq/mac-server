@@ -1740,25 +1740,13 @@ void Database::SetGroupLeaderName(uint32 gid, const char* name) {
 		Log.Out(Logs::General, Logs::None, "Unable to set group leader:", results.ErrorMessage().c_str());
 }
 
-char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 
-	std::string query = StringFormat("SELECT `leadername`, `maintank`, `assist`, `puller`, `marknpc`, `leadershipaa` FROM `group_leaders` WHERE `gid` = %lu",(unsigned long)gid);
+char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf){ 
+	std::string query = StringFormat("SELECT `leadername` FROM `group_leaders` WHERE `gid` = %lu",(unsigned long)gid);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success() || results.RowCount() == 0) {
 		if(leaderbuf)
 			strcpy(leaderbuf, "UNKNOWN");
-
-		if(maintank)
-			maintank[0] = '\0';
-
-		if(assist)
-			assist[0] = '\0';
-
-		if(puller)
-			puller[0] = '\0';
-
-		if(marknpc)
-			marknpc[0] = '\0';
 
 		return leaderbuf;
 	}
@@ -1767,21 +1755,6 @@ char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* mainta
 
 	if(leaderbuf)
 		strcpy(leaderbuf, row[0]);
-
-	if(maintank)
-		strcpy(maintank, row[1]);
-
-	if(assist)
-		strcpy(assist, row[2]);
-
-	if(puller)
-		strcpy(puller, row[3]);
-
-	if(marknpc)
-		strcpy(marknpc, row[4]);
-
-	if(GLAA && results.LengthOfColumn(5) == sizeof(GroupLeadershipAA_Struct))
-		memcpy(GLAA, row[5], sizeof(GroupLeadershipAA_Struct));
 
 	return leaderbuf;
 }

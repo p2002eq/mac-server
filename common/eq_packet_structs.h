@@ -671,16 +671,6 @@ struct MovePotionToBelt_Struct {
 	uint32	ItemID;
 };
 
-static const uint32 MAX_GROUP_LEADERSHIP_AA_ARRAY = 16;
-static const uint32 MAX_RAID_LEADERSHIP_AA_ARRAY = 16;
-static const uint32 MAX_LEADERSHIP_AA_ARRAY = (MAX_GROUP_LEADERSHIP_AA_ARRAY+MAX_RAID_LEADERSHIP_AA_ARRAY);
-struct LeadershipAA_Struct {
-	uint32 ranks[MAX_LEADERSHIP_AA_ARRAY];
-};
-struct GroupLeadershipAA_Struct {
-	uint32 ranks[MAX_GROUP_LEADERSHIP_AA_ARRAY];
-};
-
  /**
 * A bind point.
 * Size: 20 Octets
@@ -887,7 +877,6 @@ struct PlayerProfile_Struct
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7744*/	char				unknown7780[160];
 /*7904*/	uint32				endurance;
-/*7924*/	LeadershipAA_Struct	leader_abilities;
 /*8052*/	uint8				unknown8088[132];
 /*8184*/	uint32				air_remaining;
 /*8188*/	uint32				PVPKills;
@@ -1773,7 +1762,6 @@ struct GroupUpdate2_Struct {
 /*0004*/	char	yourname[64];
 /*0068*/	char	membername[5][64];
 /*0388*/	char	leadersname[64];
-/*0452*/	GroupLeadershipAA_Struct leader_aas;
 /*0580*/	uint8	unknown580[196];
 /*0766*/	uint32	NPCMarkerID;	// EntityID of player delegated MarkNPC ability
 /*0780*/	uint8	unknown780[56];
@@ -1784,7 +1772,6 @@ struct GroupJoin_Struct {
 /*0000*/	uint32	action;
 /*0004*/	char	yourname[64];
 /*0068*/	char	membername[64];
-/*0132*/	GroupLeadershipAA_Struct leader_aas;
 /*0196*/	uint8	unknown196[196];
 /*0392*/	uint32	NPCMarkerID;	// EntityID of player delegated MarkNPC ability
 /*0396*/	uint8	unknown396[56];
@@ -2943,7 +2930,6 @@ struct RaidDetails_Struct {
 /*000*/	uint32		action;	//=6,20
 /*004*/	char		leader_name[64];
 /*068*/	uint32		unknown68[4];
-/*084*/	LeadershipAA_Struct abilities;	//ranks in backwards byte order
 /*128*/	uint8		unknown128[142];
 /*354*/	uint32		leader_id;
 };

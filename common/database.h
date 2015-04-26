@@ -118,38 +118,7 @@ namespace Convert {
 	struct Disciplines_Struct {
 		uint32 values[MAX_PP_DISCIPLINES];
 	};
-	struct GroupLeadershipAA_Struct {
-		union {
-			struct {
-				uint32 groupAAMarkNPC;
-				uint32 groupAANPCHealth;
-				uint32 groupAADelegateMainAssist;
-				uint32 groupAADelegateMarkNPC;
-				uint32 groupAA4;
-				uint32 groupAA5;
-				uint32 groupAAInspectBuffs;
-				uint32 groupAA7;
-				uint32 groupAASpellAwareness;
-				uint32 groupAAOffenseEnhancement;
-				uint32 groupAAManaEnhancement;
-				uint32 groupAAHealthEnhancement;
-				uint32 groupAAHealthRegeneration;
-				uint32 groupAAFindPathToPC;
-				uint32 groupAAHealthOfTargetsTarget;
-				uint32 groupAA15;
-			};
-			uint32 ranks[MAX_GROUP_LEADERSHIP_AA_ARRAY];
-		};
-	};
 
-	struct LeadershipAA_Struct {
-		union {
-			struct {
-				Convert::GroupLeadershipAA_Struct group;
-			};
-			uint32 ranks[MAX_LEADERSHIP_AA_ARRAY];
-		};
-	};
 	typedef struct
 	{
 		/*00*/ char Name[64];
@@ -295,7 +264,6 @@ namespace Convert {
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7744*/	char							unknown7780[160];
 		/*7904*/	uint32							endurance;
-		/*7924*/	Convert::LeadershipAA_Struct	leader_abilities;
 		/*8052*/	uint8							unknown8088[132];
 		/*8184*/	uint32							air_remaining;
 		/*8188*/	uint32							PVPKills;
@@ -509,8 +477,7 @@ public:
 	char*	GetGroupLeaderForLogin(const char* name,char* leaderbuf);
 
 	void	SetGroupLeaderName(uint32 gid, const char* name);
-	char*	GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank = nullptr, char* assist = nullptr, char* puller = nullptr, char *marknpc = nullptr,
-						GroupLeadershipAA_Struct* GLAA = nullptr);
+	char*	GetGroupLeadershipInfo(uint32 gid, char* leaderbuf);
 	void	ClearGroupLeader(uint32 gid = 0);
 	
 

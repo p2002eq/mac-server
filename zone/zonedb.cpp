@@ -1007,16 +1007,6 @@ bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Str
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat("SELECT slot, rank FROM character_leadership_abilities WHERE `id` = %u", character_id);
-	auto results = database.QueryDatabase(query); uint32 slot = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		slot = atoi(row[0]);
-		pp->leader_abilities.ranks[slot] = atoi(row[1]);
-	}
-	return true;
-}
-
 bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp){
 	std::string query = StringFormat(
 		"SELECT				  "
@@ -1178,21 +1168,6 @@ bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32
 	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id);
 	auto results = QueryDatabase(query);
 	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
-	return true;
-}
-
-bool ZoneDatabase::SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	uint8 first_entry = 0; std::string query = "";
-	for (int i = 0; i < MAX_LEADERSHIP_AA_ARRAY; i++){
-		if (pp->leader_abilities.ranks[i] > 0){
-			if (first_entry != 1){
-				query = StringFormat("REPLACE INTO `character_leadership_abilities` (id, slot, rank) VALUES (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-				first_entry = 1;
-			}
-			query = query + StringFormat(", (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-		}
-	}
-	auto results = QueryDatabase(query);
 	return true;
 }
 
@@ -2085,7 +2060,7 @@ void ZoneDatabase::RefreshGroupFromDB(Client *client){
 	gu->action = groupActUpdate;
 
 	strcpy(gu->yourname, client->GetName());
-	GetGroupLeadershipInfo(group->GetID(), gu->leadersname, nullptr, nullptr, nullptr, nullptr, &gu->leader_aas);
+	GetGroupLeadershipInfo(group->GetID(), gu->leadersname);
 
 	int index = 0;
 

@@ -883,13 +883,8 @@ void WorldServer::Process() {
 				if(!group->GetLeader())
 				{
 					char ln[64];
-					char MainTankName[64];
-					char AssistName[64];
-					char PullerName[64];
-					char NPCMarkerName[64];
-					GroupLeadershipAA_Struct GLAA;
 					memset(ln, 0, 64);
-					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 					Client *lc = entity_list.GetClientByName(ln);
 					if(lc)
 						group->SetLeader(lc);
