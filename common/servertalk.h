@@ -34,7 +34,6 @@
 #define ServerOP_GuildMemberUpdate	0x0014
 #define ServerOP_RequestOnlineGuildMembers	0x0015
 #define ServerOP_OnlineGuildMembersResponse	0x0016
-#define ServerOP_LFGuildUpdate		0x0017
 
 #define ServerOP_FlagUpdate			0x0018	// GM Flag updated for character, refresh the memory cache
 #define ServerOP_GMGoto				0x0019
@@ -180,8 +179,6 @@
 #define ServerOP_WIClientSession 0x5004
 #define ServerOP_WIClientSessionResponse 0x5005
 /* Query Serv Generic Packet Flag/Type Enumeration */
-enum { QSG_LFGuild = 0 }; enum {	QSG_LFGuild_PlayerMatches = 0, QSG_LFGuild_UpdatePlayerInfo, QSG_LFGuild_RequestPlayerInfo, QSG_LFGuild_UpdateGuildInfo, QSG_LFGuild_GuildMatches,
-	QSG_LFGuild_RequestGuildInfo };
 
 #define ServerOP_Speech			0x4513
 

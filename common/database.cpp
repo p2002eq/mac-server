@@ -328,8 +328,6 @@ bool Database::DeleteCharacter(char *name) {
 
 	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_activities` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_enabledtasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `completed_tasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);					  
 	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
@@ -352,10 +350,7 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", charid); QueryDatabase(query); 
-	query = StringFormat("DELETE FROM `character_alt_currency` WHERE `char_id` = '%d'", charid); QueryDatabase(query);  
 	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid);
 	QueryDatabase(query);
 	

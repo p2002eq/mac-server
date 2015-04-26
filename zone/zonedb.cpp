@@ -1492,12 +1492,6 @@ bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
 	return true;
 }
 
-bool ZoneDatabase::DeleteCharacterLeadershipAAs(uint32 character_id){
-	std::string query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", character_id);
-	QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::DeleteCharacterAAs(uint32 character_id){
 	std::string query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", character_id);
 	QueryDatabase(query);
