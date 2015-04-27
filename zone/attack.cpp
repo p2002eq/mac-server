@@ -866,7 +866,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 				return 0;
 		}
 		else{
-			if((GetClass() == MONK || GetClass() == BEASTLORD) && GetLevel() >= 30){
+			if((GetClass() == MONK || GetClass() == BEASTLORD) && GetLevel() >= 10){
 				dmg = GetMonkHandToHandDamage();
 			}
 			else if(GetOwner() && GetLevel() >= RuleI(Combat, PetAttackMagicLevel)){
