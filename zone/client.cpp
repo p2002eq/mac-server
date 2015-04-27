@@ -4969,7 +4969,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if (itemid > 0)
-		SummonItem(itemid, 1, false, MainQuest);
+		SummonItem(itemid, 0, false, MainQuest);
 
 	if (faction)
 	{
