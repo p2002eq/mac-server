@@ -398,7 +398,7 @@ bool Object::Process(){
 		RandomSpawn(true);
 		// We only want to check groundspawns that randomly spawn.
 		if(!RuleB(Groundspawns, RandomSpawn) || m_min_x == m_max_x || m_min_y == m_max_y)
-			respawn_timer.Disable();;
+			respawn_timer.Disable();
 	}
 	return true;
 }
