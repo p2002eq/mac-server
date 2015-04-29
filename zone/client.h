@@ -500,10 +500,6 @@ public:
 	void	AddEXPPercent(uint8 percent, uint8 level = 1);
 	void	AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void	InspectBuffs(Client* Inspector, int Rank);
-	uint32	GetRaidPoints() { return(m_pp.raid_leadership_points); }
-	uint32	GetGroupPoints() { return(m_pp.group_leadership_points); }
-	uint32	GetRaidEXP() { return(m_pp.raid_leadership_exp); }
-	uint32	GetGroupEXP() { return(m_pp.group_leadership_exp); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
 	uint32  GetEXPForLevel(uint16 level, bool aa = false);
@@ -525,10 +521,6 @@ public:
 	void WhoAll();
 	bool CheckLoreConflict(const Item_Struct* item);
 	void ChangeLastName(const char* in_lastname);
-	void GetGroupAAs(GroupLeadershipAA_Struct *into) const;
-	void GetRaidAAs(RaidLeadershipAA_Struct *into) const;
-	void ClearGroupAAs();
-	void UpdateGroupAAs(int32 points, uint32 type);
 	void SacrificeConfirm(Client* caster);
 	void Sacrifice(Client* caster);
 	void GoToDeath();

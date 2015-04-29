@@ -825,10 +825,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"leadership_exp_on,         "
 		"show_helm,                 "
 		"endurance,                 "
-		"group_leadership_exp,      "
-		"raid_leadership_exp,       "
-		"group_leadership_points,   "
-		"raid_leadership_points,    "
 		"air_remaining,             "
 		"pvp_kills,                 "
 		"pvp_deaths,                "
@@ -911,10 +907,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
 		pp->showhelm = atoi(row[r]); r++;										 // "show_helm,                 "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
-		pp->group_leadership_exp = atoi(row[r]); r++;							 // "group_leadership_exp,      "
-		pp->raid_leadership_exp = atoi(row[r]); r++;							 // "raid_leadership_exp,       "
-		pp->group_leadership_points = atoi(row[r]); r++;						 // "group_leadership_points,   "
-		pp->raid_leadership_points = atoi(row[r]); r++;							 // "raid_leadership_points,    "
 		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
 		pp->PVPKills = atoi(row[r]); r++;										 // "pvp_kills,                 "
 		pp->PVPDeaths = atoi(row[r]); r++;										 // "pvp_deaths,                "
@@ -1011,16 +1003,6 @@ bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Str
 		if (i < MAX_PP_LANGUAGE){
 			pp->languages[i] = atoi(row[1]);
 		}
-	}
-	return true;
-}
-
-bool ZoneDatabase::LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat("SELECT slot, rank FROM character_leadership_abilities WHERE `id` = %u", character_id);
-	auto results = database.QueryDatabase(query); uint32 slot = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		slot = atoi(row[0]);
-		pp->leader_abilities.ranks[slot] = atoi(row[1]);
 	}
 	return true;
 }
@@ -1189,21 +1171,6 @@ bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32
 	return true;
 }
 
-bool ZoneDatabase::SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	uint8 first_entry = 0; std::string query = "";
-	for (int i = 0; i < MAX_LEADERSHIP_AA_ARRAY; i++){
-		if (pp->leader_abilities.ranks[i] > 0){
-			if (first_entry != 1){
-				query = StringFormat("REPLACE INTO `character_leadership_abilities` (id, slot, rank) VALUES (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-				first_entry = 1;
-			}
-			query = query + StringFormat(", (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-		}
-	}
-	auto results = QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	clock_t t = std::clock(); /* Function timer start */
 	std::string query = StringFormat(
@@ -1266,10 +1233,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" leadership_exp_on,         "
 		" show_helm,                 "
 		" endurance,                 "
-		" group_leadership_exp,      "
-		" raid_leadership_exp,       "
-		" group_leadership_points,   "
-		" raid_leadership_points,    "
 		" air_remaining,             "
 		" pvp_kills,                 "
 		" pvp_deaths,                "
@@ -1351,10 +1314,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
 		"%u,"  // show_helm					  pp->showhelm,							" show_helm,                 "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
-		"%u,"  // group_leadership_exp		  pp->group_leadership_exp,				" group_leadership_exp,      "
-		"%u,"  // raid_leadership_exp		  pp->raid_leadership_exp,				" raid_leadership_exp,       "
-		"%u,"  // group_leadership_points	  pp->group_leadership_points,			" group_leadership_points,   "
-		"%u,"  // raid_leadership_points	  pp->raid_leadership_points,			" raid_leadership_points,    "
 		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
 		"%u,"  // pvp_kills					  pp->PVPKills,							" pvp_kills,                 "
 		"%u,"  // pvp_deaths				  pp->PVPDeaths,						" pvp_deaths,                "
@@ -1435,10 +1394,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->leadAAActive,				  // " leadership_exp_on,         "
 		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
-		pp->group_leadership_exp,		  // " group_leadership_exp,      "
-		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
-		pp->group_leadership_points,	  // " group_leadership_points,   "
-		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->PVPKills,					  // " pvp_kills,                 "
 		pp->PVPDeaths,					  // " pvp_deaths,                "
@@ -1533,12 +1488,6 @@ bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, ui
 
 bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
 	std::string query = StringFormat("DELETE FROM `character_disciplines` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
-	QueryDatabase(query);
-	return true;
-}
-
-bool ZoneDatabase::DeleteCharacterLeadershipAAs(uint32 character_id){
-	std::string query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", character_id);
 	QueryDatabase(query);
 	return true;
 }
@@ -2105,7 +2054,7 @@ void ZoneDatabase::RefreshGroupFromDB(Client *client){
 	gu->action = groupActUpdate;
 
 	strcpy(gu->yourname, client->GetName());
-	GetGroupLeadershipInfo(group->GetID(), gu->leadersname, nullptr, nullptr, nullptr, nullptr, &gu->leader_aas);
+	GetGroupLeadershipInfo(group->GetID(), gu->leadersname);
 
 	int index = 0;
 

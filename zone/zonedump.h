@@ -195,6 +195,7 @@ struct Door {
 	float	dest_z;
 	float	dest_heading;
 	uint32	client_version_mask;
+	uint32	altkeyitem;
 };
 
 #pragma pack()

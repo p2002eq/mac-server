@@ -4290,9 +4290,13 @@ void Client::GarbleMessage(char *message, uint8 variance)
 	// Garble message by variance%
 	const char alpha_list[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // only change alpha characters for now
 
+	// Don't garble # commands
+	if (message[0] == '#')
+		return;
+
 	for (size_t i = 0; i < strlen(message); i++) {
 		uint8 chance = (uint8)zone->random.Int(0, 115); // variation just over worst possible scrambling
-		if (isalpha(message[i]) && (chance <= variance)) {
+		if (isalpha((unsigned char)message[i]) && (chance <= variance)) {
 			uint8 rand_char = (uint8)zone->random.Int(0,51); // choose a random character from the alpha list
 			message[i] = alpha_list[rand_char];
 		}
@@ -4965,7 +4969,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if (itemid > 0)
-		SummonItem(itemid, 1, false, MainQuest);
+		SummonItem(itemid, 0, false, MainQuest);
 
 	if (faction)
 	{

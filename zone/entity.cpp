@@ -3581,7 +3581,7 @@ void EntityList::SendGroupLeader(uint32 gid, const char *lname, const char *oldl
 					strcpy(gj->membername, lname);
 					strcpy(gj->yourname, oldlname);
 					it->second->QueuePacket(outapp);
-					Log.Out(Logs::Detail, Logs::General, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
+					Log.Out(Logs::Detail, Logs::Group, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
 					safe_delete(outapp);
 				}
 			}

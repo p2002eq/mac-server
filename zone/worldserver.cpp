@@ -883,13 +883,8 @@ void WorldServer::Process() {
 				if(!group->GetLeader())
 				{
 					char ln[64];
-					char MainTankName[64];
-					char AssistName[64];
-					char PullerName[64];
-					char NPCMarkerName[64];
-					GroupLeadershipAA_Struct GLAA;
 					memset(ln, 0, 64);
-					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 					Client *lc = entity_list.GetClientByName(ln);
 					if(lc)
 						group->SetLeader(lc);
@@ -1302,17 +1297,16 @@ void WorldServer::Process() {
 				// CONSENT_INVALID_NAME = 397
 				// TARGET_NOT_FOUND = 101
 
-				safe_delete(pack);
-				pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
-				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
+				ServerPacket *scs_pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)scs_pack->pBuffer;
 				strcpy(scs->grantname, s->grantname);
 				strcpy(scs->ownername, s->ownername);
 				scs->permission = s->permission;
 				scs->zone_id = s->zone_id;
 				scs->instance_id = s->instance_id;
 				scs->message_string_id = TARGET_NOT_FOUND;
-				worldserver.SendPacket(pack);
-				safe_delete(pack);
+				worldserver.SendPacket(scs_pack);
+				safe_delete(scs_pack);
 			}
 			break;
 		}

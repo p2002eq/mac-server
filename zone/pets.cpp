@@ -264,7 +264,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 				
 				if(act_power > 0)
 				{
-					Message(CC_Yellow, "Debug: You have cast a powered pet. Unadjusted pet power is: %i. HasItem returned: %i. If your pet is Godzilla, please report this message to cavedude or another devel.", act_power, slot);
+					if(EQDEBUG>8) Message(CC_Yellow, "Debug: You have cast a powered pet. Unadjusted pet power is: %i. HasItem returned: %i.", act_power, slot);
 
 					if(focusType == FocusPetType::NECRO ||focusType == FocusPetType::EARTH || focusType == FocusPetType::AIR
 					|| focusType == FocusPetType::FIRE || focusType == FocusPetType::WATER)

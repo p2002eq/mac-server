@@ -1242,6 +1242,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0; base_size = 0;
 	}
+	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
 	query = StringFormat(
@@ -1316,16 +1317,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (group){
-		// If the group leader is not set, pull the group leader infomrmation from the database.
+		// If the group leader is not set, pull the group leader information from the database.
 		if (!group->GetLeader()){
 			char ln[64];
-			char MainTankName[64];
-			char AssistName[64];
-			char PullerName[64];
-			char NPCMarkerName[64];
-			GroupLeadershipAA_Struct GLAA;
 			memset(ln, 0, 64);
-			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);
@@ -5497,6 +5493,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	char val1[20] = { 0 };
 	PetCommand_Struct* pet = (PetCommand_Struct*)app->pBuffer;
 	Mob* mypet = this->GetPet();
+	Mob *target = entity_list.GetMob(pet->target);
 
 	if (!mypet || pet->command == PET_LEADER)
 	{
@@ -5531,22 +5528,22 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	switch (PetCommand)
 	{
 	case PET_ATTACK: {
-		if (!GetTarget())
+		if (!target)
 			break;
-		if (GetTarget()->IsMezzed()) {
-			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
+		if (target->IsMezzed()) {
+			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), target->GetCleanName());
 			break;
 		}
 		if (mypet->IsFeared())
 			break; //prevent pet from attacking stuff while feared
 
-		if (!mypet->IsAttackAllowed(GetTarget())) {
+		if (!mypet->IsAttackAllowed(target)) {
 			mypet->Say_StringID(NOT_LEGAL_TARGET);
 			break;
 		}
 
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 2) || mypet->GetPetType() != petAnimation) {
-			if (GetTarget() != this && DistanceSquaredNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+			if (target != this && DistanceSquaredNoZ(mypet->GetPosition(), target->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 				if (mypet->IsHeld()) {
 					if (!mypet->IsFocused()) {
 						mypet->SetHeld(false); //break the hold and guard if we explicitly tell the pet to attack.
@@ -5554,12 +5551,12 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 							mypet->SetPetOrder(SPO_Follow);
 					}
 					else {
-						mypet->SetTarget(GetTarget());
+						mypet->SetTarget(target);
 					}
 				}
 				zone->AddAggroMob();
-				mypet->AddToHateList(GetTarget(), 1);
-				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), GetTarget()->GetCleanName());
+				mypet->AddToHateList(target, 1);
+				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), target->GetCleanName());
 			}
 		}
 		break;
@@ -8597,7 +8594,7 @@ void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(LFG_Struct)) {
-		Log.Out(Logs::General, Logs::None, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		Log.Out(Logs::General, Logs::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
 		return;
 	}
 
@@ -8612,7 +8609,7 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::General, "Invalid LFG value sent. %i", lfg->value);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid LFG value sent. %i", lfg->value);
 	}
 
 	UpdateWho();

@@ -138,6 +138,12 @@ Mob::Mob(const char* in_name,
 	size		= in_size;
 	base_size	= in_size;
 	runspeed	= in_runspeed;
+	current_speed = 0.0f;
+
+	float mysize = in_size;
+	if(mysize > RuleR(Map, BestZSizeMax))
+		mysize = RuleR(Map, BestZSizeMax);
+	z_offset = RuleR(Map, BestZMultiplier) * mysize;
 
 
 	// sanity check
@@ -1335,13 +1341,16 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
+				if (HasOwner())
+					move_tic_count = 0;
+				else
+					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
 				safe_delete(app2);
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1371,7 +1380,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
 		}
 		else
 		{
@@ -1383,7 +1392,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1927,6 +1936,7 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	//End of Size Code
 	this->size = in_size;
 	uint32 newsize = floor(in_size + 0.5);
+	this->z_offset = CalcZOffset();
 	SendAppearancePacket(AT_Size, newsize);
 }
 
@@ -5339,13 +5349,11 @@ bool Mob::Disarm()
 	return false;
 }
 
-float Mob::SetBestZ(float zcoord)
+float Mob::CalcZOffset()
 {
-
 	float mysize = GetSize();
-	if(mysize > RuleR(Map, BestZSizeMax))
+		if(mysize > RuleR(Map, BestZSizeMax))
 		mysize = RuleR(Map, BestZSizeMax);
 
-	return (zcoord + RuleR(Map, BestZMultiplier) * mysize);
-
+	return (RuleR(Map, BestZMultiplier) * mysize);
 }

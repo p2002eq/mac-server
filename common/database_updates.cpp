@@ -34,6 +34,7 @@ bool Database::DBSetup() {
 	DBSetup_Rules();
 	GITInfo();
 	DBSetup_account_active();
+	DBSetup_Logs();
 	return true;
 }
 
@@ -478,4 +479,21 @@ bool Database::DBSetup_account_active() {
 		Log.Out(Logs::Detail, Logs::Debug, "active column created.");
 	}
 	return true;
+}
+
+bool Database::DBSetup_Logs()
+{
+	// Placing ALL Rule creations in here, initial rule check as number in query and results, then increment by letter.
+	std::string check_query1 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Group'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		std::string check_query1a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('46', 'Group', '0', '0', '0')");
+		auto results1a = QueryDatabase(check_query1a);
+		if (!results1a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `group`.");
+			return false;
+		}
+	}
 }

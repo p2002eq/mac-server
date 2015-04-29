@@ -195,8 +195,6 @@ public:
 	void KeyRingAdd(uint32 item);
 	bool KeyRingCheck(uint32 item);
 	void QuestReadBook(const char *text, int type);
-	uint32 GetGroupPoints();
-	uint32 GetRaidPoints();
 	void LearnRecipe(uint32 recipe);
 	int GetEndurance();
 	int GetMaxEndurance();
