@@ -903,8 +903,6 @@ struct PlayerProfile_Struct
 /*19240*/	uint32				timeentitledonaccount;
 /*19532*/	uint8				unknown19568[8];
 /*19556*/	uint8				groupAutoconsent;	// 0=off, 1=on
-/*19557*/	uint8				raidAutoconsent;	// 0=off, 1=on
-/*19558*/	uint8				guildAutoconsent;	// 0=off, 1=on
 /*19559*/	uint8				unknown19595[5];	// ***Placeholder (6/29/2005)
 /*19568*/
 };

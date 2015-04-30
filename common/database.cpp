@@ -582,8 +582,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
 		pp->groupAutoconsent,			  // " group_auto_consent,        "
-		pp->raidAutoconsent,			  // " raid_auto_consent,         "
-		pp->guildAutoconsent,			  // " guild_auto_consent,        "
 		pp->boatid,						  // " boatid,					  "
 		EscapeString(pp->boat).c_str(),	  // " boatname                   "
 		pp->famished					  // " famished)				  "
