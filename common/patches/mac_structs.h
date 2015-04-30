@@ -2584,8 +2584,8 @@ struct PlayerProfile_Struct
 	/*5428*/	uint8	eyecolor1;			// Player Left Eye Color
 	/*5429*/	uint8	eyecolor2;			// Player Right Eye Color
 	/*5430*/	uint8	hairstyle;			// Player Hair Style
-	/*5431*/	uint8	beard;			// T7g: Beard Type, formerly title - I have no clue why, Title moved a few lines below this one
-	/*5432*/	uint8	face;			// Player Face Type (Is that right?)
+	/*5431*/	uint8	beard;				// Player Beard Type
+	/*5432*/	uint8	face;				// Player Face Type
 	/*5433*/	uint32	item_material[_MaterialCount];
 	/*5469*/	uint8	unknown5469[143]; //item_tint is in here somewhere.
 	/*5612*/	AA_Array aa_array[MAX_PP_AA_ARRAY];
@@ -2604,9 +2604,9 @@ struct PlayerProfile_Struct
 	/*5900*/    uint16  air_remaining;
 	/*5902*/    uint16  aapoints;
 	/*5904*/	uint32	MGBTimer;
-	/*5908*/	uint8   unknown5908[90];
-	/*5998*/	uint8	mBitFlags[6];
-	/*6004*/	uint8	Unknown6004[708];
+	/*5908*/	uint8   unknown5908[91];
+	/*5999*/	int8	mBitFlags[6];
+	/*6005*/	uint8	Unknown6004[707];
 	/*6712*/	uint32	WrathWildTimer;
 	/*6716*/	uint32	UnknownTimer;
 	/*6720*/	uint32	HarmTouchTimer;

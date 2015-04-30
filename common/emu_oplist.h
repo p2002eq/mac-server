@@ -281,4 +281,5 @@ N(OP_MBRetrievalDetailRequest),
 N(OP_MBRetrievalEraseRequest),
 N(OP_MBRetrievalPostRequest),
 N(OP_MBRetrievalDetailResponse),
+N(OP_Key),
 // mail and chat opcodes located in ../mail_oplist.h

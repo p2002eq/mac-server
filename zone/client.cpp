@@ -212,7 +212,6 @@ Client::Client(EQStreamInterface* ieqs)
 	UpdateWindowTitle();
 	horseId = 0;
 	tgb = false;
-	keyring.clear();
 	bind_sight_target = nullptr;
 	logging_enabled = CLIENT_DEFAULT_LOGGING_ENABLED;
 
@@ -2953,44 +2952,6 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 		//if we do not send this packet the client will lock up and require the player to relog.
 		QueuePacket(outapp);
 		safe_delete(outapp);
-}
-
-void Client::KeyRingLoad()
-{
-	std::string query = StringFormat("SELECT item_id FROM keyring "
-                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-		return;
-	}
-
-	for (auto row = results.begin(); row != results.end(); ++row)
-		keyring.push_back(atoi(row[0]));
-
-}
-
-void Client::KeyRingAdd(uint32 item_id)
-{
-	return;
-}
-
-bool Client::KeyRingCheck(uint32 item_id)
-{
-	return false;
-}
-
-void Client::KeyRingList()
-{
-	Message(CC_Blue,"Keys on Keyring:");
-	const Item_Struct *item = 0;
-	for(std::list<uint32>::iterator iter = keyring.begin();
-		iter != keyring.end();
-		++iter)
-	{
-		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(CC_Blue,item->Name);
-		}
-	}
 }
 
 bool Client::IsDiscovered(uint32 itemid) {

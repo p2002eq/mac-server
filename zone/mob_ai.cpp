@@ -1572,6 +1572,8 @@ void Mob::AI_Process() {
 						if ((dist >= 2500 && GetCurrentSpeed() <= 0.0f) || (dist >= 400 && GetCurrentSpeed() > 0.0f))
 						{
 							float speed = owner->GetWalkspeed();
+							if (owner->IsClient())
+								speed *= 2.0f;
 							if (dist >= 5625)
 								speed = GetRunspeed();
 							SetCurrentSpeed(speed);
