@@ -432,7 +432,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"group_auto_consent,"
 		"raid_auto_consent,"
 		"guild_auto_consent,"
-		"RestTimer,"
 		"boatid,"
 		"boatname,"
 		"famished) "
@@ -509,7 +508,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // group_auto_consent	
 		"%u,"  // raid_auto_consent		
 		"%u,"  // guild_auto_consent	
-		"%u,"  // RestTimer		
 		"%u,"   // boatid		
 		"'%s',"  // boatname	
 		"%u"
@@ -586,7 +584,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->groupAutoconsent,			  // " group_auto_consent,        "
 		pp->raidAutoconsent,			  // " raid_auto_consent,         "
 		pp->guildAutoconsent,			  // " guild_auto_consent,        "
-		pp->RestTimer,					  // " RestTimer,                 "
 		pp->boatid,						  // " boatid,					  "
 		EscapeString(pp->boat).c_str(),	  // " boatname                   "
 		pp->famished					  // " famished)				  "
