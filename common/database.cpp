@@ -429,9 +429,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"aa_points_spent,"
 		"aa_exp,"
 		"aa_points,"
-		"group_auto_consent,"
-		"raid_auto_consent,"
-		"guild_auto_consent,"
 		"boatid,"
 		"boatname,"
 		"famished) "
@@ -505,9 +502,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // aa_points_spent		
 		"%u,"  // aa_exp				
 		"%u,"  // aa_points				
-		"%u,"  // group_auto_consent	
-		"%u,"  // raid_auto_consent		
-		"%u,"  // guild_auto_consent	
 		"%u,"   // boatid		
 		"'%s',"  // boatname	
 		"%u"
