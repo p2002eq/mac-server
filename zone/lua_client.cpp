@@ -830,16 +830,6 @@ int Lua_Client::GetStartZone() {
 	return self->GetStartZone();
 }
 
-void Lua_Client::KeyRingAdd(uint32 item) {
-	Lua_Safe_Call_Void();
-	self->KeyRingAdd(item);
-}
-
-bool Lua_Client::KeyRingCheck(uint32 item) {
-	Lua_Safe_Call_Bool();
-	return self->KeyRingCheck(item);
-}
-
 void Lua_Client::QuestReadBook(const char *text, int type) {
 	Lua_Safe_Call_Void();
 	self->QuestReadBook(text, type);
@@ -1287,8 +1277,6 @@ luabind::scope lua_register_client() {
 		.def("RefundAA", (void(Lua_Client::*)(void))&Lua_Client::RefundAA)
 		.def("GetModCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetModCharacterFactionLevel)
 		.def("GetStartZone", (int(Lua_Client::*)(void))&Lua_Client::GetStartZone)
-		.def("KeyRingAdd", (void(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
-		.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 		.def("QuestReadBook", (void(Lua_Client::*)(const char *,int))&Lua_Client::QuestReadBook)
 		.def("LearnRecipe", (void(Lua_Client::*)(uint32))&Lua_Client::LearnRecipe)
 		.def("GetEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetEndurance)

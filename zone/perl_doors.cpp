@@ -300,30 +300,6 @@ XS(XS_Doors_GetKeyItem)
 	XSRETURN(1);
 }
 
-XS(XS_Doors_GetNoKeyring); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Doors_GetNoKeyring)
-{
-	dXSARGS;
-	if (items != 2)
-		Perl_croak(aTHX_ "Usage: Doors::GetNoKeyring(THIS, type)");
-	{
-		Doors *		THIS;
-		uint8		type = (uint8)SvUV(ST(1));
-
-		if (sv_derived_from(ST(0), "Doors")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Doors *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Doors");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		THIS->GetNoKeyring();
-	}
-	XSRETURN_EMPTY;
-}
-
 XS(XS_Doors_GetIncline); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Doors_GetIncline)
 {
@@ -446,30 +422,6 @@ XS(XS_Doors_SetKeyItem)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
 		THIS->SetKeyItem(type);
-	}
-	XSRETURN_EMPTY;
-}
-
-XS(XS_Doors_SetNoKeyring); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Doors_SetNoKeyring)
-{
-	dXSARGS;
-	if (items != 2)
-		Perl_croak(aTHX_ "Usage: Doors::SetNoKeyring(THIS, type)");
-	{
-		Doors *		THIS;
-		uint8		type = (uint8)SvUV(ST(1));
-
-		if (sv_derived_from(ST(0), "Doors")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Doors *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Doors");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		THIS->SetNoKeyring(type);
 	}
 	XSRETURN_EMPTY;
 }
@@ -769,8 +721,6 @@ XS(boot_Doors)
 		newXSproto(strcpy(buf, "GetLockPick"),XS_Doors_GetLockpick, file, "$");
 		newXSproto(strcpy(buf, "SetKeyItem"),XS_Doors_SetKeyItem, file, "$$");
 		newXSproto(strcpy(buf, "GetKeyItem"),XS_Doors_GetKeyItem, file, "$");
-		newXSproto(strcpy(buf, "SetNoKeyring"),XS_Doors_SetNoKeyring, file, "$$");
-		newXSproto(strcpy(buf, "GetNoKeyring"),XS_Doors_GetNoKeyring, file, "$");
 		newXSproto(strcpy(buf, "CreateDatabaseEntry"),XS_Doors_CreateDatabaseEntry, file, "$");
 	XSRETURN_YES;
 }

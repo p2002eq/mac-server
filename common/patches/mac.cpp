@@ -349,6 +349,12 @@ namespace Mac {
 		OUT(abilitySlotRefresh);
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
+		eq->mBitFlags[0] = 15;
+		eq->mBitFlags[1] = 60; 
+		eq->mBitFlags[2] = 124; 
+		eq->mBitFlags[3] = 0; 
+		eq->mBitFlags[4] = -128; 
+		eq->mBitFlags[5] = -64;
 
 		//Log.Out(Logs::General, Logs::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 

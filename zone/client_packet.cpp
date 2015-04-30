@@ -267,6 +267,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_MBRetrievalDetailRequest] = &Client::Handle_OP_MBRetrievalDetailRequest;
 	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
 	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
+	ConnectedOpcodes[OP_Key] = &Client::Handle_OP_Key;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -8881,6 +8882,16 @@ void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
 	
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
 	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_Key(const EQApplicationPacket *app)
+{
+	if (app->size != 4) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
+		return;
+	}
 
 	return;
 }
