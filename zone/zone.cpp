@@ -1616,11 +1616,11 @@ bool ZoneDatabase::GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes) {
 
 void Zone::weatherSend()
 {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-	if(zone_weather>0)
-		outapp->pBuffer[0] = zone_weather-1;
-	if(zone_weather>0)
-		outapp->pBuffer[4] = zone->weather_intensity;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+
+	ws->type = zone_weather-1;
+	ws->intensity = zone->weather_intensity;
 	entity_list.QueueClients(0, outapp);
 	safe_delete(outapp);
 }

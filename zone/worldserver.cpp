@@ -1690,47 +1690,6 @@ bool WorldServer::SendEmoteMessage(const char* to, uint32 to_guilddbid, int16 to
 	return ret;
 }
 
-bool WorldServer::SendVoiceMacro(Client* From, uint32 Type, char* Target, uint32 MacroNumber, uint32 GroupOrRaidID) {
-
-	if(!worldserver.Connected() || !From)
-		return false;
-
-	ServerPacket* pack = new ServerPacket(ServerOP_VoiceMacro, sizeof(ServerVoiceMacro_Struct));
-
-	ServerVoiceMacro_Struct* svm = (ServerVoiceMacro_Struct*) pack->pBuffer;
-
-	strcpy(svm->From, From->GetName());
-
-	switch(Type) {
-
-		case VoiceMacroTell:
-			strcpy(svm->To, Target);
-			break;
-
-		case VoiceMacroGroup:
-			svm->GroupID = GroupOrRaidID;
-			break;
-
-		case VoiceMacroRaid:
-			svm->RaidID = GroupOrRaidID;
-			break;
-	}
-
-	svm->Type = Type;
-
-	svm->Voice = (GetArrayRace(From->GetRace()) * 2) + From->GetGender();
-
-	svm->MacroNumber = MacroNumber;
-
-	pack->Deflate();
-
-	bool Ret = SendPacket(pack);
-
-	safe_delete(pack);
-
-	return Ret;
-}
-
 bool WorldServer::RezzPlayer(EQApplicationPacket* rpack, uint32 rezzexp, uint32 dbid, uint16 opcode)
 {
 	Log.Out(Logs::Detail, Logs::Spells, "WorldServer::RezzPlayer rezzexp is %i (0 is normal for RezzComplete", rezzexp);

@@ -1104,27 +1104,8 @@ void Client::Trader_EndTrader() {
 		Client* Customer = entity_list.GetClientByID(CustomerID);
 		GetItems_Struct* gis=GetTraderItems();
 
-		if(Customer && gis) {
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_TraderDelItem,sizeof(TraderDelItem_Struct));
-			TraderDelItem_Struct* tdis = (TraderDelItem_Struct*)outapp->pBuffer;
-
-			tdis->Unknown000 = 0;
-			tdis->TraderID = Customer->GetID();
-			tdis->Unknown012 = 0;
-			Customer->Message(CC_Red, "The Trader is no longer open for business");
-
-			for(int i = 0; i < 80; i++) {
-				if(gis->Items[i] != 0) {
-
-					tdis->ItemID = gis->SerialNumber[i];
-
-					Customer->QueuePacket(outapp);
-				}
-			}
-
-			safe_delete(outapp);
-			safe_delete(gis);
-
+		if(Customer && gis) 
+		{
 			EQApplicationPacket empty(OP_ShopEndConfirm);
 			Customer->QueuePacket(&empty);
 			Customer->Save();
@@ -1411,20 +1392,6 @@ void Client::NukeTraderItem(uint16 Slot,int16 Charges,uint16 Quantity,Client* Cu
 	}
 	safe_delete(outapp2);
 
-}
-
-void Client::TraderUpdate(uint16 SlotID,uint32 TraderID){
-	// This method is no longer used.
-
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_TraderItemUpdate,sizeof(TraderItemUpdate_Struct));
-	TraderItemUpdate_Struct* tus=(TraderItemUpdate_Struct*)outapp->pBuffer;
-	tus->Charges = 0xFFFF;
-	tus->FromSlot = SlotID;
-	tus->ToSlot = 0xFF;
-	tus->TraderID = TraderID;
-	tus->Unknown000 = 0;
-	QueuePacket(outapp);
-	safe_delete(outapp);
 }
 
 void Client::FindAndNukeTraderItem(int32 ItemID, uint16 Quantity, Client* Customer, uint16 SlotID){

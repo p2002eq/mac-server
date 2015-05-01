@@ -2147,15 +2147,7 @@ namespace Mac {
 	}
 
 	ENCODE(OP_DisciplineUpdate) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_Dye) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_RaidJoin) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_RemoveAllDoors) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_SendAAStats) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_SpellEffect) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_TraderDelItem) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_TraderItemUpdate) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_Untargetable) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_UpdateAA) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_Unknown)
 	{
 		EQApplicationPacket *in = *p;

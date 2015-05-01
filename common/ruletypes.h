@@ -459,7 +459,6 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( Chat )
 RULE_BOOL ( Chat, ServerWideOOC, true)
 RULE_BOOL ( Chat, ServerWideAuction, true)
-RULE_BOOL ( Chat, EnableVoiceMacros, true)
 RULE_BOOL ( Chat, EnableMailKeyIPVerification, true)
 RULE_BOOL ( Chat, EnableAntiSpam, true)
 RULE_BOOL ( Chat, SuppressCommandErrors, false) // Do not suppress by default

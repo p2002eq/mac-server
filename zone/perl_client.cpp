@@ -4998,38 +4998,6 @@ XS(XS_Client_SilentMessage)
         XSRETURN_EMPTY;
 }
 
-//Client::SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg)
-
-XS(XS_Client_SendMarqueeMessage); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Client_SendMarqueeMessage)
-{
-	dXSARGS;
-	if (items != 7)
-		Perl_croak(aTHX_ "Usage: Client::SendMarqueeMessage(THIS, type, priority, fade_in, fade_out, duration, msg)");
-	{
-		Client *		THIS;
-		uint32 type =	(uint32)SvUV(ST(1));
-		uint32 priority =	(uint32)SvUV(ST(2));
-		uint32 fade_in =	(uint32)SvUV(ST(3));
-		uint32 fade_out =	(uint32)SvUV(ST(4));
-		uint32 duration =	(uint32)SvUV(ST(5));
-		std::string msg = (std::string)SvPV_nolen(ST(6));
-		dXSTARG;
-
-		if (sv_derived_from(ST(0), "Client")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Client *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Client");
-		if(THIS == NULL)
-			Perl_croak(aTHX_ "THIS is NULL, avoiding crash.");
-
-		THIS->SendMarqueeMessage(type, priority, fade_in, fade_out, duration, msg);
-	}
-	XSRETURN_EMPTY;
-}
-
 XS(XS_Client_QuestReward); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Client_QuestReward)
 {
@@ -5307,7 +5275,6 @@ XS(boot_Client)
         newXSproto(strcpy(buf, "SetConsumption"), XS_Client_SetConsumption, file, "$$$");
 		newXSproto(strcpy(buf, "SilentMessage"), XS_Client_SilentMessage, file, "$$");
 		newXSproto(strcpy(buf, "SendTargetCommand"), XS_Client_SendTargetCommand, file, "$$");
-		newXSproto(strcpy(buf, "SendMarqueeMessage"), XS_Client_SendMarqueeMessage, file, "$$$$$$$");
 		newXSproto(strcpy(buf, "QuestReward"), XS_Client_QuestReward, file, "$$;$$$$$$$");
 		newXSproto(strcpy(buf, "SendSpellAnim"), XS_Client_SendSpellAnim, file, "$$$");
 

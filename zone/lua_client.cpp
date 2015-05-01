@@ -1042,11 +1042,6 @@ void Lua_Client::SetConsumption(int in_hunger, int in_thirst) {
 	self->SetConsumption(in_hunger, in_thirst);
 }
 
-void Lua_Client::SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg) {
-	Lua_Safe_Call_Void();
-	self->SendMarqueeMessage(type, priority, fade_in, fade_out, duration, msg);
-}
-
 int Lua_Client::GetBoatID() 
 {
 	Lua_Safe_Call_Int();
@@ -1319,7 +1314,6 @@ luabind::scope lua_register_client() {
 		.def("SetHunger", (void(Lua_Client::*)(int))&Lua_Client::SetHunger)
 		.def("SetThirst", (void(Lua_Client::*)(int))&Lua_Client::SetThirst)
 		.def("SetConsumption", (void(Lua_Client::*)(int, int))&Lua_Client::SetConsumption)
-		.def("SendMarqueeMessage", (void(Lua_Client::*)(uint32, uint32, uint32, uint32, uint32, std::string))&Lua_Client::SendMarqueeMessage)
 		.def("GetBoatID", (int(Lua_Client::*)(void))&Lua_Client::GetBoatID)
 		.def("SetBoatID", (void(Lua_Client::*)(uint32))&Lua_Client::SetBoatID)
 		.def("GetBoatName", (char *(Lua_Client::*)(void))&Lua_Client::GetBoatName)

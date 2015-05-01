@@ -93,12 +93,10 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_ReqClientSpawn] = &Client::Handle_Connect_OP_ReqClientSpawn;
 	ConnectingOpcodes[OP_ReqNewZone] = &Client::Handle_Connect_OP_ReqNewZone;
 	ConnectingOpcodes[OP_SendExpZonein] = &Client::Handle_Connect_OP_SendExpZonein;
-	ConnectingOpcodes[OP_SendAAStats] = &Client::Handle_Connect_OP_SendAAStats;
 	ConnectingOpcodes[OP_SetGuildMOTD] = &Client::Handle_OP_SetGuildMOTDCon;
 	ConnectingOpcodes[OP_SetServerFilter] = &Client::Handle_Connect_OP_SetServerFilter;
 	ConnectingOpcodes[OP_SpawnAppearance] = &Client::Handle_Connect_OP_SpawnAppearance;
 	ConnectingOpcodes[OP_TGB] = &Client::Handle_Connect_OP_TGB;
-	ConnectingOpcodes[OP_UpdateAA] = &Client::Handle_Connect_OP_UpdateAA;
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
 	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
@@ -146,7 +144,6 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_Discipline] = &Client::Handle_OP_Discipline;
 	ConnectedOpcodes[OP_DuelResponse] = &Client::Handle_OP_DuelResponse;
 	ConnectedOpcodes[OP_DuelResponse2] = &Client::Handle_OP_DuelResponse2;
-	ConnectedOpcodes[OP_Dye] = &Client::Handle_OP_Dye;
 	ConnectedOpcodes[OP_Emote] = &Client::Handle_OP_Emote;
 	ConnectedOpcodes[OP_EndLootRequest] = &Client::Handle_OP_EndLootRequest;
 	ConnectedOpcodes[OP_EnvDamage] = &Client::Handle_OP_EnvDamage;
@@ -461,14 +458,6 @@ void Client::CompleteConnect()
 
 		const SPDat_Spell_Struct &spell = spells[buffs[j1].spellid];
 
-		int NimbusEffect = GetNimbusEffect(buffs[j1].spellid);
-		if (NimbusEffect) {
-			if (!IsNimbusEffectActive(NimbusEffect))
-				SendSpellEffect(NimbusEffect, 500, 0, 1, 3000, true);
-
-		}
-
-
 		for (int x1 = 0; x1 < EFFECT_COUNT; x1++) {
 			switch (spell.effectid[x1]) {
 			case SE_IllusionCopy:
@@ -598,8 +587,6 @@ void Client::CompleteConnect()
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
-	entity_list.SendUntargetable(this);
-
 	client_data_loaded = true;
 	int x;
 	for (x = 0; x < 8; x++) {
@@ -695,7 +682,7 @@ void Client::CompleteConnect()
 			string = "Unknown";
 
 		if(GetGM())
-			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
 			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s.", string.c_str());
 	}
@@ -712,7 +699,6 @@ void Client::CompleteConnect()
 			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
 			SetEXP(totalrequiredxp, currentaa);
 			Save();
-			//SetLevel(level+1);
 			Kick();
 		}
 		else if(Admin() > 0 && level > 1)
@@ -891,15 +877,6 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
-{
-	SendAATimers();
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	return;
-}
-
 void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 {
 	//////////////////////////////////////////////////////
@@ -1009,12 +986,6 @@ void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 	}
 	OPTGB(app);
 	return;
-}
-
-void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) 
-{
-
-	SendAATable();
 }
 
 void Client::Handle_Connect_OP_WearChange(const EQApplicationPacket *app)
@@ -1574,9 +1545,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	This shouldent be moved, this seems to be what the client
 	uses to advance to the next state (sending ReqNewZone)
 	*/
-	outapp = new EQApplicationPacket(OP_Weather, 8);
-	outapp->pBuffer[0] = 0;
-	outapp->pBuffer[4] = 0;
+	outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+	ws->type = 0;
+	ws->intensity = 0;
 
 	outapp->priority = 6;
 	QueuePacket(outapp);
@@ -3434,17 +3406,6 @@ void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app)
 			InterruptSpell();
 		if (initiator->CastToClient()->IsCasting())
 			initiator->CastToClient()->InterruptSpell();
-	}
-	return;
-}
-
-void Client::Handle_OP_Dye(const EQApplicationPacket *app)
-{
-	if (app->size != sizeof(DyeStruct))
-		printf("Wrong size of DyeStruct, Got: %i, Expected: %zu\n", app->size, sizeof(DyeStruct));
-	else{
-		DyeStruct* dye = (DyeStruct*)app->pBuffer;
-		DyeArmor(dye);
 	}
 	return;
 }
