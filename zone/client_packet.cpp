@@ -4579,15 +4579,15 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(GroupLeader_Struct))
+	if (app->size != sizeof(GroupJoin_Struct))
 	{
 		Log.Out(Logs::General, Logs::None, "Size mismatch on OP_GroupUpdate: got %u expected %u",
-			app->size, sizeof(GroupLeader_Struct));
+			app->size, sizeof(GroupJoin_Struct));
 		DumpPacket(app);
 		return;
 	}
 
-	GroupLeader_Struct* gu = (GroupLeader_Struct*)app->pBuffer;
+	GroupJoin_Struct* gu = (GroupJoin_Struct*)app->pBuffer;
 
 	switch (gu->action) {
 	case groupActMakeLeader:
