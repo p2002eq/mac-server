@@ -85,6 +85,7 @@ namespace Logs{
 		Maps,
 		Character,
 		Faction,
+		Group,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 

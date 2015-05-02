@@ -111,9 +111,6 @@ void Client::SendLogServer()
 	if(RuleB(Mail, EnableMailSystem))
 		l->enablemail = 1;
 
-	if(RuleB(Chat, EnableVoiceMacros))
-		l->enablevoicemacros = 1;
-
 	l->enable_pvp = (RuleI(World, PVPSettings));
 
 	if(RuleB(World, IsGMPetitionWindowEnabled))
@@ -935,9 +932,9 @@ void Client::SendGuildList() {
 	//safe_delete_array(guildstruct);
 
 	if(outapp->pBuffer == nullptr) {
+		safe_delete(outapp);
 		return;
 	}
-
 
 	eqs->FastQueuePacket((EQApplicationPacket **)&outapp);
 }

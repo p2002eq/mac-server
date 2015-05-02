@@ -2883,13 +2883,13 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "cursor") == 0)) {
 		// Personal inventory items
 		bFound = true;
-		iter_queue it;
+		std::list<ItemInst*>::const_iterator it;
 		int i = 0;
 
 		if (client->GetInv().CursorEmpty()) { // Display 'front' cursor slot even if 'empty' (item(30[0]) == null)
 		}
 		else {
-			for (it = client->GetInv().cursor_begin(); it != client->GetInv().cursor_end(); ++it, i++) {
+			for (auto it = client->GetInv().cursor_cbegin(); it != client->GetInv().cursor_cend(); ++it, i++) {
 				const ItemInst* inst = *it;
 				item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -3285,10 +3285,12 @@ void command_equipitem(Client *c, const Seperator *sep){
 			if (partialmove) { // remove this con check if someone can figure out removing charges from cursor stack issue below
 				// mi->number_in_stack is always from_inst->GetCharges() when partialmove is false
 				c->Message(CC_Red, "Error: Partial stack added to existing stack exceeds allowable stacksize");
+				safe_delete(outapp);
 				return;
 			}
 			else if (c->SwapItem(mi) == 1) {
 				c->FastQueuePacket(&outapp);
+				return;
 
 				// if the below code is still needed..just send an an item trade packet to each slot..it should overwrite the client instance
 

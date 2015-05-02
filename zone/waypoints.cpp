@@ -223,7 +223,7 @@ void NPC::UpdateWaypoint(int wp_index)
 
 			float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
-			if ((newz > -2000) && std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaWaypoint))
+			if ((newz > -2000) && std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaWaypoint) + GetZOffset()))
 			{
 				m_CurrentWayPoint.z = SetBestZ(newz);
 			}
@@ -602,7 +602,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 				Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 				if ((newz > -2000) &&
-				    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+				    std::abs(newz + GetZOffset() - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
 				{
 					if((std::abs(x - m_Position.x) < 0.5) && (std::abs(y - m_Position.y) < 0.5))
 					{
@@ -734,11 +734,11 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 			if ((newz > -2000) &&
-			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+			    std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset())) // Sanity check.
 			{
 				if(std::abs(x - m_Position.x) < 0.5 && std::abs(y - m_Position.y) < 0.5)
 				{
-					if(std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
+					if(std::abs(z - m_Position.z) <= (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset()))
 						m_Position.z = z;
 					else
 					{
@@ -767,7 +767,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		SendPositionNearby();
 		SetAppearance(eaStanding, false);
 	}		
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 	
 	return true;
 }
@@ -890,7 +890,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 			Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 			if ((newz > -2000) &&
-			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+			    std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset())) // Sanity check.
 			{
 				if (std::abs(x - m_Position.x) < 0.5 && std::abs(y - m_Position.y) < 0.5)
 				{
@@ -921,7 +921,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 
 	// now get new heading
 	SetAppearance(eaStanding, false); // make sure they're standing
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 	return true;
 }
 
@@ -990,7 +990,7 @@ void NPC::AssignWaypoints(int32 grid)
 
 				float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
-				if( (newz > -2000) && std::abs(newz-dest.z) < RuleR(Map, FixPathingZMaxDeltaLoading))
+				if( (newz > -2000) && std::abs(newz+GetZOffset()-dest.z) < (RuleR(Map, FixPathingZMaxDeltaLoading)+GetZOffset()))
 				{
 					newwp.z = SetBestZ(newz);
 				}

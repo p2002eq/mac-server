@@ -93,12 +93,10 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_ReqClientSpawn] = &Client::Handle_Connect_OP_ReqClientSpawn;
 	ConnectingOpcodes[OP_ReqNewZone] = &Client::Handle_Connect_OP_ReqNewZone;
 	ConnectingOpcodes[OP_SendExpZonein] = &Client::Handle_Connect_OP_SendExpZonein;
-	ConnectingOpcodes[OP_SendAAStats] = &Client::Handle_Connect_OP_SendAAStats;
 	ConnectingOpcodes[OP_SetGuildMOTD] = &Client::Handle_OP_SetGuildMOTDCon;
 	ConnectingOpcodes[OP_SetServerFilter] = &Client::Handle_Connect_OP_SetServerFilter;
 	ConnectingOpcodes[OP_SpawnAppearance] = &Client::Handle_Connect_OP_SpawnAppearance;
 	ConnectingOpcodes[OP_TGB] = &Client::Handle_Connect_OP_TGB;
-	ConnectingOpcodes[OP_UpdateAA] = &Client::Handle_Connect_OP_UpdateAA;
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
 	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
@@ -146,7 +144,6 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_Discipline] = &Client::Handle_OP_Discipline;
 	ConnectedOpcodes[OP_DuelResponse] = &Client::Handle_OP_DuelResponse;
 	ConnectedOpcodes[OP_DuelResponse2] = &Client::Handle_OP_DuelResponse2;
-	ConnectedOpcodes[OP_Dye] = &Client::Handle_OP_Dye;
 	ConnectedOpcodes[OP_Emote] = &Client::Handle_OP_Emote;
 	ConnectedOpcodes[OP_EndLootRequest] = &Client::Handle_OP_EndLootRequest;
 	ConnectedOpcodes[OP_EnvDamage] = &Client::Handle_OP_EnvDamage;
@@ -267,6 +264,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_MBRetrievalDetailRequest] = &Client::Handle_OP_MBRetrievalDetailRequest;
 	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
 	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
+	ConnectedOpcodes[OP_Key] = &Client::Handle_OP_Key;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -460,14 +458,6 @@ void Client::CompleteConnect()
 
 		const SPDat_Spell_Struct &spell = spells[buffs[j1].spellid];
 
-		int NimbusEffect = GetNimbusEffect(buffs[j1].spellid);
-		if (NimbusEffect) {
-			if (!IsNimbusEffectActive(NimbusEffect))
-				SendSpellEffect(NimbusEffect, 500, 0, 1, 3000, true);
-
-		}
-
-
 		for (int x1 = 0; x1 < EFFECT_COUNT; x1++) {
 			switch (spell.effectid[x1]) {
 			case SE_IllusionCopy:
@@ -597,8 +587,6 @@ void Client::CompleteConnect()
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
-	entity_list.SendUntargetable(this);
-
 	client_data_loaded = true;
 	int x;
 	for (x = 0; x < 8; x++) {
@@ -694,7 +682,7 @@ void Client::CompleteConnect()
 			string = "Unknown";
 
 		if(GetGM())
-			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
 			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s.", string.c_str());
 	}
@@ -711,7 +699,6 @@ void Client::CompleteConnect()
 			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
 			SetEXP(totalrequiredxp, currentaa);
 			Save();
-			//SetLevel(level+1);
 			Kick();
 		}
 		else if(Admin() > 0 && level > 1)
@@ -890,15 +877,6 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
-{
-	SendAATimers();
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	return;
-}
-
 void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 {
 	//////////////////////////////////////////////////////
@@ -1008,12 +986,6 @@ void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 	}
 	OPTGB(app);
 	return;
-}
-
-void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) 
-{
-
-	SendAATable();
 }
 
 void Client::Handle_Connect_OP_WearChange(const EQApplicationPacket *app)
@@ -1242,6 +1214,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0; base_size = 0;
 	}
+	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
 	query = StringFormat(
@@ -1316,16 +1289,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (group){
-		// If the group leader is not set, pull the group leader infomrmation from the database.
+		// If the group leader is not set, pull the group leader information from the database.
 		if (!group->GetLeader()){
 			char ln[64];
-			char MainTankName[64];
-			char AssistName[64];
-			char PullerName[64];
-			char NPCMarkerName[64];
-			GroupLeadershipAA_Struct GLAA;
 			memset(ln, 0, 64);
-			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);
@@ -1550,12 +1518,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		BulkSendItems();
 		BulkSendInventoryItems();
 		/* Send stuff on the cursor which isnt sent in bulk */
-		iter_queue it;
-		for (it = m_inv.cursor_begin(); it != m_inv.cursor_end(); ++it) {
+		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
 			/* First item cursor is sent in bulk inventory packet */
-			if (it == m_inv.cursor_begin())
+			if (iter == m_inv.cursor_cbegin())
 				continue;
-			const ItemInst *inst = *it;
+			const ItemInst *inst = *iter;
 			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
 
@@ -1578,9 +1545,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	This shouldent be moved, this seems to be what the client
 	uses to advance to the next state (sending ReqNewZone)
 	*/
-	outapp = new EQApplicationPacket(OP_Weather, 8);
-	outapp->pBuffer[0] = 0;
-	outapp->pBuffer[4] = 0;
+	outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+	ws->type = 0;
+	ws->intensity = 0;
 
 	outapp->priority = 6;
 	QueuePacket(outapp);
@@ -3134,7 +3102,6 @@ void Client::Handle_OP_ControlBoat(const EQApplicationPacket *app)
 	cbs2->unknown5 = unknown5;
 
 	FastQueuePacket(&outapp);
-	safe_delete(outapp);
 	// have the boat signal itself, so quests can be triggered by boat use
 	boat->CastToNPC()->SignalNPC(0);
 }
@@ -3439,17 +3406,6 @@ void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app)
 			InterruptSpell();
 		if (initiator->CastToClient()->IsCasting())
 			initiator->CastToClient()->InterruptSpell();
-	}
-	return;
-}
-
-void Client::Handle_OP_Dye(const EQApplicationPacket *app)
-{
-	if (app->size != sizeof(DyeStruct))
-		printf("Wrong size of DyeStruct, Got: %i, Expected: %zu\n", app->size, sizeof(DyeStruct));
-	else{
-		DyeStruct* dye = (DyeStruct*)app->pBuffer;
-		DyeArmor(dye);
 	}
 	return;
 }
@@ -5499,6 +5455,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	char val1[20] = { 0 };
 	PetCommand_Struct* pet = (PetCommand_Struct*)app->pBuffer;
 	Mob* mypet = this->GetPet();
+	Mob *target = entity_list.GetMob(pet->target);
 
 	if (!mypet || pet->command == PET_LEADER)
 	{
@@ -5533,22 +5490,22 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	switch (PetCommand)
 	{
 	case PET_ATTACK: {
-		if (!GetTarget())
+		if (!target)
 			break;
-		if (GetTarget()->IsMezzed()) {
-			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
+		if (target->IsMezzed()) {
+			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), target->GetCleanName());
 			break;
 		}
 		if (mypet->IsFeared())
 			break; //prevent pet from attacking stuff while feared
 
-		if (!mypet->IsAttackAllowed(GetTarget())) {
+		if (!mypet->IsAttackAllowed(target)) {
 			mypet->Say_StringID(NOT_LEGAL_TARGET);
 			break;
 		}
 
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 2) || mypet->GetPetType() != petAnimation) {
-			if (GetTarget() != this && DistanceSquaredNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+			if (target != this && DistanceSquaredNoZ(mypet->GetPosition(), target->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 				if (mypet->IsHeld()) {
 					if (!mypet->IsFocused()) {
 						mypet->SetHeld(false); //break the hold and guard if we explicitly tell the pet to attack.
@@ -5556,12 +5513,12 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 							mypet->SetPetOrder(SPO_Follow);
 					}
 					else {
-						mypet->SetTarget(GetTarget());
+						mypet->SetTarget(target);
 					}
 				}
 				zone->AddAggroMob();
-				mypet->AddToHateList(GetTarget(), 1);
-				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), GetTarget()->GetCleanName());
+				mypet->AddToHateList(target, 1);
+				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), target->GetCleanName());
 			}
 		}
 		break;
@@ -6655,10 +6612,12 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 	Entity* entity = entity_list.GetID(ds->duel_target);
 	if (GetID() != ds->duel_target && entity->IsClient() && (entity->CastToClient()->IsDueling() && entity->CastToClient()->GetDuelTarget() != 0)) {
 		Message_StringID(CC_Default, DUEL_CONSIDERING, entity->GetName());
+		safe_delete(outapp);
 		return;
 	}
 	if (IsDueling()) {
 		Message_StringID(CC_Default, DUEL_INPROGRESS);
+		safe_delete(outapp);
 		return;
 	}
 
@@ -6669,9 +6628,10 @@ void Client::Handle_OP_RequestDuel(const EQApplicationPacket *app)
 		entity->CastToClient()->FastQueuePacket(&outapp);
 		entity->CastToClient()->SetDueling(false);
 		SetDueling(false);
+		return;
 	}
-	else
-		safe_delete(outapp);
+	
+	safe_delete(outapp);
 	return;
 }
 
@@ -8388,14 +8348,12 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_TradeReset, 0);
 		FastQueuePacket(&outapp);
-		safe_delete(outapp);
 
 		outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
 		TradeRequest_Struct* acc = (TradeRequest_Struct*)outapp->pBuffer;
 		acc->from_mob_id = msg->to_mob_id;
 		acc->to_mob_id = msg->from_mob_id;
 		FastQueuePacket(&outapp);
-		safe_delete(outapp);
 	}
 	return;
 }
@@ -8598,7 +8556,7 @@ void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(LFG_Struct)) {
-		Log.Out(Logs::General, Logs::None, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		Log.Out(Logs::General, Logs::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
 		return;
 	}
 
@@ -8613,7 +8571,7 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::General, "Invalid LFG value sent. %i", lfg->value);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid LFG value sent. %i", lfg->value);
 	}
 
 	UpdateWho();
@@ -8685,7 +8643,9 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 		else if(target->IsNPC())
 		{
-			target->Disarm();
+			if (!target->Disarm())
+				success = 0;
+
 			if(!GetGM())
 				AddToHateList(target, 1);
 		}
@@ -8883,6 +8843,16 @@ void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
 	
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
 	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_Key(const EQApplicationPacket *app)
+{
+	if (app->size != 4) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
+		return;
+	}
 
 	return;
 }

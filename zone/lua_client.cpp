@@ -830,29 +830,9 @@ int Lua_Client::GetStartZone() {
 	return self->GetStartZone();
 }
 
-void Lua_Client::KeyRingAdd(uint32 item) {
-	Lua_Safe_Call_Void();
-	self->KeyRingAdd(item);
-}
-
-bool Lua_Client::KeyRingCheck(uint32 item) {
-	Lua_Safe_Call_Bool();
-	return self->KeyRingCheck(item);
-}
-
 void Lua_Client::QuestReadBook(const char *text, int type) {
 	Lua_Safe_Call_Void();
 	self->QuestReadBook(text, type);
-}
-
-uint32 Lua_Client::GetGroupPoints() {
-	Lua_Safe_Call_Int();
-	return self->GetGroupPoints();
-}
-
-uint32 Lua_Client::GetRaidPoints() {
-	Lua_Safe_Call_Int();
-	return self->GetRaidPoints();
 }
 
 void Lua_Client::LearnRecipe(uint32 recipe) {
@@ -1060,11 +1040,6 @@ void Lua_Client::SetThirst(int in_thirst) {
 void Lua_Client::SetConsumption(int in_hunger, int in_thirst) {
 	Lua_Safe_Call_Void();
 	self->SetConsumption(in_hunger, in_thirst);
-}
-
-void Lua_Client::SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg) {
-	Lua_Safe_Call_Void();
-	self->SendMarqueeMessage(type, priority, fade_in, fade_out, duration, msg);
 }
 
 int Lua_Client::GetBoatID() 
@@ -1297,11 +1272,7 @@ luabind::scope lua_register_client() {
 		.def("RefundAA", (void(Lua_Client::*)(void))&Lua_Client::RefundAA)
 		.def("GetModCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetModCharacterFactionLevel)
 		.def("GetStartZone", (int(Lua_Client::*)(void))&Lua_Client::GetStartZone)
-		.def("KeyRingAdd", (void(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
-		.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 		.def("QuestReadBook", (void(Lua_Client::*)(const char *,int))&Lua_Client::QuestReadBook)
-		.def("GetGroupPoints", (uint32(Lua_Client::*)(void))&Lua_Client::GetGroupPoints)
-		.def("GetRaidPoints", (uint32(Lua_Client::*)(void))&Lua_Client::GetRaidPoints)
 		.def("LearnRecipe", (void(Lua_Client::*)(uint32))&Lua_Client::LearnRecipe)
 		.def("GetEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetEndurance)
 		.def("GetMaxEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetMaxEndurance)
@@ -1343,7 +1314,6 @@ luabind::scope lua_register_client() {
 		.def("SetHunger", (void(Lua_Client::*)(int))&Lua_Client::SetHunger)
 		.def("SetThirst", (void(Lua_Client::*)(int))&Lua_Client::SetThirst)
 		.def("SetConsumption", (void(Lua_Client::*)(int, int))&Lua_Client::SetConsumption)
-		.def("SendMarqueeMessage", (void(Lua_Client::*)(uint32, uint32, uint32, uint32, uint32, std::string))&Lua_Client::SendMarqueeMessage)
 		.def("GetBoatID", (int(Lua_Client::*)(void))&Lua_Client::GetBoatID)
 		.def("SetBoatID", (void(Lua_Client::*)(uint32))&Lua_Client::SetBoatID)
 		.def("GetBoatName", (char *(Lua_Client::*)(void))&Lua_Client::GetBoatName)

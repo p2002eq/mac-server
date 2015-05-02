@@ -421,7 +421,7 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 500, GetTarget(), true);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 500, GetTarget(), false);
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;
@@ -1479,49 +1479,55 @@ void Client::OPGMTraining(const EQApplicationPacket *app)
 
 	EQApplicationPacket* outapp = app->Copy();
 
-		OldGMTrainee_Struct* gmtrain = (OldGMTrainee_Struct*) outapp->pBuffer;
+	OldGMTrainee_Struct* gmtrain = (OldGMTrainee_Struct*) outapp->pBuffer;
 
-		Mob* pTrainer = entity_list.GetMob(gmtrain->npcid);
+	Mob* pTrainer = entity_list.GetMob(gmtrain->npcid);
 
-		if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM)
-			return;
+	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM) {
+		safe_delete(outapp);
+		return;
+	}
 
-		//you can only use your own trainer, client enforces this, but why trust it
-		int trains_class = pTrainer->GetClass() - (WARRIORGM - WARRIOR);
-		if(GetClass() != trains_class)
-			return;
+	//you can only use your own trainer, client enforces this, but why trust it
+	int trains_class = pTrainer->GetClass() - (WARRIORGM - WARRIOR);
+	if(GetClass() != trains_class) {
+		safe_delete(outapp);
+		return;
+	}
 
-		//you have to be somewhat close to a trainer to be properly using them
-		if(DistanceSquared(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2)
-			return;
+	//you have to be somewhat close to a trainer to be properly using them
+	if(DistanceSquared(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2) {
+		safe_delete(outapp);
+		return;
+	}
 
-		SkillUseTypes sk;
-		for (sk = Skill1HBlunt; sk <= HIGHEST_SKILL; sk = (SkillUseTypes)(sk+1)) 
-		{
-			//Only Gnomes can tinker.
-			if(sk == SkillTinkering && GetRace() != GNOME)
-				gmtrain->skills[sk] = 0;
-			else if((sk == SkillHide || sk == SkillSneak) && GetRace() == HALFLING)
-				gmtrain->skills[sk] = 50; //Alkabor sends this as 0, but it doesn't show up for us.
-			else 
-				gmtrain->skills[sk] = GetMaxSkillAfterSpecializationRules((SkillUseTypes)sk, MaxSkill((SkillUseTypes)sk, GetClass(), RuleI(Character, MaxLevel)));
+	SkillUseTypes sk;
+	for (sk = Skill1HBlunt; sk <= HIGHEST_SKILL; sk = (SkillUseTypes)(sk+1)) 
+	{
+		//Only Gnomes can tinker.
+		if(sk == SkillTinkering && GetRace() != GNOME)
+			gmtrain->skills[sk] = 0;
+		else if((sk == SkillHide || sk == SkillSneak) && GetRace() == HALFLING)
+			gmtrain->skills[sk] = 50; //Alkabor sends this as 0, but it doesn't show up for us.
+		else 
+			gmtrain->skills[sk] = GetMaxSkillAfterSpecializationRules((SkillUseTypes)sk, MaxSkill((SkillUseTypes)sk, GetClass(), RuleI(Character, MaxLevel)));
 
-		}
-		Mob* trainer = entity_list.GetMob(gmtrain->npcid);
-		gmtrain->greed = CalcPriceMod(trainer,true);
-		gmtrain->unknown208 = 1;
-		for(int l = 0; l < 32; l++) {
-			gmtrain->language[l] = 201;
-		}
+	}
+	Mob* trainer = entity_list.GetMob(gmtrain->npcid);
+	gmtrain->greed = CalcPriceMod(trainer,true);
+	gmtrain->unknown208 = 1;
+	for(int l = 0; l < 32; l++) {
+		gmtrain->language[l] = 201;
+	}
 //#pragma GCC pop_options
 
-		FastQueuePacket(&outapp);
-		// welcome message
-		if (pTrainer && pTrainer->IsNPC())
-		{
-			pTrainer->Say_StringID(zone->random.Int(1204, 1207), GetCleanName());
-		}
+	FastQueuePacket(&outapp);
+	// welcome message
+	if (pTrainer && pTrainer->IsNPC())
+	{
+		pTrainer->Say_StringID(zone->random.Int(1204, 1207), GetCleanName());
 	}
+}
 
 void Client::OPGMEndTraining(const EQApplicationPacket *app)
 {

@@ -182,7 +182,6 @@ struct Door {
 	uint32	guild_id;
 	uint16	lock_pick;
 	uint32	keyitem;
-	uint8	nokeyring;
 	uint8	trigger_door;
 	uint8	trigger_type;
 	uint32	door_param;
@@ -195,6 +194,7 @@ struct Door {
 	float	dest_z;
 	float	dest_heading;
 	uint32	client_version_mask;
+	uint32	altkeyitem;
 };
 
 #pragma pack()

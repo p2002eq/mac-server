@@ -212,7 +212,6 @@ Client::Client(EQStreamInterface* ieqs)
 	UpdateWindowTitle();
 	horseId = 0;
 	tgb = false;
-	keyring.clear();
 	bind_sight_target = nullptr;
 	logging_enabled = CLIENT_DEFAULT_LOGGING_ENABLED;
 
@@ -455,8 +454,6 @@ bool Client::Save(uint8 iCommitNow) {
 	/* Total Time Played */
 	TotalSecondsPlayed += (time(nullptr) - m_pp.lastlogin);
 	m_pp.timePlayedMin = (TotalSecondsPlayed / 60);
-	m_pp.RestTimer = rest_timer.GetRemainingTime() / 1000;
-
 	m_pp.lastlogin = time(nullptr);
 
 	if (GetPet() && !GetPet()->IsFamiliar() && GetPet()->CastToNPC()->GetPetSpellID() && !dead) {
@@ -518,6 +515,8 @@ bool Client::AddPacket(EQApplicationPacket** pApp, bool bAckreq) {
 		return false;
 	if(!zoneinpacket_timer.Enabled()) {
 		//drop the packet because it will never get sent.
+		if (pApp && (*pApp))
+			delete *pApp;
 		return(false);
 	}
 	CLIENTPACKET *c = new CLIENTPACKET;
@@ -929,31 +928,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 			}
 
 		}
-		break;
-	}
-	case 20:
-	{
-		// UCS Relay for Underfoot and later.
-		if(!worldserver.SendChannelMessage(this, 0, chan_num, 0, language, message))
-			Message(0, "Error: World server disconnected");
-		break;
-	}
-	case 22:
-	{
-		// Emotes for Underfoot and later.
-		// crash protection -- cheater
-		message[1023] = '\0';
-		size_t msg_len = strlen(message);
-		if (msg_len > 512)
-			message[512] = '\0';
-
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Emote, 4 + msg_len + strlen(GetName()) + 2);
-		Emote_Struct* es = (Emote_Struct*)outapp->pBuffer;
-		char *Buffer = (char *)es;
-		Buffer += 4;
-		snprintf(Buffer, sizeof(Emote_Struct) - 4, "%s %s", GetName(), message);
-		entity_list.QueueCloseClients(this, outapp, true, 100, 0, true, FilterSocials);
-		safe_delete(outapp);
 		break;
 	}
 	default: {
@@ -2955,44 +2929,6 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 		safe_delete(outapp);
 }
 
-void Client::KeyRingLoad()
-{
-	std::string query = StringFormat("SELECT item_id FROM keyring "
-                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-		return;
-	}
-
-	for (auto row = results.begin(); row != results.end(); ++row)
-		keyring.push_back(atoi(row[0]));
-
-}
-
-void Client::KeyRingAdd(uint32 item_id)
-{
-	return;
-}
-
-bool Client::KeyRingCheck(uint32 item_id)
-{
-	return false;
-}
-
-void Client::KeyRingList()
-{
-	Message(CC_Blue,"Keys on Keyring:");
-	const Item_Struct *item = 0;
-	for(std::list<uint32>::iterator iter = keyring.begin();
-		iter != keyring.end();
-		++iter)
-	{
-		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(CC_Blue,item->Name);
-		}
-	}
-}
-
 bool Client::IsDiscovered(uint32 itemid) {
 
 	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
@@ -3109,41 +3045,6 @@ uint32 Client::GetATKRating()
 			AttackRating = 10;
 	}
 	return AttackRating;
-}
-
-void Client::VoiceMacroReceived(uint32 Type, char *Target, uint32 MacroNumber) {
-
-	uint32 GroupOrRaidID = 0;
-
-	switch(Type) {
-
-		case VoiceMacroGroup: {
-
-			Group* g = GetGroup();
-
-			if(g)
-				GroupOrRaidID = g->GetID();
-			else
-				return;
-
-			break;
-		}
-
-		case VoiceMacroRaid: {
-
-			Raid* r = GetRaid();
-
-			if(r)
-				GroupOrRaidID = r->GetID();
-			else
-				return;
-
-			break;
-		}
-	}
-
-	if(!worldserver.SendVoiceMacro(this, Type, Target, MacroNumber, GroupOrRaidID))
-		Message(0, "Error: World server disconnected");
 }
 
 int Client::GetAggroCount() {
@@ -3799,62 +3700,6 @@ void Client::SuspendMinion()
 	}
 }
 
-// Processes a client request to inspect a SoF+ client's equipment.
-void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
-	if(requestee && requester) {
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_InspectAnswer, sizeof(InspectResponse_Struct));
-		InspectResponse_Struct* insr = (InspectResponse_Struct*) outapp->pBuffer;
-		insr->TargetID = requester->GetID();
-		insr->playerid = requestee->GetID();
-
-		const Item_Struct* item = nullptr;
-		const ItemInst* inst = nullptr;
-		for(int16 L = 0; L <= 20; L++) {
-			inst = requestee->GetInv().GetItem(L);
-
-			if(inst) {
-				item = inst->GetItem();
-				if(item) {
-					strcpy(insr->itemnames[L], item->Name);
-					insr->itemicons[L] = item->Icon;
-				}
-				else
-					insr->itemicons[L] = 0xFFFFFFFF;
-			}
-		}
-
-		inst = requestee->GetInv().GetItem(MainPowerSource);
-
-		if(inst) {
-			item = inst->GetItem();
-			if(item) {
-				strcpy(insr->itemnames[21], item->Name);
-				insr->itemicons[21] = item->Icon;
-			}
-			else
-				insr->itemicons[21] = 0xFFFFFFFF;
-		}
-
-		inst = requestee->GetInv().GetItem(21);
-
-		if(inst) {
-			item = inst->GetItem();
-			if(item) {
-				strcpy(insr->itemnames[22], item->Name);
-				insr->itemicons[22] = item->Icon;
-			}
-			else
-				insr->itemicons[22] = 0xFFFFFFFF;
-		}
-
-		// There could be an OP for this..or not... (Ti clients are not processed here..this message is generated client-side)
-		if(requestee->IsClient() && (requestee != requester)) { requestee->Message(0, "%s is looking at your equipment...", requester->GetName()); }
-
-		requester->QueuePacket(outapp); // Send answer to requester
-		safe_delete(outapp);
-	}
-}
-
 void Client::CheckEmoteHail(Mob *target, const char* message)
 {
 	if(
@@ -4288,9 +4133,13 @@ void Client::GarbleMessage(char *message, uint8 variance)
 	// Garble message by variance%
 	const char alpha_list[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // only change alpha characters for now
 
+	// Don't garble # commands
+	if (message[0] == '#')
+		return;
+
 	for (size_t i = 0; i < strlen(message); i++) {
 		uint8 chance = (uint8)zone->random.Int(0, 115); // variation just over worst possible scrambling
-		if (isalpha(message[i]) && (chance <= variance)) {
+		if (isalpha((unsigned char)message[i]) && (chance <= variance)) {
 			uint8 rand_char = (uint8)zone->random.Int(0,51); // choose a random character from the alpha list
 			message[i] = alpha_list[rand_char];
 		}
@@ -4899,26 +4748,6 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
    }
 }
 
-void Client::SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg)
-{
-	if(duration == 0 || msg.length() == 0) {
-		return;
-	}
-
-	EQApplicationPacket outapp(OP_Unknown, sizeof(ClientMarqueeMessage_Struct) + msg.length());
-	ClientMarqueeMessage_Struct *cms = (ClientMarqueeMessage_Struct*)outapp.pBuffer;
-
-	cms->type = type;
-	cms->unk04 = 10;
-	cms->priority = priority;
-	cms->fade_in_time = fade_in;
-	cms->fade_out_time = fade_out;
-	cms->duration = duration;
-	strcpy(cms->msg, msg.c_str());
-
-	QueuePacket(&outapp);
-}
-
 void Client::Starve()
 {
 	m_pp.hunger_level = 0;
@@ -4963,7 +4792,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if (itemid > 0)
-		SummonItem(itemid, 1, false, MainQuest);
+		SummonItem(itemid, 0, false, MainQuest);
 
 	if (faction)
 	{
