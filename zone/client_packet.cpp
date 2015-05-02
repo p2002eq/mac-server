@@ -4579,40 +4579,43 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(GroupJoin_Struct))
+	if (app->size != sizeof(GroupJoin_Struct)-252)
 	{
 		Log.Out(Logs::General, Logs::None, "Size mismatch on OP_GroupUpdate: got %u expected %u",
-			app->size, sizeof(GroupJoin_Struct));
+			app->size, sizeof(GroupJoin_Struct)-252);
 		DumpPacket(app);
 		return;
 	}
 
 	GroupJoin_Struct* gu = (GroupJoin_Struct*)app->pBuffer;
 
-	switch (gu->action) {
-	case groupActMakeLeader:
+	switch (gu->action) 
 	{
-		Mob* newleader = entity_list.GetClientByName(gu->membername);
-		Group* group = this->GetGroup();
+		case groupActMakeLeader:
+		{
+			Mob* newleader = entity_list.GetClientByName(gu->membername);
+			Group* group = this->GetGroup();
 
-		if (newleader && group) {
-			// the client only sends this if it's the group leader, but check anyway
-			if (group->IsLeader(this))
-				group->ChangeLeader(newleader);
-			else {
-				Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
-				DumpPacket(app);
+			if (newleader && group) 
+			{
+				// the client only sends this if it's the group leader, but check anyway
+				if (group->IsLeader(this))
+					group->ChangeLeader(newleader);
+				else 
+				{
+					Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
+					DumpPacket(app);
+				}
 			}
+			break;
 		}
-		break;
-	}
 
-	default:
-	{
-		Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
-		DumpPacket(app);
-		return;
-	}
+		default:
+		{
+			Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
+			DumpPacket(app);
+			return;
+		}
 	}
 }
 

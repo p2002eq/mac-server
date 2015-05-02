@@ -1106,6 +1106,7 @@ void Client::Trader_EndTrader() {
 
 		if(Customer && gis) 
 		{
+			Customer->Message(CC_Red, "The Trader is no longer open for business");
 			EQApplicationPacket empty(OP_ShopEndConfirm);
 			Customer->QueuePacket(&empty);
 			Customer->Save();

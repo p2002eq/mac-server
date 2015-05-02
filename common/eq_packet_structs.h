@@ -1486,8 +1486,6 @@ struct GroupCancel_Struct {
 	uint8	toggle;
 };
 
-//Group structs are fragile, this works for now until they can be cleaned up.
-
 struct GroupUpdate_Struct {
 /*0000*/	uint32	action;
 /*0004*/	char	yourname[64];
@@ -1497,12 +1495,13 @@ struct GroupUpdate_Struct {
 /*0836*/
 };
 
+//Client sends a packet with size 136, but expects size 388 back.
 struct GroupJoin_Struct {
 /*0000*/	uint32	action;
 /*0004*/	char	yourname[64];
 /*0068*/	char	membername[64];
-/*0196*/	uint8	unknown196[256];
-/*0452*/
+/*0132*/	uint8	unknown196[256];
+/*0388*/
 };
 
 struct FaceChange_Struct {
