@@ -430,7 +430,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
 		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id))
+		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_User_SpellFailure,spell_id);
@@ -2364,7 +2364,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 			return(false);
 
 		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id))
+		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
 			Message_StringID(CC_Red, CANT_SEE_TARGET);
