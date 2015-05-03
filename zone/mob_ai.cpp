@@ -1569,7 +1569,7 @@ void Mob::AI_Process() {
 						//	printf("Pet start pos: (%f, %f, %f)\n", GetX(), GetY(), GetZ());
 
 						float dist = DistanceSquared(m_Position, owner->GetPosition());
-						if ((dist >= 2500 && GetCurrentSpeed() <= 0.0f) || (dist >= 400 && GetCurrentSpeed() > 0.0f))
+						if (dist >= 400)
 						{
 							float speed = owner->GetWalkspeed();
 							if (owner->IsClient())
@@ -2281,6 +2281,8 @@ bool Mob::Rampage(ExtraAttackOptions *opts)
 		if (m_target)
 		{
 			if (m_target == GetTarget())
+				continue;
+			if (m_target->IsClient() && m_target->CastToClient()->GetFeigned())
 				continue;
 
 			// Note: Some (most?) rampage NPCs could hit their ramp target from any distance.  Some required a certain
