@@ -403,8 +403,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"x,"
 		"z,"
 		"heading,"
-		"pvp2,"
-		"pvp_type,"
 		"autosplit_enabled,"
 		"zone_change_count,"
 		"toxicity,"
@@ -417,13 +415,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"show_helm,"
 		"endurance,"
 		"air_remaining,"
-		"pvp_kills,"
-		"pvp_deaths,"
-		"pvp_current_points,"
-		"pvp_career_points,"
-		"pvp_best_kill_streak,"
-		"pvp_worst_death_streak,"
-		"pvp_current_kill_streak,"
 		"aa_points_spent,"
 		"aa_exp,"
 		"aa_points,"
@@ -476,8 +467,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%f,"  // x						
 		"%f,"  // z						
 		"%f,"  // heading				
-		"%u,"  // pvp2					
-		"%u,"  // pvp_type				
 		"%u,"  // autosplit_enabled		
 		"%u,"  // zone_change_count		
 		"%i,"  // toxicity				
@@ -490,13 +479,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // show_helm				
 		"%u,"  // endurance				
 		"%u,"  // air_remaining			
-		"%u,"  // pvp_kills				
-		"%u,"  // pvp_deaths			
-		"%u,"  // pvp_current_points	
-		"%u,"  // pvp_career_points		
-		"%u,"  // pvp_best_kill_streak	
-		"%u,"  // pvp_worst_death_streak
-		"%u,"  // pvp_current_kill_strea
 		"%u,"  // aa_points_spent		
 		"%u,"  // aa_exp				
 		"%u,"  // aa_points				
@@ -549,8 +531,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->x,							  // " x,                         "
 		pp->z,							  // " z,                         "
 		pp->heading,					  // " heading,                   "
-		pp->pvp2,						  // " pvp2,                      "
-		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
 		pp->toxicity,					  // " toxicity,                  "
@@ -563,13 +543,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
-		pp->PVPKills,					  // " pvp_kills,                 "
-		pp->PVPDeaths,					  // " pvp_deaths,                "
-		pp->PVPCurrentPoints,			  // " pvp_current_points,        "
-		pp->PVPCareerPoints,			  // " pvp_career_points,         "
-		pp->PVPBestKillStreak,			  // " pvp_best_kill_streak,      "
-		pp->PVPWorstDeathStreak,		  // " pvp_worst_death_streak,    "
-		pp->PVPCurrentKillStreak,		  // " pvp_current_kill_streak,   "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
