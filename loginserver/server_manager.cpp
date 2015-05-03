@@ -234,36 +234,6 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	return outapp;
 }
 
-void ServerManager::SendUserToWorldRequest(unsigned int server_id, unsigned int client_account_id)
-{
-	list<WorldServer*>::iterator iter = world_servers.begin();
-	bool found = false;
-	while(iter != world_servers.end())
-	{
-		if((*iter)->GetRuntimeID() == server_id)
-		{
-			ServerPacket *outapp = new ServerPacket(ServerOP_UsertoWorldReq, sizeof(UsertoWorldRequest_Struct));
-			UsertoWorldRequest_Struct *utwr = (UsertoWorldRequest_Struct*)outapp->pBuffer;
-			utwr->worldid = server_id;
-			utwr->lsaccountid = client_account_id;
-			(*iter)->GetConnection()->SendPacket(outapp);
-			found = true;
-
-			if(server.options.IsDumpInPacketsOn())
-			{
-				DumpPacket(outapp);
-			}
-			delete outapp;
-		}
-		++iter;
-	}
-
-	if(!found && server.options.IsTraceOn())
-	{
-		server_log->Log(log_client_error, "Client requested a user to world but supplied an invalid id of %u.", server_id);
-	}
-}
-
 void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned int client_account_id)
 {
 	list<WorldServer*>::iterator iter = world_servers.begin();

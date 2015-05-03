@@ -559,18 +559,6 @@ struct AA_Array
 	uint32 value;
 };
 
-typedef struct
-{
-	/*00*/ char Name[64];
-	/*64*/ uint32 Level;
-	/*68*/ uint32 Race;
-	/*72*/ uint32 Class;
-	/*76*/ uint32 Zone;
-	/*80*/ uint32 Time;
-	/*84*/ uint32 Points;
-	/*88*/
-} PVPStatsEntry_Struct;
-
 static const uint32 MAX_PP_DISCIPLINES = 100;
 static const uint32 MAX_DISCIPLINE_TIMERS = 20;
 
@@ -714,10 +702,6 @@ struct PlayerProfile_Struct
 /*4772*/	uint8				unknown4808[24];
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 /*5196*/	uint8				unknown5132[184];
-/*5380*/	uint32				pvp2;				//
-/*5384*/	uint32				unknown5420;		//
-/*5388*/	uint32				pvptype;			//
-/*5392*/	uint32				unknown5428;		//
 /*5396*/	uint32				ability_down;		// Guessing
 /*5400*/	uint8				unknown5436[8];		//
 /*5408*/	uint32				autosplit;			//not used right now
@@ -751,17 +735,6 @@ struct PlayerProfile_Struct
 /*7904*/	uint32				endurance;
 /*8052*/	uint8				unknown8088[132];
 /*8184*/	uint32				air_remaining;
-/*8188*/	uint32				PVPKills;
-/*8192*/	uint32				PVPDeaths;
-/*8196*/	uint32				PVPCurrentPoints;
-/*8200*/	uint32				PVPCareerPoints;
-/*8204*/	uint32				PVPBestKillStreak;
-/*8208*/	uint32				PVPWorstDeathStreak;
-/*8212*/	uint32				PVPCurrentKillStreak;
-/*8216*/	PVPStatsEntry_Struct	PVPLastKill;
-/*8304*/	PVPStatsEntry_Struct	PVPLastDeath;
-/*8392*/	uint32				PVPNumberOfKillsInLast24Hours;
-/*8396*/	PVPStatsEntry_Struct	PVPRecentKills[50];
 /*12796*/	uint32				aapoints_spent;
 /*12800*/	uint32				expAA;
 /*12804*/	uint32				aapoints;			//avaliable, unspent
