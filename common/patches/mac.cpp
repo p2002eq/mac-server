@@ -746,8 +746,7 @@ namespace Mac {
 		OUT(type);
 		OUT(spellid);
 		OUT(damage);
-		eq->unknown12 = emu->unknown11;
-		//OUT(unknown11);
+		OUT(force);
 		OUT(sequence);
 		//OUT(unknown19);
 		FINISH_ENCODE();
