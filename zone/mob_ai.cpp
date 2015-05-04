@@ -1641,11 +1641,18 @@ void Mob::AI_Process() {
 					float dist2 = DistanceSquared(m_Position, follow->GetPosition());
 					int followdist = GetFollowDistance();
 
-					if (dist2 >= followdist)	// Default follow distance is 100
+					if(followdist != 0 && dist2 >= followdist)	// Default follow distance is 100
 					{
 						float speed = GetWalkspeed();
 						if (dist2 >= followdist + 150)
 							speed = GetRunspeed();
+						SetCurrentSpeed(speed);
+						if (speed > 0.0f)
+							CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
+					}
+					else if(followdist == 0 && dist2 >= 100) // Used by Lua method to force the NPC to follow at a walking speed
+					{
+						float speed = GetWalkspeed();
 						SetCurrentSpeed(speed);
 						if (speed > 0.0f)
 							CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
