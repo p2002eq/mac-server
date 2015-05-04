@@ -1012,16 +1012,21 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 				return 0;
 		}
 		else{
-			if((GetClass() == MONK || GetClass() == BEASTLORD) && GetLevel() >= 30){
+			bool MagicGloves = false;
+			ItemInst *gloves = CastToClient()->GetInv().GetItem(MainHands);
+
+			if (gloves != nullptr)
+				MagicGloves = gloves->GetItem()->Magic;
+
+			if ((GetClass() == MONK || GetClass() == BEASTLORD) && (GetLevel() >= 30 || MagicGloves))
+			{
 				dmg = GetMonkHandToHandDamage();
 				if (hate) *hate += dmg;
 			}
-			else if(GetOwner() && GetLevel() >= RuleI(Combat, PetAttackMagicLevel)){ //pets wouldn't actually use this but...
+			else if(GetOwner() && GetLevel() >= RuleI(Combat, PetAttackMagicLevel)) //pets wouldn't actually use this but...
 				dmg = 1;															//it gives us an idea if we can hit
-			}
-			else if(GetSpecialAbility(SPECATK_MAGICAL)){
+			else if (MagicGloves || GetSpecialAbility(SPECATK_MAGICAL))
 				dmg = 1;
-			}
 			else
 				return 0;
 		}
