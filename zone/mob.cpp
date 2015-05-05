@@ -138,6 +138,12 @@ Mob::Mob(const char* in_name,
 	size		= in_size;
 	base_size	= in_size;
 	runspeed	= in_runspeed;
+	current_speed = 0.0f;
+
+	float mysize = in_size;
+	if(mysize > RuleR(Map, BestZSizeMax))
+		mysize = RuleR(Map, BestZSizeMax);
+	z_offset = RuleR(Map, BestZMultiplier) * mysize;
 
 
 	// sanity check
@@ -1335,13 +1341,16 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
+				if (HasOwner())
+					move_tic_count = 0;
+				else
+					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
 				safe_delete(app2);
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1371,7 +1380,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
 		}
 		else
 		{
@@ -1383,7 +1392,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1812,59 +1821,6 @@ void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool i
 	safe_delete(outapp);
 }
 
-void Mob::SendTargetable(bool on, Client *specific_target) {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Untargetable, sizeof(Untargetable_Struct));
-	Untargetable_Struct *ut = (Untargetable_Struct*)outapp->pBuffer;
-	ut->id = GetID();
-	ut->targetable_flag = on == true ? 1 : 0;
-
-	if(specific_target == nullptr) {
-		entity_list.QueueClients(this, outapp);
-	}
-	else if (specific_target->IsClient()) {
-		specific_target->CastToClient()->QueuePacket(outapp, false);
-	}
-	safe_delete(outapp);
-}
-
-void Mob::SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020, bool perm_effect, Client *c) {
-
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpellEffect, sizeof(SpellEffect_Struct));
-	SpellEffect_Struct* se = (SpellEffect_Struct*) outapp->pBuffer;
-	se->EffectID = effectid;	// ID of the Particle Effect
-	se->EntityID = GetID();
-	se->EntityID2 = GetID();	// EntityID again
-	se->Duration = duration;	// In Milliseconds
-	se->FinishDelay = finish_delay;	// Seen 0
-	se->Unknown020 = unk020;	// Seen 3000
-	se->Unknown024 = 1;		// Seen 1 for SoD
-	se->Unknown025 = 1;		// Seen 1 for Live
-	se->Unknown026 = 0;		// Seen 1157
-
-	if(c)
-		c->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
-	else if(zone_wide)
-		entity_list.QueueClients(this, outapp, false, false);
-	else
-		entity_list.QueueCloseClients(this, outapp, false, 200.0f, 0, false);
-
-	safe_delete(outapp);
-
-	if (perm_effect) {
-		if(!IsNimbusEffectActive(effectid)) {
-			SetNimbusEffect(effectid);
-		}
-	}
-
-}
-
-void Mob::SetTargetable(bool on) {
-	if(m_targetable != on) {
-		m_targetable = on;
-		SendTargetable(on);
-	}
-}
-
 const int32& Mob::SetMana(int32 amount)
 {
 	CalcMaxMana();
@@ -1927,6 +1883,7 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	//End of Size Code
 	this->size = in_size;
 	uint32 newsize = floor(in_size + 0.5);
+	this->z_offset = CalcZOffset();
 	SendAppearancePacket(AT_Size, newsize);
 }
 
@@ -5339,13 +5296,11 @@ bool Mob::Disarm()
 	return false;
 }
 
-float Mob::SetBestZ(float zcoord)
+float Mob::CalcZOffset()
 {
-
 	float mysize = GetSize();
-	if(mysize > RuleR(Map, BestZSizeMax))
+		if(mysize > RuleR(Map, BestZSizeMax))
 		mysize = RuleR(Map, BestZSizeMax);
 
-	return (zcoord + RuleR(Map, BestZMultiplier) * mysize);
-
+	return (RuleR(Map, BestZMultiplier) * mysize);
 }

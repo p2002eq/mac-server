@@ -199,17 +199,12 @@ public:
 	void	Trader_EndTrader();
 	void	Trader_StartTrader();
 	uint8	WithCustomer(uint16 NewCustomer);
-	void	KeyRingLoad();
-	void	KeyRingAdd(uint32 item_id);
-	bool	KeyRingCheck(uint32 item_id);
-	void	KeyRingList();
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
 	void	SendTraderPacket(Client* trader, uint32 Unknown72 = 51);
 	GetItems_Struct* GetTraderItems();
 	void	SendBazaarWelcome();
-	void	DyeArmor(DyeStruct* dye);
 	uint8	SlotConvert(uint8 slot,bool bracer=false);
 	void	Message_StringID(uint32 type, uint32 string_id, uint32 distance = 0);
 	void	Message_StringID(uint32 type, uint32 string_id, const char* message,const char* message2=0,const char* message3=0,const char* message4=0,const char* message5=0,const char* message6=0,const char* message7=0,const char* message8=0,const char* message9=0, uint32 distance = 0);
@@ -232,7 +227,6 @@ public:
 	void	ReturnTraderReq(const EQApplicationPacket* app,int16 traderitemcharges, int TraderSlot,uint32 price);
 	void	TradeRequestFailed(const EQApplicationPacket* app);
 	void	BuyTraderItem(TraderBuy_Struct* tbs,Client* trader,const EQApplicationPacket* app);
-	void	TraderUpdate(uint16 slot_id,uint32 trader_id);
 	void	FinishTrade(Mob* with, bool finalizer = false, void* event_entry = nullptr, std::list<void*>* event_details = nullptr);
 	void	SendZonePoints();
 
@@ -247,7 +241,6 @@ public:
 	void ChannelMessageSend(const char* from, const char* to, uint8 chan_num, uint8 language, uint8 lang_skill, const char* message, ...);
 	void Message(uint32 type, const char* message, ...);
 	void QuestJournalledMessage(const char *npcname, const char* message);
-	void VoiceMacroReceived(uint32 Type, char *Target, uint32 MacroNumber);
 	void SendSound();
 	void LearnRecipe(uint32 recipeID);
 	bool CanIncreaseTradeskill(SkillUseTypes tradeskill);
@@ -500,10 +493,6 @@ public:
 	void	AddEXPPercent(uint8 percent, uint8 level = 1);
 	void	AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void	InspectBuffs(Client* Inspector, int Rank);
-	uint32	GetRaidPoints() { return(m_pp.raid_leadership_points); }
-	uint32	GetGroupPoints() { return(m_pp.group_leadership_points); }
-	uint32	GetRaidEXP() { return(m_pp.raid_leadership_exp); }
-	uint32	GetGroupEXP() { return(m_pp.group_leadership_exp); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
 	uint32  GetEXPForLevel(uint16 level, bool aa = false);
@@ -525,10 +514,6 @@ public:
 	void WhoAll();
 	bool CheckLoreConflict(const Item_Struct* item);
 	void ChangeLastName(const char* in_lastname);
-	void GetGroupAAs(GroupLeadershipAA_Struct *into) const;
-	void GetRaidAAs(RaidLeadershipAA_Struct *into) const;
-	void ClearGroupAAs();
-	void UpdateGroupAAs(int32 points, uint32 type);
 	void SacrificeConfirm(Client* caster);
 	void Sacrifice(Client* caster);
 	void GoToDeath();
@@ -820,7 +805,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	//Doesn't appear to work directly after the client recieves an action packet.
 	void SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, int slotid);
 
-	void ProcessInspectRequest(Client* requestee, Client* requester);
 	bool ClientFinishedLoading() { return (conn_state == ClientConnectFinished); }
 	int FindSpellBookSlotBySpellID(uint16 spellid);
 	int FindSpellMemSlotBySpellID(uint16 spellid);
@@ -888,7 +872,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	const char* GetRacePlural(Client* client);
 	const char* GetClassPlural(Client* client);
-	void SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg);
 	void SendSpellAnim(uint16 targetid, uint16 spell_id);
 
 	void DuplicateLoreMessage(uint32 ItemID);
@@ -1052,7 +1035,6 @@ private:
 	uint8				guildrank; // player's rank in the guild, 0-GUILD_MAX_RANK
 	uint16				duel_target;
 	bool				duelaccepted;
-	std::list<uint32> keyring;
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;

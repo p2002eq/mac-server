@@ -1012,16 +1012,21 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 				return 0;
 		}
 		else{
-			if((GetClass() == MONK || GetClass() == BEASTLORD) && GetLevel() >= 30){
+			bool MagicGloves = false;
+			ItemInst *gloves = CastToClient()->GetInv().GetItem(MainHands);
+
+			if (gloves != nullptr)
+				MagicGloves = gloves->GetItem()->Magic;
+
+			if ((GetClass() == MONK || GetClass() == BEASTLORD) && (GetLevel() >= 30 || MagicGloves))
+			{
 				dmg = GetMonkHandToHandDamage();
 				if (hate) *hate += dmg;
 			}
-			else if(GetOwner() && GetLevel() >= RuleI(Combat, PetAttackMagicLevel)){ //pets wouldn't actually use this but...
+			else if(GetOwner() && GetLevel() >= RuleI(Combat, PetAttackMagicLevel)) //pets wouldn't actually use this but...
 				dmg = 1;															//it gives us an idea if we can hit
-			}
-			else if(GetSpecialAbility(SPECATK_MAGICAL)){
+			else if (MagicGloves || GetSpecialAbility(SPECATK_MAGICAL))
 				dmg = 1;
-			}
 			else
 				return 0;
 		}
@@ -1946,7 +1951,7 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 
 	if(damage > 0) {
 		//see if we are gunna start fleeing
-		if(!IsPet()) CheckFlee();
+		if(!IsPet() && !IsCasting()) CheckFlee();
 	}
 }
 
@@ -3569,35 +3574,35 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			case Skill1HSlashing:
 			case SkillHandtoHand:
 			case SkillThrowing:
-				a->unknown11 = 0.1f;
+				a->force = 0.1f;
 				break;
 			case Skill2HBlunt:
 			case Skill2HSlashing:
 			case SkillEagleStrike:
 			case SkillKick:
-				a->unknown11 = 0.2f;
+				a->force = 0.2f;
 				break;
 			case SkillArchery:
-				a->unknown11 = 0.15f;
+				a->force = 0.15f;
 				break;
 			case SkillBackstab:
 			case SkillBash:
-				a->unknown11 = 0.3f;
+				a->force = 0.3f;
 				break;
 			case SkillDragonPunch:
-				a->unknown11 = 0.25f;
+				a->force = 0.25f;
 				break;
 			case SkillFlyingKick:
-				a->unknown11 = 0.4f;
+				a->force = 0.4f;
 				break;
 			case Skill1HPiercing:
 			case SkillFrenzy:
-				a->unknown11 = 0.05f;
+				a->force = 0.05f;
 				break;
 			default:
-				a->unknown11 = 0.0f;
+				a->force = 0.0f;
 			}
-			if (a->unknown11 > 0.0f)
+			if (a->force> 0.0f)
 				a->sequence = attacker->GetHeading() * 2.0f;
 
 			if (IsNPC())

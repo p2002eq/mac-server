@@ -97,7 +97,8 @@ void Mob::CheckFlee() {
 
 void Mob::ProcessFlee()
 {
-
+	if (!flee_mode)
+		return;
 	//Stop fleeing if effect is applied after they start to run.
 	//When ImmuneToFlee effect fades it will turn fear back on and check if it can still flee.
 	if (flee_mode && (GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) &&

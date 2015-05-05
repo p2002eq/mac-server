@@ -97,6 +97,8 @@ RULE_INT ( Character, BaseRunSpeedCap, 150) // Base Run Speed Cap, on live it's 
 RULE_REAL (Character, BaseRunSpeed, 0.7)
 RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
+RULE_BOOL(Character, ForageNeedFoodorDrink, false)
+RULE_BOOL(Character, ForageCommonFoodorDrink, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -457,7 +459,6 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( Chat )
 RULE_BOOL ( Chat, ServerWideOOC, true)
 RULE_BOOL ( Chat, ServerWideAuction, true)
-RULE_BOOL ( Chat, EnableVoiceMacros, true)
 RULE_BOOL ( Chat, EnableMailKeyIPVerification, true)
 RULE_BOOL ( Chat, EnableAntiSpam, true)
 RULE_BOOL ( Chat, SuppressCommandErrors, false) // Do not suppress by default
@@ -531,7 +532,6 @@ RULE_BOOL( QueryServ, PlayerLogLevels, false) // Logs Player Leveling/Deleveling
 RULE_BOOL( QueryServ, PlayerLogAARate, false) // Logs Player AA Experience Rates 
 RULE_BOOL( QueryServ, PlayerLogQGlobalUpdate, false) // Logs Player QGlobal Updates
 RULE_BOOL( QueryServ, PlayerLogTaskUpdates, false) // Logs Player Task Updates
-RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring additions
 RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands

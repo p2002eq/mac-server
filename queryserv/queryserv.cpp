@@ -50,7 +50,6 @@ int main() {
 	RegisterExecutablePlatform(ExePlatformQueryServ);
 	Log.LoadLogSettingsDefaults();
 	set_exception_handler(); 
-	Timer LFGuildExpireTimer(60000);  
 	Timer InterserverTimer(INTERSERVER_TIMER); // does auto-reconnect
 
 	/* Load XML from eqemu_config.xml 

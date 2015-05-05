@@ -118,74 +118,6 @@ namespace Convert {
 	struct Disciplines_Struct {
 		uint32 values[MAX_PP_DISCIPLINES];
 	};
-	struct GroupLeadershipAA_Struct {
-		union {
-			struct {
-				uint32 groupAAMarkNPC;
-				uint32 groupAANPCHealth;
-				uint32 groupAADelegateMainAssist;
-				uint32 groupAADelegateMarkNPC;
-				uint32 groupAA4;
-				uint32 groupAA5;
-				uint32 groupAAInspectBuffs;
-				uint32 groupAA7;
-				uint32 groupAASpellAwareness;
-				uint32 groupAAOffenseEnhancement;
-				uint32 groupAAManaEnhancement;
-				uint32 groupAAHealthEnhancement;
-				uint32 groupAAHealthRegeneration;
-				uint32 groupAAFindPathToPC;
-				uint32 groupAAHealthOfTargetsTarget;
-				uint32 groupAA15;
-			};
-			uint32 ranks[MAX_GROUP_LEADERSHIP_AA_ARRAY];
-		};
-	};
-
-	struct RaidLeadershipAA_Struct {
-		union {
-			struct {
-				uint32 raidAAMarkNPC;
-				uint32 raidAANPCHealth;
-				uint32 raidAADelegateMainAssist;
-				uint32 raidAADelegateMarkNPC;
-				uint32 raidAA4;
-				uint32 raidAA5;
-				uint32 raidAA6;
-				uint32 raidAASpellAwareness;
-				uint32 raidAAOffenseEnhancement;
-				uint32 raidAAManaEnhancement;
-				uint32 raidAAHealthEnhancement;
-				uint32 raidAAHealthRegeneration;
-				uint32 raidAAFindPathToPC;
-				uint32 raidAAHealthOfTargetsTarget;
-				uint32 raidAA14;
-				uint32 raidAA15;
-			};
-			uint32 ranks[MAX_RAID_LEADERSHIP_AA_ARRAY];
-		};
-	};
-
-	struct LeadershipAA_Struct {
-		union {
-			struct {
-				Convert::GroupLeadershipAA_Struct group;
-				Convert::RaidLeadershipAA_Struct raid;
-			};
-			uint32 ranks[MAX_LEADERSHIP_AA_ARRAY];
-		};
-	};
-	typedef struct
-	{
-		/*00*/ char Name[64];
-		/*64*/ uint32 Level;
-		/*68*/ uint32 Race;
-		/*72*/ uint32 Class;
-		/*76*/ uint32 Zone;
-		/*80*/ uint32 Time;
-		/*84*/ uint32 Points;
-		/*88*/
-	} PVPStatsEntry_Struct;
 
 	struct SuspendedMinion_Struct
 	{
@@ -285,10 +217,6 @@ namespace Convert {
 		/*4772*/	uint8							unknown4808[24];
 		/*4796*/	uint32							skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 		/*5196*/	uint8							unknown5132[184];
-		/*5380*/	uint32							pvp2;				//
-		/*5384*/	uint32							unknown5420;		//
-		/*5388*/	uint32							pvptype;			//
-		/*5392*/	uint32							unknown5428;		//
 		/*5396*/	uint32							ability_down;		// Guessing
 		/*5400*/	uint8							unknown5436[8];		//
 		/*5408*/	uint32							autosplit;			//not used right now
@@ -320,24 +248,8 @@ namespace Convert {
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7744*/	char							unknown7780[160];
 		/*7904*/	uint32							endurance;
-		/*7908*/	uint32							group_leadership_exp;	//0-1000
-		/*7912*/	uint32							raid_leadership_exp;	//0-2000
-		/*7916*/	uint32							group_leadership_points;
-		/*7920*/	uint32							raid_leadership_points;
-		/*7924*/	Convert::LeadershipAA_Struct	leader_abilities;
 		/*8052*/	uint8							unknown8088[132];
 		/*8184*/	uint32							air_remaining;
-		/*8188*/	uint32							PVPKills;
-		/*8192*/	uint32							PVPDeaths;
-		/*8196*/	uint32							PVPCurrentPoints;
-		/*8200*/	uint32							PVPCareerPoints;
-		/*8204*/	uint32							PVPBestKillStreak;
-		/*8208*/	uint32							PVPWorstDeathStreak;
-		/*8212*/	uint32							PVPCurrentKillStreak;
-		/*8216*/	Convert::PVPStatsEntry_Struct	PVPLastKill;
-		/*8304*/	Convert::PVPStatsEntry_Struct	PVPLastDeath;
-		/*8392*/	uint32							PVPNumberOfKillsInLast24Hours;
-		/*8396*/	Convert::PVPStatsEntry_Struct	PVPRecentKills[50];
 		/*12796*/	uint32							aapoints_spent;
 		/*12800*/	uint32							expAA;
 		/*12804*/	uint32							aapoints;			//avaliable, unspent
@@ -346,11 +258,6 @@ namespace Convert {
 		/*18630*/	Convert::SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 		/*19240*/	uint32							timeentitledonaccount;
 		/*19532*/	uint8							unknown19568[8];
-		/*19556*/	uint8							groupAutoconsent;	// 0=off, 1=on
-		/*19557*/	uint8							raidAutoconsent;	// 0=off, 1=on
-		/*19558*/	uint8							guildAutoconsent;	// 0=off, 1=on
-		/*19559*/	uint8							unknown19595[5];	// ***Placeholder (6/29/2005)
-		/*19564*/	uint32							RestTimer;
 		/*19568*/
 	};
 	
@@ -538,8 +445,7 @@ public:
 	char*	GetGroupLeaderForLogin(const char* name,char* leaderbuf);
 
 	void	SetGroupLeaderName(uint32 gid, const char* name);
-	char*	GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank = nullptr, char* assist = nullptr, char* puller = nullptr, char *marknpc = nullptr,
-						GroupLeadershipAA_Struct* GLAA = nullptr);
+	char*	GetGroupLeadershipInfo(uint32 gid, char* leaderbuf);
 	void	ClearGroupLeader(uint32 gid = 0);
 	
 
@@ -563,6 +469,7 @@ public:
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
 	bool DBSetup_Rules();
+	bool DBSetup_Logs();
 	bool GITInfo();
 
 	/*
