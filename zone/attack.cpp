@@ -3607,7 +3607,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 
 			if (IsNPC())
 			{
-				CastToNPC()->AddPush(attacker->GetHeading(), a->unknown11);
+				CastToNPC()->AddPush(attacker->GetHeading(), a->force);
 			}
 		}
 		
