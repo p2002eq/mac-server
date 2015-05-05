@@ -283,9 +283,10 @@ public:
 	inline const char* GetAmmoIDfile() const { return ammo_idfile; }
 	uint16	GetInnateProcSpellId() const { return innateProcSpellId;  }
 	void	AddPush(float heading, float magnitude);		// adds push to the push vector; call this for every melee hit
-	void	ApplyPushVector();								// actually push the mob and reset the push vector. checks map collision
+	float	ApplyPushVector(bool noglance = false);			// actually push the mob and reset the push vector. checks map collision
 	void	ResetPushTimer() { push_timer.Start(1000); }
 	bool	CheckPushTimer() { return push_timer.Check(false); }
+	void	TriggerPushTimer() { push_timer.Trigger(); }
 
 	//waypoint crap
 	int					GetMaxWp() const { return max_wp; }
@@ -490,7 +491,7 @@ protected:
 private:
 	uint32	loottable_id;
 	bool	p_depop;
-	glm::vec2 push_vector;
+	glm::vec3 push_vector;
 };
 
 #endif

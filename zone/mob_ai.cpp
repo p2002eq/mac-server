@@ -1974,7 +1974,6 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 
 					CastToNPC()->SetCombatEvent(true);
 					CastToNPC()->ResetPushTimer();
-					Say("AddToHateList()");
 
 					/* Web Interface: Combat State NPC */
 					if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {

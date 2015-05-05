@@ -10594,9 +10594,19 @@ void command_push(Client *c, const Seperator *sep){
 		}
 		else
 		{
-			if(t->CombatPush(c, pushback))
+			if (t->IsNPC())
 			{
-				success = true;	
+				t->CastToNPC()->AddPush(c->GetHeading(), pushback);
+				pushback = t->CastToNPC()->ApplyPushVector();
+				if (pushback > 0.0f)
+					success = true;
+			}
+			else
+			{
+				if(t->CombatPush(c, pushback))
+				{
+					success = true;	
+				}
 			}
 		}
 
