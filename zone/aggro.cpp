@@ -510,6 +510,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (
 			mob != sender
 			&& mob != attacker
+			&& mob->GetClass() != 41
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
