@@ -503,6 +503,7 @@ public:
 	void	AddReport(std::string who, std::string against, std::string lines);
 	struct TimeOfDay_Struct		LoadTime(time_t &realtime);
 	bool	SaveTime(int8 minute, int8 hour, int8 day, int8 month, int16 year);
+	bool	AdjustSpawnTimes();
 
 	/* EQEmuLogSys */
 	void	LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
