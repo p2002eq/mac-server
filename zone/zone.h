@@ -243,9 +243,9 @@ public:
 	EQEmu::Random random;
 
 	static void GMSayHookCallBackProcess(uint16 log_category, std::string message){
-		/* Cut messages down to 4000 max to prevent client crash */
+		/* Cut messages down to 2600 max to prevent client crash */
 		if (!message.empty())
-			message = message.substr(0, 4000);
+			message = message.substr(0, 2600);
 
 		/* Replace Occurrences of % or MessageStatus will crash */
 		find_replace(message, std::string("%"), std::string("."));
