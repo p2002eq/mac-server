@@ -508,28 +508,6 @@ bool ZoneServer::Process() {
 				zoneserver_list.SendEmoteMessageRaw(sem->to, sem->guilddbid, sem->minstatus, sem->type, sem->message);
 				break;
 			}
-			case ServerOP_VoiceMacro: {
-
-				ServerVoiceMacro_Struct* svm = (ServerVoiceMacro_Struct*) pack->pBuffer;
-
-				if(svm->Type == VoiceMacroTell) {
-
-					ClientListEntry* cle = client_list.FindCharacter(svm->To);
-
-					if (!cle || (cle->Online() < CLE_Status_Zoning) || !cle->Server()) {
-
-						zoneserver_list.SendEmoteMessage(svm->From, 0, 0, 0, "'%s is not online at this time'", svm->To);
-
-						break;
-					}
-
-					cle->Server()->SendPacket(pack);
-				}
-				else
-					zoneserver_list.SendPacket(pack);
-
-				break;
-			}
 
 			case ServerOP_RezzPlayerAccept: {
 				zoneserver_list.SendPacket(pack);

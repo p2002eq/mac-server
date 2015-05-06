@@ -365,7 +365,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	)
 	)
 	{
-		//FatherNiwtit: make sure we can see them. last since it is very expensive
+		//make sure we can see them. last since it is very expensive
 		if(zone->SkipLoS() || CheckLosFN(mob)) {
 			Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
 			return( mod_will_aggro(mob, this) );
@@ -510,6 +510,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (
 			mob != sender
 			&& mob != attacker
+			&& mob->GetClass() != 41
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
@@ -542,7 +543,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				if(useprimfaction || sender->GetReverseFactionCon(mob) <= FACTION_AMIABLE )
 				{
 					//attacking someone on same faction, or a friend
-					//Father Nitwit: make sure we can see them.
+					//make sure we can see them.
 					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
 						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",

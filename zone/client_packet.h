@@ -4,13 +4,11 @@
 	void Handle_Connect_OP_ClientUpdate(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ReqClientSpawn(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app);
-	void Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app);
 	void Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app);
 	void Handle_Connect_OP_SetDataRate(const EQApplicationPacket *app);
 	void Handle_Connect_OP_SetServerFilter(const EQApplicationPacket *app);
 	void Handle_Connect_OP_SpawnAppearance(const EQApplicationPacket *app);
 	void Handle_Connect_OP_TGB(const EQApplicationPacket *app);
-	void Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app);
 	void Handle_Connect_OP_WearChange(const EQApplicationPacket *app);
 	void Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app);
 	/* Connected opcode handlers*/
@@ -55,7 +53,6 @@
 	void Handle_OP_Discipline(const EQApplicationPacket *app);
 	void Handle_OP_DuelResponse(const EQApplicationPacket *app);
 	void Handle_OP_DuelResponse2(const EQApplicationPacket *app);
-	void Handle_OP_Dye(const EQApplicationPacket *app);
 	void Handle_OP_Emote(const EQApplicationPacket *app);
 	void Handle_OP_EndLootRequest(const EQApplicationPacket *app);
 	void Handle_OP_EnvDamage(const EQApplicationPacket *app);
@@ -178,3 +175,4 @@
 	void Handle_OP_MBRetrievalDetailRequest(const EQApplicationPacket *app);
 	void Handle_OP_MBRetrievalPostRequest(const EQApplicationPacket *app);
 	void Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app);
+	void Handle_OP_Key(const EQApplicationPacket *app);

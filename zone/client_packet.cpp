@@ -93,12 +93,10 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_ReqClientSpawn] = &Client::Handle_Connect_OP_ReqClientSpawn;
 	ConnectingOpcodes[OP_ReqNewZone] = &Client::Handle_Connect_OP_ReqNewZone;
 	ConnectingOpcodes[OP_SendExpZonein] = &Client::Handle_Connect_OP_SendExpZonein;
-	ConnectingOpcodes[OP_SendAAStats] = &Client::Handle_Connect_OP_SendAAStats;
 	ConnectingOpcodes[OP_SetGuildMOTD] = &Client::Handle_OP_SetGuildMOTDCon;
 	ConnectingOpcodes[OP_SetServerFilter] = &Client::Handle_Connect_OP_SetServerFilter;
 	ConnectingOpcodes[OP_SpawnAppearance] = &Client::Handle_Connect_OP_SpawnAppearance;
 	ConnectingOpcodes[OP_TGB] = &Client::Handle_Connect_OP_TGB;
-	ConnectingOpcodes[OP_UpdateAA] = &Client::Handle_Connect_OP_UpdateAA;
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
 	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
@@ -146,7 +144,6 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_Discipline] = &Client::Handle_OP_Discipline;
 	ConnectedOpcodes[OP_DuelResponse] = &Client::Handle_OP_DuelResponse;
 	ConnectedOpcodes[OP_DuelResponse2] = &Client::Handle_OP_DuelResponse2;
-	ConnectedOpcodes[OP_Dye] = &Client::Handle_OP_Dye;
 	ConnectedOpcodes[OP_Emote] = &Client::Handle_OP_Emote;
 	ConnectedOpcodes[OP_EndLootRequest] = &Client::Handle_OP_EndLootRequest;
 	ConnectedOpcodes[OP_EnvDamage] = &Client::Handle_OP_EnvDamage;
@@ -267,6 +264,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_MBRetrievalDetailRequest] = &Client::Handle_OP_MBRetrievalDetailRequest;
 	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
 	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
+	ConnectedOpcodes[OP_Key] = &Client::Handle_OP_Key;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -460,14 +458,6 @@ void Client::CompleteConnect()
 
 		const SPDat_Spell_Struct &spell = spells[buffs[j1].spellid];
 
-		int NimbusEffect = GetNimbusEffect(buffs[j1].spellid);
-		if (NimbusEffect) {
-			if (!IsNimbusEffectActive(NimbusEffect))
-				SendSpellEffect(NimbusEffect, 500, 0, 1, 3000, true);
-
-		}
-
-
 		for (int x1 = 0; x1 < EFFECT_COUNT; x1++) {
 			switch (spell.effectid[x1]) {
 			case SE_IllusionCopy:
@@ -597,8 +587,6 @@ void Client::CompleteConnect()
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
-	entity_list.SendUntargetable(this);
-
 	client_data_loaded = true;
 	int x;
 	for (x = 0; x < 8; x++) {
@@ -694,7 +682,7 @@ void Client::CompleteConnect()
 			string = "Unknown";
 
 		if(GetGM())
-			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
 			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s.", string.c_str());
 	}
@@ -711,7 +699,6 @@ void Client::CompleteConnect()
 			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
 			SetEXP(totalrequiredxp, currentaa);
 			Save();
-			//SetLevel(level+1);
 			Kick();
 		}
 		else if(Admin() > 0 && level > 1)
@@ -890,15 +877,6 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
-{
-	SendAATimers();
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	return;
-}
-
 void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 {
 	//////////////////////////////////////////////////////
@@ -1008,12 +986,6 @@ void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 	}
 	OPTGB(app);
 	return;
-}
-
-void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) 
-{
-
-	SendAATable();
 }
 
 void Client::Handle_Connect_OP_WearChange(const EQApplicationPacket *app)
@@ -1573,9 +1545,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	This shouldent be moved, this seems to be what the client
 	uses to advance to the next state (sending ReqNewZone)
 	*/
-	outapp = new EQApplicationPacket(OP_Weather, 8);
-	outapp->pBuffer[0] = 0;
-	outapp->pBuffer[4] = 0;
+	outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+	ws->type = 0;
+	ws->intensity = 0;
 
 	outapp->priority = 6;
 	QueuePacket(outapp);
@@ -3437,17 +3410,6 @@ void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Dye(const EQApplicationPacket *app)
-{
-	if (app->size != sizeof(DyeStruct))
-		printf("Wrong size of DyeStruct, Got: %i, Expected: %zu\n", app->size, sizeof(DyeStruct));
-	else{
-		DyeStruct* dye = (DyeStruct*)app->pBuffer;
-		DyeArmor(dye);
-	}
-	return;
-}
-
 void Client::Handle_OP_Emote(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(OldEmote_Struct)) {
@@ -4617,40 +4579,43 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(GroupLeader_Struct))
+	if (app->size != sizeof(GroupJoin_Struct)-252)
 	{
 		Log.Out(Logs::General, Logs::None, "Size mismatch on OP_GroupUpdate: got %u expected %u",
-			app->size, sizeof(GroupLeader_Struct));
+			app->size, sizeof(GroupJoin_Struct)-252);
 		DumpPacket(app);
 		return;
 	}
 
-	GroupLeader_Struct* gu = (GroupLeader_Struct*)app->pBuffer;
+	GroupJoin_Struct* gu = (GroupJoin_Struct*)app->pBuffer;
 
-	switch (gu->action) {
-	case groupActMakeLeader:
+	switch (gu->action) 
 	{
-		Mob* newleader = entity_list.GetClientByName(gu->membername);
-		Group* group = this->GetGroup();
+		case groupActMakeLeader:
+		{
+			Mob* newleader = entity_list.GetClientByName(gu->membername);
+			Group* group = this->GetGroup();
 
-		if (newleader && group) {
-			// the client only sends this if it's the group leader, but check anyway
-			if (group->IsLeader(this))
-				group->ChangeLeader(newleader);
-			else {
-				Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
-				DumpPacket(app);
+			if (newleader && group) 
+			{
+				// the client only sends this if it's the group leader, but check anyway
+				if (group->IsLeader(this))
+					group->ChangeLeader(newleader);
+				else 
+				{
+					Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
+					DumpPacket(app);
+				}
 			}
+			break;
 		}
-		break;
-	}
 
-	default:
-	{
-		Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
-		DumpPacket(app);
-		return;
-	}
+		default:
+		{
+			Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
+			DumpPacket(app);
+			return;
+		}
 	}
 }
 
@@ -7972,8 +7937,8 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 					}
 				}
 			}
-			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
-			{
+			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 2500))
+			{ // client will allow targeting something just beyond max clip just out of sight, so add another 50 for that.
 				char *hacker_str = nullptr;
 				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
 					" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
@@ -8881,6 +8846,16 @@ void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
 	
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
 	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_Key(const EQApplicationPacket *app)
+{
+	if (app->size != 4) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
+		return;
+	}
 
 	return;
 }

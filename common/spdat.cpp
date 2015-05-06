@@ -455,9 +455,13 @@ bool IsResistableSpell(uint16 spell_id)
 	// for now only detrimental spells are resistable. later on i will
 	// add specific exceptions for the beneficial spells that are resistable
 	// Torven: dispels do not have a MR check; they have a different check that is entirely level based
-	if (IsDetrimentalSpell(spell_id) && !IsPureDispelSpell(spell_id))
+	if (IsDetrimentalSpell(spell_id) && !IsPureDispelSpell(spell_id) && 
+		!IsAllianceSpellLine(spell_id) && spells[spell_id].resisttype != RESIST_NONE)
+	{
 		return true;
+	}
 
+	Log.Out(Logs::Detail, Logs::Spells, "Spell %i is unresistable.", spell_id);
 	return false;
 }
 

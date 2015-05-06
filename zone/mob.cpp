@@ -1821,59 +1821,6 @@ void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool i
 	safe_delete(outapp);
 }
 
-void Mob::SendTargetable(bool on, Client *specific_target) {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Untargetable, sizeof(Untargetable_Struct));
-	Untargetable_Struct *ut = (Untargetable_Struct*)outapp->pBuffer;
-	ut->id = GetID();
-	ut->targetable_flag = on == true ? 1 : 0;
-
-	if(specific_target == nullptr) {
-		entity_list.QueueClients(this, outapp);
-	}
-	else if (specific_target->IsClient()) {
-		specific_target->CastToClient()->QueuePacket(outapp, false);
-	}
-	safe_delete(outapp);
-}
-
-void Mob::SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020, bool perm_effect, Client *c) {
-
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpellEffect, sizeof(SpellEffect_Struct));
-	SpellEffect_Struct* se = (SpellEffect_Struct*) outapp->pBuffer;
-	se->EffectID = effectid;	// ID of the Particle Effect
-	se->EntityID = GetID();
-	se->EntityID2 = GetID();	// EntityID again
-	se->Duration = duration;	// In Milliseconds
-	se->FinishDelay = finish_delay;	// Seen 0
-	se->Unknown020 = unk020;	// Seen 3000
-	se->Unknown024 = 1;		// Seen 1 for SoD
-	se->Unknown025 = 1;		// Seen 1 for Live
-	se->Unknown026 = 0;		// Seen 1157
-
-	if(c)
-		c->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
-	else if(zone_wide)
-		entity_list.QueueClients(this, outapp, false, false);
-	else
-		entity_list.QueueCloseClients(this, outapp, false, 200.0f, 0, false);
-
-	safe_delete(outapp);
-
-	if (perm_effect) {
-		if(!IsNimbusEffectActive(effectid)) {
-			SetNimbusEffect(effectid);
-		}
-	}
-
-}
-
-void Mob::SetTargetable(bool on) {
-	if(m_targetable != on) {
-		m_targetable = on;
-		SendTargetable(on);
-	}
-}
-
 const int32& Mob::SetMana(int32 amount)
 {
 	CalcMaxMana();

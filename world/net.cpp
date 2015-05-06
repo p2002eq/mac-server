@@ -320,9 +320,15 @@ int main(int argc, char** argv) {
 		}
 	}
 	if(RuleB(World, ClearTempMerchantlist)){
-		Log.Out(Logs::General, Logs::World_Server, "Clearing temporary merchant lists..");
+		Log.Out(Logs::General, Logs::World_Server, "Clearing temporary merchant lists...");
 		database.ClearMerchantTemp();
 	}
+
+	if(RuleB(World, AdjustRespawnTimes)){
+		Log.Out(Logs::General, Logs::World_Server, "Clearing and adjusting boot time spawn timers...");
+		database.AdjustSpawnTimes();
+	}
+
 	Log.Out(Logs::General, Logs::World_Server, "Loading EQ time of day..");
 	TimeOfDay_Struct eqTime;
 	time_t realtime;

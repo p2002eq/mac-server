@@ -155,6 +155,7 @@ RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client
 RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_INT (World, TellQueueSize, 20) 
 RULE_BOOL (World, UseDBUpdate, false) //Automatic Database Upgrade Script
+RULE_BOOL (World, AdjustRespawnTimes, true) //Determines if spawntimes with a boot time variable take effect or not. Set to false in the db for emergency patches.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Zone )
@@ -459,7 +460,6 @@ RULE_CATEGORY_END()
 RULE_CATEGORY ( Chat )
 RULE_BOOL ( Chat, ServerWideOOC, true)
 RULE_BOOL ( Chat, ServerWideAuction, true)
-RULE_BOOL ( Chat, EnableVoiceMacros, true)
 RULE_BOOL ( Chat, EnableMailKeyIPVerification, true)
 RULE_BOOL ( Chat, EnableAntiSpam, true)
 RULE_BOOL ( Chat, SuppressCommandErrors, false) // Do not suppress by default
@@ -533,7 +533,6 @@ RULE_BOOL( QueryServ, PlayerLogLevels, false) // Logs Player Leveling/Deleveling
 RULE_BOOL( QueryServ, PlayerLogAARate, false) // Logs Player AA Experience Rates 
 RULE_BOOL( QueryServ, PlayerLogQGlobalUpdate, false) // Logs Player QGlobal Updates
 RULE_BOOL( QueryServ, PlayerLogTaskUpdates, false) // Logs Player Task Updates
-RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring additions
 RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands

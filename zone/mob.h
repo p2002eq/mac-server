@@ -167,7 +167,6 @@ public:
 	bool HasDied();
 
 	//Appearance
-	void SendTargetable(bool on, Client *specific_target = nullptr);
 	virtual void SendWearChange(uint8 material_slot);
 	virtual void SendTextureWC(uint8 slot, uint16 texture, uint32 hero_forge_model = 0, uint32 elite_material = 0,
 		uint32 unknown06 = 0, uint32 unknown18 = 0);
@@ -192,8 +191,6 @@ public:
 	void BardPulse(uint16 spell_id, Mob *caster);
 
 	//Spell
-	void SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide,
-		uint32 unk020, bool perm_effect = false, Client *c = nullptr);
 	bool IsBeneficialAllowed(Mob *target);
 	virtual int GetCasterLevel(uint16 spell_id);
 	void ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* newbon, uint16 casterID = 0,
@@ -300,7 +297,6 @@ public:
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
-	void SetTargetable(bool on);
 	bool IsTargetable() const { return m_targetable; }
 	bool HasShieldEquiped() const { return has_shieldequiped; }
 	inline void ShieldEquiped(bool val) { has_shieldequiped = val; }

@@ -1569,9 +1569,11 @@ void Mob::AI_Process() {
 						//	printf("Pet start pos: (%f, %f, %f)\n", GetX(), GetY(), GetZ());
 
 						float dist = DistanceSquared(m_Position, owner->GetPosition());
-						if ((dist >= 2500 && GetCurrentSpeed() <= 0.0f) || (dist >= 400 && GetCurrentSpeed() > 0.0f))
+						if (dist >= 400)
 						{
 							float speed = owner->GetWalkspeed();
+							if (owner->IsClient())
+								speed *= 2.0f;
 							if (dist >= 5625)
 								speed = GetRunspeed();
 							SetCurrentSpeed(speed);
@@ -1639,11 +1641,18 @@ void Mob::AI_Process() {
 					float dist2 = DistanceSquared(m_Position, follow->GetPosition());
 					int followdist = GetFollowDistance();
 
-					if (dist2 >= followdist)	// Default follow distance is 100
+					if(followdist != 0 && dist2 >= followdist)	// Default follow distance is 100
 					{
 						float speed = GetWalkspeed();
 						if (dist2 >= followdist + 150)
 							speed = GetRunspeed();
+						SetCurrentSpeed(speed);
+						if (speed > 0.0f)
+							CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
+					}
+					else if(followdist == 0 && dist2 >= 100) // Used by Lua method to force the NPC to follow at a walking speed
+					{
+						float speed = GetWalkspeed();
 						SetCurrentSpeed(speed);
 						if (speed > 0.0f)
 							CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
@@ -2279,6 +2288,8 @@ bool Mob::Rampage(ExtraAttackOptions *opts)
 		if (m_target)
 		{
 			if (m_target == GetTarget())
+				continue;
+			if (m_target->IsClient() && m_target->CastToClient()->GetFeigned())
 				continue;
 
 			// Note: Some (most?) rampage NPCs could hit their ramp target from any distance.  Some required a certain

@@ -1998,7 +1998,7 @@ void EntityList::RemoveAllDoors()
 
 void EntityList::DespawnAllDoors()
 {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_RemoveAllDoors, 0);
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DespawnDoor, 0);
 	this->QueueClients(0,outapp);
 	safe_delete(outapp);
 }
@@ -3743,55 +3743,6 @@ void EntityList::SendZoneAppearance(Client *c)
 			if (cur->GetSize() != cur->GetBaseSize()) {
 				cur->SendAppearancePacket(AT_Size, (uint32)cur->GetSize(), false, true, c);
 			}
-		}
-		++it;
-	}
-}
-
-void EntityList::SendNimbusEffects(Client *c)
-{
-	if (!c)
-		return;
-
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-		Mob *cur = it->second;
-
-		if (cur) {
-			if (cur == c) {
-				++it;
-				continue;
-			}
-			if (cur->GetNimbusEffect1() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect1(), 1000, 0, 1, 3000, false, c);
-			}
-			if (cur->GetNimbusEffect2() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect2(), 2000, 0, 1, 3000, false, c);
-			}
-			if (cur->GetNimbusEffect3() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect3(), 3000, 0, 1, 3000, false, c);
-			}
-		}
-		++it;
-	}
-}
-
-void EntityList::SendUntargetable(Client *c)
-{
-	if (!c)
-		return;
-
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-		Mob *cur = it->second;
-
-		if (cur) {
-			if (cur == c) {
-				++it;
-				continue;
-			}
-			if (!cur->IsTargetable())
-				cur->SendTargetable(false, c);
 		}
 		++it;
 	}

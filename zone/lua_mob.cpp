@@ -1537,22 +1537,6 @@ void Lua_Mob::SendIllusionPacket(luabind::adl::object illusion) {
 		beard, aa_title, size);
 }
 
-void Lua_Mob::SendSpellEffect(uint32 effect_id, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020) {
-	Lua_Safe_Call_Void();
-	self->SendSpellEffect(effect_id, duration, finish_delay, zone_wide, unk020);
-}
-
-void Lua_Mob::SendSpellEffect(uint32 effect_id, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020, bool perm_effect) {
-	Lua_Safe_Call_Void();
-	self->SendSpellEffect(effect_id, duration, finish_delay, zone_wide, unk020, perm_effect);
-}
-
-void Lua_Mob::SendSpellEffect(uint32 effect_id, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020, bool perm_effect,
-							  Lua_Client c) {
-	Lua_Safe_Call_Void();
-	self->SendSpellEffect(effect_id, duration, finish_delay, zone_wide, unk020, perm_effect, c);
-}
-
 void Lua_Mob::SetGlobal(const char *varname, const char *newvalue, int options, const char *duration) {
 	Lua_Safe_Call_Void();
 	self->SetGlobal(varname, newvalue, options, duration);
@@ -1601,11 +1585,6 @@ void Lua_Mob::SetRunning(bool running) {
 void Lua_Mob::SetBodyType(int new_body, bool overwrite_orig) {
 	Lua_Safe_Call_Void();
 	self->SetBodyType(static_cast<bodyType>(new_body), overwrite_orig);
-}
-
-void Lua_Mob::SetTargetable(bool on) {
-	Lua_Safe_Call_Void();
-	self->SetTargetable(on);
 }
 
 void Lua_Mob::ModSkillDmgTaken(int skill, int value) {
@@ -2018,9 +1997,6 @@ luabind::scope lua_register_mob() {
 		.def("SetRace", (void(Lua_Mob::*)(int))&Lua_Mob::SetRace)
 		.def("SetGender", (void(Lua_Mob::*)(int))&Lua_Mob::SetGender)
 		.def("SendIllusionPacket", (void(Lua_Mob::*)(luabind::adl::object))&Lua_Mob::SendIllusionPacket)
-		.def("SendSpellEffect", (void(Lua_Mob::*)(uint32,uint32,uint32,bool,uint32))&Lua_Mob::SendSpellEffect)
-		.def("SendSpellEffect", (void(Lua_Mob::*)(uint32,uint32,uint32,bool,uint32,bool))&Lua_Mob::SendSpellEffect)
-		.def("SendSpellEffect", (void(Lua_Mob::*)(uint32,uint32,uint32,bool,uint32,bool,Lua_Client))&Lua_Mob::SendSpellEffect)
 		.def("SetGlobal", (void(Lua_Mob::*)(const char*,const char*,int,const char*))&Lua_Mob::SetGlobal)
 		.def("SetGlobal", (void(Lua_Mob::*)(const char*,const char*,int,const char*,Lua_Mob))&Lua_Mob::SetGlobal)
 		.def("TarGlobal", (void(Lua_Mob::*)(const char*,const char*,const char*,int,int,int))&Lua_Mob::TarGlobal)
@@ -2031,7 +2007,6 @@ luabind::scope lua_register_mob() {
 		.def("IsRunning", (bool(Lua_Mob::*)(void))&Lua_Mob::IsRunning)
 		.def("SetRunning", (void(Lua_Mob::*)(bool))&Lua_Mob::SetRunning)
 		.def("SetBodyType", (void(Lua_Mob::*)(int,bool))&Lua_Mob::SetBodyType)
-		.def("SetTargetable", (void(Lua_Mob::*)(bool))&Lua_Mob::SetTargetable)
 		.def("ModSkillDmgTaken", (void(Lua_Mob::*)(int,int))&Lua_Mob::ModSkillDmgTaken)
 		.def("GetModSkillDmgTaken", (int(Lua_Mob::*)(int))&Lua_Mob::GetModSkillDmgTaken)
 		.def("GetSkillDmgTaken", (int(Lua_Mob::*)(int))&Lua_Mob::GetSkillDmgTaken)

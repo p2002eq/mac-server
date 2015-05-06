@@ -1562,44 +1562,6 @@ void Client::QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call) {
 	safe_delete(qspack);
 }
 
-void Client::DyeArmor(DyeStruct* dye){
-	int16 slot=0;
-	for (int i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++) {
-		if(m_pp.item_tint[i].rgb.blue!=dye->dye[i].rgb.blue ||
-			m_pp.item_tint[i].rgb.red!=dye->dye[i].rgb.red ||
-			m_pp.item_tint[i].rgb.green != dye->dye[i].rgb.green){
-			slot = m_inv.HasItem(32557, 1, invWherePersonal);
-			if (slot != INVALID_INDEX){
-				DeleteItemInInventory(slot,1,true);
-				uint8 slot2=SlotConvert(i);
-				ItemInst* inst = this->m_inv.GetItem(slot2);
-				if(inst){
-					uint32 armor_color = (dye->dye[i].rgb.red * 65536) + (dye->dye[i].rgb.green * 256) + (dye->dye[i].rgb.blue);
-					inst->SetColor(armor_color); 
-					database.SaveCharacterMaterialColor(this->CharacterID(), i, armor_color);
-					database.SaveInventory(CharacterID(),inst,slot2);
-					if(dye->dye[i].rgb.use_tint)
-						m_pp.item_tint[i].rgb.use_tint = 0xFF;
-					else
-						m_pp.item_tint[i].rgb.use_tint=0x00;
-				}
-				m_pp.item_tint[i].rgb.blue=dye->dye[i].rgb.blue;
-				m_pp.item_tint[i].rgb.red=dye->dye[i].rgb.red;
-				m_pp.item_tint[i].rgb.green=dye->dye[i].rgb.green;
-				SendWearChange(i);
-			}
-			else{
-				Message(CC_Red,"Could not locate A Vial of Prismatic Dye.");
-				return;
-			}
-		}
-	}
-	EQApplicationPacket* outapp=new EQApplicationPacket(OP_Dye,0);
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	
-}
-
 bool Client::DecreaseByID(uint32 type, uint8 amt) {
 	const Item_Struct* TempItem = nullptr;
 	ItemInst* ins;
