@@ -15,41 +15,11 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#ifndef EQEMU_LOGINSERVER_H
-#define EQEMU_LOGINSERVER_H
+#ifndef EQEMUCAPI__H
+#define EQEMUCAPI__H
 
-#include "error_log.h"
-#include "config.h"
-#include "database.h"
-#include "database_mysql.h"
-#include "database_postgresql.h"
-#include "encryption.h"
-#include "options.h"
-#include "server_manager.h"
-#include "client_manager.h"
-
-/**
-* Login server struct, contains every variable for the server that needs to exist
-* outside the scope of main().
-*/
-struct LoginServer
-{
-public:
-	/**
-	* I don't really like how this looks with all the ifdefs...
-	* but it's the most trivial way to do this.
-	*/
-#ifdef WIN32
-	LoginServer() : config(nullptr), db(nullptr), SM(nullptr) { }
-#else
-	LoginServer() : config(nullptr), db(nullptr) { }
-#endif
-
-	Config *config;
-	Database *db;
-	Options options;
-	ServerManager *SM;
-	ClientManager *CM;
-};
+char* DecryptUsernamePassword(const char* encryptedBuffer, unsigned int bufferSize, int mode);
+char* Encrypt(const char* buffer, unsigned int bufferSize, unsigned int &outSize);
+void _HeapDeleteCharBuffer(char *buffer);
 
 #endif

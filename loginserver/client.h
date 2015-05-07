@@ -23,6 +23,9 @@
 #include "../common/eq_stream_type.h"
 #include "../common/eq_stream_factory.h"
 #include "../common/random.h"
+#ifndef WIN32
+#include "eq_crypto_api.h"
+#endif
 #include <string>
 
 using namespace std;
