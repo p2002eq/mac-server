@@ -127,7 +127,6 @@ Client::Client(EQStreamInterface* ieqs)
 	scanarea_timer(AIClientScanarea_delay),
 	proximity_timer(ClientProximity_interval),
 	charm_update_timer(6000),
-	rest_timer(1),
 	charm_class_attacks_timer(3000),
 	charm_cast_timer(3500),
 	qglobal_purge_timer(30000),
@@ -3073,7 +3072,6 @@ void Client::DecrementAggroCount() {
 
 	// This should be called when a client is removed from a mob's hate list (it dies or is memblurred).
 	// It checks whether any other mob is aggro on the player, and if not, starts the rest timer.
-	// For SoF, the opcode to start the rest state countdown timer in the UI is sent.
 	//
 
 	// If we didn't have aggro before, this method should not have been called.
@@ -3100,9 +3098,6 @@ void Client::DecrementAggroCount() {
 			time_until_rest = RuleI(Character, RestRegenTimeToActivate) * 1000;
 		}
 	}
-
-	rest_timer.Start(time_until_rest);
-
 }
 
 void Client::SendDisciplineTimers()
@@ -3990,13 +3985,13 @@ void Client::SendStats(Client* client)
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
 	client->Message(0, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
-	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
+	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
 	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
-		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
+		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
-	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
+	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen()+RestRegenEndurance, CalcEnduranceRegenCap());
 	client->Message(0, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
 	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);
 	client->Message(0, " STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
