@@ -162,7 +162,6 @@ int command_init(void){
 		command_add("bind", "- Sets your targets bind spot to their current location.", 81, command_bind) ||
 		command_add("bug", "- Bug report system. Encase your bug in quotes. Type: #bug <quote>I have a bug</quote>.", 90, command_bug) ||
 
-		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 255, command_camerashake) ||
 		command_add("cast", nullptr, 160, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell.", 160, command_castspell) ||
 		command_add("chat", "[channel num] [message] - Send a channel message to all zones.", 90, command_chat) ||
@@ -10120,27 +10119,6 @@ void command_reloadworldrules(Client *c, const Seperator *sep){
 		c->Message(CC_Red, "Successfully sent the packet to world to reload rules. (only world)");
 		safe_delete(pack);
 	}
-}
-
-void command_camerashake(Client *c, const Seperator *sep){
-	if (c)
-	{
-		if (sep->arg[1][0] && sep->arg[2][0])
-		{
-			ServerPacket *pack = new ServerPacket(ServerOP_CameraShake, sizeof(ServerCameraShake_Struct));
-			memset(pack->pBuffer, 0, sizeof(pack->pBuffer));
-			ServerCameraShake_Struct* scss = (ServerCameraShake_Struct*)pack->pBuffer;
-			scss->duration = atoi(sep->arg[1]);
-			scss->intensity = atoi(sep->arg[2]);
-			worldserver.SendPacket(pack);
-			c->Message(CC_Red, "Successfully sent the packet to world! Shake it, world, shake it!");
-			safe_delete(pack);
-		}
-		else {
-			c->Message(CC_Red, "Usage -- #camerashake [duration], [intensity [1-10])");
-		}
-	}
-	return;
 }
 
 void command_qtest(Client *c, const Seperator *sep){

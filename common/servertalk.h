@@ -154,7 +154,6 @@
 #define ServerOP_UCSMailMessage 0x4001
 #define ServerOP_ReloadRules	0x4002
 #define ServerOP_ReloadRulesWorld	0x4003
-#define ServerOP_CameraShake	0x4004
 #define ServerOP_QueryServGeneric	0x4005
 #define ServerOP_CZSignalClient 0x4006
 #define ServerOP_CZSignalClientByName 0x4007
@@ -889,12 +888,6 @@ struct ServerLeaderboardRequest_Struct
 {
 	char player[64];
 	uint8 type;
-};
-
-struct ServerCameraShake_Struct
-{
-	uint32 duration; // milliseconds
-	uint32 intensity; // number from 1-10
 };
 
 struct ServerMailMessageHeader_Struct {

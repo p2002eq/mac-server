@@ -1115,7 +1115,6 @@ private:
 	Timer scanarea_timer;
 	Timer	proximity_timer;
 	Timer	charm_update_timer;
-	Timer	rest_timer;
 	Timer	charm_class_attacks_timer;
 	Timer	charm_cast_timer;
 	Timer	qglobal_purge_timer;

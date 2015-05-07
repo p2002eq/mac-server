@@ -1958,9 +1958,6 @@ void Client::CalcRestState() {
 	if(AggroCount || !IsSitting())
 		return;
 
-	if(!rest_timer.Check(false))
-		return;
-
 	uint32 buff_count = GetMaxTotalSlots();
 	for (unsigned int j = 0; j < buff_count; j++) {
 		if(buffs[j].spellid != SPELL_UNKNOWN) {
