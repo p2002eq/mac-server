@@ -44,8 +44,10 @@
 #include "eq_packet_structs.h"
 #include "extprofile.h"
 #include "string_util.h"
+#include "random.h"
 
 extern Client client;
+EQEmu::Random emudb_random;
 
 #ifdef _WINDOWS
 #if _MSC_VER > 1700 // greater than 2012 (2013+)
@@ -1476,13 +1478,11 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
@@ -1506,7 +1506,6 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::Debug, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
@@ -1519,7 +1518,6 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from ZoneConnected.");
@@ -1545,7 +1543,6 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::Error, "Loading EQ time of day failed. Using defaults.");
 	Log.Out(Logs::Detail, Logs::Debug, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
@@ -2515,4 +2512,51 @@ void Database::SetAccountActive(uint32 account_id)
     QueryDatabase(query);
 
 	return;
+}
+
+bool Database::AdjustSpawnTimes() 
+{
+
+	std::string dquery = StringFormat("DELETE rt FROM respawn_times AS rt inner join spawn2 AS s ON rt.id = s.id WHERE s.clear_timer_onboot = 1");
+	auto dresults = QueryDatabase(dquery);
+
+	if (!dresults.Success()) 
+	{
+		return false;
+	}
+	Log.Out(Logs::General, Logs::World_Server, "World has reset %d spawn timers.", dresults.RowsAffected());
+
+	std::string query = StringFormat("SELECT id, boot_respawntime, variance FROM spawn2 WHERE boot_respawntime > 0");
+	auto results = QueryDatabase(query); 
+
+	if (!results.Success()) 
+	{
+		return false;
+	}
+
+	if(results.RowCount() == 0) 
+	{
+		return true;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{
+		uint32 rspawn = atoi(row[1]);
+		uint32 variance = atoi(row[2]);
+
+		if (variance != 0) {
+			int var = variance / 2;
+			rspawn = emudb_random.Int(rspawn - var, rspawn + var);
+		}
+
+		std::string iquery = StringFormat("REPLACE INTO respawn_times SET id = %d, start = %d, duration = %d", atoi(row[0]), time(0), rspawn);
+		auto iresults = QueryDatabase(iquery);
+
+		if (!iresults.Success()) 
+		{
+			return false;
+		}
+		Log.Out(Logs::General, Logs::World_Server, "Boot time respawn timer adjusted for id: %d duration is: %d (base: %d var: %d)", atoi(row[0]), rspawn, atoi(row[1]), atoi(row[2]));
+	}
+	return true;
 }

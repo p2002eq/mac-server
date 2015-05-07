@@ -155,6 +155,7 @@ RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client
 RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_INT (World, TellQueueSize, 20) 
 RULE_BOOL (World, UseDBUpdate, false) //Automatic Database Upgrade Script
+RULE_BOOL (World, AdjustRespawnTimes, true) //Determines if spawntimes with a boot time variable take effect or not. Set to false in the db for emergency patches.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Zone )

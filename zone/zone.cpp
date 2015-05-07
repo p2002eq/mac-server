@@ -1619,8 +1619,10 @@ void Zone::weatherSend()
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
 	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
 
-	ws->type = zone_weather-1;
-	ws->intensity = zone->weather_intensity;
+	if(zone_weather>0)
+		ws->type = zone_weather-1;
+	if(zone_weather>0)
+		ws->intensity = zone->weather_intensity;
 	entity_list.QueueClients(0, outapp);
 	safe_delete(outapp);
 }
