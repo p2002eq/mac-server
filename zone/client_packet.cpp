@@ -1325,6 +1325,13 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.cur_hp = GetMaxHP();
 
 	SetHP(m_pp.cur_hp);
+
+	if (m_pp.cur_hp > 32700)
+	{
+		m_pp.cur_hp = 32700;
+		SetHP(32700);			// client will die after zoning with more than 32,767 hp
+	}
+
 	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
 

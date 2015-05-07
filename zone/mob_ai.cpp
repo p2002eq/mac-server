@@ -1220,6 +1220,12 @@ void Mob::AI_Process() {
 			}
 		}
 
+		if (IsNPC() && CastToNPC()->CheckPushTimer())
+		{
+			CastToNPC()->ApplyPushVector();
+			CastToNPC()->ResetPushTimer();
+		}
+
 		if (!target)
 			return;
 
@@ -1988,7 +1994,9 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 					uint16 emoteid = GetEmoteID();
 					if(emoteid != 0)
 						CastToNPC()->DoNPCEmote(ENTERCOMBAT,emoteid);
+
 					CastToNPC()->SetCombatEvent(true);
+					CastToNPC()->ResetPushTimer();
 
 					/* Web Interface: Combat State NPC */
 					if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("Combat.States")) {
