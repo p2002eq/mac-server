@@ -137,6 +137,7 @@ namespace Logs{
 		"Maps",
 		"Character",
 		"Faction",
+		"Group",
 	};
 }
 
