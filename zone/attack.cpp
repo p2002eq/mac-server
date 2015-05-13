@@ -1740,7 +1740,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 				//skillinuse = Skill1HPiercing;
 				//break;
 			case ItemType2HPiercing:
-				skillinuse = Skill1HPiercing; // change to Skill2HPiercing once activated
+				skillinuse = Skill2HPiercing;
 				break;
 			case ItemType1HBlunt:
 				skillinuse = Skill1HBlunt;
@@ -1767,11 +1767,6 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	int16 charges = 0;
 	ItemInst weapon_inst(weapon, charges);
 	AttackAnimation(skillinuse, Hand, &weapon_inst);
-
-	// Remove this once Skill2HPiercing is activated
-	//Work-around for there being no 2HP skill - We use 99 for the 2HB animation and 36 for pierce messages
-	if(skillinuse == 99)
-		skillinuse = static_cast<SkillUseTypes>(36);
 
 	//basically "if not immune" then do the attack
 	if((weapon_damage) > 0) {
