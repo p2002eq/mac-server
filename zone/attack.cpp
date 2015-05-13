@@ -90,7 +90,7 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 			}
 			case ItemType2HPiercing: // 2H Piercing
 			{
-				skillinuse = Skill2HPiercing;
+				skillinuse = Skill1HPiercing; // change to Skill2HPiercing once activated
 				type = Animation::Weapon2H;
 				break;
 			}
@@ -133,11 +133,6 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 				break;
 			}
 			case Skill2HBlunt: // 2H Blunt
-			{
-				type = Animation::Weapon2H;
-				break;
-			}
-			case Skill2HPiercing:
 			{
 				type = Animation::Weapon2H;
 				break;
@@ -1740,7 +1735,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 				//skillinuse = Skill1HPiercing;
 				//break;
 			case ItemType2HPiercing:
-				skillinuse = Skill2HPiercing;
+				skillinuse = Skill1HPiercing; // change to Skill2HPiercing once activated
 				break;
 			case ItemType1HBlunt:
 				skillinuse = Skill1HBlunt;
@@ -1767,6 +1762,11 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	int16 charges = 0;
 	ItemInst weapon_inst(weapon, charges);
 	AttackAnimation(skillinuse, Hand, &weapon_inst);
+
+	// Remove this once Skill2HPiercing is activated
+	//Work-around for there being no 2HP skill - We use 99 for the 2HB animation and 36 for pierce messages
+	if(skillinuse == 99)
+		skillinuse = static_cast<SkillUseTypes>(36);
 
 	//basically "if not immune" then do the attack
 	if((weapon_damage) > 0) {
