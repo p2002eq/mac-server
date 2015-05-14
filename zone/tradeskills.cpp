@@ -662,11 +662,11 @@ void Client::CheckIncreaseTradeskill(uint16 success_modifier, SkillUseTypes trad
 	// Remember: skillup_modifier is (float). Lower is better
 	switch (tradeskill) {
 	case SkillPottery:
-		skillup_modifier += 4;
+		skillup_modifier += 2;
 		break;
 	case SkillTailoring:
 	case SkillBlacksmithing:
-		skillup_modifier += 3;
+		skillup_modifier += 2;
 		break;
 	case SkillFletching:
 	case SkillJewelryMaking:
