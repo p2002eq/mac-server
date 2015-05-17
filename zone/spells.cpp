@@ -2260,8 +2260,8 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 	}
-
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	if (!IsBardSong(spell_id))
+		DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 
 	// if this was a spell slot or an ability use up the mana for it
 	// CastSpell already reduced the cost for it if we're a client with focus
@@ -2472,7 +2472,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	}
 
 	//do we need to do this???
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	//DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 	if(IsClient())
 		CastToClient()->CheckSongSkillIncrease(spell_id);
 
@@ -3177,12 +3177,19 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	buffs[emptyslot].dot_rune = 0;
 	buffs[emptyslot].ExtraDIChance = 0;
 	buffs[emptyslot].RootBreakChance = 0;
+	buffs[emptyslot].instrumentmod = 10;
 
 	if (level_override > 0) {
 		buffs[emptyslot].UpdateClient = true;
 	} else {
 		if (buffs[emptyslot].ticsremaining > (1 + CalcBuffDuration_formula(caster_level, spells[spell_id].buffdurationformula, spells[spell_id].buffduration)))
 			buffs[emptyslot].UpdateClient = true;
+	}
+
+	if (IsBardSong(spell_id) && caster) {
+		int mod = caster->GetInstrumentMod(spell_id);
+		if (mod > 10)
+			buffs[emptyslot].instrumentmod = mod;
 	}
 
 	Log.Out(Logs::Detail, Logs::Spells, "Buff %d added to slot %d with caster level %d", spell_id, emptyslot, caster_level);

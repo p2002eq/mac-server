@@ -2848,7 +2848,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	return true;
 }
 
-int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, Mob *caster, int ticsremaining)
+int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, Mob *caster, int ticsremaining, int instrumentmod)
 {
 	int formula, base, max, effect_value;
 
@@ -2882,6 +2882,8 @@ int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, 
 
 		int oval = effect_value;
 		int mod = caster->GetInstrumentMod(spell_id);
+		if (instrumentmod > mod)
+			mod = instrumentmod;
 		mod = ApplySpellEffectiveness(caster, spell_id, mod, true);
 		effect_value = effect_value * mod / 10;
 		Log.Out(Logs::Detail, Logs::Spells, "Effect value %d altered with bard modifier of %d to yeild %d", oval, mod, effect_value);
@@ -3182,7 +3184,7 @@ void Mob::BuffProcess()
 	{
 		if (buffs[buffs_i].spellid != SPELL_UNKNOWN)
 		{
-			DoBuffTic(buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining, buffs[buffs_i].casterlevel, entity_list.GetMob(buffs[buffs_i].casterid));
+			DoBuffTic(buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining, buffs[buffs_i].casterlevel, entity_list.GetMob(buffs[buffs_i].casterid), buffs[buffs_i].instrumentmod);
 			// If the Mob died during DoBuffTic, then the buff we are currently processing will have been removed
 			if(buffs[buffs_i].spellid == SPELL_UNKNOWN)
 				continue;
@@ -3232,7 +3234,7 @@ void Mob::BuffProcess()
 	}
 }
 
-void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster) {
+void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster, int instrumentmod) {
 	int effect, effect_value;
 
 	if(!IsValidSpell(spell_id))
@@ -3284,7 +3286,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 		{
 			case SE_CurrentHP:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, ticsremaining);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, ticsremaining, instrumentmod);
 				//Handle client cast DOTs here.
 				if (caster && caster->IsClient() && IsDetrimentalSpell(spell_id) && effect_value < 0) {
 
@@ -3320,7 +3322,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 			case SE_HealOverTime:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, 0, instrumentmod);
 				if(caster)
 					effect_value = caster->GetActSpellHealing(spell_id, effect_value);
 
@@ -3336,7 +3338,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 			case SE_BardAEDot:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, 0, instrumentmod);
 
 				if ((!RuleB(Spells, PreNerfBardAEDoT) && IsMoving()) || invulnerable || /*effect_value > 0 ||*/ DivineAura())
 					break;

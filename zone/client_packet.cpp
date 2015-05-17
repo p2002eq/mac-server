@@ -1344,7 +1344,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			if (!RuleB(AlKabor, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
 			{
 				m_pp.buffs[i].spellid = buffs[i].spellid;
-				m_pp.buffs[i].bard_modifier = 10;
+				m_pp.buffs[i].bard_modifier = buffs[i].instrumentmod;
 				m_pp.buffs[i].slotid = 2;
 				m_pp.buffs[i].player_id = 0x2211;
 				m_pp.buffs[i].level = buffs[i].casterlevel;
