@@ -2812,7 +2812,7 @@ void NPC::ApplyAISpellEffects(StatBonuses* newbon)
 
 	for(int i=0; i < AIspellsEffects.size(); i++)
 	{
-		ApplySpellsBonuses(0, 0, newbon, 0, false, 0,-1,
+		ApplySpellsBonuses(0, 0, newbon, 0, false, 10, 0,-1,
 			true, AIspellsEffects[i].spelleffectid,  AIspellsEffects[i].base, AIspellsEffects[i].limit,AIspellsEffects[i].max);
 	}
 
