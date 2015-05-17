@@ -268,6 +268,7 @@ Client::Client(EQStreamInterface* ieqs)
 	has_zomm = false;
 	client_position_update = false;
 	ignore_zone_count = false;
+	clicky_override = false;
 }
 
 Client::~Client() {

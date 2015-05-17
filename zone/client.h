@@ -947,6 +947,9 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
 
+	bool ClickyOverride() { return clicky_override; }
+
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);
@@ -1221,6 +1224,8 @@ private:
 	bool InterrogateInventory_error(int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, int depth);
 
 	void UpdateZoneChangeCount(uint32 zoneid);
+
+	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
 
 };
 

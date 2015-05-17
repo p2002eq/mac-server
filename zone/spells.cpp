@@ -1079,7 +1079,10 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	// Check for consumables and Reagent focus items
 	// first check for component reduction
-	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && RequiresComponents(spell_id)) {
+	if(IsClient() && RequiresComponents(spell_id) && 
+		(slot != USE_ITEM_SPELL_SLOT || 
+		(slot == USE_ITEM_SPELL_SLOT && !CastToClient()->ClickyOverride()))) 
+	{
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{

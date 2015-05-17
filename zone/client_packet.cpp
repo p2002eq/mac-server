@@ -2129,6 +2129,8 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 	CastSpell_Struct* castspell = (CastSpell_Struct*)app->pBuffer;
 
+	clicky_override = false;
+
 	Log.Out(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 
 	if (m_pp.boatid != 0)
@@ -2200,16 +2202,23 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 				if ((item->Click.Type == ET_ClickEffect) || (item->Click.Type == ET_Expendable) || (item->Click.Type == ET_EquipClick) || (item->Click.Type == ET_ClickEffect2))
 				{
-					if (item->Click.Level2 > 0)
+					int16 casttime_ = item->CastTime;
+					// Clickies with 0 casttime had no level or regeant requirement on AK. Also, -1 casttime was instant cast.
+					if(casttime_ <= 0)
 					{
-						// Clickies with 0 casttime had no level requirement on AK
-						if (GetLevel() >= item->Click.Level2 || item->CastTime == 0)
+						clicky_override = true;
+						casttime_ = 0;
+					}
+
+					if (item->Click.Level2 > 0)
+					{			
+						if (GetLevel() >= item->Click.Level2 || clicky_override)
 						{
 							ItemInst* p_inst = (ItemInst*)inst;
 							int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 							if (i == 0) {
-								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 							}
 							else {
 								InterruptSpell(castspell->spell_id);
@@ -2229,7 +2238,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 						int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 						if (i == 0) {
-							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 						}
 						else {
 							InterruptSpell(castspell->spell_id);
