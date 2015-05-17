@@ -1077,8 +1077,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Load Character Data */
 	query = StringFormat("SELECT `firstlogon`, `guild_id`, `rank` FROM `character_data` LEFT JOIN `guild_members` ON `id` = `char_id` WHERE `id` = %i", cid);
 	results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		m_pp.lastlogin = time(nullptr);
+	for (auto row = results.begin(); row != results.end(); ++row) {		
 		if (row[1] && atoi(row[1]) > 0){
 			guild_id = atoi(row[1]);
 			if (row[2] != nullptr){ guildrank = atoi(row[2]); }
@@ -1088,6 +1087,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (firstlogon){ firstlogon = atoi(row[0]); }
 	}
 
+	/* Do not write to the PP prior to this otherwise it will just be overwritten when it's loaded from the DB */
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
 	database.LoadCharacterBindPoint(cid, &m_pp); /* Load Character Bind */
 	database.LoadCharacterMaterialColor(cid, &m_pp); /* Load Character Material */
@@ -1113,6 +1113,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
+	ignore_zone_count = false;
 
 	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
 	// This can lead difficulty entering the zone, since some people's client's don't like
@@ -1141,6 +1142,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			
 		
 	/* Set Total Seconds Played */
+	m_pp.lastlogin = time(nullptr);
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
 	max_AAXP = GetEXPForLevel(0, true);
@@ -2951,7 +2953,8 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
 		uint32 day, hour, min, sec, ttime;
-		if ((ttime = tcorpse->GetRezTime()) != 0) {
+		if ((ttime = tcorpse->GetRemainingRezTime()) > 0)
+		{
 			sec = (ttime / 1000) % 60; // Total seconds
 			min = (ttime / 60000) % 60; // Total seconds
 			hour = (ttime / 3600000) % 24; // Total hours
@@ -7387,11 +7390,8 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	mco->playerid = this->GetID();
 	QueuePacket(outapp);
 	safe_delete(outapp);
-
-	t1.start();
 	Save(1);
-	t1.stop();
-	std::cout << "Save took: " << t1.getDuration() << std::endl;
+
 	return;
 }
 
@@ -7678,13 +7678,6 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	{
 		// don't do anything with this, we tell the client when it's
 		// levitating, not the other way around
-	}
-	else if (sa->type == AT_ShowHelm)
-	{
-		if(helm_toggle_timer.Check()) {
-			m_pp.showhelm = (sa->parameter == 1);
-			entity_list.QueueClients(this, app, true);
-		}
 	}
 	else {
 		std::cout << "Unknown SpawnAppearance type: 0x" << std::hex << std::setw(4) << std::setfill('0') << sa->type << std::dec

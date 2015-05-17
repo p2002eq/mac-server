@@ -415,3 +415,13 @@ void find_replace(std::string& string_subject, const std::string& search_string,
 		index = string_subject.find_first_of(search_string);
 	}
 }
+
+void replace_all(std::string& in, std::string old, std::string repl)
+{
+	for (std::string::size_type pos = 0;
+		(pos = in.find(old, pos)) != std::string::npos;
+		pos += repl.size())
+	{
+		in.replace(pos, old.size(), repl);
+	}
+}

@@ -272,7 +272,6 @@ enum ItemQuantityTypes
 #define AT_Split		28	// 0 = normal, 1 = autosplit on
 #define AT_Size			29	// spawn's size
 #define AT_NPCName		31	// change PC's name's color to NPC color 0 = normal, 1 = npc name
-#define AT_ShowHelm		43	// 0 = do not show helmet graphic, 1 = show graphic
 #define AT_DamageState	44	// The damage state of a destructible object (0 through 4)
 //#define AT_Trader		300	// Bazzar Trader Mode
 

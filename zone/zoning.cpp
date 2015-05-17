@@ -101,7 +101,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	}
 	else {
 		// This is to allow both 6.2 and Titanium clients to perform a proper zoning of the client when evac/succor
-		// WildcardX 27 January 2008
 		if(zone_mode == EvacToSafeCoords && zonesummon_id > 0)
 			target_zone_id = zonesummon_id;
 		else
@@ -271,10 +270,14 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		}
 	}
 
-	if(myerror == 1) {
+	if(myerror == 1) 
+	{
 		//we have successfully zoned
 		DoZoneSuccess(zc, target_zone_id, target_instance_id, dest_x, dest_y, dest_z, dest_h, ignorerestrictions);
-	} else {
+		UpdateZoneChangeCount(target_zone_id);
+	} 
+	else 
+	{
 		Log.Out(Logs::General, Logs::Error, "Zoning %s: Rules prevent this char from zoning into '%s'", GetName(), target_zone_name);
 		SendZoneError(zc, myerror);
 	}
@@ -341,7 +344,7 @@ void Client::DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instanc
 	m_Position.x = dest_x; //these coordinates will now be saved when ~client is called
 	m_Position.y = dest_y;
 	m_Position.z = dest_z;
-	m_Position.w = dest_h / 2.0f; // Cripp: fix for zone heading
+	m_Position.w = dest_h / 2.0f; // fix for zone heading
 	m_pp.heading = dest_h;
 	m_pp.zone_id = zone_id;
 	m_pp.zoneInstance = instance_id;
@@ -572,7 +575,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->type = 0x01;				//an observed value, not sure of meaning
 
 			outapp->priority = 6;
-			FastQueuePacket(&outapp);
+			FastQueuePacket(&outapp);	
 		}
 		else if (zm == ZoneToBindPoint) {
 			//TODO: Find a better packet that works with EQMac on death. Sending OP_RequestClientZoneChange here usually does not zone the
@@ -875,3 +878,14 @@ bool Client::CanBeInZone() {
 
 	return(true);
 }
+
+void Client::UpdateZoneChangeCount(uint32 zoneID)
+{
+	if(zoneID != GetZoneID() && !ignore_zone_count)
+	{
+		++m_pp.zone_change_count;
+		ignore_zone_count = true;
+	}
+
+}
+

@@ -178,7 +178,6 @@ struct Spawn_Struct {
 /*0114*/ uint8	eyecolor1;			// Player's left eye color
 /*0115*/ uint8	unknown0115[11];	// Was [24]
 /*0126*/ uint8	StandState;	// stand state for SoF+ 0x64 for normal animation
-/*0139*/ uint8	showhelm;			// 0=no, 1=yes
 /*0140*/ uint8	unknown0140[4];
 /*0144*/ uint8	is_npc;				// 0=no, 1=yes
 /*0145*/ uint8	hairstyle;			// Hair style
@@ -726,7 +725,6 @@ struct PlayerProfile_Struct
 /*7052*/	uint32				leadAAActive;
 /*7056*/	uint32				unknown7092;
 /*7124*/	uint8				unknown7160[72];
-/*7200*/	uint32				showhelm;
 /*7208*/	uint32				unknown7244;
 /*7216*/	uint32				unknown7252;
 /*7264*/	Disciplines_Struct	disciplines;

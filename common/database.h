@@ -241,7 +241,6 @@ namespace Convert {
 		/*7052*/	uint32							leadAAActive;
 		/*7056*/	uint32							unknown7092;
 		/*7124*/	uint8							unknown7160[72];
-		/*7200*/	uint32							showhelm;
 		/*7208*/	uint32							unknown7244;
 		/*7216*/	uint32							unknown7252;
 		/*7264*/	Convert::Disciplines_Struct		disciplines;

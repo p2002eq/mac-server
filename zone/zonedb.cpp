@@ -821,7 +821,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"zone_id,                   "
 		"zone_instance,             "
 		"leadership_exp_on,         "
-		"show_helm,                 "
 		"endurance,                 "
 		"air_remaining,             "
 		"aa_points_spent,           "
@@ -890,7 +889,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
 		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
-		pp->showhelm = atoi(row[r]); r++;										 // "show_helm,                 "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
 		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
 		pp->aapoints_spent = atoi(row[r]); r++;									 // "aa_points_spent,           "
@@ -1203,7 +1201,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" zone_id,                   "
 		" zone_instance,             "
 		" leadership_exp_on,         "
-		" show_helm,                 "
 		" endurance,                 "
 		" air_remaining,             "
 		" aa_points_spent,           "
@@ -1271,7 +1268,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
 		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
-		"%u,"  // show_helm					  pp->showhelm,							" show_helm,                 "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
 		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
 		"%u,"  // aa_points_spent			  pp->aapoints_spent,					" aa_points_spent,           "
@@ -1338,7 +1334,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
@@ -2179,7 +2174,14 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
     QueryDatabase(query);
 }
 
-void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name){
+void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name)
+{
+
+	std::string new_char_name = std::string(char_name);
+	replace_all(new_char_name, "'", "_");
+	std::string new_target = std::string(target);
+	replace_all(new_target, "'", "_");
+
 	std::string rquery = StringFormat("SHOW TABLES LIKE 'commands_log'");
 	auto results = QueryDatabase(rquery);
 	if (results.RowCount() == 0){
@@ -2207,7 +2209,7 @@ void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, flo
 	}
 	std::string query = StringFormat("INSERT INTO `commands_log` (char_name, acct_name, y, x, z, command, target_type, target, tar_y, tar_x, tar_z, zone_id, zone_name, time) "
 									"VALUES('%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%i', '%s', now())",
-									char_name, acct_name, y, x, z, command, targetType, target, tar_y, tar_x, tar_z, zone_id, zone_name, time);
+									new_char_name.c_str(), acct_name, y, x, z, command, targetType, new_target.c_str(), tar_y, tar_x, tar_z, zone_id, zone_name, time);
 	auto log_results = QueryDatabase(query);
 	if (!log_results.Success())
 		Log.Out(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
@@ -2858,7 +2860,9 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n"
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u,\n"
+		"`is_rezzed` =			%u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(),
 		zone_id,
@@ -2901,6 +2905,8 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
 		dbpc->rezzable,
+		dbpc->rez_time,
+		is_rezzed,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -2918,7 +2924,9 @@ bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, con
 		"`silver` =             %u,\n"
 		"`gold` =               %u,\n"
 		"`platinum` =           %u,\n"
-		"`rezzable` =           %d\n"
+		"`rezzable` =           %d,\n"
+		"`rez_time` =           %u,\n"
+		"`is_rezzed` =          %u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(), 
 		char_id, 
@@ -2929,6 +2937,8 @@ bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, con
 		dbpc->gold,
 		dbpc->plat,
 		dbpc->rezzable,
+		dbpc->rez_time,
+		is_rezzed,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -2991,7 +3001,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n",
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u \n",
 		EscapeString(charname).c_str(),
 		zoneid,
 		instanceid,
@@ -3032,7 +3043,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
-		dbpc->rezzable
+		dbpc->rezzable,
+		dbpc->rez_time
 	);
 	auto results = QueryDatabase(query);
 	uint32 last_insert_id = results.LastInsertedID();
@@ -3111,7 +3123,8 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n",
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u \n",
 		corpse_id,
 		EscapeString(charname).c_str(),
 		zoneid,
@@ -3153,7 +3166,8 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
-		dbpc->rezzable
+		dbpc->rezzable,
+		dbpc->rez_time
 	);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()){
@@ -3282,7 +3296,8 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"wc_8,            \n"
 		"wc_9,             \n"
 		"killedby,		  \n"
-		"rezzable		  \n"
+		"rezzable,		  \n"
+		"rez_time		  \n"
 		"FROM             \n"
 		"character_corpses\n"
 		"WHERE `id` = %u  LIMIT 1\n",
@@ -3324,6 +3339,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		pcs->item_tint[8].color = atoul(row[i++]);			// wc_9
 		pcs->killedby = atoi(row[i++]);						// killedby
 		pcs->rezzable = atoi(row[i++]);						// rezzable
+		pcs->rez_time = atoul(row[i++]);					// rez_time
 	}
 	query = StringFormat(
 		"SELECT                       \n"

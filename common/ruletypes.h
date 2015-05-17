@@ -32,6 +32,7 @@ RULE_INT ( Character, CorpseDecayTimeMS, 604800000 ) // 7 days
 RULE_INT ( Character, EmptyCorpseDecayTimeMS, 10800000 ) // 3 hours
 RULE_INT ( Character, CorpseResTimeMS, 10800000 ) // time before cant res corpse(3 hours)
 RULE_INT ( Character, DuelCorpseResTimeMS, 600000 ) // time before cant res corpse after a duel (10 minutes)
+RULE_INT ( Character, CorpseOwnerOnlineTimeMS, 30000 ) // how often corpse will check if its owner is online
 RULE_BOOL( Character, LeaveCorpses, true )
 RULE_BOOL( Character, LeaveNakedCorpses, true )
 RULE_INT ( Character, MaxDraggedCorpses, 2 )
@@ -156,6 +157,7 @@ RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_INT (World, TellQueueSize, 20) 
 RULE_BOOL (World, UseDBUpdate, false) //Automatic Database Upgrade Script
 RULE_BOOL (World, AdjustRespawnTimes, true) //Determines if spawntimes with a boot time variable take effect or not. Set to false in the db for emergency patches.
+RULE_INT (World, BootHour, 0) // Sets the in-game hour world will set when it first boots. 0-24 are valid options, where 0 disables this rule.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Zone )
