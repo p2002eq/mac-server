@@ -850,13 +850,12 @@ struct Action_Struct
  /* 00 */	uint16 target;	// id of target
  /* 02 */	uint16 source;	// id of caster
  /* 04 */	uint16 level; // level of caster
- /* 06 */	uint16 instrument_mod;
- /* 08 */	uint32 bard_focus_id;
- /* 12 */	uint16 unknown16;
+ /* 06 */	uint32 instrument_mod;
+ /* 10 */	float force;
 // some kind of sequence that's the same in both actions
 // as well as the combat damage, to tie em together?
  /* 14 */	float sequence;
- /* 18 */	uint32 unknown18;
+ /* 18 */	float pushup_angle;
  /* 22 */	uint8 type;		// 231 (0xE7) for spells
  /* 23 */	uint32 unknown23;
  /* 27 */	uint16 spell;	// spell id being cast
@@ -878,7 +877,7 @@ struct CombatDamage_Struct
 /* 07 */	uint32	damage;
 /* 11 */	float force;
 /* 15 */	float sequence;	// see above notes in Action_Struct
-/* 19 */	uint32	unknown19;
+/* 19 */	float pushup_angle; // associated with force.  Sine of this angle, multiplied by force, will be z push.
 /* 23 */
 };
 
