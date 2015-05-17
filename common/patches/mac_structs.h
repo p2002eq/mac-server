@@ -182,7 +182,7 @@ struct CombatDamage_Struct
 	/*008*/	int32	damage;
 	/*012*/	float	force;
 	/*016*/	float	sequence;
-	/*020*/	uint8	unknown20[4];
+	/*020*/	float	pushup_angle;
 	/*024*/
 };
 
@@ -194,11 +194,10 @@ struct Action_Struct
 	/*05*/	uint8	unknown5;
 	/*06*/	uint8   unknown6;  //0x41
 	/*07*/	uint8	unknown7;		// Comment: Unknown -> needs confirming 
-	/*08*/	uint8	instrument_mod;
-	/*09*/	uint32  bard_focus_id; //Seriously doubt this client uses it
-	/*13*/	uint8	unknown_zero1[3];	// Comment: Unknown -> needs confirming -> (orginal comment: lol) <- lol 
+	/*08*/	int32	instrument_mod;
+	/*12*/	float	force;
 	/*16*/	uint32	sequence;			// Comment: Heading of Who? Caster or Target? Needs confirming
-	/*20*/	uint8	unknown_zero2[4];	// Comment: Unknown -> needs confirming
+	/*20*/	float	pushup_angle;
 	/*24*/	uint8	type;				// Comment: Unknown -> needs confirming -> Which action target or caster does maybe?
 	/*25*/	uint8	unknown28[5];			// Comment: Spell ID of the Spell being casted? Needs Confirming
 	/*30*/	uint16	spell;		// Comment: Unknown -> needs confirming
