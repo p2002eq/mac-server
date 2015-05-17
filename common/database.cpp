@@ -1318,7 +1318,7 @@ bool Database::MoveCharacterToZone(uint32 iCharID, const char* iZonename) {
 bool Database::SetHackerFlag(const char* accountname, const char* charactername, const char* hacked) { 
 	std::string new_hacked = std::string(hacked);
 	replace_all(new_hacked, "'", "_");
-	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, new_hacked);
+	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, new_hacked.c_str());
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
@@ -1332,7 +1332,7 @@ bool Database::SetMQDetectionFlag(const char* accountname, const char* character
 	//Utilize the "hacker" table, but also give zone information.
 	std::string new_hacked = std::string(hacked);
 	replace_all(new_hacked, "'", "_");
-	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, new_hacked, zone);
+	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, new_hacked.c_str(), zone);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
