@@ -711,7 +711,7 @@ public:
 	void	QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call = false);
 	void	PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootItem_Struct** bag_item_data = 0);
 	bool	AutoPutLootInInventory(ItemInst& inst, bool try_worn = false, bool try_cursor = true, ServerLootItem_Struct** bag_item_data = 0);
-	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor);
+	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor, bool force_charges = false);
 	void	DropItem(int16 slot_id);
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
