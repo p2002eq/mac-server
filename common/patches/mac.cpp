@@ -748,7 +748,7 @@ namespace Mac {
 		OUT(damage);
 		OUT(force);
 		OUT(sequence);
-		//OUT(unknown19);
+		OUT(pushup_angle);
 		FINISH_ENCODE();
 	}
 
@@ -762,8 +762,9 @@ namespace Mac {
 		OUT(level);
 		eq->unknown6 = 0x41; //Think this is target level.
 		OUT(instrument_mod);
-		OUT(bard_focus_id);
+		OUT(force);
 		OUT(sequence);
+		OUT(pushup_angle);
 		OUT(type);
 		OUT(spell);
 		OUT(buff_unknown);

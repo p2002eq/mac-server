@@ -86,6 +86,7 @@ namespace Logs{
 		Character,
 		Faction,
 		Group,
+		Corpse,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -137,6 +138,8 @@ namespace Logs{
 		"Maps",
 		"Character",
 		"Faction",
+		"Group",
+		"Corpse",
 	};
 }
 

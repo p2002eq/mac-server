@@ -1125,8 +1125,6 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	UpdateActiveLight();
 	ns->spawn.light		= m_Light.Type.Active;
 
-	ns->spawn.showhelm = 1;
-
 	if(IsNPC())
 		ns->spawn.invis		= (invisible || hidden || !trackable) ? 1 : 0;
 	else
@@ -1487,7 +1485,7 @@ void Mob::ShowStats(Client* client)
 	}
 	else if (IsCorpse()) {
 		if (IsPlayerCorpse()) {
-			client->Message(0, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy());
+			client->Message(0, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i Rez Time: %d Owner Online: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy(), CastToCorpse()->GetRemainingRezTime(), CastToCorpse()->GetOwnerOnline());
 		}
 		else {
 			client->Message(0, "  NPCCorpse", GetID());

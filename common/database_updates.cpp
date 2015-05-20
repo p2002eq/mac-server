@@ -44,7 +44,7 @@ bool Database::GITInfo()
 	auto results1 = QueryDatabase(check_query1);
 	if (results1.RowCount() == 0)
 	{
-		std::string check_query2 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-HEAD-hash', '', 'git rev-parse HEAD', '')");
+		std::string check_query2 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`) VALUES ('git-HEAD-hash', '', 'git rev-parse HEAD')");
 		auto results2 = QueryDatabase(check_query2);
 		if (!results2.Success())
 		{
@@ -56,7 +56,7 @@ bool Database::GITInfo()
 	auto results3 = QueryDatabase(check_query3);
 	if (results3.RowCount() == 0)
 	{
-		std::string check_query4 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`, `ts`) VALUES ('git-BRANCH', '', 'git rev-parse --abbrev-ref HEAD', '')");
+		std::string check_query4 = StringFormat("INSERT INTO `variables` (`varname`, `value`, `information`) VALUES ('git-BRANCH', '', 'git rev-parse --abbrev-ref HEAD')");
 		auto results4 = QueryDatabase(check_query4);
 		if (!results4.Success())
 		{
@@ -70,7 +70,7 @@ bool Database::GITInfo()
 	FILE *fbranch;
 #ifdef _WINDOWS
 	char buf[1024];
-	fhash = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse HEAD", "r");
+	fhash = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=C:\\EQEmu\\source\\.git rev-parse HEAD", "r");
 	while (fgets(buf, 1024, fhash))
 	{
 		const char * output = (const char *)buf;
@@ -94,7 +94,7 @@ bool Database::GITInfo()
 	fclose(fhash);
 
 	char buf2[1024];
-	fbranch = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=../../../Source/.git rev-parse --abbrev-ref HEAD", "r");
+	fbranch = _popen("C:\\\"Program Files (x86)\"\\Git\\bin\\git --git-dir=C:\\EQEmu\\source\\.git rev-parse --abbrev-ref HEAD", "r");
 	while (fgets(buf2, 1024, fbranch))
 	{
 		const char * output = (const char *)buf2;
@@ -493,6 +493,18 @@ bool Database::DBSetup_Logs()
 		if (!results1a.Success())
 		{
 			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `group`.");
+			return false;
+		}
+	}
+	std::string check_query2 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Corpse'");
+	auto results2 = QueryDatabase(check_query2);
+	if (results2.RowCount() == 0)
+	{
+		std::string check_query2a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('47', 'Corpse', '0', '0', '0')");
+		auto results2a = QueryDatabase(check_query2a);
+		if (!results2a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `corpse`.");
 			return false;
 		}
 	}

@@ -624,8 +624,6 @@ void WorldServer::Process() {
 								zone->GetShortName(), srs->rez.corpse_name);
 
 					Log.Out(Logs::Detail, Logs::Spells, "Found corpse. Marking corpse as rezzed.");
-					// I don't know why Rezzed is not set to true in CompleteRezz().
-					corpse->IsRezzed(true);
 					corpse->CompleteResurrection();
 				}
 			}
@@ -943,6 +941,22 @@ void WorldServer::Process() {
 					break;
 
 				entity_list.SendGroupLeader(fgu->gid, fgu->leader_name, fgu->oldleader_name);
+			}
+			break;
+		}
+
+		case ServerOP_IsOwnerOnline: {
+			ServerIsOwnerOnline_Struct* online = (ServerIsOwnerOnline_Struct*) pack->pBuffer;
+			if(zone)
+			{
+				if(online->zoneid != zone->GetZoneID())
+					break;
+
+				Corpse* corpse = entity_list.GetCorpseByID(online->corpseid);
+				if(corpse && online->online == 1)
+					corpse->SetOwnerOnline(true);
+				else if(corpse)
+					corpse->SetOwnerOnline(false);
 			}
 			break;
 		}

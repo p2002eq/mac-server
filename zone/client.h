@@ -324,6 +324,7 @@ public:
 	inline const float GetBindHeading(uint32 index = 0) const { return m_pp.binds[index].heading; }
 	inline uint32 GetBindZoneID(uint32 index = 0) const { return m_pp.binds[index].zoneId; }
 	inline uint32 GetBindInstanceID(uint32 index = 0) const { return m_pp.binds[index].instance_id; }
+	inline uint32 GetZoneChangeCount() const { return m_pp.zone_change_count; }
 	int32 CalcMaxMana();
 	int32 CalcBaseMana();
 	const int32& SetMana(int32 amount);
@@ -710,7 +711,7 @@ public:
 	void	QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call = false);
 	void	PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootItem_Struct** bag_item_data = 0);
 	bool	AutoPutLootInInventory(ItemInst& inst, bool try_worn = false, bool try_cursor = true, ServerLootItem_Struct** bag_item_data = 0);
-	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor);
+	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor, bool force_charges = false);
 	void	DropItem(int16 slot_id);
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
@@ -941,6 +942,13 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	bool has_zomm;
 	bool client_position_update;
+	bool ignore_zone_count; 
+
+	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
+	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
+
+	bool ClickyOverride() { return clicky_override; }
+
 
 protected:
 	friend class Mob;
@@ -1214,6 +1222,10 @@ private:
 
 	void InterrogateInventory_(bool errorcheck, Client* requester, int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, bool log, bool silent, bool &error, int depth);
 	bool InterrogateInventory_error(int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, int depth);
+
+	void UpdateZoneChangeCount(uint32 zoneid);
+
+	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
 
 };
 

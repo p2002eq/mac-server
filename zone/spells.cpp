@@ -1079,7 +1079,10 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	// Check for consumables and Reagent focus items
 	// first check for component reduction
-	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && RequiresComponents(spell_id)) {
+	if(IsClient() && RequiresComponents(spell_id) && 
+		(slot != USE_ITEM_SPELL_SLOT || 
+		(slot == USE_ITEM_SPELL_SLOT && !CastToClient()->ClickyOverride()))) 
+	{
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{
@@ -2260,8 +2263,8 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 	}
-
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	if (!IsBardSong(spell_id))
+		DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 
 	// if this was a spell slot or an ability use up the mana for it
 	// CastSpell already reduced the cost for it if we're a client with focus
@@ -2472,7 +2475,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	}
 
 	//do we need to do this???
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	//DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 	if(IsClient())
 		CastToClient()->CheckSongSkillIncrease(spell_id);
 
@@ -2508,7 +2511,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (GetHeading() * 2);	// just some random number
+			action->sequence = (GetHeading() * 2.0f);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3177,12 +3180,19 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	buffs[emptyslot].dot_rune = 0;
 	buffs[emptyslot].ExtraDIChance = 0;
 	buffs[emptyslot].RootBreakChance = 0;
+	buffs[emptyslot].instrumentmod = 10;
 
 	if (level_override > 0) {
 		buffs[emptyslot].UpdateClient = true;
 	} else {
 		if (buffs[emptyslot].ticsremaining > (1 + CalcBuffDuration_formula(caster_level, spells[spell_id].buffdurationformula, spells[spell_id].buffduration)))
 			buffs[emptyslot].UpdateClient = true;
+	}
+
+	if (IsBardSong(spell_id) && caster) {
+		int mod = caster->GetInstrumentMod(spell_id);
+		if (mod > 10)
+			buffs[emptyslot].instrumentmod = mod;
 	}
 
 	Log.Out(Logs::Detail, Logs::Spells, "Buff %d added to slot %d with caster level %d", spell_id, emptyslot, caster_level);
@@ -3793,9 +3803,27 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 	else if(spells[spell_id].pushback != 0 || spells[spell_id].pushup != 0)
 	{
-		action->buff_unknown = 0;
+		
 		Log.Out(Logs::Detail, Logs::Spells, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
-		spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+
+		if (spelltar->IsNPC()) {
+			action->buff_unknown = 0;
+			spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+		} else {
+			action->buff_unknown = 4;
+			float push_back = spells[spell_id].pushback;
+			if (push_back < 0)
+				push_back = -push_back;
+			action->force = push_back;
+			float push_up = spells[spell_id].pushup;
+			if (push_up > 0 && push_back > 0)
+			{
+				// z pushup will be translated into client as z += (force * sine(pushup_angle))
+				float ratio = push_up / push_back;
+				float angle = atanf(ratio);
+				action->pushup_angle = angle;
+			}
+		}
 	}
 
 	if(spelltar->IsClient() && spelltar->CastToClient()->GetFeigned() && IsDetrimentalSpell(spell_id))

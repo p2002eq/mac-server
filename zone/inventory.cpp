@@ -159,7 +159,7 @@ bool Client::CheckLoreConflict(const Item_Struct* item) {
 	return (m_inv.HasItemByLoreGroup(item->LoreGroup, ~invWhereUnused) != INVALID_INDEX);
 }
 
-bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_slot) {
+bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_slot, bool force_charges) {
 	this->EVENT_ITEM_ScriptStopReturn();
 
 	// TODO: update calling methods and script apis to handle a failure return
@@ -212,7 +212,8 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_
 		}
 		else if(database.ItemQuantityType(item_id) == Quantity_Charges)
 		{
-			quantity = item->MaxCharges;
+			if(!force_charges)
+				quantity = item->MaxCharges;
 		}
 		else if(database.ItemQuantityType(item_id) == Quantity_Stacked)
 		{

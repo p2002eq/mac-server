@@ -1077,8 +1077,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Load Character Data */
 	query = StringFormat("SELECT `firstlogon`, `guild_id`, `rank` FROM `character_data` LEFT JOIN `guild_members` ON `id` = `char_id` WHERE `id` = %i", cid);
 	results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		m_pp.lastlogin = time(nullptr);
+	for (auto row = results.begin(); row != results.end(); ++row) {		
 		if (row[1] && atoi(row[1]) > 0){
 			guild_id = atoi(row[1]);
 			if (row[2] != nullptr){ guildrank = atoi(row[2]); }
@@ -1088,6 +1087,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (firstlogon){ firstlogon = atoi(row[0]); }
 	}
 
+	/* Do not write to the PP prior to this otherwise it will just be overwritten when it's loaded from the DB */
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
 	database.LoadCharacterBindPoint(cid, &m_pp); /* Load Character Bind */
 	database.LoadCharacterMaterialColor(cid, &m_pp); /* Load Character Material */
@@ -1113,6 +1113,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
+	ignore_zone_count = false;
 
 	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
 	// This can lead difficulty entering the zone, since some people's client's don't like
@@ -1141,6 +1142,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			
 		
 	/* Set Total Seconds Played */
+	m_pp.lastlogin = time(nullptr);
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
 	max_AAXP = GetEXPForLevel(0, true);
@@ -1325,6 +1327,13 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.cur_hp = GetMaxHP();
 
 	SetHP(m_pp.cur_hp);
+
+	if (m_pp.cur_hp > 32700)
+	{
+		m_pp.cur_hp = 32700;
+		SetHP(32700);			// client will die after zoning with more than 32,767 hp
+	}
+
 	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
 
@@ -1335,7 +1344,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			if (!RuleB(AlKabor, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
 			{
 				m_pp.buffs[i].spellid = buffs[i].spellid;
-				m_pp.buffs[i].bard_modifier = 10;
+				m_pp.buffs[i].bard_modifier = buffs[i].instrumentmod;
 				m_pp.buffs[i].slotid = 2;
 				m_pp.buffs[i].player_id = 0x2211;
 				m_pp.buffs[i].level = buffs[i].casterlevel;
@@ -2120,6 +2129,8 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 	CastSpell_Struct* castspell = (CastSpell_Struct*)app->pBuffer;
 
+	clicky_override = false;
+
 	Log.Out(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 
 	if (m_pp.boatid != 0)
@@ -2191,16 +2202,23 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 				if ((item->Click.Type == ET_ClickEffect) || (item->Click.Type == ET_Expendable) || (item->Click.Type == ET_EquipClick) || (item->Click.Type == ET_ClickEffect2))
 				{
-					if (item->Click.Level2 > 0)
+					int16 casttime_ = item->CastTime;
+					// Clickies with 0 casttime had no level or regeant requirement on AK. Also, -1 casttime was instant cast.
+					if(casttime_ <= 0)
 					{
-						// Clickies with 0 casttime had no level requirement on AK
-						if (GetLevel() >= item->Click.Level2 || item->CastTime == 0)
+						clicky_override = true;
+						casttime_ = 0;
+					}
+
+					if (item->Click.Level2 > 0)
+					{			
+						if (GetLevel() >= item->Click.Level2 || clicky_override)
 						{
 							ItemInst* p_inst = (ItemInst*)inst;
 							int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 							if (i == 0) {
-								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 							}
 							else {
 								InterruptSpell(castspell->spell_id);
@@ -2220,7 +2238,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 						int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 						if (i == 0) {
-							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 						}
 						else {
 							InterruptSpell(castspell->spell_id);
@@ -2944,7 +2962,8 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
 		uint32 day, hour, min, sec, ttime;
-		if ((ttime = tcorpse->GetRezTime()) != 0) {
+		if ((ttime = tcorpse->GetRemainingRezTime()) > 0)
+		{
 			sec = (ttime / 1000) % 60; // Total seconds
 			min = (ttime / 60000) % 60; // Total seconds
 			hour = (ttime / 3600000) % 24; // Total hours
@@ -7380,11 +7399,8 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	mco->playerid = this->GetID();
 	QueuePacket(outapp);
 	safe_delete(outapp);
-
-	t1.start();
 	Save(1);
-	t1.stop();
-	std::cout << "Save took: " << t1.getDuration() << std::endl;
+
 	return;
 }
 
@@ -7671,13 +7687,6 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 	{
 		// don't do anything with this, we tell the client when it's
 		// levitating, not the other way around
-	}
-	else if (sa->type == AT_ShowHelm)
-	{
-		if(helm_toggle_timer.Check()) {
-			m_pp.showhelm = (sa->parameter == 1);
-			entity_list.QueueClients(this, app, true);
-		}
 	}
 	else {
 		std::cout << "Unknown SpawnAppearance type: 0x" << std::hex << std::setw(4) << std::setfill('0') << sa->type << std::dec

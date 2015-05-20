@@ -267,6 +267,8 @@ Client::Client(EQStreamInterface* ieqs)
 
 	has_zomm = false;
 	client_position_update = false;
+	ignore_zone_count = false;
+	clicky_override = false;
 }
 
 Client::~Client() {
@@ -1333,7 +1335,6 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	}
 	ns->spawn.size			= 0; // Changing size works, but then movement stops! (wth?)
 	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.1f;
-	if (!m_pp.showhelm) ns->spawn.showhelm = 0;
 
 	// pp also hold this info; should we pull from there or inventory?
 	// (update: i think pp should do it, as this holds LoY dye - plus, this is ugly code with Inventory!)
@@ -4030,7 +4031,7 @@ void Client::SendStats(Client* client)
 		if(GetLevel() < 10)
 			exploss = 0;
 		client->Message(0, "  CurrentXP: %i XP Needed: %i ExpLoss: %i CurrentAA: %i", GetEXP(), xpneeded, exploss, GetAAXP());
-		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate);
+		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d Zone Count: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate, GetZoneChangeCount());
 	}
 }
 

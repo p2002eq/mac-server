@@ -164,6 +164,7 @@ struct PlayerCorpse_Struct {
 	uint8 beard;
 	uint8 killedby;
 	bool  rezzable;
+	uint32	rez_time;
 	player_lootitem::ServerLootItem_Struct	items[0];
 	//std::list<player_lootitem::ServerLootItem_Struct*> items;
 };

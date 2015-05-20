@@ -448,9 +448,10 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 			parse->EventPlayer(EVENT_PLAYER_PICKUP, sender, buf, 0, &args);
 
 			int charges = m_inst->GetCharges();
-			if(charges < 1)
+			int16 item_id = m_inst->GetItem()->ID;
+			if(database.ItemQuantityType(item_id) != Quantity_Charges && charges < 1)
 				charges = 1;
-			if(sender->SummonItem(m_inst->GetItem()->ID,charges))
+			if(sender->SummonItem(item_id,charges,false,0,true))
 			{
 				ItemInst* curitem = sender->GetInv().GetItem(MainCursor);
 				if(curitem && curitem->IsType(ItemClassContainer))

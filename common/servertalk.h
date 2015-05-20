@@ -76,6 +76,7 @@
 #define ServerOP_UpdateSpawn		0x003f
 #define ServerOP_SpawnStatusChange	0x0040
 #define ServerOP_ChangeGroupLeader	0x0041
+#define ServerOP_IsOwnerOnline		0x0042
 #define ServerOP_DepopAllPlayersCorpses	0x0061
 #define ServerOP_ReloadTitles		0x0062
 #define ServerOP_QGlobalUpdate		0x0063
@@ -1049,6 +1050,13 @@ struct ServerRequestTellQueue_Struct {
 struct ServerRequestSoulMark_Struct {
 	char	name[64];
 	SoulMarkList_Struct entry;
+};
+
+struct ServerIsOwnerOnline_Struct {
+	char   name[64];	
+	uint32 corpseid;
+	uint16 zoneid;
+	uint8  online;
 };
 
 #pragma pack()

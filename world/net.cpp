@@ -334,6 +334,8 @@ int main(int argc, char** argv) {
 	time_t realtime;
 	eqTime = database.LoadTime(realtime);
 	zoneserver_list.worldclock.setEQTimeOfDay(eqTime,realtime);
+	Timer EQTimeTimer(3600000);
+	EQTimeTimer.Start(3600000);
 
 	Log.Out(Logs::General, Logs::World_Server, "Loading launcher list..");
 	launcher_list.LoadList();
@@ -455,6 +457,16 @@ int main(int argc, char** argv) {
 		if(PurgeInstanceTimer.Check())
 		{
 			database.PurgeExpiredInstances();
+		}
+
+		if(EQTimeTimer.Check())
+		{
+			TimeOfDay_Struct tod;
+			zoneserver_list.worldclock.getEQTimeOfDay(time(0), &tod);
+			if(!database.SaveTime(tod.minute,tod.hour,tod.day,tod.month,tod.year))
+				Log.Out(Logs::General, Logs::World_Server, "Failed to save eqtime.");
+			else
+				Log.Out(Logs::General, Logs::World_Server, "EQTime successfully saved.");
 		}
 
 		//check for timeouts in other threads

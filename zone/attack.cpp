@@ -3567,7 +3567,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		a->damage = damage;
 		a->spellid = spell_id;
 
-		if (damage > 0 && IsClient() && !IsRooted() && skill_used < 75) {
+		if (damage > 0  && skill_used < 75) {
 			// Push magnitudes in unknown11 are from client decompile
 			switch (skill_used) {
 			case Skill1HBlunt:
@@ -3604,6 +3604,11 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 			}
 			if (a->force> 0.0f)
 				a->sequence = attacker->GetHeading() * 2.0f;
+
+			if (IsNPC())
+			{
+				CastToNPC()->AddPush(attacker->GetHeading(), a->force);
+			}
 		}
 		
 		//Note: if players can become pets, they will not receive damage messages of their own

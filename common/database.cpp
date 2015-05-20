@@ -414,7 +414,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"zone_id,"
 		"zone_instance,"
 		"leadership_exp_on,"
-		"show_helm,"
 		"endurance,"
 		"air_remaining,"
 		"aa_points_spent,"
@@ -477,8 +476,7 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // ability_up			
 		"%u,"  // zone_id				
 		"%u,"  // zone_instance			
-		"%u,"  // leadership_exp_on		
-		"%u,"  // show_helm				
+		"%u,"  // leadership_exp_on					
 		"%u,"  // endurance				
 		"%u,"  // air_remaining			
 		"%u,"  // aa_points_spent		
@@ -542,7 +540,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
@@ -1319,7 +1316,9 @@ bool Database::MoveCharacterToZone(uint32 iCharID, const char* iZonename) {
 }
 
 bool Database::SetHackerFlag(const char* accountname, const char* charactername, const char* hacked) { 
-	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, hacked);
+	std::string new_hacked = std::string(hacked);
+	replace_all(new_hacked, "'", "_");
+	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, new_hacked.c_str());
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
@@ -1331,7 +1330,9 @@ bool Database::SetHackerFlag(const char* accountname, const char* charactername,
 
 bool Database::SetMQDetectionFlag(const char* accountname, const char* charactername, const char* hacked, const char* zone) { 
 	//Utilize the "hacker" table, but also give zone information.
-	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, hacked, zone);
+	std::string new_hacked = std::string(hacked);
+	replace_all(new_hacked, "'", "_");
+	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, new_hacked.c_str(), zone);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -2405,12 +2406,21 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 
 	auto row = results.begin();
 
+	uint8 hour = atoi(row[1]);
+	time_t realtime_ = atoi(row[5]);
+	if(RuleI(World, BootHour) > 0 && RuleI(World, BootHour) <= 24)
+	{
+		hour = RuleI(World, BootHour);
+		realtime_ = time(0);
+		Log.Out(Logs::Detail, Logs::World_Server, "EQTime: Setting hour to: %d", hour);
+	}
+
 	eqTime.minute = atoi(row[0]);
-	eqTime.hour = atoi(row[1]);
+	eqTime.hour = hour;
 	eqTime.day = atoi(row[2]);
 	eqTime.month = atoi(row[3]);
 	eqTime.year = atoi(row[4]);
-	realtime = atoi(row[5]);
+	realtime = realtime_;
 
 	return eqTime;
 }
