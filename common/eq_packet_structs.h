@@ -1902,8 +1902,7 @@ struct OldBazaarSearchResults_Struct {
 /*002*/	uint16  NumItems;
 /*004*/	uint16	ItemID;
 /*006*/	uint16	SellerID;
-/*008*/	uint16	Cost;
-/*010*/	uint16	ItemStat;
+/*008*/	uint32	Cost;
 /*012*/	char	ItemName[64];
 /*076*/
 
@@ -2075,24 +2074,25 @@ struct	WhoAllPlayerPart4 {
 	uint16	Unknown100;
 };
 
-struct Trader_Struct {
-/*000*/	uint32	Code;
-/*004*/	uint32	Unknown004;
-/*008*/	uint64	Items[80];
-/*648*/	uint32	ItemCost[80];
-};
-
-struct ClickTrader_Struct {
-/*000*/	uint32	Code;
-/*004*/	uint32	Unknown004;
-/*008*/	int64	SerialNumber[80];
-/*648*/	uint32	ItemCost[80];
+struct Trader_Struct 
+{
+	/*000*/	uint16	Code;
+	/*002*/ uint16  TraderID;
+	/*004*/	uint32	Items[80];
+	/*324*/	uint32	ItemCost[80];
+	/*644*/
 };
 
 struct GetItems_Struct{
 	uint32	Items[80];
 	int32	SerialNumber[80];
 	int32	Charges[80];
+};
+
+struct GetItem_Struct{
+	uint32	Items;
+	int32	SerialNumber;
+	int32	Charges;
 };
 
 struct BecomeTrader_Struct

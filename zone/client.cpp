@@ -156,7 +156,6 @@ Client::Client(EQStreamInterface* ieqs)
 	port = ntohs(eqs->GetRemotePort());
 	client_state = CLIENT_CONNECTING;
 	Trader=false;
-	Buyer = false;
 	CustomerID = 0;
 	TrackingID = 0;
 	WID = 0;
@@ -4437,6 +4436,7 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalval
 	int32 fac = GetModCharacterFactionLevel(faction_id) + tmpvalue;
 	totalvalue = fac;
 
+	bool gained = true;
 	if (tmpvalue == 0 || temp == 1 || temp == 2)
 		return;
 	else if (totalvalue >= MAX_PERSONAL_FACTION)
@@ -4444,10 +4444,21 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalval
 	else if (tmpvalue > 0 && totalvalue < MAX_PERSONAL_FACTION)
 		Message_StringID(CC_Default, FACTION_BETTER, name);
 	else if (tmpvalue < 0 && totalvalue > MIN_PERSONAL_FACTION)
+	{
+		gained = false;
 		Message_StringID(CC_Default, FACTION_WORSE, name);
+	}
 	else if (totalvalue <= MIN_PERSONAL_FACTION)
+	{
+		gained = false;
 		Message_StringID(CC_Default, FACTION_WORST, name);
+	}
 
+	std::string type = "gained";
+	if(!gained)
+		type = "lost";
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, totalvalue);
+	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
 

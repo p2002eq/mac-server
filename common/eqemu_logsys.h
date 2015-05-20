@@ -87,6 +87,7 @@ namespace Logs{
 		Faction,
 		Group,
 		Corpse,
+		Bazaar,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -140,6 +141,7 @@ namespace Logs{
 		"Faction",
 		"Group",
 		"Corpse",
+		"Bazaar",
 	};
 }
 

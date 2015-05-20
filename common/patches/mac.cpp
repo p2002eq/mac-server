@@ -1518,6 +1518,7 @@ namespace Mac {
 			ENCODE_LENGTH_EXACT(Trader_Struct);
 			SETUP_DIRECT_ENCODE(Trader_Struct, structs::Trader_Struct);
 			OUT(Code);
+			OUT(TraderID);
 			int k;
 			for(k = 0; k < 80; k++) 
 			{
@@ -1575,6 +1576,7 @@ namespace Mac {
 			DECODE_LENGTH_EXACT(structs::Trader_Struct);
 			SETUP_DIRECT_DECODE(Trader_Struct, structs::Trader_Struct);
 			IN(Code);
+			IN(TraderID);
 			int k;
 			for(k = 0; k < 80; k++)
 			{
