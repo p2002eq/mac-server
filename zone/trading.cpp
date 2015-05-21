@@ -1210,38 +1210,18 @@ void Client::BulkSendTraderInventory(uint32 char_id) {
 	safe_delete(TraderItems);
 }
 
-ItemInst* Client::FindTraderItemBySerialNumber(int32 SerialNumber){
-
-	ItemInst* item = nullptr;
-	uint16 SlotID = 0;
-	for(int i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++){
-		item = this->GetInv().GetItem(i);
-		if(item && item->GetItem()->ID == 17899){ //Traders Satchel
-			for(int x = SUB_BEGIN; x < EmuConstants::ITEM_CONTAINER_SIZE; x++) {
-				// we already have the parent bag and a contents iterator..why not just iterate the bag!??
-				SlotID = Inventory::CalcSlotId(i, x);
-				item = this->GetInv().GetItem(SlotID);
-				if(item) {
-					if(item->GetSerialNumber() == SerialNumber)
-						return item;
-				}
-			}
-		}
-	}
-	Log.Out(Logs::Detail, Logs::Bazaar, "Client::FindTraderItemBySerialNumber Couldn't find item! Serial No. was %i", SerialNumber);
-
-	return nullptr;
-}
-
 ItemInst* Client::FindTraderItemByID(int32 ItemID){
 
 	ItemInst* item = nullptr;
 	uint16 SlotID = 0;
-	for(int i = 0; i < 8;i++){
-		item = this->GetInv().GetItem(22 + i);
-		if(item && item->GetItem()->ID == 17899){ //Traders Satchel
-			for(int x = 0; x < 10; x++){
-				SlotID = (((22 + i + 3) * 10) + x + 1);
+	for(int i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
+	{
+		item = this->GetInv().GetItem(i);
+		if(item && item->GetItem()->ID == 17899) //Traders Satchel
+		{ 
+			for(int x = SUB_BEGIN; x < EmuConstants::ITEM_CONTAINER_SIZE; x++) 
+			{
+				SlotID = Inventory::CalcSlotId(i, x);
 				item = this->GetInv().GetItem(SlotID);
 				if(item && item->GetItem()->ID == ItemID)
 					return item;

@@ -508,4 +508,16 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
+	std::string check_query3 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Bazaar'");
+	auto results3 = QueryDatabase(check_query3);
+	if (results3.RowCount() == 0)
+	{
+		std::string check_query3a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('48', 'Bazaar', '0', '0', '0')");
+		auto results3a = QueryDatabase(check_query3a);
+		if (!results3a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `bazaar`.");
+			return false;
+		}
+	}
 }

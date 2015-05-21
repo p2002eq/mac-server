@@ -1483,6 +1483,13 @@ struct CancelTrade_Struct {
 /*08*/
 };
 
+struct RefuseTrade_Struct {
+/*00*/	uint16 fromid;
+/*02*/	uint16 toid;
+/*04*/  uint16 unknown;
+/*06*/
+};
+
 struct PetitionUpdate_Struct {
 	uint32 petnumber;	// Petition Number
 	uint32 color;		// 0x00 = green, 0x01 = yellow, 0x02 = red
@@ -1877,16 +1884,6 @@ struct BazaarInspect_Struct{
 	uint32 ItemID;
 	uint32 Unknown004;
 	char Name[64];
-};
-
-struct NewBazaarInspect_Struct {
-/*000*/	BazaarWindowStart_Struct Beginning;
-/*004*/	char Name[64];
-/*068*/	uint32 Unknown068;
-/*072*/	uint32 Unknown072;
-/*076*/	uint32 Unknown076;
-/*080*/	int32 SerialNumber;
-/*084*/	uint32 Unknown084;
 };
 
 struct BazaarReturnDone_Struct{

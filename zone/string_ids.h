@@ -251,6 +251,7 @@
 #define MEMBER_OF_YOUR_GUILD		1429
 #define OFFICER_OF_YOUR_GUILD		1430
 #define LEADER_OF_YOUR_GUILD		1431
+#define TRADE_CANCELLED				1449	//The trade has been cancelled.
 #define RECEIVED_PLATINUM			1452	//You receive %1 Platinum from %2.
 #define RECEIVED_GOLD				1453	//You receive %1 Gold from %2.
 #define RECEIVED_SILVER				1454	//You receive %1 Silver from %2.

@@ -265,6 +265,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
 	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
 	ConnectedOpcodes[OP_Key] = &Client::Handle_OP_Key;
+	ConnectedOpcodes[OP_TradeRefused] = &Client::Handle_OP_TradeRefused;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -1824,20 +1825,8 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 		if (bws->Beginning.Action == BazaarWelcome)
 			SendBazaarWelcome();
 	}
-	else if (app->size == sizeof(NewBazaarInspect_Struct)) {
-
-		NewBazaarInspect_Struct *nbis = (NewBazaarInspect_Struct*)app->pBuffer;
-
-		Client *c = entity_list.GetClientByName(nbis->Name);
-		if (c) {
-			ItemInst* inst = c->FindTraderItemBySerialNumber(nbis->SerialNumber);
-			if (inst)
-				SendItemPacket(0, inst, ItemPacketViewLink);
-		}
-		return;
-	}
 	else {
-		Log.Out(Logs::Detail, Logs::Trading, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
+		Log.Out(Logs::Detail, Logs::Bazaar, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
 		Log.Out(Logs::General, Logs::Error, "Malformed BazaarSearch_Struct packet received, ignoring...\n");
 	}
 
@@ -8199,32 +8188,51 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			// Verify there are no NODROP or items with a zero price
 			bool TradeItemsValid = true;
 
+			/* In this loop, we will compare the items sent by the client in OP_Trader with the items the server has in the player's trader satchels.
+			It is important we force the client to sync with the data the server has, because otherwise we will have no way to track stackable
+			items as no serial or slot number is sent by the client. In a default setting, both client and server will check the satchel's items 
+			in the same order. However, if items are moved around in the satchel and the player has kept the trader window up the client will tack 
+			those items to the end of its check, while the server will continue to check them in the order they appear in the bags. Closing the 
+			trader will sync server and client. */
 			for (uint32 i = 0; i < max_items; i++) 
 			{
+				// We've reached the end of the server's item list.
 				if (gis->Items[i] == 0) break;
 
-				if (ints->ItemCost[i] == 0) 
-				{
-					Message(CC_Red, "Item in Trader Satchel with no price. Unable to start trader mode");
-					TradeItemsValid = false;
-					break;
-				}
-				const Item_Struct *Item = database.GetItem(ints->Items[i]);
+				// Our client will not send an item if the cost has never been set by the player. If the item was previously set with a cost
+				// but the player has since cleared it, the item will be sent with cost 1.
 
+				// This will happen if an item with no cost is the last one the client checks. `Item` gets its value from the next 
+				// offset in the packet which is usually garbage as our client does not memset.
+				const Item_Struct *Item = database.GetItem(ints->Items[i]);
 				if (!Item) 
 				{
-					Message(CC_Red, "An item is out of sync. Please close your trader window and start again.");
+					Message(CC_Red, "Make sure all your items have a price, close your trader window, and start again.");
 					TradeItemsValid = false;
 					break;
 				}
 
+				// No drop item.
 				if (Item->NoDrop == 0) 
 				{
-					Message(CC_Red, "NODROP Item in Trader Satchel. Unable to start trader mode");
+					Message(CC_Red, "NODROP Item in Trader Satchel. Unable to start trader mode.");
 					TradeItemsValid = false;
 					break;
 				}
 
+				// We should in theory never reach this logic, but keep it here just in case I am wrong.
+				if (ints->ItemCost[i] == 0) 
+				{
+					Message(CC_Red, "Item in Trader Satchel with no price. Unable to start trader mode.");
+					TradeItemsValid = false;
+					break;
+				}
+
+				// This will happen if an item with no cost is in the middle of the client's check. The client will skip it
+				// but server does not. 
+				// It can also happen if the player moves items around in their satchel while their trader window is still up.
+				// Finally if `Item` is a garbage value that just happens to be a valid itemid this will catch that. 
+				// We either try to re-sync, or fail and send the player an error message.
 				if(ints->Items[i] != gis->Items[i])
 				{
 					GetItem_Struct* gi = RefetchItem(ints->Items[i]);
@@ -8236,7 +8244,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 					}
 					else
 					{
-						Message(CC_Red, "Your items are out of sync. Please close the trader window and start again");
+						Message(CC_Red, "Make sure all your items have a price, close your trader window, and start again.");
 						TradeItemsValid = false;
 						break;
 					}
@@ -8245,7 +8253,8 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				Log.Out(Logs::Detail, Logs:: Bazaar, "(%d) Item: %s added to trader list with cost: %d and charges: %d", i, Item->Name, ints->ItemCost[i], gis->Charges[i]);
 			}
 
-			if (!TradeItemsValid) {
+			if (!TradeItemsValid) 
+			{
 				Trader_EndTrader();
 				return;
 			}
@@ -8259,7 +8268,6 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				}
 				else 
 				{
-					Log.Out(Logs::Detail, Logs::Bazaar, "The item %d was null when we went to save. This is very bad.", ints->Items[i]);
 					break;
 				}
 
@@ -8875,6 +8883,25 @@ void Client::Handle_OP_Key(const EQApplicationPacket *app)
 	if (app->size != 4) {
 		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
 		return;
+	}
+
+	return;
+}
+
+void Client::Handle_OP_TradeRefused(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(RefuseTrade_Struct)) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_TradeRefused: Expected: %i, Got: %i", sizeof(RefuseTrade_Struct), app->size);
+		return;
+	}
+
+	RefuseTrade_Struct* in = (RefuseTrade_Struct*)app->pBuffer;	
+	Client* client = entity_list.GetClientByID(in->fromid);
+
+	if(client)
+	{
+		CancelTrade_Struct* msg = (CancelTrade_Struct*)app->pBuffer;
+		client->QueuePacket(app);
 	}
 
 	return;

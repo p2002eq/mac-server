@@ -221,7 +221,6 @@ public:
 	void	SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minprice,uint32 maxprice);
 	void	SendTraderItem(uint32 item_id,uint16 quantity);
 	uint16	FindTraderItem(int32 SerialNumber,uint16 Quantity);
-	ItemInst* FindTraderItemBySerialNumber(int32 SerialNumber);
 	ItemInst* FindTraderItemByID(int32 ItemID);
 	void	FindAndNukeTraderItem(int32 item_id,uint16 quantity,Client* customer,uint16 traderslot);
 	void	NukeTraderItem(uint16 slot, int16 charges,uint16 quantity,Client* customer,uint16 traderslot,int uniqueid, uint32 sellerid);
