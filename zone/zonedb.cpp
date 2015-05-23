@@ -718,54 +718,6 @@ void ZoneDatabase::DeleteTraderItem(uint32 CharID,uint16 SlotID) {
 		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete trader item data for char_id: %i, the error was: %s\n",CharID, results.ErrorMessage().c_str());
 }
 
-void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
-
-	if(CharID==0) {
-        const std::string query = "DELETE FROM buyer";
-		auto results = QueryDatabase(query);
-        if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete all buyer items data, the error was: %s\n",results.ErrorMessage().c_str());
-
-        return;
-	}
-
-    std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i", CharID);
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyer item data for charid: %i, the error was: %s\n",CharID,results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char* ItemName, uint32 Quantity, uint32 Price) {
-	std::string query = StringFormat("REPLACE INTO buyer VALUES(%i, %i, %i, \"%s\", %i, %i)",
-                                    CharID, BuySlot, ItemID, ItemName, Quantity, Price);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to save buline item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
-	std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i AND buyslot = %i", CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity) {
-	if(Quantity <= 0) {
-		RemoveBuyLine(CharID, BuySlot);
-		return;
-	}
-
-	std::string query = StringFormat("UPDATE buyer SET quantity = %i WHERE charid = %i AND buyslot = %i", Quantity, CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to update quantity in buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
 bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	std::string query = StringFormat(
 		"SELECT                     "

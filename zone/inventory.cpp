@@ -400,10 +400,9 @@ int32 Client::GetItemIDAt(int16 slot_id) {
 }
 
 // Remove item from inventory
-void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) {
-	#if (EQDEBUG >= 5)
-		Log.Out(Logs::General, Logs::None, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
-	#endif
+void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) 
+{
+	Log.Out(Logs::Detail, Logs::Inventory, "DeleteItemInInventory(%i, %i, %s)", slot_id, quantity, (client_update) ? "true":"false");
 
 	// Added 'IsSlotValid(slot_id)' check to both segments of client packet processing.
 	// - cursor queue slots were slipping through and crashing client
@@ -491,7 +490,8 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 		}
 	}
 
-	if(client_update && IsValidSlot(slot_id)) {
+	if(client_update && IsValidSlot(slot_id)) 
+	{
 		EQApplicationPacket* outapp;
 		if(inst) {
 			if(!isDeleted){
@@ -507,28 +507,18 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 				{
 					SendItemPacket(slot_id, inst, ItemPacketTrade);
 				}
+				return;
 			}
-			else {
-				outapp = new EQApplicationPacket(OP_MoveItem, sizeof(MoveItem_Struct));
-				MoveItem_Struct* delitem	= (MoveItem_Struct*)outapp->pBuffer;
-				delitem->from_slot			= slot_id;
-				delitem->to_slot			= 0xFFFFFFFF;
-				delitem->number_in_stack	= 0xFFFFFFFF;
-				QueuePacket(outapp);
-				safe_delete(outapp);
-			}
-				
 		}
-		else {
-			outapp = new EQApplicationPacket(OP_MoveItem, sizeof(MoveItem_Struct));
-			MoveItem_Struct* delitem	= (MoveItem_Struct*)outapp->pBuffer;
-			delitem->from_slot			= slot_id;
-			delitem->to_slot			= 0xFFFFFFFF;
-			delitem->number_in_stack	= 0xFFFFFFFF;
-			QueuePacket(outapp);
-			safe_delete(outapp);
-			
-		}
+
+		outapp = new EQApplicationPacket(OP_MoveItem, sizeof(MoveItem_Struct));
+		MoveItem_Struct* delitem	= (MoveItem_Struct*)outapp->pBuffer;
+		delitem->from_slot			= slot_id;
+		delitem->to_slot			= 0xFFFFFFFF;
+		delitem->number_in_stack	= 0xFFFFFFFF;
+		QueuePacket(outapp);
+		safe_delete(outapp);
+
 	}
 }
 
@@ -618,7 +608,10 @@ void Client::PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootI
 
 	CalcBonuses();
 }
-bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cursor){
+
+bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cursor)
+{
+
 	if(!item || !item->IsStackable())
 		return false;
 	int16 i;

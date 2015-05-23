@@ -34,7 +34,7 @@ class QueryServ;
 extern WorldServer worldserver;
 extern QueryServ* QServ;
 
-// The maximum amount of a single bazaar/barter transaction expressed in copper.
+// The maximum amount of a single bazaar transaction expressed in copper.
 // Equivalent to 2 Million plat
 #define MAX_TRANSACTION_VALUE 2000000000
 // ##########################################
@@ -1553,9 +1553,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs,Client* Trader,const EQApplicat
 	ReturnTraderReq(app, outtbs->Quantity, TraderSlot, outtbs->Price);
 
 	outtbs->TraderID = this->GetID();
-
 	outtbs->Action = BazaarBuyItem;
-
 	strn0cpy(outtbs->ItemName, BuyItem->GetItem()->Name, 64);
 
 	int SlotID = 0;

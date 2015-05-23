@@ -171,12 +171,6 @@ public:
 	TraderCharges_Struct* LoadTraderItemWithCharges(uint32 char_id);
 	int8 ItemQuantityType(int16 item_id);
 
-	/* Buyer/Barter  */
-	void AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char *ItemName, uint32 Quantity, uint32 Price);
-	void RemoveBuyLine(uint32 CharID, uint32 BuySlot);
-	void DeleteBuyLines(uint32 CharID);
-	void UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity);
-
 	/* General Character Related Stuff  */
 	bool	SetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 	uint32	GetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
