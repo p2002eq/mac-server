@@ -703,7 +703,6 @@ struct PlayerProfile_Struct
 /*6008*/	char				groupMembers[6][64];//
 			char				boat[20];
 /*7048*/	uint32				entityid;
-/*7052*/	uint32				leadAAActive;
 /*7264*/	Disciplines_Struct	disciplines;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7904*/	uint32				endurance;
@@ -2049,7 +2048,7 @@ struct WhoAllPlayer player[0];
 struct	WhoAllPlayerPart1 {
 	uint16	FormatMSGID;
 	uint16	PIDMSGID;
-	char	Name[1];;
+	char	Name[1];
 };
 
 struct	WhoAllPlayerPart2 {

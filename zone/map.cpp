@@ -19,7 +19,7 @@ uint32 InflateData(const char* buffer, uint32 len, char* out_buffer, uint32 out_
 
 	zstream.next_in = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(buffer));
 	zstream.avail_in = len;
-	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);;
+	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);
 	zstream.avail_out = out_len_max;
 	zstream.zalloc = Z_NULL;
 	zstream.zfree = Z_NULL;

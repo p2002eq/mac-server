@@ -1039,7 +1039,7 @@ XS(XS_Client_GetBindY)
 		if (items == 1)
 			index = 0;
 		else if (items == 2) {
-			index = (uint32)SvUV(ST(1));;
+			index = (uint32)SvUV(ST(1));
 		}
 
 		RETVAL = THIS->GetBindY(index);
@@ -4027,7 +4027,7 @@ XS(XS_Client_LearnRecipe)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		THIS->LearnRecipe(recipe_id);;
+		THIS->LearnRecipe(recipe_id);
 	}
 	XSRETURN_EMPTY;
 }

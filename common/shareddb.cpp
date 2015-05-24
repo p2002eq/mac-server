@@ -1414,7 +1414,7 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 		sp[tempid].targettype = (SpellTargetType) atoi(row[98]);
 		sp[tempid].basediff=atoi(row[99]);
 
-		int tmp_skill = atoi(row[100]);;
+		int tmp_skill = atoi(row[100]);
 
 		if(tmp_skill < 0 || tmp_skill > HIGHEST_SKILL)
             sp[tempid].skill = SkillBegging; /* not much better we can do. */ // can probably be changed to client-based 'SkillNone' once activated
