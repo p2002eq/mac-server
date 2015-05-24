@@ -1503,7 +1503,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		case ST_Self:
 		{
 			// innate NPC procs always hit the target, even self-only spells (like scareling step)
-			if (!isproc || !IsNPC() || CastToNPC()->GetInnateProcSpellId() != spell_id)
+			if (!isproc || !IsNPC() || (IsNPC() && CastToNPC()->GetInnateProcSpellId() != spell_id))
 				spell_target = this;
 
 			CastAction = SingleTarget;
