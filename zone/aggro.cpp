@@ -173,10 +173,23 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		return;
 	}
 
-	if(GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GREEN ) {
-		towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
-		dist2, iAggroRange2);
-		return;
+
+	if (RuleB(Aggro, UseLevelAggro))
+	{
+		if (GetLevel() < 18 && mob->GetLevelCon(GetLevel()) == CON_GREEN && GetBodyType() != 3)
+		{
+			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),	dist2, iAggroRange2);
+			return;
+		}
+	}
+	else
+	{
+		if (GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GREEN)
+		{
+			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
+				dist2, iAggroRange2);
+			return;
+		}
 	}
 
 	if(verbose) {
@@ -341,34 +354,70 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	int heroicCHA_mod = mob->itembonuses.HeroicCHA/25; // 800 Heroic CHA cap
 	if(heroicCHA_mod > THREATENLY_ARRGO_CHANCE)
 		heroicCHA_mod = THREATENLY_ARRGO_CHANCE;
-	if
-	(
-	//old InZone check taken care of above by !mob->CastToClient()->Connected()
-	(
-		( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
-		||( mob->IsClient() && mob->CastToClient()->IsSitting() )
-		||( mob->GetLevelCon(GetLevel()) != CON_GREEN )
 
-	)
-	&&
-	(
+	if (RuleB(Aggro, UseLevelAggro))
+	{
+		if
 		(
-			fv == FACTION_SCOWLS
-			||
-			(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
-			||
+		//old InZone check taken care of above by !mob->CastToClient()->Connected()
+		(
+			(GetLevel() >= 18)
+			|| (GetBodyType() == 3)
+			|| (mob->IsClient() && mob->CastToClient()->IsSitting())
+			|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
+		)
+		&&
+		(
 			(
-				fv == FACTION_THREATENLY
-				&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				fv == FACTION_SCOWLS
+				||
+				(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
+				||
+				(
+					fv == FACTION_THREATENLY
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				)
 			)
 		)
-	)
-	)
+		)
+		{
+			//make sure we can see them. last since it is very expensive
+			if (zone->SkipLoS() || CheckLosFN(mob)) {
+				Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				return(mod_will_aggro(mob, this));
+			}
+		}
+	}
+	else
 	{
-		//make sure we can see them. last since it is very expensive
-		if(zone->SkipLoS() || CheckLosFN(mob)) {
-			Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
-			return( mod_will_aggro(mob, this) );
+		if
+		(
+		//old InZone check taken care of above by !mob->CastToClient()->Connected()
+			(
+			(GetINT() <= RuleI(Aggro, IntAggroThreshold))
+			|| (mob->IsClient() && mob->CastToClient()->IsSitting())
+			|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
+		)
+		&&
+		(
+			(
+				fv == FACTION_SCOWLS
+				||
+				(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
+				||
+				(
+					fv == FACTION_THREATENLY
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				)
+			)
+		)
+		)
+		{
+			//make sure we can see them. last since it is very expensive
+			if (zone->SkipLoS() || CheckLosFN(mob)) {
+				Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				return(mod_will_aggro(mob, this));
+			}
 		}
 	}
 
