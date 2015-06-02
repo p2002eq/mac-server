@@ -718,7 +718,10 @@ bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_curs
 							instrument == ItemTypeStringedInstrument ||
 							instrument == ItemTypeBrassInstrument ||
 							instrument == ItemTypePercussionInstrument
-						) continue; // Do not auto-equip Primary when instrument is in Secondary
+						) {
+							Log.Out(Logs::Detail, Logs::Inventory, "Cannot equip a primary weapon with %s already in the secondary.", m_inv[MainSecondary]->GetItem()->Name);
+							continue; // Do not auto-equip Primary when instrument is in Secondary
+						}
 					}
 				}
 				if( i== MainSecondary && m_inv[MainPrimary]) // check to see if primary slot is a two hander
@@ -729,7 +732,10 @@ bool Client::AutoPutLootInInventory(ItemInst& inst, bool try_worn, bool try_curs
 						instrument == ItemTypeStringedInstrument ||
 						instrument == ItemTypeBrassInstrument ||
 						instrument == ItemTypePercussionInstrument
-					) continue; // Do not auto-equip instrument in Secondary when Primary is equipped.	
+					) {
+						Log.Out(Logs::Detail, Logs::Inventory, "Cannot equip a secondary instrument with %s already in the primary.", m_inv[MainPrimary]->GetItem()->Name);
+						continue; // Do not auto-equip instrument in Secondary when Primary is equipped.	
+					}
 
 					uint8 use = m_inv[MainPrimary]->GetItem()->ItemType;
 					if(use == ItemType2HSlash || use == ItemType2HBlunt || use == ItemType2HPiercing)

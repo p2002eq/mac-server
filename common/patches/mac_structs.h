@@ -137,7 +137,11 @@ struct NewZone_Struct
 	/*0457*/	uint8	specialcodes[16];
 	/*0473*/	uint8	timezone;
 	/*0474*/	uint8	sky;					// Sky Type
-	/*0475*/	uint8	unknown331[9];			// Music work out positions.
+	/*0475*/	uint8   unknown0475;
+	/*0476*/	uint16  water_music;
+	/*0478*/	uint16  normal_music_day;
+	/*0480*/	uint16  normal_music_night;
+	/*0482*/	uint8	unknown0482[2];
 	/*0484*/	float	zone_exp_multiplier;	// Experience Multiplier
 	/*0488*/	float	safe_y;					// Zone Safe Y
 	/*0492*/	float	safe_x;					// Zone Safe X
