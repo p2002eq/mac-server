@@ -17,6 +17,8 @@
 #include "questmgr.h"
 #include "qglobals.h"
 #include "../common/timer.h"
+#include "../common/eqemu_logsys.h"
+#include "encounter.h"
 
 struct Events { };
 struct Factions { };
