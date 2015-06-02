@@ -623,4 +623,15 @@ void handle_leave_boat(QuestInterface *parse, lua_State* L, Client* client, std:
 	lua_setfield(L, -2, "boat_id");
 }
 
+void handle_encounter_timer(QuestInterface *parse, lua_State* L, std::string data, uint32 extra_data,
+							std::vector<EQEmu::Any> *extra_pointers) {
+	lua_pushstring(L, data.c_str());
+	lua_setfield(L, -2, "timer");
+}
+
+void handle_encounter_null(QuestInterface *parse, lua_State* L, std::string data, uint32 extra_data,
+							std::vector<EQEmu::Any> *extra_pointers) {
+
+}
+
 #endif
