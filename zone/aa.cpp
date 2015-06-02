@@ -1451,7 +1451,7 @@ uint32 ZoneDatabase::CountAAs(){
 
 	auto row = results.begin();
 
-	return atoi(row[0]);;
+	return atoi(row[0]);
 }
 
 uint32 ZoneDatabase::CountAAEffects() {

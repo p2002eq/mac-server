@@ -344,7 +344,7 @@ public:
 
 	/* Only allows players that killed corpse to loot */
 	const bool HasPrivateCorpse() const { return NPCTypedata->private_corpse; }
-
+	const bool IsAggroOnPC() const { return NPCTypedata->aggro_pc; }
 	const bool IsUnderwaterOnly() const { return NPCTypedata->underwater; }
 	const char* GetRawNPCTypeName() const { return NPCTypedata->name; }
 

@@ -129,7 +129,7 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 			}
 			case Skill1HBlunt: // 1H Blunt
 			{
-				type = Animation::Weapon1H;;
+				type = Animation::Weapon1H;
 				break;
 			}
 			case Skill2HBlunt: // 2H Blunt

@@ -775,7 +775,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"ability_up,                "
 		"zone_id,                   "
 		"zone_instance,             "
-		"leadership_exp_on,         "
 		"endurance,                 "
 		"air_remaining,             "
 		"aa_points_spent,           "
@@ -843,7 +842,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->ability_up = atoi(row[r]); r++;										 // "ability_up,                "
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
-		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
 		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
 		pp->aapoints_spent = atoi(row[r]); r++;									 // "aa_points_spent,           "
@@ -1155,7 +1153,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" ability_up,                "
 		" zone_id,                   "
 		" zone_instance,             "
-		" leadership_exp_on,         "
 		" endurance,                 "
 		" air_remaining,             "
 		" aa_points_spent,           "
@@ -1222,7 +1219,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // ability_up				  pp->ability_up,						" ability_up,                "
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
-		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
 		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
 		"%u,"  // aa_points_spent			  pp->aapoints_spent,					" aa_points_spent,           "
@@ -1288,7 +1284,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
@@ -1452,7 +1447,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1610,6 +1605,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1664,7 +1660,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1822,6 +1818,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

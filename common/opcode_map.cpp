@@ -6,7 +6,7 @@ std::map<unsigned long, std::string> opcode_map;
 
 std::string get_opcode_name(unsigned long opcode)
 {
-std::map<unsigned long, std::string>::iterator itr;;
+std::map<unsigned long, std::string>::iterator itr;
 
 	return (itr=opcode_map.find(opcode))!=opcode_map.end() ? itr->second : "OP_Unknown";
 }
