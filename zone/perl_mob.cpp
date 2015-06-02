@@ -7044,6 +7044,37 @@ XS(XS_Mob_GetItemStat)
 	XSRETURN(1);
 }
 
+XS(XS_Mob_GetGlobal);
+XS(XS_Mob_GetGlobal)
+{
+	dXSARGS;
+	if (items < 2)
+		Perl_croak(aTHX_ "Usage: GetGlobal(THIS, varname)");
+	{
+		Mob* THIS;
+		Const_char* varname = (Const_char*)SvPV_nolen(ST(1));
+		std::string ret_val = "Undefined";
+		Const_char* RETVAL;
+		dXSTARG;
+
+		if (sv_derived_from(ST(0), "Mob")) {
+			IV tmp = SvIV((SV*)SvRV(ST(0)));
+			THIS = INT2PTR(Mob *, tmp);
+		}
+		else
+			Perl_croak(aTHX_ "THIS is not of type Mob");
+		if (THIS == nullptr)
+			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+		if (THIS->GetGlobal(varname) != "Undefined")
+			ret_val = THIS->GetGlobal(varname);
+
+		RETVAL = ret_val.c_str();
+		sv_setpv(TARG, RETVAL); XSprePUSH; PUSHTARG;
+	}
+	XSRETURN(1);		
+}
+
 XS(XS_Mob_SetGlobal);
 XS(XS_Mob_SetGlobal)
 {
@@ -8259,6 +8290,7 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "MakeTempPet"), XS_Mob_MakeTempPet, file, "$$;$$$$");
 		newXSproto(strcpy(buf, "TypesTempPet"), XS_Mob_TypesTempPet, file, "$$;$$$$$");
 		newXSproto(strcpy(buf, "GetItemStat"), XS_Mob_GetItemStat, file, "$$$");
+		newXSproto(strcpy(buf, "GetGlobal"), XS_Mob_GetGlobal, file, "$$");
 		newXSproto(strcpy(buf, "SetGlobal"), XS_Mob_SetGlobal, file, "$$$$$;$");
 		newXSproto(strcpy(buf, "TarGlobal"), XS_Mob_TarGlobal, file, "$$$$$$$");
 		newXSproto(strcpy(buf, "DelGlobal"), XS_Mob_DelGlobal, file, "$$");
