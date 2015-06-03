@@ -18,6 +18,7 @@ SET(zone_sources
 	embparser_api.cpp
 	embperl.cpp
 	embxs.cpp
+  encounter.cpp
 	entity.cpp
 	exp.cpp
 	fearpath.cpp
@@ -132,6 +133,7 @@ SET(zone_headers
 	embparser.h
 	embperl.h
 	embxs.h
+  encounter.h
 	entity.h
 	errmsg.h
 	event_codes.h
