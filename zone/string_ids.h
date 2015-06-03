@@ -251,6 +251,7 @@
 #define MEMBER_OF_YOUR_GUILD		1429
 #define OFFICER_OF_YOUR_GUILD		1430
 #define LEADER_OF_YOUR_GUILD		1431
+#define TRADE_CANCELLED				1449	//The trade has been cancelled.
 #define RECEIVED_PLATINUM			1452	//You receive %1 Platinum from %2.
 #define RECEIVED_GOLD				1453	//You receive %1 Gold from %2.
 #define RECEIVED_SILVER				1454	//You receive %1 Silver from %2.
@@ -310,15 +311,7 @@
 #define SENTINEL_TRIG_OTHER			6725	//%1 has triggered your sentinel.
 #define IDENTIFY_SPELL				6765	//Item Lore: %1.
 #define DOORS_NO_PICK				7564	//You must have a lock pick in your inventory to do this.
-#define GAIN_GROUP_LEADERSHIP_POINT	8585	//
-#define GAIN_RAID_LEADERSHIP_POINT	8589	//
-#define MAX_GROUP_LEADERSHIP_POINTS	8584	//
-#define MAX_RAID_LEADERSHIP_POINTS	8591	//
-#define LEADERSHIP_EXP_ON			8653	//
-#define LEADERSHIP_EXP_OFF			8654	//
 #define CURRENT_SPELL_EFFECTS		8757	//%1's current spell effects:
-#define GAIN_GROUP_LEADERSHIP_EXP	8788	//
-#define GAIN_RAID_LEADERSHIP_EXP	8789	//
 #define BUFF_MINUTES_REMAINING		8799	//%1 (%2 minutes remaining)
 #define FEAR_TOO_HIGH				9035	//Your target is too high of a level for your fear spell.
 #define SLOW_MOSTLY_SUCCESSFUL		9029	//Your spell was mostly successful.

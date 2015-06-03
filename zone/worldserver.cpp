@@ -1493,7 +1493,7 @@ void WorldServer::Process() {
 			if(!c)
 				return;
 
-			uint32 Type = pack->ReadUInt32();;
+			uint32 Type = pack->ReadUInt32();
 
 			switch(Type)
 			{

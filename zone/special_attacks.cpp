@@ -684,7 +684,7 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 			hate = 20 * backstab_dmg * GetSkill(SkillBackstab) / 355;
 		}
 		else{
-			max_hit = (((2*backstab_dmg) * GetDamageTable(SkillBackstab) / 100) * 10 * GetSkill(SkillBackstab) / 355) + 1;;
+			max_hit = (((2*backstab_dmg) * GetDamageTable(SkillBackstab) / 100) * 10 * GetSkill(SkillBackstab) / 355) + 1;
 			hate = 20 * backstab_dmg * GetSkill(SkillBackstab) / 355;
 		}
 

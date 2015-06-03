@@ -497,7 +497,7 @@ namespace Mac {
 		OUT(safe_x);
 		OUT(safe_z);
 		OUT(max_z);
-		eq->underworld=emu->underworld;
+		OUT(underworld);
 		OUT(minclip);
 		OUT(maxclip);
 		OUT(skylock);
@@ -506,6 +506,9 @@ namespace Mac {
 		OUT_array(snow_duration, 4);
 		OUT_array(rain_chance, 4);
 		OUT_array(rain_duration, 4);
+		OUT(normal_music_day);
+		eq->water_music = 4; // No need to add a column for these two, they never change like gravity.
+		eq->normal_music_night = 0;
 		FINISH_ENCODE();	
 	}
 
@@ -1518,6 +1521,7 @@ namespace Mac {
 			ENCODE_LENGTH_EXACT(Trader_Struct);
 			SETUP_DIRECT_ENCODE(Trader_Struct, structs::Trader_Struct);
 			OUT(Code);
+			OUT(TraderID);
 			int k;
 			for(k = 0; k < 80; k++) 
 			{
@@ -1575,6 +1579,7 @@ namespace Mac {
 			DECODE_LENGTH_EXACT(structs::Trader_Struct);
 			SETUP_DIRECT_DECODE(Trader_Struct, structs::Trader_Struct);
 			IN(Code);
+			IN(TraderID);
 			int k;
 			for(k = 0; k < 80; k++)
 			{

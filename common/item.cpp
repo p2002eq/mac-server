@@ -1497,8 +1497,8 @@ bool ItemInst::IsEquipable(int16 slot_id) const
 	if ((uint16)slot_id <= EmuConstants::EQUIPMENT_END) { use_slot = slot_id; }
 
 	if (use_slot != INVALID_INDEX) {
-		if (m_item->Slots & (1 << use_slot))
-			return true;
+		if (m_item->Slots & (1 << use_slot)) { return true; }
+		else if (slot_id == MainAmmo && (m_item->ItemType == ItemTypeSmallThrowing)) { return true; }
 	}
 
 	return false;

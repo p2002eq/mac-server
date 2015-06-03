@@ -123,6 +123,7 @@ struct NPCType
 	uint8 	probability;
 	uint32  combat_hp_regen;
 	uint32  combat_mana_regen;
+	bool	aggro_pc;
 };
 
 namespace player_lootitem {

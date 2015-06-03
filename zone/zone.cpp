@@ -792,7 +792,6 @@ bool Zone::Init(bool iStaticZone) {
 	//clear trader items if we are loading the bazaar
 	if(strncasecmp(short_name,"bazaar",6)==0) {
 		database.DeleteTraderItem(0);
-		database.DeleteBuyLines(0);
 	}
 
 	zone->LoadNPCEmotes(&NPCEmoteList);

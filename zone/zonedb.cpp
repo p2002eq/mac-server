@@ -106,7 +106,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
                                     "rain_chance1, rain_chance2, rain_chance3, rain_chance4, " // 4
                                     "rain_duration1, rain_duration2, rain_duration3, rain_duration4, " // 4
                                     "snow_chance1, snow_chance2, snow_chance3, snow_chance4, " // 4
-                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, skip_los " // 4
+                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, " // 4
+									"skylock, skip_los, music " // 3
                                     "FROM zone WHERE zoneidnumber = %i AND version = %i", zoneid, instance_id);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -144,6 +145,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
     zone_data->minclip=atof(row[28]);
     zone_data->maxclip=atof(row[29]);
     zone_data->time_type=atoi(row[30]);
+	zone_data->skylock = atoi(row[56]);
+	zone_data->normal_music_day = atoi(row[58]);
 
     //not in the DB yet:
     zone_data->gravity = 0.4;
@@ -181,7 +184,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 	for(index = 0; index < 4; index++)
         zone_data->snow_duration[index]=atof(row[52 + index]);
 
-	skip_los = atoi(row[56]) == 0? false: true;
+	skip_los = atoi(row[57]) == 0? false: true;
 
 	return true;
 }
@@ -718,54 +721,6 @@ void ZoneDatabase::DeleteTraderItem(uint32 CharID,uint16 SlotID) {
 		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete trader item data for char_id: %i, the error was: %s\n",CharID, results.ErrorMessage().c_str());
 }
 
-void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
-
-	if(CharID==0) {
-        const std::string query = "DELETE FROM buyer";
-		auto results = QueryDatabase(query);
-        if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete all buyer items data, the error was: %s\n",results.ErrorMessage().c_str());
-
-        return;
-	}
-
-    std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i", CharID);
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyer item data for charid: %i, the error was: %s\n",CharID,results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char* ItemName, uint32 Quantity, uint32 Price) {
-	std::string query = StringFormat("REPLACE INTO buyer VALUES(%i, %i, %i, \"%s\", %i, %i)",
-                                    CharID, BuySlot, ItemID, ItemName, Quantity, Price);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to save buline item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
-	std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i AND buyslot = %i", CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity) {
-	if(Quantity <= 0) {
-		RemoveBuyLine(CharID, BuySlot);
-		return;
-	}
-
-	std::string query = StringFormat("UPDATE buyer SET quantity = %i WHERE charid = %i AND buyslot = %i", Quantity, CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to update quantity in buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
 bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	std::string query = StringFormat(
 		"SELECT                     "
@@ -820,7 +775,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"ability_up,                "
 		"zone_id,                   "
 		"zone_instance,             "
-		"leadership_exp_on,         "
 		"endurance,                 "
 		"air_remaining,             "
 		"aa_points_spent,           "
@@ -888,7 +842,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->ability_up = atoi(row[r]); r++;										 // "ability_up,                "
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
-		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
 		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
 		pp->aapoints_spent = atoi(row[r]); r++;									 // "aa_points_spent,           "
@@ -1200,7 +1153,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" ability_up,                "
 		" zone_id,                   "
 		" zone_instance,             "
-		" leadership_exp_on,         "
 		" endurance,                 "
 		" air_remaining,             "
 		" aa_points_spent,           "
@@ -1267,7 +1219,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // ability_up				  pp->ability_up,						" ability_up,                "
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
-		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
 		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
 		"%u,"  // aa_points_spent			  pp->aapoints_spent,					" aa_points_spent,           "
@@ -1333,7 +1284,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
@@ -1497,7 +1447,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1655,6 +1605,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1709,7 +1660,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1867,6 +1818,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

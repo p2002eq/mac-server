@@ -413,7 +413,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"ability_up,"
 		"zone_id,"
 		"zone_instance,"
-		"leadership_exp_on,"
 		"endurance,"
 		"air_remaining,"
 		"aa_points_spent,"
@@ -476,7 +475,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // ability_up			
 		"%u,"  // zone_id				
 		"%u,"  // zone_instance			
-		"%u,"  // leadership_exp_on					
 		"%u,"  // endurance				
 		"%u,"  // air_remaining			
 		"%u,"  // aa_points_spent		
@@ -539,7 +537,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
 		pp->endurance,					  // " endurance,                 "
 		pp->air_remaining,				  // " air_remaining,             "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
@@ -1345,8 +1342,6 @@ bool Database::SetMQDetectionFlag(const char* accountname, const char* character
 
 uint8 Database::GetRaceSkill(uint8 skillid, uint8 in_race)
 {
-	uint16 race_cap = 0;
-	
 	//Check for a racial cap!
 	std::string query = StringFormat("SELECT skillcap from race_skillcaps where skill = %i && race = %i", skillid, in_race);
 	auto results = QueryDatabase(query);

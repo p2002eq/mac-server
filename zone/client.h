@@ -204,6 +204,7 @@ public:
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
 	void	SendTraderPacket(Client* trader, uint32 Unknown72 = 51);
 	GetItems_Struct* GetTraderItems();
+	GetItem_Struct* RefetchItem(uint16 item_id);
 	void	SendBazaarWelcome();
 	uint8	SlotConvert(uint8 slot,bool bracer=false);
 	void	Message_StringID(uint32 type, uint32 string_id, uint32 distance = 0);
@@ -220,7 +221,6 @@ public:
 	void	SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minprice,uint32 maxprice);
 	void	SendTraderItem(uint32 item_id,uint16 quantity);
 	uint16	FindTraderItem(int32 SerialNumber,uint16 Quantity);
-	ItemInst* FindTraderItemBySerialNumber(int32 SerialNumber);
 	ItemInst* FindTraderItemByID(int32 ItemID);
 	void	FindAndNukeTraderItem(int32 item_id,uint16 quantity,Client* customer,uint16 traderslot);
 	void	NukeTraderItem(uint16 slot, int16 charges,uint16 quantity,Client* customer,uint16 traderslot,int uniqueid, uint32 sellerid);
@@ -721,7 +721,6 @@ public:
 	bool	IsBankSlot(uint32 slot);
 
 	inline bool IsTrader() const { return(Trader); }
-	inline bool IsBuyer() const { return(Buyer); }
 	eqFilterMode GetFilter(eqFilterType filter_id) const { return ClientFilters[filter_id]; }
 	void SetFilter(eqFilterType filter_id, eqFilterMode value) { ClientFilters[filter_id]=value; }
 
@@ -1065,7 +1064,6 @@ private:
 	uint32				account_creation;
 	uint8				firstlogon;
 	bool	Trader;
-	bool	Buyer;
 	std::string	BuyerWelcomeMessage;
 	bool	AbilityTimer;
 	int Haste; //precalced value
