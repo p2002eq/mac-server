@@ -1100,11 +1100,12 @@ bool RequiresComponents(uint16 spell_id)
 		for (int t_count = 0; t_count < 4; t_count++) 
 		{
 			int32 component = spells[spell_id].components[t_count];
+			int32 focuscomponent = spells[spell_id].NoexpendReagent[t_count];
 
-			if (component == -1)
+			if (component == -1 && focuscomponent == -1)
 				continue;
 
-			if(component > 0)
+			if(component > 0 || focuscomponent > 0)
 				return true;
 		}
 	}

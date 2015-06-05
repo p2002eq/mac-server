@@ -1091,6 +1091,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		(slot != USE_ITEM_SPELL_SLOT || 
 		(slot == USE_ITEM_SPELL_SLOT && !CastToClient()->ClickyOverride()))) 
 	{
+		Log.Out(Logs::Detail, Logs::Spells, "Spell %d: requires a component.", spell_id);
+
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{
@@ -1117,13 +1119,15 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 			
 			if (bard_song_mode)
 			{
-				if (!HasSongInstrument(spell_id)){
+				if (!HasSongInstrument(spell_id))
+				{
 					InterruptSpell();
 					return;
 				}
 			}
 			else{
-				if (!HasSpellReagent(spell_id)){
+				if (!HasSpellReagent(spell_id))
+				{
 					InterruptSpell();
 					return;
 				}
@@ -1316,7 +1320,8 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, component, component_count, missingreags)){
+		if (!HasReagent(spell_id, component, component_count, missingreags))
+		{
 			missingreags = true;
 		}
 	}
@@ -1330,7 +1335,9 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 		bool petfocuscomponent = false;
 		int8 petfocusItemsize = sizeof(petfocusItems) / sizeof(petfocusItems[0]);
 		for (int i = 0; i < petfocusItemsize; i++) {
-			if (focuscomponent == petfocusItems[i]) {
+			if (focuscomponent == petfocusItems[i]) 
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus, additonal checks will be skipped.", spell_id);
 				petfocuscomponent = true;
 				break;
 			}
@@ -1340,12 +1347,14 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags)){
+		if (!HasReagent(spell_id, focuscomponent, 1, missingreags))
+		{
 			missingreags = true;
 		}
 	}
 
-	if (missingreags) {
+	if (missingreags) 
+	{
 		if (c->GetGM())
 			c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing required components.");
 		else {
