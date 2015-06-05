@@ -5171,9 +5171,43 @@ int16 Client::GetFocusEffect(focusType type, uint16 spell_id) {
 		if(UsedItem && rand_effectiveness && focus_max_real != 0)
 			realTotal = CalcFocusEffect(type, UsedFocusID, spell_id);
 
-		if (realTotal != 0 && UsedItem && type != focusReagentCost)
+		if ((rand_effectiveness && UsedItem) || (realTotal != 0 && UsedItem && type != focusReagentCost))
 		{
-			Message_StringID(MT_Spells, BEGINS_TO_GLOW, UsedItem->Name);
+			// there are a crap ton more of these, I was able to verify these ones though
+			// the RNG effective ones appear to have a different message for failing to focus
+			uint32 string_id = BEGINS_TO_GLOW; // this is really just clicky message ...
+			switch (type) {
+			case focusSpellHaste:
+				string_id = SHIMMERS_BRIEFLY;
+				break;
+			case focusManaCost: // this might be GROWS_DIM for fail
+				string_id = FLICKERS_PALE_LIGHT;
+				break;
+			case focusSpellDuration:
+				string_id = SPARKLES;
+				break;
+			case focusImprovedDamage:
+				if (realTotal)
+					string_id = ALIVE_WITH_POWER;
+				else
+					string_id = SEEMS_DRAINED;
+				break;
+			case focusRange:
+				string_id = PULSES_WITH_LIGHT;
+				break;
+			case focusImprovedHeal:
+				if (realTotal)
+					string_id = FEEDS_WITH_POWER;
+				else
+					string_id = POWER_DRAIN_INTO;
+				break;
+			case focusReagentCost: // this might be GROWS_DIM for fail as well ...
+				string_id = BEGINS_TO_SHINE;
+				break;
+			default:
+				break;
+			}
+			Message_StringID(MT_Spells, string_id, UsedItem->Name);
 		}
 	}
 
