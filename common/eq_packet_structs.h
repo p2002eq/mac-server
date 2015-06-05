@@ -314,7 +314,8 @@ struct NewZone_Struct {
 /*0457*/	uint8	specialcodes[16];
 /*0473*/	uint8	timezone;
 /*0474*/	uint8	sky;					// Sky Type
-/*0475*/	uint8	unknown331[13];			// ***Placeholder
+			uint16	normal_music_day;
+/*0475*/	uint8	unknown331[11];			// ***Placeholder
 /*0488*/	float	zone_exp_multiplier;	// Experience Multiplier
 /*0492*/	float	safe_y;					// Zone Safe Y
 /*0496*/	float	safe_x;					// Zone Safe X

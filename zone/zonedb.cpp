@@ -106,7 +106,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
                                     "rain_chance1, rain_chance2, rain_chance3, rain_chance4, " // 4
                                     "rain_duration1, rain_duration2, rain_duration3, rain_duration4, " // 4
                                     "snow_chance1, snow_chance2, snow_chance3, snow_chance4, " // 4
-                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, skip_los " // 4
+                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, " // 4
+									"skylock, skip_los, music " // 3
                                     "FROM zone WHERE zoneidnumber = %i AND version = %i", zoneid, instance_id);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -144,6 +145,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
     zone_data->minclip=atof(row[28]);
     zone_data->maxclip=atof(row[29]);
     zone_data->time_type=atoi(row[30]);
+	zone_data->skylock = atoi(row[56]);
+	zone_data->normal_music_day = atoi(row[58]);
 
     //not in the DB yet:
     zone_data->gravity = 0.4;
@@ -181,7 +184,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 	for(index = 0; index < 4; index++)
         zone_data->snow_duration[index]=atof(row[52 + index]);
 
-	skip_los = atoi(row[56]) == 0? false: true;
+	skip_los = atoi(row[57]) == 0? false: true;
 
 	return true;
 }
