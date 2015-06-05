@@ -475,7 +475,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	safe_delete(outapp);
 	outapp = nullptr;
 
-	if (IsClient() && slot == USE_ITEM_SPELL_SLOT &&item_slot != 0xFFFFFFFF) 
+	if (IsClient() && slot == USE_ITEM_SPELL_SLOT && item_slot != 0xFFFFFFFF) 
 	{
 		auto item = CastToClient()->GetInv().GetItem(item_slot);
 		if (item && item->GetItem())
@@ -1107,7 +1107,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 				const Item_Struct* TempItem = ins->GetItem();
 				if (TempItem && IsRegeantFocus(TempItem->Focus.Effect)) 
 				{
-					Message_StringID(MT_Spells, BEGINS_TO_GLOW, TempItem->Name);
+					Message_StringID(MT_Spells, BEGINS_TO_SHINE, TempItem->Name);
 					break;
 				}
 			}
