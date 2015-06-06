@@ -394,7 +394,8 @@ void Client::CompleteConnect()
 	SetDueling(false);
 
 	EnteringMessages(this);
-	LoadZoneFlags();
+	ZoneFlags.Clear();
+	LoadZoneFlags(&ZoneFlags);
 
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
@@ -8883,6 +8884,49 @@ void Client::Handle_OP_Key(const EQApplicationPacket *app)
 	if (app->size != 4) {
 		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
 		return;
+	}
+
+	// Todo: Figure out how to get the client to spit these messages out for us.
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		uint32 zoneid = zfs->zoneid;
+		uint8 key = zfs->key;
+
+		const char *short_name = database.GetZoneName(zoneid);
+
+		float safe_x, safe_y, safe_z;
+		int16 minstatus = 0;
+		uint8 minlevel = 0;
+		char flag_name[128];
+		// Unfortunately, we have to hit the DB here. We can't assume the target zone will be booted to check its zone_data.
+		if(database.GetSafePoints(short_name, 0, &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_name)) 
+		{
+			if(zoneid == vexthal)
+			{
+				if(key == 0 || key == 1)
+					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					Message(CC_Default, "North Tower Key (Vex Thal)"); //Flag within the zone.
+			}
+			if(zoneid == ssratemple)
+				Message(CC_Default, "Ring of the Shissar"); //Flag within the zone.
+			if(zoneid == frozenshadow)
+				Message(CC_Default, "Tower of Frozen Shadows: %d", key); //Flag within the zone.
+			if(zoneid == bothunder)
+			{
+				if(key == 0 || key == 1)
+					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					Message(CC_Default, "Enchanted Ring of Torden"); //Flag within the zone.
+			}
+			else
+				Message(CC_Default, "%s", flag_name);
+		}
+
+		iterator.Advance();
 	}
 
 	return;

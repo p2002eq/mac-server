@@ -178,8 +178,10 @@ public:
 	bool UseDiscipline(int spell_id, int target_id);
 	int GetCharacterFactionLevel(int faction_id);
 	void SetZoneFlag(int zone_id);
+	void SetZoneFlag(int zone_id, uint8 key);
 	void ClearZoneFlag(int zone_id);
 	bool HasZoneFlag(int zone_id);
+	bool HasZoneFlag(int zone_id, uint8 key);
 	void SendZoneFlagInfo(Lua_Client to);
 	void SetAATitle(const char *title);
 	int GetClientVersion();

@@ -2639,6 +2639,11 @@ struct MBEraseRequest_Struct {
 
 }; 
 
+struct ZoneFlags_Struct {
+	uint32 zoneid;
+	uint8  key;
+};
+
 typedef std::list<ServerLootItem_Struct*> ItemList;
 
 // Restore structure packing to default

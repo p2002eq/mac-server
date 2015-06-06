@@ -759,14 +759,18 @@ void Client::GoToDeath() {
 	MovePC(m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, 0.0f, 0.0f, 0.0f, 0.0f, 1, ZoneToBindPoint);
 }
 
-void Client::SetZoneFlag(uint32 zone_id) {
-	if(HasZoneFlag(zone_id))
+void Client::SetZoneFlag(uint32 zone_id, uint8 key) {
+	if(HasZoneFlag(zone_id, key))
 		return;
 
-	zone_flags.insert(zone_id);
+	ClearZoneFlag(zone_id);
 
-	// Retrieve all waypoints for this grid
-	std::string query = StringFormat("INSERT INTO zone_flags (charID,zoneID) VALUES(%d,%d)", CharacterID(), zone_id);
+	ZoneFlags_Struct* zfs = new ZoneFlags_Struct;
+	zfs->zoneid = zone_id;
+	zfs->key = key;
+	ZoneFlags.Insert(zfs);
+
+	std::string query = StringFormat("INSERT INTO zone_flags (charID,zoneID,key_) VALUES(%d,%d,%d)", CharacterID(), zone_id, key);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to set zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -776,9 +780,18 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 	if(!HasZoneFlag(zone_id))
 		return;
 
-	zone_flags.erase(zone_id);
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		if (zfs->zoneid == zone_id)
+		{
+			iterator.RemoveCurrent(true);
+		}
+		iterator.Advance();
+	}
 
-	// Retrieve all waypoints for this grid
 	std::string query = StringFormat("DELETE FROM zone_flags WHERE charID=%d AND zoneID=%d", CharacterID(), zone_id);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
@@ -786,10 +799,10 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 
 }
 
-void Client::LoadZoneFlags() {
-
-	// Retrieve all waypoints for this grid
-	std::string query = StringFormat("SELECT zoneID from zone_flags WHERE charID=%d", CharacterID());
+void Client::LoadZoneFlags(LinkedList<ZoneFlags_Struct*>* ZoneFlags) 
+{
+	ZoneFlags->Clear();
+	std::string query = StringFormat("SELECT zoneID, key_ from zone_flags WHERE charID=%d order by zoneID", CharacterID());
 	auto results = database.QueryDatabase(query);
     if (!results.Success()) {
         Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to load zone flags for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -797,28 +810,62 @@ void Client::LoadZoneFlags() {
     }
 
 	for(auto row = results.begin(); row != results.end(); ++row)
-		zone_flags.insert(atoi(row[0]));
+	{
+		ZoneFlags_Struct* zfs = new ZoneFlags_Struct;
+		zfs->zoneid = atoi(row[0]);
+		zfs->key = atoi(row[1]);
+		ZoneFlags->Insert(zfs);
+	}
 }
 
-bool Client::HasZoneFlag(uint32 zone_id) const {
-	return(zone_flags.find(zone_id) != zone_flags.end());
+bool Client::HasZoneFlag(uint32 zone_id, uint8 key) {
+
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		if (zfs->zoneid == zone_id && zfs->key >= key)
+		{
+			return true;
+		}
+		iterator.Advance();
+	}
+	return false;
 }
 
-void Client::SendZoneFlagInfo(Client *to) const {
-	if(zone_flags.empty()) {
+uint8 Client::GetZoneFlagKey(uint32 zone_id) {
+
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		if (zfs->zoneid == zone_id)
+		{
+			return zfs->key;
+		}
+		iterator.Advance();
+	}
+
+	return 0;
+}
+
+void Client::SendZoneFlagInfo(Client *to) {
+	if(ZoneFlags.Count() == 0) {
 		to->Message(0, "%s has no zone flags.", GetName());
 		return;
 	}
 
-	std::set<uint32>::const_iterator cur, end;
-	cur = zone_flags.begin();
-	end = zone_flags.end();
-	char empty[1] = { '\0' };
-
 	to->Message(0, "Flags for %s:", GetName());
-
-	for(; cur != end; ++cur) {
-		uint32 zoneid = *cur;
+	char empty[1] = { '\0' };
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		uint32 zoneid = zfs->zoneid;
+		uint8 key = zfs->key;
 
 		const char *short_name = database.GetZoneName(zoneid);
 
@@ -835,9 +882,11 @@ void Client::SendZoneFlagInfo(Client *to) const {
 			strcpy(flag_name, "(ERROR GETTING NAME)");
 		}
 
-		to->Message(0, "Has Flag %s for zone %s (%d,%s)", flag_name, long_name, zoneid, short_name);
+		to->Message(CC_Default, "Has Flag %s for zone %s (%d,%s) Key: %d", flag_name, long_name, zoneid, short_name, key);
 		if(long_name != empty)
 			delete[] long_name;
+
+		iterator.Advance();
 	}
 }
 

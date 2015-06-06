@@ -434,7 +434,7 @@ public:
 	bool DBSetup_webdata_character();
 	bool DBSetup_webdata_servers();
 	bool DBSetup_feedback();
-	bool DBSetup_account_active();
+	bool DBSetup_player_updates();
 	bool DBSetup_PlayerCorpseBackup();
 	bool DBSetup_CharacterSoulMarks();
 	bool DBSetup_MessageBoards();
