@@ -1890,7 +1890,8 @@ namespace Mac {
 			mac_pop_item->NoRent = item->NoRent;         
 			mac_pop_item->NoDrop = item->NoDrop;         
 			mac_pop_item->Size = item->Size;           
-			mac_pop_item->ID = item->ID;        
+			mac_pop_item->ID = item->ID;       
+			mac_pop_item->inv_refnum = mac_pop_item->equipSlot;
 			mac_pop_item->Icon = item->Icon;       
 			mac_pop_item->Slots = item->Slots;  
 			mac_pop_item->CastTime = item->CastTime;  

@@ -1693,9 +1693,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 	if (!IsPoison)
 	{
-		Log.Out(Logs::Detail, Logs::Spells, "Item used to cast spell effect from a poison item was missing from inventory slot %d "
-			"after casting, or is not a poison!", ApplyPoisonData->inventorySlot);
-
+		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
 		Message(0, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
 	}
 	else if (GetClass() == ROGUE)
@@ -1716,7 +1714,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
 
-			Log.Out(Logs::General, Logs::None, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
+			Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
 		}
 	}
 

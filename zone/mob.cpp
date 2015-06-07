@@ -2709,7 +2709,7 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(twinproc_chance && zone->random.Roll(twinproc_chance))
 		twinproc = true;
 
-	if (inst->GetID() == 14811 ||	// Iron Bound Tome was bugged during this era and would proc on self
+	if ((inst && inst->GetID() == 14811) ||	// Iron Bound Tome was bugged during this era and would proc on self
 		(IsBeneficialSpell(spell_id) &&
 		(!IsNPC() || CastToNPC()->GetInnateProcSpellId() != spell_id)))		// innate NPC procs always hit the target
 	{
