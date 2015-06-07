@@ -33,7 +33,7 @@ bool Database::DBSetup() {
 	DBSetup_MessageBoards();
 	DBSetup_Rules();
 	GITInfo();
-	DBSetup_account_active();
+	DBSetup_player_updates();
 	DBSetup_Logs();
 	return true;
 }
@@ -465,7 +465,7 @@ bool Database::DBSetup_Rules()
 	}
 }
 
-bool Database::DBSetup_account_active() {
+bool Database::DBSetup_player_updates() {
 	std::string check_query = StringFormat("SHOW COLUMNS FROM `account` LIKE 'active'");
 	auto results = QueryDatabase(check_query);
 	if (results.RowCount() == 0){
@@ -477,6 +477,19 @@ bool Database::DBSetup_account_active() {
 			return false;
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "active column created.");
+	}
+
+	std::string check_querya = StringFormat("SHOW COLUMNS FROM `zone_flags` LIKE 'key_'");
+	auto resultsa = QueryDatabase(check_querya);
+	if (resultsa.RowCount() == 0){
+		std::string create_querya = StringFormat("ALTER table `zone_flags` add column `key_` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add key_ column to zone_flags...");
+		auto create_resultsa = QueryDatabase(create_querya);
+		if (!create_resultsa.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating key_ column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "key_ column created.");
 	}
 	return true;
 }

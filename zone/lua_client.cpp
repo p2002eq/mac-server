@@ -760,6 +760,11 @@ void Lua_Client::SetZoneFlag(int zone_id) {
 	self->SetZoneFlag(zone_id);
 }
 
+void Lua_Client::SetZoneFlag(int zone_id, uint8 key) {
+	Lua_Safe_Call_Void();
+	self->SetZoneFlag(zone_id, key);
+}
+
 void Lua_Client::ClearZoneFlag(int zone_id) {
 	Lua_Safe_Call_Void();
 	self->ClearZoneFlag(zone_id);
@@ -768,6 +773,11 @@ void Lua_Client::ClearZoneFlag(int zone_id) {
 bool Lua_Client::HasZoneFlag(int zone_id) {
 	Lua_Safe_Call_Bool();
 	return self->HasZoneFlag(zone_id);
+}
+
+bool Lua_Client::HasZoneFlag(int zone_id, uint8 key) {
+	Lua_Safe_Call_Bool();
+	return self->HasZoneFlag(zone_id,key);
 }
 
 void Lua_Client::SendZoneFlagInfo(Lua_Client to) {
@@ -1258,8 +1268,10 @@ luabind::scope lua_register_client() {
 		.def("UseDiscipline", (bool(Lua_Client::*)(int,int))&Lua_Client::UseDiscipline)
 		.def("GetCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetCharacterFactionLevel)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int))&Lua_Client::SetZoneFlag)
+		.def("SetZoneFlag", (void(Lua_Client::*)(int,uint8))&Lua_Client::SetZoneFlag)
 		.def("ClearZoneFlag", (void(Lua_Client::*)(int))&Lua_Client::ClearZoneFlag)
 		.def("HasZoneFlag", (bool(Lua_Client::*)(int))&Lua_Client::HasZoneFlag)
+		.def("HasZoneFlag", (bool(Lua_Client::*)(int,uint8))&Lua_Client::HasZoneFlag)
 		.def("SendZoneFlagInfo", (void(Lua_Client::*)(Lua_Client))&Lua_Client::SendZoneFlagInfo)
 		.def("SetAATitle", (void(Lua_Client::*)(const char *))&Lua_Client::SetAATitle)
 		.def("GetClientVersion", (int(Lua_Client::*)(void))&Lua_Client::GetClientVersion)

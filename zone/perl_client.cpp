@@ -3617,29 +3617,6 @@ XS(XS_Client_SendZoneFlagInfo)
 	XSRETURN_EMPTY;
 }
 
-XS(XS_Client_LoadZoneFlags); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Client_LoadZoneFlags)
-{
-	dXSARGS;
-	if (items != 1)
-		Perl_croak(aTHX_ "Usage: Client::LoadZoneFlags(THIS)");
-	{
-		Client *		THIS;
-
-		if (sv_derived_from(ST(0), "Client")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Client *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Client");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		THIS->LoadZoneFlags();
-	}
-	XSRETURN_EMPTY;
-}
-
 XS(XS_Client_SetAATitle); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Client_SetAATitle)
 {
@@ -5224,7 +5201,6 @@ XS(boot_Client)
 		newXSproto(strcpy(buf, "ClearZoneFlag"), XS_Client_ClearZoneFlag, file, "$$");
 		newXSproto(strcpy(buf, "HasZoneFlag"), XS_Client_HasZoneFlag, file, "$$");
 		newXSproto(strcpy(buf, "SendZoneFlagInfo"), XS_Client_SendZoneFlagInfo, file, "$$");
-		newXSproto(strcpy(buf, "LoadZoneFlags"), XS_Client_LoadZoneFlags, file, "$");
 		newXSproto(strcpy(buf, "SetAATitle"), XS_Client_SetAATitle, file, "$$;$");
 		newXSproto(strcpy(buf, "GetClientVersion"), XS_Client_GetClientVersion, file, "$");
 		newXSproto(strcpy(buf, "GetClientVersionBit"), XS_Client_GetClientVersionBit, file, "$");
