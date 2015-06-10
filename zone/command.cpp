@@ -6310,6 +6310,11 @@ void command_npcedit(Client *c, const Seperator *sep){
 		c->Message(0, "#npcedit Gender - Sets an NPC's gender");
 		c->Message(0, "#npcedit Texture - Sets an NPC's texture");
 		c->Message(0, "#npcedit Helmtexture - Sets an NPC's helmtexture");
+		c->Message(0, "#npcedit Armtexture - Sets an NPC's arm texture");
+		c->Message(0, "#npcedit Bracertexture - Sets an NPC's bracer texture");
+		c->Message(0, "#npcedit Handtexture - Sets an NPC's hand texture");
+		c->Message(0, "#npcedit Legtexture - Sets an NPC's leg texture");
+		c->Message(0, "#npcedit Feettexture - Sets an NPC's feettexture");
 		c->Message(0, "#npcedit Size - Sets an NPC's size");
 		c->Message(0, "#npcedit Hpregen - Sets an NPC's hitpoint regen rate per tick");
 		c->Message(0, "#npcedit Manaregen - Sets an NPC's mana regen rate per tick");
@@ -6446,6 +6451,41 @@ void command_npcedit(Client *c, const Seperator *sep){
 
 		std::string query = StringFormat("UPDATE npc_types SET helmtexture = %i WHERE id = %i",
 			atoi(sep->argplus[2]), npcTypeID);
+		database.QueryDatabase(query);
+		return;
+	}
+
+	if (strcasecmp(sep->arg[1], "armtexture") == 0) {
+		c->Message(15, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		std::string query = StringFormat("UPDATE npc_types SET armtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
+		database.QueryDatabase(query);
+		return;
+	}
+
+	if (strcasecmp(sep->arg[1], "bracertexture") == 0) {
+		c->Message(15, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		std::string query = StringFormat("UPDATE npc_types SET bracertexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
+		database.QueryDatabase(query);
+		return;
+	}
+
+	if (strcasecmp(sep->arg[1], "handtexture") == 0) {
+		c->Message(15, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		std::string query = StringFormat("UPDATE npc_types SET handtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
+		database.QueryDatabase(query);
+		return;
+	}
+
+	if (strcasecmp(sep->arg[1], "legtexture") == 0) {
+		c->Message(15, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		std::string query = StringFormat("UPDATE npc_types SET legtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
+		database.QueryDatabase(query);
+		return;
+	}
+
+	if (strcasecmp(sep->arg[1], "feettexture") == 0) {
+		c->Message(15, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		std::string query = StringFormat("UPDATE npc_types SET feettexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}

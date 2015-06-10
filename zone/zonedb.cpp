@@ -1447,7 +1447,9 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, "
+						"npc_types.armtexture, npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, "
+						"npc_types.feettexture FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1606,7 +1608,11 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
-
+		tmpNPCType->armtexture = atoi(row[89]);
+		tmpNPCType->bracertexture = atoi(row[90]);
+		tmpNPCType->handtexture = atoi(row[91]);
+		tmpNPCType->legtexture = atoi(row[92]);
+		tmpNPCType->feettexture = atoi(row[93]);
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
 		if (zone->npctable.find(tmpNPCType->npc_id) != zone->npctable.end()) {
@@ -1660,7 +1666,9 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, npc_types.armtexture, "
+						"npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, npc_types.feettexture "
+						"FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1819,6 +1827,11 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
+		tmpNPCType->armtexture = atoi(row[89]);
+		tmpNPCType->bracertexture = atoi(row[90]);
+		tmpNPCType->handtexture = atoi(row[91]);
+		tmpNPCType->legtexture = atoi(row[92]);
+		tmpNPCType->feettexture = atoi(row[93]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

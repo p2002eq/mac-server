@@ -124,6 +124,11 @@ struct NPCType
 	uint32  combat_hp_regen;
 	uint32  combat_mana_regen;
 	bool	aggro_pc;
+	uint8	armtexture;
+	uint8	bracertexture;
+	uint8	handtexture;
+	uint8	legtexture;
+	uint8	feettexture;
 };
 
 namespace player_lootitem {
