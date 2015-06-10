@@ -248,7 +248,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		if (!pZoning && ClientVersionBit != 0)
+		//if (!pZoning && ClientVersionBit != 0)
 			//SendGuildList();
 			SendLogServer();
 			SendApproveWorld();
@@ -717,8 +717,8 @@ void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
 		return;
 
-	//if(GetSessionLimit())
-	//	return;
+	if(GetSessionLimit())
+		return;
 
 	ZoneServer* zs = nullptr;
 	if(instanceID > 0)

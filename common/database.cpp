@@ -2499,8 +2499,8 @@ bool Database::CheckAccountActive(uint32 account_id) {
 
 	if(active == 0)
 	{
-		std::string query = StringFormat("UPDATE `account` SET active = 1 WHERE id = %i", account_id);
-		QueryDatabase(query);
+		//std::string query = StringFormat("UPDATE `account` SET active = 1 WHERE id = %i", account_id);
+		//QueryDatabase(query);
 		return false;
 	}
 	else

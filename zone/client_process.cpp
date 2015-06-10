@@ -82,8 +82,8 @@ bool Client::Process() {
 		if(mana_timer.Check())
 			SendManaUpdatePacket();
 
-			if(dead && dead_timer.Check()) {
-				database.MoveCharacterToZone(GetName(), database.GetZoneName(m_pp.binds[0].zoneId));
+		if(dead && dead_timer.Check()) {
+			database.MoveCharacterToZone(GetName(), database.GetZoneName(m_pp.binds[0].zoneId));
 
 			m_pp.zone_id = m_pp.binds[0].zoneId;
 			m_pp.zoneInstance = m_pp.binds[0].instance_id;
@@ -130,6 +130,8 @@ bool Client::Process() {
 			LeaveGroup();
 			Save();
 			instalog = true;
+			database.ClearAccountActive(this->AccountID());
+			return false;
 		}
 
 		if (IsStunned() && stunned_timer.Check()) {
@@ -540,28 +542,6 @@ bool Client::Process() {
 		return false;
 	}
 
-	if (client_state == CLIENT_ERROR) {
-		OnDisconnect(true);
-		std::cout << "Client disconnected (cs=e): " << GetName() << std::endl;
-		return false;
-	}
-
-	if (client_state != CLIENT_LINKDEAD && !eqs->CheckState(ESTABLISHED)) {
-		OnDisconnect(true);
-		Log.Out(Logs::General, Logs::Zone_Server, "Client linkdead: %s", name);
-
-		if (GetGM()) 
-			return false;
-		else if(!linkdead_timer.Enabled()){
-			linkdead_timer.Start(RuleI(Zone,ClientLinkdeadMS));
-			client_state = CLIENT_LINKDEAD;
-			AI_Start(CLIENT_LD_TIMEOUT);
-			SendAppearancePacket(AT_Linkdead, 1);
-			UpdateWho();
-		}
-	}
-
-
 	/************ Get all packets from packet manager out queue and process them ************/
 	EQApplicationPacket *app = nullptr;
 
@@ -627,9 +607,9 @@ bool Client::Process() {
 		}
 		else
 		{
+			Log.Out(Logs::General, Logs::Zone_Server, "Client linkdead: %s", name);
 			LinkDead();
 		}
-		OnDisconnect(true);
 	}
 	// Feign Death 2 minutes and zone forgets you
 	if (forget_timer.Check()) {
@@ -646,7 +626,6 @@ void Client::OnDisconnect(bool hard_disconnect) {
 	database.CharacterQuit(this->CharacterID());
 	if(hard_disconnect)
 	{
-		database.ClearAccountActive(this->AccountID());
 		LeaveGroup();
 		Raid *MyRaid = entity_list.GetRaidByClient(this);
 
