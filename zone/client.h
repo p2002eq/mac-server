@@ -199,17 +199,13 @@ public:
 	void	Trader_EndTrader();
 	void	Trader_StartTrader();
 	uint8	WithCustomer(uint16 NewCustomer);
-	void	KeyRingLoad();
-	void	KeyRingAdd(uint32 item_id);
-	bool	KeyRingCheck(uint32 item_id);
-	void	KeyRingList();
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
 	void	SendTraderPacket(Client* trader, uint32 Unknown72 = 51);
 	GetItems_Struct* GetTraderItems();
+	GetItem_Struct* RefetchItem(uint16 item_id);
 	void	SendBazaarWelcome();
-	void	DyeArmor(DyeStruct* dye);
 	uint8	SlotConvert(uint8 slot,bool bracer=false);
 	void	Message_StringID(uint32 type, uint32 string_id, uint32 distance = 0);
 	void	Message_StringID(uint32 type, uint32 string_id, const char* message,const char* message2=0,const char* message3=0,const char* message4=0,const char* message5=0,const char* message6=0,const char* message7=0,const char* message8=0,const char* message9=0, uint32 distance = 0);
@@ -225,14 +221,12 @@ public:
 	void	SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minprice,uint32 maxprice);
 	void	SendTraderItem(uint32 item_id,uint16 quantity);
 	uint16	FindTraderItem(int32 SerialNumber,uint16 Quantity);
-	ItemInst* FindTraderItemBySerialNumber(int32 SerialNumber);
 	ItemInst* FindTraderItemByID(int32 ItemID);
 	void	FindAndNukeTraderItem(int32 item_id,uint16 quantity,Client* customer,uint16 traderslot);
 	void	NukeTraderItem(uint16 slot, int16 charges,uint16 quantity,Client* customer,uint16 traderslot,int uniqueid, uint32 sellerid);
 	void	ReturnTraderReq(const EQApplicationPacket* app,int16 traderitemcharges, int TraderSlot,uint32 price);
 	void	TradeRequestFailed(const EQApplicationPacket* app);
 	void	BuyTraderItem(TraderBuy_Struct* tbs,Client* trader,const EQApplicationPacket* app);
-	void	TraderUpdate(uint16 slot_id,uint32 trader_id);
 	void	FinishTrade(Mob* with, bool finalizer = false, void* event_entry = nullptr, std::list<void*>* event_details = nullptr);
 	void	SendZonePoints();
 
@@ -247,7 +241,6 @@ public:
 	void ChannelMessageSend(const char* from, const char* to, uint8 chan_num, uint8 language, uint8 lang_skill, const char* message, ...);
 	void Message(uint32 type, const char* message, ...);
 	void QuestJournalledMessage(const char *npcname, const char* message);
-	void VoiceMacroReceived(uint32 Type, char *Target, uint32 MacroNumber);
 	void SendSound();
 	void LearnRecipe(uint32 recipeID);
 	bool CanIncreaseTradeskill(SkillUseTypes tradeskill);
@@ -331,6 +324,7 @@ public:
 	inline const float GetBindHeading(uint32 index = 0) const { return m_pp.binds[index].heading; }
 	inline uint32 GetBindZoneID(uint32 index = 0) const { return m_pp.binds[index].zoneId; }
 	inline uint32 GetBindInstanceID(uint32 index = 0) const { return m_pp.binds[index].instance_id; }
+	inline uint32 GetZoneChangeCount() const { return m_pp.zone_change_count; }
 	int32 CalcMaxMana();
 	int32 CalcBaseMana();
 	const int32& SetMana(int32 amount);
@@ -500,10 +494,6 @@ public:
 	void	AddEXPPercent(uint8 percent, uint8 level = 1);
 	void	AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void	InspectBuffs(Client* Inspector, int Rank);
-	uint32	GetRaidPoints() { return(m_pp.raid_leadership_points); }
-	uint32	GetGroupPoints() { return(m_pp.group_leadership_points); }
-	uint32	GetRaidEXP() { return(m_pp.raid_leadership_exp); }
-	uint32	GetGroupEXP() { return(m_pp.group_leadership_exp); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 	void	GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
 	uint32  GetEXPForLevel(uint16 level, bool aa = false);
@@ -525,10 +515,6 @@ public:
 	void WhoAll();
 	bool CheckLoreConflict(const Item_Struct* item);
 	void ChangeLastName(const char* in_lastname);
-	void GetGroupAAs(GroupLeadershipAA_Struct *into) const;
-	void GetRaidAAs(RaidLeadershipAA_Struct *into) const;
-	void ClearGroupAAs();
-	void UpdateGroupAAs(int32 points, uint32 type);
 	void SacrificeConfirm(Client* caster);
 	void Sacrifice(Client* caster);
 	void GoToDeath();
@@ -725,7 +711,7 @@ public:
 	void	QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call = false);
 	void	PutLootInInventory(int16 slot_id, const ItemInst &inst, ServerLootItem_Struct** bag_item_data = 0);
 	bool	AutoPutLootInInventory(ItemInst& inst, bool try_worn = false, bool try_cursor = true, ServerLootItem_Struct** bag_item_data = 0);
-	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor);
+	bool	SummonItem(uint32 item_id, int16 quantity = -1, bool attuned = false, uint16 to_slot = MainCursor, bool force_charges = false);
 	void	DropItem(int16 slot_id);
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
@@ -735,7 +721,6 @@ public:
 	bool	IsBankSlot(uint32 slot);
 
 	inline bool IsTrader() const { return(Trader); }
-	inline bool IsBuyer() const { return(Buyer); }
 	eqFilterMode GetFilter(eqFilterType filter_id) const { return ClientFilters[filter_id]; }
 	void SetFilter(eqFilterType filter_id, eqFilterMode value) { ClientFilters[filter_id]=value; }
 
@@ -820,7 +805,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	//Doesn't appear to work directly after the client recieves an action packet.
 	void SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, int slotid);
 
-	void ProcessInspectRequest(Client* requestee, Client* requester);
 	bool ClientFinishedLoading() { return (conn_state == ClientConnectFinished); }
 	int FindSpellBookSlotBySpellID(uint16 spellid);
 	int FindSpellMemSlotBySpellID(uint16 spellid);
@@ -888,7 +872,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	const char* GetRacePlural(Client* client);
 	const char* GetClassPlural(Client* client);
-	void SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg);
 	void SendSpellAnim(uint16 targetid, uint16 spell_id);
 
 	void DuplicateLoreMessage(uint32 ItemID);
@@ -958,6 +941,13 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	bool has_zomm;
 	bool client_position_update;
+	bool ignore_zone_count; 
+
+	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
+	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
+
+	bool ClickyOverride() { return clicky_override; }
+
 
 protected:
 	friend class Mob;
@@ -1052,7 +1042,6 @@ private:
 	uint8				guildrank; // player's rank in the guild, 0-GUILD_MAX_RANK
 	uint16				duel_target;
 	bool				duelaccepted;
-	std::list<uint32> keyring;
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;
@@ -1075,7 +1064,6 @@ private:
 	uint32				account_creation;
 	uint8				firstlogon;
 	bool	Trader;
-	bool	Buyer;
 	std::string	BuyerWelcomeMessage;
 	bool	AbilityTimer;
 	int Haste; //precalced value
@@ -1133,7 +1121,6 @@ private:
 	Timer scanarea_timer;
 	Timer	proximity_timer;
 	Timer	charm_update_timer;
-	Timer	rest_timer;
 	Timer	charm_class_attacks_timer;
 	Timer	charm_cast_timer;
 	Timer	qglobal_purge_timer;
@@ -1233,6 +1220,10 @@ private:
 
 	void InterrogateInventory_(bool errorcheck, Client* requester, int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, bool log, bool silent, bool &error, int depth);
 	bool InterrogateInventory_error(int16 head, int16 index, const ItemInst* inst, const ItemInst* parent, int depth);
+
+	void UpdateZoneChangeCount(uint32 zoneid);
+
+	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
 
 };
 

@@ -38,6 +38,7 @@
 #include "string_ids.h"
 #include "spawn2.h"
 #include "zone.h"
+#include "water_map.h"
 
 #include <cctype>
 #include <stdio.h>
@@ -270,6 +271,12 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 		SetWalkSpeed(d->walkspeed);
 	SetCombatHPRegen(d->combat_hp_regen);
 	SetCombatManaRegen(d->combat_mana_regen);
+
+	// Innate Quad attack for NPCs is merely dual wield enabled with no weapon required
+	// these two special ability flags are redundant
+	// NPCs of all classes gain the ability to dual wield two weapons starting at level 4 on Live as of 2014
+	if (GetSpecialAbility(SPECATK_INNATE_DW) || GetSpecialAbility(SPECATK_QUAD))
+		can_dual_wield = true;
 
 	InitializeBuffSlots();
 	CalcBonuses();
@@ -1823,7 +1830,7 @@ void NPC::LevelScale() {
 		STA += (int)(STA * scaling / scale_adjust);
 		AGI += (int)(AGI * scaling / scale_adjust);
 		DEX += (int)(DEX * scaling / scale_adjust);
-		if(INT > RuleI(Aggro, IntAggroThreshold))
+		if (RuleB(Aggro, UseLevelAggro) || INT > RuleI(Aggro, IntAggroThreshold))
 			INT += (int)(INT * scaling / scale_adjust);
 		WIS += (int)(WIS * scaling / scale_adjust);
 		CHA += (int)(CHA * scaling / scale_adjust);
@@ -2338,4 +2345,363 @@ int32 NPC::GetManaRegen()
 	}
 	else
 		return 0;
+}
+
+void NPC::AddPush(float heading, float magnitude)
+{
+	float headingRadians = heading;
+	headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+	if (headingRadians < 270)
+		headingRadians += 90;
+	else
+		headingRadians -= 270;
+	headingRadians = headingRadians * 3.1415f / 180.0f;
+
+	push_vector.x += cosf(headingRadians) * magnitude;
+	push_vector.y += sinf(headingRadians) * magnitude;
+}
+
+/*
+	Used by ApplyPushVector()
+	Creates two lines from p1 to p1 - pv, and hitLocation with 2nd point from a perpendicular of hitNormal
+	and finds intersection coords.  Returns magnitude of intersect point - (hitLocation - pv) vector.
+	Negative magnitude indicates the intersect point was behind p1 - pv.
+	This is needed to know where along the pushed-in-to wall the NPC stopped at.  NPCs have a 'cushion' around it
+	to prevent it from going half way into the wall, and NPC might hit a wall from the side, so the side checks
+	need this function.
+*/
+float WallIntersect(glm::vec3 &p1, glm::vec3 &pv, glm::vec3 &hitLocation, glm::vec3 &hitNormal, glm::vec3 &intersection, Mob *npc)
+{
+	float p2x = p1.x - -pv.x;
+	float p2y = p1.y + -pv.y;
+
+	float a1 = p2y - p1.y;
+	float b1 = p1.x - p2x;
+	float c1 = a1 * p1.x + b1 * p1.y;
+
+	float a2 = (hitLocation.y + (hitNormal.x)) - hitLocation.y;
+	float b2 = hitLocation.x - (hitLocation.x + -hitNormal.y);
+	float c2 = a2 * hitLocation.x + b2 * hitLocation.y;
+
+	float det = a1*b2 - a2*b1;
+	if (det == 0.0f)
+	{
+		return 0.0f;	// parallel
+	}
+
+	intersection.x = (b2*c1 - b1*c2) / det;
+	intersection.y = (a1*c2 - a2*c1) / det;
+
+	float xv = intersection.x - p2x;
+	float yv = intersection.y - p2y;
+	float mag = sqrtf(xv * xv + yv * yv);
+	float pvmag = sqrtf(pv.x * pv.x + pv.y * pv.y);
+
+	float dotp = (-pv.x / pvmag) * (xv / mag) + (pv.y / pvmag) * (yv / mag);
+
+	if (dotp > 0)
+		return mag;
+	else
+	{
+		//npc->Say("-mag in wall intersect;  dotp: %.2f;  xv: %.2f, xy: %.2f;  mag: %.2f;  pvmag: %.2f", dotp, xv, yv, mag, pvmag);
+		return -mag;
+	}
+}
+
+/*
+	This function attempts to move the NPC in the drection of push_vector.  Checks are made to prevent NPCs from
+	going into walls.  Multiple raycasts with zone geoemtry are done to prevent NPCs from going into the wall up
+	to their centerpoints.  If the NPC hits a wall, it will 'glance' it and change the direction of the vector
+	to align with the wall so mobs won't get stuck on it.
+
+	Since this is expensive, this gets called on a timer periodically instead of called for every melee hit.
+	Use AddPush() to add to the push vector.
+*/
+float NPC::ApplyPushVector(bool noglance)
+{
+	if (!zone->zonemap)
+	{
+		return 0.0f;
+	}
+
+	if (push_vector.x == 0.0f && push_vector.y == 0.0f)
+		return 0.0f;
+
+	glm::vec3 currentLoc(GetX(), GetY(), GetZ());
+	glm::vec3 newLoc(GetX(), GetY(), GetZ());
+	glm::vec3 hitLocation, hitNormal, glanceV, intersection;
+	float hitDistance;
+	float magnitude = sqrtf(push_vector.x * push_vector.x + push_vector.y * push_vector.y);
+	glm::vec2 pushUnitV(push_vector.x == 0.0f ? 0.0f : push_vector.x / magnitude,
+		push_vector.y == 0.0f ? 0.0f : push_vector.y / magnitude);
+	float sizeCushion = GetSize() / 2.0f;
+	float newz;
+
+	// where we want to be
+	newLoc.x -= push_vector.x;
+	newLoc.y += push_vector.y;
+	newLoc.z = GetZ();
+
+	/*
+	if (noglance)
+		Say("starting loc: %.2f, %.2f, %.2f  newLoc: %.2f, %.2f, %.2f (%.2f)  push mag: %.2f;  sizeCushion: %.2f",
+		currentLoc.x, currentLoc.y, currentLoc.z, newLoc.x, newLoc.y, newLoc.z, GetZ(), magnitude, sizeCushion);
+	else
+		Shout("starting loc: %.2f, %.2f, %.2f  newLoc: %.2f, %.2f, %.2f (%.2f)  push mag: %.2f;  sizeCushion: %.2f",
+		currentLoc.x, currentLoc.y, currentLoc.z, newLoc.x, newLoc.y, newLoc.z, GetZ(), magnitude, sizeCushion);
+
+	glm::vec3 down(currentLoc.x, currentLoc.y, -99999);
+	zone->zonemap->LineIntersectsZone(currentLoc, down, 0.0f, &hitLocation, &hitNormal, &hitDistance);
+	Say("curentLoc.z to floor == %.2f", hitDistance);
+	*/
+
+	bool glancing = false;
+	float glanceMag = 0.0f;
+	int wallsHit = 0;
+	glm::vec3 points[5];
+
+	// Check for walls in 5 locations: in front of NPC, both sides of NPC, and 45 degree angles, half size dist away.
+	// this prevents NPC centerpoints from colliding into the wall, burying half their model in zone geometry
+	for (int i = 0; i < 5; i++)
+	{
+		switch (i)
+		{
+		case 0:
+			points[i].x = newLoc.x - pushUnitV.x * sizeCushion;
+			points[i].y = newLoc.y + pushUnitV.y * sizeCushion;
+			points[i].z = newLoc.z;
+			break;
+
+		case 1:
+			points[i].x = newLoc.x - -pushUnitV.y * sizeCushion;
+			points[i].y = newLoc.y + pushUnitV.x * sizeCushion;
+			points[i].z = newLoc.z;
+			break;
+
+		case 2:
+			points[i].x = newLoc.x - pushUnitV.y * sizeCushion;
+			points[i].y = newLoc.y + -pushUnitV.x * sizeCushion;
+			points[i].z = newLoc.z;
+			break;
+
+		case 3:
+			points[i].x = newLoc.x - (pushUnitV.x * cosf(-3.141592f/4.0f) - pushUnitV.y * sinf(-3.141592f/4.0f)) * sizeCushion;
+			points[i].y = newLoc.y + (pushUnitV.x * sinf(-3.141592f/4.0f) + pushUnitV.y * cosf(-3.141592f/4.0f)) * sizeCushion;
+			points[i].z = newLoc.z;
+			break;
+
+		case 4:
+			points[i].x = newLoc.x - (pushUnitV.x * cosf(3.141592f / 4.0f) - pushUnitV.y * sinf(3.141592f / 4.0f)) * sizeCushion;
+			points[i].y = newLoc.y + (pushUnitV.x * sinf(3.141592f / 4.0f) + pushUnitV.y * cosf(3.141592f / 4.0f)) * sizeCushion;
+			points[i].z = newLoc.z;
+			break;
+		}
+
+		if (zone->zonemap->LineIntersectsZone(i == 0 ? currentLoc : newLoc, points[i], 0.0f, &hitLocation, &hitNormal, &hitDistance))
+		{
+			//Say("Hit Wall %i; dist: %.2f point: %.2f, %.2f; hitLoc: %.2f, %.2f, %.2f  push_vector: %.2f, %.2f; normal: %.2f, %.2f, %.2f",
+			//	i, hitDistance, points[i].x, points[i].y, hitLocation.x, hitLocation.y, hitLocation.z, push_vector.x, push_vector.y, hitNormal.x, hitNormal.y, hitNormal.z);
+
+			if (hitNormal.x != 0.0f || hitNormal.y != 0.0f)
+			{
+				// z > 0 means NPC hit an inclined floor.  z < 0 means NPC hit an inclined ceiling
+				if (hitNormal.z < 0.25f || hitDistance > 10)		// stop large pushes to inclined floors, otherwise we can see
+				{													// weird stuff like pushing through hills or walls
+					wallsHit++;
+
+					if (magnitude == 0.0f)
+					{
+						continue;
+					}
+					else if (i == 0)		// forward facing collision check
+					{
+						if (hitDistance > (sizeCushion + 0.01f))
+						{
+							// NPC isn't at the wall yet, but will be after we apply vector
+							// reduce vector magnitude to end up precisely at wall
+							float newMag = magnitude - (sizeCushion - (hitDistance - magnitude));
+							push_vector.x = pushUnitV.x * newMag;
+							push_vector.y = pushUnitV.y * newMag;
+
+							newLoc.x = currentLoc.x - push_vector.x;
+							newLoc.y = currentLoc.y + push_vector.y;
+
+							glanceMag = magnitude - newMag;
+							magnitude = newMag;
+
+							wallsHit--;
+							//Say("reducing push magnitude to match cushion dist;   newLoc: %.2f, %.2f, %.2f  push mag: %.2f", newLoc.x, newLoc.y, newLoc.z, magnitude);
+						}
+					}
+					else   // all points but the forward one
+					{
+						// do a line intersection check to figure out where NPC collides with wall
+						// at sizeCushion distance from centerpoint
+
+						if (hitNormal.z != 0.0f)
+						{
+							// 'rotate' by extending the x and y to a 2d unit vector
+							float normal2dMag = sqrt(hitNormal.x * hitNormal.x + hitNormal.y * hitNormal.y);
+							hitNormal.x /= normal2dMag;
+							hitNormal.y /= normal2dMag;
+							hitNormal.z = 0.0f;
+						}
+
+						float pushVhitNormDotp = hitNormal.x * -pushUnitV.x + hitNormal.y * pushUnitV.y;
+
+						// dotp of >= 0.0f means we are pushing away from the wall we hit
+						if (pushVhitNormDotp < 0.0f)
+						{
+							// pushing toward wall
+
+							float mag = WallIntersect(points[i], push_vector, hitLocation, hitNormal, intersection, this);
+
+							if (mag < magnitude && mag > 0.0f)
+							{
+								// NPC was pushed into wall; set newLoc to stop at the wall
+
+								push_vector.x = pushUnitV.x * mag;
+								push_vector.y = pushUnitV.y * mag;
+
+								newLoc.x = currentLoc.x - push_vector.x;
+								newLoc.y = currentLoc.y + push_vector.y;
+
+								glanceMag = magnitude - mag;
+								magnitude = mag;
+
+								//Say("side collision mid-push; xy: %.2f, %.2f;  new push vector: %.2f, %.2f   pushv magnitude: %.2f;  pushVhitNormDotp: %.2f",
+								//	intersection.x, intersection.y, push_vector.x, push_vector.y, magnitude, pushVhitNormDotp);
+								wallsHit--;
+							}
+							else if (mag < 0.0f)
+							{
+								// -mag means line intersection is in opposite direction of push vector
+								// indicating that NPC is likely already at the wall and closer than cushion dist
+								newLoc.x = currentLoc.x;
+								newLoc.y = currentLoc.y;
+								//Say("side collision behind currentLoc; x: %.2f  y: %.2f  mag: %.2f;  pushVhitNormDotp: %.2f", 
+								//	intersection.x, intersection.y, mag, pushVhitNormDotp);
+							}
+							else if (mag == 0.0f)
+							{
+								// collision with wall is precisely at 0 push magnitude, or lines are parallel
+								newLoc.x = currentLoc.x;
+								newLoc.y = currentLoc.y;
+								//Say("side collision mag == 0.0f;  intersect: %.2f, %.2f;  pushVhitNormDotp: %.2f", intersection.x, intersection.y, pushVhitNormDotp);
+							}
+						}
+						else
+						{
+							// if pushing away from the wall, don't count it as a hit
+							/*
+							if (pushVhitNormDotp == 0.0f)
+								Say("wall is parallel to push vector");
+							else
+								Say("pushing away from a wall I am touching; dotp: %.2f;  pushUnitV: %.2f, %.2f;  wall normal: %.2f, %.2f", 
+								pushVhitNormDotp, pushUnitV.x, pushUnitV.y, hitNormal.x, hitNormal.y);
+							*/
+							wallsHit--;
+							continue;
+						}
+					}
+
+					if (!glancing && !noglance)
+					{
+						// create glancing vector
+
+						if (hitNormal.z != 0.0f)
+						{
+							// 'rotate' by extending the x and y to a 2d unit vector
+							float normal2dMag = sqrt(hitNormal.x * hitNormal.x + hitNormal.y * hitNormal.y);
+							hitNormal.x /= normal2dMag;
+							hitNormal.y /= normal2dMag;
+							hitNormal.z = 0.0f;
+						}
+
+						// angle between wall normal and push vector
+						float hitNormalDotp = hitNormal.x * -pushUnitV.x + hitNormal.y * pushUnitV.y;
+
+						// create perpendicular vector of wall normal
+						float perpNormalX = -hitNormal.y;
+						float perpNormalY = hitNormal.x;
+
+						float perpDotp = perpNormalX * -pushUnitV.x + perpNormalY * pushUnitV.y;
+
+						// two possible perpendicular vectors; figure out which one to use
+						if (perpDotp < 0.0f)
+						{
+							perpNormalX = -perpNormalX;
+							perpNormalY = -perpNormalY;
+						}
+
+						if (glanceMag == 0.0f)
+							glanceMag = magnitude;
+
+						// reduce push magnitude the more the push vector is perpendicular to wall
+						glanceV.x = -perpNormalX * glanceMag * (1.0f + hitNormalDotp);		// hitNormalDotp should be -1 to 0
+						glanceV.y = perpNormalY * glanceMag * (1.0f + hitNormalDotp);
+
+						glancing = true;
+						//Say("Glancing the wall; glanceMag: %.3f, push mag: %.3f  perpNormal: %.3f, %.3f  hitNormal %.3f, %.3f  hitNormalDotp: %.3f  glanceV: %.3f, %.3f",
+						//	glanceMag, (glanceMag * (1.0f + hitNormalDotp)), perpNormalX, perpNormalY, hitNormal.x, hitNormal.y, hitNormalDotp, glanceV.x, glanceV.y);
+					}
+
+				}  // if (hitNormal.z < 0.25f)
+				else
+				{
+					//Say("hit inclined wall %i", i);
+					if (i == 0 && hitNormal.z > 0.0f && magnitude < 10)
+						newLoc.z += hitNormal.z * magnitude;
+
+				}
+			}  // if (hitNormal.x != 0.0f || hitNormal.y != 0.0f)
+			/*else
+			{
+				Shout("Error: hitNormal x and y both 0");
+			}*/
+		}
+
+	}
+
+	float pushedDist = 0.0f;
+
+	if (wallsHit == 0 && (newLoc.x != currentLoc.x || newLoc.y != currentLoc.y))
+	{
+		if (!IsUnderwaterOnly() && (!zone->watermap || !zone->watermap->InLiquid(newLoc)))
+		{
+			newz = zone->zonemap->FindClosestZ(newLoc, nullptr);
+			if (newz != BEST_Z_INVALID)
+				newLoc.z = SetBestZ(newz);
+		}
+
+		if (!zone->zonemap->LineIntersectsZone(currentLoc, newLoc, 0.0f, &hitLocation, nullptr, &hitDistance))
+		{
+			m_Position.x = newLoc.x;
+			m_Position.y = newLoc.y;
+			m_Position.z = newLoc.z;
+			pushedDist += magnitude;
+
+			SendPosition();
+
+			//Say(" -- Setting position to: %.2f, %.2f, %.2f; push magnitude: %.3f", newLoc.x, newLoc.y, newLoc.z, magnitude);
+		}
+		/*else
+		{
+			Shout(" --- No LOS to newLoc from currentLoc; hitDist: %.2f  newLoc: %.2f, %.2f, %.2f  hitLoc: %.2f, %.2f, %.2f  mag: %.2f",
+				hitDistance, newLoc.x, newLoc.y, newLoc.z, hitLocation.x, hitLocation.y, hitLocation.z, magnitude);
+		}*/
+	}
+
+	push_vector.x = 0.0f;
+	push_vector.y = 0.0f;
+	push_vector.z = 0.0f;
+
+	if (glancing)
+	{
+		push_vector.x = glanceV.x;
+		push_vector.y = glanceV.y;
+		pushedDist += ApplyPushVector(true);
+	}
+
+	return pushedDist;
 }

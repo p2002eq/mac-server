@@ -1310,18 +1310,9 @@ void Client::ResetAA(){
 	for (itr = aa_points.begin(); itr != aa_points.end(); ++itr)
 		aa_points[itr->first] = 0;
 
-	for (int i = 0; i < _maxLeaderAA; ++i)
-		m_pp.leader_abilities.ranks[i] = 0;
-
-	m_pp.group_leadership_points = 0;
-	m_pp.raid_leadership_points = 0;
-	m_pp.group_leadership_exp = 0;
-	m_pp.raid_leadership_exp = 0;
-
 	database.DeleteCharacterAAs(this->CharacterID());
 	SaveAA();
 	SendAATable();
-	database.DeleteCharacterLeadershipAAs(this->CharacterID());
 	Kick();
 }
 
@@ -1460,7 +1451,7 @@ uint32 ZoneDatabase::CountAAs(){
 
 	auto row = results.begin();
 
-	return atoi(row[0]);;
+	return atoi(row[0]);
 }
 
 uint32 ZoneDatabase::CountAAEffects() {

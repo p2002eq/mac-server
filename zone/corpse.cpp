@@ -110,6 +110,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 		pcs->gmexp,			   // uint32 in_gmrezexp
 		pcs->killedby,		   // uint8 in_killedby
 		pcs->rezzable,		   // bool rezzable
+		pcs->rez_time,		   // uint32 rez_time
 		was_at_graveyard	   // bool wasAtGraveyard
 	);
 	if (pcs->locked){
@@ -329,11 +330,13 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	platinum		= 0;
 	killedby		= in_killedby;
 	rezzable		= true;
+	rez_time		= 0;
+	is_owner_online = false; // We can't assume they are online just because they just died. Perhaps they rage smashed their router.
 
-	if(killedby == Killed_DUEL)
-	{
-		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
-	}
+	owner_online_timer.SetTimer(RuleI(Character, CorpseOwnerOnlineTimeMS));
+
+	corpse_rez_timer.Disable();
+	SetRezTimer(true);
 
 	strcpy(corpse_name, pp->name);
 	strcpy(name, pp->name);
@@ -392,15 +395,9 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 			database.QueryDatabase(ss.str().c_str());
 		}
 
-		if (cursor) { // all cursor items should be on corpse (client < SoF or RespawnFromHover = false)
-			while (!client->GetInv().CursorEmpty())
-				client->DeleteItemInInventory(MainCursor, 0, false, false);
-		}
-		else { // only visible cursor made it to corpse (client >= Sof and RespawnFromHover = true)
-			std::list<ItemInst*>::const_iterator start = client->GetInv().cursor_begin();
-			std::list<ItemInst*>::const_iterator finish = client->GetInv().cursor_end();
-			database.SaveCursor(client->CharacterID(), start, finish);
-		}
+		auto start = client->GetInv().cursor_cbegin();
+		auto finish = client->GetInv().cursor_cend();
+		database.SaveCursor(client->CharacterID(), start, finish);
 
 		client->CalcBonuses(); // will only affect offline profile viewing of dead characters..unneeded overhead
 		client->Save();
@@ -452,7 +449,7 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 
 /* Called from Database Load */
 
-Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool in_rezzable, bool wasAtGraveyard)
+Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool in_rezzable, uint32 in_rez_time, bool wasAtGraveyard)
 	: Mob("Unnamed_Corpse", // const char* in_name,
 	"",						// const char* in_lastname,
 	0,						// int32		in_cur_hp,
@@ -540,15 +537,13 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	gm_rez_experience = in_gmrezexp;
 	killedby = in_killedby;
 	rezzable = in_rezzable;
+	rez_time = in_rez_time;
+	is_owner_online = false;
 
-	if (rezzable && killedby == Killed_DUEL)
-	{
-		corpse_rez_timer.SetTimer(RuleI(Character, DuelCorpseResTimeMS));
-	}
-	else if (!rezzable)
-	{
-		corpse_rez_timer.Disable();
-	}
+	owner_online_timer.SetTimer(RuleI(Character, CorpseOwnerOnlineTimeMS));
+
+	corpse_rez_timer.Disable();
+	SetRezTimer();
 
 	for (int i = 0; i < MAX_LOOTERS; i++){
 		allowed_looters[i] = 0;
@@ -620,6 +615,7 @@ bool Corpse::Save() {
 	dbpc->gmexp = gm_rez_experience;
 	dbpc->killedby = killedby;
 	dbpc->rezzable = rezzable;
+	dbpc->rez_time = rez_time;
 
 	memcpy(dbpc->item_tint, item_tint, sizeof(dbpc->item_tint));
 	dbpc->haircolor = haircolor;
@@ -823,6 +819,11 @@ bool Corpse::Process() {
 		return false;
 	}
 
+	if(owner_online_timer.Check() || rezzable) 
+	{
+		IsOwnerOnline();
+	}
+
 	if (corpse_delay_timer.Check()) {
 		for (int i = 0; i < MAX_LOOTERS; i++){
 			allowed_looters[i] = 0;
@@ -844,7 +845,7 @@ bool Corpse::Process() {
 			spc->zone_id = zone->graveyard_zoneid();
 			worldserver.SendPacket(pack);
 			safe_delete(pack);
-			Log.Out(Logs::General, Logs::None, "Moved %s player corpse to the designated graveyard in zone %s.", this->GetName(), database.GetZoneName(zone->graveyard_zoneid()));
+			Log.Out(Logs::General, Logs::Corpse, "Moved %s player corpse to the designated graveyard in zone %s.", this->GetName(), database.GetZoneName(zone->graveyard_zoneid()));
 			corpse_db_id = 0;
 		}
 
@@ -852,14 +853,34 @@ bool Corpse::Process() {
 		return false;
 	}
 
+	//Player is offline. If rez timer is enabled, disable it and save corpse.
+	if(!is_owner_online && rezzable)
+	{
+		if(corpse_rez_timer.Enabled())
+		{
+			rez_time = corpse_rez_timer.GetRemainingTime();
+			corpse_rez_timer.Disable();
+			is_corpse_changed = true;
+			Save();
+		}
+	}
+	//Player is online. If rez timer is disabled, enable it.
+	else if(is_owner_online && rezzable)
+	{
+		if(corpse_rez_timer.Enabled())
+		{
+			rez_time = corpse_rez_timer.GetRemainingTime();
+		}
+		else
+		{
+			SetRezTimer();
+		}
+	}
+
 	if(corpse_rez_timer.Check()) 
 	{
-		rezzable = false;
-		IsRezzed(true);
-		CompleteResurrection();
-		database.MarkCorpseAsRezzed(this->GetCorpseDBID());
-		corpse_rez_timer.Disable();
-	}
+		CompleteResurrection(true);
+	}	
 
 	/* This is when a corpse hits decay timer and does checks*/
 	if (corpse_decay_timer.Check()) {
@@ -877,7 +898,7 @@ bool Corpse::Process() {
 				Save();
 				player_corpse_depop = true;
 				corpse_db_id = 0;
-				Log.Out(Logs::General, Logs::None, "Tagged %s player corpse has burried.", this->GetName());
+				Log.Out(Logs::General, Logs::Corpse, "Tagged %s player corpse has burried.", this->GetName());
 			}
 			else {
 				Log.Out(Logs::General, Logs::Error, "Unable to bury %s player corpse.", this->GetName());
@@ -1087,7 +1108,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 				for (; cur != end; ++cur) {
 					ServerLootItem_Struct* item_data = *cur;
 					item = database.GetItem(item_data->item_id);
-					Log.Out(Logs::General, Logs::None, "Corpse Looting: %s was not sent to client loot window (corpse_dbid: %i, charname: %s(%s))", item->Name, GetCorpseDBID(), client->GetName(), client->GetGM() ? "GM" : "Owner");
+					Log.Out(Logs::General, Logs::Corpse, "Corpse Looting: %s was not sent to client loot window (corpse_dbid: %i, charname: %s(%s))", item->Name, GetCorpseDBID(), client->GetName(), client->GetGM() ? "GM" : "Owner");
 					client->Message(0, "Inaccessable Corpse Item: %s", item->Name);
 				}
 			}
@@ -1393,7 +1414,20 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 	return true;
 }
 
-void Corpse::CompleteResurrection(){
+void Corpse::CompleteResurrection(bool timer_expired)
+{
+	if(timer_expired)
+	{
+		rez_time = 0;
+		rezzable = false; // Players can no longer rez this corpse.
+		corpse_rez_timer.Disable();
+	}
+	else
+	{
+		rez_time = corpse_rez_timer.GetRemainingTime();
+	}
+
+	IsRezzed(true); // Players can rez this corpse for no XP (corpse gate) provided rezzable is true.
 	rez_experience = 0;
 	is_corpse_changed = true;
 	this->Save();
@@ -1508,5 +1542,73 @@ void Corpse::LoadPlayerCorpseDecayTime(uint32 corpse_db_id, bool empty){
 	}
 	else {
 		corpse_graveyard_timer.SetTimer(3000);
+	}
+}
+
+void Corpse::SetRezTimer(bool initial_timer)
+{
+
+	if(!rezzable)
+	{
+		if(corpse_rez_timer.Enabled())
+			corpse_rez_timer.Disable();
+
+		return;
+	}
+
+	IsOwnerOnline();
+	if(!is_owner_online && !initial_timer)
+	{
+		if(corpse_rez_timer.Enabled())
+			corpse_rez_timer.Disable();
+
+		return;
+    }
+
+	if(corpse_rez_timer.Enabled() && !initial_timer)
+	{
+		return;
+	}
+
+	if(initial_timer)
+	{
+		uint32 timer = RuleI(Character, CorpseResTimeMS);
+		if(killedby == Killed_DUEL)
+		{
+			timer = RuleI(Character, DuelCorpseResTimeMS);
+		}
+	
+		rez_time = timer;
+	}
+
+	if(rez_time < 1)
+	{
+		// Corpse is no longer rezzable
+		CompleteResurrection(true);
+		return;
+	}
+
+	corpse_rez_timer.SetTimer(rez_time);
+
+}
+
+void Corpse::IsOwnerOnline()
+{
+	Client* client = entity_list.GetClientByCharID(GetCharID());
+
+	if(!client)
+	{
+		// Client is not in the corpse's zone, send a packet to world to have it check.
+		ServerPacket* pack = new ServerPacket(ServerOP_IsOwnerOnline, sizeof(ServerIsOwnerOnline_Struct));
+		ServerIsOwnerOnline_Struct* online = (ServerIsOwnerOnline_Struct*)pack->pBuffer;
+		strncpy(online->name, GetOwnerName(), 64);
+		online->corpseid = this->GetID();
+		online->zoneid = zone->GetZoneID();
+		online->online = 0;
+		worldserver.SendPacket(pack);
+	}
+	else
+	{
+		SetOwnerOnline(true);
 	}
 }

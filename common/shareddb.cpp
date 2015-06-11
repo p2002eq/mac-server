@@ -111,8 +111,10 @@ bool SharedDatabase::SaveCursor(uint32 char_id, std::list<ItemInst*>::const_iter
     int i = 8000;
     for(auto it = start; it != end; ++it, i++) {
         ItemInst *inst = *it;
-        if (!SaveInventory(char_id,inst,(i == 8000) ? MainCursor : i))
-            return false;
+		int16 use_slot = (i == 8000) ? MainCursor : i;
+		if (!SaveInventory(char_id, inst, use_slot)) {
+			return false;
+		}
     }
 	return true;
 }
@@ -191,6 +193,7 @@ bool SharedDatabase::UpdateInventorySlot(uint32 char_id, const ItemInst* inst, i
 
 bool SharedDatabase::UpdateSharedBankSlot(uint32 char_id, const ItemInst* inst, int16 slot_id)
 {
+	// need to check 'inst' argument for valid pointer
 
 // Update/Insert item
     uint32 account_id = GetAccountIDByChar(char_id);
@@ -208,11 +211,12 @@ bool SharedDatabase::UpdateSharedBankSlot(uint32 char_id, const ItemInst* inst, 
     auto results = QueryDatabase(query);
 
     // Save bag contents, if slot supports bag contents
-	if (inst && inst->IsType(ItemClassContainer) && Inventory::SupportsContainers(slot_id))
+	if (inst->IsType(ItemClassContainer) && Inventory::SupportsContainers(slot_id)) {
 		for (uint8 idx = SUB_BEGIN; idx < EmuConstants::ITEM_CONTAINER_SIZE; idx++) {
 			const ItemInst* baginst = inst->GetItem(idx);
 			SaveInventory(char_id, baginst, Inventory::CalcSlotId(slot_id, idx));
 		}
+	}
 
     if (!results.Success()) {
         return false;
@@ -445,6 +449,9 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 
         ItemInst* inst = CreateBaseItem(item, charges);
 
+		if (inst == nullptr)
+			continue;
+
         if(row[5]) {
             std::string data_str(row[5]);
             std::string idAsString;
@@ -530,6 +537,10 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
             continue;
 
         ItemInst* inst = CreateBaseItem(item, charges);
+
+		if (inst == nullptr)
+			continue;
+
         inst->SetInstNoDrop(instnodrop);
 
         if(row[5]) {
@@ -1031,9 +1042,16 @@ ItemInst* SharedDatabase::CreateItem(uint32 item_id, int16 charges)
 {
 	const Item_Struct* item = nullptr;
 	ItemInst* inst = nullptr;
+
 	item = GetItem(item_id);
 	if (item) {
 		inst = CreateBaseItem(item, charges);
+
+		if (inst == nullptr) {
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
+			return nullptr;
+		}
 	}
 
 	return inst;
@@ -1046,6 +1064,12 @@ ItemInst* SharedDatabase::CreateItem(const Item_Struct* item, int16 charges)
 	ItemInst* inst = nullptr;
 	if (item) {
 		inst = CreateBaseItem(item, charges);
+
+		if (inst == nullptr) {
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
+			return nullptr;
+		}
 	}
 
 	return inst;
@@ -1060,6 +1084,12 @@ ItemInst* SharedDatabase::CreateBaseItem(const Item_Struct* item, int16 charges)
 			charges = 1;
 
 		inst = new ItemInst(item, charges);
+
+		if (inst == nullptr) {
+			Log.Out(Logs::General, Logs::Error, "Error: valid item data returned a null reference for ItemInst creation in SharedDatabase::CreateBaseItem()");
+			Log.Out(Logs::General, Logs::Error, "Item Data = ID: %u, Name: %s, Charges: %i", item->ID, item->Name, charges);
+			return nullptr;
+		}
 
 		if(item->CharmFileID != 0 || (item->LoreGroup >= 1000 && item->LoreGroup != -1)) {
 			inst->Initialize(this);
@@ -1384,7 +1414,7 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 		sp[tempid].targettype = (SpellTargetType) atoi(row[98]);
 		sp[tempid].basediff=atoi(row[99]);
 
-		int tmp_skill = atoi(row[100]);;
+		int tmp_skill = atoi(row[100]);
 
 		if(tmp_skill < 0 || tmp_skill > HIGHEST_SKILL)
             sp[tempid].skill = SkillBegging; /* not much better we can do. */ // can probably be changed to client-based 'SkillNone' once activated

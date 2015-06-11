@@ -162,7 +162,6 @@ int command_init(void){
 		command_add("bind", "- Sets your targets bind spot to their current location.", 81, command_bind) ||
 		command_add("bug", "- Bug report system. Encase your bug in quotes. Type: #bug <quote>I have a bug</quote>.", 90, command_bug) ||
 
-		command_add("camerashake", "Shakes the camera on everyone's screen globally.", 255, command_camerashake) ||
 		command_add("cast", nullptr, 160, command_castspell) ||
 		command_add("castspell", "[spellid] - Cast a spell.", 160, command_castspell) ||
 		command_add("chat", "[channel num] [message] - Send a channel message to all zones.", 90, command_chat) ||
@@ -431,7 +430,7 @@ int command_init(void){
 		command_add("viewnpctype", "[npctype id] - Show info about an npctype.", 95, command_viewnpctype) ||
 
 		command_add("wc", "[wear slot] [material] - Sends an OP_WearChange for your target.", 250, command_wc) ||
-		command_add("weather", "[0/1/2/3] (Off/Rain/Snow/Manual) - Change the weather.", 160, command_weather) ||
+		command_add("weather", "[0/1/2] (Off/Rain/Snow) [1-3] (intensity) - Change the weather.", 160, command_weather) ||
 		command_add("worldshutdown", "- Shut down world and all zones.", 250, command_worldshutdown) ||
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid.", 250, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path.", 250, command_wpadd) ||
@@ -1931,68 +1930,61 @@ void command_permagender(Client *c, const Seperator *sep){
 	}
 }
 
-void command_weather(Client *c, const Seperator *sep){
-	if (!(sep->arg[1][0] == '0' || sep->arg[1][0] == '1' || sep->arg[1][0] == '2' || sep->arg[1][0] == '3')) {
-		c->Message(0, "Usage: #weather <0/1/2/3> - Off/Rain/Snow/Manual.");
+void command_weather(Client *c, const Seperator *sep)
+{
+	if (!(sep->arg[1][0] == '0' || sep->arg[1][0] == '1' || sep->arg[1][0] == '2')) 
+	{
+		c->Message(0, "Usage: #weather <0/1/2> - Off/Rain/Snow <1-3> - intensity");
 	}
-	else if (zone->zone_weather == 0) {
-		if (sep->arg[1][0] == '3')	{ // Put in modifications here because it had a very good chance at screwing up the client's weather system if rain was sent during snow -T7
-			if (sep->arg[2][0] != 0 && sep->arg[3][0] != 0) {
-				c->Message(0, "Sending weather packet... TYPE=%s, INTENSITY=%s", sep->arg[2], sep->arg[3]);
-				zone->zone_weather = atoi(sep->arg[2]);
-				EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-				outapp->pBuffer[0] = atoi(sep->arg[2]);
-				outapp->pBuffer[4] = atoi(sep->arg[3]); // This number changes in the packets, intensity?
-				entity_list.QueueClients(c, outapp);
-				safe_delete(outapp);
-			}
-			else {
-				c->Message(0, "Manual Usage: #weather 3 <type> <intensity>");
-			}
-		}
-		else if (sep->arg[1][0] == '2')	{
-			entity_list.Message(0, 0, "Snowflakes begin to fall from the sky.");
+
+	//Turn off weather
+	if(sep->arg[1][0] == '0')
+	{
+		c->Message(CC_Yellow, "Turning off weather.");
+		zone->zone_weather = 0;
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
+		Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+		ws->type = 0;
+		ws->intensity = 0;
+		entity_list.QueueClients(c, outapp);
+		safe_delete(outapp);
+	}
+	if(zone->zone_weather == 0)
+	{
+		uint8 intensity = 3;
+		if(sep->IsNumber(2) && sep->arg[2][0] != 0)
+			intensity = atoi(sep->arg[2]);
+
+		// Snow
+		if (sep->arg[1][0] == '2')	
+		{
+			c->Message(CC_Yellow, "Changing weather to snow.");
 			zone->zone_weather = 2;
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-			outapp->pBuffer[0] = 0x01;
-			outapp->pBuffer[4] = 0x02; // This number changes in the packets, intensity?
+			Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+			ws->type = 1;
+			ws->intensity = intensity;
 			entity_list.QueueClients(c, outapp);
 			safe_delete(outapp);
 		}
-		else if (sep->arg[1][0] == '1')	{
-			entity_list.Message(0, 0, "Raindrops begin to fall from the sky.");
+		// Rain
+		else if (sep->arg[1][0] == '1')	
+		{
+			c->Message(CC_Yellow, "Changing weather to rain.");
 			zone->zone_weather = 1;
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-			outapp->pBuffer[4] = 0x01; // This is how it's done in Fear, and you can see a decent distance with it at this value
+			Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+			ws->type = 0;
+			ws->intensity = intensity;
 			entity_list.QueueClients(c, outapp);
 			safe_delete(outapp);
 		}
 	}
-	else {
-		if (zone->zone_weather == 1)	{ // Doing this because if you have rain/snow on, you can only turn one off.
-			entity_list.Message(0, 0, "The sky clears as the rain ceases to fall.");
-			zone->zone_weather = 0;
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-			// To shutoff weather you send an empty 8 byte packet (You get this everytime you zone even if the sky is clear)
-			entity_list.QueueClients(c, outapp);
-			safe_delete(outapp);
-		}
-		else if (zone->zone_weather == 2) {
-			entity_list.Message(0, 0, "The sky clears as the snow stops falling.");
-			zone->zone_weather = 0;
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-			// To shutoff weather you send an empty 8 byte packet (You get this everytime you zone even if the sky is clear)
-			outapp->pBuffer[0] = 0x01; // Snow has it's own shutoff packet
-			entity_list.QueueClients(c, outapp);
-			safe_delete(outapp);
-		}
-		else {
-			entity_list.Message(0, 0, "The sky clears.");
-			zone->zone_weather = 0;
-			EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
-			// To shutoff weather you send an empty 8 byte packet (You get this everytime you zone even if the sky is clear)
-			entity_list.QueueClients(c, outapp);
-			safe_delete(outapp);
+	else
+	{
+		if(sep->arg[1][0] != '0')
+		{
+			c->Message(CC_Yellow, "You cannot change from one type of weather to another without first stopping it.");
 		}
 	}
 }
@@ -2883,13 +2875,13 @@ void command_peekinv(Client *c, const Seperator *sep){
 	if (bAll || (strcasecmp(sep->arg[1], "cursor") == 0)) {
 		// Personal inventory items
 		bFound = true;
-		iter_queue it;
+		std::list<ItemInst*>::const_iterator it;
 		int i = 0;
 
 		if (client->GetInv().CursorEmpty()) { // Display 'front' cursor slot even if 'empty' (item(30[0]) == null)
 		}
 		else {
-			for (it = client->GetInv().cursor_begin(); it != client->GetInv().cursor_end(); ++it, i++) {
+			for (auto it = client->GetInv().cursor_cbegin(); it != client->GetInv().cursor_cend(); ++it, i++) {
 				const ItemInst* inst = *it;
 				item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
@@ -10122,27 +10114,6 @@ void command_reloadworldrules(Client *c, const Seperator *sep){
 	}
 }
 
-void command_camerashake(Client *c, const Seperator *sep){
-	if (c)
-	{
-		if (sep->arg[1][0] && sep->arg[2][0])
-		{
-			ServerPacket *pack = new ServerPacket(ServerOP_CameraShake, sizeof(ServerCameraShake_Struct));
-			memset(pack->pBuffer, 0, sizeof(pack->pBuffer));
-			ServerCameraShake_Struct* scss = (ServerCameraShake_Struct*)pack->pBuffer;
-			scss->duration = atoi(sep->arg[1]);
-			scss->intensity = atoi(sep->arg[2]);
-			worldserver.SendPacket(pack);
-			c->Message(CC_Red, "Successfully sent the packet to world! Shake it, world, shake it!");
-			safe_delete(pack);
-		}
-		else {
-			c->Message(CC_Red, "Usage -- #camerashake [duration], [intensity [1-10])");
-		}
-	}
-	return;
-}
-
 void command_qtest(Client *c, const Seperator *sep){
 
 
@@ -10223,7 +10194,7 @@ void command_mysql(Client *c, const Seperator *sep)
 				//split lines that could overflow the buffer in Client::Message and get cut off
 				//This will crash MQ2 @ 4000 since their internal buffer is only 2048.
 				//Reducing it to 2000 fixes that but splits more results from tables with a lot of columns.
-				if (lineText.str().length() > 4000) {
+				if (lineText.str().length() > 2600) {
 					lineVec.push_back(lineText.str());
 					lineText.str("");
 				}
@@ -10594,9 +10565,19 @@ void command_push(Client *c, const Seperator *sep){
 		}
 		else
 		{
-			if(t->CombatPush(c, pushback))
+			if (t->IsNPC())
 			{
-				success = true;	
+				t->CastToNPC()->AddPush(c->GetHeading(), pushback);
+				pushback = t->CastToNPC()->ApplyPushVector();
+				if (pushback > 0.0f)
+					success = true;
+			}
+			else
+			{
+				if(t->CombatPush(c, pushback))
+				{
+					success = true;	
+				}
 			}
 		}
 

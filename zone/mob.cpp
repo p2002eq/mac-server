@@ -138,6 +138,12 @@ Mob::Mob(const char* in_name,
 	size		= in_size;
 	base_size	= in_size;
 	runspeed	= in_runspeed;
+	current_speed = 0.0f;
+
+	float mysize = in_size;
+	if(mysize > RuleR(Map, BestZSizeMax))
+		mysize = RuleR(Map, BestZSizeMax);
+	z_offset = RuleR(Map, BestZMultiplier) * mysize;
 
 
 	// sanity check
@@ -1119,8 +1125,6 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	UpdateActiveLight();
 	ns->spawn.light		= m_Light.Type.Active;
 
-	ns->spawn.showhelm = 1;
-
 	if(IsNPC())
 		ns->spawn.invis		= (invisible || hidden || !trackable) ? 1 : 0;
 	else
@@ -1335,13 +1339,16 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
+				if (HasOwner())
+					move_tic_count = 0;
+				else
+					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
 				safe_delete(app2);
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1371,7 +1378,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
 		}
 		else
 		{
@@ -1383,7 +1390,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1478,7 +1485,7 @@ void Mob::ShowStats(Client* client)
 	}
 	else if (IsCorpse()) {
 		if (IsPlayerCorpse()) {
-			client->Message(0, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy());
+			client->Message(0, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i Rez Time: %d Owner Online: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy(), CastToCorpse()->GetRemainingRezTime(), CastToCorpse()->GetOwnerOnline());
 		}
 		else {
 			client->Message(0, "  NPCCorpse", GetID());
@@ -1507,7 +1514,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  Attack Speed: %i Accuracy: %i LootTable: %u SpellsID: %u MerchantID: %i", n->GetAttackTimer(), n->GetAccuracyRating(), n->GetLoottableID(), n->GetNPCSpellsID(), n->MerchantType);
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
-			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture());
+			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
 			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
@@ -1812,59 +1819,6 @@ void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool i
 	safe_delete(outapp);
 }
 
-void Mob::SendTargetable(bool on, Client *specific_target) {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Untargetable, sizeof(Untargetable_Struct));
-	Untargetable_Struct *ut = (Untargetable_Struct*)outapp->pBuffer;
-	ut->id = GetID();
-	ut->targetable_flag = on == true ? 1 : 0;
-
-	if(specific_target == nullptr) {
-		entity_list.QueueClients(this, outapp);
-	}
-	else if (specific_target->IsClient()) {
-		specific_target->CastToClient()->QueuePacket(outapp, false);
-	}
-	safe_delete(outapp);
-}
-
-void Mob::SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide, uint32 unk020, bool perm_effect, Client *c) {
-
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpellEffect, sizeof(SpellEffect_Struct));
-	SpellEffect_Struct* se = (SpellEffect_Struct*) outapp->pBuffer;
-	se->EffectID = effectid;	// ID of the Particle Effect
-	se->EntityID = GetID();
-	se->EntityID2 = GetID();	// EntityID again
-	se->Duration = duration;	// In Milliseconds
-	se->FinishDelay = finish_delay;	// Seen 0
-	se->Unknown020 = unk020;	// Seen 3000
-	se->Unknown024 = 1;		// Seen 1 for SoD
-	se->Unknown025 = 1;		// Seen 1 for Live
-	se->Unknown026 = 0;		// Seen 1157
-
-	if(c)
-		c->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
-	else if(zone_wide)
-		entity_list.QueueClients(this, outapp, false, false);
-	else
-		entity_list.QueueCloseClients(this, outapp, false, 200.0f, 0, false);
-
-	safe_delete(outapp);
-
-	if (perm_effect) {
-		if(!IsNimbusEffectActive(effectid)) {
-			SetNimbusEffect(effectid);
-		}
-	}
-
-}
-
-void Mob::SetTargetable(bool on) {
-	if(m_targetable != on) {
-		m_targetable = on;
-		SendTargetable(on);
-	}
-}
-
 const int32& Mob::SetMana(int32 amount)
 {
 	CalcMaxMana();
@@ -1927,6 +1881,7 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	//End of Size Code
 	this->size = in_size;
 	uint32 newsize = floor(in_size + 0.5);
+	this->z_offset = CalcZOffset();
 	SendAppearancePacket(AT_Size, newsize);
 }
 
@@ -5226,63 +5181,123 @@ uint32 Mob::GetClassStringID() {
 	}
 }
 
-// Double attack chances based on this data: http://www.eqemulator.org/forums/showthread.php?t=38708
+// Double attack and dual wield chances based on this data: http://www.eqemulator.org/forums/showthread.php?t=38708
 uint8 Mob::DoubleAttackChance()
 {
 
 	uint8 level = GetLevel();
 
-	if (level > 59) {
+	if (!IsPet() || !GetOwner())
+	{
+		if (level > 59)
 		return (level - 59) / 4 + 61;
-    }
-	else if (level > 50) {
-		return 61;
-    }
-	else if (level > 35) {
-		return (level - 35) / 2 + 44;
-    }
-	else if (level < 6) {
-		return 0;
-    }
-    return level;
+	
+		else if (level > 50)
+			return 61;
+
+		else if (level > 35)
+			return (level - 35) / 2 + 44;
+
+		else if (level < 6)
+			return 0;
+
+		else return level;
+	}
+	else
+	{
+		// beastlord and shaman pets have different double attack and dual wield rates
+		if (GetOwner()->GetClass() == BEASTLORD || GetOwner()->GetClass() == SHAMAN)
+		{
+			if (level < 36)
+				return level;
+			else if (level < 42)
+				return level * 1.2f;
+			else
+				return 48 + (level - 41) / 4;
+		}
+		else
+		{
+			if (level > 45)
+				return (level - 45) / 4 + 53;
+			else
+				return level * 1.2f;
+		}
+	}
+
 }
 
-void Mob::Disarm()
+uint8 Mob::DualWieldChance()
+{
+	if (!IsPet() || !GetOwner())
+	{
+		return DoubleAttackChance() * 1.333f;
+	}
+	else
+	{
+		// dual wield chance is always about 1 and 1/3 times double attack chance except for these low level pets
+		if (GetOwner()->GetClass() == BEASTLORD || GetOwner()->GetClass() == SHAMAN)
+		{
+			if (GetLevel() > 35)
+				return DoubleAttackChance() * 1.333f;
+			else if (GetLevel() < 25)
+				return 0;
+			else
+				return (GetLevel() - 20) * 2;
+		}
+		else
+		{
+			return DoubleAttackChance() * 1.333f;
+		}
+	}
+}
+
+bool Mob::Disarm()
 {
 	if(this->IsNPC())
 	{
-		CastToNPC()->SetPrimSkill(SkillHandtoHand);
-
 		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
 		if(weapon)
 		{
 			uint16 weaponid = weapon->item_id;
 			const ItemInst* inst = database.CreateItem(weaponid);
-			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-			if(inst->GetItem()->NoDrop == 0 || inst->GetItem()->Magic)
+
+			if (inst->GetItem()->Magic)
 			{
-				const Item_Struct* item = inst->GetItem();
-				int8 charges = item->MaxCharges;
-				CastToNPC()->AddLootDrop(item,&CastToNPC()->itemlist,charges,1,127,false,true);
+				safe_delete(inst);
+				return false;				// magic weapons cannot be disarmed
+			}
+
+			const Item_Struct* item = inst->GetItem();
+			int8 charges = item->MaxCharges;
+			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+
+			if (inst->GetItem()->NoDrop == 0)
+			{
+				CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
 			}
 			else
 			{
 				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
 			}
+
+			CastToNPC()->SetPrimSkill(SkillHandtoHand);
+			if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
+				can_dual_wield = false;
+
+			WearChange(MaterialPrimary, 0, 0);
+
 			safe_delete(inst);
+			return true;
 		}
 	}
-	can_dual_wield = false;
-	WearChange(MaterialPrimary, 0, 0);
+	return false;
 }
 
-float Mob::SetBestZ(float zcoord)
+float Mob::CalcZOffset()
 {
-
 	float mysize = GetSize();
-	if(mysize > RuleR(Map, BestZSizeMax))
+		if(mysize > RuleR(Map, BestZSizeMax))
 		mysize = RuleR(Map, BestZSizeMax);
 
-	return (zcoord + RuleR(Map, BestZMultiplier) * mysize);
-
+	return (RuleR(Map, BestZMultiplier) * mysize);
 }

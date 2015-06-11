@@ -123,6 +123,7 @@ struct NPCType
 	uint8 	probability;
 	uint32  combat_hp_regen;
 	uint32  combat_mana_regen;
+	bool	aggro_pc;
 };
 
 namespace player_lootitem {
@@ -164,6 +165,7 @@ struct PlayerCorpse_Struct {
 	uint8 beard;
 	uint8 killedby;
 	bool  rezzable;
+	uint32	rez_time;
 	player_lootitem::ServerLootItem_Struct	items[0];
 	//std::list<player_lootitem::ServerLootItem_Struct*> items;
 };
@@ -182,7 +184,6 @@ struct Door {
 	uint32	guild_id;
 	uint16	lock_pick;
 	uint32	keyitem;
-	uint8	nokeyring;
 	uint8	trigger_door;
 	uint8	trigger_type;
 	uint32	door_param;
@@ -195,6 +196,7 @@ struct Door {
 	float	dest_z;
 	float	dest_heading;
 	uint32	client_version_mask;
+	uint32	altkeyitem;
 };
 
 #pragma pack()

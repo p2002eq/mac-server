@@ -624,8 +624,6 @@ void WorldServer::Process() {
 								zone->GetShortName(), srs->rez.corpse_name);
 
 					Log.Out(Logs::Detail, Logs::Spells, "Found corpse. Marking corpse as rezzed.");
-					// I don't know why Rezzed is not set to true in CompleteRezz().
-					corpse->IsRezzed(true);
 					corpse->CompleteResurrection();
 				}
 			}
@@ -883,13 +881,8 @@ void WorldServer::Process() {
 				if(!group->GetLeader())
 				{
 					char ln[64];
-					char MainTankName[64];
-					char AssistName[64];
-					char PullerName[64];
-					char NPCMarkerName[64];
-					GroupLeadershipAA_Struct GLAA;
 					memset(ln, 0, 64);
-					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+					strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 					Client *lc = entity_list.GetClientByName(ln);
 					if(lc)
 						group->SetLeader(lc);
@@ -948,6 +941,22 @@ void WorldServer::Process() {
 					break;
 
 				entity_list.SendGroupLeader(fgu->gid, fgu->leader_name, fgu->oldleader_name);
+			}
+			break;
+		}
+
+		case ServerOP_IsOwnerOnline: {
+			ServerIsOwnerOnline_Struct* online = (ServerIsOwnerOnline_Struct*) pack->pBuffer;
+			if(zone)
+			{
+				if(online->zoneid != zone->GetZoneID())
+					break;
+
+				Corpse* corpse = entity_list.GetCorpseByID(online->corpseid);
+				if(corpse && online->online == 1)
+					corpse->SetOwnerOnline(true);
+				else if(corpse)
+					corpse->SetOwnerOnline(false);
 			}
 			break;
 		}
@@ -1302,17 +1311,16 @@ void WorldServer::Process() {
 				// CONSENT_INVALID_NAME = 397
 				// TARGET_NOT_FOUND = 101
 
-				safe_delete(pack);
-				pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
-				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
+				ServerPacket *scs_pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)scs_pack->pBuffer;
 				strcpy(scs->grantname, s->grantname);
 				strcpy(scs->ownername, s->ownername);
 				scs->permission = s->permission;
 				scs->zone_id = s->zone_id;
 				scs->instance_id = s->instance_id;
 				scs->message_string_id = TARGET_NOT_FOUND;
-				worldserver.SendPacket(pack);
-				safe_delete(pack);
+				worldserver.SendPacket(scs_pack);
+				safe_delete(scs_pack);
 			}
 			break;
 		}
@@ -1485,7 +1493,7 @@ void WorldServer::Process() {
 			if(!c)
 				return;
 
-			uint32 Type = pack->ReadUInt32();;
+			uint32 Type = pack->ReadUInt32();
 
 			switch(Type)
 			{
@@ -1694,47 +1702,6 @@ bool WorldServer::SendEmoteMessage(const char* to, uint32 to_guilddbid, int16 to
 	bool ret = SendPacket(pack);
 	safe_delete(pack);
 	return ret;
-}
-
-bool WorldServer::SendVoiceMacro(Client* From, uint32 Type, char* Target, uint32 MacroNumber, uint32 GroupOrRaidID) {
-
-	if(!worldserver.Connected() || !From)
-		return false;
-
-	ServerPacket* pack = new ServerPacket(ServerOP_VoiceMacro, sizeof(ServerVoiceMacro_Struct));
-
-	ServerVoiceMacro_Struct* svm = (ServerVoiceMacro_Struct*) pack->pBuffer;
-
-	strcpy(svm->From, From->GetName());
-
-	switch(Type) {
-
-		case VoiceMacroTell:
-			strcpy(svm->To, Target);
-			break;
-
-		case VoiceMacroGroup:
-			svm->GroupID = GroupOrRaidID;
-			break;
-
-		case VoiceMacroRaid:
-			svm->RaidID = GroupOrRaidID;
-			break;
-	}
-
-	svm->Type = Type;
-
-	svm->Voice = (GetArrayRace(From->GetRace()) * 2) + From->GetGender();
-
-	svm->MacroNumber = MacroNumber;
-
-	pack->Deflate();
-
-	bool Ret = SendPacket(pack);
-
-	safe_delete(pack);
-
-	return Ret;
 }
 
 bool WorldServer::RezzPlayer(EQApplicationPacket* rpack, uint32 rezzexp, uint32 dbid, uint16 opcode)

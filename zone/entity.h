@@ -270,8 +270,6 @@ public:
 	void	SendZoneCorpsesBulk(Client*);
 	void	SendZoneObjects(Client* client);
 	void	SendZoneAppearance(Client *c);
-	void	SendNimbusEffects(Client *c);
-	void	SendUntargetable(Client *c);
 	void	DuelMessage(Mob* winner, Mob* loser, bool flee);
 	void	QuestJournalledSayClose(Mob *sender, Client *QuestIntiator, float dist, const char* mobname, const char* message);
 	void	GroupMessage(uint32 gid, const char *from, const char *message);

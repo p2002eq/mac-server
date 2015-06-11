@@ -217,3 +217,30 @@ bool EQTime::IsNightTime(){
 	return false;
 }
 
+bool EQTime::IsInbetweenTime(uint8 mintime, uint8 maxtime)
+{
+	TimeOfDay_Struct tod;
+	getEQTimeOfDay(&tod);
+
+	if(mintime == 0 || maxtime == 0 || mintime > 24 || maxtime > 24)
+		return true;
+
+	if(maxtime < mintime)
+	{
+		if((tod.hour >= mintime && tod.hour > maxtime) || (tod.hour < mintime && tod.hour <= maxtime))
+		{
+			return true;
+		}
+	}
+	else
+	{
+		if(tod.hour >= mintime && tod.hour <= maxtime)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+

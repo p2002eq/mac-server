@@ -677,10 +677,10 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					}
 				}
 				else
-					Log.Out(Logs::Detail, Logs::General, "%s is too low in level to gain XP from this group.", cmember->GetName());
+					Log.Out(Logs::Detail, Logs::Group, "%s is too low in level to gain XP from this group.", cmember->GetName());
 			}
 			else
-				Log.Out(Logs::Detail, Logs::General, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
+				Log.Out(Logs::Detail, Logs::Group, "%s is not in the kill zone, is out of range, or %s is green to them. They won't recieve group XP.", cmember->GetName(), other->GetCleanName());
 		}
 	}
 }
@@ -780,13 +780,11 @@ bool Client::IsInRange(Mob* defender)
 
 bool Client::IsInLevelRange(uint8 maxlevel)
 {
-	int16 diff = GetLevel() - maxlevel;
-	int16 maxdiff = -(GetLevel()*15/10 - GetLevel());
+	uint8 max_level = GetLevel()*1.5 + 0.5;
+	if(max_level < 6)
+		max_level = 6;
 
-	if(maxdiff > -5)
-		maxdiff = -5;
-
-	if (diff >= (maxdiff)) 
+	if (max_level >= maxlevel) 
 		return true;
 	else
 		return false;

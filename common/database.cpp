@@ -44,8 +44,10 @@
 #include "eq_packet_structs.h"
 #include "extprofile.h"
 #include "string_util.h"
+#include "random.h"
 
 extern Client client;
+EQEmu::Random emudb_random;
 
 #ifdef _WINDOWS
 #if _MSC_VER > 1700 // greater than 2012 (2013+)
@@ -326,10 +328,7 @@ bool Database::DeleteCharacter(char *name) {
 	for (auto row = results.begin(); row != results.end(); ++row) { charid = atoi(row[0]); }
 	if (charid <= 0){ std::cerr << "Database::DeleteCharacter :: Character not found, stopping delete...\n"; return false; }
 
-	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_activities` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_enabledtasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `completed_tasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);			   
 	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);					  
 	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
@@ -337,8 +336,7 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `keyring` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  		  
 	query = StringFormat("DELETE FROM `faction_values` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
 	query = StringFormat("DELETE FROM `character_data` WHERE `id` = '%d'", charid); QueryDatabase(query);				  
@@ -352,10 +350,7 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); QueryDatabase(query);		  
 	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); QueryDatabase(query);			  
-	query = StringFormat("DELETE FROM `character_tribute` WHERE `id` = %u", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", charid); QueryDatabase(query); 
-	query = StringFormat("DELETE FROM `character_alt_currency` WHERE `char_id` = '%d'", charid); QueryDatabase(query);  
 	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid);
 	QueryDatabase(query);
 	
@@ -410,8 +405,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"x,"
 		"z,"
 		"heading,"
-		"pvp2,"
-		"pvp_type,"
 		"autosplit_enabled,"
 		"zone_change_count,"
 		"toxicity,"
@@ -420,28 +413,11 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"ability_up,"
 		"zone_id,"
 		"zone_instance,"
-		"leadership_exp_on,"
-		"show_helm,"
 		"endurance,"
-		"group_leadership_exp,"
-		"raid_leadership_exp,"
-		"group_leadership_points,"
-		"raid_leadership_points,"
 		"air_remaining,"
-		"pvp_kills,"
-		"pvp_deaths,"
-		"pvp_current_points,"
-		"pvp_career_points,"
-		"pvp_best_kill_streak,"
-		"pvp_worst_death_streak,"
-		"pvp_current_kill_streak,"
 		"aa_points_spent,"
 		"aa_exp,"
 		"aa_points,"
-		"group_auto_consent,"
-		"raid_auto_consent,"
-		"guild_auto_consent,"
-		"RestTimer,"
 		"boatid,"
 		"boatname,"
 		"famished) "
@@ -491,8 +467,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%f,"  // x						
 		"%f,"  // z						
 		"%f,"  // heading				
-		"%u,"  // pvp2					
-		"%u,"  // pvp_type				
 		"%u,"  // autosplit_enabled		
 		"%u,"  // zone_change_count		
 		"%i,"  // toxicity				
@@ -501,28 +475,11 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // ability_up			
 		"%u,"  // zone_id				
 		"%u,"  // zone_instance			
-		"%u,"  // leadership_exp_on		
-		"%u,"  // show_helm				
 		"%u,"  // endurance				
-		"%u,"  // group_leadership_exp	
-		"%u,"  // raid_leadership_exp	
-		"%u,"  // group_leadership_point
-		"%u,"  // raid_leadership_points
 		"%u,"  // air_remaining			
-		"%u,"  // pvp_kills				
-		"%u,"  // pvp_deaths			
-		"%u,"  // pvp_current_points	
-		"%u,"  // pvp_career_points		
-		"%u,"  // pvp_best_kill_streak	
-		"%u,"  // pvp_worst_death_streak
-		"%u,"  // pvp_current_kill_strea
 		"%u,"  // aa_points_spent		
 		"%u,"  // aa_exp				
 		"%u,"  // aa_points				
-		"%u,"  // group_auto_consent	
-		"%u,"  // raid_auto_consent		
-		"%u,"  // guild_auto_consent	
-		"%u,"  // RestTimer		
 		"%u,"   // boatid		
 		"'%s',"  // boatname	
 		"%u"
@@ -572,8 +529,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->x,							  // " x,                         "
 		pp->z,							  // " z,                         "
 		pp->heading,					  // " heading,                   "
-		pp->pvp2,						  // " pvp2,                      "
-		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
 		pp->toxicity,					  // " toxicity,                  "
@@ -582,28 +537,11 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
-		pp->group_leadership_exp,		  // " group_leadership_exp,      "
-		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
-		pp->group_leadership_points,	  // " group_leadership_points,   "
-		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
-		pp->PVPKills,					  // " pvp_kills,                 "
-		pp->PVPDeaths,					  // " pvp_deaths,                "
-		pp->PVPCurrentPoints,			  // " pvp_current_points,        "
-		pp->PVPCareerPoints,			  // " pvp_career_points,         "
-		pp->PVPBestKillStreak,			  // " pvp_best_kill_streak,      "
-		pp->PVPWorstDeathStreak,		  // " pvp_worst_death_streak,    "
-		pp->PVPCurrentKillStreak,		  // " pvp_current_kill_streak,   "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
-		pp->groupAutoconsent,			  // " group_auto_consent,        "
-		pp->raidAutoconsent,			  // " raid_auto_consent,         "
-		pp->guildAutoconsent,			  // " guild_auto_consent,        "
-		pp->RestTimer,					  // " RestTimer,                 "
 		pp->boatid,						  // " boatid,					  "
 		EscapeString(pp->boat).c_str(),	  // " boatname                   "
 		pp->famished					  // " famished)				  "
@@ -1375,7 +1313,9 @@ bool Database::MoveCharacterToZone(uint32 iCharID, const char* iZonename) {
 }
 
 bool Database::SetHackerFlag(const char* accountname, const char* charactername, const char* hacked) { 
-	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, hacked);
+	std::string new_hacked = std::string(hacked);
+	replace_all(new_hacked, "'", "_");
+	std::string query = StringFormat("INSERT INTO `hackers` (account, name, hacked) values('%s','%s','%s')", accountname, charactername, new_hacked.c_str());
 	auto results = QueryDatabase(query);
 
 	if (!results.Success()) {
@@ -1387,7 +1327,9 @@ bool Database::SetHackerFlag(const char* accountname, const char* charactername,
 
 bool Database::SetMQDetectionFlag(const char* accountname, const char* charactername, const char* hacked, const char* zone) { 
 	//Utilize the "hacker" table, but also give zone information.
-	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, hacked, zone);
+	std::string new_hacked = std::string(hacked);
+	replace_all(new_hacked, "'", "_");
+	std::string query = StringFormat("INSERT INTO hackers(account,name,hacked,zone) values('%s','%s','%s','%s')", accountname, charactername, new_hacked.c_str(), zone);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -1400,8 +1342,6 @@ bool Database::SetMQDetectionFlag(const char* accountname, const char* character
 
 uint8 Database::GetRaceSkill(uint8 skillid, uint8 in_race)
 {
-	uint16 race_cap = 0;
-	
 	//Check for a racial cap!
 	std::string query = StringFormat("SELECT skillcap from race_skillcaps where skill = %i && race = %i", skillid, in_race);
 	auto results = QueryDatabase(query);
@@ -1523,7 +1463,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	Log.Out(Logs::Detail, Logs::General, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		return false;
@@ -1534,14 +1474,12 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "CharacterQuit should have wrote to database for %i...", char_id);
+	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
 	return true;
 }
 
@@ -1564,8 +1502,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 		name								// name
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
+	Log.Out(Logs::Detail, Logs::Debug, "ZoneConnected should have wrote id %i to webdata_servers for %s with connected status 1.", id, name);
 
 	if (!connect_results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating zone status in webdata_servers table from ZoneConnected.");
@@ -1577,8 +1514,7 @@ bool Database::ZoneConnected(uint32 id, const char* name) {
 bool Database::ZoneDisconnect(uint32 id) {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `id` = '%i'", id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
+	Log.Out(Logs::Detail, Logs::Debug, "ZoneDisconnect should have wrote '0' to webdata_servers for %i.", id);
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from ZoneConnected.");
 		return false;
@@ -1603,8 +1539,7 @@ bool Database::LSConnected(uint32 port) {
 		port								// id
 		);
 	auto connect_results = QueryDatabase(connect_query);
-	Log.Out(Logs::Detail, Logs::General, "Loading EQ time of day failed. Using defaults.");
-	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
+	Log.Out(Logs::Detail, Logs::Debug, "LSConnected should have wrote id %i to webdata_servers for LoginServer with connected status 1.", port);
 
 	if (!connect_results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating LoginServer status in webdata_servers table from LSConnected.");
@@ -1616,7 +1551,7 @@ bool Database::LSConnected(uint32 port) {
 bool Database::LSDisconnect() {
 	std::string query = StringFormat("UPDATE `webdata_servers` SET `connected`='0' WHERE `name` = 'LoginServer'");
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::General, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
+	Log.Out(Logs::Detail, Logs::Debug, "LSConnected should have wrote to webdata_servers for LoginServer connected status 0.");
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Error, "Error updating webdata_servers table from LSDisconnect.");
 		return false;
@@ -1752,25 +1687,13 @@ void Database::SetGroupLeaderName(uint32 gid, const char* name) {
 		Log.Out(Logs::General, Logs::None, "Unable to set group leader:", results.ErrorMessage().c_str());
 }
 
-char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* maintank, char* assist, char* puller, char *marknpc, GroupLeadershipAA_Struct* GLAA){ 
-	std::string query = StringFormat("SELECT `leadername`, `maintank`, `assist`, `puller`, `marknpc`, `leadershipaa` FROM `group_leaders` WHERE `gid` = %lu",(unsigned long)gid);
+char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf){ 
+	std::string query = StringFormat("SELECT `leadername` FROM `group_leaders` WHERE `gid` = %lu",(unsigned long)gid);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success() || results.RowCount() == 0) {
 		if(leaderbuf)
 			strcpy(leaderbuf, "UNKNOWN");
-
-		if(maintank)
-			maintank[0] = '\0';
-
-		if(assist)
-			assist[0] = '\0';
-
-		if(puller)
-			puller[0] = '\0';
-
-		if(marknpc)
-			marknpc[0] = '\0';
 
 		return leaderbuf;
 	}
@@ -1779,21 +1702,6 @@ char *Database::GetGroupLeadershipInfo(uint32 gid, char* leaderbuf, char* mainta
 
 	if(leaderbuf)
 		strcpy(leaderbuf, row[0]);
-
-	if(maintank)
-		strcpy(maintank, row[1]);
-
-	if(assist)
-		strcpy(assist, row[2]);
-
-	if(puller)
-		strcpy(puller, row[3]);
-
-	if(marknpc)
-		strcpy(marknpc, row[4]);
-
-	if(GLAA && results.LengthOfColumn(5) == sizeof(GroupLeadershipAA_Struct))
-		memcpy(GLAA, row[5], sizeof(GroupLeadershipAA_Struct));
 
 	return leaderbuf;
 }
@@ -2493,12 +2401,21 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 
 	auto row = results.begin();
 
+	uint8 hour = atoi(row[1]);
+	time_t realtime_ = atoi(row[5]);
+	if(RuleI(World, BootHour) > 0 && RuleI(World, BootHour) <= 24)
+	{
+		hour = RuleI(World, BootHour);
+		realtime_ = time(0);
+		Log.Out(Logs::Detail, Logs::World_Server, "EQTime: Setting hour to: %d", hour);
+	}
+
 	eqTime.minute = atoi(row[0]);
-	eqTime.hour = atoi(row[1]);
+	eqTime.hour = hour;
 	eqTime.day = atoi(row[2]);
 	eqTime.month = atoi(row[3]);
 	eqTime.year = atoi(row[4]);
-	realtime = atoi(row[5]);
+	realtime = realtime_;
 
 	return eqTime;
 }
@@ -2600,4 +2517,51 @@ void Database::SetAccountActive(uint32 account_id)
     QueryDatabase(query);
 
 	return;
+}
+
+bool Database::AdjustSpawnTimes() 
+{
+
+	std::string dquery = StringFormat("DELETE rt FROM respawn_times AS rt inner join spawn2 AS s ON rt.id = s.id WHERE s.clear_timer_onboot = 1");
+	auto dresults = QueryDatabase(dquery);
+
+	if (!dresults.Success()) 
+	{
+		return false;
+	}
+	Log.Out(Logs::General, Logs::World_Server, "World has reset %d spawn timers.", dresults.RowsAffected());
+
+	std::string query = StringFormat("SELECT id, boot_respawntime, variance FROM spawn2 WHERE boot_respawntime > 0");
+	auto results = QueryDatabase(query); 
+
+	if (!results.Success()) 
+	{
+		return false;
+	}
+
+	if(results.RowCount() == 0) 
+	{
+		return true;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{
+		uint32 rspawn = atoi(row[1]);
+		uint32 variance = atoi(row[2]);
+
+		if (variance != 0) {
+			int var = variance / 2;
+			rspawn = emudb_random.Int(rspawn - var, rspawn + var);
+		}
+
+		std::string iquery = StringFormat("REPLACE INTO respawn_times SET id = %d, start = %d, duration = %d", atoi(row[0]), time(0), rspawn);
+		auto iresults = QueryDatabase(iquery);
+
+		if (!iresults.Success()) 
+		{
+			return false;
+		}
+		Log.Out(Logs::General, Logs::World_Server, "Boot time respawn timer adjusted for id: %d duration is: %d (base: %d var: %d)", atoi(row[0]), rspawn, atoi(row[1]), atoi(row[2]));
+	}
+	return true;
 }

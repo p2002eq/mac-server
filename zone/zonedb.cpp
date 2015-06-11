@@ -106,7 +106,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
                                     "rain_chance1, rain_chance2, rain_chance3, rain_chance4, " // 4
                                     "rain_duration1, rain_duration2, rain_duration3, rain_duration4, " // 4
                                     "snow_chance1, snow_chance2, snow_chance3, snow_chance4, " // 4
-                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, skip_los " // 4
+                                    "snow_duration1, snow_duration2, snow_duration3, snow_duration4, " // 4
+									"skylock, skip_los, music " // 3
                                     "FROM zone WHERE zoneidnumber = %i AND version = %i", zoneid, instance_id);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -144,6 +145,8 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
     zone_data->minclip=atof(row[28]);
     zone_data->maxclip=atof(row[29]);
     zone_data->time_type=atoi(row[30]);
+	zone_data->skylock = atoi(row[56]);
+	zone_data->normal_music_day = atoi(row[58]);
 
     //not in the DB yet:
     zone_data->gravity = 0.4;
@@ -181,7 +184,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
 	for(index = 0; index < 4; index++)
         zone_data->snow_duration[index]=atof(row[52 + index]);
 
-	skip_los = atoi(row[56]) == 0? false: true;
+	skip_los = atoi(row[57]) == 0? false: true;
 
 	return true;
 }
@@ -718,54 +721,6 @@ void ZoneDatabase::DeleteTraderItem(uint32 CharID,uint16 SlotID) {
 		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete trader item data for char_id: %i, the error was: %s\n",CharID, results.ErrorMessage().c_str());
 }
 
-void ZoneDatabase::DeleteBuyLines(uint32 CharID) {
-
-	if(CharID==0) {
-        const std::string query = "DELETE FROM buyer";
-		auto results = QueryDatabase(query);
-        if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete all buyer items data, the error was: %s\n",results.ErrorMessage().c_str());
-
-        return;
-	}
-
-    std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i", CharID);
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-			Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyer item data for charid: %i, the error was: %s\n",CharID,results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char* ItemName, uint32 Quantity, uint32 Price) {
-	std::string query = StringFormat("REPLACE INTO buyer VALUES(%i, %i, %i, \"%s\", %i, %i)",
-                                    CharID, BuySlot, ItemID, ItemName, Quantity, Price);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to save buline item: %i for char_id: %i, the error was: %s\n", ItemID, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::RemoveBuyLine(uint32 CharID, uint32 BuySlot) {
-	std::string query = StringFormat("DELETE FROM buyer WHERE charid = %i AND buyslot = %i", CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to delete buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
-void ZoneDatabase::UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity) {
-	if(Quantity <= 0) {
-		RemoveBuyLine(CharID, BuySlot);
-		return;
-	}
-
-	std::string query = StringFormat("UPDATE buyer SET quantity = %i WHERE charid = %i AND buyslot = %i", Quantity, CharID, BuySlot);
-    auto results = QueryDatabase(query);
-	if (!results.Success())
-		Log.Out(Logs::Detail, Logs::None, "[CLIENT] Failed to update quantity in buyslot %i for charid: %i, the error was: %s\n", BuySlot, CharID, results.ErrorMessage().c_str());
-
-}
-
 bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	std::string query = StringFormat(
 		"SELECT                     "
@@ -812,8 +767,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"x,                         "
 		"z,                         "
 		"heading,                   "
-		"pvp2,                      "
-		"pvp_type,                  "
 		"autosplit_enabled,         "
 		"zone_change_count,         "
 		"toxicity,                  "
@@ -822,28 +775,11 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"ability_up,                "
 		"zone_id,                   "
 		"zone_instance,             "
-		"leadership_exp_on,         "
-		"show_helm,                 "
 		"endurance,                 "
-		"group_leadership_exp,      "
-		"raid_leadership_exp,       "
-		"group_leadership_points,   "
-		"raid_leadership_points,    "
 		"air_remaining,             "
-		"pvp_kills,                 "
-		"pvp_deaths,                "
-		"pvp_current_points,        "
-		"pvp_career_points,         "
-		"pvp_best_kill_streak,      "
-		"pvp_worst_death_streak,    "
-		"pvp_current_kill_streak,   "
 		"aa_points_spent,           "
 		"aa_exp,                    "
 		"aa_points,                 "
-		"group_auto_consent,        "
-		"raid_auto_consent,         "
-		"guild_auto_consent,        "
-		"RestTimer,                 "
 		"boatid,					"
 		"`boatname`,				"
 		"famished,					"
@@ -898,8 +834,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->x = atof(row[r]); r++;												 // "x,                         "
 		pp->z = atof(row[r]); r++;												 // "z,                         "
 		pp->heading = atof(row[r]); r++;										 // "heading,                   "
-		pp->pvp2 = atoi(row[r]); r++;											 // "pvp2,                      "
-		pp->pvptype = atoi(row[r]); r++;										 // "pvp_type,                  "
 		pp->autosplit = atoi(row[r]); r++;										 // "autosplit_enabled,         "
 		pp->zone_change_count = atoi(row[r]); r++;								 // "zone_change_count,         "
 		pp->toxicity = atoi(row[r]); r++;										 // "toxicity,                  "
@@ -908,28 +842,11 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->ability_up = atoi(row[r]); r++;										 // "ability_up,                "
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
-		pp->leadAAActive = atoi(row[r]); r++;									 // "leadership_exp_on,         "
-		pp->showhelm = atoi(row[r]); r++;										 // "show_helm,                 "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
-		pp->group_leadership_exp = atoi(row[r]); r++;							 // "group_leadership_exp,      "
-		pp->raid_leadership_exp = atoi(row[r]); r++;							 // "raid_leadership_exp,       "
-		pp->group_leadership_points = atoi(row[r]); r++;						 // "group_leadership_points,   "
-		pp->raid_leadership_points = atoi(row[r]); r++;							 // "raid_leadership_points,    "
 		pp->air_remaining = atoi(row[r]); r++;									 // "air_remaining,             "
-		pp->PVPKills = atoi(row[r]); r++;										 // "pvp_kills,                 "
-		pp->PVPDeaths = atoi(row[r]); r++;										 // "pvp_deaths,                "
-		pp->PVPCurrentPoints = atoi(row[r]); r++;								 // "pvp_current_points,        "
-		pp->PVPCareerPoints = atoi(row[r]); r++;								 // "pvp_career_points,         "
-		pp->PVPBestKillStreak = atoi(row[r]); r++;								 // "pvp_best_kill_streak,      "
-		pp->PVPWorstDeathStreak = atoi(row[r]); r++;							 // "pvp_worst_death_streak,    "
-		pp->PVPCurrentKillStreak = atoi(row[r]); r++;							 // "pvp_current_kill_streak,   "
 		pp->aapoints_spent = atoi(row[r]); r++;									 // "aa_points_spent,           "
 		pp->expAA = atoi(row[r]); r++;											 // "aa_exp,                    "
 		pp->aapoints = atoi(row[r]); r++;										 // "aa_points,                 "
-		pp->groupAutoconsent = atoi(row[r]); r++;								 // "group_auto_consent,        "
-		pp->raidAutoconsent = atoi(row[r]); r++;								 // "raid_auto_consent,         "
-		pp->guildAutoconsent = atoi(row[r]); r++;								 // "guild_auto_consent,        "
-		pp->RestTimer = atoi(row[r]); r++;										 // "RestTimer,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
 		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
@@ -1011,16 +928,6 @@ bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Str
 		if (i < MAX_PP_LANGUAGE){
 			pp->languages[i] = atoi(row[1]);
 		}
-	}
-	return true;
-}
-
-bool ZoneDatabase::LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat("SELECT slot, rank FROM character_leadership_abilities WHERE `id` = %u", character_id);
-	auto results = database.QueryDatabase(query); uint32 slot = 0;
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		slot = atoi(row[0]);
-		pp->leader_abilities.ranks[slot] = atoi(row[1]);
 	}
 	return true;
 }
@@ -1189,21 +1096,6 @@ bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32
 	return true;
 }
 
-bool ZoneDatabase::SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp){
-	uint8 first_entry = 0; std::string query = "";
-	for (int i = 0; i < MAX_LEADERSHIP_AA_ARRAY; i++){
-		if (pp->leader_abilities.ranks[i] > 0){
-			if (first_entry != 1){
-				query = StringFormat("REPLACE INTO `character_leadership_abilities` (id, slot, rank) VALUES (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-				first_entry = 1;
-			}
-			query = query + StringFormat(", (%i, %u, %u)", character_id, i, pp->leader_abilities.ranks[i]);
-		}
-	}
-	auto results = QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
 	clock_t t = std::clock(); /* Function timer start */
 	std::string query = StringFormat(
@@ -1253,8 +1145,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" x,                         "
 		" z,                         "
 		" heading,                   "
-		" pvp2,                      "
-		" pvp_type,                  "
 		" autosplit_enabled,         "
 		" zone_change_count,         "
 		" toxicity,                  "
@@ -1263,28 +1153,11 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" ability_up,                "
 		" zone_id,                   "
 		" zone_instance,             "
-		" leadership_exp_on,         "
-		" show_helm,                 "
 		" endurance,                 "
-		" group_leadership_exp,      "
-		" raid_leadership_exp,       "
-		" group_leadership_points,   "
-		" raid_leadership_points,    "
 		" air_remaining,             "
-		" pvp_kills,                 "
-		" pvp_deaths,                "
-		" pvp_current_points,        "
-		" pvp_career_points,         "
-		" pvp_best_kill_streak,      "
-		" pvp_worst_death_streak,    "
-		" pvp_current_kill_streak,   "
 		" aa_points_spent,           "
 		" aa_exp,                    "
 		" aa_points,                 "
-		" group_auto_consent,        "
-		" raid_auto_consent,         "
-		" guild_auto_consent,        "
-		" RestTimer,				 "
 		" boatid,					 "
 		" `boatname`,				 "
 		" famished,					 "
@@ -1338,8 +1211,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%f,"  // x							  pp->x,								" x,                         "
 		"%f,"  // z							  pp->z,								" z,                         "
 		"%f,"  // heading					  pp->heading,							" heading,                   "
-		"%u,"  // pvp2						  pp->pvp2,								" pvp2,                      "
-		"%u,"  // pvp_type					  pp->pvptype,							" pvp_type,                  "
 		"%u,"  // autosplit_enabled			  pp->autosplit,						" autosplit_enabled,         "
 		"%u,"  // zone_change_count			  pp->zone_change_count,				" zone_change_count,         "
 		"%i,"  // toxicity					  pp->toxicity,							" toxicity,                  "
@@ -1348,28 +1219,11 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // ability_up				  pp->ability_up,						" ability_up,                "
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
-		"%u,"  // leadership_exp_on			  pp->leadAAActive,						" leadership_exp_on,         "
-		"%u,"  // show_helm					  pp->showhelm,							" show_helm,                 "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
-		"%u,"  // group_leadership_exp		  pp->group_leadership_exp,				" group_leadership_exp,      "
-		"%u,"  // raid_leadership_exp		  pp->raid_leadership_exp,				" raid_leadership_exp,       "
-		"%u,"  // group_leadership_points	  pp->group_leadership_points,			" group_leadership_points,   "
-		"%u,"  // raid_leadership_points	  pp->raid_leadership_points,			" raid_leadership_points,    "
 		"%u,"  // air_remaining				  pp->air_remaining,					" air_remaining,             "
-		"%u,"  // pvp_kills					  pp->PVPKills,							" pvp_kills,                 "
-		"%u,"  // pvp_deaths				  pp->PVPDeaths,						" pvp_deaths,                "
-		"%u,"  // pvp_current_points		  pp->PVPCurrentPoints,					" pvp_current_points,        "
-		"%u,"  // pvp_career_points			  pp->PVPCareerPoints,					" pvp_career_points,         "
-		"%u,"  // pvp_best_kill_streak		  pp->PVPBestKillStreak,				" pvp_best_kill_streak,      "
-		"%u,"  // pvp_worst_death_streak	  pp->PVPWorstDeathStreak,				" pvp_worst_death_streak,    "
-		"%u,"  // pvp_current_kill_streak	  pp->PVPCurrentKillStreak,				" pvp_current_kill_streak,   "
 		"%u,"  // aa_points_spent			  pp->aapoints_spent,					" aa_points_spent,           "
 		"%u,"  // aa_exp					  pp->expAA,							" aa_exp,                    "
 		"%u,"  // aa_points					  pp->aapoints,							" aa_points,                 "
-		"%u,"  // group_auto_consent		  pp->groupAutoconsent,					" group_auto_consent,        "
-		"%u,"  // raid_auto_consent			  pp->raidAutoconsent,					" raid_auto_consent,         "
-		"%u,"  // guild_auto_consent		  pp->guildAutoconsent,					" guild_auto_consent,        "
-		"%u,"  // RestTimer					  pp->RestTimer,						" RestTimer)                 "
 		"%u,"  // boatid					  pp->boatid,							" boatid					 "
 		"'%s'," // `boatname`				  pp->boat,								" `boatname`,                "
 		"%u,"	//famished					  pp->famished							" famished					 "
@@ -1422,8 +1276,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->x,							  // " x,                         "
 		pp->z,							  // " z,                         "
 		pp->heading,					  // " heading,                   "
-		pp->pvp2,						  // " pvp2,                      "
-		pp->pvptype,					  // " pvp_type,                  "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
 		pp->toxicity,					  // " toxicity,                  "
@@ -1432,28 +1284,11 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
-		pp->leadAAActive,				  // " leadership_exp_on,         "
-		pp->showhelm,					  // " show_helm,                 "
 		pp->endurance,					  // " endurance,                 "
-		pp->group_leadership_exp,		  // " group_leadership_exp,      "
-		pp->raid_leadership_exp,		  // " raid_leadership_exp,       "
-		pp->group_leadership_points,	  // " group_leadership_points,   "
-		pp->raid_leadership_points,		  // " raid_leadership_points,    "
 		pp->air_remaining,				  // " air_remaining,             "
-		pp->PVPKills,					  // " pvp_kills,                 "
-		pp->PVPDeaths,					  // " pvp_deaths,                "
-		pp->PVPCurrentPoints,			  // " pvp_current_points,        "
-		pp->PVPCareerPoints,			  // " pvp_career_points,         "
-		pp->PVPBestKillStreak,			  // " pvp_best_kill_streak,      "
-		pp->PVPWorstDeathStreak,		  // " pvp_worst_death_streak,    "
-		pp->PVPCurrentKillStreak,		  // " pvp_current_kill_streak,   "
 		pp->aapoints_spent,				  // " aa_points_spent,           "
 		pp->expAA,						  // " aa_exp,                    "
 		pp->aapoints,					  // " aa_points,                 "
-		pp->groupAutoconsent,			  // " group_auto_consent,        "
-		pp->raidAutoconsent,			  // " raid_auto_consent,         "
-		pp->guildAutoconsent,			  // " guild_auto_consent,        "
-		pp->RestTimer,					  // " RestTimer)                 "
 		pp->boatid,						  // "boatid,					  "
 		EscapeString(pp->boat).c_str(),	  // " boatname                   "
 		pp->famished,					  // " famished					  "
@@ -1537,12 +1372,6 @@ bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
 	return true;
 }
 
-bool ZoneDatabase::DeleteCharacterLeadershipAAs(uint32 character_id){
-	std::string query = StringFormat("DELETE FROM `character_leadership_abilities` WHERE `id` = %u", character_id);
-	QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::DeleteCharacterAAs(uint32 character_id){
 	std::string query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", character_id);
 	QueryDatabase(query);
@@ -1618,7 +1447,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1776,6 +1605,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -1830,7 +1660,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1988,6 +1818,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->combat_hp_regen = atoi(row[85]);
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
+		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -2100,12 +1931,12 @@ void ZoneDatabase::RefreshGroupFromDB(Client *client){
 	if(!group)
 		return;
 
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupUpdate2_Struct));
-	GroupUpdate2_Struct* gu = (GroupUpdate2_Struct*)outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupUpdate_Struct));
+	GroupUpdate_Struct* gu = (GroupUpdate_Struct*)outapp->pBuffer;
 	gu->action = groupActUpdate;
 
 	strcpy(gu->yourname, client->GetName());
-	GetGroupLeadershipInfo(group->GetID(), gu->leadersname, nullptr, nullptr, nullptr, nullptr, &gu->leader_aas);
+	GetGroupLeadershipInfo(group->GetID(), gu->leadersname);
 
 	int index = 0;
 
@@ -2295,7 +2126,14 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
     QueryDatabase(query);
 }
 
-void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name){
+void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name)
+{
+
+	std::string new_char_name = std::string(char_name);
+	replace_all(new_char_name, "'", "_");
+	std::string new_target = std::string(target);
+	replace_all(new_target, "'", "_");
+
 	std::string rquery = StringFormat("SHOW TABLES LIKE 'commands_log'");
 	auto results = QueryDatabase(rquery);
 	if (results.RowCount() == 0){
@@ -2323,7 +2161,7 @@ void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, flo
 	}
 	std::string query = StringFormat("INSERT INTO `commands_log` (char_name, acct_name, y, x, z, command, target_type, target, tar_y, tar_x, tar_z, zone_id, zone_name, time) "
 									"VALUES('%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%i', '%s', now())",
-									char_name, acct_name, y, x, z, command, targetType, target, tar_y, tar_x, tar_z, zone_id, zone_name, time);
+									new_char_name.c_str(), acct_name, y, x, z, command, targetType, new_target.c_str(), tar_y, tar_x, tar_z, zone_id, zone_name, time);
 	auto log_results = QueryDatabase(query);
 	if (!log_results.Success())
 		Log.Out(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
@@ -2974,7 +2812,9 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n"
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u,\n"
+		"`is_rezzed` =			%u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(),
 		zone_id,
@@ -3017,6 +2857,8 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
 		dbpc->rezzable,
+		dbpc->rez_time,
+		is_rezzed,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -3034,7 +2876,9 @@ bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, con
 		"`silver` =             %u,\n"
 		"`gold` =               %u,\n"
 		"`platinum` =           %u,\n"
-		"`rezzable` =           %d\n"
+		"`rezzable` =           %d,\n"
+		"`rez_time` =           %u,\n"
+		"`is_rezzed` =          %u \n"
 		"WHERE `id` = %u",
 		EscapeString(char_name).c_str(), 
 		char_id, 
@@ -3045,6 +2889,8 @@ bool ZoneDatabase::UpdateCharacterCorpseBackup(uint32 db_id, uint32 char_id, con
 		dbpc->gold,
 		dbpc->plat,
 		dbpc->rezzable,
+		dbpc->rez_time,
+		is_rezzed,
 		db_id
 	);
 	auto results = QueryDatabase(query);
@@ -3107,7 +2953,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n",
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u \n",
 		EscapeString(charname).c_str(),
 		zoneid,
 		instanceid,
@@ -3148,7 +2995,8 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
-		dbpc->rezzable
+		dbpc->rezzable,
+		dbpc->rez_time
 	);
 	auto results = QueryDatabase(query);
 	uint32 last_insert_id = results.LastInsertedID();
@@ -3227,7 +3075,8 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 		"`wc_8` =               %u,\n"
 		"`wc_9`	=               %u,\n"
 		"`killedby` =			%u,\n"
-		"`rezzable` =			%d \n",
+		"`rezzable` =			%d,\n"
+		"`rez_time` =			%u \n",
 		corpse_id,
 		EscapeString(charname).c_str(),
 		zoneid,
@@ -3269,7 +3118,8 @@ bool ZoneDatabase::SaveCharacterCorpseBackup(uint32 corpse_id, uint32 charid, co
 		dbpc->item_tint[7].color,
 		dbpc->item_tint[8].color,
 		dbpc->killedby,
-		dbpc->rezzable
+		dbpc->rezzable,
+		dbpc->rez_time
 	);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()){
@@ -3398,7 +3248,8 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		"wc_8,            \n"
 		"wc_9,             \n"
 		"killedby,		  \n"
-		"rezzable		  \n"
+		"rezzable,		  \n"
+		"rez_time		  \n"
 		"FROM             \n"
 		"character_corpses\n"
 		"WHERE `id` = %u  LIMIT 1\n",
@@ -3440,6 +3291,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 		pcs->item_tint[8].color = atoul(row[i++]);			// wc_9
 		pcs->killedby = atoi(row[i++]);						// killedby
 		pcs->rezzable = atoi(row[i++]);						// rezzable
+		pcs->rez_time = atoul(row[i++]);					// rez_time
 	}
 	query = StringFormat(
 		"SELECT                       \n"

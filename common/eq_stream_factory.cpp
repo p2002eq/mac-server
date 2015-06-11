@@ -43,16 +43,16 @@ ThreadReturnType EQStreamFactoryWriterLoop(void *eqfs)
 	EQStreamFactory *fs=(EQStreamFactory *)eqfs;
 
 #ifndef WIN32
-	Log.Out(Logs::Detail, Logs::None,  "Starting EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
+	Log.Out(Logs::Detail, Logs::Netcode,  "Starting EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
 #else
-	Log.Out(Logs::Detail, Logs::General, "Starting EQStreamFactoryWriterLoop");
+	Log.Out(Logs::Detail, Logs::Netcode, "Starting EQStreamFactoryWriterLoop");
 #endif
 	fs->WriterLoop();
 
 #ifndef WIN32
-	Log.Out(Logs::Detail, Logs::None,  "Ending EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
+	Log.Out(Logs::Detail, Logs::Netcode,  "Ending EQStreamFactoryWriterLoop with thread ID %d", pthread_self());
 #else
-	Log.Out(Logs::Detail, Logs::General, "Ending EQStreamFactoryWriterLoop");
+	Log.Out(Logs::Detail, Logs::Netcode, "Ending EQStreamFactoryWriterLoop");
 #endif
 
 	THREAD_RETURN(nullptr);

@@ -19,7 +19,7 @@ uint32 InflateData(const char* buffer, uint32 len, char* out_buffer, uint32 out_
 
 	zstream.next_in = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(buffer));
 	zstream.avail_in = len;
-	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);;
+	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);
 	zstream.avail_out = out_len_max;
 	zstream.zalloc = Z_NULL;
 	zstream.zfree = Z_NULL;
@@ -127,10 +127,10 @@ float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) const {
 	return ClosestZ;
 }
 
-bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result) const {
+bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *hitLocation, glm::vec3 *hitNormal, float *hitDistance) const {
 	if(!imp)
 		return false;
-	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)hitLocation, (RmReal*)hitNormal, (RmReal*)hitDistance);
 }
 
 bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) const {

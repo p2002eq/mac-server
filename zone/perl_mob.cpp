@@ -7016,54 +7016,6 @@ XS(XS_Mob_SendIllusion)
 	XSRETURN_EMPTY;
 }
 
-XS(XS_Mob_SpellEffect); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Mob_SpellEffect)
-{
-	dXSARGS;
-	if (items < 2 || items > 8)
-		Perl_croak(aTHX_ "Usage: Mob::SpellEffect(THIS, effect, [duration, finish_delay, zone_wide, unk20, perm_effect, client])");
-	{
-		Mob *		THIS;
-		uint32		effect = (uint32)SvUV(ST(1));
-		uint32		duration = 5000;
-		uint32		finish_delay = 0;
-		bool		zone_wide = true;
-		uint32		unk20 = 3000;
-		bool		perm_effect = false;
-		Client*		client = nullptr;
-
-
-		if (sv_derived_from(ST(0), "Mob")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Mob *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Mob");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		if (items > 2)	{	duration = (uint32)SvUV(ST(2));	}
-		if (items > 3)	{	finish_delay = (uint32)SvUV(ST(3));	}
-		if (items > 4)	{	zone_wide = (bool)SvTRUE(ST(4));	}
-		if (items > 5)	{	unk20 = (uint32)SvUV(ST(5));	}
-		if (items > 6)	{	perm_effect = (bool)SvTRUE(ST(6));	}
-		if (items > 7)	{
-			if (sv_derived_from(ST(7), "Client")) {
-				IV tmp = SvIV((SV*)SvRV(ST(7)));
-				client = INT2PTR(Client *,tmp);
-			}
-			else
-				Perl_croak(aTHX_ "client is not of type Client");
-			if(client == nullptr)
-				Perl_croak(aTHX_ "client is nullptr, avoiding crash.");
-		}
-
-
-		THIS->SendSpellEffect(effect, duration, finish_delay, zone_wide, unk20, perm_effect, client);
-	}
-	XSRETURN_EMPTY;
-}
-
 XS(XS_Mob_GetItemStat); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Mob_GetItemStat)
 {
@@ -7424,30 +7376,6 @@ XS(XS_Mob_SetTargetDestSteps)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
 		THIS->SetTargetDestSteps(target_steps);
-	}
-	XSRETURN_EMPTY;
-}
-
-XS(XS_Mob_SetTargetable); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Mob_SetTargetable)
-{
-	dXSARGS;
-	if (items != 2)
-		Perl_croak(aTHX_ "Usage: Mob::SetTargetable(THIS, on)");
-	{
-		Mob *		THIS;
-		bool on = (bool)SvTRUE(ST(1));
-
-		if (sv_derived_from(ST(0), "Mob")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Mob *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Mob");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		THIS->SetTargetable(on);
 	}
 	XSRETURN_EMPTY;
 }
@@ -8330,7 +8258,6 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "SendIllusion"), XS_Mob_SendIllusion, file, "$$;$$$$$$$$$$$$");
 		newXSproto(strcpy(buf, "MakeTempPet"), XS_Mob_MakeTempPet, file, "$$;$$$$");
 		newXSproto(strcpy(buf, "TypesTempPet"), XS_Mob_TypesTempPet, file, "$$;$$$$$");
-		newXSproto(strcpy(buf, "SpellEffect"), XS_Mob_SpellEffect, file, "$$;$$$$$$");
 		newXSproto(strcpy(buf, "GetItemStat"), XS_Mob_GetItemStat, file, "$$$");
 		newXSproto(strcpy(buf, "SetGlobal"), XS_Mob_SetGlobal, file, "$$$$$;$");
 		newXSproto(strcpy(buf, "TarGlobal"), XS_Mob_TarGlobal, file, "$$$$$$$");
@@ -8344,7 +8271,6 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "SetDeltas"), XS_Mob_SetDeltas, file, "$$$$$");
 		newXSproto(strcpy(buf, "SetLD"), XS_Mob_SetLD, file, "$$");
 		newXSproto(strcpy(buf, "SetTargetDestSteps"), XS_Mob_SetTargetDestSteps, file, "$$");
-		newXSproto(strcpy(buf, "SetTargetable"), XS_Mob_SetTargetable, file, "$$");
 		newXSproto(strcpy(buf, "ModSkillDmgTaken"), XS_Mob_ModSkillDmgTaken, file, "$$$");
 		newXSproto(strcpy(buf, "GetModSkillDmgTaken"), XS_Mob_GetModSkillDmgTaken, file, "$$");
 		newXSproto(strcpy(buf, "GetSkillDmgTaken"), XS_Mob_GetSkillDmgTaken, file, "$$");

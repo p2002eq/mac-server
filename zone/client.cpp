@@ -127,7 +127,6 @@ Client::Client(EQStreamInterface* ieqs)
 	scanarea_timer(AIClientScanarea_delay),
 	proximity_timer(ClientProximity_interval),
 	charm_update_timer(6000),
-	rest_timer(1),
 	charm_class_attacks_timer(3000),
 	charm_cast_timer(3500),
 	qglobal_purge_timer(30000),
@@ -157,7 +156,6 @@ Client::Client(EQStreamInterface* ieqs)
 	port = ntohs(eqs->GetRemotePort());
 	client_state = CLIENT_CONNECTING;
 	Trader=false;
-	Buyer = false;
 	CustomerID = 0;
 	TrackingID = 0;
 	WID = 0;
@@ -212,7 +210,6 @@ Client::Client(EQStreamInterface* ieqs)
 	UpdateWindowTitle();
 	horseId = 0;
 	tgb = false;
-	keyring.clear();
 	bind_sight_target = nullptr;
 	logging_enabled = CLIENT_DEFAULT_LOGGING_ENABLED;
 
@@ -269,6 +266,8 @@ Client::Client(EQStreamInterface* ieqs)
 
 	has_zomm = false;
 	client_position_update = false;
+	ignore_zone_count = false;
+	clicky_override = false;
 }
 
 Client::~Client() {
@@ -455,8 +454,6 @@ bool Client::Save(uint8 iCommitNow) {
 	/* Total Time Played */
 	TotalSecondsPlayed += (time(nullptr) - m_pp.lastlogin);
 	m_pp.timePlayedMin = (TotalSecondsPlayed / 60);
-	m_pp.RestTimer = rest_timer.GetRemainingTime() / 1000;
-
 	m_pp.lastlogin = time(nullptr);
 
 	if (GetPet() && !GetPet()->IsFamiliar() && GetPet()->CastToNPC()->GetPetSpellID() && !dead) {
@@ -933,31 +930,6 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 		}
 		break;
 	}
-	case 20:
-	{
-		// UCS Relay for Underfoot and later.
-		if(!worldserver.SendChannelMessage(this, 0, chan_num, 0, language, message))
-			Message(0, "Error: World server disconnected");
-		break;
-	}
-	case 22:
-	{
-		// Emotes for Underfoot and later.
-		// crash protection -- cheater
-		message[1023] = '\0';
-		size_t msg_len = strlen(message);
-		if (msg_len > 512)
-			message[512] = '\0';
-
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Emote, 4 + msg_len + strlen(GetName()) + 2);
-		Emote_Struct* es = (Emote_Struct*)outapp->pBuffer;
-		char *Buffer = (char *)es;
-		Buffer += 4;
-		snprintf(Buffer, sizeof(Emote_Struct) - 4, "%s %s", GetName(), message);
-		entity_list.QueueCloseClients(this, outapp, true, 100, 0, true, FilterSocials);
-		safe_delete(outapp);
-		break;
-	}
 	default: {
 		Message(0, "Channel (%i) not implemented", (uint16)chan_num);
 	}
@@ -1362,7 +1334,6 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	}
 	ns->spawn.size			= 0; // Changing size works, but then movement stops! (wth?)
 	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.1f;
-	if (!m_pp.showhelm) ns->spawn.showhelm = 0;
 
 	// pp also hold this info; should we pull from there or inventory?
 	// (update: i think pp should do it, as this holds LoY dye - plus, this is ugly code with Inventory!)
@@ -2957,44 +2928,6 @@ void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_
 		safe_delete(outapp);
 }
 
-void Client::KeyRingLoad()
-{
-	std::string query = StringFormat("SELECT item_id FROM keyring "
-                                    "WHERE char_id = '%i' ORDER BY item_id", character_id);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-		return;
-	}
-
-	for (auto row = results.begin(); row != results.end(); ++row)
-		keyring.push_back(atoi(row[0]));
-
-}
-
-void Client::KeyRingAdd(uint32 item_id)
-{
-	return;
-}
-
-bool Client::KeyRingCheck(uint32 item_id)
-{
-	return false;
-}
-
-void Client::KeyRingList()
-{
-	Message(CC_Blue,"Keys on Keyring:");
-	const Item_Struct *item = 0;
-	for(std::list<uint32>::iterator iter = keyring.begin();
-		iter != keyring.end();
-		++iter)
-	{
-		if ((item = database.GetItem(*iter))!=nullptr) {
-			Message(CC_Blue,item->Name);
-		}
-	}
-}
-
 bool Client::IsDiscovered(uint32 itemid) {
 
 	std::string query = StringFormat("SELECT count(*) FROM discovered_items WHERE item_id = '%lu'", itemid);
@@ -3113,41 +3046,6 @@ uint32 Client::GetATKRating()
 	return AttackRating;
 }
 
-void Client::VoiceMacroReceived(uint32 Type, char *Target, uint32 MacroNumber) {
-
-	uint32 GroupOrRaidID = 0;
-
-	switch(Type) {
-
-		case VoiceMacroGroup: {
-
-			Group* g = GetGroup();
-
-			if(g)
-				GroupOrRaidID = g->GetID();
-			else
-				return;
-
-			break;
-		}
-
-		case VoiceMacroRaid: {
-
-			Raid* r = GetRaid();
-
-			if(r)
-				GroupOrRaidID = r->GetID();
-			else
-				return;
-
-			break;
-		}
-	}
-
-	if(!worldserver.SendVoiceMacro(this, Type, Target, MacroNumber, GroupOrRaidID))
-		Message(0, "Error: World server disconnected");
-}
-
 int Client::GetAggroCount() {
 	return AggroCount;
 }
@@ -3174,7 +3072,6 @@ void Client::DecrementAggroCount() {
 
 	// This should be called when a client is removed from a mob's hate list (it dies or is memblurred).
 	// It checks whether any other mob is aggro on the player, and if not, starts the rest timer.
-	// For SoF, the opcode to start the rest state countdown timer in the UI is sent.
 	//
 
 	// If we didn't have aggro before, this method should not have been called.
@@ -3201,9 +3098,6 @@ void Client::DecrementAggroCount() {
 			time_until_rest = RuleI(Character, RestRegenTimeToActivate) * 1000;
 		}
 	}
-
-	rest_timer.Start(time_until_rest);
-
 }
 
 void Client::SendDisciplineTimers()
@@ -3801,62 +3695,6 @@ void Client::SuspendMinion()
 	}
 }
 
-// Processes a client request to inspect a SoF+ client's equipment.
-void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
-	if(requestee && requester) {
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_InspectAnswer, sizeof(InspectResponse_Struct));
-		InspectResponse_Struct* insr = (InspectResponse_Struct*) outapp->pBuffer;
-		insr->TargetID = requester->GetID();
-		insr->playerid = requestee->GetID();
-
-		const Item_Struct* item = nullptr;
-		const ItemInst* inst = nullptr;
-		for(int16 L = 0; L <= 20; L++) {
-			inst = requestee->GetInv().GetItem(L);
-
-			if(inst) {
-				item = inst->GetItem();
-				if(item) {
-					strcpy(insr->itemnames[L], item->Name);
-					insr->itemicons[L] = item->Icon;
-				}
-				else
-					insr->itemicons[L] = 0xFFFFFFFF;
-			}
-		}
-
-		inst = requestee->GetInv().GetItem(MainPowerSource);
-
-		if(inst) {
-			item = inst->GetItem();
-			if(item) {
-				strcpy(insr->itemnames[21], item->Name);
-				insr->itemicons[21] = item->Icon;
-			}
-			else
-				insr->itemicons[21] = 0xFFFFFFFF;
-		}
-
-		inst = requestee->GetInv().GetItem(21);
-
-		if(inst) {
-			item = inst->GetItem();
-			if(item) {
-				strcpy(insr->itemnames[22], item->Name);
-				insr->itemicons[22] = item->Icon;
-			}
-			else
-				insr->itemicons[22] = 0xFFFFFFFF;
-		}
-
-		// There could be an OP for this..or not... (Ti clients are not processed here..this message is generated client-side)
-		if(requestee->IsClient() && (requestee != requester)) { requestee->Message(0, "%s is looking at your equipment...", requester->GetName()); }
-
-		requester->QueuePacket(outapp); // Send answer to requester
-		safe_delete(outapp);
-	}
-}
-
 void Client::CheckEmoteHail(Mob *target, const char* message)
 {
 	if(
@@ -4147,13 +3985,13 @@ void Client::SendStats(Client* client)
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
 	client->Message(0, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
-	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen(), CalcHPRegenCap());
+	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
 	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
-		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
+		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
-	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
+	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen()+RestRegenEndurance, CalcEnduranceRegenCap());
 	client->Message(0, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
 	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);
 	client->Message(0, " STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
@@ -4192,7 +4030,7 @@ void Client::SendStats(Client* client)
 		if(GetLevel() < 10)
 			exploss = 0;
 		client->Message(0, "  CurrentXP: %i XP Needed: %i ExpLoss: %i CurrentAA: %i", GetEXP(), xpneeded, exploss, GetAAXP());
-		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate);
+		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d Zone Count: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate, GetZoneChangeCount());
 	}
 }
 
@@ -4290,9 +4128,13 @@ void Client::GarbleMessage(char *message, uint8 variance)
 	// Garble message by variance%
 	const char alpha_list[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; // only change alpha characters for now
 
+	// Don't garble # commands
+	if (message[0] == '#')
+		return;
+
 	for (size_t i = 0; i < strlen(message); i++) {
 		uint8 chance = (uint8)zone->random.Int(0, 115); // variation just over worst possible scrambling
-		if (isalpha(message[i]) && (chance <= variance)) {
+		if (isalpha((unsigned char)message[i]) && (chance <= variance)) {
 			uint8 rand_char = (uint8)zone->random.Int(0,51); // choose a random character from the alpha list
 			message[i] = alpha_list[rand_char];
 		}
@@ -4594,6 +4436,7 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalval
 	int32 fac = GetModCharacterFactionLevel(faction_id) + tmpvalue;
 	totalvalue = fac;
 
+	bool gained = true;
 	if (tmpvalue == 0 || temp == 1 || temp == 2)
 		return;
 	else if (totalvalue >= MAX_PERSONAL_FACTION)
@@ -4601,10 +4444,21 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalval
 	else if (tmpvalue > 0 && totalvalue < MAX_PERSONAL_FACTION)
 		Message_StringID(CC_Default, FACTION_BETTER, name);
 	else if (tmpvalue < 0 && totalvalue > MIN_PERSONAL_FACTION)
+	{
+		gained = false;
 		Message_StringID(CC_Default, FACTION_WORSE, name);
+	}
 	else if (totalvalue <= MIN_PERSONAL_FACTION)
+	{
+		gained = false;
 		Message_StringID(CC_Default, FACTION_WORST, name);
+	}
 
+	std::string type = "gained";
+	if(!gained)
+		type = "lost";
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, totalvalue);
+	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
 
@@ -4901,26 +4755,6 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
    }
 }
 
-void Client::SendMarqueeMessage(uint32 type, uint32 priority, uint32 fade_in, uint32 fade_out, uint32 duration, std::string msg)
-{
-	if(duration == 0 || msg.length() == 0) {
-		return;
-	}
-
-	EQApplicationPacket outapp(OP_Unknown, sizeof(ClientMarqueeMessage_Struct) + msg.length());
-	ClientMarqueeMessage_Struct *cms = (ClientMarqueeMessage_Struct*)outapp.pBuffer;
-
-	cms->type = type;
-	cms->unk04 = 10;
-	cms->priority = priority;
-	cms->fade_in_time = fade_in;
-	cms->fade_out_time = fade_out;
-	cms->duration = duration;
-	strcpy(cms->msg, msg.c_str());
-
-	QueuePacket(&outapp);
-}
-
 void Client::Starve()
 {
 	m_pp.hunger_level = 0;
@@ -4965,7 +4799,7 @@ void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold,
 		AddMoneyToPP(copper, silver, gold, platinum, false);
 
 	if (itemid > 0)
-		SummonItem(itemid, 1, false, MainQuest);
+		SummonItem(itemid, 0, false, MainQuest);
 
 	if (faction)
 	{

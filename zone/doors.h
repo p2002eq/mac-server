@@ -39,9 +39,8 @@ public:
 	uint8	GetTriggerType() { return trigger_type; }
 
 	uint32	GetKeyItem() { return keyitem; }
+	uint32	GetAltKeyItem() { return altkeyitem; }
 	void	SetKeyItem(uint32 in) { keyitem = in; }
-	uint8	GetNoKeyring() { return nokeyring; }
-	void	SetNoKeyring(uint8 in) { nokeyring = in; }
 	uint16	GetLockpick() { return lockpick; }
 	void	SetLockpick(uint16 in) { lockpick = in; }
 	uint16	GetSize() { return size; }
@@ -80,7 +79,7 @@ private:
 	uint32	guild_id;
 	uint16	lockpick;
 	uint32	keyitem;
-	uint8	nokeyring;
+	uint32	altkeyitem;
 	uint8	trigger_door;
 	uint8	trigger_type;
 	uint32	door_param;

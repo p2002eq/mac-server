@@ -97,7 +97,7 @@ int Mob::GetBashDamage() {
 	return(dmg);
 }
 
-int NPC::GetMinBashKickDmg()
+int32 NPC::GetMinBashKickDmg()
 {
 	int16 mindmg = GetMinDMG();
 	int16 maxdmg = GetMaxDMG();
@@ -114,7 +114,7 @@ int NPC::GetMinBashKickDmg()
 	return dmg;
 }
 
-int NPC::GetMaxBashKickDmg()
+int32 NPC::GetMaxBashKickDmg()
 {
 	if (GetLevel() >= 15 && GetLevel() <= 24)
 		return GetMinBashKickDmg() + 7;
@@ -684,7 +684,7 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 			hate = 20 * backstab_dmg * GetSkill(SkillBackstab) / 355;
 		}
 		else{
-			max_hit = (((2*backstab_dmg) * GetDamageTable(SkillBackstab) / 100) * 10 * GetSkill(SkillBackstab) / 355) + 1;;
+			max_hit = (((2*backstab_dmg) * GetDamageTable(SkillBackstab) / 100) * 10 * GetSkill(SkillBackstab) / 355) + 1;
 			hate = 20 * backstab_dmg * GetSkill(SkillBackstab) / 355;
 		}
 

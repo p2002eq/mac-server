@@ -65,7 +65,7 @@ void EQPacket::build_header_dump(char *buffer) const {
 void EQPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
 	if (src_ip) {
-		std::string sIP,dIP;;
+		std::string sIP,dIP;
 		sIP=long2ip(src_ip);
 		dIP=long2ip(dst_ip);
 		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
@@ -99,7 +99,7 @@ void EQProtocolPacket::build_header_dump(char *buffer) const
 void EQProtocolPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
 	if (src_ip) {
-		std::string sIP,dIP;;
+		std::string sIP,dIP;
 		sIP=long2ip(src_ip);
 		dIP=long2ip(dst_ip);
 		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
@@ -141,7 +141,7 @@ void EQApplicationPacket::build_header_dump(char *buffer) const
 void EQApplicationPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
 	if (src_ip) {
-		std::string sIP,dIP;;
+		std::string sIP,dIP;
 		sIP=long2ip(src_ip);
 		dIP=long2ip(dst_ip);
 		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
@@ -187,7 +187,7 @@ void EQRawApplicationPacket::build_header_dump(char *buffer) const
 void EQRawApplicationPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
 	if (src_ip) {
-		std::string sIP,dIP;;
+		std::string sIP,dIP;
 		sIP=long2ip(src_ip);
 		dIP=long2ip(dst_ip);
 		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);

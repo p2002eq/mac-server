@@ -35,7 +35,7 @@ public:
 
 	float FindBestZ(glm::vec3 &start, glm::vec3 *result) const;
 	float FindClosestZ(glm::vec3 &start, glm::vec3 *result) const;
-	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result) const;
+	bool LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *hitLocation, glm::vec3 *hitNormal = nullptr, float *hitDistance = nullptr) const;
 	bool LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) const;
 	bool CheckLoS(glm::vec3 myloc, glm::vec3 oloc) const;
 	bool Load(std::string filename);

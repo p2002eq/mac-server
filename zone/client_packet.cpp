@@ -93,12 +93,10 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_ReqClientSpawn] = &Client::Handle_Connect_OP_ReqClientSpawn;
 	ConnectingOpcodes[OP_ReqNewZone] = &Client::Handle_Connect_OP_ReqNewZone;
 	ConnectingOpcodes[OP_SendExpZonein] = &Client::Handle_Connect_OP_SendExpZonein;
-	ConnectingOpcodes[OP_SendAAStats] = &Client::Handle_Connect_OP_SendAAStats;
 	ConnectingOpcodes[OP_SetGuildMOTD] = &Client::Handle_OP_SetGuildMOTDCon;
 	ConnectingOpcodes[OP_SetServerFilter] = &Client::Handle_Connect_OP_SetServerFilter;
 	ConnectingOpcodes[OP_SpawnAppearance] = &Client::Handle_Connect_OP_SpawnAppearance;
 	ConnectingOpcodes[OP_TGB] = &Client::Handle_Connect_OP_TGB;
-	ConnectingOpcodes[OP_UpdateAA] = &Client::Handle_Connect_OP_UpdateAA;
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
 	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
@@ -146,7 +144,6 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_Discipline] = &Client::Handle_OP_Discipline;
 	ConnectedOpcodes[OP_DuelResponse] = &Client::Handle_OP_DuelResponse;
 	ConnectedOpcodes[OP_DuelResponse2] = &Client::Handle_OP_DuelResponse2;
-	ConnectedOpcodes[OP_Dye] = &Client::Handle_OP_Dye;
 	ConnectedOpcodes[OP_Emote] = &Client::Handle_OP_Emote;
 	ConnectedOpcodes[OP_EndLootRequest] = &Client::Handle_OP_EndLootRequest;
 	ConnectedOpcodes[OP_EnvDamage] = &Client::Handle_OP_EnvDamage;
@@ -267,6 +264,8 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_MBRetrievalDetailRequest] = &Client::Handle_OP_MBRetrievalDetailRequest;
 	ConnectedOpcodes[OP_MBRetrievalPostRequest] = &Client::Handle_OP_MBRetrievalPostRequest;
 	ConnectedOpcodes[OP_MBRetrievalEraseRequest] = &Client::Handle_OP_MBRetrievalEraseRequest;
+	ConnectedOpcodes[OP_Key] = &Client::Handle_OP_Key;
+	ConnectedOpcodes[OP_TradeRefused] = &Client::Handle_OP_TradeRefused;
 }
 
 void ClearMappedOpcode(EmuOpcode op)
@@ -460,14 +459,6 @@ void Client::CompleteConnect()
 
 		const SPDat_Spell_Struct &spell = spells[buffs[j1].spellid];
 
-		int NimbusEffect = GetNimbusEffect(buffs[j1].spellid);
-		if (NimbusEffect) {
-			if (!IsNimbusEffectActive(NimbusEffect))
-				SendSpellEffect(NimbusEffect, 500, 0, 1, 3000, true);
-
-		}
-
-
 		for (int x1 = 0; x1 < EFFECT_COUNT; x1++) {
 			switch (spell.effectid[x1]) {
 			case SE_IllusionCopy:
@@ -597,8 +588,6 @@ void Client::CompleteConnect()
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
-	entity_list.SendUntargetable(this);
-
 	client_data_loaded = true;
 	int x;
 	for (x = 0; x < 8; x++) {
@@ -694,7 +683,7 @@ void Client::CompleteConnect()
 			string = "Unknown";
 
 		if(GetGM())
-			Message(CC_Yellow, "GM Debug: Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
 		else
 			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s.", string.c_str());
 	}
@@ -711,7 +700,6 @@ void Client::CompleteConnect()
 			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
 			SetEXP(totalrequiredxp, currentaa);
 			Save();
-			//SetLevel(level+1);
 			Kick();
 		}
 		else if(Admin() > 0 && level > 1)
@@ -890,15 +878,6 @@ void Client::Handle_Connect_OP_ReqNewZone(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_SendAAStats(const EQApplicationPacket *app)
-{
-	SendAATimers();
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SendAAStats, 0);
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	return;
-}
-
 void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 {
 	//////////////////////////////////////////////////////
@@ -1010,12 +989,6 @@ void Client::Handle_Connect_OP_TGB(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_Connect_OP_UpdateAA(const EQApplicationPacket *app) 
-{
-
-	SendAATable();
-}
-
 void Client::Handle_Connect_OP_WearChange(const EQApplicationPacket *app)
 {
 	//not sure what these are supposed to mean to us.
@@ -1105,8 +1078,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Load Character Data */
 	query = StringFormat("SELECT `firstlogon`, `guild_id`, `rank` FROM `character_data` LEFT JOIN `guild_members` ON `id` = `char_id` WHERE `id` = %i", cid);
 	results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		m_pp.lastlogin = time(nullptr);
+	for (auto row = results.begin(); row != results.end(); ++row) {		
 		if (row[1] && atoi(row[1]) > 0){
 			guild_id = atoi(row[1]);
 			if (row[2] != nullptr){ guildrank = atoi(row[2]); }
@@ -1116,6 +1088,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (firstlogon){ firstlogon = atoi(row[0]); }
 	}
 
+	/* Do not write to the PP prior to this otherwise it will just be overwritten when it's loaded from the DB */
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
 	database.LoadCharacterBindPoint(cid, &m_pp); /* Load Character Bind */
 	database.LoadCharacterMaterialColor(cid, &m_pp); /* Load Character Material */
@@ -1141,6 +1114,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
+	ignore_zone_count = false;
 
 	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
 	// This can lead difficulty entering the zone, since some people's client's don't like
@@ -1169,6 +1143,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			
 		
 	/* Set Total Seconds Played */
+	m_pp.lastlogin = time(nullptr);
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
 	max_AAXP = GetEXPForLevel(0, true);
@@ -1242,6 +1217,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	default:
 		size = 0; base_size = 0;
 	}
+	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
 	query = StringFormat(
@@ -1316,16 +1292,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (group){
-		// If the group leader is not set, pull the group leader infomrmation from the database.
+		// If the group leader is not set, pull the group leader information from the database.
 		if (!group->GetLeader()){
 			char ln[64];
-			char MainTankName[64];
-			char AssistName[64];
-			char PullerName[64];
-			char NPCMarkerName[64];
-			GroupLeadershipAA_Struct GLAA;
 			memset(ln, 0, 64);
-			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln, MainTankName, AssistName, PullerName, NPCMarkerName, &GLAA));
+			strcpy(ln, database.GetGroupLeadershipInfo(group->GetID(), ln));
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);
@@ -1357,6 +1328,13 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.cur_hp = GetMaxHP();
 
 	SetHP(m_pp.cur_hp);
+
+	if (m_pp.cur_hp > 32700)
+	{
+		m_pp.cur_hp = 32700;
+		SetHP(32700);			// client will die after zoning with more than 32,767 hp
+	}
+
 	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
 
@@ -1550,12 +1528,11 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		BulkSendItems();
 		BulkSendInventoryItems();
 		/* Send stuff on the cursor which isnt sent in bulk */
-		iter_queue it;
-		for (it = m_inv.cursor_begin(); it != m_inv.cursor_end(); ++it) {
+		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
 			/* First item cursor is sent in bulk inventory packet */
-			if (it == m_inv.cursor_begin())
+			if (iter == m_inv.cursor_cbegin())
 				continue;
-			const ItemInst *inst = *it;
+			const ItemInst *inst = *iter;
 			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 		}
 
@@ -1578,9 +1555,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	This shouldent be moved, this seems to be what the client
 	uses to advance to the next state (sending ReqNewZone)
 	*/
-	outapp = new EQApplicationPacket(OP_Weather, 8);
-	outapp->pBuffer[0] = 0;
-	outapp->pBuffer[4] = 0;
+	outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+	ws->type = 0;
+	ws->intensity = 0;
 
 	outapp->priority = 6;
 	QueuePacket(outapp);
@@ -1847,20 +1825,8 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 		if (bws->Beginning.Action == BazaarWelcome)
 			SendBazaarWelcome();
 	}
-	else if (app->size == sizeof(NewBazaarInspect_Struct)) {
-
-		NewBazaarInspect_Struct *nbis = (NewBazaarInspect_Struct*)app->pBuffer;
-
-		Client *c = entity_list.GetClientByName(nbis->Name);
-		if (c) {
-			ItemInst* inst = c->FindTraderItemBySerialNumber(nbis->SerialNumber);
-			if (inst)
-				SendItemPacket(0, inst, ItemPacketViewLink);
-		}
-		return;
-	}
 	else {
-		Log.Out(Logs::Detail, Logs::Trading, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
+		Log.Out(Logs::Detail, Logs::Bazaar, "Malformed BazaarSearch_Struct packe, Action %it received, ignoring...");
 		Log.Out(Logs::General, Logs::Error, "Malformed BazaarSearch_Struct packet received, ignoring...\n");
 	}
 
@@ -2152,6 +2118,8 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 	CastSpell_Struct* castspell = (CastSpell_Struct*)app->pBuffer;
 
+	clicky_override = false;
+
 	Log.Out(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 
 	if (m_pp.boatid != 0)
@@ -2223,16 +2191,23 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 				if ((item->Click.Type == ET_ClickEffect) || (item->Click.Type == ET_Expendable) || (item->Click.Type == ET_EquipClick) || (item->Click.Type == ET_ClickEffect2))
 				{
-					if (item->Click.Level2 > 0)
+					int16 casttime_ = item->CastTime;
+					// Clickies with 0 casttime had no level or regeant requirement on AK. Also, -1 casttime was instant cast.
+					if(casttime_ <= 0)
 					{
-						// Clickies with 0 casttime had no level requirement on AK
-						if (GetLevel() >= item->Click.Level2 || item->CastTime == 0)
+						clicky_override = true;
+						casttime_ = 0;
+					}
+
+					if (item->Click.Level2 > 0)
+					{			
+						if (GetLevel() >= item->Click.Level2 || clicky_override)
 						{
 							ItemInst* p_inst = (ItemInst*)inst;
 							int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 							if (i == 0) {
-								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+								CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 							}
 							else {
 								InterruptSpell(castspell->spell_id);
@@ -2252,7 +2227,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 						int i = parse->EventItem(EVENT_ITEM_CLICK_CAST, this, p_inst, nullptr, "", castspell->inventoryslot);
 
 						if (i == 0) {
-							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, item->CastTime, 0, 0, castspell->inventoryslot);
+							CastSpell(item->Click.Effect, castspell->target_id, castspell->slot, casttime_, 0, 0, castspell->inventoryslot);
 						}
 						else {
 							InterruptSpell(castspell->spell_id);
@@ -2976,7 +2951,8 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 	}
 	else if (tcorpse && tcorpse->IsPlayerCorpse()) {
 		uint32 day, hour, min, sec, ttime;
-		if ((ttime = tcorpse->GetRezTime()) != 0) {
+		if ((ttime = tcorpse->GetRemainingRezTime()) > 0)
+		{
 			sec = (ttime / 1000) % 60; // Total seconds
 			min = (ttime / 60000) % 60; // Total seconds
 			hour = (ttime / 3600000) % 24; // Total hours
@@ -3438,17 +3414,6 @@ void Client::Handle_OP_DuelResponse2(const EQApplicationPacket *app)
 			InterruptSpell();
 		if (initiator->CastToClient()->IsCasting())
 			initiator->CastToClient()->InterruptSpell();
-	}
-	return;
-}
-
-void Client::Handle_OP_Dye(const EQApplicationPacket *app)
-{
-	if (app->size != sizeof(DyeStruct))
-		printf("Wrong size of DyeStruct, Got: %i, Expected: %zu\n", app->size, sizeof(DyeStruct));
-	else{
-		DyeStruct* dye = (DyeStruct*)app->pBuffer;
-		DyeArmor(dye);
 	}
 	return;
 }
@@ -4622,40 +4587,43 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GroupUpdate(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(GroupLeader_Struct))
+	if (app->size != sizeof(GroupJoin_Struct)-252)
 	{
 		Log.Out(Logs::General, Logs::None, "Size mismatch on OP_GroupUpdate: got %u expected %u",
-			app->size, sizeof(GroupLeader_Struct));
+			app->size, sizeof(GroupJoin_Struct)-252);
 		DumpPacket(app);
 		return;
 	}
 
-	GroupLeader_Struct* gu = (GroupLeader_Struct*)app->pBuffer;
+	GroupJoin_Struct* gu = (GroupJoin_Struct*)app->pBuffer;
 
-	switch (gu->action) {
-	case groupActMakeLeader:
+	switch (gu->action) 
 	{
-		Mob* newleader = entity_list.GetClientByName(gu->membername);
-		Group* group = this->GetGroup();
+		case groupActMakeLeader:
+		{
+			Mob* newleader = entity_list.GetClientByName(gu->membername);
+			Group* group = this->GetGroup();
 
-		if (newleader && group) {
-			// the client only sends this if it's the group leader, but check anyway
-			if (group->IsLeader(this))
-				group->ChangeLeader(newleader);
-			else {
-				Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
-				DumpPacket(app);
+			if (newleader && group) 
+			{
+				// the client only sends this if it's the group leader, but check anyway
+				if (group->IsLeader(this))
+					group->ChangeLeader(newleader);
+				else 
+				{
+					Log.Out(Logs::General, Logs::None, "Group /makeleader request originated from non-leader member: %s", GetName());
+					DumpPacket(app);
+				}
 			}
+			break;
 		}
-		break;
-	}
 
-	default:
-	{
-		Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
-		DumpPacket(app);
-		return;
-	}
+		default:
+		{
+			Log.Out(Logs::General, Logs::None, "Received unhandled OP_GroupUpdate requesting action %u", gu->action);
+			DumpPacket(app);
+			return;
+		}
 	}
 }
 
@@ -5503,6 +5471,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	char val1[20] = { 0 };
 	PetCommand_Struct* pet = (PetCommand_Struct*)app->pBuffer;
 	Mob* mypet = this->GetPet();
+	Mob *target = entity_list.GetMob(pet->target);
 
 	if (!mypet || pet->command == PET_LEADER)
 	{
@@ -5537,22 +5506,22 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 	switch (PetCommand)
 	{
 	case PET_ATTACK: {
-		if (!GetTarget())
+		if (!target)
 			break;
-		if (GetTarget()->IsMezzed()) {
-			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), GetTarget()->GetCleanName());
+		if (target->IsMezzed()) {
+			Message_StringID(CC_Default, CANNOT_WAKE, mypet->GetCleanName(), target->GetCleanName());
 			break;
 		}
 		if (mypet->IsFeared())
 			break; //prevent pet from attacking stuff while feared
 
-		if (!mypet->IsAttackAllowed(GetTarget())) {
+		if (!mypet->IsAttackAllowed(target)) {
 			mypet->Say_StringID(NOT_LEGAL_TARGET);
 			break;
 		}
 
 		if ((mypet->GetPetType() == petAnimation && GetAA(aaAnimationEmpathy) >= 2) || mypet->GetPetType() != petAnimation) {
-			if (GetTarget() != this && DistanceSquaredNoZ(mypet->GetPosition(), GetTarget()->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+			if (target != this && DistanceSquaredNoZ(mypet->GetPosition(), target->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 				if (mypet->IsHeld()) {
 					if (!mypet->IsFocused()) {
 						mypet->SetHeld(false); //break the hold and guard if we explicitly tell the pet to attack.
@@ -5560,12 +5529,12 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 							mypet->SetPetOrder(SPO_Follow);
 					}
 					else {
-						mypet->SetTarget(GetTarget());
+						mypet->SetTarget(target);
 					}
 				}
 				zone->AddAggroMob();
-				mypet->AddToHateList(GetTarget(), 1);
-				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), GetTarget()->GetCleanName());
+				mypet->AddToHateList(target, 1);
+				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), target->GetCleanName());
 			}
 		}
 		break;
@@ -7424,11 +7393,8 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	mco->playerid = this->GetID();
 	QueuePacket(outapp);
 	safe_delete(outapp);
-
-	t1.start();
 	Save(1);
-	t1.stop();
-	std::cout << "Save took: " << t1.getDuration() << std::endl;
+
 	return;
 }
 
@@ -7716,13 +7682,6 @@ void Client::Handle_OP_SpawnAppearance(const EQApplicationPacket *app)
 		// don't do anything with this, we tell the client when it's
 		// levitating, not the other way around
 	}
-	else if (sa->type == AT_ShowHelm)
-	{
-		if(helm_toggle_timer.Check()) {
-			m_pp.showhelm = (sa->parameter == 1);
-			entity_list.QueueClients(this, app, true);
-		}
-	}
 	else {
 		std::cout << "Unknown SpawnAppearance type: 0x" << std::hex << std::setw(4) << std::setfill('0') << sa->type << std::dec
 			<< " value: 0x" << std::hex << std::setw(8) << std::setfill('0') << sa->parameter << std::dec << std::endl;
@@ -7981,8 +7940,8 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 					}
 				}
 			}
-			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
-			{
+			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 2500))
+			{ // client will allow targeting something just beyond max clip just out of sight, so add another 50 for that.
 				char *hacker_str = nullptr;
 				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
 					" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
@@ -8190,12 +8149,6 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 		return;
 	}
 
-	// Bazaar Trader:
-	//
-	// SoF sends 1 or more unhandled OP_Trader packets of size 96 when a trade has completed.
-	// I don't know what they are for (yet), but it doesn't seem to matter that we ignore them.
-
-
 	uint32 max_items = 80;
 
 	//Show Items
@@ -8205,83 +8158,121 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 
 		switch (sis->Code)
 		{
-		case BazaarTrader_EndTraderMode: {
-			Trader_EndTrader();
-			break;
-		}
-		case BazaarTrader_EndTransaction: {
+			case BazaarTrader_EndTraderMode: {
+				Trader_EndTrader();
+				break;
+			}
+			case BazaarTrader_EndTransaction: {
 
-			Client* c = entity_list.GetClientByID(sis->TraderID);
-			if (c)
-				c->WithCustomer(0);
-			else
-				Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_Trader: Null Client Pointer");
+				Client* c = entity_list.GetClientByID(sis->TraderID);
+				if (c)
+					c->WithCustomer(0);
+				else
+					Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_Trader: Null Client Pointer");
 
-			break;
-		}
-		case BazaarTrader_ShowItems: {
-			Trader_ShowItems();
-			break;
-		}
-		default: {
-			Log.Out(Logs::Detail, Logs::Trading, "Unhandled action code in OP_Trader ShowItems_Struct");
-			break;
-		}
+				break;
+			}
+			case BazaarTrader_ShowItems: {
+				Trader_ShowItems();
+				break;
+			}
+			default: {
+				Log.Out(Logs::Detail, Logs::Bazaar, "Unhandled action code in OP_Trader ShowItems_Struct");
+				break;
+			}
 		}
 	}
-	else if (app->size == sizeof(ClickTrader_Struct) || app->size == sizeof(TraderStatus_Struct))
+	else if (app->size == sizeof(Trader_Struct) || app->size == sizeof(TraderStatus_Struct))
 	{
-		if (Buyer) {
-			Trader_EndTrader();
-			Message(CC_Red, "You cannot be a Trader and Buyer at the same time.");
-			return;
-		}
+		Trader_Struct* ints = (Trader_Struct*)app->pBuffer;
 
-		ClickTrader_Struct* ints = (ClickTrader_Struct*)app->pBuffer;
-
-		if (ints->Code == BazaarTrader_StartTraderMode && app->size == sizeof(ClickTrader_Struct))
+		if (ints->Code == BazaarTrader_StartTraderMode && app->size == sizeof(Trader_Struct))
 		{
 			GetItems_Struct* gis = GetTraderItems();
 
 			// Verify there are no NODROP or items with a zero price
 			bool TradeItemsValid = true;
 
-			for (uint32 i = 0; i < max_items; i++) {
-
+			/* In this loop, we will compare the items sent by the client in OP_Trader with the items the server has in the player's trader satchels.
+			It is important we force the client to sync with the data the server has, because otherwise we will have no way to track stackable
+			items as no serial or slot number is sent by the client. In a default setting, both client and server will check the satchel's items 
+			in the same order. However, if items are moved around in the satchel and the player has kept the trader window up the client will tack 
+			those items to the end of its check, while the server will continue to check them in the order they appear in the bags. Closing the 
+			trader will sync server and client. */
+			for (uint32 i = 0; i < max_items; i++) 
+			{
+				// We've reached the end of the server's item list.
 				if (gis->Items[i] == 0) break;
 
-				if (ints->ItemCost[i] == 0) {
-					Message(CC_Red, "Item in Trader Satchel with no price. Unable to start trader mode");
-					TradeItemsValid = false;
-					break;
-				}
-				const Item_Struct *Item = database.GetItem(gis->Items[i]);
+				// Our client will not send an item if the cost has never been set by the player. If the item was previously set with a cost
+				// but the player has since cleared it, the item will be sent with cost 1.
 
-				if (!Item) {
-					Message(CC_Red, "Unexpected error. Unable to start trader mode");
+				// This will happen if an item with no cost is the last one the client checks. `Item` gets its value from the next 
+				// offset in the packet which is usually garbage as our client does not memset.
+				const Item_Struct *Item = database.GetItem(ints->Items[i]);
+				if (!Item) 
+				{
+					Message(CC_Red, "Make sure all your items have a price, close your trader window, and start again.");
 					TradeItemsValid = false;
 					break;
 				}
 
-				if (Item->NoDrop == 0) {
-					Message(CC_Red, "NODROP Item in Trader Satchel. Unable to start trader mode");
+				// No drop item.
+				if (Item->NoDrop == 0) 
+				{
+					Message(CC_Red, "NODROP Item in Trader Satchel. Unable to start trader mode.");
 					TradeItemsValid = false;
 					break;
 				}
+
+				// We should in theory never reach this logic, but keep it here just in case I am wrong.
+				if (ints->ItemCost[i] == 0) 
+				{
+					Message(CC_Red, "Item in Trader Satchel with no price. Unable to start trader mode.");
+					TradeItemsValid = false;
+					break;
+				}
+
+				// This will happen if an item with no cost is in the middle of the client's check. The client will skip it
+				// but server does not. 
+				// It can also happen if the player moves items around in their satchel while their trader window is still up.
+				// Finally if `Item` is a garbage value that just happens to be a valid itemid this will catch that. 
+				// We either try to re-sync, or fail and send the player an error message.
+				if(ints->Items[i] != gis->Items[i])
+				{
+					GetItem_Struct* gi = RefetchItem(ints->Items[i]);
+					if(gi->Items > 0)
+					{
+						gis->Items[i] = gi->Items;
+						gis->Charges[i] = gi->Charges;
+						gis->SerialNumber[i] = gi->SerialNumber;
+					}
+					else
+					{
+						Message(CC_Red, "Make sure all your items have a price, close your trader window, and start again.");
+						TradeItemsValid = false;
+						break;
+					}
+				}
+
+				Log.Out(Logs::Detail, Logs:: Bazaar, "(%d) Item: %s added to trader list with cost: %d and charges: %d", i, Item->Name, ints->ItemCost[i], gis->Charges[i]);
 			}
 
-			if (!TradeItemsValid) {
+			if (!TradeItemsValid) 
+			{
 				Trader_EndTrader();
 				return;
 			}
 
-			for (uint32 i = 0; i < max_items; i++) {
-				if (database.GetItem(gis->Items[i])) {
-					database.SaveTraderItem(this->CharacterID(), gis->Items[i], gis->SerialNumber[i],
+			for (uint32 i = 0; i < max_items; i++) 
+			{
+				if (database.GetItem(ints->Items[i])) 
+				{
+					database.SaveTraderItem(this->CharacterID(), ints->Items[i], gis->SerialNumber[i],
 						gis->Charges[i], ints->ItemCost[i], i);
 				}
-				else {
-					//return; //sony doesnt memset so assume done on first bad item
+				else 
+				{
 					break;
 				}
 
@@ -8309,7 +8300,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				if (c)
 					c->WithCustomer(0);
 				else
-					Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_Trader: Null Client Pointer");
+					Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_Trader: Null Client Pointer");
 
 				EQApplicationPacket empty(OP_ShopEndConfirm);
 				QueuePacket(&empty);
@@ -8317,7 +8308,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			}
 		}
 		else {
-			Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_Trader: Unknown TraderStruct code of: %i\n",
+			Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_Trader: Unknown TraderStruct code of: %i\n",
 				ints->Code);
 
 			Log.Out(Logs::General, Logs::Error, "Unknown TraderStruct code of: %i\n", ints->Code);
@@ -8329,7 +8320,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 		HandleTraderPriceUpdate(app);
 	}
 	else {
-		Log.Out(Logs::Detail, Logs::Trading, "Unknown size for OP_Trader: %i\n", app->size);
+		Log.Out(Logs::Detail, Logs::Bazaar, "Unknown size for OP_Trader: %i\n", app->size);
 		Log.Out(Logs::General, Logs::Error, "Unknown size for OP_Trader: %i\n", app->size);
 		DumpPacket(app);
 		return;
@@ -8356,11 +8347,11 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 			BuyTraderItem(tbs, Trader, app);
 		}
 		else {
-			Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_TraderBuy: Null Client Pointer");
+			Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_TraderBuy: Null Client Pointer");
 		}
 	}
 	else {
-		Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_TraderBuy: Struct size mismatch");
+		Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_TraderBuy: Struct size mismatch");
 
 	}
 	return;
@@ -8390,6 +8381,7 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 		tradee->CastToClient()->QueuePacket(app);
 	}
 	else if (tradee && tradee->IsNPC()) {
+
 		//npcs always accept
 		trade->Start(msg->to_mob_id);
 
@@ -8443,27 +8435,24 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 
 	if (app->size != sizeof(TraderClick_Struct)) {
 
-		Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_TraderShop: Returning due to struct size mismatch");
+		Log.Out(Logs::Detail, Logs::Error, "Client::Handle_OP_TraderShop: Returning due to struct size mismatch");
 
 		return;
 	}
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_TraderShop, sizeof(TraderClick_Struct));
-
 	TraderClick_Struct* outtcs = (TraderClick_Struct*)outapp->pBuffer;
-
 	Client* Trader = entity_list.GetClientByID(tcs->TraderID);
 
 	if (Trader)
 		outtcs->Approval = Trader->WithCustomer(GetID());
 	else {
-		Log.Out(Logs::Detail, Logs::Trading, "Client::Handle_OP_TraderShop: entity_list.GetClientByID(tcs->traderid)"
+		Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_TraderShop: entity_list.GetClientByID(tcs->traderid)"
 			" returned a nullptr pointer");
 		return;
 	}
 
 	outtcs->TraderID = tcs->TraderID;
-
 	outtcs->Unknown008 = 0x3f800000;
 
 	QueuePacket(outapp);
@@ -8603,7 +8592,7 @@ void Client::Handle_OP_ZoneEntryResend(const EQApplicationPacket *app)
 void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(LFG_Struct)) {
-		Log.Out(Logs::General, Logs::None, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
+		Log.Out(Logs::General, Logs::Error, "Invalid size for LFG_Struct: Expected: %i, Got: %i", sizeof(LFG_Struct), app->size);
 		return;
 	}
 
@@ -8618,7 +8607,7 @@ void Client::Handle_OP_LFGCommand(const EQApplicationPacket *app)
 	}
 	else
 	{
-		Log.Out(Logs::Detail, Logs::General, "Invalid LFG value sent. %i", lfg->value);
+		Log.Out(Logs::Detail, Logs::Error, "Invalid LFG value sent. %i", lfg->value);
 	}
 
 	UpdateWho();
@@ -8690,7 +8679,9 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 		}
 		else if(target->IsNPC())
 		{
-			target->Disarm();
+			if (!target->Disarm())
+				success = 0;
+
 			if(!GetGM())
 				AddToHateList(target, 1);
 		}
@@ -8888,6 +8879,35 @@ void Client::Handle_OP_MBRetrievalEraseRequest(const EQApplicationPacket *app)
 	
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_MBRetrievalFin, 0);
 	FastQueuePacket(&outapp);
+
+	return;
+}
+
+void Client::Handle_OP_Key(const EQApplicationPacket *app)
+{
+	if (app->size != 4) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
+		return;
+	}
+
+	return;
+}
+
+void Client::Handle_OP_TradeRefused(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(RefuseTrade_Struct)) {
+		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_TradeRefused: Expected: %i, Got: %i", sizeof(RefuseTrade_Struct), app->size);
+		return;
+	}
+
+	RefuseTrade_Struct* in = (RefuseTrade_Struct*)app->pBuffer;	
+	Client* client = entity_list.GetClientByID(in->fromid);
+
+	if(client)
+	{
+		CancelTrade_Struct* msg = (CancelTrade_Struct*)app->pBuffer;
+		client->QueuePacket(app);
+	}
 
 	return;
 }
