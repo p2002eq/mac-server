@@ -26,7 +26,6 @@
 #define ServerOP_KickPlayer			0x000D	// #kick
 
 #define ServerOP_RefreshGuild		0x000E	// Notice to all zoneservers to refresh their guild cache for ID# in packet (ServerGuildRefresh_Struct)
-#define ServerOP_VoiceMacro		0x000F
 //#define ServerOP_GuildInvite		0x0010
 #define ServerOP_DeleteGuild		0x0011	// ServerGuildID_Struct
 #define ServerOP_GuildRankUpdate	0x0012
@@ -34,7 +33,6 @@
 #define ServerOP_GuildMemberUpdate	0x0014
 #define ServerOP_RequestOnlineGuildMembers	0x0015
 #define ServerOP_OnlineGuildMembersResponse	0x0016
-#define ServerOP_LFGuildUpdate		0x0017
 
 #define ServerOP_FlagUpdate			0x0018	// GM Flag updated for character, refresh the memory cache
 #define ServerOP_GMGoto				0x0019
@@ -78,6 +76,7 @@
 #define ServerOP_UpdateSpawn		0x003f
 #define ServerOP_SpawnStatusChange	0x0040
 #define ServerOP_ChangeGroupLeader	0x0041
+#define ServerOP_IsOwnerOnline		0x0042
 #define ServerOP_DepopAllPlayersCorpses	0x0061
 #define ServerOP_ReloadTitles		0x0062
 #define ServerOP_QGlobalUpdate		0x0063
@@ -156,7 +155,6 @@
 #define ServerOP_UCSMailMessage 0x4001
 #define ServerOP_ReloadRules	0x4002
 #define ServerOP_ReloadRulesWorld	0x4003
-#define ServerOP_CameraShake	0x4004
 #define ServerOP_QueryServGeneric	0x4005
 #define ServerOP_CZSignalClient 0x4006
 #define ServerOP_CZSignalClientByName 0x4007
@@ -180,8 +178,6 @@
 #define ServerOP_WIClientSession 0x5004
 #define ServerOP_WIClientSessionResponse 0x5005
 /* Query Serv Generic Packet Flag/Type Enumeration */
-enum { QSG_LFGuild = 0 }; enum {	QSG_LFGuild_PlayerMatches = 0, QSG_LFGuild_UpdatePlayerInfo, QSG_LFGuild_RequestPlayerInfo, QSG_LFGuild_UpdateGuildInfo, QSG_LFGuild_GuildMatches,
-	QSG_LFGuild_RequestGuildInfo };
 
 #define ServerOP_Speech			0x4513
 
@@ -348,18 +344,6 @@ struct ServerEmoteMessage_Struct {
 	int16	minstatus;
 	uint32	type;
 	char	message[0];
-};
-
-struct ServerVoiceMacro_Struct {
-	char	From[64];
-	union {
-		char	To[64];
-		uint32	GroupID;
-		uint32	RaidID;
-	};
-	uint32	Type;
-	uint32	Voice;
-	uint32	MacroNumber;
 };
 
 struct ServerClientList_Struct {
@@ -907,12 +891,6 @@ struct ServerLeaderboardRequest_Struct
 	uint8 type;
 };
 
-struct ServerCameraShake_Struct
-{
-	uint32 duration; // milliseconds
-	uint32 intensity; // number from 1-10
-};
-
 struct ServerMailMessageHeader_Struct {
 	char from[64];
 	char to[64];
@@ -1072,6 +1050,13 @@ struct ServerRequestTellQueue_Struct {
 struct ServerRequestSoulMark_Struct {
 	char	name[64];
 	SoulMarkList_Struct entry;
+};
+
+struct ServerIsOwnerOnline_Struct {
+	char   name[64];	
+	uint32 corpseid;
+	uint16 zoneid;
+	uint8  online;
 };
 
 #pragma pack()

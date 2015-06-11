@@ -143,6 +143,8 @@ public:
 	// 13 = Primary (default), 14 = secondary
 	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
 		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
+	void DoMainHandRound(Mob* victim = nullptr, ExtraAttackOptions *opts = nullptr);
+	void DoOffHandRound(Mob* victim = nullptr, ExtraAttackOptions *opts = nullptr);
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
 	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
@@ -165,7 +167,6 @@ public:
 	bool HasDied();
 
 	//Appearance
-	void SendTargetable(bool on, Client *specific_target = nullptr);
 	virtual void SendWearChange(uint8 material_slot);
 	virtual void SendTextureWC(uint8 slot, uint16 texture, uint32 hero_forge_model = 0, uint32 elite_material = 0,
 		uint32 unknown06 = 0, uint32 unknown18 = 0);
@@ -190,12 +191,10 @@ public:
 	void BardPulse(uint16 spell_id, Mob *caster);
 
 	//Spell
-	void SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide,
-		uint32 unk020, bool perm_effect = false, Client *c = nullptr);
 	bool IsBeneficialAllowed(Mob *target);
 	virtual int GetCasterLevel(uint16 spell_id);
 	void ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* newbon, uint16 casterID = 0,
-		bool item_bonus = false, uint32 ticsremaining = 0, int buffslot = -1,
+		bool item_bonus = false, int16 instrumentmod = 10, uint32 ticsremaining = 0, int buffslot = -1,
 		bool IsAISpellEffect = false, uint16 effect_id = 0, int32 se_base = 0, int32 se_limit = 0, int32 se_max = 0);
 	void NegateSpellsBonuses(uint16 spell_id);
 	virtual float GetActSpellRange(uint16 spell_id, float range, bool IsBard = false) { return range;}
@@ -226,7 +225,7 @@ public:
 		bool use_resist_adjust = false, int16 resist_adjust = 0, bool isproc = false);
 	virtual bool SpellEffect(Mob* caster, uint16 spell_id, float partial = 100);
 	virtual bool DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center,
-		CastAction_type &CastAction);
+		CastAction_type &CastAction, bool isproc = false);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
 	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster);
@@ -248,7 +247,7 @@ public:
 
 	//Buff
 	void BuffProcess();
-	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0);
+	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0, int instrumentmod = 10);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
 	void BuffFadeAll(bool death = false);
@@ -298,7 +297,6 @@ public:
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
-	void SetTargetable(bool on);
 	bool IsTargetable() const { return m_targetable; }
 	bool HasShieldEquiped() const { return has_shieldequiped; }
 	inline void ShieldEquiped(bool val) { has_shieldequiped = val; }
@@ -401,6 +399,8 @@ public:
 	inline const float GetEQHeading() const { return m_EQPosition.w; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
+	inline const float GetZOffset() const { return z_offset; }
+	inline const float SetBestZ(float z_coord) const { return z_coord + z_offset; }
 	inline const float GetTarX() const { return m_TargetLocation.x; }
 	inline const float GetTarY() const { return m_TargetLocation.y; }
 	inline const float GetTarZ() const { return m_TargetLocation.z; }
@@ -426,16 +426,16 @@ public:
 	virtual void SetMoving(bool move) { moving = move; m_Delta = glm::vec4(); }
 	virtual void GoToBind(uint8 bindnum = 0) { }
 	virtual void Gate();
-	float GetWalkspeed() const { return(_GetMovementSpeed(0, true)); }
-	void  SetWalkSpeed(float speed) { walkspeed = speed; }
-	float GetRunspeed() const { return(_GetMovementSpeed(0)); }
+	float GetFearSpeed() const { return(0.025f * (float)_GetFearSpeed()); }
+	float GetWalkspeed() const { return(0.025f * (float)_GetWalkSpeed()); }
+	float GetRunspeed() const { return(0.025f * (float)_GetRunSpeed()); }
 	float GetBaseRunspeed() const { return runspeed; }
+	void  SetWalkSpeed(float speed) { int_walkspeed = (int)(speed * 40.0f); int_walkspeed = (int_walkspeed >> 2)<<2; walkspeed = (float)int_walkspeed / 40.0f; }
 	float GetMovespeed() const { return IsRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by grids roamboxes, and roamers to determine how fast the NPC *should* move.
-	float GetSpeed() const { return IsCurrentlyRunning() ? GetRunspeed() : GetWalkspeed(); } // Used by #showstats to show how fast the NPC currently *is* moving.
 	bool IsRunning() const { return m_is_running; } 
 	void SetRunning(bool val) { m_is_running = val; } // Toggle to force the NPC to run or walk on their next update.
-	bool IsCurrentlyRunning() const { return m_running; }
-	void SetCurrentlyRunning(bool val) { m_running = val; } // Toggle handled in SetRunAnimation() so we know the current speed of a NPC.
+	void SetCurrentSpeed(float speed);
+	float GetCurrentSpeed() { return current_speed; }
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDelta(const glm::vec4& delta) { m_Delta = delta; }
 	void SetPosition(const glm::vec4& pos) { m_Position = pos; }
@@ -443,7 +443,9 @@ public:
 	void SendPosUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct* spu);
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
+	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
+	void SendPositionNearby(uint8 iSendToSelf = 0);
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
@@ -469,7 +471,7 @@ public:
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
-	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { pLastChange = Timer::GetCurrentTime();
+	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
 		m_Position.w = iHeading; } }
 	void WipeHateList();
 	void AddFeignMemory(Client* attacker);
@@ -646,17 +648,20 @@ public:
 	void SetAppearance(EmuAppearance app, bool iIgnoreSelf = true);
 	inline EmuAppearance GetAppearance() const { return _appearance; }
 	inline const uint8 GetRunAnimSpeed() const { return pRunAnimSpeed; }
-	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; pLastChange = Timer::GetCurrentTime(); } }
+	inline void SetRunAnimSpeed(int8 in) { if (pRunAnimSpeed != in) { pRunAnimSpeed = in; SetChanged(); } }
 	float SetRunAnimation(float speed);
 
-	inline uint8 GetInnateLightValue() { return innate_light; }
-	inline uint8 GetEquipLightValue() { return equip_light; }
-	inline uint8 GetSpellLightValue() { return spell_light; }
-	virtual void UpdateEquipLightValue() { equip_light = NOT_USED; }
-	inline void SetSpellLightValue(uint8 light_value) { spell_light = (light_value & 0x0F); }
+	inline uint8 GetInnateLightType() { return m_Light.Type.Innate; }
+	inline uint8 GetEquipmentLightType() { return m_Light.Type.Equipment; }
+	inline uint8 GetSpellLightType() { return m_Light.Type.Spell; }
 
-	inline uint8 GetActiveLightValue() { return active_light; }
-	bool UpdateActiveLightValue(); // returns true if change, false if no change
+	virtual void UpdateEquipmentLight() { m_Light.Type.Equipment = 0; m_Light.Level.Equipment = 0; }
+	inline void SetSpellLightType(uint8 lightType) { m_Light.Type.Spell = (lightType & 0x0F); m_Light.Level.Spell = m_Light.TypeToLevel(m_Light.Type.Spell); }
+
+	inline uint8 GetActiveLightType() { return m_Light.Type.Active; }
+	bool UpdateActiveLight(); // returns true if change, false if no change
+
+	LightProfile_Struct* GetLightProfile() { return &m_Light; }
 
 	Mob* GetPet();
 	void SetPet(Mob* newpet);
@@ -777,10 +782,10 @@ public:
 
 	//old fear function
 	//void SetFeared(Mob *caster, uint32 duration, bool flee = false);
-	float GetFearSpeed();
 	bool IsFeared() { return curfp; } // This returns true if the mob is feared or fleeing due to low HP
 	//old fear: inline void StartFleeing() { SetFeared(GetHateTop(), FLEE_RUN_DURATION, true); }
 	inline void StartFleeing() { flee_mode = true; CalculateNewFearpoint(); }
+	inline bool IsFleeing() { return flee_mode; }
 	void ProcessFlee();
 	void CheckFlee();
 	inline bool IsBlind() { return spellbonuses.IsBlind; }
@@ -834,7 +839,7 @@ public:
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
 	uint32 GetInstrumentMod(uint16 spell_id) const;
-	int CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level = 1, Mob *caster = nullptr, int ticsremaining = 0);
+	int CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level = 1, Mob *caster = nullptr, int ticsremaining = 0, int instrumentmod = 10);
 	int CalcSpellEffectValue_formula(int formula, int base, int max, int caster_level, uint16 spell_id, int ticsremaining = 0);
 	virtual int CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2, int caster_level2, Mob* caster1 = nullptr, Mob* caster2 = nullptr, int buffslot = -1);
 	uint32 GetCastedSpellInvSlot() const { return casting_spell_inventory_slot; }
@@ -922,7 +927,8 @@ public:
 	bool	CanDualWield() { return can_dual_wield; }
 	void	SetCanDualWield(bool value) { can_dual_wield = value; }
 	uint8	DoubleAttackChance();
-	void	Disarm();
+	uint8	DualWieldChance();
+	bool	Disarm();
 
 	//Command #Tune functions
 	int32 Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg =0,	int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
@@ -933,12 +939,16 @@ public:
 	float Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod, int Msg = 1,int acc_override=0, int avoid_override=0, int add_acc=0, int add_avoid = 0);
 	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
 	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
+	float CalcZOffset();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
 	static uint16 GetProcID(uint16 spell_id, uint8 effect_index);
-	float _GetMovementSpeed(int mod, bool iswalking = false) const;
+	//float _GetMovementSpeed(int mod, bool iswalking = false) const;
+	int _GetRunSpeed() const;
+	int _GetWalkSpeed() const;
+	int _GetFearSpeed() const;
 	virtual bool MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, bool checkZ);
 
 	virtual bool AI_EngagedCastCheck() { return(false); }
@@ -948,6 +958,7 @@ protected:
 
 	bool IsFullHP;
 	bool moved;
+	float current_speed;
 
 	std::vector<uint16> RampageArray;
 	std::map<std::string, std::string> m_EntityVariables;
@@ -1025,8 +1036,10 @@ protected:
 	uint16 animation;
 	float base_size;
 	float size;
+	float z_offset;
 	float runspeed;
 	float walkspeed;
+	float fearspeed;
 	uint32 pLastChange;
 	bool held;
 	bool nocast;
@@ -1072,16 +1085,12 @@ protected:
 
 	glm::vec4 m_Delta;
 
-	uint8 innate_light;	// defined by db field `npc_types`.`light` - where appropriate
-	uint8 equip_light;	// highest value of equipped/carried light-producing items
-	uint8 spell_light;	// set value of any light-producing spell (can be modded to mimic equip_light behavior)
-	uint8 active_light;	// highest value of all light sources
+	LightProfile_Struct m_Light;
 
 	float fixedZ;
 	EmuAppearance _appearance;
 	uint8 pRunAnimSpeed;
 	bool m_is_running; // This bool tells us if the NPC *should* be running or walking, to calculate speed.
-	bool m_running; // This bool is used to tell us if the NPC is currently running or walking.
 
 	Timer attack_timer;
 	Timer attack_dw_timer;
@@ -1266,6 +1275,9 @@ protected:
 
 private:
 	void _StopSong(); //this is not what you think it is
+	int int_runspeed;
+	int int_walkspeed;
+	int int_fearspeed;
 	Mob* target;
 };
 

@@ -1078,6 +1078,10 @@ void lua_clear_npctype_cache(int npctype_id) {
 	quest_manager.ClearNPCTypeCache(npctype_id);
 }
 
+void lua_reloadzonestaticdata() {
+	quest_manager.ReloadZoneStaticData();
+}
+
 double lua_clock() {
 	timeval read_time;
 	gettimeofday(&read_time, nullptr);
@@ -1131,7 +1135,7 @@ void lua_create_npc(luabind::adl::object table, float x, float y, float z, float
 	LuaCreateNPCParse(cur_hp, int32, 30);
 	LuaCreateNPCParse(max_hp, int32, 30);
 	LuaCreateNPCParse(size, float, 6.0f);
-	LuaCreateNPCParse(runspeed, float, 1.25f);
+	LuaCreateNPCParse(runspeed, float, 1.3f);
 	LuaCreateNPCParse(gender, uint8, 0);
 	LuaCreateNPCParse(race, uint16, 1);
 	LuaCreateNPCParse(class_, uint8, WARRIOR);
@@ -1386,6 +1390,7 @@ luabind::scope lua_register_general() {
 		luabind::def("enable_recipe", &lua_enable_recipe),
 		luabind::def("disable_recipe", &lua_disable_recipe),
 		luabind::def("clear_npctype_cache", &lua_clear_npctype_cache),
+		luabind::def("reloadzonestaticdata", &lua_reloadzonestaticdata),
 		luabind::def("clock", &lua_clock),
 		luabind::def("create_npc", &lua_create_npc),
 		luabind::def("debug", (void(*)(std::string, int))&lua_debug)

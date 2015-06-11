@@ -138,7 +138,7 @@ public:
 	void setnexthpevent(int at);
 	void setnextinchpevent(int at);
 	void respawn(int npc_type, int grid);
-	void set_proximity(float minx, float maxx, float miny, float maxy, float minz=-999999, float maxz=999999);
+	void set_proximity(float minx, float maxx, float miny, float maxy, float minz=BEST_Z_INVALID, float maxz=-BEST_Z_INVALID);
 	void clear_proximity();
 	void enable_proximity_say();
 	void disable_proximity_say();
@@ -218,6 +218,7 @@ public:
 	bool DisableRecipe(uint32 recipe_id);
 	void ClearNPCTypeCache(int npctype_id);
 	void SendDebug(std::string message, int level);
+	void ReloadZoneStaticData();
 
 	Client *GetInitiator() const;
 	NPC *GetNPC() const;

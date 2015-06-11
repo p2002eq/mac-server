@@ -792,7 +792,6 @@ bool Zone::Init(bool iStaticZone) {
 	//clear trader items if we are loading the bazaar
 	if(strncasecmp(short_name,"bazaar",6)==0) {
 		database.DeleteTraderItem(0);
-		database.DeleteBuyLines(0);
 	}
 
 	zone->LoadNPCEmotes(&NPCEmoteList);
@@ -1355,7 +1354,7 @@ ZonePoint* Zone::GetClosestZonePoint(const glm::vec3& location, uint32 to, Clien
 		if (zp->target_zone_id == to)
 		{
             auto dist = Distance(glm::vec2(zp->x, zp->y), glm::vec2(location));
-			if ((zp->x == 999999 || zp->x == -999999) && (zp->y == 999999 || zp->y == -999999))
+			if ((zp->x == -BEST_Z_INVALID || zp->x == BEST_Z_INVALID) && (zp->y == -BEST_Z_INVALID || zp->y == BEST_Z_INVALID))
 				dist = 0;
 
 			if (dist < closest_dist)
@@ -1409,9 +1408,9 @@ ZonePoint* Zone::GetClosestZonePointWithoutZone(float x, float y, float z, Clien
 
 		float delta_x = zp->x - x;
 		float delta_y = zp->y - y;
-		if(zp->x == 999999 || zp->x == -999999)
+		if(zp->x == -BEST_Z_INVALID || zp->x == BEST_Z_INVALID)
 			delta_x = 0;
-		if(zp->y == 999999 || zp->y == -999999)
+		if(zp->y == -BEST_Z_INVALID || zp->y == BEST_Z_INVALID)
 			delta_y = 0;
 
 		float dist = delta_x*delta_x+delta_y*delta_y;///*+(zp->z-z)*(zp->z-z)*/;
@@ -1616,11 +1615,13 @@ bool ZoneDatabase::GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes) {
 
 void Zone::weatherSend()
 {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, 8);
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Weather, sizeof(Weather_Struct));
+	Weather_Struct* ws = (Weather_Struct*)outapp->pBuffer;
+
 	if(zone_weather>0)
-		outapp->pBuffer[0] = zone_weather-1;
+		ws->type = zone_weather-1;
 	if(zone_weather>0)
-		outapp->pBuffer[4] = zone->weather_intensity;
+		ws->intensity = zone->weather_intensity;
 	entity_list.QueueClients(0, outapp);
 	safe_delete(outapp);
 }
@@ -1713,7 +1714,7 @@ bool Zone::IsSpellBlocked(uint32 spell_id, const glm::vec3& location)
 					}
 					case 2:
 					{
-						if (!IsWithinAxisAlignedBox(location, blocked_spells[x].m_Location - blocked_spells[x].m_Difference, blocked_spells[x].m_Location + blocked_spells[x].m_Difference))
+						if (IsWithinAxisAlignedBox(location, blocked_spells[x].m_Location - blocked_spells[x].m_Difference, blocked_spells[x].m_Location + blocked_spells[x].m_Difference))
 							return true;
 						break;
 					}
@@ -1747,7 +1748,7 @@ const char* Zone::GetSpellBlockedMessage(uint32 spell_id, const glm::vec3& locat
 				}
 				case 2:
 				{
-					if(!IsWithinAxisAlignedBox(location, blocked_spells[x].m_Location - blocked_spells[x].m_Difference, blocked_spells[x].m_Location + blocked_spells[x].m_Difference))
+					if(IsWithinAxisAlignedBox(location, blocked_spells[x].m_Location - blocked_spells[x].m_Difference, blocked_spells[x].m_Location + blocked_spells[x].m_Difference))
 						return blocked_spells[x].message;
 					break;
 				}

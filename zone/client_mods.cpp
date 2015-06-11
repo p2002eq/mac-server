@@ -1143,7 +1143,7 @@ int32 Client::CalcSTR() {
 }
 
 int32 Client::CalcSTA() {
-	int32 val = m_pp.STA + itembonuses.STA + spellbonuses.STA + CalcAlcoholPhysicalEffect();;
+	int32 val = m_pp.STA + itembonuses.STA + spellbonuses.STA + CalcAlcoholPhysicalEffect();
 
 	int32 mod = aabonuses.STA;
 
@@ -1160,7 +1160,7 @@ int32 Client::CalcSTA() {
 }
 
 int32 Client::CalcAGI() {
-	int32 val = m_pp.AGI + itembonuses.AGI + spellbonuses.AGI - CalcAlcoholPhysicalEffect();;
+	int32 val = m_pp.AGI + itembonuses.AGI + spellbonuses.AGI - CalcAlcoholPhysicalEffect();
 	int32 mod = aabonuses.AGI;
 
 	int32 str = GetSTR();
@@ -1185,7 +1185,7 @@ int32 Client::CalcAGI() {
 }
 
 int32 Client::CalcDEX() {
-	int32 val = m_pp.DEX + itembonuses.DEX + spellbonuses.DEX - CalcAlcoholPhysicalEffect();;
+	int32 val = m_pp.DEX + itembonuses.DEX + spellbonuses.DEX - CalcAlcoholPhysicalEffect();
 
 	int32 mod = aabonuses.DEX;
 
@@ -1890,9 +1890,9 @@ int32 Client::CalcEnduranceRegenCap() {
 	return (cap * RuleI(Character, EnduranceRegenMultiplier) / 100);
 }
 
-int Client::GetRawACNoShield(int &shield_ac) const
+int Client::GetRawACNoShield(int &shield_ac, int spell_mod) const
 {
-	int ac = itembonuses.AC + spellbonuses.AC + aabonuses.AC;
+	int ac = itembonuses.AC + spellbonuses.AC / spell_mod + aabonuses.AC;
 	shield_ac = 0;
 	const ItemInst *inst = m_inv.GetItem(MainSecondary);
 	if(inst)

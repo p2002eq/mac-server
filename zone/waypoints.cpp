@@ -223,8 +223,10 @@ void NPC::UpdateWaypoint(int wp_index)
 
 			float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
-			if ((newz > -2000) && std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaWaypoint))
-				m_CurrentWayPoint.z = newz + 1;
+			if ((newz > -2000) && std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaWaypoint) + GetZOffset()))
+			{
+				m_CurrentWayPoint.z = SetBestZ(newz);
+			}
 		}
 	}
 
@@ -395,6 +397,7 @@ void NPC::SetWaypointPause()
 
 	if (cur_wp_pause == 0) {
 		AIwalking_timer->Start(100);
+		AIwalking_timer->Trigger();
 	}
 	else
 	{
@@ -429,19 +432,64 @@ void NPC::SaveGuardSpot(bool iClearGuardSpot) {
 }
 
 void NPC::NextGuardPosition() {
-	if (!CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, GetMovespeed())) {
-		SetHeading(m_GuardPoint.w);
-		Log.Out(Logs::Detail, Logs::AI, "Unable to move to next guard position. Probably rooted.");
-	}
-	else if((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z))
+	float walksp = GetMovespeed();
+	SetCurrentSpeed(walksp);
+	if(walksp <= 0.0f)
+		return;
+
+	bool CP2Moved;
+	if(!RuleB(Pathing, Guard) || !zone->pathing)
+		CP2Moved = CalculateNewPosition2( m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+	else
 	{
-		if(moved)
+		if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
 		{
+			bool WaypointChanged, NodeReached;
+			glm::vec3 Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
+			if(WaypointChanged)
+				tar_ndx = 20;
+
+			if(NodeReached)
+				entity_list.OpenDoorsNear(CastToNPC());
+
+			CP2Moved = CalculateNewPosition2(Goal.x, Goal.y, Goal.z, walksp);
+		}
+		else
+			CP2Moved = false;
+
+	}
+	if (!CP2Moved)
+	{
+		if(moved) {
+			Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 			moved=false;
 			SetMoving(false);
+			if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
+			{
+				SetHeading(m_GuardPoint.w);
+			} else {
+				FaceTarget(GetTarget());
+			}
 			SendPosition();
+			SetAppearance(GetGuardPointAnim());
 		}
 	}
+
+
+
+	//if (!CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, GetMovespeed())) {
+	//	SetHeading(m_GuardPoint.w);
+	//	Log.Out(Logs::Detail, Logs::AI, "Unable to move to next guard position. Probably rooted.");
+	//}
+	//else if((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z))
+	//{
+	//	if(moved)
+	//	{
+	//		moved=false;
+	//		SetMoving(false);
+	//		SendPosition();
+	//	}
+	//}
 }
 
 /*
@@ -516,8 +564,9 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		m_Position.z = z;
 		return true;
 	}
-
+	bool send_update = false;
 	int compare_steps = IsBoat() ? 1 : 20;
+
 	if(tar_ndx < compare_steps && m_TargetLocation.x==x && m_TargetLocation.y==y) {
 
 		float new_x = m_Position.x + m_TargetV.x*tar_vector;
@@ -553,17 +602,21 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 				Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 				if ((newz > -2000) &&
-				    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+				    std::abs(newz + GetZOffset() - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
 				{
 					if((std::abs(x - m_Position.x) < 0.5) && (std::abs(y - m_Position.y) < 0.5))
 					{
 						if (std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
 							m_Position.z = z;
 						else
-							m_Position.z = newz + 1;
+						{
+							m_Position.z = SetBestZ(newz);
+						}
 					}
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 			}
 		}
@@ -601,7 +654,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	tar_vector = speed / mag;
 
 // mob move fix
-	int numsteps = (int) ( mag * 20 / speed) + 1;
+	int numsteps = (int) ( mag * 20.0f / speed);
 
 
 // mob move fix
@@ -610,7 +663,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	{
 		if (numsteps>1)
 		{
-			tar_vector=1.0f	;
+			tar_vector=1.0f ;
 			m_TargetV.x = m_TargetV.x/numsteps;
 			m_TargetV.y = m_TargetV.y/numsteps;
 			m_TargetV.z = m_TargetV.z/numsteps;
@@ -638,14 +691,13 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			m_Position.x = x;
 			m_Position.y = y;
 			m_Position.z = z;
-
+			tar_ndx = 20;
 			Log.Out(Logs::Detail, Logs::AI, "Only a single step to get there... jumping.");
-
 		}
 	}
 
 	else {
-		tar_vector/=20;
+		tar_vector/=20.0f;
 
 		float new_x = m_Position.x + m_TargetV.x*tar_vector;
 		float new_y = m_Position.y + m_TargetV.y*tar_vector;
@@ -660,6 +712,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		m_Position.w = CalculateHeadingToTarget(x, y);
 		Log.Out(Logs::Detail, Logs::AI, "Next position2 (%.3f, %.3f, %.3f) (%d steps)", m_Position.x, m_Position.y, m_Position.z, numsteps);
 	}
+
 
 	uint8 NPCFlyMode = 0;
 
@@ -681,18 +734,22 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 			if ((newz > -2000) &&
-			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+			    std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset())) // Sanity check.
 			{
 				if(std::abs(x - m_Position.x) < 0.5 && std::abs(y - m_Position.y) < 0.5)
 				{
-					if(std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
+					if(std::abs(z - m_Position.z) <= (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset()))
 						m_Position.z = z;
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 				else
-					m_Position.z = newz+1;
+				{
+					m_Position.z = SetBestZ(newz);
 				}
+			}
 		}
 	}
 
@@ -701,13 +758,17 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 
 	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
 
-	if (IsClient())
-		SendPosUpdate(1);
+	if (IsClient()) {
+		SendPositionNearby(1);
+		CastToClient()->ResetPositionTimer();
+	}
 	else
-		SendPosUpdate();
-
-	SetAppearance(eaStanding, false);
-	pLastChange = Timer::GetCurrentTime();
+	{
+		SendPositionNearby();
+		SetAppearance(eaStanding, false);
+	}		
+	SetChanged();
+	
 	return true;
 }
 
@@ -719,10 +780,16 @@ bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool che
 
 float Mob::SetRunAnimation(float speed)
 {
-	float newspeed;
-	if(IsNPC()) 
+	SetCurrentSpeed(speed);
+	float newspeed = speed * 50.0f;
+	pRunAnimSpeed = static_cast<uint8>(speed * 10.0f);
+	if (IsClient()) {
+		newspeed = speed * 100.0f;
+		animation = static_cast<uint16>(speed * 10.0f);
+	}
+	/*if(IsNPC()) 
 	{
-		if(speed == GetRunspeed())
+		if(speed >= GetRunspeed())
 		{
 			SetCurrentlyRunning(true);
 			newspeed = speed * RuleR(NPC, SpeedMultiplier);
@@ -734,7 +801,7 @@ float Mob::SetRunAnimation(float speed)
 			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
 			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
 		}
-	}
+	}*/
 
 	return newspeed;
 }
@@ -748,7 +815,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 	float nz = m_Position.z;
 
 	// if NPC is rooted
-	if (speed == 0.0) {
+	if (speed <= 0.0) {
 		SetHeading(CalculateHeadingToTarget(x, y));
 		if(moved){
 			SendPosition();
@@ -823,17 +890,21 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 			Log.Out(Logs::Detail, Logs::AI, "BestZ returned %4.3f at %4.3f, %4.3f, %4.3f", newz,m_Position.x,m_Position.y,m_Position.z);
 
 			if ((newz > -2000) &&
-			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaMoving)) // Sanity check.
+			    std::abs(newz + GetZOffset() - dest.z) < (RuleR(Map, FixPathingZMaxDeltaMoving) + GetZOffset())) // Sanity check.
 			{
 				if (std::abs(x - m_Position.x) < 0.5 && std::abs(y - m_Position.y) < 0.5)
 				{
 					if(std::abs(z - m_Position.z) <= RuleR(Map, FixPathingZMaxDeltaMoving))
 						m_Position.z = z;
 					else
-						m_Position.z = newz + 1;
+					{
+						m_Position.z = SetBestZ(newz);
+					}
 				}
 				else
-					m_Position.z = newz+1;
+				{
+					m_Position.z = SetBestZ(newz);
+				}
 			}
 		}
 	}
@@ -850,7 +921,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 
 	// now get new heading
 	SetAppearance(eaStanding, false); // make sure they're standing
-	pLastChange = Timer::GetCurrentTime();
+	SetChanged();
 	return true;
 }
 
@@ -919,8 +990,10 @@ void NPC::AssignWaypoints(int32 grid)
 
 				float newz = zone->zonemap->FindBestZ(dest, nullptr);
 
-				if( (newz > -2000) && std::abs(newz-dest.z) < RuleR(Map, FixPathingZMaxDeltaLoading))
-					newwp.z = newz + 1;
+				if( (newz > -2000) && std::abs(newz+GetZOffset()-dest.z) < (RuleR(Map, FixPathingZMaxDeltaLoading)+GetZOffset()))
+				{
+					newwp.z = SetBestZ(newz);
+				}
 			}
 		}
 
@@ -969,7 +1042,9 @@ void Mob::SendTo(float new_x, float new_y, float new_z) {
 
 			if ((newz > -2000) &&
 			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaSendTo)) // Sanity check.
-				m_Position.z = newz + 1;
+			{
+				m_Position.z = SetBestZ(newz);
+			}
 		}
 	}
 	else
@@ -978,12 +1053,12 @@ void Mob::SendTo(float new_x, float new_y, float new_z) {
 
 void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 	if(IsNPC()) {
-		entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z + 0.1);
+		entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z + 0.5f);
 	}
 
 	m_Position.x = new_x;
 	m_Position.y = new_y;
-	m_Position.z = new_z + 0.1;
+	m_Position.z = new_z + 0.5f;
 
 	//fix up pathing Z, this shouldent be needed IF our waypoints
 	//are corrected instead
@@ -1001,7 +1076,9 @@ void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 
 			if ((newz > -2000) &&
 			    std::abs(newz - dest.z) < RuleR(Map, FixPathingZMaxDeltaSendTo)) // Sanity check.
-				m_Position.z = newz + 1;
+			{
+				m_Position.z = SetBestZ(newz);
+			}
 		}
 	}
 }

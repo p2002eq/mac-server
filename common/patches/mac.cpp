@@ -159,16 +159,17 @@ namespace Mac {
 			strncpy(eq->name, emu->player.spawn.name, 64);
 			eq->deity = emu->player.spawn.deity;
 			eq->race = emu->player.spawn.race;
-			eq->size = emu->player.spawn.size;
-			if(emu->player.spawn.race == 42)
+			if (emu->player.spawn.race == 42 && emu->player.spawn.gender == 2)
 				eq->size = emu->player.spawn.size + 2.0f;
+			else
+				eq->size = emu->player.spawn.size;
 			eq->NPC = emu->player.spawn.NPC;
 			eq->invis = emu->player.spawn.invis;
 			eq->max_hp = emu->player.spawn.max_hp;
 			eq->curHP = emu->player.spawn.curHp;
 			eq->x_pos = (float)emu->player.spawn.x;
 			eq->y_pos = (float)emu->player.spawn.y;
-			eq->z_pos = (float)emu->player.spawn.z + (eq->size * 0.625f - 4);
+			eq->z_pos = (float)emu->player.spawn.z;
 			eq->animation = emu->player.spawn.animation;
 			eq->heading = (float)emu->player.spawn.heading;
 			eq->haircolor = emu->player.spawn.haircolor;
@@ -496,7 +497,7 @@ namespace Mac {
 		OUT(safe_x);
 		OUT(safe_z);
 		OUT(max_z);
-		eq->underworld=emu->underworld;
+		OUT(underworld);
 		OUT(minclip);
 		OUT(maxclip);
 		OUT(skylock);
@@ -505,6 +506,9 @@ namespace Mac {
 		OUT_array(snow_duration, 4);
 		OUT_array(rain_chance, 4);
 		OUT_array(rain_duration, 4);
+		OUT(normal_music_day);
+		eq->water_music = 4; // No need to add a column for these two, they never change like gravity.
+		eq->normal_music_night = 0;
 		FINISH_ENCODE();	
 	}
 
@@ -745,9 +749,9 @@ namespace Mac {
 		OUT(type);
 		OUT(spellid);
 		OUT(damage);
-		//OUT(unknown11);
+		OUT(force);
 		OUT(sequence);
-		//OUT(unknown19);
+		OUT(pushup_angle);
 		FINISH_ENCODE();
 	}
 
@@ -761,8 +765,9 @@ namespace Mac {
 		OUT(level);
 		eq->unknown6 = 0x41; //Think this is target level.
 		OUT(instrument_mod);
-		OUT(bard_focus_id);
+		OUT(force);
 		OUT(sequence);
+		OUT(pushup_angle);
 		OUT(type);
 		OUT(spell);
 		OUT(buff_unknown);
@@ -1516,6 +1521,7 @@ namespace Mac {
 			ENCODE_LENGTH_EXACT(Trader_Struct);
 			SETUP_DIRECT_ENCODE(Trader_Struct, structs::Trader_Struct);
 			OUT(Code);
+			OUT(TraderID);
 			int k;
 			for(k = 0; k < 80; k++) 
 			{
@@ -1573,6 +1579,7 @@ namespace Mac {
 			DECODE_LENGTH_EXACT(structs::Trader_Struct);
 			SETUP_DIRECT_DECODE(Trader_Struct, structs::Trader_Struct);
 			IN(Code);
+			IN(TraderID);
 			int k;
 			for(k = 0; k < 80; k++)
 			{
@@ -1845,7 +1852,7 @@ namespace Mac {
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
 		if(item->GMFlag == -1)
-			Log.Out(Logs::Detail, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
+			Log.Out(Logs::Moderate, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
 
 		// General items
   		if(type == 0)
@@ -2061,8 +2068,8 @@ namespace Mac {
 		eq->anon = emu->anon;
 		memcpy(eq->name, emu->name, 64);
 		eq->deity = emu->deity;
-		if(emu->race == 42)
-			eq->size = emu->size + 2.0f;
+		if (emu->race == 42 && emu->gender == 2)
+				eq->size = emu->size + 2.0f;
 		else
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;
@@ -2098,7 +2105,20 @@ namespace Mac {
 		if(eq->GuildID == 0)
 			eq->GuildID = 0xFFFF;
 		eq->helm = emu->helm;
-		eq->race = emu->race;
+		if (emu->race >= 209 && emu->race <= 212)
+		{
+			eq->race = 75;
+			if (emu->race == 210)
+				eq->texture = 3;
+			else if (emu->race == 211)
+				eq->texture = 2;
+			else if (emu->race == 212)
+				eq->texture = 1;
+			else
+				eq->texture = 0;
+		}
+		else
+			eq->race = emu->race;
 		strncpy(eq->Surname, emu->lastName, 32);
 		eq->walkspeed = emu->walkspeed;
 		eq->light = emu->light;
@@ -2126,15 +2146,7 @@ namespace Mac {
 	}
 
 	ENCODE(OP_DisciplineUpdate) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_Dye) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_RaidJoin) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_RemoveAllDoors) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_SendAAStats) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_SpellEffect) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_TraderDelItem) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_TraderItemUpdate) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_Untargetable) { ENCODE_FORWARD(OP_Unknown); }
-	ENCODE(OP_UpdateAA) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_Unknown)
 	{
 		EQApplicationPacket *in = *p;

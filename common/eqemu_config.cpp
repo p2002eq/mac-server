@@ -264,7 +264,7 @@ void EQEmuConfig::do_zones(TiXmlElement *ele)
 
 		text = sub_ele->Attribute("low");
 		if (text)
-			ZonePortLow=atoi(text);;
+			ZonePortLow=atoi(text);
 
 		text = sub_ele->Attribute("high");
 		if (text)

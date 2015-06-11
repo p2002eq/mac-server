@@ -255,8 +255,11 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 	}
 
 	if (RuleB(Combat, UseIntervalAC)) {
-		float softcap = (GetSkill(SkillDefense) + GetLevel()) *
-			RuleR(Combat, SoftcapFactor) * (1.0 + aa_mit);
+		float lvl_adj = GetLevel() + 50;
+		float softcap = (GetSkill(SkillDefense) + lvl_adj) * RuleR(Combat, SoftcapFactor) / 3;
+		softcap += lvl_adj;
+		softcap *= (1.0 + aa_mit);
+
 		float mitigation_rating = 0.0;
 		float attack_rating = 0.0;
 		int shield_ac = 0;
@@ -279,8 +282,14 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		float monkweight = RuleI(Combat, MonkACBonusWeight);
 		monkweight = mod_monk_weight(monkweight, attacker);
 
+		// for spell AC contribution, cloth wearers get / 3, others get /4
+		int adj_mod = 4;
+		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
+			GetClass() == NECROMANCER || GetClass() == ENCHANTER)
+			adj_mod = 3;
+
 		if (IsClient()) {
-			armor = CastToClient()->GetRawACNoShield(shield_ac) + add_ac;
+			armor = CastToClient()->GetRawACNoShield(shield_ac, adj_mod) + add_ac;
 			weight = (CastToClient()->CalcCurrentWeight() / 10.0);
 
 			if (ac_override)
@@ -289,7 +298,7 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 			if (Msg >=2 ){
 				GM->Message(0, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
 				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) AA Bonus", aabonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC);
+				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC / adj_mod);
 				GM->Message(0, "# %i #### DEFENDER Shield AC", shield_ac);
 				GM->Message(0, "# %i #### DEFENDER Total Client Armor - NO shield", armor);
 			}
@@ -360,6 +369,14 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		}
 		softcap += shield_ac;
 		armor += shield_ac;
+		armor = armor * 4 / 3;
+
+		if (armor < 1)
+			armor = 1;
+
+		// anti-twink code
+		if (IsClient() && (GetLevel() < 50) && (armor > (25 + GetLevel() * 6)))
+			armor = 25 + GetLevel() * 6;
 
 		if (RuleB(Combat, OldACSoftcapRules))
 			softcap += (softcap * (aa_mit * RuleR(Combat, AAMitigationACFactor)));
@@ -410,12 +427,12 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		int tmp_armor = armor;
 		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
 				GetClass() == NECROMANCER || GetClass() == ENCHANTER){
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 4.0) + armor + 1;
+			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 2.0) + armor;
 			if (Msg >= 2)
 				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
 		}
 		else{
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + (armor * 1.333333) + 1;
+			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + armor;
 			if (Msg >= 2)
 				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
 
@@ -457,6 +474,8 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 
 		attack_rating = attacker->mod_attack_rating(attack_rating, this);
 
+		if (attack_rating < 1)
+			attack_rating = 1.0f;
 		if (Msg >= 2){
 			GM->Message(0, " "); 
 			GM->Message(0, "### Calculate Attack Rating ###"); 
@@ -544,36 +563,80 @@ int32 Client::Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 mi
 	float dmg_interval = (damage - minhit) / 19.0;
 	float dmg_bonus = minhit - dmg_interval;
 	float spellMeleeMit =  (spellbonuses.MeleeMitigationEffect + itembonuses.MeleeMitigationEffect + aabonuses.MeleeMitigationEffect) / 100.0;
-	if (GetClass() == WARRIOR)
-		spellMeleeMit += 0.05;
+
 	dmg_bonus -= dmg_bonus * (itembonuses.MeleeMitigation / 100.0);
 	dmg_interval -= dmg_interval * spellMeleeMit;
 
-	float mit_roll = zone->random.Real(0, mit_rating);
-	float atk_roll = zone->random.Real(0, atk_rating);
+	if (RuleB(Combat, NewACCurves)) {
+		float mit_adj = 3.0f;
+		if (GetLevel() < 65.0f)
+			mit_adj = 2.0f + 1.0f * ((float)GetLevel()/ 65.0f);
 
-	if (atk_roll > mit_roll) {
-		float a_diff = atk_roll - mit_roll;
-		float thac0 = atk_rating * RuleR(Combat, ACthac0Factor);
-		float thac0cap = attacker->GetLevel() * 9 + 20;
-		if (thac0 > thac0cap)
-			thac0 = thac0cap;
+		const float combatRating = 1.0f - (mit_adj * mit_rating / atk_rating);
 
-		d += 10 * (a_diff / thac0);
-	} else if (mit_roll > atk_roll) {
-		float m_diff = mit_roll - atk_roll;
-		float thac20 = mit_rating * RuleR(Combat, ACthac20Factor);
-		float thac20cap = GetLevel() * 9 + 20;
-		if (thac20 > thac20cap)
-			thac20 = thac20cap;
+		float minHit = 0.25f;
+		if (combatRating < 0.95f)
+			minHit = 7.314f - combatRating * 11.712f + 4.448 * combatRating * combatRating;
+		float maxHit = 0.25f;
+		if (combatRating > -1.632f)
+			maxHit = 27.463f + combatRating * 30.177f + 8.273f * combatRating * combatRating;
 
-		d -= 10 * (m_diff / thac20);
-	}
+		if (minHit > 95.0f)
+			minHit = 95.0f;
+		if (maxHit > 95.0f)
+			maxHit = 95.0f;
 
-	if (d < 1)
+		float d2_d19_chance = 100 - (maxHit + minHit);
+		const float d2_d19_dist = d2_d19_chance / 18.0f;
+
+		if(minHit < d2_d19_dist) {
+			minHit = (100 - maxHit) / 19.0f;
+			d2_d19_chance = 100 - (maxHit + minHit);
+		}
+		if(maxHit < d2_d19_dist) {
+			maxHit = (100 - minHit) / 19.0f;
+			d2_d19_chance = 100 - (maxHit + minHit);
+		}
+
+		const float d1_chance = minHit;
+		const float dice = zone->random.Real(0, 100);
+	
 		d = 1;
-	else if (d > 20)
-		d = 20;
+		if(dice <= d1_chance)
+			d = 1;
+		else if(dice <= (d2_d19_chance + d1_chance))
+			d = 2 + (int)((dice-d1_chance) * 18.0f / d2_d19_chance);
+		else
+			d = 20;
+
+	} else {
+
+		float mit_roll = zone->random.Real(0, mit_rating);
+		float atk_roll = zone->random.Real(0, atk_rating);
+
+		if (atk_roll > mit_roll) {
+			float a_diff = atk_roll - mit_roll;
+			float thac0 = atk_rating * RuleR(Combat, ACthac0Factor);
+			float thac0cap = attacker->GetLevel() * 9 + 20;
+			if (thac0 > thac0cap)
+				thac0 = thac0cap;
+
+			d += 10 * (a_diff / thac0);
+		} else if (mit_roll > atk_roll) {
+			float m_diff = mit_roll - atk_roll;
+			float thac20 = mit_rating * RuleR(Combat, ACthac20Factor);
+			float thac20cap = GetLevel() * 9 + 20;
+			if (thac20 > thac20cap)
+				thac20 = thac20cap;
+
+			d -= 10 * (m_diff / thac20);
+		}
+
+		if (d < 1)
+			d = 1;
+		else if (d > 20)
+			d = 20;
+	}
 
 	return static_cast<int32>((dmg_bonus + dmg_interval * d));
 }

@@ -173,10 +173,23 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		return;
 	}
 
-	if(GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GREEN ) {
-		towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
-		dist2, iAggroRange2);
-		return;
+
+	if (RuleB(Aggro, UseLevelAggro))
+	{
+		if (GetLevel() < 18 && mob->GetLevelCon(GetLevel()) == CON_GREEN && GetBodyType() != 3 && !IsAggroOnPC())
+		{
+			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),	dist2, iAggroRange2);
+			return;
+		}
+	}
+	else
+	{
+		if (GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GREEN)
+		{
+			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
+				dist2, iAggroRange2);
+			return;
+		}
 	}
 
 	if(verbose) {
@@ -341,34 +354,71 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	int heroicCHA_mod = mob->itembonuses.HeroicCHA/25; // 800 Heroic CHA cap
 	if(heroicCHA_mod > THREATENLY_ARRGO_CHANCE)
 		heroicCHA_mod = THREATENLY_ARRGO_CHANCE;
-	if
-	(
-	//old InZone check taken care of above by !mob->CastToClient()->Connected()
-	(
-		( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
-		||( mob->IsClient() && mob->CastToClient()->IsSitting() )
-		||( mob->GetLevelCon(GetLevel()) != CON_GREEN )
 
-	)
-	&&
-	(
+	if (RuleB(Aggro, UseLevelAggro))
+	{
+		if
 		(
-			fv == FACTION_SCOWLS
-			||
-			(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
-			||
+		//old InZone check taken care of above by !mob->CastToClient()->Connected()
+		(
+			(GetLevel() >= 18)
+			|| (GetBodyType() == 3)
+			|| (CastToNPC()->IsAggroOnPC())
+			|| (mob->IsClient() && mob->CastToClient()->IsSitting())
+			|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
+		)
+		&&
+		(
 			(
-				fv == FACTION_THREATENLY
-				&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				fv == FACTION_SCOWLS
+				||
+				(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
+				||
+				(
+					fv == FACTION_THREATENLY
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				)
 			)
 		)
-	)
-	)
+		)
+		{
+			//make sure we can see them. last since it is very expensive
+			if (zone->SkipLoS() || CheckLosFN(mob)) {
+				Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				return(mod_will_aggro(mob, this));
+			}
+		}
+	}
+	else
 	{
-		//FatherNiwtit: make sure we can see them. last since it is very expensive
-		if(CheckLosFN(mob)) {
-			Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName()); 
-			return( mod_will_aggro(mob, this) );
+		if
+		(
+		//old InZone check taken care of above by !mob->CastToClient()->Connected()
+			(
+			(GetINT() <= RuleI(Aggro, IntAggroThreshold))
+			|| (mob->IsClient() && mob->CastToClient()->IsSitting())
+			|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
+		)
+		&&
+		(
+			(
+				fv == FACTION_SCOWLS
+				||
+				(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
+				||
+				(
+					fv == FACTION_THREATENLY
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+				)
+			)
+		)
+		)
+		{
+			//make sure we can see them. last since it is very expensive
+			if (zone->SkipLoS() || CheckLosFN(mob)) {
+				Log.Out(Logs::Moderate, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
+				return(mod_will_aggro(mob, this));
+			}
 		}
 	}
 
@@ -510,6 +560,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (
 			mob != sender
 			&& mob != attacker
+			&& mob->GetClass() != 41
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
@@ -542,8 +593,8 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				if(useprimfaction || sender->GetReverseFactionCon(mob) <= FACTION_AMIABLE )
 				{
 					//attacking someone on same faction, or a friend
-					//Father Nitwit: make sure we can see them.
-					if(mob->CheckLosFN(sender)) {
+					//make sure we can see them.
+					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
 #if (EQDEBUG>=11)
 						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
@@ -1044,8 +1095,8 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 #define LOS_DEFAULT_HEIGHT 6.0f
 
 
-	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize())/2 * HEAD_POSITION;
-	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	myloc.z = mybestz + (GetSize()==0.0?LOS_DEFAULT_HEIGHT:GetSize()) * HEAD_POSITION;
+	oloc.z = obestz + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize) * SEE_POSITION;
 
 	Log.Out(Logs::Detail, Logs::Maps, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 	return zone->zonemap->CheckLoS(myloc, oloc);

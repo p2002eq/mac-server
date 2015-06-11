@@ -158,7 +158,7 @@ Mob* HateList::GetClosest(Mob *hater) {
 
 	auto iterator = list.begin();
 	while(iterator != list.end()) {
-		this_distance = DistanceSquaredNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());;
+		this_distance = DistanceSquaredNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());
 		if((*iterator)->ent != nullptr && this_distance <= close_distance) {
 			close_distance = this_distance;
 			close_entity = (*iterator)->ent;
@@ -325,7 +325,7 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || cur->ent->IsFeared()){
+			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing())){
 				if(hate == -1)
 				{
 					top = cur->ent;
@@ -520,37 +520,27 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 	if(!target || !caster)
 		return 0;
 
-	int ret = 0;
-	std::list<uint32> id_list;
+	int targetsHit = 0;
 	auto iterator = list.begin();
-	while (iterator != list.end())
+	tHateEntry* h = nullptr;
+
+	while (iterator != list.end() && targetsHit < count)
 	{
-		tHateEntry *h = (*iterator);
-		++iterator;
-		if(h && h->ent && h->ent != caster)
+		h = (*iterator);
+		if (h && h->ent && h->ent != caster)
 		{
-			if(caster->CombatRange(h->ent))
+			if (caster->CombatRange(h->ent))
 			{
-				id_list.push_back(h->ent->GetID());
-				++ret;
+				caster->DoMainHandRound(h->ent, opts);
+				caster->DoOffHandRound(h->ent, opts);
+
+				++targetsHit;
 			}
 		}
+		++iterator;
 	}
 
-	std::list<uint32>::iterator iter = id_list.begin();
-	while(iter != id_list.end())
-	{
-		Mob *cur = entity_list.GetMobID((*iter));
-		if(cur)
-		{
-			for(int i = 0; i < count; ++i) {
-				caster->Attack(cur, MainPrimary, false, false, false, opts);
-			}
-		}
-		iter++;
-	}
-
-	return ret;
+	return targetsHit;
 }
 
 void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_center)

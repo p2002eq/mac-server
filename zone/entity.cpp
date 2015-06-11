@@ -1276,6 +1276,21 @@ void EntityList::Save()
 	}
 }
 
+void EntityList::InterruptTargeted(Mob* mob)
+{
+	if (!mob)
+		return;
+	Mob* Cur = nullptr;
+
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		Cur = it->second;
+		if (Cur->GetTarget() == mob && (!Cur->GetOwner() || !Cur->GetOwner()->IsClient()) && Cur->IsCasting()) 
+			Cur->InterruptSpell();
+		++it;
+	}	
+}
+
 void EntityList::ReplaceWithTarget(Mob *pOldMob, Mob *pNewTarget)
 {
 	if (!pNewTarget)
@@ -1373,6 +1388,40 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 				|| (filter2 == FilterShowSelfOnly && ent == sender))
 			&& (DistanceSquared(ent->GetPosition(), sender->GetPosition()) <= dist2)) {
 				ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
+			}
+		}
+		++it;
+	}
+}
+
+void EntityList::QueueCloseClientsSplit(Mob *sender, const EQApplicationPacket *app, const EQApplicationPacket *app2,
+		bool ignore_sender, float dist, Mob *SkipThisMob, bool ackreq, eqFilterType filter)
+{
+	if (sender == nullptr) {
+		QueueClients(sender, app, ignore_sender);
+		return;
+	}
+
+	if (dist <= 0)
+		dist = 600;
+	float dist2 = dist * dist; //pow(dist, 2);
+
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		Client *ent = it->second;
+
+		if ((!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
+			eqFilterMode filter2 = ent->GetFilter(filter);
+			if(ent->Connected() &&
+				(filter == FilterNone
+				|| filter2 == FilterShow
+				|| (filter2 == FilterShowGroupOnly && (sender == ent ||
+					(ent->GetGroup() && ent->GetGroup()->IsGroupMember(sender))))
+				|| (filter2 == FilterShowSelfOnly && ent == sender))) {
+					if (DistanceSquared(ent->GetPosition(), sender->GetPosition()) <= dist2)
+						ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
+					else if (app2)
+						ent->QueuePacket(app2, ackreq, Client::CLIENT_CONNECTED);
 			}
 		}
 		++it;
@@ -1597,7 +1646,6 @@ int EntityList::RezzAllCorpsesByCharID(uint32 charid)
 	while (it != corpse_list.end()) {
 		if (it->second->GetCharID() == charid) {
 			RezzExp += it->second->GetRezExp();
-			it->second->IsRezzed(true);
 			it->second->CompleteResurrection();
 		}
 		++it;
@@ -1949,7 +1997,7 @@ void EntityList::RemoveAllDoors()
 
 void EntityList::DespawnAllDoors()
 {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_RemoveAllDoors, 0);
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DespawnDoor, 0);
 	this->QueueClients(0,outapp);
 	safe_delete(outapp);
 }
@@ -2621,7 +2669,7 @@ void EntityList::WriteEntityIDs()
 
 BulkZoneSpawnPacket::BulkZoneSpawnPacket(Client *iSendTo, uint32 iMaxSpawnsPerPacket)
 {
-	data = 0;
+	data = nullptr;
 	pSendTo = iSendTo;
 	pMaxSpawnsPerPacket = iMaxSpawnsPerPacket;
 }
@@ -2629,7 +2677,7 @@ BulkZoneSpawnPacket::BulkZoneSpawnPacket(Client *iSendTo, uint32 iMaxSpawnsPerPa
 BulkZoneSpawnPacket::~BulkZoneSpawnPacket()
 {
 	SendBuffer();
-	safe_delete_array(data)
+	safe_delete_array(data);
 }
 
 bool BulkZoneSpawnPacket::AddSpawn(NewSpawn_Struct *ns)
@@ -2648,7 +2696,8 @@ bool BulkZoneSpawnPacket::AddSpawn(NewSpawn_Struct *ns)
 	return false;
 }
 
-void BulkZoneSpawnPacket::SendBuffer() {
+void BulkZoneSpawnPacket::SendBuffer()
+{
 	if (!data)
 		return;
 
@@ -2891,6 +2940,25 @@ void EntityList::OpenDoorsNear(NPC *who)
 			continue;
 
 		auto diff = who->GetPosition() - cdoor->GetPosition();
+
+		float curdist = diff.x * diff.x + diff.y * diff.y;
+
+		if (diff.z * diff.z < 20 && curdist <= 250)
+		{
+			cdoor->NPCOpen(who);
+		}
+	}
+}
+
+void EntityList::OpenDoorsNearCoords(NPC *who, glm::vec4 position)
+{
+
+	for (auto it = door_list.begin();it != door_list.end(); ++it) {
+		Doors *cdoor = it->second;
+		if (!cdoor || cdoor->IsDoorOpen())
+			continue;
+
+		auto diff = position - cdoor->GetPosition();
 
 		float curdist = diff.x * diff.x + diff.y * diff.y;
 
@@ -3512,7 +3580,7 @@ void EntityList::SendGroupLeader(uint32 gid, const char *lname, const char *oldl
 					strcpy(gj->membername, lname);
 					strcpy(gj->yourname, oldlname);
 					it->second->QueuePacket(outapp);
-					Log.Out(Logs::Detail, Logs::General, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
+					Log.Out(Logs::Detail, Logs::Group, "SendGroupLeader(): Entity loop leader update packet sent to: %s .", it->second->GetName());
 					safe_delete(outapp);
 				}
 			}
@@ -3674,55 +3742,6 @@ void EntityList::SendZoneAppearance(Client *c)
 			if (cur->GetSize() != cur->GetBaseSize()) {
 				cur->SendAppearancePacket(AT_Size, (uint32)cur->GetSize(), false, true, c);
 			}
-		}
-		++it;
-	}
-}
-
-void EntityList::SendNimbusEffects(Client *c)
-{
-	if (!c)
-		return;
-
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-		Mob *cur = it->second;
-
-		if (cur) {
-			if (cur == c) {
-				++it;
-				continue;
-			}
-			if (cur->GetNimbusEffect1() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect1(), 1000, 0, 1, 3000, false, c);
-			}
-			if (cur->GetNimbusEffect2() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect2(), 2000, 0, 1, 3000, false, c);
-			}
-			if (cur->GetNimbusEffect3() != 0) {
-				cur->SendSpellEffect(cur->GetNimbusEffect3(), 3000, 0, 1, 3000, false, c);
-			}
-		}
-		++it;
-	}
-}
-
-void EntityList::SendUntargetable(Client *c)
-{
-	if (!c)
-		return;
-
-	auto it = mob_list.begin();
-	while (it != mob_list.end()) {
-		Mob *cur = it->second;
-
-		if (cur) {
-			if (cur == c) {
-				++it;
-				continue;
-			}
-			if (!cur->IsTargetable())
-				cur->SendTargetable(false, c);
 		}
 		++it;
 	}

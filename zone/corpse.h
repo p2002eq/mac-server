@@ -41,7 +41,7 @@ class Corpse : public Mob {
 
 	Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NPCType** in_npctypedata, uint32 in_decaytime = 600000);
 	Corpse(Client* client, int32 in_rezexp, uint8 killedby = 0);
-	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool in_rezzable, bool wasAtGraveyard = false);
+	Corpse(uint32 in_corpseid, uint32 in_charid, const char* in_charname, ItemList* in_itemlist, uint32 in_copper, uint32 in_silver, uint32 in_gold, uint32 in_plat, const glm::vec4& position, float in_size, uint8 in_gender, uint16 in_race, uint8 in_class, uint8 in_deity, uint8 in_level, uint8 in_texture, uint8 in_helmtexture, uint32 in_rezexp, uint32 in_gmrezexp, uint8 in_killedby, bool in_rezzable, uint32 in_rez_time, bool wasAtGraveyard = false);
 	~Corpse();
 	static Corpse* LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const glm::vec4& position, std::string time_of_death, bool rezzed, bool was_at_graveyard);
 
@@ -99,8 +99,9 @@ class Corpse : public Mob {
 	bool	IsRezzed() { return rez; }
 	void	IsRezzed(bool in_rez) { rez = in_rez; }
 	void	CastRezz(uint16 spellid, Mob* Caster);
-	void	CompleteResurrection();
+	void	CompleteResurrection(bool timer_expired = false);
 	bool	IsRezzable() { return rezzable; }
+	void	SetRezTimer(bool initial_timer = false);
 
 	/* Corpse: Loot */
 	void	QueryLoot(Client* to);
@@ -129,8 +130,13 @@ class Corpse : public Mob {
 	inline int	GetRezExp() { return rez_experience; } 
 	inline int	GetGMRezExp() { return gm_rez_experience; } 
 	uint8		GetKilledBy() { return killedby; }
+	uint32		GetRemainingRezTime() { return rez_time; }
 
-	virtual void UpdateEquipLightValue();
+	virtual void UpdateEquipmentLight();
+
+	void		IsOwnerOnline();
+	void		SetOwnerOnline(bool value) { is_owner_online = value; }
+	bool		GetOwnerOnline() { return is_owner_online; }
 
 protected:
 	std::list<uint32> MoveItemToCorpse(Client *client, ItemInst *item, int16 equipslot);
@@ -159,9 +165,12 @@ private:
 	Timer		corpse_delay_timer;
 	Timer		corpse_graveyard_timer;
 	Timer		loot_cooldown_timer; /* Delay between loot actions on the corpse entity */
+	Timer		owner_online_timer; /* How often in milliseconds in which a corpse will check if its owner is online */
 	uint8		killedby;
-	bool		rezzable; /* Determines if the corpse is still rezzable*/
+	bool		rezzable; /* Determines if the corpse is still rezzable */
 	Color_Struct item_tint[9];
+	uint32		rez_time; /* How much of the rez timer remains */
+	bool		is_owner_online;
 
 };
 

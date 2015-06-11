@@ -270,14 +270,14 @@ public:
 	void	SendZoneCorpsesBulk(Client*);
 	void	SendZoneObjects(Client* client);
 	void	SendZoneAppearance(Client *c);
-	void	SendNimbusEffects(Client *c);
-	void	SendUntargetable(Client *c);
 	void	DuelMessage(Mob* winner, Mob* loser, bool flee);
 	void	QuestJournalledSayClose(Mob *sender, Client *QuestIntiator, float dist, const char* mobname, const char* message);
 	void	GroupMessage(uint32 gid, const char *from, const char *message);
 	void	RemoveFromTargets(Mob* mob);
+	void	InterruptTargeted(Mob* mob);
 	void	ReplaceWithTarget(Mob* pOldMob, Mob*pNewTarget);
 	void	QueueCloseClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
+	void	QueueCloseClientsSplit(Mob* sender, const EQApplicationPacket* app, const EQApplicationPacket* app2 = nullptr, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
 	void	QueueClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, bool ackreq = true);
 	void	QueueClientsStatus(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint8 minstatus = 0, uint8 maxstatus = 0);
 	void	QueueClientsGuild(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint32 guildeqid = 0);
@@ -300,6 +300,7 @@ public:
 	void	AddHealAggro(Mob* target, Mob* caster, uint16 thedam);
 	Mob*	FindDefenseNPC(uint32 npcid);
 	void	OpenDoorsNear(NPC* opener);
+	void	OpenDoorsNearCoords(NPC* opener, glm::vec4 position);
 	void	UpdateWho(bool iSendFullUpdate = false);
 	void	SendPositionUpdates(Client* client, uint32 cLastUpdate = 0, float range = 0, Entity* alwayssend = 0, bool iSendEvenIfNotChanged = false);
 	char*	MakeNameUnique(char* name);

@@ -178,7 +178,7 @@ bool Spawn2::Process() {
 		uint32 npcid = sg->GetNPCType();
 		if (npcid == 0) {
 			Log.Out(Logs::Detail, Logs::Spawns, "Spawn2 %d: Spawn group %d did not yeild an NPC! not spawning.", spawn2_id, spawngroup_id_);
-			Reset();	//try again later (why?)
+			Reset();	//try again later
 			return(true);
 		}
 

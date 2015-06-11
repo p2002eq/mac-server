@@ -430,7 +430,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
 		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id))
+		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_User_SpellFailure,spell_id);
@@ -1079,7 +1079,10 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	// Check for consumables and Reagent focus items
 	// first check for component reduction
-	if(IsClient() && slot != USE_ITEM_SPELL_SLOT && RequiresComponents(spell_id)) {
+	if(IsClient() && RequiresComponents(spell_id) && 
+		(slot != USE_ITEM_SPELL_SLOT || 
+		(slot == USE_ITEM_SPELL_SLOT && !CastToClient()->ClickyOverride()))) 
+	{
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{
@@ -1396,7 +1399,7 @@ bool Mob::HasReagent(uint16 spell_id, int component, int component_count, bool m
 	return true;
 }
 
-bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center, CastAction_type &CastAction) {
+bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center, CastAction_type &CastAction, bool isproc) {
 
 /*
 	The basic types of spells:
@@ -1499,7 +1502,10 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		// single target spells
 		case ST_Self:
 		{
-			spell_target = this;
+			// innate NPC procs always hit the target, even self-only spells (like scareling step)
+			if (!isproc || !IsNPC() || (IsNPC() && CastToNPC()->GetInnateProcSpellId() != spell_id))
+				spell_target = this;
+
 			CastAction = SingleTarget;
 			break;
 		}
@@ -1888,12 +1894,9 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			}
 		}
 
-	if (spell_id == SPELL_CAZIC_TOUCH && IsNPC())
+	if ( spell_target && spell_id == SPELL_CAZIC_TOUCH && IsNPC())
 	{
-		char shoutStr[sizeof name[0] + 1];
-		strcpy(shoutStr, spell_target->name);
-		strcat(shoutStr, "!");
-		Shout(shoutStr);
+		Shout("%s!",spell_target->name);
 	}
 
 	if(IsClient() && !CastToClient()->GetGM()){
@@ -1933,7 +1936,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 
 	//determine the type of spell target we have
 	CastAction_type CastAction;
-	if(!DetermineSpellTargets(spell_id, spell_target, ae_center, CastAction))
+	if(!DetermineSpellTargets(spell_id, spell_target, ae_center, CastAction, isproc))
 		return(false);
 
 	Log.Out(Logs::Detail, Logs::Spells, "Spell %d: target type %d, target %s, AE center %s", spell_id, CastAction, spell_target?spell_target->GetName():"NONE", ae_center?ae_center->GetName():"NONE");
@@ -1994,7 +1997,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	}
 
 	// NPC innate procs that are AoE spells only hit the target they are attacking
-	if (IsNPC() && isproc && (CastAction == AETarget || CastAction == AECaster))
+	if (IsNPC() && isproc && CastToNPC()->GetInnateProcSpellId() == spell_id && (CastAction == AETarget || CastAction == AECaster))
 	{
 		CastAction = SingleTarget;
 	}
@@ -2260,8 +2263,8 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 	}
-
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	if (!IsBardSong(spell_id))
+		DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 
 	// if this was a spell slot or an ability use up the mana for it
 	// CastSpell already reduced the cost for it if we're a client with focus
@@ -2364,7 +2367,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 			return(false);
 
 		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id))
+		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
 			Message_StringID(CC_Red, CANT_SEE_TARGET);
@@ -2472,7 +2475,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	}
 
 	//do we need to do this???
-	DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
+	//DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 	if(IsClient())
 		CastToClient()->CheckSongSkillIncrease(spell_id);
 
@@ -2508,7 +2511,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (uint32) (GetHeading() * 2);	// just some random number
+			action->sequence = (GetHeading() * 2.0f);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3177,12 +3180,19 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	buffs[emptyslot].dot_rune = 0;
 	buffs[emptyslot].ExtraDIChance = 0;
 	buffs[emptyslot].RootBreakChance = 0;
+	buffs[emptyslot].instrumentmod = 10;
 
 	if (level_override > 0) {
 		buffs[emptyslot].UpdateClient = true;
 	} else {
 		if (buffs[emptyslot].ticsremaining > (1 + CalcBuffDuration_formula(caster_level, spells[spell_id].buffdurationformula, spells[spell_id].buffduration)))
 			buffs[emptyslot].UpdateClient = true;
+	}
+
+	if (IsBardSong(spell_id) && caster) {
+		int mod = caster->GetInstrumentMod(spell_id);
+		if (mod > 10)
+			buffs[emptyslot].instrumentmod = mod;
 	}
 
 	Log.Out(Logs::Detail, Logs::Spells, "Buff %d added to slot %d with caster level %d", spell_id, emptyslot, caster_level);
@@ -3399,7 +3409,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->level = caster_level;	// caster level, for animation only
 	action->type = 231;	// 231 means a spell
 	action->spell = spell_id;
-	action->sequence = (uint32) (GetHeading() * 2);	// just some random number
+	action->sequence = (GetHeading() * 2);	// just some random number
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
@@ -3743,7 +3753,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			}
 		}
 	}
-	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id))
+	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
+		&& (!IsNPC() || !isproc || CastToNPC()->GetInnateProcSpellId() != spell_id )		// NPC innate procs always hit the target, even if beneficial
+	)																						// we don't want beneficial procs aggroing nearby NPCs
 		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, (spelltar->GetMaxHP() - spelltar->GetHP())));
 
 	// make sure spelltar is high enough level for the buff
@@ -3791,9 +3803,27 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 	else if(spells[spell_id].pushback != 0 || spells[spell_id].pushup != 0)
 	{
-		action->buff_unknown = 0;
+		
 		Log.Out(Logs::Detail, Logs::Spells, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
-		spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+
+		if (spelltar->IsNPC()) {
+			action->buff_unknown = 0;
+			spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+		} else {
+			action->buff_unknown = 4;
+			float push_back = spells[spell_id].pushback;
+			if (push_back < 0)
+				push_back = -push_back;
+			action->force = push_back;
+			float push_up = spells[spell_id].pushup;
+			if (push_up > 0 && push_back > 0)
+			{
+				// z pushup will be translated into client as z += (force * sine(pushup_angle))
+				float ratio = push_up / push_back;
+				float angle = atanf(ratio);
+				action->pushup_angle = angle;
+			}
+		}
 	}
 
 	if(spelltar->IsClient() && spelltar->CastToClient()->GetFeigned() && IsDetrimentalSpell(spell_id))
@@ -4766,10 +4796,10 @@ void Mob::Stun(int duration, Mob* attacker)
 		stunned_timer.Start(duration);
 	}
 
-	if(attacker)
-	{
-		CombatPush(attacker, RuleR(Combat, PushBackAmount));
-	}
+	//if(attacker)
+	//{
+	//	CombatPush(attacker, RuleR(Combat, PushBackAmount));
+	//}
 }
 
 void Mob::UnStun() {
@@ -5167,7 +5197,7 @@ bool Mob::AddProcToWeapon(uint16 spell_id, bool bPerma, uint16 iChance, uint16 b
 			if (SpellProcs[i].spellID == SPELL_UNKNOWN) {
 				SpellProcs[i].spellID = spell_id;
 				SpellProcs[i].chance = iChance;
-				SpellProcs[i].base_spellID = base_spell_id;;
+				SpellProcs[i].base_spellID = base_spell_id;
 				Log.Out(Logs::Detail, Logs::Spells, "Added spell-granted proc spell %d with chance %d to slot %d", spell_id, iChance, i);
 				return true;
 			}
@@ -5246,7 +5276,7 @@ bool Mob::RemoveRangedProc(uint16 spell_id, bool bAll)
 		if (bAll || RangedProcs[i].spellID == spell_id) {
 			RangedProcs[i].spellID = SPELL_UNKNOWN;
 			RangedProcs[i].chance = 0;
-			RangedProcs[i].base_spellID = SPELL_UNKNOWN;;
+			RangedProcs[i].base_spellID = SPELL_UNKNOWN;
 			Log.Out(Logs::Detail, Logs::Spells, "Removed ranged proc %d from slot %d", spell_id, i);
 		}
 	}

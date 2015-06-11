@@ -71,7 +71,7 @@ Group::Group(Mob* leader)
 	leader->SetGrouped(true);
 	SetLeader(leader);
 	SetOldLeaderName(leader->GetName());
-	Log.Out(Logs::Detail, Logs::General, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
+	Log.Out(Logs::Detail, Logs::Group, "Group:Group() Setting OldLeader to: %s and Leader to: %s", GetOldLeaderName(), leader->GetName());
 	uint32 i;
 	for(i=0;i<MAX_GROUP_MEMBERS;i++)
 	{
@@ -316,7 +316,7 @@ void Group::QueuePacket(const EQApplicationPacket *app, bool ack_req)
 	}
 }
 
-// solar: sends the rest of the group's hps to member. this is useful when
+// sends the rest of the group's hps to member. this is useful when
 // someone first joins a group, but otherwise there shouldn't be a need to
 // call it
 void Group::SendHPPacketsTo(Mob *member)
@@ -354,7 +354,7 @@ void Group::SendHPPacketsFrom(Mob *member)
 }
 
 //updates a group member's client pointer when they zone in
-//if the group was in the zone allready
+//if the group was in the zone already
 bool Group::UpdatePlayer(Mob* update){
 
 	VerifyGroup();
@@ -441,7 +441,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 				memset(membername[i], 0, 64);
 				MemberRoles[i] = 0;
 				removed = true;
-				Log.Out(Logs::Detail, Logs::General, "DelMemberOOZ: Removed Member: %s", Name);
+				Log.Out(Logs::Detail, Logs::Group, "DelMemberOOZ: Removed Member: %s", Name);
 				break;
 			}
 		}
@@ -455,7 +455,7 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 
 	if(checkleader)
 	{
-		Log.Out(Logs::Detail, Logs::General, "DelMemberOOZ: Checking leader...");
+		Log.Out(Logs::Detail, Logs::Group, "DelMemberOOZ: Checking leader...");
 		if (strcmp(GetOldLeaderName(),Name) == 0 && GroupCount() >= 2)
 		{
 			for(uint32 nl = 0; nl < MAX_GROUP_MEMBERS; nl++)
@@ -490,7 +490,7 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 			membername[i][0] = '\0';
 			memset(membername[i],0,64);
 			MemberRoles[i] = 0;
-			Log.Out(Logs::Detail, Logs::General, "DelMember: Removed Member: %s", oldmember->GetCleanName());
+			Log.Out(Logs::Detail, Logs::Group, "DelMember: Removed Member: %s", oldmember->GetCleanName());
 			break;
 		}
 	}
@@ -531,15 +531,15 @@ bool Group::DelMember(Mob* oldmember,bool ignoresender)
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
 
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate,sizeof(GroupLeader_Struct));
-	GroupLeader_Struct* gu = (GroupLeader_Struct*) outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupJoin_Struct));
+	GroupJoin_Struct* gu = (GroupJoin_Struct*)outapp->pBuffer;
 	gu->action = groupActLeave;
 	strcpy(gu->membername, oldmember->GetCleanName());
 	strcpy(gu->yourname, oldmember->GetCleanName());
 
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] == nullptr) {
-			//if (DEBUG>=5) Log.Out(Logs::Detail, Logs::Debug, "Group::DelMember() null member at slot %i", i);
+			//if (DEBUG>=5) Log.Out(Logs::Detail, Logs::Group, "Group::DelMember() null member at slot %i", i);
 			continue;
 		}
 		if (members[i] != oldmember) {
@@ -778,8 +778,8 @@ void Group::SendUpdate(uint32 type, Mob* member)
 	if(!member->IsClient())
 		return;
 
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupUpdate2_Struct));
-	GroupUpdate2_Struct* gu = (GroupUpdate2_Struct*)outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupUpdate_Struct));
+	GroupUpdate_Struct* gu = (GroupUpdate_Struct*)outapp->pBuffer;
 	gu->action = type;
 	strcpy(gu->yourname,member->GetName());
 
@@ -893,7 +893,7 @@ void Group::VerifyGroup() {
 	for (i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (membername[i][0] == '\0') {
 #if EQDEBUG >= 7
-	Log.Out(Logs::General, Logs::None, "Group %lu: Verify %d: Empty.\n", (unsigned long)GetID(), i);
+	Log.Out(Logs::General, Logs::Group, "Group %lu: Verify %d: Empty.\n", (unsigned long)GetID(), i);
 #endif
 			members[i] = nullptr;
 			continue;
@@ -904,7 +904,7 @@ void Group::VerifyGroup() {
 		Mob *them = entity_list.GetMob(membername[i]);
 		if(them == nullptr && members[i] != nullptr) {	//they arnt here anymore....
 #if EQDEBUG >= 6
-		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::Group, "Member of group %lu named '%s' has disappeared!!", (unsigned long)GetID(), membername[i]);
 #endif
 			membername[i][0] = '\0';
 			members[i] = nullptr;
@@ -913,13 +913,13 @@ void Group::VerifyGroup() {
 
 		if(them != nullptr && members[i] != them) {	//our pointer is out of date... not so good.
 #if EQDEBUG >= 5
-		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::Group, "Member of group %lu named '%s' had an out of date pointer!!", (unsigned long)GetID(), membername[i]);
 #endif
 			members[i] = them;
 			continue;
 		}
 #if EQDEBUG >= 8
-		Log.Out(Logs::General, Logs::None, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
+		Log.Out(Logs::General, Logs::Group, "Member of group %lu named '%s' is valid.", (unsigned long)GetID(), membername[i]);
 #endif
 	}
 }
@@ -1167,12 +1167,12 @@ void Group::ChangeLeader(Mob* newleader)
 		if (members[i] && members[i]->IsClient())
 		{
 			members[i]->CastToClient()->QueuePacket(outapp);
-			Log.Out(Logs::Detail, Logs::General, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
+			Log.Out(Logs::Detail, Logs::Group, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
 		}
 	}
 	safe_delete(outapp);
 
-	Log.Out(Logs::Detail, Logs::General, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
+	Log.Out(Logs::Detail, Logs::Group, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
 
 	ServerPacket* pack = new ServerPacket(ServerOP_ChangeGroupLeader, sizeof(ServerGroupLeader_Struct));
 	ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;

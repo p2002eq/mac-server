@@ -19,7 +19,7 @@ uint32 InflateData(const char* buffer, uint32 len, char* out_buffer, uint32 out_
 
 	zstream.next_in = const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(buffer));
 	zstream.avail_in = len;
-	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);;
+	zstream.next_out = reinterpret_cast<unsigned char*>(out_buffer);
 	zstream.avail_out = out_len_max;
 	zstream.zalloc = Z_NULL;
 	zstream.zfree = Z_NULL;
@@ -64,7 +64,7 @@ Map::~Map() {
 
 float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result) const {
 	if (!imp)
-		return false;
+		return BEST_Z_INVALID;
 
 	glm::vec3 tmp;
 	if(!result)
@@ -93,10 +93,44 @@ float Map::FindBestZ(glm::vec3 &start, glm::vec3 *result) const {
 	return BEST_Z_INVALID;
 }
 
-bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *result) const {
+float Map::FindClosestZ(glm::vec3 &start, glm::vec3 *result) const {
+	// Unlike FindBestZ, this method finds the closest Z value above or below the specified point.
+	//
+	if (!imp)
+		return false;
+
+	float ClosestZ = BEST_Z_INVALID;
+
+	glm::vec3 tmp;
+	if(!result)
+		result = &tmp;
+
+	glm::vec3 from(start.x, start.y, start.z);
+	glm::vec3 to(start.x, start.y, BEST_Z_INVALID);
+	float hit_distance;
+	bool hit = false;
+
+	// first check is below us
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	if(hit) {
+		ClosestZ = result->z;
+	}
+	
+	// Find nearest Z above us
+	to.z = -BEST_Z_INVALID;
+	hit = imp->rm->raycast((const RmReal*)&from, (const RmReal*)&to, (RmReal*)result, nullptr, &hit_distance);
+	if (hit) {
+		if (abs(from.z - result->z) < abs(ClosestZ - from.z))
+			return result->z;
+	}
+	
+	return ClosestZ;
+}
+
+bool Map::LineIntersectsZone(glm::vec3 start, glm::vec3 end, float step, glm::vec3 *hitLocation, glm::vec3 *hitNormal, float *hitDistance) const {
 	if(!imp)
 		return false;
-	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)result, nullptr, nullptr);
+	return imp->rm->raycast((const RmReal*)&start, (const RmReal*)&end, (RmReal*)hitLocation, (RmReal*)hitNormal, (RmReal*)hitDistance);
 }
 
 bool Map::LineIntersectsZoneNoZLeaps(glm::vec3 start, glm::vec3 end, float step_mag, glm::vec3 *result) const {

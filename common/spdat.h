@@ -43,7 +43,7 @@
 
 const int Z_AGGRO=10;
 
-const int MobAISpellRange=100; // max range of buffs
+const int MobAISpellRange=80; // max range of buffs
 const int SpellType_Nuke=1;
 const int SpellType_Heal=2;
 const int SpellType_Root=4;
@@ -868,6 +868,7 @@ uint32 GetPartialMeleeRuneAmount(uint32 spell_id);
 uint32 GetPartialMagicRuneAmount(uint32 spell_id);
 bool IsRacialIllusion(uint16 spell_id);
 bool IsCorpseSummon(uint16 spell_id);
+bool IsSpeedBuff(uint16 spell_id);
 
 int CalcPetHp(int levelb, int classb, int STA = 75);
 const char *GetRandPetName();

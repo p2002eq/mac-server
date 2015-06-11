@@ -101,7 +101,6 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	}
 	else {
 		// This is to allow both 6.2 and Titanium clients to perform a proper zoning of the client when evac/succor
-		// WildcardX 27 January 2008
 		if(zone_mode == EvacToSafeCoords && zonesummon_id > 0)
 			target_zone_id = zonesummon_id;
 		else
@@ -195,11 +194,13 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		dest_x = m_pp.binds[0].x;
 		dest_y = m_pp.binds[0].y;
 		dest_z = m_pp.binds[0].z;
+		dest_h = m_pp.binds[0].heading;
 		break;
 	case ZoneToBindPoint:
 		dest_x = m_pp.binds[0].x;
 		dest_y = m_pp.binds[0].y;
 		dest_z = m_pp.binds[0].z;
+		dest_h = m_pp.binds[0].heading;
 		ignorerestrictions = 1;	//can always get to our bind point? seems exploitable
 		break;
 	case ZoneSolicited: //we told the client to zone somewhere, so we know where they are going.
@@ -269,10 +270,14 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		}
 	}
 
-	if(myerror == 1) {
+	if(myerror == 1) 
+	{
 		//we have successfully zoned
 		DoZoneSuccess(zc, target_zone_id, target_instance_id, dest_x, dest_y, dest_z, dest_h, ignorerestrictions);
-	} else {
+		UpdateZoneChangeCount(target_zone_id);
+	} 
+	else 
+	{
 		Log.Out(Logs::General, Logs::Error, "Zoning %s: Rules prevent this char from zoning into '%s'", GetName(), target_zone_name);
 		SendZoneError(zc, myerror);
 	}
@@ -339,7 +344,7 @@ void Client::DoZoneSuccess(ZoneChange_Struct *zc, uint16 zone_id, uint32 instanc
 	m_Position.x = dest_x; //these coordinates will now be saved when ~client is called
 	m_Position.y = dest_y;
 	m_Position.z = dest_z;
-	m_Position.w = dest_h; // Cripp: fix for zone heading
+	m_Position.w = dest_h / 2.0f; // fix for zone heading
 	m_pp.heading = dest_h;
 	m_pp.zone_id = zone_id;
 	m_pp.zoneInstance = instance_id;
@@ -496,12 +501,14 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			y = m_Position.y = m_pp.binds[0].y;
 			z = m_Position.z = m_pp.binds[0].z;
 			heading = m_pp.binds[0].heading;
+			m_Position.w = heading / 2.0f;
 			break;
 		case ZoneToBindPoint:
 			x = m_Position.x = m_pp.binds[0].x;
 			y = m_Position.y = m_pp.binds[0].y;
 			z = m_Position.z = m_pp.binds[0].z;
 			heading = m_pp.binds[0].heading;
+			m_Position.w = heading / 2.0f;
 
 			zonesummon_ignorerestrictions = 1;
 			Log.Out(Logs::General, Logs::None, "Player %s has died and will be zoned to bind point in zone: %s at LOC x=%f, y=%f, z=%f, heading=%f", GetName(), pZoneName, m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
@@ -568,8 +575,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->type = 0x01;				//an observed value, not sure of meaning
 
 			outapp->priority = 6;
-			FastQueuePacket(&outapp);
-			safe_delete(outapp);
+			FastQueuePacket(&outapp);	
 		}
 		else if (zm == ZoneToBindPoint) {
 			//TODO: Find a better packet that works with EQMac on death. Sending OP_RequestClientZoneChange here usually does not zone the
@@ -586,8 +592,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->z = z;
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-	
-			safe_delete(outapp);
 		}
 		else if (zm == GateToBindPoint) {			
 			// we hide the real zoneid we want to evac/succor to here
@@ -618,7 +622,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 				gmg->type = 0x01;	//an observed value, not sure of meaning
 				outapp->priority = 6;
 				FastQueuePacket(&outapp);
-				safe_delete(outapp);
 			}
 		}
 		else if(zm == EvacToSafeCoords)
@@ -647,7 +650,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-			safe_delete(outapp);
 		}
 		else {
 			if(zoneID == GetZoneID()) {
@@ -672,7 +674,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			gmg->type = 0x01;	//an observed value, not sure of meaning
 			outapp->priority = 6;
 			FastQueuePacket(&outapp);
-			safe_delete(outapp);
 		}
 
 		Log.Out(Logs::Detail, Logs::None, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
@@ -725,6 +726,7 @@ void Client::SetBindPoint(int to_zone, int to_instance, const glm::vec3& locatio
 		m_pp.binds[0].x = m_Position.x;
 		m_pp.binds[0].y = m_Position.y;
 		m_pp.binds[0].z = m_Position.z;
+		m_pp.binds[0].heading = m_Position.w * 2.0f;
 	}
 	else {
 		m_pp.binds[0].zoneId = to_zone;
@@ -732,8 +734,9 @@ void Client::SetBindPoint(int to_zone, int to_instance, const glm::vec3& locatio
 		m_pp.binds[0].x = location.x;
 		m_pp.binds[0].y = location.y;
 		m_pp.binds[0].z = location.z;
+		m_pp.binds[0].heading = m_Position.w * 2.0f;
 	}
-	auto regularBindPoint = glm::vec4(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, 0.0f);
+	auto regularBindPoint = glm::vec4(m_pp.binds[0].x, m_pp.binds[0].y, m_pp.binds[0].z, m_pp.binds[0].heading);
 	database.SaveCharacterBindPoint(this->CharacterID(), m_pp.binds[0].zoneId, m_pp.binds[0].instance_id, regularBindPoint, 0);
 }
 
@@ -875,3 +878,14 @@ bool Client::CanBeInZone() {
 
 	return(true);
 }
+
+void Client::UpdateZoneChangeCount(uint32 zoneID)
+{
+	if(zoneID != GetZoneID() && !ignore_zone_count)
+	{
+		++m_pp.zone_change_count;
+		ignore_zone_count = true;
+	}
+
+}
+

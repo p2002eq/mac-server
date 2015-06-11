@@ -171,12 +171,6 @@ public:
 	TraderCharges_Struct* LoadTraderItemWithCharges(uint32 char_id);
 	int8 ItemQuantityType(int16 item_id);
 
-	/* Buyer/Barter  */
-	void AddBuyLine(uint32 CharID, uint32 BuySlot, uint32 ItemID, const char *ItemName, uint32 Quantity, uint32 Price);
-	void RemoveBuyLine(uint32 CharID, uint32 BuySlot);
-	void DeleteBuyLines(uint32 CharID);
-	void UpdateBuyLine(uint32 CharID, uint32 BuySlot, uint32 Quantity);
-
 	/* General Character Related Stuff  */
 	bool	SetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 	uint32	GetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
@@ -219,7 +213,6 @@ public:
 	bool	DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterDisc(uint32 character_id, uint32 slot_id);
-	bool	DeleteCharacterLeadershipAAs(uint32 character_id);
 	bool	DeleteCharacterAAs(uint32 character_id);
 	bool	DeleteCharacterDye(uint32 character_id);
 

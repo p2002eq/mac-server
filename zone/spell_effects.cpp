@@ -771,7 +771,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if (IsClient())
 				{
-					AI_Start();
+					CastToClient()->AI_Start();
 					SendAppearancePacket(14, 100, true, true);
 				} else if(IsNPC()) {
 					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
@@ -818,8 +818,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if(RuleB(Combat, EnableFearPathing)){
 					if(IsClient())
 					{
-						AI_Start();
-						animation = static_cast<uint16>(GetRunspeed() * 21.0f); //set our animation to match our speed about
+						CastToClient()->AI_Start();
 					}
 
 					CalculateNewFearpoint();
@@ -853,7 +852,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						action->source = caster ? caster->GetID() : GetID();
 						action->level = 65;
 						action->instrument_mod = 10;
-						action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+						action->sequence = ((GetHeading() * 12345 / 2));
 						action->type = 231;
 						action->spell = spell_id;
 						action->buff_unknown = 4;
@@ -903,7 +902,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 								action->source = caster ? caster->GetID() : GetID();
 								action->level = 65;
 								action->instrument_mod = 10;
-								action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+								action->sequence = ((GetHeading() * 12345 / 2));
 								action->type = 231;
 								action->spell = spell_id;
 								action->buff_unknown = 4;
@@ -939,7 +938,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							action->source = caster ? caster->GetID() : GetID();
 							action->level = 65;
 							action->instrument_mod = 10;
-							action->sequence = static_cast<uint32>((GetHeading() * 12345 / 2));
+							action->sequence = ((GetHeading() * 12345 / 2));
 							action->type = 231;
 							action->spell = spell_id;
 							action->buff_unknown = 4;
@@ -1112,8 +1111,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							quantity = 1;
 
 						if (SummonedItem) {
-							c->PushItemOnCursor(*SummonedItem);
-							c->SendItemPacket(MainCursor, SummonedItem, ItemPacketSummonItem);
+							c->SummonItem(SummonedItem->GetID(), SummonedItem->GetCharges());
 							safe_delete(SummonedItem);
 						}
 						SummonedItem = database.CreateItem(spell.base[i], quantity);
@@ -2577,6 +2575,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				}
 				break;
 			}
+			
+			case SE_MovementSpeed: {
+				if (IsNPC() && IsSpeedBuff(spell_id) && RuleB(NPC, CheckSoWBuff))
+					SetRunning(true);
+
+				break;
+			}
 
 			// Handled Elsewhere
 			case SE_ImmuneFleeing:
@@ -2657,7 +2662,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_DamageShield:
 			case SE_TrueNorth:
 			case SE_WaterBreathing:
-			case SE_MovementSpeed:
 			case SE_HealOverTime:
 			case SE_PercentXPIncrease:
 			case SE_DivineSave:
@@ -2844,7 +2848,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	return true;
 }
 
-int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, Mob *caster, int ticsremaining)
+int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, Mob *caster, int ticsremaining, int instrumentmod)
 {
 	int formula, base, max, effect_value;
 
@@ -2878,6 +2882,8 @@ int Mob::CalcSpellEffectValue(uint16 spell_id, int effect_id, int caster_level, 
 
 		int oval = effect_value;
 		int mod = caster->GetInstrumentMod(spell_id);
+		if (instrumentmod > mod)
+			mod = instrumentmod;
 		mod = ApplySpellEffectiveness(caster, spell_id, mod, true);
 		effect_value = effect_value * mod / 10;
 		Log.Out(Logs::Detail, Logs::Spells, "Effect value %d altered with bard modifier of %d to yeild %d", oval, mod, effect_value);
@@ -3178,7 +3184,7 @@ void Mob::BuffProcess()
 	{
 		if (buffs[buffs_i].spellid != SPELL_UNKNOWN)
 		{
-			DoBuffTic(buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining, buffs[buffs_i].casterlevel, entity_list.GetMob(buffs[buffs_i].casterid));
+			DoBuffTic(buffs[buffs_i].spellid, buffs_i, buffs[buffs_i].ticsremaining, buffs[buffs_i].casterlevel, entity_list.GetMob(buffs[buffs_i].casterid), buffs[buffs_i].instrumentmod);
 			// If the Mob died during DoBuffTic, then the buff we are currently processing will have been removed
 			if(buffs[buffs_i].spellid == SPELL_UNKNOWN)
 				continue;
@@ -3228,7 +3234,7 @@ void Mob::BuffProcess()
 	}
 }
 
-void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster) {
+void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster, int instrumentmod) {
 	int effect, effect_value;
 
 	if(!IsValidSpell(spell_id))
@@ -3280,7 +3286,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 		{
 			case SE_CurrentHP:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, ticsremaining);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, ticsremaining, instrumentmod);
 				//Handle client cast DOTs here.
 				if (caster && caster->IsClient() && IsDetrimentalSpell(spell_id) && effect_value < 0) {
 
@@ -3316,7 +3322,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			}
 			case SE_HealOverTime:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, 0, instrumentmod);
 				if(caster)
 					effect_value = caster->GetActSpellHealing(spell_id, effect_value);
 
@@ -3332,7 +3338,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 			case SE_BardAEDot:
 			{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster);
+				effect_value = CalcSpellEffectValue(spell_id, i, caster_level, caster, 0, instrumentmod);
 
 				if ((!RuleB(Spells, PreNerfBardAEDoT) && IsMoving()) || invulnerable || /*effect_value > 0 ||*/ DivineAura())
 					break;
@@ -3783,6 +3789,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					// clear the hate list of the mobs
 					entity_list.ReplaceWithTarget(this, tempmob);
 					WipeHateList();
+					entity_list.InterruptTargeted(this);
 					if(tempmob)
 						AddToHateList(tempmob, 1, 0);
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
@@ -3807,7 +3814,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					{
 						bool feared = FindType(SE_Fear);
 						if(!feared)
-							AI_Stop();
+							CastToClient()->AI_Stop();
 					}
 				}
 				break;
@@ -3832,7 +3839,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					{
 						bool charmed = FindType(SE_Charm);
 						if(!charmed)
-							AI_Stop();
+							CastToClient()->AI_Stop();
 					}
 
 					if(curfp) {
@@ -3882,6 +3889,10 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 
 			case SE_MovementSpeed:
 			{
+				if(IsNPC() && IsRunning() && !IsEngaged())
+				{
+					SetRunning(false);
+				}
 				if(IsClient())
 				{
 					Client *my_c = CastToClient();
@@ -3935,17 +3946,22 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 					my_c->m_TimeSinceLastPositionCheck = cur_time;
 					my_c->m_DistanceSinceLastPositionCheck = 0.0f;
 				}
+
+				break;
 			}
 
 			case SE_EyeOfZomm:
 			{
 				if(IsClient())
 				{
-					CastToClient()->AI_Stop();
+					CastToClient()->AI_Stop(true);
 					CastToClient()->has_zomm = false;
+					
 					// The client handles this as well on the first OP_ClientUpdate sent after Zomm fades, but we can't trust the client.
 					m_Position = glm::vec4(GetEQX(), GetEQY(), GetEQZ(), GetEQHeading());
 				}
+
+				break;
 			}
 		}
 	}
