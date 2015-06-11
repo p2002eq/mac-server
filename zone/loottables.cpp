@@ -170,7 +170,6 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 		// If true, limit reached.
 		if(limit >= droplimit && droplimit > 0)
 			break;
-
 		item++;
 		i++;
 

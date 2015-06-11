@@ -260,6 +260,8 @@ public:
 
 	uint32	GetMaxDMG() const {return max_dmg;}
 	uint32	GetMinDMG() const {return min_dmg;}
+	int		GetMinBashKickDmg();
+	int		GetMaxBashKickDmg();
 	int16	GetSlowMitigation() const {return slow_mitigation;}
 	bool	IsAnimal() const { return(bodytype == BT_Animal); }
 	uint16	GetPetSpellID() const {return pet_spell_id;}

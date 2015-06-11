@@ -3285,10 +3285,12 @@ void command_equipitem(Client *c, const Seperator *sep){
 			if (partialmove) { // remove this con check if someone can figure out removing charges from cursor stack issue below
 				// mi->number_in_stack is always from_inst->GetCharges() when partialmove is false
 				c->Message(CC_Red, "Error: Partial stack added to existing stack exceeds allowable stacksize");
+				safe_delete(outapp);
 				return;
 			}
 			else if (c->SwapItem(mi) == 1) {
 				c->FastQueuePacket(&outapp);
+				return;
 
 				// if the below code is still needed..just send an an item trade packet to each slot..it should overwrite the client instance
 
@@ -7132,8 +7134,11 @@ void command_path(Client *c, const Seperator *sep)
 		{
 			if (sep->arg[2][0] == '\0')
 				return;
-
+			
+			zone->pathing->SortNodes();
+			zone->pathing->ResortConnections();
 			zone->pathing->DumpPath(sep->arg[2]);
+			c->Message(0, "Path file saved as %s", sep->arg[2]);
 		}
 		return;
 	}
@@ -7203,6 +7208,7 @@ void command_path(Client *c, const Seperator *sep)
 			if (zone->pathing->DeleteNode(c))
 			{
 				c->Message(0, "Removed Node.");
+				zone->pathing->CheckNodeErrors(c);
 			}
 			else
 			{
@@ -7298,6 +7304,8 @@ void command_path(Client *c, const Seperator *sep)
 			{
 				zone->pathing->ResortConnections();
 				c->Message(0, "Connections resorted...");
+				c->Message(0, "Spawned Nodes will need respawned to display proper node id.");
+				zone->pathing->CheckNodeErrors(c);
 			}
 		}
 		return;
@@ -7352,13 +7360,16 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "simple"))
 			{
 				c->Message(0, "You may go linkdead. Results will be in the log file.");
-				zone->pathing->SimpleMeshTest();
+				zone->pathing->SimpleMeshTest(c);
 				return;
 			}
-			else
+			else if(!strcasecmp(sep->arg[2], "complex"))
 			{
 				c->Message(0, "You may go linkdead. Results will be in the log file.");
 				zone->pathing->MeshTest();
+				return;
+			} else {
+				c->Message(0, "Usage: #path meshtest [simple|complex] - complex may result in linkdead/zone crash");
 				return;
 			}
 		}

@@ -1314,17 +1314,17 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 	spu->num_updates = 1; // hack - only one spawn position per update
 	MakeSpawnUpdate(&spu->spawn_update);
 
-	entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
-
 	if (iSendToSelf == 2) {
-		if (this->IsClient())
+		if (this->IsClient()) {
 			this->CastToClient()->FastQueuePacket(&app,false);
+			return;
+		}
 	}
 	else
 	{
 		if(IsClient())
 		{
-			entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+			entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
@@ -1335,13 +1335,13 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 800, nullptr, false);
-				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 2;
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 500, nullptr, false);
+				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
 				safe_delete(app2);
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 800, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1359,8 +1359,10 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 	MakeSpawnUpdate(&spu->spawn_update);
 
 	if (iSendToSelf == 2) {
-		if (this->IsClient())
+		if (this->IsClient()) {
 			this->CastToClient()->FastQueuePacket(&app,false);
+			return;
+		}
 	}
 	else
 	{
@@ -1472,7 +1474,7 @@ void Mob::SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpda
 void Mob::ShowStats(Client* client)
 {
 	if (IsClient()) {
-		CastToClient()->SendStatsWindow(client, RuleB(Character, UseNewStatsWindow));
+		CastToClient()->SendStats(client);
 	}
 	else if (IsCorpse()) {
 		if (IsPlayerCorpse()) {
