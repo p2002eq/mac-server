@@ -281,7 +281,6 @@ public:
 	int32 GetHPRegen();
 	int32 GetManaRegen();
 	inline const char* GetAmmoIDfile() const { return ammo_idfile; }
-	uint16	GetInnateProcSpellId() const { return innateProcSpellId;  }
 	void	AddPush(float heading, float magnitude);		// adds push to the push vector; call this for every melee hit
 	float	ApplyPushVector(bool noglance = false);			// actually push the mob and reset the push vector. checks map collision
 	void	ResetPushTimer() { push_timer.Start(1000); }
