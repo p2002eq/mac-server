@@ -188,7 +188,7 @@ namespace Mac {
 			eq->AFK = emu->player.spawn.afk;
 			eq->title = emu->player.spawn.aaitle;
 			eq->anim_type = 0x64;
-			eq->texture = emu->player.spawn.equip_chest2;
+			eq->bodytexture = emu->player.spawn.bodytexture;
 			eq->helm = emu->player.spawn.helm;
 			eq->GM = emu->player.spawn.gm;
 			eq->GuildID = emu->player.spawn.guildID;
@@ -2094,7 +2094,8 @@ namespace Mac {
 			eq->guildrank = 0;
 			eq->LD=1;
 		}
-		eq->texture = emu->equip_chest2;
+
+		eq->bodytexture = emu->bodytexture;
 		for(int k = 0; k < 9; k++) 
 		{
 			eq->equipment[k] = emu->equipment[k];
@@ -2110,13 +2111,13 @@ namespace Mac {
 		{
 			eq->race = 75;
 			if (emu->race == 210)
-				eq->texture = 3;
+				eq->bodytexture = 3;
 			else if (emu->race == 211)
-				eq->texture = 2;
+				eq->bodytexture = 2;
 			else if (emu->race == 212)
-				eq->texture = 1;
+				eq->bodytexture = 1;
 			else
-				eq->texture = 0;
+				eq->bodytexture = 0;
 		}
 		else
 			eq->race = emu->race;
@@ -2146,7 +2147,6 @@ namespace Mac {
 		return eq;
 	}
 
-	ENCODE(OP_DisciplineUpdate) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_RaidJoin) { ENCODE_FORWARD(OP_Unknown); }
 	ENCODE(OP_Unknown)
 	{

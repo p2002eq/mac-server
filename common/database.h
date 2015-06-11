@@ -115,9 +115,6 @@ namespace Convert {
 		/*016*/	uint32	player_id;	//'global' ID of the caster, for wearoff messages
 		/*020*/
 	};
-	struct Disciplines_Struct {
-		uint32 values[MAX_PP_DISCIPLINES];
-	};
 
 	struct SuspendedMinion_Struct
 	{
@@ -219,7 +216,6 @@ namespace Convert {
 		/*6008*/	char							groupMembers[6][64];//
 					char							boat[20];			// The client uses this string for boats.
 		/*7048*/	uint32							entityid;
-		/*7264*/	Convert::Disciplines_Struct		disciplines;
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7904*/	uint32							endurance;
 		/*8184*/	uint32							air_remaining;

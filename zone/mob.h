@@ -121,7 +121,8 @@ public:
 		uint8		in_bracertexture,
 		uint8		in_handtexture,
 		uint8		in_legtexture,
-		uint8		in_feettexture
+		uint8		in_feettexture,
+		uint8		in_chesttexture
 	);
 	virtual ~Mob();
 
@@ -267,10 +268,8 @@ public:
 	int CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caster_level_override = -1);
 	virtual int GetCurrentBuffSlots() const { return 0; }
 	virtual int GetCurrentSongSlots() const { return 0; }
-	virtual int GetCurrentDiscSlots() const { return 0; }
 	virtual int GetMaxBuffSlots() const { return 0; }
 	virtual int GetMaxSongSlots() const { return 0; }
-	virtual int GetMaxDiscSlots() const { return 0; }
 	virtual int GetMaxTotalSlots() const { return 0; }
 	virtual void InitializeBuffSlots() { buffs = nullptr; current_buff_count = 0; }
 	virtual void UninitializeBuffSlots() { }
@@ -329,6 +328,12 @@ public:
 	inline uint8 GetGender() const { return gender; }
 	inline uint8 GetTexture() const { return texture; }
 	inline uint8 GetHelmTexture() const { return helmtexture; }
+	inline uint8 GetChestTexture() const { return chesttexture; }
+	inline uint8 GetArmTexture() const { return armtexture; }
+	inline uint8 GetBracerTexture() const { return bracertexture; }
+	inline uint8 GetHandTexture() const { return handtexture; }
+	inline uint8 GetLegTexture() const { return legtexture; }
+	inline uint8 GetFeetTexture() const { return feettexture; }
 	inline uint8 GetHairColor() const { return haircolor; }
 	inline uint8 GetBeardColor() const { return beardcolor; }
 	inline uint8 GetEyeColor1() const { return eyecolor1; }
@@ -979,6 +984,7 @@ protected:
 	bool pendinggroup;
 	uint16 entity_id_being_looted; //the id of the entity being looted, 0 if not looting.
 	uint8 texture;
+	uint8 chesttexture;
 	uint8 helmtexture;
 	uint8 armtexture;
 	uint8 bracertexture;
@@ -1022,6 +1028,7 @@ protected:
 	StatBonuses itembonuses;
 	StatBonuses spellbonuses;
 	StatBonuses aabonuses;
+	StatBonuses discbonuses;
 	uint16 petid;
 	uint16 ownerid;
 	PetType typeofpet;

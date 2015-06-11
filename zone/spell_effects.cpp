@@ -991,8 +991,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				int buff_count = GetMaxTotalSlots();
 				for(int slot = 0; slot < buff_count; slot++) {
 					if(	buffs[slot].spellid != SPELL_UNKNOWN &&
-						spells[buffs[slot].spellid].dispel_flag == 0 &&
-						!IsDiscipline(buffs[slot].spellid))
+						spells[buffs[slot].spellid].dispel_flag == 0)
 					{
 						if (TryDispel(caster->GetLevel(),buffs[slot].casterlevel, effect_value)){
 							BuffFadeBySlot(slot);

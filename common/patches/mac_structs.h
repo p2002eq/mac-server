@@ -75,7 +75,7 @@ struct ServerZoneEntry_Struct
 	/*0184*/    uint16  equipment[9]; // Array elements correspond to struct equipment above
 	/*0202*/	uint16	unknown; //Probably part of equipment
 	/*0204*/	Color_Struct equipcolors[9]; // Array elements correspond to struct equipment_colors above
-	/*0240*/	uint32	texture;	// Texture (0xFF=Player - See list of textures for more)
+	/*0240*/	uint32	bodytexture;	// Texture (0xFF=Player - See list of textures for more)
 	/*0244*/	float	size;
 	/*0248*/	float	width;
 	/*0252*/	float	length;
@@ -330,7 +330,7 @@ struct Spawn_Struct
 	/*0098*/	uint8	LD;					// 0=NotLD, 1=LD
 	/*0099*/	uint8	GM;					// 0=NotGM, 1=GM
 	/*0100*/	uint8	flymode;				
-	/*0101*/	uint8	texture;
+	/*0101*/	uint8	bodytexture;
 	/*0102*/	uint8	helm; 
 	/*0103*/	uint8	face;		
 	/*0104*/	uint16	equipment[9];		// Equipment worn: 0=helm, 1=chest, 2=arm, 3=bracer, 4=hand, 5=leg, 6=boot, 7=melee1, 8=melee2

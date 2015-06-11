@@ -193,6 +193,8 @@
 #define NPC_ENRAGE_END				1043	//%1 is no longer enraged.
 #define NPC_RAMPAGE					1044	//%1 goes on a RAMPAGE!
 #define NPC_FLURRY					1045	//%1 executes a FLURRY of attacks on %2!
+#define DISCIPLINE_SANCTIFICATION	1066	//A sanctifying aura surrounds %1.
+#define DISCIPLINE_RESISTANT		1075	//%1 has become more resistant.
 #define DISCIPLINE_FEARLESS			1076	//%1 becomes fearless.
 #define DUEL_FINISHED				1088	//dont know text
 #define EATING_MESSAGE				1091	//Chomp, chomp, chomp... %1 takes a bite from a %2.

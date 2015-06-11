@@ -272,7 +272,6 @@ void command_rules(Client *c, const Seperator *sep);
 void command_reloadtitles(Client *c, const Seperator *sep);
 void command_altactivate(Client *c, const Seperator *sep);
 void command_refundaa(Client *c, const Seperator *sep);
-void command_traindisc(Client *c, const Seperator *sep);
 void command_deletegraveyard(Client *c, const Seperator *sep);
 void command_setgraveyard(Client *c, const Seperator *sep);
 void command_unscribespell(Client *c, const Seperator *sep);

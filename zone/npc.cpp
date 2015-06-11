@@ -106,7 +106,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 		d->bracertexture,
 		d->handtexture,
 		d->legtexture,
-		d->feettexture
+		d->feettexture,
+		d->chesttexture
 		),
 	attacked_timer(CombatEventTimer_expire),
 	swarm_timer(100),

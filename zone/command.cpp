@@ -413,7 +413,6 @@ int command_init(void){
 		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional.", 250, command_timezone) ||
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title.", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix.", 255, command_titlesuffix) ||
-		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds).", 150, command_traindisc) ||
 		command_add("tune", "Calculate ideal statical values related to combat.", 250, command_tune) ||
 
 		command_add("undyeme", "- Remove dye from all of your armor slots.", 255, command_undyeme) ||
@@ -5546,7 +5545,7 @@ void command_scribespells(Client *c, const Seperator *sep){
 					c->Message(CC_Red, "Error scribing spells: %s ran out of spell book slots on spell %s (%u)", t->GetName(), spells[curspell].name, curspell);
 				break;
 			}
-			if (!IsDiscipline(curspell) && !t->HasSpellScribed(curspell)) {	//isn't a discipline & we don't already have it scribed
+			if (!t->HasSpellScribed(curspell)) {	//we don't already have it scribed
 				t->ScribeSpell(curspell, book_slot);
 				count++;
 			}
@@ -5588,7 +5587,7 @@ void command_scribespell(Client *c, const Seperator *sep){
 
 		Log.Out(Logs::General, Logs::Normal, "Scribe spell: %s (%i) request for %s from %s.", spells[spell_id].name, spell_id, t->GetName(), c->GetName());
 
-		if (spells[spell_id].classes[WARRIOR] != 0 && spells[spell_id].skill != 52 && spells[spell_id].classes[t->GetPP().class_ - 1] > 0 && !IsDiscipline(spell_id)) {
+		if (spells[spell_id].classes[WARRIOR] != 0 && spells[spell_id].skill != 52 && spells[spell_id].classes[t->GetPP().class_ - 1] > 0) {
 			book_slot = t->GetNextAvailableSpellBookSlot();
 
 			if (book_slot >= 0 && t->FindSpellBookSlotBySpellID(spell_id) < 0)
@@ -8086,83 +8085,6 @@ void command_altactivate(Client *c, const Seperator *sep){
 	else
 	{
 		c->ActivateAA((aaID)atoi(sep->arg[1]));
-	}
-}
-
-void command_traindisc(Client *c, const Seperator *sep){
-	uint8 max_level, min_level;
-	uint16 curspell, count;
-	Client *t = c;
-
-	if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
-		t = c->GetTarget()->CastToClient();
-
-	if (!sep->arg[1][0])
-	{
-		c->Message(0, "FORMAT: #traindisc <max level> <min level>");
-		return;
-	}
-
-	max_level = (uint8)atoi(sep->arg[1]);
-	if (!c->GetGM() && max_level > RuleI(Character, MaxLevel))
-		max_level = RuleI(Character, MaxLevel);	//default to Character:MaxLevel if we're not a GM & it's higher than the max level
-	min_level = sep->arg[2][0] ? (uint8)atoi(sep->arg[2]) : 1;	//default to 1 if there isn't a 2nd argument
-	if (!c->GetGM() && min_level > RuleI(Character, MaxLevel))
-		min_level = RuleI(Character, MaxLevel);	//default to Character:MaxLevel if we're not a GM & it's higher than the max level
-
-	if (max_level < 1 || min_level < 1)
-	{
-		c->Message(0, "ERROR: Level must be greater than 1.");
-		return;
-	}
-	if (min_level > max_level) {
-		c->Message(0, "Error: Min Level must be less than or equal to Max Level.");
-		return;
-	}
-
-	t->Message(0, "Training disciplines");
-	if (t != c)
-		c->Message(0, "Training disciplines for %s.", t->GetName());
-	Log.Out(Logs::General, Logs::Normal, "Train disciplines request for %s from %s, levels: %u -> %u", t->GetName(), c->GetName(), min_level, max_level);
-
-	for (curspell = 0, count = 0; curspell < SPDAT_RECORDS; curspell++)
-	{
-		if
-			(
-			spells[curspell].classes[WARRIOR] != 0 && // check if spell exists
-			spells[curspell].classes[t->GetPP().class_ - 1] <= max_level &&	//maximum level
-			spells[curspell].classes[t->GetPP().class_ - 1] >= min_level &&	//minimum level
-			spells[curspell].skill != 52
-			)
-		{
-			if (IsDiscipline(curspell)){
-				//we may want to come up with a function like Client::GetNextAvailableSpellBookSlot() to help speed this up a little
-				for (int r = 0; r < MAX_PP_DISCIPLINES; r++) {
-					if (t->GetPP().disciplines.values[r] == curspell) {
-						t->Message(CC_Red, "You already know this discipline.");
-						break;	//continue the 1st loop
-					}
-					else if (t->GetPP().disciplines.values[r] == 0) {
-						t->GetPP().disciplines.values[r] = curspell;
-						t->SendDisciplineUpdate();
-						t->Message(0, "You have learned a new discipline!");
-						count++;	//success counter
-						break;	//continue the 1st loop
-					}	//if we get to this point, there's already a discipline in this slot, so we continue onto the next slot
-				}
-			}
-		}
-	}
-
-	if (count > 0) {
-		t->Message(0, "Successfully trained %u disciplines.", count);
-		if (t != c)
-			c->Message(0, "Successfully trained %u disciplines for %s.", count, t->GetName());
-	}
-	else {
-		t->Message(0, "No disciplines trained.");
-		if (t != c)
-			c->Message(0, "No disciplines trained for %s.", t->GetName());
 	}
 }
 

@@ -82,7 +82,8 @@ Mob::Mob(const char* in_name,
 		uint8		in_bracertexture,
 		uint8		in_handtexture,
 		uint8		in_legtexture,
-		uint8		in_feettexture
+		uint8		in_feettexture,
+		uint8		in_chesttexture
 		) :
 		attack_timer(2000),
 		attack_dw_timer(2000),
@@ -187,13 +188,14 @@ Mob::Mob(const char* in_name,
 	m_Light.Level.Active = m_Light.Level.Innate;
 	
 	texture		= in_texture;
+	chesttexture = in_chesttexture;
 	helmtexture	= in_helmtexture;
 	armtexture = in_armtexture;
 	bracertexture = in_bracertexture;
 	handtexture = in_handtexture;
 	legtexture = in_legtexture;
 	feettexture = in_feettexture;
-	multitexture = (armtexture || bracertexture || handtexture || legtexture || feettexture);
+	multitexture = (chesttexture || armtexture || bracertexture || handtexture || legtexture || feettexture);
 
 	haircolor	= in_haircolor;
 	beardcolor	= in_beardcolor;
@@ -1152,9 +1154,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.face = luclinface;
 	ns->spawn.beard = beard;
 	ns->spawn.StandState = GetAppearanceValue(_appearance);
-	ns->spawn.equip_chest2 = texture;
-
-//	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
+	ns->spawn.bodytexture = texture;
 
 	if(helmtexture && helmtexture != 0xFF)
 	{
@@ -1510,8 +1510,9 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
 		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
-		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
+		client->Message(0, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
+		client->Message(0, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
 		if (client->Admin() >= 100)
 			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
@@ -2453,6 +2454,23 @@ int32 Mob::GetEquipmentMaterial(uint8 material_slot) const
 		{
 			return item->Material;
 		}
+	}
+	else if(IsNPC())
+	{
+		if(material_slot == MaterialHead)
+			return helmtexture;
+		else if(material_slot == MaterialChest)
+			return chesttexture;
+		else if(material_slot == MaterialArms)
+			return armtexture;
+		else if(material_slot == MaterialWrist)
+			return bracertexture;
+		else if(material_slot == MaterialHands)
+			return handtexture;
+		else if(material_slot == MaterialLegs)
+			return legtexture;
+		else if(material_slot == MaterialFeet)
+			return feettexture;
 	}
 
 	return 0;
@@ -5096,7 +5114,6 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 	else if (id == "bonushate") {stat = spells[spell_id].bonushate; }
 	else if (id == "EndurCost") {stat = spells[spell_id].EndurCost; }
 	else if (id == "EndurTimerIndex") {stat = spells[spell_id].EndurTimerIndex; }
-	else if (id == "IsDisciplineBuf") {stat = spells[spell_id].IsDisciplineBuff; }
 	else if (id == "HateAdded") {stat = spells[spell_id].HateAdded; }
 	else if (id == "EndurUpkeep") {stat = spells[spell_id].EndurUpkeep; }
 	else if (id == "numhitstype") {stat = spells[spell_id].numhitstype; }

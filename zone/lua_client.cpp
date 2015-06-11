@@ -555,31 +555,6 @@ void Lua_Client::UnscribeSpellAll(bool update_client) {
 	self->UnscribeSpellAll(update_client);
 }
 
-void Lua_Client::TrainDisc(int itemid) {
-	Lua_Safe_Call_Void();
-	self->TrainDiscipline(itemid);
-}
-
-void Lua_Client::UntrainDisc(int slot) {
-	Lua_Safe_Call_Void();
-	self->UntrainDisc(slot);
-}
-
-void Lua_Client::UntrainDisc(int slot, bool update_client) {
-	Lua_Safe_Call_Void();
-	self->UntrainDisc(slot, update_client);
-}
-
-void Lua_Client::UntrainDiscAll() {
-	Lua_Safe_Call_Void();
-	self->UntrainDiscAll();
-}
-
-void Lua_Client::UntrainDiscAll(bool update_client) {
-	Lua_Safe_Call_Void();
-	self->UntrainDiscAll(update_client);
-}
-
 bool Lua_Client::IsSitting() {
 	Lua_Safe_Call_Bool();
 	return self->IsSitting();
@@ -745,9 +720,9 @@ void Lua_Client::ResetTrade() {
 	self->ResetTrade();
 }
 
-bool Lua_Client::UseDiscipline(int spell_id, int target_id) {
+bool Lua_Client::UseDiscipline(int spell_id, Client* client) {
 	Lua_Safe_Call_Bool();
-	return self->UseDiscipline(spell_id, target_id);
+	return self->UseDiscipline(spell_id, client);
 }
 
 int Lua_Client::GetCharacterFactionLevel(int faction_id) {
@@ -1227,11 +1202,6 @@ luabind::scope lua_register_client() {
 		.def("UnscribeSpell", (void(Lua_Client::*)(int,bool))&Lua_Client::UnscribeSpell)
 		.def("UnscribeSpellAll", (void(Lua_Client::*)(void))&Lua_Client::UnscribeSpellAll)
 		.def("UnscribeSpellAll", (void(Lua_Client::*)(bool))&Lua_Client::UnscribeSpellAll)
-		.def("TrainDisc", (void(Lua_Client::*)(int))&Lua_Client::TrainDisc)
-		.def("UntrainDisc", (void(Lua_Client::*)(int))&Lua_Client::UntrainDisc)
-		.def("UntrainDisc", (void(Lua_Client::*)(int,bool))&Lua_Client::UntrainDisc)
-		.def("UntrainDiscAll", (void(Lua_Client::*)(void))&Lua_Client::UntrainDiscAll)
-		.def("UntrainDiscAll", (void(Lua_Client::*)(bool))&Lua_Client::UntrainDiscAll)
 		.def("IsSitting", (bool(Lua_Client::*)(void))&Lua_Client::IsSitting)
 		.def("SetFeigned", (void(Lua_Client::*)(bool))&Lua_Client::SetFeigned)
 		.def("GetFeigned", (bool(Lua_Client::*)(void))&Lua_Client::GetFeigned)
@@ -1265,7 +1235,7 @@ luabind::scope lua_register_client() {
 		.def("ForageItem", (void(Lua_Client::*)(bool))&Lua_Client::ForageItem)
 		.def("CalcPriceMod", (float(Lua_Client::*)(Lua_Mob,bool))&Lua_Client::CalcPriceMod)
 		.def("ResetTrade", (void(Lua_Client::*)(void))&Lua_Client::ResetTrade)
-		.def("UseDiscipline", (bool(Lua_Client::*)(int,int))&Lua_Client::UseDiscipline)
+		.def("UseDiscipline", (bool(Lua_Client::*)(int,Client*))&Lua_Client::UseDiscipline)
 		.def("GetCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetCharacterFactionLevel)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int))&Lua_Client::SetZoneFlag)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int,uint8))&Lua_Client::SetZoneFlag)

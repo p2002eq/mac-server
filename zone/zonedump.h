@@ -129,6 +129,7 @@ struct NPCType
 	uint8	handtexture;
 	uint8	legtexture;
 	uint8	feettexture;
+	uint8	chesttexture;
 };
 
 namespace player_lootitem {

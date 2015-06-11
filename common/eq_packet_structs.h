@@ -228,7 +228,7 @@ struct Spawn_Struct {
 /*0336*/ uint8 unknown0336[3];
 union
 {
-/*0339*/ uint8 equip_chest2;	// Second place in packet for chest texture (usually 0xFF in live packets)
+/*0339*/ uint8 bodytexture;	// Second place in packet for chest texture (usually 0xFF in live packets)
 								// Not sure why there are 2 of them, but it effects chest texture!
 /*0339*/ uint8 mount_color;		// drogmor: 0=white, 1=black, 2=green, 3=red
 								// horse: 0=brown, 1=white, 2=black, 3=tan
@@ -559,13 +559,6 @@ struct AA_Array
 	uint32 value;
 };
 
-static const uint32 MAX_PP_DISCIPLINES = 100;
-static const uint32 MAX_DISCIPLINE_TIMERS = 20;
-
-struct Disciplines_Struct {
-	uint32 values[MAX_PP_DISCIPLINES];
-};
-
 struct ClientDiscipline_Struct {
     uint8	disc_id;	// There are only a few discs < 60
     uint8	unknown3[3];	// Which leaves room for ??
@@ -704,7 +697,6 @@ struct PlayerProfile_Struct
 /*6008*/	char				groupMembers[6][64];//
 			char				boat[20];
 /*7048*/	uint32				entityid;
-/*7264*/	Disciplines_Struct	disciplines;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7904*/	uint32				endurance;
 /*8184*/	uint32				air_remaining;
@@ -2487,13 +2479,6 @@ struct ClearObject_Struct
 {
 /*000*/	uint8	Clear;	// If this is not set to non-zero there is a random chance of a client crash.
 /*001*/	uint8	Unknown001[7];
-};
-
-struct DisciplineTimer_Struct
-{
-/*00*/ uint32	TimerID;
-/*04*/ uint32	Duration;
-/*08*/ uint32	Unknown08;
 };
 
 struct GMSearchCorpse_Struct
