@@ -1944,15 +1944,15 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 {
 
-	if (app->size <= 7 || app->size > 20) {
-		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 20, got %i", app->size);
+	if (app->size <= 7 || app->size > 21) {
+		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 21, got %i", app->size);
 		DumpPacket(app);
 		return;
 	}
 
-	char boatname[20];
+	char boatname[21];
 	memcpy(boatname, app->pBuffer, app->size);
-	boatname[19] = '\0';
+	boatname[20] = '\0';
 
 	Mob* boat = entity_list.GetMob(boatname);
 

@@ -1891,10 +1891,10 @@ void Zone::UpdateHotzone()
 
 bool Zone::IsBoatZone()
 {
-	// This only returns true for zones that contain actual boats. It should not be used for zones that only have 
-	// controllable boats, or the Halas raft.
+	// This only returns true for zones that contain actual boats or rafts. It should not be used for zones that only have 
+	// controllable boats, or intrazone rafts (Halas).
 
-	static const int16 boatzones[] = { qeynos, freporte, erudnext, butcher, oot, erudsxing };
+	static const int16 boatzones[] = { qeynos, freporte, erudnext, butcher, oot, erudsxing, timorous, firiona, oasis, overthere };
 
 	int8 boatzonessize = sizeof(boatzones) / sizeof(boatzones[0]);
 	for (int i = 0; i < boatzonessize; i++) {
