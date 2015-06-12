@@ -131,7 +131,6 @@ bool Client::Process() {
 			Save();
 			instalog = true;
 			database.ClearAccountActive(this->AccountID());
-			return false;
 		}
 
 		if (IsStunned() && stunned_timer.Check()) {
