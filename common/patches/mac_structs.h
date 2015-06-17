@@ -75,7 +75,7 @@ struct ServerZoneEntry_Struct
 	/*0184*/    uint16  equipment[9]; // Array elements correspond to struct equipment above
 	/*0202*/	uint16	unknown; //Probably part of equipment
 	/*0204*/	Color_Struct equipcolors[9]; // Array elements correspond to struct equipment_colors above
-	/*0240*/	uint32	texture;	// Texture (0xFF=Player - See list of textures for more)
+	/*0240*/	uint32	bodytexture;	// Texture (0xFF=Player - See list of textures for more)
 	/*0244*/	float	size;
 	/*0248*/	float	width;
 	/*0252*/	float	length;
@@ -330,7 +330,7 @@ struct Spawn_Struct
 	/*0098*/	uint8	LD;					// 0=NotLD, 1=LD
 	/*0099*/	uint8	GM;					// 0=NotGM, 1=GM
 	/*0100*/	uint8	flymode;				
-	/*0101*/	uint8	texture;
+	/*0101*/	uint8	bodytexture;
 	/*0102*/	uint8	helm; 
 	/*0103*/	uint8	face;		
 	/*0104*/	uint16	equipment[9];		// Equipment worn: 0=helm, 1=chest, 2=arm, 3=bracer, 4=hand, 5=leg, 6=boot, 7=melee1, 8=melee2
@@ -496,7 +496,7 @@ struct Item_Struct
 	/*0176*/ int8      NoDrop;          // Nodrop flag 1=normal, 0=nodrop, -1=??
 	/*0177*/ uint8     Size;            // Size of item
 	/*0178*/ int16     ItemClass;
-	/*0180*/ int16	   ID;         // Unique Item number confirmed to be signed.
+	/*0180*/ int16	   ID;				// Record number. Confirmed to be signed.
 	/*0182*/ uint16    Icon;         // Icon Number
 	/*0184*/ int16     equipSlot;       // Current slot location of item
 	/*0186*/ uint8     unknown0186[2];   // Client dump has equipSlot/location as a short so this is still unknown
@@ -506,7 +506,7 @@ struct Item_Struct
 	/*0200*/ float	   cur_y;
 	/*0204*/ float     cur_z;
 	/*0208*/ float     heading;
-	/*0212*/ uint32	   inv_refnum; 
+	/*0212*/ uint32	   inv_refnum;  // Unique serial. This is required by apply poison. We're just sending slot for now, in the future a serial system will be needed. 
 	/*0216*/ int16	   log; 
 	/*0218*/ int16     loot_log;
 	/*0220*/ uint16    avatar_level;  //Usually 01, sometimes seen as FFFF, once as 0.

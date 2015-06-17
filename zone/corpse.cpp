@@ -192,7 +192,13 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	0,							// int32		in_mana_regen,
 	0,							// uint8		in_qglobal,
 	0,							// uint8		in_maxlevel,
-	0							// uint32		in_scalerate
+	0,							// uint32		in_scalerate
+	0,							// uint8		in_armtexture,
+	0,							// uint8		in_bracertexture,
+	0,							// uint8		in_handtexture,
+	0,							// uint8		in_legtexture,
+	0,							// uint8		in_feettexture,
+	0							// uint8		in_chesttexture,
 ),									  
 	corpse_decay_timer(in_decaytime),
 	corpse_rez_timer(0),
@@ -291,7 +297,13 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	0,								  // int32		in_mana_regen,
 	0,								  // uint8		in_qglobal,
 	0,								  // uint8		in_maxlevel,
-	0								  // uint32		in_scalerate
+	0,								  // uint32		in_scalerate
+	0,								  // uint8		in_armtexture,
+	0,								  // uint8		in_bracertexture,
+	0,								  // uint8		in_handtexture,
+	0,								  // uint8		in_legtexture,
+	0,								  // uint8		in_feettexture,
+	0								  // uint8		in_chesttexture,
 	),
 	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
@@ -493,7 +505,14 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	0,						// int32		in_mana_regen,
 	0,						// uint8		in_qglobal,
 	0,						// uint8		in_maxlevel,
-	0),						// uint32		in_scalerate
+	0,						// uint32		in_scalerate
+	0,						// uint8		in_armtexture,
+	0,						// uint8		in_bracertexture,
+	0,						// uint8		in_handtexture,
+	0,						// uint8		in_legtexture,
+	0,						// uint8		in_feettexture,
+	0						// uint8		in_chesttexture,
+	),						
 	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
 	corpse_delay_timer(RuleI(NPC, CorpseUnlockTimer)),

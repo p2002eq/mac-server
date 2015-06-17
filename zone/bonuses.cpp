@@ -81,6 +81,9 @@ void Client::CalcBonuses()
 	CalcAABonuses(&aabonuses);	//we're not quite ready for this
 	Log.Out(Logs::Detail, Logs::AA, "Finished calculating AA Bonuses for %s.", this->GetCleanName());
 
+	memset(&discbonuses, 0, sizeof(StatBonuses));
+	CalcDiscBonuses(&discbonuses);
+
 	RecalcWeight();
 
 	CalcAC();
@@ -3424,30 +3427,35 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					spellbonuses.FR = effect_value;
 					itembonuses.FR = effect_value;
 					aabonuses.FR = effect_value;
+					discbonuses.FR = effect_value;
 					break;
 
 				case SE_ResistCold:
 					spellbonuses.CR = effect_value;
 					aabonuses.CR = effect_value;
 					itembonuses.CR = effect_value;
+					discbonuses.CR = effect_value;
 					break;
 
 				case SE_ResistPoison:
 					spellbonuses.PR = effect_value;
 					aabonuses.PR = effect_value;
 					itembonuses.PR = effect_value;
+					discbonuses.PR = effect_value;
 					break;
 
 				case SE_ResistDisease:
 					spellbonuses.DR = effect_value;
 					itembonuses.DR = effect_value;
 					aabonuses.DR = effect_value;
+					discbonuses.DR = effect_value;
 					break;
 
 				case SE_ResistMagic:
 					spellbonuses.MR = effect_value;
 					aabonuses.MR = effect_value;
 					itembonuses.MR = effect_value;
+					discbonuses.MR = effect_value;
 					break;
 
 				case SE_ResistAll:
@@ -3469,6 +3477,12 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					itembonuses.PR = effect_value;
 					itembonuses.CR = effect_value;
 					itembonuses.FR = effect_value;
+
+					discbonuses.MR = effect_value;
+					discbonuses.DR = effect_value;
+					discbonuses.PR = effect_value;
+					discbonuses.CR = effect_value;
+					discbonuses.FR = effect_value;
 					break;
 				}
 
@@ -3624,6 +3638,7 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					spellbonuses.ResistSpellChance = effect_value;
 					aabonuses.ResistSpellChance = effect_value;
 					itembonuses.ResistSpellChance = effect_value;
+					discbonuses.ResistSpellChance = effect_value;
 					break;
 
 				case SE_ResistFearChance:
@@ -3637,6 +3652,7 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					spellbonuses.Fearless = false;
 					aabonuses.Fearless = false;
 					itembonuses.Fearless = false;
+					discbonuses.Fearless = false;
 					break;
 
 				case SE_HundredHands:
@@ -4410,3 +4426,30 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 	}
 }
 
+void Client::CalcDiscBonuses(StatBonuses* newbon) 
+{
+	if(active_disc == disc_sanctification)
+	{
+		discbonuses.ResistSpellChance = 100;
+	}
+
+	else if(active_disc == disc_resistant)
+	{
+		uint8 calc_level = GetLevel();
+		if(calc_level > 50) calc_level = 50;
+
+		float bonus = 3;
+		bonus += (calc_level - 30) * 0.35;
+		
+		discbonuses.MR = static_cast<int8>(bonus);
+		discbonuses.FR = static_cast<int8>(bonus);
+		discbonuses.DR = static_cast<int8>(bonus);
+		discbonuses.PR = static_cast<int8>(bonus);
+		discbonuses.CR = static_cast<int8>(bonus);
+	}
+
+	else if(active_disc == disc_fearless)
+	{
+		discbonuses.Fearless = true;
+	}
+}

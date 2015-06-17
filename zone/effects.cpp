@@ -495,116 +495,8 @@ int32 Client::GetActSpellCasttime(uint16 spell_id, int32 casttime)
 	return casttime;
 }
 
-bool Client::TrainDiscipline(uint32 itemid) {
-
-	//get the item info
-	const Item_Struct *item = database.GetItem(itemid);
-	if(item == nullptr) {
-		Message(CC_Red, "Unable to find the tome you turned in!");
-		Log.Out(Logs::General, Logs::Error, "Unable to find turned in tome id %lu\n", (unsigned long)itemid);
-		return(false);
-	}
-
-	if(item->ItemClass != ItemClassCommon || item->ItemType != ItemTypeSpell) {
-		Message(CC_Red, "Invalid item type, you cannot learn from this item.");
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	//Need a way to determine the difference between a spell and a tome
-	//so they cant turn in a spell and get it as a discipline
-	//this is kinda a hack:
-	if(!(
-		item->Name[0] == 'T' &&
-		item->Name[1] == 'o' &&
-		item->Name[2] == 'm' &&
-		item->Name[3] == 'e' &&
-		item->Name[4] == ' '
-		) && !(
-		item->Name[0] == 'S' &&
-		item->Name[1] == 'k' &&
-		item->Name[2] == 'i' &&
-		item->Name[3] == 'l' &&
-		item->Name[4] == 'l' &&
-		item->Name[5] == ':' &&
-		item->Name[6] == ' '
-		)) {
-		Message(CC_Red, "This item is not a tome.");
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	int myclass = GetClass();
-	if(myclass == WIZARD || myclass == ENCHANTER || myclass == MAGICIAN || myclass == NECROMANCER) {
-		Message(CC_Red, "Your class cannot learn from this tome.");
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	//make sure we can train this...
-	//can we use the item?
-	uint32 cbit = 1 << (myclass-1);
-	if(!(item->Classes & cbit)) {
-		Message(CC_Red, "Your class cannot learn from this tome.");
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	uint32 spell_id = item->Scroll.Effect;
-	if(!IsValidSpell(spell_id)) {
-		Message(CC_Red, "This tome contains invalid knowledge.");
-		return(false);
-	}
-
-	//can we use the spell?
-	const SPDat_Spell_Struct &spell = spells[spell_id];
-	uint8 level_to_use = spell.classes[myclass - 1];
-	if(level_to_use == 255) {
-		Message(CC_Red, "Your class cannot learn from this tome.");
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	if(level_to_use > GetLevel()) {
-		Message(CC_Red, "You must be at least level %d to learn this discipline.", level_to_use);
-		//summon them the item back...
-		SummonItem(itemid);
-		return(false);
-	}
-
-	//add it to PP.
-	int r;
-	for(r = 0; r < MAX_PP_DISCIPLINES; r++) {
-		if(m_pp.disciplines.values[r] == spell_id) {
-			Message(CC_Red, "You already know this discipline.");
-			//summon them the item back...
-			SummonItem(itemid);
-			return(false);
-		} else if(m_pp.disciplines.values[r] == 0) {
-			m_pp.disciplines.values[r] = spell_id;
-			database.SaveCharacterDisc(this->CharacterID(), r, spell_id);
-			SendDisciplineUpdate();
-			Message(0, "You have learned a new discipline!");
-			return(true);
-		}
-	}
-	Message(CC_Red, "You have learned too many disciplines and can learn no more.");
-	return(false);
-}
-
-void Client::SendDisciplineUpdate() {
-	EQApplicationPacket app(OP_DisciplineUpdate, sizeof(Disciplines_Struct));
-	Disciplines_Struct *d = (Disciplines_Struct*)app.pBuffer;
-	memcpy(d, &m_pp.disciplines, sizeof(m_pp.disciplines));
-	QueuePacket(&app);
-}
-
-bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
+bool Client::UseDiscipline(uint8 disc_id, Client* target) 
+{
 	// Dont let client waste a reuse timer if they can't use the disc
 	if (IsStunned() || IsFeared() || IsMezzed() || IsAmnesiad() || IsPet())
 	{
@@ -612,82 +504,409 @@ bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
 	}
 
 	//Check the disc timer
-	pTimerType DiscTimer = pTimerDisciplineReuseStart + spells[spell_id].EndurTimerIndex;
-	if(!p_timers.Expired(&database, DiscTimer)) {
-		/*char val1[20]={0};*/	//unused
-		/*char val2[20]={0};*/	//unused
-		uint32 remain = p_timers.GetRemainingTime(DiscTimer);
-		//Message_StringID(CC_Default, DISCIPLINE_CANUSEIN, ConvertArray((remain)/60,val1), ConvertArray(remain%60,val2));
-		Message(0, "You can use this discipline in %d minutes %d seconds.", ((remain)/60), (remain%60));
-		return(false);
-	}
-
-	//make sure we can use it..
-	if(!IsValidSpell(spell_id)) {
-		Message(CC_Red, "This tome contains invalid knowledge.");
-		return(false);
-	}
-
-	//can we use the spell?
-	const SPDat_Spell_Struct &spell = spells[spell_id];
-	uint8 level_to_use = spell.classes[GetClass() - 1];
-	if(level_to_use == 255) {
-		Message(CC_Red, "Your class cannot learn from this tome.");
-		//should summon them a new one...
-		return(false);
-	}
-
-	if(level_to_use > GetLevel()) {
-		Message_StringID(CC_Red, DISC_LEVEL_USE_ERROR);
-		//should summon them a new one...
-		return(false);
-	}
-
-	if(GetEndurance() > spell.EndurCost) {
-		SetEndurance(GetEndurance() - spell.EndurCost);
-		TryTriggerOnValueAmount(false, false, true);
-	} else {
-		Message(11, "You are too fatigued to use this skill right now.");
-		return(false);
-	}
-
-	if(spell.recast_time > 0)
+	uint32 remain = p_timers.GetRemainingTime(pTimerDisciplineReuseStart);
+	if(remain > 0 && !GetGM())
 	{
-		uint32 reduced_recast = spell.recast_time / 1000;
-		reduced_recast -= CastToClient()->GetFocusEffect(focusReduceRecastTime, spell_id);
-		if(reduced_recast <= 0){
-			reduced_recast = 0;
-			if (GetPTimers().Enabled((uint32)DiscTimer))
-				GetPTimers().Clear(&database, (uint32)DiscTimer);
-		}
-
-		if (reduced_recast > 0)
-			CastSpell(spell_id, target, DISCIPLINE_SPELL_SLOT, -1, -1, 0, -1, (uint32)DiscTimer, reduced_recast);
-		else{
-			CastSpell(spell_id, target, DISCIPLINE_SPELL_SLOT);
-			return true;
-		}
-
-		SendDisciplineTimer(spells[spell_id].EndurTimerIndex, reduced_recast);
+		char val1[20]={0};
+		char val2[20]={0};
+		Message_StringID(CC_User_Disciplines, DISCIPLINE_CANUSEIN, ConvertArray((remain)/60,val1), ConvertArray(remain%60,val2));
+		return(false);
 	}
+
+	//can we use the disc? the client checks this for us, but we should also confirm server side.
+	uint8 level_to_use = DisciplineUseLevel(disc_id);
+	if(level_to_use > GetLevel() || level_to_use == 0) {
+		Message_StringID(CC_User_Disciplines, DISC_LEVEL_USE_ERROR);
+		return(false);
+	}
+
+	//cast the disc
+	if(CastDiscipline(disc_id, target, level_to_use))
+		return(true);
 	else
-	{
-		CastSpell(spell_id, target, DISCIPLINE_SPELL_SLOT);
-	}
-	return(true);
+		return(false);
 }
 
-void Client::SendDisciplineTimer(uint32 timer_id, uint32 duration)
+uint8 Client::DisciplineUseLevel(uint8 disc_id)
 {
-	if (timer_id < MAX_DISCIPLINE_TIMERS)
+	switch(disc_id) 
 	{
-		EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineTimer, sizeof(DisciplineTimer_Struct));
-		DisciplineTimer_Struct *dts = (DisciplineTimer_Struct *)outapp->pBuffer;
-		dts->TimerID = timer_id;
-		dts->Duration = duration;
-		QueuePacket(outapp);
-		safe_delete(outapp);
+		case disc_aggressive:
+			if(GetClass() == WARRIOR)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_precision:
+			if(GetClass() == WARRIOR)
+				return 57;
+			else
+				return 0;
+			break;
+		case disc_defensive:
+			if(GetClass() == WARRIOR)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_evasive:
+			if(GetClass() == WARRIOR)
+				return 52;
+			else
+				return 0;
+			break;
+		case disc_ashenhand:
+			if(GetClass() == MONK)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_furious:
+			if(GetClass() == WARRIOR)
+				return 56;
+			else if(GetClass() == MONK || GetClass() == ROGUE)
+				return 53;
+			else
+				return 0;
+			break;
+		case disc_stonestance:
+			if(GetClass() == MONK)
+				return 51;
+			else if(GetClass() == BEASTLORD)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_thunderkick:
+			if(GetClass() == MONK)
+				return 52;
+			else
+				return 0;
+			break;
+		case disc_fortitude:
+			if(GetClass() == WARRIOR)
+				return 59;
+			else if(GetClass() == MONK)
+				return 54;
+			else
+				return 0;
+			break;
+		case disc_fellstrike:
+			if(GetClass() == WARRIOR)
+				return 58;
+			else if(GetClass() == MONK)
+				return 56;
+			else if(GetClass() == BEASTLORD)
+				return 60;
+			else if(GetClass() == ROGUE)
+				return 59;
+			else
+				return 0;
+			break;
+		case disc_hundredfist:
+			if(GetClass() == MONK)
+				return 57;
+			else if(GetClass() == ROGUE)
+				return 58;
+			else
+				return 0;
+			break;
+		case disc_charge:
+			if(GetClass() == WARRIOR)
+				return 53;
+			else if(GetClass() == ROGUE)
+				return 54;
+			else
+				return 0;
+			break;
+		case disc_mightystrike:
+			if(GetClass() == WARRIOR)
+				return 54;
+			else
+				return 0;
+			break;
+		case disc_nimble:
+			if(GetClass() == ROGUE)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_silentfist:
+			if(GetClass() == MONK)
+				return 59;
+			else
+				return 0;
+			break;
+		case disc_kinesthetics:
+			if(GetClass() == ROGUE)
+				return 57;
+			else
+				return 0;
+			break;
+		case disc_holyforge:
+			if(GetClass() == PALADIN)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_sanctification:
+			if(GetClass() == PALADIN)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_trueshot:
+			if(GetClass() == RANGER)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_weaponshield:
+			if(GetClass() == RANGER)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_unholyaura:
+			if(GetClass() == SHADOWKNIGHT)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_leechcurse:
+			if(GetClass() == SHADOWKNIGHT)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_deftdance:
+			if(GetClass() == BARD)
+				return 55;
+			else
+				return 0;
+			break;
+		case disc_puretone:
+			if(GetClass() == BARD)
+				return 60;
+			else
+				return 0;
+			break;
+		case disc_resistant:
+			if(GetClass() == WARRIOR || GetClass() == MONK || GetClass() == ROGUE)
+				return 30;
+			else if(GetClass() == PALADIN || GetClass() == RANGER || GetClass() == SHADOWKNIGHT || GetClass() == BARD || GetClass() == BEASTLORD)
+				return 51;
+			else
+				return 0;
+			break;
+		case disc_fearless:
+			if(GetClass() == WARRIOR || GetClass() == MONK || GetClass() == ROGUE)
+				return 40;
+			else if(GetClass() == PALADIN || GetClass() == RANGER || GetClass() == SHADOWKNIGHT || GetClass() == BARD || GetClass() == BEASTLORD)
+				return 54;
+			else
+				return 0;
+			break;
+		default:
+			return 0;
+			break;
 	}
+}
+
+bool Client::CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use)
+{
+
+	if(!target)
+		return false;
+
+	uint8 current_level = GetLevel();
+	if(current_level > 60)
+		current_level = 60;
+
+	if(level_to_use > current_level || level_to_use == 0)
+		return false;
+
+	// reuse_timer is in seconds, ability_timer is in milliseconds.
+	uint32 reuse_timer, ability_timer;
+	uint32 string = 0;
+
+	switch(disc_id)
+	{
+		case disc_aggressive:
+			reuse_timer = 1620 - (current_level - level_to_use) * 60;
+			ability_timer = 180000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_precision:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 180000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_defensive:
+			reuse_timer = 900 - (current_level - level_to_use) * 60;
+			ability_timer = 180000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_evasive:
+			reuse_timer = 900 - (current_level - level_to_use) * 60;
+			ability_timer = 180000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_ashenhand:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_furious:
+			reuse_timer = 3600 - (current_level - level_to_use) * 60;
+			ability_timer = 9000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_stonestance:
+			reuse_timer = 720 - (current_level - level_to_use) * 60;
+			ability_timer = 12000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_thunderkick:
+			reuse_timer = 420 - (current_level - level_to_use) * 60;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_fortitude:
+			reuse_timer = 3600 - (current_level - level_to_use) * 60;
+			ability_timer = 8000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_fellstrike:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 12000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_hundredfist:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 15000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_charge:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 14000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_mightystrike:
+			reuse_timer = 3600 - (current_level - level_to_use) * 60;
+			ability_timer = 10000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_nimble:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 12000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_silentfist:
+			reuse_timer = 540 - (current_level - level_to_use) * 60;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_kinesthetics:
+			reuse_timer = 1800 - (current_level - level_to_use) * 60;
+			ability_timer = 18000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_holyforge:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 120000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_sanctification:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 10000;
+			string = DISCIPLINE_SANCTIFICATION;
+
+			break;
+		case disc_trueshot:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 120000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_weaponshield:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 15000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_unholyaura:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_leechcurse:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 15000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_deftdance:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 10000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_puretone:
+			reuse_timer = 4320 - (current_level - level_to_use) * 60;
+			ability_timer = 120000;
+			Message(CC_Yellow, "This disc is not yet implemented.");
+
+			break;
+		case disc_resistant:
+			reuse_timer = 3600 - (current_level - level_to_use) * 60;
+			ability_timer = 60000;
+			string = DISCIPLINE_RESISTANT;
+
+			break;
+		case disc_fearless:
+			reuse_timer = 3600 - (current_level - level_to_use) * 60;
+			ability_timer = 11000;
+			string = DISCIPLINE_FEARLESS;
+
+			break;
+		default:
+			Log.Out(Logs::General, Logs::Discs, "Invalid disc id %d was passed to CastDiscipline.", disc_id);
+			return false;
+	}
+
+	if(string > 0)
+	{
+		Message_StringID(CC_User_Disciplines, string, target->GetName());
+		target->p_timers.Start(pTimerDisciplineReuseStart, reuse_timer);
+		target->disc_ability_timer.SetTimer(ability_timer);
+		target->SetActiveDisc(disc_id);
+		target->CalcBonuses();
+	}
+	else
+		return false;
+
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
+	ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
+	d->disc_id = disc_id;
+	QueuePacket(outapp);
+	safe_delete(outapp);
+
+	return true;
 }
 
 void EntityList::AETaunt(Client* taunter, float range)

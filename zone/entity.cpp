@@ -160,6 +160,11 @@ Beacon *Entity::CastToBeacon()
 	return static_cast<Beacon *>(this);
 }
 
+Encounter *Entity::CastToEncounter()
+{
+	return static_cast<Encounter *>(this);
+}
+
 const Client *Entity::CastToClient() const
 {
 	if (this == 0x00) {
@@ -239,6 +244,10 @@ const Beacon* Entity::CastToBeacon() const
 	return static_cast<const Beacon *>(this);
 }
 
+const Encounter* Entity::CastToEncounter() const 
+{
+	return static_cast<const Encounter *>(this);
+}
 EntityList::EntityList()
 {
 	// set up ids between 1 and 1500
@@ -542,6 +551,21 @@ void EntityList::BeaconProcess()
 	}
 }
 
+void EntityList::EncounterProcess()
+{
+	auto it = encounter_list.begin();
+	while (it != encounter_list.end()) {
+		if (!it->second->Process()) {
+			safe_delete(it->second);
+			free_ids.push(it->first);
+			it = encounter_list.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+}
+
 void EntityList::AddGroup(Group *group)
 {
 	if (group == nullptr)	//this seems to be happening somehow...
@@ -695,6 +719,12 @@ void EntityList::AddBeacon(Beacon *beacon)
 {
 	beacon->SetID(GetFreeID());
 	beacon_list.insert(std::pair<uint16, Beacon *>(beacon->GetID(), beacon));
+}
+
+void EntityList::AddEncounter(Encounter *encounter)
+{
+	encounter->SetID(GetFreeID());
+	encounter_list.insert(std::pair<uint16, Encounter *>(encounter->GetID(), encounter));
 }
 
 void EntityList::AddToSpawnQueue(uint16 entityid, NewSpawn_Struct **ns)
@@ -971,6 +1001,11 @@ Entity *EntityList::GetEntityBeacon(uint16 id)
 	return beacon_list.count(id) ? beacon_list.at(id) : nullptr;
 }
 
+Entity *EntityList::GetEntityEncounter(uint16 id)
+{
+	return encounter_list.count(id) ? encounter_list.at(id) : nullptr;
+}
+
 Entity *EntityList::GetID(uint16 get_id)
 {
 	Entity *ent = 0;
@@ -985,6 +1020,8 @@ Entity *EntityList::GetID(uint16 get_id)
 	else if ((ent=entity_list.GetEntityTrap(get_id)) != 0)
 		return ent;
 	else if ((ent=entity_list.GetEntityBeacon(get_id)) != 0)
+		return ent;
+	else if ((ent = entity_list.GetEntityEncounter(get_id)) != 0)
 		return ent;
 	else
 		return 0;
@@ -3257,6 +3294,15 @@ bool EntityList::IsMobInZone(Mob *who)
 		}
 		++it;
 	}
+
+	auto enc_it = encounter_list.begin();
+	while (enc_it != encounter_list.end()) {
+		if (enc_it->second == who) {
+			return true;
+		}
+		++enc_it;
+	}
+
 	return false;
 }
 

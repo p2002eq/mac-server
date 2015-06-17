@@ -137,11 +137,6 @@ public:
 	void UnscribeSpell(int slot, bool update_client);
 	void UnscribeSpellAll();
 	void UnscribeSpellAll(bool update_client);
-	void TrainDisc(int itemid);
-	void UntrainDisc(int slot);
-	void UntrainDisc(int slot, bool update_client);
-	void UntrainDiscAll();
-	void UntrainDiscAll(bool update_client);
 	bool IsSitting();
 	void SetFeigned(bool v);
 	bool GetFeigned();
@@ -175,11 +170,13 @@ public:
 	void ForageItem(bool guarantee);
 	float CalcPriceMod(Lua_Mob other, bool reverse);
 	void ResetTrade();
-	bool UseDiscipline(int spell_id, int target_id);
+	bool UseDiscipline(int spell_id, Client* client);
 	int GetCharacterFactionLevel(int faction_id);
 	void SetZoneFlag(int zone_id);
+	void SetZoneFlag(int zone_id, uint8 key);
 	void ClearZoneFlag(int zone_id);
 	bool HasZoneFlag(int zone_id);
+	bool HasZoneFlag(int zone_id, uint8 key);
 	void SendZoneFlagInfo(Lua_Client to);
 	void SetAATitle(const char *title);
 	int GetClientVersion();

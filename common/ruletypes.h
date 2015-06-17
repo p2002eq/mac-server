@@ -279,7 +279,6 @@ RULE_INT ( Spells, SacrificeItemID, 9963)	//Item ID of the item Sacrifice will r
 RULE_BOOL ( Spells, EnableSpellGlobals, false)	// If Enabled, spells check the spell_globals table and compare character data from the quest globals before allowing that spell to scribe with scribespells
 RULE_INT ( Spells, MaxBuffSlotsNPC, 25)
 RULE_INT ( Spells, MaxSongSlotsNPC, 10)
-RULE_INT ( Spells, MaxDiscSlotsNPC, 1)
 RULE_INT ( Spells, MaxTotalSlotsNPC, 36)
 RULE_INT ( Spells, MaxTotalSlotsPET, 15)	// do not set this higher than 25 until the player profile is removed from the blob
 RULE_INT ( Spells, ReflectType, 1) //0 = disabled, 1 = single target player spells only, 2 = all player spells, 3 = all single target spells, 4 = all spells

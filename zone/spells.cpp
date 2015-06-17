@@ -158,15 +158,15 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		IsStunned() ||
 		IsFeared() ||
 		IsMezzed() ||
-		(IsSilenced() && !IsDiscipline(spell_id)) ||
-		(IsAmnesiad() && IsDiscipline(spell_id))
+		(IsSilenced()) ||
+		(IsAmnesiad())
 	)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: not able to cast now. Valid? %d, casting %d, waiting? %d, spellend? %d, stunned? %d, feared? %d, mezed? %d, silenced? %d, amnesiad? %d",
 			IsValidSpell(spell_id), casting_spell_id, delaytimer, spellend_timer.Enabled(), IsStunned(), IsFeared(), IsMezzed(), IsSilenced(), IsAmnesiad() );
-		if(IsSilenced() && !IsDiscipline(spell_id))
+		if(IsSilenced())
 			Message_StringID(CC_Red, SILENCED_STRING);
-		if(IsAmnesiad() && IsDiscipline(spell_id))
+		if(IsAmnesiad())
 			Message_StringID(CC_Red, MELEE_SILENCE);
 		if(IsClient())
 			CastToClient()->SendSpellBarEnable(spell_id);
@@ -475,7 +475,15 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	safe_delete(outapp);
 	outapp = nullptr;
 
-	if (!DoCastingChecks()) {
+	if (IsClient() && slot == USE_ITEM_SPELL_SLOT && item_slot != 0xFFFFFFFF) 
+	{
+		auto item = CastToClient()->GetInv().GetItem(item_slot);
+		if (item && item->GetItem())
+			 Message_StringID(MT_Spells, BEGINS_TO_GLOW, item->GetItem()->Name);
+	}
+
+	if (!DoCastingChecks())
+	{
 		InterruptSpell();
 		return false;
 	}
@@ -1083,6 +1091,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		(slot != USE_ITEM_SPELL_SLOT || 
 		(slot == USE_ITEM_SPELL_SLOT && !CastToClient()->ClickyOverride()))) 
 	{
+		Log.Out(Logs::Detail, Logs::Spells, "Spell %d: requires a component.", spell_id);
+
 		int reg_focus = CastToClient()->GetFocusEffect(focusReagentCost,spell_id);
 		if(zone->random.Roll(reg_focus)) 
 		{
@@ -1097,7 +1107,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 				const Item_Struct* TempItem = ins->GetItem();
 				if (TempItem && IsRegeantFocus(TempItem->Focus.Effect)) 
 				{
-					Message_StringID(MT_Spells, BEGINS_TO_GLOW, TempItem->Name);
+					Message_StringID(MT_Spells, BEGINS_TO_SHINE, TempItem->Name);
 					break;
 				}
 			}
@@ -1109,13 +1119,15 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 			
 			if (bard_song_mode)
 			{
-				if (!HasSongInstrument(spell_id)){
+				if (!HasSongInstrument(spell_id))
+				{
 					InterruptSpell();
 					return;
 				}
 			}
 			else{
-				if (!HasSpellReagent(spell_id)){
+				if (!HasSpellReagent(spell_id))
+				{
 					InterruptSpell();
 					return;
 				}
@@ -1308,7 +1320,8 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, component, component_count, missingreags)){
+		if (!HasReagent(spell_id, component, component_count, missingreags))
+		{
 			missingreags = true;
 		}
 	}
@@ -1322,7 +1335,9 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 		bool petfocuscomponent = false;
 		int8 petfocusItemsize = sizeof(petfocusItems) / sizeof(petfocusItems[0]);
 		for (int i = 0; i < petfocusItemsize; i++) {
-			if (focuscomponent == petfocusItems[i]) {
+			if (focuscomponent == petfocusItems[i]) 
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus, additonal checks will be skipped.", spell_id);
 				petfocuscomponent = true;
 				break;
 			}
@@ -1332,12 +1347,14 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags)){
+		if (!HasReagent(spell_id, focuscomponent, 1, missingreags))
+		{
 			missingreags = true;
 		}
 	}
 
-	if (missingreags) {
+	if (missingreags) 
+	{
 		if (c->GetGM())
 			c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing required components.");
 		else {
@@ -1464,10 +1481,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && IsEngaged()) ||
 				(IsClient() && CastToClient()->GetAggroCount())){
-					if (IsDiscipline(spell_id))
-						Message_StringID(CC_User_SpellFailure,NO_ABILITY_IN_COMBAT);
-					else
-						Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
+					Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
 
 					return false;
 			}
@@ -1487,11 +1501,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && !IsEngaged()) ||
 				(IsClient() && !CastToClient()->GetAggroCount())){
-					if (IsDiscipline(spell_id))
-						Message_StringID(CC_User_SpellFailure,NO_ABILITY_OUT_OF_COMBAT);
-					else
-						Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
-
+					Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
 					return false;
 			}
 		}
@@ -2284,7 +2294,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			CastToClient()->GetPTimers().Start(casting_spell_timer, casting_spell_timer_duration);
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: Setting custom reuse timer %d to %d", spell_id, casting_spell_timer, casting_spell_timer_duration);
 		}
-		else if(spells[spell_id].recast_time > 1000 && !spells[spell_id].IsDisciplineBuff) {
+		else if(spells[spell_id].recast_time > 1000) {
 			int recast = spells[spell_id].recast_time/1000;
 			if (spell_id == SPELL_LAY_ON_HANDS)	//lay on hands
 			{
@@ -3077,10 +3087,7 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	int buff_count = GetMaxTotalSlots();
 	uint32 start_slot = 0;
 	uint32 end_slot = 0;
-	if (IsDisciplineBuff(spell_id)) {
-		start_slot = GetMaxBuffSlots() + GetMaxSongSlots();
-		end_slot = start_slot + GetCurrentDiscSlots();
-	} else if(spells[spell_id].short_buff_box) {
+	if(spells[spell_id].short_buff_box) {
 		start_slot = GetMaxBuffSlots();
 		end_slot = start_slot + GetCurrentSongSlots();
 	} else {
@@ -4673,7 +4680,7 @@ int16 Mob::CalcResistChanceBonus()
 	int resistchance = spellbonuses.ResistSpellChance + itembonuses.ResistSpellChance;
 
 	if(IsClient())
-		resistchance += aabonuses.ResistSpellChance;
+		resistchance += aabonuses.ResistSpellChance + discbonuses.ResistSpellChance;
 
 	return resistchance;
 }
@@ -4683,7 +4690,7 @@ int16 Mob::CalcFearResistChance()
 	int resistchance = spellbonuses.ResistFearChance + itembonuses.ResistFearChance;
 	if(this->IsClient()) {
 		resistchance += aabonuses.ResistFearChance;
-		if(aabonuses.Fearless == true)
+		if(aabonuses.Fearless == true || discbonuses.Fearless == true)
 			resistchance = 100;
 	}
 	if(spellbonuses.Fearless == true || itembonuses.Fearless == true)
@@ -5005,32 +5012,6 @@ void Client::UnscribeSpellAll(bool update_client)
 	{
 		if(m_pp.spell_book[i] != 0xFFFFFFFF)
 			UnscribeSpell(i, update_client);
-	}
-}
-
-void Client::UntrainDisc(int slot, bool update_client)
-{
-	if(slot >= MAX_PP_DISCIPLINES || slot < 0)
-		return;
-
-	Log.Out(Logs::Detail, Logs::Spells, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
-	m_pp.disciplines.values[slot] = 0;
-	database.DeleteCharacterDisc(this->CharacterID(), slot);
-
-	if(update_client)
-	{
-		SendDisciplineUpdate();
-	}
-}
-
-void Client::UntrainDiscAll(bool update_client)
-{
-	int i;
-
-	for(i = 0; i < MAX_PP_DISCIPLINES; i++)
-	{
-		if(m_pp.disciplines.values[i] != 0)
-			UntrainDisc(i, update_client);
 	}
 }
 
