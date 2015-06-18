@@ -333,6 +333,9 @@ Client::~Client() {
 	eqs->Close();
 	eqs->ReleaseFromUse();
 
+	// remove us from any feign memory
+	entity_list.ClearZoneFeignAggro(this);
+
 	UninitializeBuffSlots();
 }
 
