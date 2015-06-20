@@ -3943,12 +3943,15 @@ bool Mob::FindBuff(uint16 spellid)
 }
 
 // removes all buffs
-void Mob::BuffFadeAll(bool death)
+void Mob::BuffFadeAll(bool death, bool skiprez)
 {
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if(buffs[j].spellid != SPELL_UNKNOWN)
-			BuffFadeBySlot(j, false, death);
+		{
+			if(!skiprez || (skiprez && !IsResurrectionEffects(buffs[j].spellid)))
+				BuffFadeBySlot(j, false, death);
+		}
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
 	CalcBonuses();

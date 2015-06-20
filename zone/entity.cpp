@@ -4272,7 +4272,7 @@ void EntityList::GetBoatInfo(Client* client)
 		if (it->second->IsNPC() && (it->second->GetBaseRace() == SHIP || it->second->GetBaseRace() == LAUNCH))
 		{
 			uint8 passengers = GetClientCountByBoatID(it->second->GetNPCTypeID());
-			client->Message(CC_Default, " Boat: %s (%d) found at %0.2f,%0.2f,%0.2f. Waypoint: %d Passengers: %d", it->second->GetName(), it->second->GetNPCTypeID(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCurWp(), passengers);
+			client->Message(CC_Default, " Boat: %s (%d) found at %0.2f,%0.2f,%0.2f. Waypoint: %d Passengers: %d", it->second->GetName(), it->second->GetNPCTypeID(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCurWp()+1, passengers);
 			++count;
 		}
 		++it;

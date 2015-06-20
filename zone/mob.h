@@ -256,7 +256,7 @@ public:
 	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0, int instrumentmod = 10);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
-	void BuffFadeAll(bool death = false);
+	void BuffFadeAll(bool death = false, bool skiprez = false);
 	void BuffFadeNonPersistDeath();
 	void BuffFadeDetrimental();
 	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool death = false);
