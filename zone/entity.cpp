@@ -4263,3 +4263,32 @@ void EntityList::StopMobAI()
 		mob.second->AI_ShutDown();
 	}
 }
+
+void EntityList::GetBoatInfo(Client* client)
+{
+	uint8 count = 0;
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		if (it->second->IsNPC() && (it->second->GetBaseRace() == SHIP || it->second->GetBaseRace() == LAUNCH))
+		{
+			uint8 passengers = GetClientCountByBoatID(it->second->GetNPCTypeID());
+			client->Message(CC_Default, " Boat: %s (%d) found at %0.2f,%0.2f,%0.2f. Waypoint: %d Passengers: %d", it->second->GetName(), it->second->GetNPCTypeID(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCurWp(), passengers);
+			++count;
+		}
+		++it;
+	}
+
+	client->Message(CC_Default, "%d boats found.", count);
+}
+
+uint8 EntityList::GetClientCountByBoatID(uint32 boatid)
+{
+	uint8 count = 0;
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		if (it->second->GetBoatNPCID() == boatid)
+			++count;
+		++it;
+	}
+	return count;
+}

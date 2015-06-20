@@ -56,10 +56,16 @@ void NPC::AI_SetRoambox(float iDist, float iMaxX, float iMinX, float iMaxY, floa
 
 void NPC::DisplayWaypointInfo(Client *c) {
 
-	c->Message(0, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
+	if(GetGrid() == 0)
+	{
+		c->Message(CC_Default, "Mob in spawn group %d is not on a grid.", GetSp2());
+		return;
+	}
+
+	c->Message(CC_Default, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
 		GetGrid(),
 		GetSp2(),
-		GetCurWp(),
+		GetCurWp()+1,
 		GetMaxWp() );
 
 
@@ -67,8 +73,8 @@ void NPC::DisplayWaypointInfo(Client *c) {
 	cur = Waypoints.begin();
 	end = Waypoints.end();
 	for(; cur != end; ++cur) {
-		c->Message(0,"Waypoint %d: (%.2f,%.2f,%.2f,%.2f) pause %d",
-				cur->index,
+		c->Message(CC_Default,"Waypoint %d: (%.2f,%.2f,%.2f,%.2f) pause %d",
+				cur->index+1,
 				cur->x,
 				cur->y,
 				cur->z,

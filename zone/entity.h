@@ -394,6 +394,9 @@ public:
 	uint16 GetFreeID();
 	void SendLFG(Client* client, bool lfg);
 
+	void GetBoatInfo(Client* client);
+	uint8 GetClientCountByBoatID(uint32 boatid);
+
 protected:
 	friend class Zone;
 	void	Depop(bool StartSpawnTimer = false);
