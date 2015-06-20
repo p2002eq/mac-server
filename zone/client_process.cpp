@@ -1625,7 +1625,6 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			case SkillFletching:
 			case SkillJewelryMaking:
 			case SkillPottery:
-			case SkillFishing:
 				if(skilllevel >= RuleI(Skills, MaxTrainTradeskills)) {
 					Message_StringID(CC_Red, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
 					SetSkill(skill, skilllevel);
