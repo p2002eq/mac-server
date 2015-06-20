@@ -1478,7 +1478,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		if (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc))
+		if (!zone->IsBoatZone() && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)))
 		{
 			m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
 			if(size > 0)

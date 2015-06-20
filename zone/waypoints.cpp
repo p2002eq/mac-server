@@ -56,25 +56,43 @@ void NPC::AI_SetRoambox(float iDist, float iMaxX, float iMinX, float iMaxY, floa
 
 void NPC::DisplayWaypointInfo(Client *c) {
 
-	if(GetGrid() == 0)
+	SpawnGroup* sg = zone->spawn_group_list.GetSpawnGroup(GetSp2());
+
+	//Mob is on a roambox.
+	if(sg && GetGrid() == 0 && sg->roamdist != 0)
 	{
-		c->Message(CC_Default, "Mob in spawn group %d is not on a grid.", GetSp2());
+		c->Message(CC_Default, "Mob in spawn group %d is on a roambox.", GetSp2());
+		c->Message(CC_Default, "MinX: %0.2f MaxX: %0.2f MinY: %0.2f MaxY: %0.2f", sg->roambox[1], sg->roambox[0], sg->roambox[3], sg->roambox[2]);
+		c->Message(CC_Default, "Distance: %0.2f MinDelay: %d Delay: %d", sg->roamdist, sg->min_delay, sg->delay);
 		return;
 	}
+	//Mob either doesn't have a grid, or has a quest assigned grid. 
+	else if(GetGrid() == 0)
+	{
+		c->Message(CC_Default, "Mob in spawn group %d is not on a permanent grid.", GetSp2());
+	}
+	//Mob is on a normal grid.
+	else
+	{
+		int MaxWp = GetMaxWp();
+		//If the Mob hasn't moved yet, this will be 0. Set to 1 so it looks correct.
+		if(MaxWp == 0)
+			MaxWp = 1;
 
-	c->Message(CC_Default, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
-		GetGrid(),
-		GetSp2(),
-		GetCurWp()+1,
-		GetMaxWp() );
+		c->Message(CC_Default, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
+			GetGrid(),
+			GetSp2(),
+			GetCurWp()+1, //We start from 0 internally, but in the DB and lua functions we start from 1.
+			MaxWp );
+	}
 
-
+	//Waypoints won't load into memory until the Mob moves.
 	std::vector<wplist>::iterator cur, end;
 	cur = Waypoints.begin();
 	end = Waypoints.end();
 	for(; cur != end; ++cur) {
 		c->Message(CC_Default,"Waypoint %d: (%.2f,%.2f,%.2f,%.2f) pause %d",
-				cur->index+1,
+				cur->index+1, //We start from 0 internally, but in the DB and lua functions we start from 1.
 				cur->x,
 				cur->y,
 				cur->z,
