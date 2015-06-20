@@ -848,7 +848,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->expAA = atoi(row[r]); r++;											 // "aa_exp,                    "
 		pp->aapoints = atoi(row[r]); r++;										 // "aa_points,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
-		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
+		strncpy(pp->boat, row[r], 32); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
@@ -860,7 +860,10 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 bool ZoneDatabase::LoadCharacterFactionValues(uint32 character_id, faction_map & val_list) {
 	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `faction_values` WHERE `char_id` = %i", character_id);
 	auto results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) { val_list[atoi(row[0])] = atoi(row[1]); }
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{ 
+		val_list[atoi(row[0])] = atoi(row[1]); 
+	}
 	return true;
 }
 

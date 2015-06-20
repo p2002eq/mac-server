@@ -202,7 +202,7 @@ namespace Convert {
 		/*4796*/	uint32							skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 		/*5396*/	uint32							ability_down;		// Guessing
 		/*5408*/	uint32							autosplit;			//not used right now
-		/*5418*/	uint16							boatid;				// We use this ID internally for boats.
+		/*5418*/	uint32							boatid;				// We use this ID internally for boats.
 		/*5420*/	uint32							zone_change_count;	// Number of times user has zoned in their career (guessing)
 		/*5452*/	uint32							expansions;			// expansion setting, bit field of expansions avaliable
 		/*5456*/	int32							toxicity;			//from drinking potions, seems to increase by 3 each time you drink
@@ -213,7 +213,7 @@ namespace Convert {
 		/*5506*/	uint16							zoneInstance;		// Instance ID
 		/*5508*/	Convert::SpellBuff_Struct		buffs[BUFF_COUNT];	// Buffs currently on the player
 		/*6008*/	char							groupMembers[6][64];//
-					char							boat[20];			// The client uses this string for boats.
+					char							boat[32];			// The client uses this string for boats.
 		/*7048*/	uint32							entityid;
 		/*7664*/	uint32							recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 		/*7904*/	int16							endurance;

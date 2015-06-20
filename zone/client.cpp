@@ -4721,7 +4721,7 @@ void Client::SetBoatID(uint32 boatid)
 
 void Client::SetBoatName(const char* boatname)
 {
-	strncpy(m_pp.boat, boatname, 16);
+	strncpy(m_pp.boat, boatname, 32);
 }
 
 void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold, uint32 platinum, uint32 itemid, uint32 exp, bool faction) {

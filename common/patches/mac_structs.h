@@ -1166,8 +1166,8 @@ struct PlayerProfile_Struct
 	/*3244*/	float	width;
 	/*3248*/	float   length;
 	/*3252*/	float   view_height;
-	/*3256*/    char    boat[16];
-	/*3272*/    uint8   unknown[76];
+	/*3256*/    char    boat[32];
+	/*3280*/    uint8   unknown[60];
 	/*3348*/	uint8	autosplit;
 	/*3349*/	uint8	unknown3449[43];
 	/*3392*/	uint8	expansions;			//Effects features such as /disc, AA, raid

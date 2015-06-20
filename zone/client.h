@@ -843,7 +843,7 @@ public:
 	Mob *GetBindSightTarget() { return bind_sight_target; }
 	void SetBindSightTarget(Mob *n) { bind_sight_target = n; }
 	uint16 GetBoatID() const { return BoatID; }
-	uint16 GetBoatNPCID() { return m_pp.boatid; }
+	uint32 GetBoatNPCID() { return m_pp.boatid; }
 	char* GetBoatName() { return m_pp.boat; }
 	void SetBoatID(uint32 boatid);
 	void SetBoatName(const char* boatname);
