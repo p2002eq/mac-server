@@ -1299,14 +1299,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);
-
-			//group->NotifyMainTank(this, 1);
-			//group->NotifyMainAssist(this, 1);
-			//group->NotifyPuller(this, 1);
-
-			// If we are the leader, force an update of our group AAs to other members in the zone, in case
-			// we purchased a new one while out-of-zone.
-
 		}
 	}
 
@@ -1332,6 +1324,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
+	m_pp.fatigue = GetFatiguePercent();
 
 	uint32 max_slots = GetMaxBuffSlots();
 	for (int i = 0; i < max_slots; i++) 
@@ -2975,16 +2968,20 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	Log.Out(Logs::Detail, Logs::Debug, "Hit Consume! How consumed: %i. Slot: %i. Type: %i", pcs->auto_consumed, pcs->slot, pcs->type);
 	int value = RuleI(Character, ConsumptionValue);
 
+	m_pp.fatigue = GetFatiguePercent();
+
+	// We don't want to change the pp for hunger or thirst, since we want to be able to go past the client's maximium value internally.
 	if (pcs->type == 0x01)
 	{
 		if (m_pp.hunger_level > value)
 		{
+			m_pp.hunger_level = value;
 			EQApplicationPacket *outapp;
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-			sta->fatigue=GetFatiguePercent();
+			sta->fatigue = m_pp.fatigue;
 
 			QueuePacket(outapp, false);
 			safe_delete(outapp);
@@ -3000,7 +2997,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 			sta->water = value;
-			sta->fatigue=GetFatiguePercent();
+			sta->fatigue = m_pp.fatigue;
 
 			QueuePacket(outapp, false);
 			safe_delete(outapp);
@@ -3026,15 +3023,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		return;
 	}
 
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
-	QueuePacket(outapp, false);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 	return;
 }
 

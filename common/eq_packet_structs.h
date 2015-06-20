@@ -707,6 +707,7 @@ struct PlayerProfile_Struct
 			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
+			uint8				fatigue;
 /*19568*/
 };
 

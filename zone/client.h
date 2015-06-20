@@ -910,7 +910,6 @@ public:
 	int mod_consume(Item_Struct *item, ItemUseTypes type, int change);
 	int mod_food_value(const Item_Struct *item, int change);
 	int mod_drink_value(const Item_Struct *item, int change);
-	void Starve();
 	void QuestReward(Mob* target, uint32 copper = 0, uint32 silver = 0, uint32 gold = 0, uint32 platinum = 0, uint32 itemid = 0, uint32 exp = 0, bool faction = false);
 	void RewindCommand();
 

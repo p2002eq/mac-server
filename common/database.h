@@ -223,6 +223,7 @@ namespace Convert {
 		/*12804*/	uint32							aapoints;			//avaliable, unspent
 		/*18630*/	Convert::SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 		/*19240*/	uint32							timeentitledonaccount;
+					uint8							fatigue;
 		/*19568*/
 	};
 	

@@ -1803,7 +1803,8 @@ void Client::DoStaminaUpdate() {
 	bool aamod = false;
 	//This is our stomach size. It probably shouldn't be changed from 6000. 
 	int value = RuleI(Character,ConsumptionValue);
-	if(zone->GetZoneID() != bazaar && !GetGM()) {
+	if(zone->GetZoneID() != bazaar && !GetGM()) 
+	{
 		//Change this rule to raise or lower rate of food consumption.
 		float loss = RuleR(Character, FoodLossPerUpdate);
 
@@ -1875,16 +1876,18 @@ void Client::DoStaminaUpdate() {
 
 		Log.Out(Logs::Detail, Logs::None, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
 
+		m_pp.fatigue = GetFatiguePercent();
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-		sta->fatigue=GetFatiguePercent();
+		sta->fatigue = m_pp.fatigue;
 
 	}
-	else {
+	else 
+	{
 		// No auto food/drink consumption in the Bazaar or for GMs
 		sta->food = value;
 		sta->water = value;
-		sta->fatigue=GetFatiguePercent();
+		sta->fatigue = m_pp.fatigue;
 	}
 	FastQueuePacket(&outapp);
 }
