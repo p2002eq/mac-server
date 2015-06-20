@@ -2901,7 +2901,7 @@ void NPC::AISpellsList(Client *c)
 		return;
 
 	for (std::vector<AISpells_Struct>::iterator it = AIspells.begin(); it != AIspells.end(); ++it)
-		c->Message(0, "%s (%d): Type %d, Priority %d",
+		c->Message(CC_Default, "%s (%d): Type %d, Priority %d",
 				spells[it->spellid].name, it->spellid, it->type, it->priority);
 
 	return;

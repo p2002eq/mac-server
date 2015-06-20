@@ -1297,7 +1297,7 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 	if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
 		Log.Out(Logs::Detail, Logs::Spells, "Song %d: Canceled. Missing required instrument %d", spell_id, InstComponent);
 		if (c->GetGM())
-			c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
+			c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing a required instrument.");
 		else {
 			return false;
 		}

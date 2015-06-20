@@ -507,7 +507,7 @@ void HateList::PrintToClient(Client *c)
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
-		c->Message(0, "- name: %s, damage: %d, hate: %d",
+		c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
 			(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
 			e->damage, e->hate);
 
