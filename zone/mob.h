@@ -386,17 +386,17 @@ public:
 	inline virtual int32 GetMaxDR() const { return 255; }
 	inline virtual int32 GetMaxCR() const { return 255; }
 	inline virtual int32 GetMaxFR() const { return 255; }
-	inline int32 GetHP() const { return cur_hp; }
-	inline int32 GetMaxHP() const { return max_hp; }
-	virtual int32 CalcMaxHP();
-	inline int32 GetMaxMana() const { return max_mana; }
-	inline int32 GetMana() const { return cur_mana; }
+	inline int16 GetHP() const { return cur_hp; }
+	inline int16 GetMaxHP() const { return max_hp; }
+	virtual int16 CalcMaxHP();
+	inline int16 GetMaxMana() const { return max_mana; }
+	inline int16 GetMana() const { return cur_mana; }
 	int32 GetItemHPBonuses();
 	int32 GetSpellHPBonuses();
-	virtual const int32& SetMana(int32 amount);
+	virtual const int16& SetMana(int16 amount);
 	inline float GetManaRatio() const { return max_mana == 0 ? 100 :
 		((static_cast<float>(cur_mana) / max_mana) * 100); }
-	virtual int32 CalcMaxMana();
+	virtual int16 CalcMaxMana();
 	uint32 GetNPCTypeID() const { return npctype_id; }
 	inline const glm::vec4& GetPosition() const { return m_Position; }
 	inline const float GetX() const { return m_Position.x; }
@@ -1013,11 +1013,11 @@ protected:
 	int targeted;
 	bool findable;
 	bool trackable;
-	int32 cur_hp;
-	int32 max_hp;
-	int32 base_hp;
-	int32 cur_mana;
-	int32 max_mana;
+	int16 cur_hp;
+	int16 max_hp;
+	int16 base_hp;
+	int16 cur_mana;
+	int16 max_mana;
 	int32 hp_regen;
 	int32 mana_regen;
 	int32 oocregen;

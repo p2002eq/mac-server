@@ -2024,7 +2024,7 @@ void NPC::SetSwarmTarget(int target_id)
 	return;
 }
 
-int32 NPC::CalcMaxMana() {
+int16 NPC::CalcMaxMana() {
 	if(npc_mana == 0) {
 		switch (GetCasterClass()) {
 			case 'I':

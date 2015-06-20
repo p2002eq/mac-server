@@ -229,7 +229,7 @@ int32 Client::CalcHPRegenCap()
 	return (cap * RuleI(Character, HPRegenMultiplier) / 100);
 }
 
-int32 Client::CalcMaxHP() {
+int16 Client::CalcMaxHP() {
 	float nd = 10000;
 	max_hp = (CalcBaseHP() + itembonuses.HP);
 
@@ -360,10 +360,10 @@ uint32 Mob::GetClassLevelFactor(){
 	return multiplier;
 }
 
-int32 Client::CalcBaseHP()
+int16 Client::CalcBaseHP()
 {
-	uint32 Post255;
-	uint32 lm=GetClassLevelFactor();
+	int16 Post255;
+	int16 lm=GetClassLevelFactor();
 	if((GetSTA()-255)/2 > 0)
 		Post255 = (GetSTA()-255)/2;
 	else
@@ -898,7 +898,7 @@ int32 Client::GetACAvoid() {
 	return(avoidance*1000/847);
 }
 
-int32 Client::CalcMaxMana()
+int16 Client::CalcMaxMana()
 {
 	switch(GetCasterClass())
 	{
@@ -936,11 +936,11 @@ int32 Client::CalcMaxMana()
 	return max_mana;
 }
 
-int32 Client::CalcBaseMana()
+int16 Client::CalcBaseMana()
 {
 	int WisInt = 0;
 	int MindLesserFactor, MindFactor;
-	int32 max_m = 0;
+	int16 max_m = 0;
 	int wisint_mana = 0;
 	int base_mana = 0;
 	int ConvertedWisInt = 0;
@@ -1848,9 +1848,9 @@ void Client::CalcMaxEndurance()
 	}
 }
 
-int32 Client::CalcBaseEndurance()
+int16 Client::CalcBaseEndurance()
 {
-	int32 base_end = 0;
+	int16 base_end = 0;
 
 		int Stats = GetSTR()+GetSTA()+GetDEX()+GetAGI();
 		int LevelBase = GetLevel() * 15;

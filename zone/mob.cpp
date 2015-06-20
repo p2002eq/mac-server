@@ -862,7 +862,7 @@ int Mob::_GetFearSpeed() const {
 //	return speed_mod;
 //}
 
-int32 Mob::CalcMaxMana() {
+int16 Mob::CalcMaxMana() {
 	switch (GetCasterClass()) {
 		case 'I':
 			max_mana = (((GetINT()/2)+1) * GetLevel()) + spellbonuses.Mana + itembonuses.Mana;
@@ -882,7 +882,7 @@ int32 Mob::CalcMaxMana() {
 	return max_mana;
 }
 
-int32 Mob::CalcMaxHP() {
+int16 Mob::CalcMaxHP() {
 	max_hp = (base_hp + itembonuses.HP + spellbonuses.HP);
 	max_hp += max_hp * ((aabonuses.MaxHPChange + spellbonuses.MaxHPChange + itembonuses.MaxHPChange) / 10000.0f);
 	return max_hp;
@@ -1831,10 +1831,10 @@ void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool i
 	safe_delete(outapp);
 }
 
-const int32& Mob::SetMana(int32 amount)
+const int16& Mob::SetMana(int16 amount)
 {
 	CalcMaxMana();
-	int32 mmana = GetMaxMana();
+	int16 mmana = GetMaxMana();
 	cur_mana = amount < 0 ? 0 : (amount > mmana ? mmana : amount);
 /*
 	if(IsClient())

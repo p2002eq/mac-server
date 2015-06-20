@@ -194,12 +194,12 @@ struct Buffs_Struct {
 
 struct StatBonuses {
 	int32	AC;
-	int32	HP;
+	int16	HP;
 	int32	HPRegen;
-	int32	MaxHP;
+	int16	MaxHP;
 	int32	ManaRegen;
 	int32	EnduranceRegen;
-	int32	Mana;
+	int16	Mana;
 	int32	Endurance;
 	int32	ATK;
 	//would it be worth it to create a Stat_Struct?
@@ -316,7 +316,7 @@ struct StatBonuses {
 	int32	MeleeLifetap;						//i
 	int32	Vampirism;							//i
 	int32	HealRate;							// Spell effect that influences effectiveness of heals
-	int32	MaxHPChange;						// Spell Effect
+	int16	MaxHPChange;						// Spell Effect
 	int16	SkillDmgTaken[HIGHEST_SKILL+2];		// All Skills + -1
 	int32	HealAmt;							// Item Effect
 	int32	SpellDmg;							// Item Effect

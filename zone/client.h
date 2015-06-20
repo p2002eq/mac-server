@@ -325,9 +325,9 @@ public:
 	inline uint32 GetBindZoneID(uint32 index = 0) const { return m_pp.binds[index].zoneId; }
 	inline uint32 GetBindInstanceID(uint32 index = 0) const { return m_pp.binds[index].instance_id; }
 	inline uint32 GetZoneChangeCount() const { return m_pp.zone_change_count; }
-	int32 CalcMaxMana();
-	int32 CalcBaseMana();
-	const int32& SetMana(int32 amount);
+	int16 CalcMaxMana();
+	int16 CalcBaseMana();
+	const int16& SetMana(int16 amount);
 	int32 CalcManaRegenCap();
 
 	void ServerFilter(SetServerFilter_Struct* filter);
@@ -462,15 +462,15 @@ public:
 
 	/*Endurance and such*/
 	void CalcMaxEndurance(); //This calculates the maximum endurance we can have
-	int32 CalcBaseEndurance(); //Calculates Base End
+	int16 CalcBaseEndurance(); //Calculates Base End
 	int32 CalcEnduranceRegen(); //Calculates endurance regen used in DoEnduranceRegen()
-	int32 GetEndurance() const {return cur_end;} //This gets our current endurance
-	int32 GetMaxEndurance() const {return max_end;} //This gets our endurance from the last CalcMaxEndurance() call
+	int16 GetEndurance() const {return cur_end;} //This gets our current endurance
+	int16 GetMaxEndurance() const {return max_end;} //This gets our endurance from the last CalcMaxEndurance() call
 	int32 CalcEnduranceRegenCap();
 	int32 CalcHPRegenCap();
 	inline uint8 GetEndurancePercent() { return (uint8)((float)cur_end / (float)max_end * 100.0f); }
 	inline uint8 GetFatiguePercent() { return (100 - GetEndurancePercent()); }
-	void SetEndurance(int32 newEnd);	//This sets the current endurance to the new value
+	void SetEndurance(int16 newEnd);	//This sets the current endurance to the new value
 	void DoEnduranceRegen();	//This Regenerates endurance
 	void DoEnduranceUpkeep();	//does the endurance upkeep
 
@@ -1006,8 +1006,8 @@ private:
 	int32 CalcPR();
 	int32 CalcCR();
 	int32 CalcCorrup();
-	int32 CalcMaxHP();
-	int32 CalcBaseHP();
+	int16 CalcMaxHP();
+	int16 CalcBaseHP();
 	int32 CalcHPRegen();
 	int32 CalcManaRegen();
 	int32 CalcBaseManaRegen();
@@ -1065,8 +1065,8 @@ private:
 	int Haste; //precalced value
 	uint32				versionbit;
 
-	int32 max_end;
-	int32 cur_end;
+	int16 max_end;
+	int16 cur_end;
 
 	PlayerProfile_Struct		m_pp;
 	ExtendedProfile_Struct		m_epp;

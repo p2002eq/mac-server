@@ -1103,8 +1103,8 @@ struct PlayerProfile_Struct
 	/*0149*/	char	levelchar[3];		// ***Placeholder
 	/*0152*/	uint32	exp;				// Current Experience
 	/*0156*/	uint16	points;				// Players Points
-	/*0158*/	uint16	mana;				// Player Mana
-	/*0160*/	uint16	cur_hp;				// Player Health
+	/*0158*/	int16	mana;				// Player Mana
+	/*0160*/	int16	cur_hp;				// Player Health
 	/*0162*/	uint16	status;				
 	/*0164*/	uint16	STR;				// Player Strength
 	/*0166*/	uint16	STA;				// Player Stamina
