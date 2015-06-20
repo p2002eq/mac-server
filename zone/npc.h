@@ -437,7 +437,7 @@ protected:
 	int32	accuracy_rating;
 	int32	avoidance_rating;
 	int16	attack_count;
-	uint32	npc_mana;
+	int16	npc_mana;
 	float	spellscale;
 	float	healscale;
 	int32 SpellFocusDMG;
