@@ -1128,7 +1128,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if(m_pp.boatid > 0)
 		{
 			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
-			if(!boat)
+			if(!boat || !boat->IsBoat())
 			{
 				auto safePoint = zone->GetSafePoint();
 				m_pp.boatid = 0;
@@ -1478,7 +1478,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		if (!zone->IsBoatZone() && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)))
+		if (m_pp.boatid == 0 && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)))
 		{
 			m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
 			if(size > 0)
@@ -1945,7 +1945,7 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 
 	Mob* boat = entity_list.GetMob(boatname);
 
-	if (!boat || (boat->GetRace() != CONTROLLED_BOAT && boat->GetRace() != SHIP && boat->GetRace() != LAUNCH))
+	if (!boat || !boat->IsBoat())
 		return;
 
 	if (boat)
@@ -2465,7 +2465,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		else if (ppu->spawn_id == BoatID) 
 		{
 			Mob* boat = entity_list.GetMob(BoatID);
-			if (boat == 0) 
+			if (!boat || !boat->IsBoat()) 
 			{	// if the boat ID is invalid, reset the id and abort
 				BoatID = 0;
 				return;

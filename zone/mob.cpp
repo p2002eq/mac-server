@@ -380,8 +380,8 @@ Mob::Mob(const char* in_name,
 	hasTempPet = false;
 	count_TempPet = 0;
 
-	//Boats always "run"
-	if(race == SHIP && RuleB(NPC, BoatsRunByDefault))
+	//Boats always "run." Ignore launches and player controlled ships.
+	if(GetBaseRace() == SHIP && RuleB(NPC, BoatsRunByDefault))
 	{
 		m_is_running = true;
 	}
@@ -4407,8 +4407,9 @@ void Mob::SpreadVirus(uint16 spell_id, uint16 casterID)
 	}
 }
 
-bool Mob::IsBoat() const {
-	return (race == 72 || race == 73 || race == 114 || race == 404 || race == 550 || race == 551 || race == 552);
+bool Mob::IsBoat() const 
+{
+	return (GetBaseRace() == SHIP || GetBaseRace() == LAUNCH || GetBaseRace() == CONTROLLED_BOAT);
 }
 
 void Mob::SetBodyType(bodyType new_body, bool overwrite_orig) {

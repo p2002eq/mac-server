@@ -385,6 +385,8 @@ public:
 	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
 	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }
 
+	bool IsBoat();
+
 protected:
 
 	const NPCType*	NPCTypedata;

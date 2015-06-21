@@ -4269,6 +4269,7 @@ void EntityList::GetBoatInfo(Client* client)
 	uint8 count = 0;
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
+		// We don't want to include player controlled boats.
 		if (it->second->IsNPC() && (it->second->GetBaseRace() == SHIP || it->second->GetBaseRace() == LAUNCH))
 		{
 			uint8 passengers = GetClientCountByBoatID(it->second->GetNPCTypeID());

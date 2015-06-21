@@ -2723,3 +2723,7 @@ float NPC::ApplyPushVector(bool noglance)
 
 	return pushedDist;
 }
+bool NPC::IsBoat()
+{
+	return (GetBaseRace() == SHIP || GetBaseRace() == LAUNCH || GetBaseRace() == CONTROLLED_BOAT);
+}
