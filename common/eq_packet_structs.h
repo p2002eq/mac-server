@@ -649,8 +649,8 @@ struct PlayerProfile_Struct
 /*2448*/	uint32				guildid2;			//
 /*2452*/	uint32				exp;				// Current Experience
 /*2460*/	uint32				points;				// Unspent Practice points
-/*2464*/	int16				mana;				// current mana
-/*2468*/	int16				cur_hp;				// current hp
+/*2464*/	uint32				mana;				// current mana
+/*2468*/	uint32				cur_hp;				// current hp
 /*2472*/	uint32				famished;
 /*2476*/	uint32				STR;				// Strength
 /*2480*/	uint32				STA;				// Stamina
@@ -697,7 +697,7 @@ struct PlayerProfile_Struct
 			char				boat[32];
 /*7048*/	uint32				entityid;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
-/*7904*/	int16				endurance;
+/*7904*/	uint32				endurance;
 /*8184*/	uint32				air_remaining;
 /*12796*/	uint32				aapoints_spent;
 /*12800*/	uint32				expAA;

@@ -202,7 +202,7 @@ public:
 	inline void	SetPlatinum(uint32 amt)		{ platinum = amt; }
 
 
-	virtual int16 CalcMaxMana();
+	virtual int32 CalcMaxMana();
 	void SetGrid(int32 grid_){ grid=grid_; }
 	void SetSp2(uint32 sg2){ spawn_group=sg2; }
 	void SetWaypointMax(uint16 wp_){ wp_m=wp_; }
@@ -439,7 +439,7 @@ protected:
 	int32	accuracy_rating;
 	int32	avoidance_rating;
 	int16	attack_count;
-	int16	npc_mana;
+	uint32	npc_mana;
 	float	spellscale;
 	float	healscale;
 	int32 SpellFocusDMG;

@@ -229,7 +229,7 @@ int32 Client::CalcHPRegenCap()
 	return (cap * RuleI(Character, HPRegenMultiplier) / 100);
 }
 
-int16 Client::CalcMaxHP() {
+int32 Client::CalcMaxHP() {
 	float nd = 10000;
 	max_hp = (CalcBaseHP() + itembonuses.HP);
 
@@ -244,15 +244,18 @@ int16 Client::CalcMaxHP() {
 
 	max_hp += max_hp * ((spellbonuses.MaxHPChange + itembonuses.MaxHPChange) / 10000.0f);
 
-	if (cur_hp > max_hp)
-		cur_hp = max_hp;
-
 	int hp_perc_cap = spellbonuses.HPPercCap[0];
 	if(hp_perc_cap) {
 		int curHP_cap = (max_hp * hp_perc_cap) / 100;
 		if (cur_hp > curHP_cap || (spellbonuses.HPPercCap[1] && cur_hp > spellbonuses.HPPercCap[1]))
 			cur_hp = curHP_cap;
 	}
+
+	if(max_hp > 32767)
+		max_hp = 32767;
+
+	if (cur_hp > max_hp)
+		cur_hp = max_hp;
 
 	return max_hp;
 }
@@ -360,10 +363,10 @@ uint32 Mob::GetClassLevelFactor(){
 	return multiplier;
 }
 
-int16 Client::CalcBaseHP()
+int32 Client::CalcBaseHP()
 {
-	int16 Post255;
-	int16 lm=GetClassLevelFactor();
+	uint32 Post255;
+	uint32 lm=GetClassLevelFactor();
 	if((GetSTA()-255)/2 > 0)
 		Post255 = (GetSTA()-255)/2;
 	else
@@ -898,7 +901,7 @@ int32 Client::GetACAvoid() {
 	return(avoidance*1000/847);
 }
 
-int16 Client::CalcMaxMana()
+int32 Client::CalcMaxMana()
 {
 	switch(GetCasterClass())
 	{
@@ -921,10 +924,6 @@ int16 Client::CalcMaxMana()
 		max_mana = 0;
 	}
 
-	if (cur_mana > max_mana) {
-		cur_mana = max_mana;
-	}
-
 	int mana_perc_cap = spellbonuses.ManaPercCap[0];
 	if(mana_perc_cap) {
 		int curMana_cap = (max_mana * mana_perc_cap) / 100;
@@ -932,15 +931,22 @@ int16 Client::CalcMaxMana()
 			cur_mana = curMana_cap;
 	}
 
+	if(max_mana > 32767)
+		max_mana = 32767;
+
+	if (cur_mana > max_mana) {
+		cur_mana = max_mana;
+	}
+
 	Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
 	return max_mana;
 }
 
-int16 Client::CalcBaseMana()
+int32 Client::CalcBaseMana()
 {
 	int WisInt = 0;
 	int MindLesserFactor, MindFactor;
-	int16 max_m = 0;
+	int32 max_m = 0;
 	int wisint_mana = 0;
 	int base_mana = 0;
 	int ConvertedWisInt = 0;
@@ -1836,21 +1842,24 @@ void Client::CalcMaxEndurance()
 		max_end = 0;
 	}
 
-	if (cur_end > max_end) {
-		cur_end = max_end;
-	}
-
 	int end_perc_cap = spellbonuses.EndPercCap[0];
 	if(end_perc_cap) {
 		int curEnd_cap = (max_end * end_perc_cap) / 100;
 		if (cur_end > curEnd_cap || (spellbonuses.EndPercCap[1] && cur_end > spellbonuses.EndPercCap[1]))
 			cur_end = curEnd_cap;
 	}
+
+	if(max_end > 32767)
+		max_end = 32767;
+
+	if (cur_end > max_end) {
+		cur_end = max_end;
+	}
 }
 
-int16 Client::CalcBaseEndurance()
+int32 Client::CalcBaseEndurance()
 {
-	int16 base_end = 0;
+	int32 base_end = 0;
 
 		int Stats = GetSTR()+GetSTA()+GetDEX()+GetAGI();
 		int LevelBase = GetLevel() * 15;
