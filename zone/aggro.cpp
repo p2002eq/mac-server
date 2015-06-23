@@ -1121,7 +1121,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 			case SE_MovementSpeed: {
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					AggroAmount += (2 + ((slevel * slevel) / 8));
+					AggroAmount += (2 + ((slevel * slevel) / 6));
 				break;
 			}
 			case SE_AttackSpeed:
@@ -1152,7 +1152,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 				break;
 			}
 			case SE_Root: {
-				AggroAmount += (2 + ((slevel * slevel) / 8));
+				AggroAmount += (2 + ((slevel * slevel) / 6));
 				break;
 			}
 			case SE_Fear: {
@@ -1164,8 +1164,13 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 			case SE_ArmorClass: {
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					AggroAmount -= val * 2;
+					AggroAmount += (2 + ((slevel * slevel) / 8));
 				break;
+			}
+			case SE_DiseaseCounter:
+			case SE_PoisonCounter:
+			{
+				AggroAmount += (1 + ((slevel * slevel) / 15));
 			}
 			case SE_ResistMagic:
 			case SE_ResistFire:
@@ -1174,7 +1179,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 			case SE_ResistDisease: {
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					AggroAmount -= val * 3;
+					AggroAmount -= val * 2;
 				break;
 			}
 			case SE_ResistAll: {
@@ -1252,7 +1257,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 			}
 			case SE_CancelMagic:
 			case SE_DispelDetrimental: {
-				AggroAmount += slevel;
+				AggroAmount += 1;
 				break;
 			}
 			case SE_ReduceHate:
