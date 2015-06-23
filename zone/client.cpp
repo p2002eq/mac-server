@@ -1250,7 +1250,7 @@ void Client::UpdateAdmin(bool iFromDB) {
 	UpdateWho();
 }
 
-const int16& Client::SetMana(int16 amount) {
+const int32& Client::SetMana(int32 amount) {
 	bool update = false;
 	if (amount < 0)
 		amount = 0;
@@ -2789,7 +2789,7 @@ void Client::SendRules(Client* client)
 	safe_delete_array(rules);
 }
 
-void Client::SetEndurance(int16 newEnd)
+void Client::SetEndurance(int32 newEnd)
 {
 	/*Endurance can't be less than 0 or greater than max*/
 	if(newEnd < 0)

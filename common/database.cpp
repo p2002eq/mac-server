@@ -2406,7 +2406,7 @@ struct TimeOfDay_Struct Database::LoadTime(time_t &realtime)
 	{
 		hour = RuleI(World, BootHour);
 		realtime_ = time(0);
-		Log.Out(Logs::Detail, Logs::World_Server, "EQTime: Setting hour to %d", hour);
+		Log.Out(Logs::Detail, Logs::World_Server, "EQTime: Setting hour to: %d", hour);
 	}
 
 	eqTime.minute = atoi(row[0]);
