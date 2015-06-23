@@ -14,6 +14,8 @@
 #include "mac_structs.h"
 #include "../rulesys.h"
 
+#pragma warning( disable : 4244 4267 4309 )
+
 namespace Mac {
 
 	static const char *name = "Mac";

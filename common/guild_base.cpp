@@ -27,6 +27,8 @@
 #include <cstring>
 #include "eq_packet_structs.h"
 
+#pragma warning( disable : 4267 4800 4018 )
+
 const char *const BaseGuildManager::GuildActionNames[_MaxGuildAction] =
 { "HearGuildChat", "SpeakGuildChat", "Invite", "Remove", "Promote", "Demote", "Set_MOTD", "War/Peace" };
 

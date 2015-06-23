@@ -20,6 +20,8 @@
 #include "login_server.h"
 #include "login_structures.h"
 
+#pragma warning( disable : 4996 )
+
 extern ErrorLog *server_log;
 extern LoginServer server;
 
