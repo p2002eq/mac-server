@@ -60,6 +60,8 @@ EQEmu::Random emudb_random;
 #	define _ISNAN_(a) std::isnan(a)
 #endif
 
+#pragma warning( disable : 4267 4244 4018 )
+
 Database::Database () {
 	DBInitVars();
 }

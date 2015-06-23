@@ -32,9 +32,11 @@
 	#define va_copy(d,s) ((d) = (s))
 #endif
 
+#pragma warning( disable : 4267 )
+
 // original source: 
 // https://github.com/facebook/folly/blob/master/folly/String.cpp
-//
+
 const std::string vStringFormat(const char* format, va_list args)
 {
 	std::string output;

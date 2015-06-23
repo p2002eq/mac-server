@@ -22,7 +22,6 @@
 #include "config.h"
 #include "database.h"
 #include "database_mysql.h"
-#include "database_postgresql.h"
 #include "options.h"
 #include "server_manager.h"
 #include "client_manager.h"

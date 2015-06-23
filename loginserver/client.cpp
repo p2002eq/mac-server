@@ -24,6 +24,8 @@
 #include "EQCrypto.h"
 #include "../common/sha1.h"
 
+#pragma warning( disable : 4267 4244 4996 4101 4700 )
+
 extern EQCrypto eq_crypto;
 extern ErrorLog *server_log;
 extern LoginServer server;
