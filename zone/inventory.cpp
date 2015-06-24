@@ -1350,8 +1350,20 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 	// Step 7: Save change to the database
 	if (src_slot_id == MainCursor){
+		bool hasqueue = database.HasCursorQueue(character_id);
 		auto s = m_inv.cursor_cbegin(), e = m_inv.cursor_cend();
 		database.SaveCursor(character_id, s, e);
+		// Make client aware of the next item on the cursor queue.
+		if(hasqueue)
+		{
+			ItemInst* inst = GetInv().GetItem(MainCursor);
+			if(inst)
+			{
+				SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
+				Log.Out(Logs::Detail, Logs::Inventory, "Sending out packet for queued cursor item %s.", inst->GetItem()->Name);
+			}
+		}
+			
 	} else
 		database.SaveInventory(character_id, m_inv.GetItem(src_slot_id), src_slot_id);
 
@@ -2131,7 +2143,7 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 		if (cursor_itr == m_inv.cursor_cbegin())
 			continue;
 
-		instmap[8000 + limbo] = *cursor_itr;
+		instmap[EmuConstants::CURSOR_QUEUE_BEGIN + limbo] = *cursor_itr;
 	}
 
 	if (m_inv[MainPowerSource])
@@ -2228,7 +2240,7 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 	if ((head == MainCursor) ||
 		(head >= EmuConstants::EQUIPMENT_BEGIN && head <= EmuConstants::EQUIPMENT_END) ||
 		(head >= EmuConstants::WORLD_BEGIN && head <= EmuConstants::WORLD_END) ||
-		(head >= 8000 && head <= 8101) ||
+		(head >= EmuConstants::CURSOR_QUEUE_BEGIN && head <= EmuConstants::CURSOR_QUEUE_END) ||
 		(head == MainPowerSource)) {
 		switch (depth)
 		{

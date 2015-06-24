@@ -143,6 +143,10 @@ namespace MAC {
 
 		static const uint16 ITEM_COMMON_SIZE = 5;
 		static const uint16 ITEM_CONTAINER_SIZE = 10;
+
+		static const int16 CURSOR_QUEUE_BEGIN = 8000;
+		static const int16 CURSOR_QUEUE_END = 8999;
+
 	}
 
 	namespace limits {

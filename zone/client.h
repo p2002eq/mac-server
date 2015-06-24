@@ -1186,7 +1186,7 @@ private:
 			//this is the point where the client changes to the loading screen
 			ReceivedZoneEntry, //got the first packet, loading up PP
 			PlayerProfileLoaded, //our DB work is done, sending it
-			ZoneInfoSent, //includes PP, tributes, tasks, spawns, time and weather
+			ZoneInfoSent, //includes PP, spawns, time and weather
 			//this is the point where the client shows a status bar zoning in
 			NewZoneRequested, //received and sent new zone request
 			ClientSpawnRequested, //client sent ReqClientSpawn

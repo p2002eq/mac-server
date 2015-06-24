@@ -126,6 +126,9 @@ public:
 	static const uint16 ITEM_COMMON_SIZE = MAC::consts::ITEM_COMMON_SIZE;
 	static const uint16 ITEM_CONTAINER_SIZE = MAC::consts::ITEM_CONTAINER_SIZE;
 
+	static const int16 CURSOR_QUEUE_BEGIN = 8000;
+	static const int16 CURSOR_QUEUE_END = 8999;
+
 	// player profile
 	//static const uint32 CLASS_BITMASK = 0;	// needs value
 	//static const uint32 RACE_BITMASK = 0;	// needs value

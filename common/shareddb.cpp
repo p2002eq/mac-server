@@ -98,25 +98,45 @@ bool SharedDatabase::SaveCursor(uint32 char_id, std::list<ItemInst*>::const_iter
 {
 	// Delete cursor items
 	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
-                                    "AND ((slotid >= 8000 AND slotid <= 8999) "
+                                    "AND ((slotid >= %i AND slotid <= %i) "
                                     "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
-                                    char_id, MainCursor,
-                                    EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
+                                    char_id, EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
+									MainCursor, EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
         std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
         return false;
     }
 
-    int i = 8000;
+    int i = EmuConstants::CURSOR_QUEUE_BEGIN;
     for(auto it = start; it != end; ++it, i++) {
         ItemInst *inst = *it;
-		int16 use_slot = (i == 8000) ? MainCursor : i;
+		int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
 		if (!SaveInventory(char_id, inst, use_slot)) {
 			return false;
 		}
     }
 	return true;
+}
+
+bool SharedDatabase::HasCursorQueue(uint32 char_id)
+{
+	std::string query = StringFormat("SELECT COUNT(*)FROM inventory WHERE charid = %i "
+                                    "AND slotid >= %i AND slotid <= %i ",
+                                    char_id, EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        return false;
+    }
+
+	auto row = results.begin();
+    int16 count = atoi(row[0]);
+	if(count > 0)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 bool SharedDatabase::VerifyInventory(uint32 account_id, int16 slot_id, const ItemInst* inst)
@@ -489,7 +509,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
         else
             inst->SetCharges(charges);
 
-        if (slot_id >= 8000 && slot_id <= 8999)
+        if (slot_id >= EmuConstants::CURSOR_QUEUE_BEGIN && slot_id <= EmuConstants::CURSOR_QUEUE_END)
             put_slot_id = inv->PushCursor(*inst);
         else if (slot_id >= 3110 && slot_id <= 3179) {
             // Admins: please report any occurrences of this error
@@ -575,7 +595,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 
         inst->SetCharges(charges);
 
-        if (slot_id>=8000 && slot_id <= 8999)
+        if (slot_id>=EmuConstants::CURSOR_QUEUE_BEGIN && slot_id <= EmuConstants::CURSOR_QUEUE_END)
             put_slot_id = inv->PushCursor(*inst);
         else
             put_slot_id = inv->PutItem(slot_id, *inst);
