@@ -1305,22 +1305,47 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, bool isproc)
 int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
 {
 	int32 AggroAmount = 0;
+	uint8 slevel = GetLevel();
 
-	for (int o = 0; o < EFFECT_COUNT; o++) {
-		switch (spells[spell_id].effectid[o]) {
-			case SE_CurrentHP: {
-				AggroAmount += IsBuffSpell(spell_id) ? spells[spell_id].mana / 4 : spells[spell_id].mana;
+	for (int o = 0; o < EFFECT_COUNT; o++)
+	{
+		switch (spells[spell_id].effectid[o])
+		{
+			case SE_CurrentHP:
+			{
+				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
+				if (val > 0)
+				{
+					if (heal_possible < val)
+						val = heal_possible;		// aggro is based on amount healed
+
+					if (zone->random.Roll(15))		// heals have a smallish chance to be ignored
+						val = 0;
+
+					if (val > 0)
+						val /= 1.5f;				// heal aggro is 2/3rds amount healed
+
+					if (slevel <= 50 && val > 800)	// heal aggro is capped.  800 was stated in a patch note
+						val = 800;
+					else if (val > 2000)			// cap after level 50 quote "does not approach the total hitpoints of a fully buffed warrior"
+						val = 2000;
+
+					AggroAmount += val;
+				}
 				break;
 			}
-			case SE_Rune: {
-				AggroAmount += CalcSpellEffectValue_formula(spells[spell_id].formula[0], spells[spell_id].base[0], spells[spell_id].max[o], GetLevel(), spell_id) * 2;
+			case SE_Rune:
+			{
+				AggroAmount += CalcSpellEffectValue_formula(spells[spell_id].formula[0], spells[spell_id].base[0], spells[spell_id].max[o], slevel, spell_id) * 2;
 				break;
 			}
-			case SE_HealOverTime: {
-				AggroAmount += CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], GetLevel(), spell_id);
+			case SE_HealOverTime:
+			{
+				AggroAmount += CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				break;
 			}
-			default: {
+			default:
+			{
 				break;
 			}
 		}
@@ -1330,7 +1355,8 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
 	if (GetOwner() && IsPet())
 		AggroAmount = AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
 
-	if (AggroAmount > 0) {
+	if (AggroAmount > 0)
+	{
 		int HateMod = RuleI(Aggro, SpellAggroMod);
 
 		if (IsClient())

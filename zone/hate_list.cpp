@@ -285,7 +285,8 @@ Mob *HateList::GetTop(Mob *center)
 	if(center == nullptr)
 		return nullptr;
 
-	if (RuleB(Aggro,SmartAggroList)){
+	if (RuleB(Aggro,SmartAggroList))
+	{
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
@@ -296,18 +297,22 @@ Mob *HateList::GetTop(Mob *center)
 			tHateEntry *cur = (*iterator);
 			int16 aggroMod = 0;
 
-			if(!cur){
+			if(!cur)
+			{
 				++iterator;
 				continue;
 			}
 
-			if(!cur->ent){
+			if(!cur->ent)
+			{
 				++iterator;
 				continue;
 			}
 
             auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
-			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
+
+			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
+			{
 				if(!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
@@ -315,7 +320,8 @@ Mob *HateList::GetTop(Mob *center)
 				}
 			}
 
-			if (cur->ent->Sanctuary()) {
+			if (cur->ent->Sanctuary())
+			{
 				if(hate == -1)
 				{
 					top = cur->ent;
@@ -325,7 +331,8 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing())){
+			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing()))
+			{
 				if(hate == -1)
 				{
 					top = cur->ent;
@@ -337,21 +344,26 @@ Mob *HateList::GetTop(Mob *center)
 
 			int32 currentHate = cur->hate;
 
-			if(cur->ent->IsClient()){
-
-				if(cur->ent->CastToClient()->IsSitting()){
+			if(cur->ent->IsClient())
+			{
+				if(cur->ent->CastToClient()->IsSitting())
+				{
 					aggroMod += RuleI(Aggro, SittingAggroMod);
 				}
 
-				if(center){
+				if(center)
+				{
 					if(center->GetTarget() == cur->ent)
 						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
+
 					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
 					{
-						if(center->CombatRange(cur->ent)){
+						if(center->CombatRange(cur->ent))
+						{
 							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
 
-							if(currentHate > hateClientTypeInRange || cur->bFrenzy){
+							if(currentHate > hateClientTypeInRange || cur->bFrenzy)
+							{
 								hateClientTypeInRange = currentHate;
 								topClientTypeInRange = cur->ent;
 							}
@@ -360,28 +372,35 @@ Mob *HateList::GetTop(Mob *center)
 				}
 
 			}
-			else{
-				if(center){
+			else
+			{
+				if(center)
+				{
 					if(center->GetTarget() == cur->ent)
 						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
+
 					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
 					{
-						if(center->CombatRange(cur->ent)){
+						if(center->CombatRange(cur->ent))
+						{
 							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
 						}
 					}
 				}
 			}
 
-			if(cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP()*100/cur->ent->GetMaxHP()) < 20)){
+			if(cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP()*100/cur->ent->GetMaxHP()) < 20))
+			{
 				aggroMod += RuleI(Aggro, CriticallyWoundedAggroMod);
 			}
 
-			if(aggroMod){
+			if(aggroMod)
+			{
 				currentHate += (currentHate * aggroMod / 100);
 			}
 
-			if(currentHate > hate || cur->bFrenzy){
+			if(currentHate > hate || cur->bFrenzy)
+			{
 				hate = currentHate;
 				top = cur->ent;
 			}
@@ -389,11 +408,14 @@ Mob *HateList::GetTop(Mob *center)
 			++iterator;
 		}
 
-		if(topClientTypeInRange != nullptr && top != nullptr) {
+		if(topClientTypeInRange != nullptr && top != nullptr)
+		{
 			bool isTopClientType = top->IsClient();
 
-			if (!isTopClientType) {
-				if (top->GetSpecialAbility(ALLOW_TO_TANK)){
+			if (!isTopClientType)
+			{
+				if (top->GetSpecialAbility(ALLOW_TO_TANK))
+				{
 					isTopClientType = true;
 					topClientTypeInRange = top;
 				}
@@ -404,14 +426,17 @@ Mob *HateList::GetTop(Mob *center)
 
 			return top ? top : nullptr;
 		}
-		else {
-			if(top == nullptr && skipped_count > 0) {
+		else
+		{
+			if(top == nullptr && skipped_count > 0)
+			{
 				return center->GetTarget() ? center->GetTarget() : nullptr;
 			}
 			return top ? top : nullptr;
 		}
-	}
-	else{
+	}	// if (RuleB(Aggro,SmartAggroList))
+	else
+	{
 		auto iterator = list.begin();
 		int skipped_count = 0;
 		while(iterator != list.end())
