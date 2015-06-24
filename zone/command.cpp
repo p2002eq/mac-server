@@ -37,6 +37,7 @@
 #include <sstream>
 #include <algorithm>
 #include <ctime>
+#include <thread>
 
 #ifdef _WINDOWS
 #define strcasecmp _stricmp
@@ -241,6 +242,7 @@ int command_init(void){
 		command_add("helm", "- Change the helm of your target.", 250, command_helm) ||
 		command_add("help", "[search term] - List available commands and their description, specify partial command as argument to search.", 0, command_help) ||
 		command_add("hideme", "[on/off] - Hide yourself from spawn lists.", 81, command_hideme) ||
+		command_add("hotfix", "[hotfix_name] - Reloads shared memory into a hotfix", 250, command_hotfix) ||
 		command_add("hp", "- Refresh your HP bar from the server.", 255, command_hp) ||
 
 		command_add("instance", "- Modify Instances.", 255, command_instance) ||
@@ -378,7 +380,6 @@ int command_init(void){
 		command_add("setlanguage", "[language ID] [value] - Set your target's language skillnum to value.", 170, command_setlanguage) ||
 		command_add("setlsinfo", "[email] [password] - Set login server email address and password (if supported by login server).", 255, command_setlsinfo) ||
 		command_add("setpass", "[accountname] [password] - Set local password for accountname.", 255, command_setpass) ||
-		command_add("setsharedmem", "[hotfix_name] - Set your shared memory mapping to a specific hotfix", 250, command_set_shared_memory) ||
 		command_add("setskill", "[skillnum] [value] - Set your target's skill skillnum to value.", 170, command_setskill) ||
 		command_add("setskillall", "[value] - Set all of your target's skills to value.", 170, command_setskillall) ||
 		command_add("setxp", "[value] - Set your or your player target's experience.", 170, command_setxp) ||
@@ -10964,15 +10965,49 @@ void command_undeletechar(Client *c, const Seperator *sep)
 	}
 }
 
-void command_set_shared_memory(Client *c, const Seperator *sep) {
-	std::string hotfix_name = sep->arg[1];
-	c->Message(0, "Setting shared memory hotfix mapping to '%s'", hotfix_name.c_str());
+void command_hotfix(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string current_hotfix = hotfix;
 
-	database.SetVariable("hotfix_name", hotfix_name.c_str());
-
-	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
-	if (hotfix_name.length() > 0) {
-		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+	std::string hotfix_name;
+	if (!strcasecmp(current_hotfix.c_str(), "hotfix_")) {
+		hotfix_name = "";
 	}
-	worldserver.SendPacket(&pack);
+	else {
+		hotfix_name = "hotfix_";
+	}
+
+
+	c->Message(0, "Creating and applying hotfix");
+	//Not 100% certain on the thread safety of this.
+	//I think it's okay however
+	std::thread t1([c, hotfix_name]() {
+#ifdef WIN32
+		if (hotfix_name.length() > 0) {
+			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("shared_memory").c_str());
+		}
+#else
+		if (hotfix_name.length() > 0) {
+			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("./shared_memory").c_str());
+		}
+#endif
+		database.SetVariable("hotfix_name", hotfix_name.c_str());
+
+		ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
+		if (hotfix_name.length() > 0) {
+			strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+		}
+		worldserver.SendPacket(&pack);
+
+		c->Message(0, "Hotfix applied");
+	});
+
+	t1.detach();
 }
