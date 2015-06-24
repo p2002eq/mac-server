@@ -1236,6 +1236,23 @@ bool ZoneServer::Process() {
 				}
 				break;
 			}
+			case ServerOP_ChangeSharedMem: {
+				std::string hotfix_name = std::string((char*)pack->pBuffer);
+
+				Log.Out(Logs::General, Logs::World_Server, "Loading items...");
+				if(!database.LoadItems(hotfix_name)) {
+					Log.Out(Logs::General, Logs::World_Server, "Error: Could not load item data. But ignoring");
+				}
+
+				Log.Out(Logs::General, Logs::World_Server, "Loading skill caps...");
+				if(!database.LoadSkillCaps(hotfix_name)) {
+					Log.Out(Logs::General, Logs::World_Server, "Error: Could not load skill cap data. But ignoring");
+				}
+
+				zoneserver_list.SendPacket(pack);
+				break;
+			}
+
 			case ServerOP_RequestTellQueue:
 			{
 				ServerRequestTellQueue_Struct* rtq = (ServerRequestTellQueue_Struct*) pack->pBuffer;

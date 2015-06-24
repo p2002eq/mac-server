@@ -288,6 +288,12 @@ int main(int argc, char** argv) {
 	database.DBSetup();
 	Log.Out(Logs::General, Logs::World_Server, "Loading variables..");
 	database.LoadVariables();
+
+	char hotfix_name[256] = { 0 };
+	if(database.GetVariable("hotfix_name", hotfix_name, 256)) {
+		Log.Out(Logs::General, Logs::Zone_Server, "Current hotfix in use: %s", hotfix_name);
+	}
+
 	Log.Out(Logs::General, Logs::World_Server, "Loading zones..");
 	database.LoadZoneNames();
 	Log.Out(Logs::General, Logs::World_Server, "Clearing groups..");
@@ -296,10 +302,10 @@ int main(int argc, char** argv) {
 	database.ClearRaid();
 	database.ClearRaidDetails();
 	Log.Out(Logs::General, Logs::World_Server, "Loading items..");
-	if (!database.LoadItems())
+	if(!database.LoadItems(hotfix_name))
 		Log.Out(Logs::General, Logs::World_Server, "Error: Could not load item data. But ignoring");
 	Log.Out(Logs::General, Logs::World_Server, "Loading skill caps..");
-	if (!database.LoadSkillCaps())
+	if(!database.LoadSkillCaps(std::string(hotfix_name)))
 		Log.Out(Logs::General, Logs::World_Server, "Error: Could not load skill cap data. But ignoring");
 	Log.Out(Logs::General, Logs::World_Server, "Loading guilds..");
 	guild_mgr.LoadGuilds();

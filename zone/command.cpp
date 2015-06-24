@@ -378,6 +378,7 @@ int command_init(void){
 		command_add("setlanguage", "[language ID] [value] - Set your target's language skillnum to value.", 170, command_setlanguage) ||
 		command_add("setlsinfo", "[email] [password] - Set login server email address and password (if supported by login server).", 255, command_setlsinfo) ||
 		command_add("setpass", "[accountname] [password] - Set local password for accountname.", 255, command_setpass) ||
+		command_add("setsharedmem", "[hotfix_name] - Set your shared memory mapping to a specific hotfix", 250, command_set_shared_memory) ||
 		command_add("setskill", "[skillnum] [value] - Set your target's skill skillnum to value.", 170, command_setskill) ||
 		command_add("setskillall", "[value] - Set all of your target's skills to value.", 170, command_setskillall) ||
 		command_add("setxp", "[value] - Set your or your player target's experience.", 170, command_setxp) ||
@@ -10961,4 +10962,17 @@ void command_undeletechar(Client *c, const Seperator *sep)
 	{
 		c->Message(CC_Default, "Usage: undeletechar [charname]");
 	}
+}
+
+void command_set_shared_memory(Client *c, const Seperator *sep) {
+	std::string hotfix_name = sep->arg[1];
+	c->Message(0, "Setting shared memory hotfix mapping to '%s'", hotfix_name.c_str());
+
+	database.SetVariable("hotfix_name", hotfix_name.c_str());
+
+	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
+	if (hotfix_name.length() > 0) {
+		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+	}
+	worldserver.SendPacket(&pack);
 }
