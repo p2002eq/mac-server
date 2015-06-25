@@ -4,7 +4,7 @@ SET(eqlogin_sources
 	client.cpp
 	client_manager.cpp
 	config.cpp
-	database_mysql.cpp
+	database.cpp
 	EQCrypto.cpp
 	error_log.cpp
 	main.cpp
@@ -17,7 +17,6 @@ SET(eqlogin_headers
 	client_manager.h
 	config.h
 	database.h
-	database_mysql.h
 	EQCrypto.h
 	error_log.h
 	login_server.h
