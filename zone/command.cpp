@@ -2886,10 +2886,13 @@ void command_peekinv(Client *c, const Seperator *sep){
 				item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
 				sprintf(itemid, "%06d", (item == 0) ? 0 : item->ID);
-				c->Message((item == 0), "CursorSlot: %i, Depth: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", MainCursor, i,
-					((item == 0) ? 0 : item->ID), 0x12, ((item == 0) ? 0 : item->ID),
-					((item == 0) ? "null" : item->Name), 0x12,
-					((item == 0) ? 0 : inst->GetCharges()));
+				int16 slot = i;
+				if(slot > 0)
+					slot += EmuConstants::CURSOR_QUEUE_BEGIN;
+				c->Message((item == 0), "CursorSlot: %i, Item: %i (%c%c%s%s%c), Charges: %i", slot,
+				((item == 0) ? 0 : item->ID), 0x12, 0x30, ((item == 0) ? 0 : itemid),
+				((item == 0) ? "null" : item->Name), 0x12,
+				((item == 0) ? 0 : inst->GetCharges()));
 
 				if (inst && inst->IsType(ItemClassContainer) && i == 0) { // 'CSD 1' - only display contents of slot 30[0] container..higher ones don't exist
 					for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
@@ -2897,14 +2900,15 @@ void command_peekinv(Client *c, const Seperator *sep){
 						item = (instbag) ? instbag->GetItem() : nullptr;
 						static char itemid[7];
 						sprintf(itemid, "%06d", (item == 0) ? 0 : item->ID);
-						c->Message((item == 0), "   CursorBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%c%s%s%c), Charges: %i",
-							Inventory::CalcSlotId(MainCursor, j),
-							MainCursor, j, ((item == 0) ? 0 : item->ID), 0x12, ((item == 0) ? 0 : item->ID),
+						c->Message((item == 0), "   CursorBagSlot: %i Item: %i (%c%c%s%s%c), Charges: %i",
+							Inventory::CalcSlotId(MainCursor, j), 
+							((item == 0) ? 0 : item->ID), 0x12,  0x30, ((item == 0) ? 0 : itemid),
 							((item == 0) ? "null" : item->Name), 0x12,
 							((item == 0) ? 0 : instbag->GetCharges()));
 					}
 				}
 			}
+			c->Message(CC_Default, "Cursor size: %d", c->GetInv().CursorSize());
 		}
 	}
 

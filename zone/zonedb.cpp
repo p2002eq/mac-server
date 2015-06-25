@@ -3689,3 +3689,47 @@ bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
 	strncpy(outData, row[0], 2048);
 	return true;
 }
+
+
+bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::const_iterator &start, std::list<ItemInst*>::const_iterator &end)
+{
+		// Delete cursor items
+	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
+                                    "AND ((slotid >= %i AND slotid <= %i) "
+                                    "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
+                                    client->CharacterID(), EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
+									MainCursor, EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
+        return false;
+    }
+
+	int8 count = 0;
+	int i = EmuConstants::CURSOR_QUEUE_BEGIN;
+    for(auto it = start; it != end; ++it) {
+        ItemInst *inst = *it;
+		if(inst && inst->GetItem()->Soulbound)
+		{
+			int16 newslot = client->GetInv().FindFreeSlot(false, false, inst->GetItem()->Size);
+			if(newslot != INVALID_INDEX)
+			{
+				client->PutItemInInventory(newslot, *inst);
+				++count;
+			}
+		}
+		else if(inst)
+		{
+			int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
+			if (SaveInventory(client->CharacterID(), inst, use_slot)) 
+			{
+				++i;
+			}
+		}
+    }
+
+	if(count > 0)
+		return true;
+
+	return false;
+}

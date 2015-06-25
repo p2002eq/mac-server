@@ -247,6 +247,7 @@ struct Item_Struct {
 	char	FocusName[65];
 	char	ScrollName[65];
 	int8	GMFlag;
+	int8	Soulbound;
 
 };
 

@@ -112,31 +112,15 @@ bool SharedDatabase::SaveCursor(uint32 char_id, std::list<ItemInst*>::const_iter
     for(auto it = start; it != end; ++it, i++) {
         ItemInst *inst = *it;
 		int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
+		if(inst)
+			Log.Out(Logs::Moderate, Logs::Inventory, "SaveCursor: Attempting to save item %s for char %d in slot %d", inst->GetItem()->Name, char_id, use_slot);
+		else
+			Log.Out(Logs::Moderate, Logs::Inventory, "SaveCursor: No inst found. This is either an error, or we've reached the end of the list.");
 		if (!SaveInventory(char_id, inst, use_slot)) {
 			return false;
 		}
     }
 	return true;
-}
-
-bool SharedDatabase::HasCursorQueue(uint32 char_id)
-{
-	std::string query = StringFormat("SELECT COUNT(*)FROM inventory WHERE charid = %i "
-                                    "AND slotid >= %i AND slotid <= %i ",
-                                    char_id, EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END);
-    auto results = QueryDatabase(query);
-    if (!results.Success()) {
-        return false;
-    }
-
-	auto row = results.begin();
-    int16 count = atoi(row[0]);
-	if(count > 0)
-	{
-		return true;
-	}
-
-	return false;
 }
 
 bool SharedDatabase::VerifyInventory(uint32 account_id, int16 slot_id, const ItemInst* inst)
@@ -879,6 +863,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		strcpy(item.FocusName, row[ItemField::focusname]);
 		strcpy(item.ScrollName, row[ItemField::scrollname]);
 		item.GMFlag = (int8)atoi(row[ItemField::gmflag]);
+		item.Soulbound = (int8)atoi(row[ItemField::soulbound]);
 
         try {
             hash.insert(item.ID, item);

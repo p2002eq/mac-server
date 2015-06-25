@@ -60,7 +60,6 @@ public:
 	bool	GetInventory(uint32 char_id, Inventory* inv);
 	bool	GetInventory(uint32 account_id, char* name, Inventory* inv);
 	bool	SetStartingItems(PlayerProfile_Struct* pp, Inventory* inv, uint32 si_race, uint32 si_class, uint32 si_deity, uint32 si_current_zone, char* si_name, int admin);
-	bool	HasCursorQueue(uint32 char_id);
 
 	std::string	GetBook(const char *txtfile);
 
