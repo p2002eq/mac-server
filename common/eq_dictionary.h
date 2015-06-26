@@ -96,12 +96,6 @@ public:
 	static const int16 BANK_BAGS_END_OFFSET = 79;
 	static const int16 BANK_BAGS_END = BANK_BAGS_BEGIN + BANK_BAGS_END_OFFSET;
 
-	static const int16 SHARED_BANK_BEGIN = 2500;
-	static const int16 SHARED_BANK_END = 2501;
-	static const int16 SHARED_BANK_BAGS_BEGIN = 2531;
-	static const int16 SHARED_BANK_BAGS_END_OFFSET = 19;
-	static const int16 SHARED_BANK_BAGS_END = SHARED_BANK_BAGS_BEGIN + SHARED_BANK_BAGS_END_OFFSET;
-
 	static const int16 TRADE_BEGIN = 3000;
 	static const int16 TRADE_END = 3007;
 	static const int16 TRADE_NPC_END = 3003;
@@ -114,7 +108,6 @@ public:
 	static const int16 WORLD_SIZE = MAP_WORLD_SIZE;
 
 	static const int16 CORPSE_BEGIN = 22;
-	//static const int16 CORPSE_END = RoF::consts::CORPSE_END; // not ready for use
 
 	static const int16 MATERIAL_BEGIN = MaterialHead;
 	static const int16 MATERIAL_END = MaterialSecondary;

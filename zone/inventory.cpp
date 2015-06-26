@@ -1366,6 +1366,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 		// When we have a bag on the cursor filled with items that is new (zoned with it, summoned it, picked it up from the ground)
 		// the client is only aware of the bag. So, we have to send packets for each item within the bag once it is placed in the inventory.
+		// This is a workaround hack until we can figure out how to send these items to the client while they are still on the cursor.
 		const ItemInst* baginst = m_inv[dst_slot_id];
 		if(src_slot_id == MainCursor && baginst && baginst->IsType(ItemClassContainer))
 		{

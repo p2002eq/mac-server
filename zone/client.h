@@ -1025,7 +1025,6 @@ private:
 	uint32				ip;
 	uint16				port;
 	CLIENT_CONN_STATUS	client_state;
-	bool				itemsinabag;
 	uint32				character_id;
 	uint32				WID;
 	uint32				account_id;
@@ -1131,7 +1130,8 @@ private:
     glm::vec3 m_Proximity;
 
 	void BulkSendInventoryItems();
-	void	BulkSendItems();
+	void BulkSendItems();
+	void SendCursorItems();
 
 	faction_map factionvalues;
 
