@@ -208,30 +208,13 @@ int main()
 	}
 
 	//Create our DB from options.
-	if(server.config->GetVariable("database", "subsystem").compare("MySQL") == 0)
-	{
-#ifdef EQEMU_MYSQL_ENABLED
 		server_log->Log(log_debug, "MySQL Database Init.");
-		server.db = (Database*)new DatabaseMySQL(
+		server.db = (Database*)new Database(
 			server.config->GetVariable("database", "user"),
 			server.config->GetVariable("database", "password"),
 			server.config->GetVariable("database", "host"),
 			server.config->GetVariable("database", "port"),
 			server.config->GetVariable("database", "db"));
-#endif
-	}
-	else if(server.config->GetVariable("database", "subsystem").compare("PostgreSQL") == 0)
-	{
-#ifdef EQEMU_POSTGRESQL_ENABLED
-		server_log->Log(log_debug, "PostgreSQL Database Init.");
-		server.db = (Database*)new DatabasePostgreSQL(
-			server.config->GetVariable("database", "user"),
-			server.config->GetVariable("database", "password"),
-			server.config->GetVariable("database", "host"),
-			server.config->GetVariable("database", "port"),
-			server.config->GetVariable("database", "db"));
-#endif
-	}
 
 	//Make sure our database got created okay, otherwise cleanup and exit.
 	if(!server.db)

@@ -22,6 +22,8 @@
 #define ENC(c) (((c) & 0x3f) + ' ')
 #define DEC(c)	(((c) - ' ') & 0x3f)
 
+#pragma warning( disable : 4244 4267 )
+
 std::map<int,std::string> DBFieldNames;
 
 #ifndef WIN32

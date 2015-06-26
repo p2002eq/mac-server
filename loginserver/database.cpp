@@ -18,17 +18,17 @@
 #include "../common/global_define.h"
 #include "database.h"
 
-#ifdef EQEMU_MYSQL_ENABLED
-#include "database_mysql.h"
 #include "error_log.h"
 #include "login_server.h"
+
+#pragma warning( disable : 4267 )
 
 extern ErrorLog *server_log;
 extern LoginServer server;
 
 #pragma comment(lib, "mysqlclient.lib")
 
-DatabaseMySQL::DatabaseMySQL(string user, string pass, string host, string port, string name)
+Database::Database(string user, string pass, string host, string port, string name)
 {
 	this->user = user;
 	this->pass = pass;
@@ -53,7 +53,7 @@ DatabaseMySQL::DatabaseMySQL(string user, string pass, string host, string port,
 	}
 }
 
-DatabaseMySQL::~DatabaseMySQL()
+Database::~Database()
 {
 	if(db)
 	{
@@ -61,7 +61,7 @@ DatabaseMySQL::~DatabaseMySQL()
 	}
 }
 
-bool DatabaseMySQL::GetStatusLSAccountTable(std::string &name, unsigned int &client_unlock)
+bool Database::GetStatusLSAccountTable(std::string &name, unsigned int &client_unlock)
 {
 	if (!db)
 	{
@@ -101,7 +101,7 @@ bool DatabaseMySQL::GetStatusLSAccountTable(std::string &name, unsigned int &cli
 	return false;
 }
 
-bool DatabaseMySQL::GetLoginDataFromAccountName(string name, string &password, unsigned int &id)
+bool Database::GetLoginDataFromAccountName(string name, string &password, unsigned int &id)
 {
 	if(!db)
 	{
@@ -138,7 +138,7 @@ bool DatabaseMySQL::GetLoginDataFromAccountName(string name, string &password, u
 	return false;
 }
 
-bool DatabaseMySQL::GetWorldRegistration(string long_name, string short_name, unsigned int &id, string &desc, unsigned int &list_id,
+bool Database::GetWorldRegistration(string long_name, string short_name, unsigned int &id, string &desc, unsigned int &list_id,
 		unsigned int &trusted, string &list_desc, string &account, string &password)
 {
 	if(!db)
@@ -212,7 +212,7 @@ bool DatabaseMySQL::GetWorldRegistration(string long_name, string short_name, un
 	return false;
 }
 
-void DatabaseMySQL::UpdateLSAccountData(unsigned int id, string ip_address)
+void Database::UpdateLSAccountData(unsigned int id, string ip_address)
 {
 	if(!db)
 	{
@@ -231,7 +231,7 @@ void DatabaseMySQL::UpdateLSAccountData(unsigned int id, string ip_address)
 	}
 }
 
-void DatabaseMySQL::UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason)
+void Database::UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason)
 {
 	if(!db)
 	{
@@ -251,7 +251,7 @@ void DatabaseMySQL::UpdateAccessLog(unsigned int account_id, std::string account
 	}
 }
 
-void DatabaseMySQL::UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
+void Database::UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
 	bool activate = 0;
 	if (!db)
@@ -277,7 +277,7 @@ void DatabaseMySQL::UpdateLSAccountInfo(unsigned int id, std::string name, std::
 	}
 }
 
-void DatabaseMySQL::UpdateWorldRegistration(unsigned int id, string long_name, string ip_address)
+void Database::UpdateWorldRegistration(unsigned int id, string long_name, string ip_address)
 {
 	if(!db)
 	{
@@ -302,7 +302,7 @@ void DatabaseMySQL::UpdateWorldRegistration(unsigned int id, string long_name, s
 	}
 }
 
-bool DatabaseMySQL::CreateWorldRegistration(string long_name, string short_name, unsigned int &id)
+bool Database::CreateWorldRegistration(string long_name, string short_name, unsigned int &id)
 {
 	if(!db)
 	{
@@ -351,5 +351,3 @@ bool DatabaseMySQL::CreateWorldRegistration(string long_name, string short_name,
 	server_log->Log(log_database, "World registration did not exist in the database for %s %s", long_name.c_str(), short_name.c_str());
 	return false;
 }
-
-#endif
