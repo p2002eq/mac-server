@@ -867,6 +867,20 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				}
 			}
 
+			// allow tells to corpses
+			if (targetname) {
+				if (GetTarget() && GetTarget()->IsCorpse() && GetTarget()->CastToCorpse()->IsPlayerCorpse()) {
+					if (strcasecmp(targetname,GetTarget()->CastToCorpse()->GetName()) == 0) {
+						if (strcasecmp(GetTarget()->CastToCorpse()->GetOwnerName(),GetName()) == 0) {
+							Message_StringID(MT_DefaultText, TALKING_TO_SELF);
+							return;
+						} else {
+							targetname = GetTarget()->CastToCorpse()->GetOwnerName();
+						}
+					}
+				}
+			}
+
 			char target_name[64];
 
 			if(targetname)
