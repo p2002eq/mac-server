@@ -707,31 +707,6 @@ int32 CalculateCounters(uint16 spell_id)
 	return counter;
 }
 
-bool IsDisciplineBuff(uint16 spell_id)
-{
-	if (!IsValidSpell(spell_id))
-		return false;
-
-	if (spells[spell_id].mana == 0 && spells[spell_id].short_buff_box == 0 &&
-			(spells[spell_id].EndurCost || spells[spell_id].EndurUpkeep) &&
-			spells[spell_id].targettype == ST_Self)
-		return true;
-
-	return false;
-}
-
-bool IsDiscipline(uint16 spell_id)
-{
-	if (!IsValidSpell(spell_id))
-		return false;
-
-	if (spells[spell_id].mana == 0 &&
-			(spells[spell_id].EndurCost || spells[spell_id].EndurUpkeep))
-		return true;
-
-	return false;
-}
-
 bool IsCombatSkill(uint16 spell_id)
 {
 	if (!IsValidSpell(spell_id))
@@ -1100,11 +1075,12 @@ bool RequiresComponents(uint16 spell_id)
 		for (int t_count = 0; t_count < 4; t_count++) 
 		{
 			int32 component = spells[spell_id].components[t_count];
+			int32 focuscomponent = spells[spell_id].NoexpendReagent[t_count];
 
-			if (component == -1)
+			if (component == -1 && focuscomponent == -1)
 				continue;
 
-			if(component > 0)
+			if(component > 0 || focuscomponent > 0)
 				return true;
 		}
 	}

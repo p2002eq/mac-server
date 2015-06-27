@@ -347,8 +347,7 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `character_currency` WHERE `id` = %u", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_data` WHERE `id` = %u", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `character_spells` WHERE `id` = %u", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `character_disciplines` WHERE `id` = %u", charid); QueryDatabase(query);		  
+	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  	  
 	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); QueryDatabase(query);	  
 	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid);
@@ -2494,8 +2493,8 @@ bool Database::CheckAccountActive(uint32 account_id) {
 
 	if(active == 0)
 	{
-		std::string query = StringFormat("UPDATE `account` SET active = 1 WHERE id = %i", account_id);
-		QueryDatabase(query);
+		//std::string query = StringFormat("UPDATE `account` SET active = 1 WHERE id = %i", account_id);
+		//QueryDatabase(query);
 		return false;
 	}
 	else

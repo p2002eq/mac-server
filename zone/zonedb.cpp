@@ -932,26 +932,6 @@ bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Str
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat(
-		"SELECT				  "
-		"disc_id			  "
-		"FROM				  "
-		"`character_disciplines`"
-		"WHERE `id` = %u ORDER BY `slot_id`", character_id);
-	auto results = database.QueryDatabase(query);
-	int i = 0;
-	/* Initialize Disciplines */
-	memset(pp->disciplines.values, 0, (sizeof(pp->disciplines.values[0]) * MAX_PP_DISCIPLINES));
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		if (i < MAX_PP_DISCIPLINES){
-			pp->disciplines.values[i] = atoi(row[0]);
-		}
-		i++;
-	}
-	return true;
-}
-
 bool ZoneDatabase::LoadCharacterSkills(uint32 character_id, PlayerProfile_Struct* pp){
 	std::string query = StringFormat(
 		"SELECT				"
@@ -1086,13 +1066,6 @@ bool ZoneDatabase::SaveCharacterMaterialColor(uint32 character_id, uint32 slot_i
 bool ZoneDatabase::SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_skills` (id, skill_id, value) VALUES (%u, %u, %u)", character_id, skill_id, value); auto results = QueryDatabase(query);
 	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
-	return true;
-}
-
-bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id){
-	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id);
-	auto results = QueryDatabase(query);
-	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
 	return true;
 }
 
@@ -1366,12 +1339,6 @@ bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, ui
 	return true;
 }
 
-bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
-	std::string query = StringFormat("DELETE FROM `character_disciplines` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
-	QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::DeleteCharacterAAs(uint32 character_id){
 	std::string query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", character_id);
 	QueryDatabase(query);
@@ -1447,7 +1414,9 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, "
+						"npc_types.armtexture, npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, "
+						"npc_types.feettexture, npc_types.chesttexture FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1606,7 +1575,12 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
-
+		tmpNPCType->armtexture = atoi(row[89]);
+		tmpNPCType->bracertexture = atoi(row[90]);
+		tmpNPCType->handtexture = atoi(row[91]);
+		tmpNPCType->legtexture = atoi(row[92]);
+		tmpNPCType->feettexture = atoi(row[93]);
+		tmpNPCType->chesttexture = atoi(row[94]);
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
 		if (zone->npctable.find(tmpNPCType->npc_id) != zone->npctable.end()) {
@@ -1660,7 +1634,9 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.private_corpse, npc_types.unique_spawn_by_name, npc_types.underwater, "
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
-						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc FROM npc_types WHERE id = %d", id);
+						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, npc_types.armtexture, "
+						"npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, npc_types.feettexture, "
+						"npc_types.chesttexture FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1819,6 +1795,12 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->combat_mana_regen = atoi(row[86]);
 		tmpNPCType->light = (atoi(row[87]) & 0x0F);
 		tmpNPCType->aggro_pc = atoi(row[88]) == 1 ? true : false;
+		tmpNPCType->armtexture = atoi(row[89]);
+		tmpNPCType->bracertexture = atoi(row[90]);
+		tmpNPCType->handtexture = atoi(row[91]);
+		tmpNPCType->legtexture = atoi(row[92]);
+		tmpNPCType->feettexture = atoi(row[93]);
+		tmpNPCType->chesttexture = atoi(row[94]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.

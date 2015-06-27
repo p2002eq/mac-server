@@ -106,8 +106,13 @@ Client::Client(EQStreamInterface* ieqs)
 	0,
 	0,	// qglobal
 	0,	// maxlevel
-	0	// scalerate
-
+	0,	// scalerate
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
 	),
 	//these must be listed in the order they appear in client.h
 	position_timer(250),
@@ -268,6 +273,7 @@ Client::Client(EQStreamInterface* ieqs)
 	client_position_update = false;
 	ignore_zone_count = false;
 	clicky_override = false;
+	active_disc = 0;
 }
 
 Client::~Client() {
@@ -3100,27 +3106,6 @@ void Client::DecrementAggroCount() {
 	}
 }
 
-void Client::SendDisciplineTimers()
-{
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineTimer, sizeof(DisciplineTimer_Struct));
-	DisciplineTimer_Struct *dts = (DisciplineTimer_Struct *)outapp->pBuffer;
-
-	for(unsigned int i = 0; i < MAX_DISCIPLINE_TIMERS; ++i)
-	{
-		uint32 RemainingTime = p_timers.GetRemainingTime(pTimerDisciplineReuseStart + i);
-
-		if(RemainingTime > 0)
-		{
-			dts->TimerID = i;
-			dts->Duration = RemainingTime;
-			QueuePacket(outapp);
-		}
-	}
-
-	safe_delete(outapp);
-}
-
 void Client::SummonAndRezzAllCorpses()
 {
 	PendingRezzXP = -1;
@@ -3987,7 +3972,7 @@ void Client::SendStats(Client* client)
 	client->Message(0, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
-	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
+	client->Message(0, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
@@ -4017,7 +4002,7 @@ void Client::SendStats(Client* client)
 		client->Message(0, " GroupID: %i Count: %i GroupLeader: %s GroupLeaderCached: %s", g->GetID(), g->GroupCount(), g->GetLeaderName(), g->GetOldLeaderName());
 	}
 	client->Message(0, " Hidden: %i ImpHide: %i Sneaking: %i Invisible: %i InvisVsUndead: %i InvisVsAnimals: %i", hidden, improved_hidden, sneaking, invisible, invisible_undead, invisible_animals);
-	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i", feigned, invulnerable, see_invis, has_zomm);
+	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i Disc: %i", feigned, invulnerable, see_invis, has_zomm, active_disc);
 
 	Extra_Info:
 

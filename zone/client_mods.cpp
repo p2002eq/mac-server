@@ -1345,7 +1345,6 @@ int Client::CalcHaste()
 }
 
 //The AA multipliers are set to be 5, but were 2 on WR
-//The resistant discipline which I think should be here is implemented
 //in Mob::ResistSpell
 int32	Client::CalcMR()
 {
@@ -1400,7 +1399,7 @@ int32	Client::CalcMR()
 			MR = 20;
 	}
 
-	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR;
+	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR + discbonuses.MR;
 
 	if(GetClass() == WARRIOR)
 		MR += GetLevel() / 2;
@@ -1476,7 +1475,7 @@ int32	Client::CalcFR()
 			FR += l - 49;
 	}
 
-	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR;
+	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR + discbonuses.FR;
 
 	if(FR < 1)
 		FR = 1;
@@ -1490,12 +1489,16 @@ int32	Client::CalcFR()
 int32	Client::CalcDR()
 {
 	//racial bases
+	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			DR = 15;
 			break;
 		case BARBARIAN:
 			DR = 15;
+			bonus = 4;
+			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
+			DR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			DR = 10;
@@ -1556,7 +1559,7 @@ int32	Client::CalcDR()
 			DR += l - 49;
 	}
 
-	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR;
+	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR + discbonuses.DR;
 
 	if(DR < 1)
 		DR = 1;
@@ -1636,7 +1639,7 @@ int32	Client::CalcPR()
 			PR += l - 49;
 	}
 
-	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR;
+	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR + discbonuses.PR;
 
 	if(PR < 1)
 		PR = 1;
@@ -1650,12 +1653,16 @@ int32	Client::CalcPR()
 int32	Client::CalcCR()
 {
 	//racial bases
+	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			CR = 25;
 			break;
 		case BARBARIAN:
 			CR = 35;
+			bonus = 4;
+			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
+			CR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			CR = 25;
@@ -1709,7 +1716,7 @@ int32	Client::CalcCR()
 			CR += l - 49;
 	}
 
-	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR;
+	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR + discbonuses.CR;
 
 	if(CR < 1)
 		CR = 1;

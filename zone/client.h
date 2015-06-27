@@ -443,10 +443,8 @@ public:
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
 	virtual int GetCurrentBuffSlots() const;
 	virtual int GetCurrentSongSlots() const;
-	virtual int GetCurrentDiscSlots() const { return 1; }
 	virtual int GetMaxBuffSlots() const { return 25; }
 	virtual int GetMaxSongSlots() const { return 12; }
-	virtual int GetMaxDiscSlots() const { return 1; }
 	virtual int GetMaxTotalSlots() const { return 38; }
 	virtual void InitializeBuffSlots();
 	virtual void UninitializeBuffSlots();
@@ -623,8 +621,6 @@ public:
 	void ScribeSpell(uint16 spell_id, int slot, bool update_client = true);
 	void UnscribeSpell(int slot, bool update_client = true);
 	void UnscribeSpellAll(bool update_client = true);
-	void UntrainDisc(int slot, bool update_client = true);
-	void UntrainDiscAll(bool update_client = true);
 	bool SpellGlobalCheck(uint16 Spell_ID, uint32 Char_ID);
 	uint32 GetCharMaxLevelFromQGlobal();
 
@@ -731,12 +727,12 @@ public:
 	bool Thirsty() const {if (GetGM()) return false; return m_pp.thirst_level <= 3000;}
 	bool FoodFamished(); 
 	bool WaterFamished();
-int32 GetHunger() const { return m_pp.hunger_level; }
-int32 GetThirst() const { return m_pp.thirst_level; }
-int32 GetFamished() const { return m_pp.famished; }
-void SetHunger(int32 in_hunger);
-void SetThirst(int32 in_thirst);
-void SetConsumption(int32 in_hunger, int32 in_thirst);
+	int32 GetHunger() const { return m_pp.hunger_level; }
+	int32 GetThirst() const { return m_pp.thirst_level; }
+	int32 GetFamished() const { return m_pp.famished; }
+	void SetHunger(int32 in_hunger);
+	void SetThirst(int32 in_thirst);
+	void SetConsumption(int32 in_hunger, int32 in_thirst);
 
 	bool	CheckTradeLoreConflict(Client* other);
 	void	LinkDead();
@@ -755,11 +751,12 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	virtual void ThrowingAttack(Mob* other, bool CanDoubleAttack = false);
 	void DoClassAttacks(Mob *ca_target, uint16 skill = -1, bool IsRiposte=false);
 
-	void SetZoneFlag(uint32 zone_id);
+	void SetZoneFlag(uint32 zone_id, uint8 key = 0);
 	void ClearZoneFlag(uint32 zone_id);
-	bool HasZoneFlag(uint32 zone_id) const;
-	void SendZoneFlagInfo(Client *to) const;
-	void LoadZoneFlags();
+	bool HasZoneFlag(uint32 zone_id, uint8 key = 0);
+	void SendZoneFlagInfo(Client *to);
+	void LoadZoneFlags(LinkedList<ZoneFlags_Struct*>* ZoneFlags);
+	uint8 GetZoneFlagKey(uint32 zone_id);
 
 	bool CanFish();
 	void GoFish();
@@ -769,10 +766,9 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	void ResetTrade();
 	void DropInst(const ItemInst* inst);
 	void CreateGroundObject(const ItemInst* item, float x, float y, float z, float heading, uint32 decay_time = 300000);
-	bool TrainDiscipline(uint32 itemid);
-	void SendDisciplineUpdate();
-	void SendDisciplineTimer(uint32 timer_id, uint32 duration);
-	bool UseDiscipline(uint32 spell_id, uint32 target);
+	bool UseDiscipline(uint8 disc_id, Client* target);
+	uint8 DisciplineUseLevel(uint8 disc_id);
+	bool CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use);
 
 	bool CheckTitle(int titleset);
 	void EnableTitle(int titleset);
@@ -825,7 +821,6 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	int GetAggroCount();
 	void IncrementAggroCount();
 	void DecrementAggroCount();
-	void SendDisciplineTimers();
 
 	void CheckEmoteHail(Mob *target, const char* message);
 
@@ -947,7 +942,7 @@ void SetConsumption(int32 in_hunger, int32 in_thirst);
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
 
 	bool ClickyOverride() { return clicky_override; }
-
+	void SetActiveDisc(uint8 value) { active_disc = value; }
 
 protected:
 	friend class Mob;
@@ -959,6 +954,7 @@ protected:
 	void ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon);
 	void MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message = true);
 	bool client_data_loaded;
+	void CalcDiscBonuses(StatBonuses* newbon);
 
 	int16 GetFocusEffect(focusType type, uint16 spell_id);
 	int16 GetSympatheticFocusEffect(focusType type, uint16 spell_id);
@@ -1131,6 +1127,7 @@ private:
 	Timer helm_toggle_timer;
 	Timer light_update_timer;
 	Timer position_update_timer;
+	Timer disc_ability_timer;
 
     glm::vec3 m_Proximity;
 
@@ -1162,7 +1159,7 @@ private:
 	bool EngagedRaidTarget;
 	uint32 SavedRaidRestTimer;
 
-	std::set<uint32> zone_flags;
+	LinkedList<ZoneFlags_Struct*> ZoneFlags;
 
 	int TotalSecondsPlayed;
 
@@ -1224,7 +1221,7 @@ private:
 	void UpdateZoneChangeCount(uint32 zoneid);
 
 	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
-
+	uint8 active_disc;
 };
 
 #endif

@@ -188,7 +188,6 @@ public:
 	bool	LoadCharacterSpellBook(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterMemmedSpells(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterLanguages(uint32 character_id, PlayerProfile_Struct* pp);
-	bool	LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterSkills(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	LoadCharacterData(uint32 character_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp);
 	bool	LoadCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp);
@@ -206,13 +205,11 @@ public:
 	bool	SaveCharacterMaterialColor(uint32 character_id, uint32 slot_id, uint32 color);
 	bool	SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value);
 	bool	SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value);
-	bool	SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id);
 	bool	SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
 
 	/* Character Data Deletes   */
 	bool	DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
-	bool	DeleteCharacterDisc(uint32 character_id, uint32 slot_id);
 	bool	DeleteCharacterAAs(uint32 character_id);
 	bool	DeleteCharacterDye(uint32 character_id);
 

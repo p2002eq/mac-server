@@ -68,7 +68,6 @@ Mob::Mob(const char* in_name,
 		uint8		in_luclinface,
 		uint8		in_beard,
 		uint32		in_armor_tint[_MaterialCount],
-
 		uint8		in_aa_title,
 		uint8		in_see_invis, // see through invis/ivu
 		uint8		in_see_invis_undead,
@@ -78,7 +77,13 @@ Mob::Mob(const char* in_name,
 		int32		in_mana_regen,
 		uint8		in_qglobal,
 		uint8		in_maxlevel,
-		uint32		in_scalerate
+		uint32		in_scalerate,
+		uint8		in_armtexture,
+		uint8		in_bracertexture,
+		uint8		in_handtexture,
+		uint8		in_legtexture,
+		uint8		in_feettexture,
+		uint8		in_chesttexture
 		) :
 		attack_timer(2000),
 		attack_dw_timer(2000),
@@ -183,7 +188,15 @@ Mob::Mob(const char* in_name,
 	m_Light.Level.Active = m_Light.Level.Innate;
 	
 	texture		= in_texture;
+	chesttexture = in_chesttexture;
 	helmtexture	= in_helmtexture;
+	armtexture = in_armtexture;
+	bracertexture = in_bracertexture;
+	handtexture = in_handtexture;
+	legtexture = in_legtexture;
+	feettexture = in_feettexture;
+	multitexture = (chesttexture || armtexture || bracertexture || handtexture || legtexture || feettexture);
+
 	haircolor	= in_haircolor;
 	beardcolor	= in_beardcolor;
 	eyecolor1	= in_eyecolor1;
@@ -1141,9 +1154,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.face = luclinface;
 	ns->spawn.beard = beard;
 	ns->spawn.StandState = GetAppearanceValue(_appearance);
-	ns->spawn.equip_chest2 = texture;
-
-//	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
+	ns->spawn.bodytexture = texture;
 
 	if(helmtexture && helmtexture != 0xFF)
 	{
@@ -1499,8 +1510,9 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
 		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
-		client->Message(0, "  Race: %i  BaseRace: %i  Texture: %i  HelmTexture: %i  Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetTexture(), GetHelmTexture(), GetGender(), GetBaseGender(), GetBodyType());
+		client->Message(0, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
+		client->Message(0, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
 		if (client->Admin() >= 100)
 			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
@@ -2443,6 +2455,23 @@ int32 Mob::GetEquipmentMaterial(uint8 material_slot) const
 			return item->Material;
 		}
 	}
+	else if(IsNPC())
+	{
+		if(material_slot == MaterialHead)
+			return helmtexture;
+		else if(material_slot == MaterialChest)
+			return chesttexture;
+		else if(material_slot == MaterialArms)
+			return armtexture;
+		else if(material_slot == MaterialWrist)
+			return bracertexture;
+		else if(material_slot == MaterialHands)
+			return handtexture;
+		else if(material_slot == MaterialLegs)
+			return legtexture;
+		else if(material_slot == MaterialFeet)
+			return feettexture;
+	}
 
 	return 0;
 }
@@ -2709,12 +2738,15 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 	if(twinproc_chance && zone->random.Roll(twinproc_chance))
 		twinproc = true;
 
-	if (IsBeneficialSpell(spell_id)) {
+	if ((inst && inst->GetID() == 14811) ||	// Iron Bound Tome was bugged during this era and would proc on self
+		(IsBeneficialSpell(spell_id)))
+        {
 		SpellFinished(spell_id, this, 10, 0, -1, spells[spell_id].ResistDiff, true);
 		if(twinproc)
 			SpellOnTarget(spell_id, this, false, false, 0, true);
 	}
-	else if(!(on->IsClient() && on->CastToClient()->dead)) { //dont proc on dead clients
+	else if(!(on->IsClient() && on->CastToClient()->dead)) //dont proc on dead clients
+	{ 
 		SpellFinished(spell_id, on, 10, 0, -1, spells[spell_id].ResistDiff, true);
 		if(twinproc)
 			SpellOnTarget(spell_id, on, false, false, 0, true);
@@ -3677,6 +3709,39 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 
 	safe_delete(inst);
 	return stat;
+}
+
+std::string Mob::GetGlobal(const char *varname) {
+	int qgCharid = 0;
+	int qgNpcid = 0;
+	
+	if (this->IsNPC())
+		qgNpcid = this->GetNPCTypeID();
+	
+	if (this->IsClient())
+		qgCharid = this->CastToClient()->CharacterID();
+	
+	QGlobalCache *qglobals = nullptr;
+	std::list<QGlobal> globalMap;
+	
+	if (this->IsClient())
+		qglobals = this->CastToClient()->GetQGlobals();
+	
+	if (this->IsNPC())
+		qglobals = this->CastToNPC()->GetQGlobals();
+
+	if(qglobals)
+		QGlobalCache::Combine(globalMap, qglobals->GetBucket(), qgNpcid, qgCharid, zone->GetZoneID());
+	
+	std::list<QGlobal>::iterator iter = globalMap.begin();
+	while(iter != globalMap.end()) {
+		if ((*iter).name.compare(varname) == 0)
+			return (*iter).value;
+
+		++iter;
+	}
+	
+	return "Undefined";
 }
 
 void Mob::SetGlobal(const char *varname, const char *newvalue, int options, const char *duration, Mob *other) {
@@ -5048,7 +5113,6 @@ int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)
 	else if (id == "bonushate") {stat = spells[spell_id].bonushate; }
 	else if (id == "EndurCost") {stat = spells[spell_id].EndurCost; }
 	else if (id == "EndurTimerIndex") {stat = spells[spell_id].EndurTimerIndex; }
-	else if (id == "IsDisciplineBuf") {stat = spells[spell_id].IsDisciplineBuff; }
 	else if (id == "HateAdded") {stat = spells[spell_id].HateAdded; }
 	else if (id == "EndurUpkeep") {stat = spells[spell_id].EndurUpkeep; }
 	else if (id == "numhitstype") {stat = spells[spell_id].numhitstype; }

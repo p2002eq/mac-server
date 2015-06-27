@@ -835,6 +835,9 @@ void Client::AI_Process()
 
 	if (engaged)
 	{
+		if (camp_timer.Enabled())
+			camp_timer.Disable();
+
 		if (IsRooted())
 			SetTarget(hate_list.GetClosest(this));
 		else
@@ -1059,6 +1062,9 @@ void Client::AI_Process()
 					SetRunAnimSpeed(0);
 				}
 			}
+		}
+		if (IsLD() && !camp_timer.Enabled()) {
+			camp_timer.Start(CLIENT_LD_TIMEOUT, true);
 		}
 	}
 }

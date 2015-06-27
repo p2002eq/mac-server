@@ -146,10 +146,8 @@ public:
 	virtual void CalcBonuses();
 	virtual int GetCurrentBuffSlots() const { return RuleI(Spells, MaxBuffSlotsNPC); }
 	virtual int GetCurrentSongSlots() const { return RuleI(Spells, MaxSongSlotsNPC); }
-	virtual int GetCurrentDiscSlots() const { return RuleI(Spells, MaxDiscSlotsNPC); }
 	virtual int GetMaxBuffSlots() const { return RuleI(Spells, MaxBuffSlotsNPC); }
 	virtual int GetMaxSongSlots() const { return RuleI(Spells, MaxSongSlotsNPC); }
-	virtual int GetMaxDiscSlots() const { return RuleI(Spells, MaxDiscSlotsNPC); }
 	virtual int GetMaxTotalSlots() const { return RuleI(Spells, MaxTotalSlotsNPC); }
 	virtual int GetPetMaxTotalSlots() const { return RuleI(Spells, MaxTotalSlotsPET); }
 	virtual void InitializeBuffSlots();

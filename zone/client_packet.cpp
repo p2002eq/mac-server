@@ -394,7 +394,8 @@ void Client::CompleteConnect()
 	SetDueling(false);
 
 	EnteringMessages(this);
-	LoadZoneFlags();
+	ZoneFlags.Clear();
+	LoadZoneFlags(&ZoneFlags);
 
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
@@ -630,7 +631,6 @@ void Client::CompleteConnect()
 		zone->weatherSend();
 
 	TotalKarma = database.GetKarma(AccountID());
-	SendDisciplineTimers();
 
 	parse->EventPlayer(EVENT_ENTER_ZONE, this, "", 0);
 
@@ -1097,7 +1097,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterSkills(cid, &m_pp); /* Load Character Skills */
 	database.LoadCharacterSpellBook(cid, &m_pp); /* Load Character Spell Book */
 	database.LoadCharacterMemmedSpells(cid, &m_pp);  /* Load Character Memorized Spells */
-	database.LoadCharacterDisciplines(cid, &m_pp); /* Load Character Disciplines */
 	database.LoadCharacterLanguages(cid, &m_pp); /* Load Character Languages */
 
 	/* Set item material tint */
@@ -1692,9 +1691,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 	if (!IsPoison)
 	{
-		Log.Out(Logs::Detail, Logs::Spells, "Item used to cast spell effect from a poison item was missing from inventory slot %d "
-			"after casting, or is not a poison!", ApplyPoisonData->inventorySlot);
-
+		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
 		Message(0, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
 	}
 	else if (GetClass() == ROGUE)
@@ -1715,7 +1712,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
 
-			Log.Out(Logs::General, Logs::None, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
+			Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
 		}
 	}
 
@@ -1947,15 +1944,15 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 {
 
-	if (app->size <= 7 || app->size > 20) {
-		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 20, got %i", app->size);
+	if (app->size <= 7 || app->size > 21) {
+		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 21, got %i", app->size);
 		DumpPacket(app);
 		return;
 	}
 
-	char boatname[20];
+	char boatname[21];
 	memcpy(boatname, app->pBuffer, app->size);
-	boatname[19] = '\0';
+	boatname[20] = '\0';
 
 	Mob* boat = entity_list.GetMob(boatname);
 
@@ -2154,15 +2151,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	/* Item Spell Slot or Potion Belt Slot */
 	else if ((castspell->slot == USE_ITEM_SPELL_SLOT))	// ITEM or POTION cast
 	{
-		//discipline, using the item spell slot
-		if (castspell->inventoryslot == INVALID_INDEX) {
-			if (!UseDiscipline(castspell->spell_id, castspell->target_id)) {
-				Log.Out(Logs::General, Logs::Spells, "Unknown ability being used by %s, spell being cast is: %i\n", GetName(), castspell->spell_id);
-				InterruptSpell(castspell->spell_id);
-			}
-			return;
-		}
-		else if (m_inv.SupportsClickCasting(castspell->inventoryslot))	// sanity check
+		if (m_inv.SupportsClickCasting(castspell->inventoryslot))	// sanity check
 		{
 			if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
 			{
@@ -2250,13 +2239,6 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		{
 			Message(0, "Error: castspell->inventoryslot >= %i (0x%04x)", MainCursor, castspell->inventoryslot);
 			InterruptSpell(castspell->spell_id);
-		}
-	}
-	else if (castspell->slot == DISCIPLINE_SPELL_SLOT) {	// DISCIPLINE cast
-		if (!UseDiscipline(castspell->spell_id, castspell->target_id)) {
-			Log.Out(Logs::General, Logs::Spells, "Unknown ability being used by %s, spell being cast is: %i\n", GetName(), castspell->spell_id);
-			InterruptSpell(castspell->spell_id);
-			return;
 		}
 	}
 	else if (castspell->slot == ABILITY_SPELL_SLOT) {	// ABILITY cast (LoH and Harm Touch)
@@ -3327,31 +3309,35 @@ void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
 {
 	if (Admin() >= RuleI(GM, NoCombatLow) && Admin()<= RuleI(GM, NoCombatHigh) && Admin() != 0) return;
 
-	//Don't change this yet, I'll need the EQEmu code to implement /disc on TAK
-	char* packet_dump = "Disc.txt";
-	FileDumpPacketHex(packet_dump, app);
+	ClientDiscipline_Struct* cds = (ClientDiscipline_Struct*)app->pBuffer;
 
-	bool message = true;
-	ClientDiscipline_Struct* cds = (ClientDiscipline_Struct*)app;
-
-	int32 target;
-	if (GetTarget() && GetTarget()->IsClient())
-		target = GetTarget()->GetID();
-	else
-		target = GetID();
-	if (cds->disc_id > 0)
+	uint32 remain = p_timers.GetRemainingTime(pTimerDisciplineReuseStart);
+	if(remain > 0 && !GetGM())
 	{
-		UseDiscipline(cds->disc_id, target);
-		message = false;
+		char val1[20]={0};
+		char val2[20]={0};
+		Log.Out(Logs::General, Logs::Discs, "Disc reuse time not yet met. %d", remain);
+		Message_StringID(CC_User_Disciplines, DISCIPLINE_CANUSEIN, ConvertArray((remain)/60,val1), ConvertArray(remain%60,val2));
+		return;
 	}
 
-	if (message == true)
+	if (cds->disc_id > 0)
 	{
+		Log.Out(Logs::General, Logs::Discs, "Attempting to cast Disc %d.", cds->disc_id);
+
+		Client* target = this;
+		if (GetTarget() && GetTarget()->IsClient())
+			target = entity_list.GetClientByID(GetTarget()->GetID());
+
+		UseDiscipline(cds->disc_id, target);
+	}
+	else
+	{
+		Log.Out(Logs::General, Logs::Discs, "No disc used and reuse time is met.");
 		EQApplicationPacket *outapp = new EQApplicationPacket(OP_InterruptCast, sizeof(InterruptCast_Struct));
 		InterruptCast_Struct* ic = (InterruptCast_Struct*)outapp->pBuffer;
-		ic->messageid = 393;
-		ic->color = 0;
-		strcpy(ic->message, 0);
+		ic->messageid = DISCIPLINE_RDY;
+		ic->color = CC_User_Disciplines;
 		QueuePacket(outapp);
 		safe_delete(outapp);
 	}
@@ -8888,6 +8874,49 @@ void Client::Handle_OP_Key(const EQApplicationPacket *app)
 	if (app->size != 4) {
 		Log.Out(Logs::Detail, Logs::Error, "Invalid size for OP_Key: Expected: %i, Got: %i", 4, app->size);
 		return;
+	}
+
+	// Todo: Figure out how to get the client to spit these messages out for us.
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		uint32 zoneid = zfs->zoneid;
+		uint8 key = zfs->key;
+
+		const char *short_name = database.GetZoneName(zoneid);
+
+		float safe_x, safe_y, safe_z;
+		int16 minstatus = 0;
+		uint8 minlevel = 0;
+		char flag_name[128];
+		// Unfortunately, we have to hit the DB here. We can't assume the target zone will be booted to check its zone_data.
+		if(database.GetSafePoints(short_name, 0, &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_name)) 
+		{
+			if(zoneid == vexthal)
+			{
+				if(key == 0 || key == 1)
+					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					Message(CC_Default, "North Tower Key (Vex Thal)"); //Flag within the zone.
+			}
+			if(zoneid == ssratemple)
+				Message(CC_Default, "Ring of the Shissar"); //Flag within the zone.
+			if(zoneid == frozenshadow)
+				Message(CC_Default, "Tower of Frozen Shadows: %d", key); //Flag within the zone.
+			if(zoneid == bothunder)
+			{
+				if(key == 0 || key == 1)
+					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					Message(CC_Default, "Enchanted Ring of Torden"); //Flag within the zone.
+			}
+			else
+				Message(CC_Default, "%s", flag_name);
+		}
+
+		iterator.Advance();
 	}
 
 	return;
