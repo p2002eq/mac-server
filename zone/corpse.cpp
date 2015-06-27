@@ -1103,13 +1103,16 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			if (!IsPlayerCorpse() || item_data->equip_slot <= EmuConstants::GENERAL_END || item_data->equip_slot == MainPowerSource || Loot_Request_Type >= 3 ||
 				(item_data->equip_slot >= EmuConstants::CURSOR_QUEUE_BEGIN && item_data->equip_slot <= EmuConstants::CURSOR_QUEUE_END)) {
 				if (i < corpselootlimit) {
-					item = database.GetItem(item_data->item_id);
-					if(client && item) {
-						ItemInst* inst = database.CreateItem(item, item_data->charges);
-						if(inst) {
-							// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
-							client->SendItemPacket(i, inst, ItemPacketLoot);
-							safe_delete(inst);
+					if(!RuleB(NPC, IgnoreQuestLoot) || (RuleB(NPC, IgnoreQuestLoot) && item_data->quest == 0))
+					{
+						item = database.GetItem(item_data->item_id);
+						if(client && item) {
+							ItemInst* inst = database.CreateItem(item, item_data->charges);
+							if(inst) {
+								// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
+								client->SendItemPacket(i, inst, ItemPacketLoot);
+								safe_delete(inst);
+							}
 						}
 
 						item_data->lootslot = i;

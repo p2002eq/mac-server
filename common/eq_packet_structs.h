@@ -2512,6 +2512,7 @@ struct ServerLootItem_Struct {
 	uint16	lootslot;	  // uint16	lootslot;
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
+	uint8	quest;
 };
 
 struct Checksum_Struct {
