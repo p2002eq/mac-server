@@ -53,7 +53,7 @@ public:
 	* Needed for status check.
 	* Returns true if the record was found, false otherwise.
 	*/
-	virtual bool GetStatusLSAccountTable(std::string &name, unsigned int &client_unlock);
+	virtual bool GetStatusLSAccountTable(std::string name);
 
 	/**
 	* Retrieves the world registration from the long and short names provided.
@@ -90,6 +90,8 @@ public:
 protected:
 	std::string user, pass, host, port, name;
 	MYSQL *db;
+	MYSQL_ROW row;
+	MYSQL_RES *res;
 };
 
 #endif
