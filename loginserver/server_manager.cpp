@@ -228,6 +228,9 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 				break;
 			}
 		}
+
+		slsf->flags = 0x1;
+		slsf->worldid = (*iter)->GetRuntimeID();
 		slsf->usercount = (*iter)->GetPlayersOnline();
 		data_ptr += sizeof(ServerListServerFlags_Struct);
 		++iter;

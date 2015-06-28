@@ -61,21 +61,23 @@ Database::~Database()
 	}
 }
 
-bool Database::GetStatusLSAccountTable(std::string &name, unsigned int &client_unlock)
+bool Database::GetStatusLSAccountTable(std::string name)
 {
 	if (!db)
 	{
 		return false;
 	}
 
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	stringstream query(stringstream::in | stringstream::out);
-	query << "SELECT client_unlock FROM " << server.options.GetAccountTable() << " WHERE AccountName = '" << name << "' ";
+	string query = "SELECT "
+						"client_unlock "
+					"FROM "
+						"tblLoginServerAccounts "
+					"WHERE "
+						"AccountName = '" + name + "'";
 
-	if (mysql_query(db, query.str().c_str()) != 0)
+	if (mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
@@ -85,8 +87,8 @@ bool Database::GetStatusLSAccountTable(std::string &name, unsigned int &client_u
 	{
 		while ((row = mysql_fetch_row(res)) != nullptr)
 		{
-			client_unlock = atoi(row[0]);
-			if (client_unlock == 1)
+			int unlock = atoi(row[0]);
+			if (unlock == 1)
 			{
 				mysql_free_result(res);
 				return true;
@@ -108,17 +110,19 @@ bool Database::GetLoginDataFromAccountName(string name, string &password, unsign
 		return false;
 	}
 
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	stringstream query(stringstream::in | stringstream::out);
 	char tmpUN[1024];
 	mysql_real_escape_string(db, tmpUN, name.c_str(), name.length());(tmpUN, name.c_str(), name.length());
 
-	query << "SELECT LoginServerID, AccountPassword FROM " << server.options.GetAccountTable() << " WHERE AccountName = '" << tmpUN << "'";
+	string query = "SELECT "
+						"LoginServerID, AccountPassword "
+					"FROM " +
+						server.options.GetAccountTable() +
+					" WHERE " +
+						"AccountName = '" + tmpUN + "'";
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
@@ -134,7 +138,7 @@ bool Database::GetLoginDataFromAccountName(string name, string &password, unsign
 			return true;
 		}
 	}
-	server_log->Log(log_database, "Mysql query returned no result: %s", query.str().c_str());
+	server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
 	return false;
 }
 
@@ -146,23 +150,25 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 		return false;
 	}
 
-	MYSQL_RES *res;
-	MYSQL_ROW row;
 	char escaped_short_name[101];
 	unsigned long length;
 	length = mysql_real_escape_string(db, escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
 	escaped_short_name[length+1] = 0;
-	stringstream query(stringstream::in | stringstream::out);
-	query << "SELECT WSR.ServerID, WSR.ServerTagDescription, WSR.ServerTrusted, SLT.ServerListTypeID, ";
-	query << "SLT.ServerListTypeDescription, WSR.ServerAdminID FROM " << server.options.GetWorldRegistrationTable();
-	query << " AS WSR JOIN " << server.options.GetWorldServerTypeTable() << " AS SLT ON WSR.ServerListTypeID = SLT.ServerListTypeID";
-	query << " WHERE WSR.ServerShortName = '";
-	query << escaped_short_name;
-	query << "'";
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	string query = "SELECT "
+						"WSR.ServerID, WSR.ServerTagDescription, WSR.ServerTrusted, SLT.ServerListTypeID, SLT.ServerListTypeDescription, WSR.ServerAdminID "
+					"FROM " +
+						server.options.GetWorldRegistrationTable() +
+					" AS WSR JOIN " +
+						server.options.GetWorldServerTypeTable() +
+					" AS SLT ON "
+						"WSR.ServerListTypeID = SLT.ServerListTypeID"
+					" WHERE "
+						"WSR.ServerShortName = '" + escaped_short_name + " '";
+
+	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
@@ -181,13 +187,16 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 
 			if(db_account_id > 0)
 			{
-				stringstream query(stringstream::in | stringstream::out);
-				query << "SELECT AccountName, AccountPassword FROM " << server.options.GetWorldAdminRegistrationTable();
-				query << " WHERE ServerAdminID = " << db_account_id;
+				string query = "SELECT "
+									"AccountName, AccountPassword "
+								"FROM " +
+									server.options.GetWorldAdminRegistrationTable() +
+								" WHERE "
+									"ServerAdminID = " + std::to_string(db_account_id);
 
-				if(mysql_query(db, query.str().c_str()) != 0)
+				if(mysql_query(db, query.c_str()) != 0)
 				{
-					server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+					server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 					return false;
 				}
 
@@ -202,13 +211,13 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 						return true;
 					}
 				}
-				server_log->Log(log_database, "Mysql query returned no result: %s", query.str().c_str());
+				server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
 				return false;
 			}
 			return true;
 		}
 	}
-	server_log->Log(log_database, "Mysql query returned no result: %s", query.str().c_str());
+	server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
 	return false;
 }
 
@@ -219,15 +228,17 @@ void Database::UpdateLSAccountData(unsigned int id, string ip_address)
 		return;
 	}
 
-	stringstream query(stringstream::in | stringstream::out);
-	query << "UPDATE " << server.options.GetAccountTable() << " SET LastIPAddress = '";
-	query << ip_address;
-	query << "', LastLoginDate = now() where LoginServerID = ";
-	query << id;
+	string query = "UPDATE " +
+						server.options.GetAccountTable() +
+					" SET " +
+						"LastIPAddress = '" + ip_address + "', " +
+						"LastLoginDate = now() " +
+					"WHERE " +
+						"LoginServerID = " + std::to_string(id);
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -241,13 +252,18 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 	char tmpUN[1024];
 	mysql_real_escape_string(db, tmpUN, account_name.c_str(), account_name.length());
 
-	stringstream query(stringstream::in | stringstream::out);
-	query << "INSERT INTO " << server.options.GetAccessLogTable() << " SET account_id = " << account_id;
-	query << ", account_name = '" << tmpUN << "', IP = '" << IP << "', accessed = '" << accessed << "', reason = '" << reason << "'";
+	string query = "INSERT INTO " +
+						server.options.GetAccessLogTable() +
+					" SET " +
+						"account_id = " + std::to_string(account_id) + ", " +
+						"account_name = '" + tmpUN +"', " +
+						"IP = '" + IP + "', " +
+						"accessed = '" + std::to_string(accessed) + "', " +
+						"reason = '" + reason + "'";
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -264,22 +280,28 @@ void Database::UpdateLSAccountInfo(unsigned int id, std::string name, std::strin
 	}
 	char tmpUN[1024];
 	mysql_real_escape_string(db, tmpUN, name.c_str(), name.length());
-	stringstream query(stringstream::in | stringstream::out);
-	query << "INSERT INTO " << server.options.GetAccountTable() << " SET LoginServerID = ";
-	query << id << ", AccountName = '" << tmpUN << "', AccountPassword = sha('";
-	query << password << "'), AccountCreateDate = now(), LastLoginDate = now(), LastIPAddress = '";
-	query << LastIPAddress << "', client_unlock = '" << activate << "', created_by = '";
-	query << created_by << "', creationIP = '" << creationIP << "'";
 
-	if (mysql_query(db, query.str().c_str()) != 0)
+	string query = "INSERT INTO " +
+						server.options.GetAccountTable() +
+					" SET LoginServerID = " + std::to_string(id) + ", " +
+						"AccountName = '" + tmpUN + "', " +
+						"AccountPassword = sha('" +	password + "'), " +
+						"AccountCreateDate = now(), " +
+						"LastLoginDate = now(), " +
+						"LastIPAddress = '" + LastIPAddress + "', " +
+						"client_unlock = '" + std::to_string(activate) + "', " +
+						"created_by = '" + std::to_string(created_by) + "', " +
+						"creationIP = '" + creationIP + "'";
+
+	if (mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
 void Database::UpdateWorldRegistration(unsigned int id, string long_name, string ip_address)
 {
-	if(!db)
+	if (!db)
 	{
 		return;
 	}
@@ -287,18 +309,20 @@ void Database::UpdateWorldRegistration(unsigned int id, string long_name, string
 	char escaped_long_name[101];
 	unsigned long length;
 	length = mysql_real_escape_string(db, escaped_long_name, long_name.substr(0, 100).c_str(), long_name.substr(0, 100).length());
-	escaped_long_name[length+1] = 0;
-	stringstream query(stringstream::in | stringstream::out);
-	query << "UPDATE " << server.options.GetWorldRegistrationTable() << " SET ServerLastLoginDate = now(), ServerLastIPAddr = '";
-	query << ip_address;
-	query << "', ServerLongName = '";
-	query << escaped_long_name;
-	query << "' WHERE ServerID = ";
-	query << id;
+	escaped_long_name[length + 1] = 0;
+	
+	string query = "UPDATE " +
+		server.options.GetWorldRegistrationTable() +
+		" SET " +
+			"ServerLastLoginDate = now(), " +
+			"ServerLastIPAddr = '" + ip_address + "', " +
+			"ServerLongName = '" + escaped_long_name + "' " +
+		"WHERE " +
+			"ServerID = '" + std::to_string(id) + "'";
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	if (mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -309,8 +333,6 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 		return false;
 	}
 
-	MYSQL_RES *res;
-	MYSQL_ROW row;
 	char escaped_long_name[201];
 	char escaped_short_name[101];
 	unsigned long length;
@@ -318,31 +340,37 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 	escaped_long_name[length+1] = 0;
 	length = mysql_real_escape_string(db, escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
 	escaped_short_name[length+1] = 0;
-	stringstream query(stringstream::in | stringstream::out);
-	query << "SELECT max(ServerID) FROM " << server.options.GetWorldRegistrationTable();
 
-	if(mysql_query(db, query.str().c_str()) != 0)
+	string query = "SELECT max(ServerID) FROM " + server.options.GetWorldRegistrationTable();
+
+	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+		server_log->Log(log_database, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
 	res = mysql_use_result(db);
-	if(res)
+	if (res)
 	{
-		if((row = mysql_fetch_row(res)) != nullptr)
+		if ((row = mysql_fetch_row(res)) != nullptr)
 		{
 			id = atoi(row[0]) + 1;
 			mysql_free_result(res);
 
-			stringstream query(stringstream::in | stringstream::out);
-			query << "INSERT INTO " << server.options.GetWorldRegistrationTable() << " SET ServerID = " << id;
-			query << ", ServerLongName = '" << escaped_long_name << "', ServerShortName = '" << escaped_short_name;
-			query << "', ServerListTypeID = 3, ServerAdminID = 0, ServerTrusted = 0, ServerTagDescription = ''";
+			string query = "INSERT INTO " +
+				server.options.GetWorldRegistrationTable() +
+				" SET " +
+					"ServerID = '" + std::to_string(id) + "', " +
+					"ServerLongName = '" + escaped_long_name + "', " +
+					"ServerShortName = '" + escaped_short_name + "', " +
+					"ServerListTypeID = 3, " +
+					"ServerAdminID = 0, " +
+					"ServerTrusted = 0, " +
+					"ServerTagDescription = ''";
 
-			if(mysql_query(db, query.str().c_str()) != 0)
+			if (mysql_query(db, query.c_str()) != 0)
 			{
-				server_log->Log(log_database, "Mysql query failed: %s", query.str().c_str());
+				server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 				return false;
 			}
 			return true;

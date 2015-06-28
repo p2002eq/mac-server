@@ -248,7 +248,7 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 	{
 		if(!sentsessioninfo)
 		{
-			if (server.db->GetStatusLSAccountTable(username, enable) == false)
+			if (server.db->GetStatusLSAccountTable(username) == false)
 			{
 				FatalError("Account is not activated. Server is not allowing open logins at this time.");
 				return;
@@ -352,7 +352,7 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 
 	if (result)
 	{
-		if (server.db->GetStatusLSAccountTable(username, enable) == false)
+		if (server.db->GetStatusLSAccountTable(username) == false)
 		{
 			FatalError("Account is not activated. Server is not allowing open logins at this time.");
 			return;
