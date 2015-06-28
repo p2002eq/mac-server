@@ -459,6 +459,24 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		string s_list_desc;
 		string s_acct_name;
 		string s_acct_pass;
+
+		// something here is causing a "debug assertion" if world registration table is empty, and only when empty.
+		// this shows that the previous values are null when they should not be.
+#ifdef _WINDOWS
+		//if (s_id == NULL)
+		//	MessageBox(0, "s_id returns null", "Debug", MB_OK);
+#endif
+
+		//server_log->Log(log_world, "long_name: ", long_name);
+		//server_log->Log(log_world, "short_name: ", short_name);
+		//server_log->Log(log_world, "s_id: ", std::to_string(s_id));
+		//server_log->Log(log_world, "s_desc: ", s_desc);
+		//server_log->Log(log_world, "s_list_type: ", std::to_string(s_list_type));
+		//server_log->Log(log_world, "s_trusted: ", std::to_string(s_trusted));
+		//server_log->Log(log_world, "s_list_desc: ", s_list_desc);
+		//server_log->Log(log_world, "s_acct_name: ", s_acct_name);
+		//server_log->Log(log_world, "s_acct_pass: ", s_acct_pass);
+
 		if(server.db->GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
 		{
 			if(account_name.size() > 0 && account_password.size() > 0)
@@ -506,6 +524,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 		else
 		{
+			s_id = 0; // part of trying to determine the assertion fix.
 			server_log->Log(log_world, "Server %s(%s) attempted to log in but database couldn't find an entry but unregistered servers are allowed.",
 				long_name.c_str(), short_name.c_str());
 			if(server.db->CreateWorldRegistration(long_name, short_name, s_id))
