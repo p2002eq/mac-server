@@ -174,8 +174,8 @@ public:
 	virtual void SpellProcess();
 	virtual void FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho);
 
-	void	AddItem(const Item_Struct* item, uint16 charges, bool equipitem = true);
-	void	AddItem(uint32 itemid, uint16 charges, bool equipitem = true);
+	void	AddItem(const Item_Struct* item, uint16 charges, bool equipitem = true, bool quest = false);
+	void	AddItem(uint32 itemid, uint16 charges, bool equipitem = true, bool quest = false);
 	void	AddLootTable();
 	void	AddLootTable(uint32 ldid);
 	void	DescribeAggro(Client *towho, Mob *mob, bool verbose);
@@ -189,6 +189,11 @@ public:
 	void	QueryLoot(Client* to);
 	uint32	CountLoot();
 	inline uint32	GetLoottableID()	const { return loottable_id; }
+	bool	GetQuestLootItem(int16 itemid); 
+	bool	HasQuestLootItem(); 
+	bool	RemoveQuestLootItems(int16 itemid);
+	bool	QuestLootCount(uint16 itemid1, uint16 itemid2, uint16 itemid3, uint16 itemid4);
+	void	RemoveItem(ServerLootItem_Struct* item_data);
 	virtual void UpdateEquipmentLight();
 
 	inline uint32	GetCopper()		const { return copper; }
@@ -270,7 +275,7 @@ public:
 	bool	IsTaunting() { return taunting; }
 	void	PickPocket(Client* thief);
 	void	StartSwarmTimer(uint32 duration) { swarm_timer.Start(duration); }
-	void	AddLootDrop(const Item_Struct*dbitem, ItemList* itemlistconst, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange = false);
+	void	AddLootDrop(const Item_Struct*dbitem, ItemList* itemlistconst, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange = false, bool quest = false);
 	virtual void DoClassAttacks(Mob *target);
 	void	CheckSignal();
 	inline bool IsTargetableWithHotkey() const { return no_target_hotkey; }
@@ -385,6 +390,8 @@ public:
 	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
 	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }
 
+	bool AddQuestLoot(int16 itemid);
+	void DeleteQuestLoot(int16 itemid1, int16 itemid2 = 0, int16 itemid3 = 0, int16 itemid4 = 0);
 	bool IsBoat();
 
 protected:

@@ -215,6 +215,7 @@ public:
 
 	/* Character Inventory  */
 	bool	NoRentExpired(const char* name);
+	bool	SaveSoulboundItems(Client* client, std::list<ItemInst*>::const_iterator &start, std::list<ItemInst*>::const_iterator &end);
 
 	/* Corpses  */
 	bool		DeleteItemOffCharacterCorpse(uint32 db_id, uint32 equip_slot, uint32 item_id);

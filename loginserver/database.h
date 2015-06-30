@@ -20,9 +20,6 @@
 
 #include <string>
 
-#define EQEMU_MYSQL_ENABLED
-//#define EQEMU_POSTGRESQL_ENABLED
-
 /**
 * Base database class, intended to be extended.
 */

@@ -1051,17 +1051,21 @@ void command_npcloot(Client *c, const Seperator *sep){
 			const Item_Struct* dbitem = database.GetItem(item);
 			if (dbitem)
 			{
+				bool quest = false;
+				if (sep->arg[4][0] != 0 && sep->IsNumber(4))
+					quest = atoi(sep->arg[4]);
+
 				if (sep->arg[3][0] != 0 && sep->IsNumber(3))
-					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0);
+					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0, quest);
 				else
 				{
 					if(database.ItemQuantityType(item) == Quantity_Charges)
 					{
 						int8 charges = dbitem->MaxCharges;
-						c->GetTarget()->CastToNPC()->AddItem(item, charges, 0);
+						c->GetTarget()->CastToNPC()->AddItem(item, charges, 0, quest);
 					}
 					else
-						c->GetTarget()->CastToNPC()->AddItem(item, 1, 0);
+						c->GetTarget()->CastToNPC()->AddItem(item, 1, 0, quest);
 				}
 				c->Message(CC_Default, "Added item(%i) to the %s's loot.", item, c->GetTarget()->GetName());
 			}
@@ -1111,7 +1115,7 @@ void command_npcloot(Client *c, const Seperator *sep){
 			c->Message(CC_Default, "Usage: #npcloot money platinum gold silver copper");
 	}
 	else
-		c->Message(CC_Default, "Usage: #npcloot [show/money/add/remove] [itemid/all/money: pp gp sp cp] [quantity]");
+		c->Message(CC_Default, "Usage: #npcloot [show/money/add/remove] [itemid/all/money: pp gp sp cp] [quantity] [quest]");
 }
 
 void command_gm(Client *c, const Seperator *sep){
@@ -2886,10 +2890,13 @@ void command_peekinv(Client *c, const Seperator *sep){
 				item = (inst) ? inst->GetItem() : nullptr;
 				static char itemid[7];
 				sprintf(itemid, "%06d", (item == 0) ? 0 : item->ID);
-				c->Message((item == 0), "CursorSlot: %i, Depth: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", MainCursor, i,
-					((item == 0) ? 0 : item->ID), 0x12, ((item == 0) ? 0 : item->ID),
-					((item == 0) ? "null" : item->Name), 0x12,
-					((item == 0) ? 0 : inst->GetCharges()));
+				int16 slot = i;
+				if(slot > 0)
+					slot += EmuConstants::CURSOR_QUEUE_BEGIN;
+				c->Message((item == 0), "CursorSlot: %i, Item: %i (%c%c%s%s%c), Charges: %i", slot,
+				((item == 0) ? 0 : item->ID), 0x12, 0x30, ((item == 0) ? 0 : itemid),
+				((item == 0) ? "null" : item->Name), 0x12,
+				((item == 0) ? 0 : inst->GetCharges()));
 
 				if (inst && inst->IsType(ItemClassContainer) && i == 0) { // 'CSD 1' - only display contents of slot 30[0] container..higher ones don't exist
 					for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++) {
@@ -2897,14 +2904,15 @@ void command_peekinv(Client *c, const Seperator *sep){
 						item = (instbag) ? instbag->GetItem() : nullptr;
 						static char itemid[7];
 						sprintf(itemid, "%06d", (item == 0) ? 0 : item->ID);
-						c->Message((item == 0), "   CursorBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%c%s%s%c), Charges: %i",
-							Inventory::CalcSlotId(MainCursor, j),
-							MainCursor, j, ((item == 0) ? 0 : item->ID), 0x12, ((item == 0) ? 0 : item->ID),
+						c->Message((item == 0), "   CursorBagSlot: %i Item: %i (%c%c%s%s%c), Charges: %i",
+							Inventory::CalcSlotId(MainCursor, j), 
+							((item == 0) ? 0 : item->ID), 0x12,  0x30, ((item == 0) ? 0 : itemid),
 							((item == 0) ? "null" : item->Name), 0x12,
 							((item == 0) ? 0 : instbag->GetCharges()));
 					}
 				}
 			}
+			c->Message(CC_Default, "Cursor size: %d", c->GetInv().CursorSize());
 		}
 	}
 

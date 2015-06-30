@@ -442,6 +442,7 @@ RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will
 RULE_INT ( NPC, NPCTemplateID, 153076)
 RULE_BOOL ( NPC, BoatsRunByDefault, true) // Mainly to make it easier to adjust boats' timing on the fly.
 RULE_BOOL(NPC, CheckSoWBuff, false)
+RULE_BOOL( NPC, IgnoreQuestLoot, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Aggro )

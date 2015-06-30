@@ -21,6 +21,8 @@
 #include "login_structures.h"
 #include <stdlib.h>
 
+#pragma warning( disable : 4996 4267 )
+
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
@@ -226,6 +228,9 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 				break;
 			}
 		}
+
+		slsf->flags = 0x1;
+		slsf->worldid = (*iter)->GetRuntimeID();
 		slsf->usercount = (*iter)->GetPlayersOnline();
 		data_ptr += sizeof(ServerListServerFlags_Struct);
 		++iter;

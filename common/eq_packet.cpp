@@ -38,6 +38,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#pragma warning( disable : 4244 4800 4267 )
+
 EQPacket::EQPacket(EmuOpcode op, const unsigned char *buf, uint32 len)
 :	BasePacket(buf, len),
 	emu_opcode(op)

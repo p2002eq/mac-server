@@ -19,6 +19,8 @@
 #include "error_log.h"
 #include "login_server.h"
 
+#pragma warning( disable : 4996 )
+
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;

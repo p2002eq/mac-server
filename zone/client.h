@@ -1025,7 +1025,6 @@ private:
 	uint32				ip;
 	uint16				port;
 	CLIENT_CONN_STATUS	client_state;
-	bool				itemsinabag;
 	uint32				character_id;
 	uint32				WID;
 	uint32				account_id;
@@ -1131,7 +1130,8 @@ private:
     glm::vec3 m_Proximity;
 
 	void BulkSendInventoryItems();
-	void	BulkSendItems();
+	void BulkSendItems();
+	void SendCursorItems();
 
 	faction_map factionvalues;
 
@@ -1186,7 +1186,7 @@ private:
 			//this is the point where the client changes to the loading screen
 			ReceivedZoneEntry, //got the first packet, loading up PP
 			PlayerProfileLoaded, //our DB work is done, sending it
-			ZoneInfoSent, //includes PP, tributes, tasks, spawns, time and weather
+			ZoneInfoSent, //includes PP, spawns, time and weather
 			//this is the point where the client shows a status bar zoning in
 			NewZoneRequested, //received and sent new zone request
 			ClientSpawnRequested, //client sent ReqClientSpawn

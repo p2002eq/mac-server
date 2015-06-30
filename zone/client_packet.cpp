@@ -946,11 +946,7 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	safe_delete(outapp);
 
 	SendGuildMOTD();
-
-	const ItemInst* inst = m_inv[MainCursor];
-	if (inst){
-		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
-	}
+	SendCursorItems();
 
 	return;
 }
@@ -1510,32 +1506,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	/*
 	Character Inventory Packet
-	this is not quite where live sends inventory, they do it after tribute
+	AK sent both individual item packets and a single bulk inventory packet on zonein
+	The client requires cursor items to be sent in Handle_Connect_OP_SendExpZonein, should all items be moved there as well?
 	*/
 	if (loaditems) { /* Dont load if a length error occurs */
 		BulkSendItems();
 		BulkSendInventoryItems();
-		/* Send stuff on the cursor which isnt sent in bulk */
-		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
-			/* First item cursor is sent in bulk inventory packet */
-			if (iter == m_inv.cursor_cbegin())
-				continue;
-			const ItemInst *inst = *iter;
-			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
-		}
-
-		//Items in cursor container
-		itemsinabag = false; // This used to provide a message when we zoned with items in a bag before that worked, now it doesn't do anything but may be useful in the future.
-		int16 slot_id = 0;
-		for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
-			const ItemInst* inst = m_inv[slot_id];
-			if (inst){
-				itemsinabag = true;
-
-				Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
-				break;
-			}
-		}
 	}
 
 	/*

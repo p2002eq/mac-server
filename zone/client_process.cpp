@@ -757,7 +757,7 @@ void Client::BulkSendItems()
 
 	// LINKDEAD TRADE ITEMS
 	// Move trade slot items back into normal inventory..need them there now for the proceeding validity checks -U
-	for(slot_id = 3000; slot_id <= 3007; slot_id++) {
+	for(slot_id = EmuConstants::TRADE_BEGIN; slot_id <= EmuConstants::TRADE_END; slot_id++) {
 		ItemInst* inst = m_inv.PopItem(slot_id);
 		if(inst) {
 			bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
@@ -807,6 +807,29 @@ void Client::BulkSendItems()
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
 		}
 	}
+}
+
+void Client::SendCursorItems()
+{
+	/* Send stuff on the cursor which isnt sent in bulk */
+	for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
+		const ItemInst *inst = *iter;
+		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
+	}
+
+	//Items in cursor container
+	//The client ignores these items. I couldn't find a packet from AK with bag cursor items being sent and
+	//have tried every packet type without luck. Perhaps our slotids are wrong? Workaround hack is in SwapItem.
+
+	/*int16 slot_id = 0;
+	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			SendItemPacket(slot_id, inst, ItemPacketTrade);
+			Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
+			break;
+		}
+	}*/
 }
 
 void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
