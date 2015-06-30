@@ -277,12 +277,12 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
-Mob *HateList::GetTop(Mob *center)
+Mob *HateList::GetTop()
 {
 	Mob* top = nullptr;
 	int32 hate = -1;
 
-	if(center == nullptr)
+	if(owner == nullptr)
 		return nullptr;
 
 	if (RuleB(Aggro,SmartAggroList))
@@ -291,29 +291,52 @@ Mob *HateList::GetTop(Mob *center)
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
 
+		uint8 mobLevel = owner->GetLevel();
+
+		// the aggro amount of most offensive spells; scales by target level
+		int32 defaultAggro = 25;
+		if (mobLevel > 35)
+		{
+			defaultAggro = 25 + (mobLevel - 25)*(mobLevel - 25);
+		}
+		else if (mobLevel > 15)
+		{
+			defaultAggro = 15 + (mobLevel * mobLevel) / 10;
+		}
+
+		// melee range hate bonus
+		int32 chargeAggroThreshold = defaultAggro / 3;
+		if (chargeAggroThreshold < 130)
+		{
+			chargeAggroThreshold = 130;
+		}
+		if (owner->IsNPC() && owner->GetSpecialAbility(PROX_AGGRO))
+		{
+			chargeAggroThreshold *= 2;
+		}
+
 		auto iterator = list.begin();
-		while(iterator != list.end())
+		while (iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
-			int16 aggroMod = 0;
 
-			if(!cur)
+			if (!cur)
 			{
 				++iterator;
 				continue;
 			}
 
-			if(!cur->ent)
+			if (!cur->ent)
 			{
 				++iterator;
 				continue;
 			}
 
-            auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
+			auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
 
-			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
+			if (owner->IsNPC() && owner->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
 			{
-				if(!zone->watermap->InLiquid(hateEntryPosition)) {
+				if (!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
 					continue;
@@ -322,7 +345,7 @@ Mob *HateList::GetTop(Mob *center)
 
 			if (cur->ent->Sanctuary())
 			{
-				if(hate == -1)
+				if (hate == -1)
 				{
 					top = cur->ent;
 					hate = 1;
@@ -331,9 +354,9 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing()))
+			if (cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing()))
 			{
-				if(hate == -1)
+				if (hate == -1)
 				{
 					top = cur->ent;
 					hate = 0;
@@ -344,62 +367,39 @@ Mob *HateList::GetTop(Mob *center)
 
 			int32 currentHate = cur->hate;
 
-			if(cur->ent->IsClient())
+			if(owner->CombatRange(cur->ent))
 			{
-				if(cur->ent->CastToClient()->IsSitting())
-				{
-					aggroMod += RuleI(Aggro, SittingAggroMod);
-				}
-
-				if(center)
-				{
-					if(center->GetTarget() == cur->ent)
-						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
-
-					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
-					{
-						if(center->CombatRange(cur->ent))
-						{
-							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
-
-							if(currentHate > hateClientTypeInRange || cur->bFrenzy)
-							{
-								hateClientTypeInRange = currentHate;
-								topClientTypeInRange = cur->ent;
-							}
-						}
-					}
-				}
-
+				currentHate += chargeAggroThreshold;
 			}
-			else
-			{
-				if(center)
-				{
-					if(center->GetTarget() == cur->ent)
-						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
 
-					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
-					{
-						if(center->CombatRange(cur->ent))
-						{
-							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
-						}
-					}
+			if (cur->bFrenzy || cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP() * 100 / cur->ent->GetMaxHP()) < 20))
+			{
+				// this could be replaced with a better fit
+				int32 lowHealthAggroThreshold = mobLevel - 15;
+				lowHealthAggroThreshold = lowHealthAggroThreshold*lowHealthAggroThreshold*lowHealthAggroThreshold / 4 + 500;
+				if (lowHealthAggroThreshold < 500)
+					lowHealthAggroThreshold = 500;
+				else if (lowHealthAggroThreshold > 10000)
+					lowHealthAggroThreshold = 10000;
+
+				currentHate += lowHealthAggroThreshold;
+			}
+
+			if (cur->ent->IsClient())
+			{
+				if (cur->ent->CastToClient()->IsSitting())
+				{
+					currentHate += defaultAggro;
+				}
+
+				if (currentHate > hateClientTypeInRange)
+				{
+					hateClientTypeInRange = currentHate;
+					topClientTypeInRange = cur->ent;
 				}
 			}
 
-			if(cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP()*100/cur->ent->GetMaxHP()) < 20))
-			{
-				aggroMod += RuleI(Aggro, CriticallyWoundedAggroMod);
-			}
-
-			if(aggroMod)
-			{
-				currentHate += (currentHate * aggroMod / 100);
-			}
-
-			if(currentHate > hate || cur->bFrenzy)
+			if(currentHate > hate)
 			{
 				hate = currentHate;
 				top = cur->ent;
@@ -408,6 +408,7 @@ Mob *HateList::GetTop(Mob *center)
 			++iterator;
 		}
 
+		// this is mostly to make sure NPCs attack players instead of pets in melee range
 		if(topClientTypeInRange != nullptr && top != nullptr)
 		{
 			bool isTopClientType = top->IsClient();
@@ -430,7 +431,7 @@ Mob *HateList::GetTop(Mob *center)
 		{
 			if(top == nullptr && skipped_count > 0)
 			{
-				return center->GetTarget() ? center->GetTarget() : nullptr;
+				return owner->GetTarget() ? owner->GetTarget() : nullptr;
 			}
 			return top ? top : nullptr;
 		}
@@ -442,8 +443,10 @@ Mob *HateList::GetTop(Mob *center)
 		while(iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
- 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition()))) {
+ 			if(owner->IsNPC() && owner->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
+			{
+				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition())))
+				{
 					skipped_count++;
 					++iterator;
 					continue;
@@ -457,8 +460,9 @@ Mob *HateList::GetTop(Mob *center)
 			}
 			++iterator;
 		}
-		if(top == nullptr && skipped_count > 0) {
-			return center->GetTarget() ? center->GetTarget() : nullptr;
+		if(top == nullptr && skipped_count > 0)
+		{
+			return owner->GetTarget() ? owner->GetTarget() : nullptr;
 		}
 		return top ? top : nullptr;
 	}

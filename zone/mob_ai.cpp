@@ -845,7 +845,7 @@ void Client::AI_Process()
 		{
 			if(AItarget_check_timer->Check())
 			{
-				SetTarget(hate_list.GetTop(this));
+				SetTarget(hate_list.GetTop());
 			}
 		}
 
@@ -1216,11 +1216,11 @@ void Mob::AI_Process() {
 			{
 				if (IsFocused()) {
 					if (!target) {
-						SetTarget(hate_list.GetTop(this));
+						SetTarget(hate_list.GetTop());
 					}
 				} else {
 					if (!ImprovedTaunt())
-						SetTarget(hate_list.GetTop(this));
+						SetTarget(hate_list.GetTop());
 				}
 
 			}
@@ -1458,7 +1458,7 @@ void Mob::AI_Process() {
 			if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
                 auto targetPosition = glm::vec3(target->GetX(), target->GetY(), target->GetZ());
 				if(!zone->watermap->InLiquid(targetPosition)) {
-					Mob *tar = hate_list.GetTop(this);
+					Mob *tar = hate_list.GetTop();
 					if(tar == target) {
 						WipeHateList();
 						Heal();

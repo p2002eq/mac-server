@@ -6195,13 +6195,14 @@ XS(XS_Mob_CheckAggroAmount); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Mob_CheckAggroAmount)
 {
 	dXSARGS;
-	if (items != 2)
-		Perl_croak(aTHX_ "Usage: Mob::CheckAggroAmount(THIS, spellid)");
+	if (items != 3)
+		Perl_croak(aTHX_ "Usage: Mob::CheckAggroAmount(THIS, spellid, spell_target)");
 	{
 		Mob *		THIS;
 		uint32		RETVAL;
 		dXSTARG;
 		uint16		spellid = (uint16)SvUV(ST(1));
+		Mob *		spell_target;
 
 		if (sv_derived_from(ST(0), "Mob")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -6212,7 +6213,21 @@ XS(XS_Mob_CheckAggroAmount)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->CheckAggroAmount(spellid);
+		spell_target = THIS;
+
+		if (items > 2)
+		{
+			if (sv_derived_from(ST(2), "Mob")) {
+				IV tmp = SvIV((SV*)SvRV(ST(2)));
+				spell_target = INT2PTR(Mob *, tmp);
+			}
+			else
+				Perl_croak(aTHX_ "spell_target is not of type Mob");
+			if (spell_target == nullptr)
+				Perl_croak(aTHX_ "spell_target is nullptr, avoiding crash.");
+		}
+
+		RETVAL = THIS->CheckAggroAmount(spellid, spell_target);
 		XSprePUSH; PUSHu((UV)RETVAL);
 	}
 	XSRETURN(1);
