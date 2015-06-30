@@ -19,6 +19,7 @@
 #define EQEMU_DATABASE_H
 
 #include <string>
+#include <sstream>
 #include <stdlib.h>
 #include <mysql.h>
 
@@ -70,7 +71,7 @@ public:
 	/**
 	* Updates or creates the login server account with info from world server
 	*/
-	virtual void CreateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
+	virtual void UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
 
 	/**
 	* Updates or creates the access log

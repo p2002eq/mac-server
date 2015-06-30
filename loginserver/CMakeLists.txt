@@ -21,6 +21,7 @@ SET(eqlogin_headers
 	error_log.h
 	login_server.h
 	login_structures.h
+	options.h
 	server_manager.h
 	world_server.h
 )
