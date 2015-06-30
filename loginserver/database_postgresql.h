@@ -15,90 +15,78 @@
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
-#ifndef EQEMU_DATABASEMYSQL_H
-#define EQEMU_DATABASEMYSQL_H
+#ifndef EQEMU_DATABASEPOSTGRESQL_H
+#define EQEMU_DATABASEPOSTGRESQL_H
 
 #include "database.h"
+#ifdef EQEMU_POSTGRESQL_ENABLED
 
 #include <string>
 #include <sstream>
 #include <stdlib.h>
-#include <mysql.h>
+#include <libpq-fe.h>
+
+using namespace std;
 
 /**
-* Mysql Database class
-*/
-class DatabaseMySQL : public Database
+ * PostgreSQL Database class
+ */
+class DatabasePostgreSQL : public Database
 {
 public:
 	/**
 	* Constructor, sets our database to null.
 	*/
-	DatabaseMySQL() { db = nullptr; }
+	DatabasePostgreSQL() { db = nullptr; }
 
 	/**
 	* Constructor, tries to set our database to connect to the supplied options.
 	*/
-	DatabaseMySQL(std::string user, std::string pass, std::string host, std::string port, std::string name);
+	DatabasePostgreSQL(string user, string pass, string host, string port, string name);
 
 	/**
 	* Destructor, frees our database if needed.
 	*/
-	virtual ~DatabaseMySQL();
+	virtual ~DatabasePostgreSQL();
 
 	/**
-	* @return Returns true if the database successfully connected.
+	* Returns true if the database successfully connected.
 	*/
 	virtual bool IsConnected() { return (db != nullptr); }
-	
+
 	/**
 	* Retrieves the login data (password hash and account id) from the account name provided
 	* Needed for client login procedure.
 	* Returns true if the record was found, false otherwise.
 	*/
-	virtual bool GetLoginDataFromAccountName(std::string name, std::string &password, unsigned int &id);
-
-	/**
-	* Retrieves account status to check for GM ability to use UF+ clients
-	* Needed for status check.
-	* Returns true if the record was found, false otherwise.
-	*/
-	virtual bool GetStatusLSAccountTable(std::string &name, unsigned int &client_unlock);
+	virtual bool GetLoginDataFromAccountName(string name, string &password, unsigned int &id);
 
 	/**
 	* Retrieves the world registration from the long and short names provided.
 	* Needed for world login procedure.
 	* Returns true if the record was found, false otherwise.
 	*/
-	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
-		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
+	virtual bool GetWorldRegistration(string long_name, string short_name, unsigned int &id, string &desc, unsigned int &list_id,
+		unsigned int &trusted, string &list_desc, string &account, string &password);
 
 	/**
 	* Updates the ip address of the client with account id = id
 	*/
-	virtual void UpdateLSAccountData(unsigned int id, std::string ip_address);
-
-	/**
-	* Updates or creates the access log
-	*/
-	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
-
-	/**
-	* Updates or creates the login server account with info from world server
-	*/
-	virtual void UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
+	virtual void UpdateLSAccountData(unsigned int id, string ip_address);
 
 	/**
 	* Updates the ip address of the world with account id = id
 	*/
-	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address);
+	virtual void UpdateWorldRegistration(unsigned int id, string long_name, string ip_address);
 
 	/**
 	* Creates new world registration for unregistered servers and returns new id
 	*/
-	virtual bool CreateWorldRegistration(std::string long_name, std::string short_name, unsigned int &id);
+	virtual bool CreateWorldRegistration(string long_name, string short_name, unsigned int &id);
 protected:
-	std::string user, pass, host, port, name;
-	MYSQL *db;
+	string user, pass, host, port, name;
+	PGconn *db;
 };
+
+#endif
 #endif

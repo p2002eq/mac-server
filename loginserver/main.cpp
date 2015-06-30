@@ -209,7 +209,7 @@ int main()
 
 	//Create our DB from options.
 		server_log->Log(log_debug, "MySQL Database Init.");
-		server.db = (Database*)new Database(
+		server.db = (Database*)new DatabaseMySQL(
 			server.config->GetVariable("database", "user"),
 			server.config->GetVariable("database", "password"),
 			server.config->GetVariable("database", "host"),
