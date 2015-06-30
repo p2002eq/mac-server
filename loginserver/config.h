@@ -30,7 +30,7 @@ public:
 	/**
 	* Gets a variable if it exists.
 	*/
-	std::string Config::LoadOption(std::string option, std::string filename);
+	std::string LoadOption(std::string option, std::string filename);
 
 protected:
 	std::map<std::string, std::map<std::string, std::string> > vars;
