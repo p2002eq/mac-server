@@ -46,12 +46,12 @@ bool Client::Process()
 	EQApplicationPacket *app = connection->PopPacket();
 	while(app)
 	{
-		if(server.options.IsTraceOn())
+		if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 		{
 			server_log->Log(log_network, "Application packet received from client (size %u)", app->Size());
 		}
 
-		if(server.options.IsDumpInPacketsOn())
+		if (server.config->LoadOption("dump_packets_in", "login.ini") == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -60,7 +60,7 @@ bool Client::Process()
 		{
 		case OP_SessionReady:
 			{
-				if(server.options.IsTraceOn())
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
 					server_log->Log(log_network, "Session ready received from client.");
 				}
@@ -69,7 +69,7 @@ bool Client::Process()
 			}
 		case OP_SessionLogin:
 			{
-				if(server.options.IsTraceOn())
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
 					server_log->Log(log_network, "Session ready received from client.");
 				}
@@ -83,7 +83,7 @@ bool Client::Process()
 					server_log->Log(log_network_error, "Login received but it is too small, discarding.");
 					break;
 				}
-				if(server.options.IsTraceOn())
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
 					server_log->Log(log_network, "Login received from client.");
 				}
@@ -103,7 +103,7 @@ bool Client::Process()
 			}
 		case OP_ServerListRequest:
 			{
-				if(server.options.IsTraceOn())
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
 					server_log->Log(log_network, "Server list request received from client.");
 				}
@@ -129,7 +129,7 @@ bool Client::Process()
 			{
 				char dump[64];
 				app->build_header_dump(dump);
-				server_log->Log(log_network_error, "Recieved unhandled application packet from the client: %s.", dump);
+				server_log->Log(log_network_error, "Received unhandled application packet from the client: %s.", dump);
 			}
 		}
 		delete app;
@@ -196,7 +196,7 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 
 	string username = userpass.substr(0, userpass.find("/"));
 	string password = userpass.substr(userpass.find("/") + 1);
-	string salt = server.options.GetSalt();
+	string salt = server.config->LoadOption("salt", "login.ini");
 
 	server_log->Log(log_network, "Username: %s", username.c_str());
 	server_log->Log(log_network, "Password: %s", password.c_str());
@@ -218,10 +218,11 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 		server_log->Log(log_client_error, "Error logging in, user %s does not exist in the database.", username.c_str());
 
 		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
-		if (server.options.IsCreateOn())
+
+		if (server.config->LoadOption("auto_account_create", "login.ini") == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
-			server.db->UpdateLSAccountInfo(NULL, username, userandpass, "", 2, string(inet_ntoa(in)), string(inet_ntoa(in)));
+			server.db->CreateLSAccountInfo(NULL, username, userandpass, "", 2, string(inet_ntoa(in)), string(inet_ntoa(in)));
 			FatalError("Account did not exist so it was created. Hit connect again to login.");
 
 			return;
@@ -267,7 +268,7 @@ void Client::Handle_OSXLogin(const char* data, unsigned int size)
 			connection->QueuePacket(outapp);
 			delete outapp;
 
-			string buf = server.options.GetNetworkIP();
+			string buf =  server.config->LoadOption("network_ip", "login.ini");
 			EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, buf.length() + 1);
 			strncpy((char*)outapp2->pBuffer, buf.c_str(), buf.length() + 1);
 			connection->QueuePacket(outapp2);
@@ -312,7 +313,7 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 
 	string username = lcs->username;
 	string password = lcs->password;
-	string salt = server.options.GetSalt();
+	string salt = server.config->LoadOption("salt", "login.ini");
 
 	string userandpass = password + salt;
 	unsigned int enable;
@@ -324,10 +325,11 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 		server_log->Log(log_client_error, "Error logging in, user %s does not exist in the database.", username.c_str());
 
 		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
-		if (server.options.IsCreateOn())
+
+		if (server.config->LoadOption("auto_account_create", "login.ini") == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
-			server.db->UpdateLSAccountInfo(NULL, username.c_str(), userandpass.c_str(), "", 1, string(inet_ntoa(in)), string(inet_ntoa(in)));
+			server.db->CreateLSAccountInfo(NULL, username.c_str(), userandpass.c_str(), "", 1, string(inet_ntoa(in)), string(inet_ntoa(in)));
 			FatalError("Account did not exist so it was created. Hit connect again to login.");
 
 			return;
@@ -412,7 +414,8 @@ void Client::SendServerListPacket()
 {
 	EQApplicationPacket *outapp = server.SM->CreateOldServerListPacket(this);
 
-	if(server.options.IsDumpOutPacketsOn())
+
+	if (server.config->LoadOption("dump_packets_out", "login.ini") == "TRUE")
 	{
 		DumpPacket(outapp);
 	}
@@ -447,7 +450,7 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 
 void Client::SendPlayResponse(EQApplicationPacket *outapp)
 {
-	if(server.options.IsTraceOn())
+	if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 	{
 		server_log->Log(log_network_trace, "Sending play response for %s.", GetAccountName().c_str());
 		server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
@@ -479,19 +482,19 @@ void Client::GenerateKey()
 void Client::Logs(std::string platform, unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason)
 {
 	// valid reason codes are: notexist, created, badpass, success
-	if (server.options.IsLoginFailsOn() && !server.options.IsCreateOn() && reason == "notexist")
+	if (server.config->LoadOption("failed_login_log", "login.ini") == "TRUE" && server.config->LoadOption("auto_account_create", "login.ini") == "FALSE" && reason == "notexist")
 	{
 		server.db->UpdateAccessLog(account_id, account_name, IP, accessed, "Account not exist, " + platform);
 	}
-	if (server.options.IsLoginFailsOn() && server.options.IsCreateOn() && reason == "created")
+	if (server.config->LoadOption("failed_login_log", "login.ini") == "TRUE" && server.config->LoadOption("auto_account_create", "login.ini") == "TRUE" && reason == "created")
 	{
 		server.db->UpdateAccessLog(account_id, account_name, IP, accessed, "Account created, " + platform);
 	}
-	if (server.options.IsLoginFailsOn() && reason == "badpass")
+	if (server.config->LoadOption("failed_login_log", "login.ini") == "TRUE" && reason == "badpass")
 	{
 		server.db->UpdateAccessLog(account_id, account_name, IP, accessed, "Bad password, " + platform);
 	}
-	if (server.options.IsLoggedOn() && reason == "success")
+	if (server.config->LoadOption("good_loginIP_log", "login.ini") == "TRUE" && reason == "success")
 	{
 		server.db->UpdateAccessLog(account_id, account_name, IP, accessed, "Logged in Success, " + platform);
 	}

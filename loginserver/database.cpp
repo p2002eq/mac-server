@@ -17,7 +17,6 @@
 */
 #include "../common/global_define.h"
 #include "database.h"
-
 #include "error_log.h"
 #include "login_server.h"
 
@@ -70,9 +69,9 @@ bool Database::GetStatusLSAccountTable(std::string name)
 
 	string query = "SELECT "
 						"client_unlock "
-					"FROM "
-						"tblLoginServerAccounts "
-					"WHERE "
+					"FROM " +
+						server.config->LoadOption("account_table", "login.ini") +
+					" WHERE "
 						"AccountName = '" + name + "'";
 
 	if (mysql_query(db, query.c_str()) != 0)
@@ -85,7 +84,7 @@ bool Database::GetStatusLSAccountTable(std::string name)
 
 	if (res)
 	{
-		while ((row = mysql_fetch_row(res)) != nullptr)
+		while ((row = mysql_fetch_row(res)))
 		{
 			int unlock = atoi(row[0]);
 			if (unlock == 1)
@@ -116,7 +115,7 @@ bool Database::GetLoginDataFromAccountName(string name, string &password, unsign
 	string query = "SELECT "
 						"LoginServerID, AccountPassword "
 					"FROM " +
-						server.options.GetAccountTable() +
+						server.config->LoadOption("account_table", "login.ini") +
 					" WHERE " +
 						"AccountName = '" + tmpUN + "'";
 
@@ -158,9 +157,9 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 	string query = "SELECT "
 						"WSR.ServerID, WSR.ServerTagDescription, WSR.ServerTrusted, SLT.ServerListTypeID, SLT.ServerListTypeDescription, WSR.ServerAdminID "
 					"FROM " +
-						server.options.GetWorldRegistrationTable() +
+						server.config->LoadOption("world_registration_table", "login.ini") +
 					" AS WSR JOIN " +
-						server.options.GetWorldServerTypeTable() +
+						server.config->LoadOption("world_server_type_table", "login.ini") +
 					" AS SLT ON "
 						"WSR.ServerListTypeID = SLT.ServerListTypeID"
 					" WHERE "
@@ -190,7 +189,7 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 				string query = "SELECT "
 									"AccountName, AccountPassword "
 								"FROM " +
-									server.options.GetWorldAdminRegistrationTable() +
+									server.config->LoadOption("world_admin_registration_table", "login.ini") +
 								" WHERE "
 									"ServerAdminID = " + std::to_string(db_account_id);
 
@@ -229,7 +228,7 @@ void Database::UpdateLSAccountData(unsigned int id, string ip_address)
 	}
 
 	string query = "UPDATE " +
-						server.options.GetAccountTable() +
+						server.config->LoadOption("account_table", "login.ini") +
 					" SET " +
 						"LastIPAddress = '" + ip_address + "', " +
 						"LastLoginDate = now() " +
@@ -253,7 +252,7 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 	mysql_real_escape_string(db, tmpUN, account_name.c_str(), account_name.length());
 
 	string query = "INSERT INTO " +
-						server.options.GetAccessLogTable() +
+						server.config->LoadOption("access_log_table", "login.ini") +
 					" SET " +
 						"account_id = " + std::to_string(account_id) + ", " +
 						"account_name = '" + tmpUN +"', " +
@@ -267,14 +266,14 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 	}
 }
 
-void Database::UpdateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
+void Database::CreateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
 	bool activate = 0;
 	if (!db)
 	{
 		return;
 	}
-	if (server.options.IsActiveOn())
+	if (server.config->LoadOption("auto_account_activate", "login.ini") == "TRUE")
 	{
 		activate = 1;
 	}
@@ -282,7 +281,7 @@ void Database::UpdateLSAccountInfo(unsigned int id, std::string name, std::strin
 	mysql_real_escape_string(db, tmpUN, name.c_str(), name.length());
 
 	string query = "INSERT INTO " +
-						server.options.GetAccountTable() +
+						server.config->LoadOption("account_table", "login.ini") +
 					" SET LoginServerID = " + std::to_string(id) + ", " +
 						"AccountName = '" + tmpUN + "', " +
 						"AccountPassword = sha('" +	password + "'), " +
@@ -312,13 +311,13 @@ void Database::UpdateWorldRegistration(unsigned int id, string long_name, string
 	escaped_long_name[length + 1] = 0;
 	
 	string query = "UPDATE " +
-		server.options.GetWorldRegistrationTable() +
-		" SET " +
-			"ServerLastLoginDate = now(), " +
-			"ServerLastIPAddr = '" + ip_address + "', " +
-			"ServerLongName = '" + escaped_long_name + "' " +
-		"WHERE " +
-			"ServerID = '" + std::to_string(id) + "'";
+						server.config->LoadOption("world_registration_table", "login.ini") +
+					" SET " +
+						"ServerLastLoginDate = now(), " +
+						"ServerLastIPAddr = '" + ip_address + "', " +
+						"ServerLongName = '" + escaped_long_name + "' " +
+					"WHERE " +
+						"ServerID = '" + std::to_string(id) + "'";
 
 	if (mysql_query(db, query.c_str()) != 0)
 	{
@@ -341,11 +340,11 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 	length = mysql_real_escape_string(db, escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
 	escaped_short_name[length+1] = 0;
 
-	string query = "SELECT max(ServerID) FROM " + server.options.GetWorldRegistrationTable();
+	string query = "SELECT max(ServerID) FROM " + server.config->LoadOption("world_registration_table", "login.ini");
 
 	if(mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_database, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
@@ -358,15 +357,15 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 			mysql_free_result(res);
 
 			string query = "INSERT INTO " +
-				server.options.GetWorldRegistrationTable() +
-				" SET " +
-					"ServerID = '" + std::to_string(id) + "', " +
-					"ServerLongName = '" + escaped_long_name + "', " +
-					"ServerShortName = '" + escaped_short_name + "', " +
-					"ServerListTypeID = 3, " +
-					"ServerAdminID = 0, " +
-					"ServerTrusted = 0, " +
-					"ServerTagDescription = ''";
+								server.config->LoadOption("world_registration_table", "login.ini") +
+							" SET " +
+								"ServerID = '" + std::to_string(id) + "', " +
+								"ServerLongName = '" + escaped_long_name + "', " +
+								"ServerShortName = '" + escaped_short_name + "', " +
+								"ServerListTypeID = 3, " +
+								"ServerAdminID = 0, " +
+								"ServerTrusted = 0, " +
+								"ServerTagDescription = ''";
 
 			if (mysql_query(db, query.c_str()) != 0)
 			{
