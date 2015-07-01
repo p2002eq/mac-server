@@ -19,6 +19,8 @@
 #include "database.h"
 #include "string_util.h"
 
+#pragma warning( disable : 4267 4715 )
+
 /*	This section past here is for setting up the database in bootstrap ONLY.
 	Please put regular server changes and additions above this. 
 	Don't use this for the login server. It should never have access to the game database. */

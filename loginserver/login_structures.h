@@ -22,16 +22,16 @@
 
 struct ServerList_Struct {
 	uint16	numservers;
-	uint8	unknown1;
-	uint8	unknown2;
+	uint8	padding[2];
 	uint8	showusercount; // 0xFF = show numbers, 0x0 = show "UP"
 	uchar	data[0];
 };
 
 struct ServerListServerFlags_Struct {
 	uint8 greenname;
+	int32 flags; // if 0x8 then server is hidden on list
+	int32 worldid;
 	uint32 usercount;
-	uint8 unknown[8];
 };
 
 struct ServerListEndFlags_Struct {

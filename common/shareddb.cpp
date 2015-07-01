@@ -20,6 +20,8 @@
 #include "faction.h"
 #include "features.h"
 
+#pragma warning( disable : 4305 4309 4244 4800 )
+
 SharedDatabase::SharedDatabase()
 : Database(), skill_caps_mmf(nullptr), items_mmf(nullptr), items_hash(nullptr), faction_mmf(nullptr), faction_hash(nullptr),
 	loot_table_mmf(nullptr), loot_table_hash(nullptr), loot_drop_mmf(nullptr), loot_drop_hash(nullptr), base_data_mmf(nullptr)
@@ -98,20 +100,24 @@ bool SharedDatabase::SaveCursor(uint32 char_id, std::list<ItemInst*>::const_iter
 {
 	// Delete cursor items
 	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
-                                    "AND ((slotid >= 8000 AND slotid <= 8999) "
+                                    "AND ((slotid >= %i AND slotid <= %i) "
                                     "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
-                                    char_id, MainCursor,
-                                    EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
+                                    char_id, EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
+									MainCursor, EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
         std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
         return false;
     }
 
-    int i = 8000;
+    int i = EmuConstants::CURSOR_QUEUE_BEGIN;
     for(auto it = start; it != end; ++it, i++) {
         ItemInst *inst = *it;
-		int16 use_slot = (i == 8000) ? MainCursor : i;
+		int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
+		if(inst)
+			Log.Out(Logs::Moderate, Logs::Inventory, "SaveCursor: Attempting to save item %s for char %d in slot %d", inst->GetItem()->Name, char_id, use_slot);
+		else
+			Log.Out(Logs::Moderate, Logs::Inventory, "SaveCursor: No inst found. This is either an error, or we've reached the end of the list.");
 		if (!SaveInventory(char_id, inst, use_slot)) {
 			return false;
 		}
@@ -489,7 +495,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
         else
             inst->SetCharges(charges);
 
-        if (slot_id >= 8000 && slot_id <= 8999)
+        if (slot_id >= EmuConstants::CURSOR_QUEUE_BEGIN && slot_id <= EmuConstants::CURSOR_QUEUE_END)
             put_slot_id = inv->PushCursor(*inst);
         else if (slot_id >= 3110 && slot_id <= 3179) {
             // Admins: please report any occurrences of this error
@@ -575,7 +581,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 
         inst->SetCharges(charges);
 
-        if (slot_id>=8000 && slot_id <= 8999)
+        if (slot_id>=EmuConstants::CURSOR_QUEUE_BEGIN && slot_id <= EmuConstants::CURSOR_QUEUE_END)
             put_slot_id = inv->PushCursor(*inst);
         else
             put_slot_id = inv->PutItem(slot_id, *inst);
@@ -859,6 +865,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		strcpy(item.FocusName, row[ItemField::focusname]);
 		strcpy(item.ScrollName, row[ItemField::scrollname]);
 		item.GMFlag = (int8)atoi(row[ItemField::gmflag]);
+		item.Soulbound = (int8)atoi(row[ItemField::soulbound]);
 
         try {
             hash.insert(item.ID, item);

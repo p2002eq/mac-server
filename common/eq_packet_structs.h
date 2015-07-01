@@ -627,7 +627,6 @@ struct PlayerProfile_Struct
 /*0242*/	uint8				anon;				// 2=roleplay, 1=anon, 0=not anon
 /*0243*/	uint8				gm;
 /*0244*/	uint8				guildrank;
-/*0245*/	uint8				guildbanker;
 /*0252*/	uint32				intoxication;
 /*0256*/	uint32				spellSlotRefresh[MAX_PP_REF_MEMSPELL];	//in ms
 /*0292*/	uint32				abilitySlotRefresh;
@@ -684,7 +683,7 @@ struct PlayerProfile_Struct
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 /*5396*/	uint32				ability_down;		// Guessing
 /*5408*/	uint32				autosplit;			//not used right now
-/*5418*/	uint16				boatid;
+/*5418*/	uint32				boatid;
 /*5420*/	uint32				zone_change_count;	// Number of times user has zoned in their career (guessing)
 /*5452*/	uint32				expansions;			// expansion setting, bit field of expansions avaliable
 /*5456*/	int32				toxicity;			//from drinking potions, seems to increase by 3 each time you drink
@@ -695,7 +694,7 @@ struct PlayerProfile_Struct
 /*5506*/	uint16				zoneInstance;		// Instance ID
 /*5508*/	SpellBuff_Struct	buffs[BUFF_COUNT];	// Buffs currently on the player
 /*6008*/	char				groupMembers[6][64];//
-			char				boat[20];
+			char				boat[32];
 /*7048*/	uint32				entityid;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7904*/	uint32				endurance;
@@ -708,6 +707,7 @@ struct PlayerProfile_Struct
 			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
+			uint8				fatigue;
 /*19568*/
 };
 
@@ -2512,6 +2512,7 @@ struct ServerLootItem_Struct {
 	uint16	lootslot;	  // uint16	lootslot;
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
+	uint8	quest;
 };
 
 struct Checksum_Struct {

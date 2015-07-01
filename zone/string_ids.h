@@ -365,6 +365,7 @@
 #define GROUP_INVITEE_NOT_FOUND		12268	//You must target a player or use /invite <name> to invite someone to your group.
 #define GROUP_INVITEE_SELF			12270	//12270 You cannot invite yourself.
 #define	CAMP_ABANDON				12290	//You abandon your preparations to camp.
+#define TALKING_TO_SELF				12323	//Talking to yourself again?
 #define NOT_IN_CONTROL				12368	//You do not have control of yourself right now.
 #define TOO_DISTRACTED				12440   //You are too distracted to cast a spell now!
 #define ALREADY_CASTING				12442	//You are already casting a spell!

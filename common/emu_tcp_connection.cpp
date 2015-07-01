@@ -43,6 +43,7 @@ tremendously.
 #define TCPN_LOG_RAW_DATA_OUT	0
 #define TCPN_LOG_RAW_DATA_IN	0
 
+#pragma warning( disable : 4267 )
 
 //server side case
 EmuTCPConnection::EmuTCPConnection(uint32 ID, EmuTCPServer* iServer, SOCKET in_socket, uint32 irIP, uint16 irPort, bool iOldFormat)

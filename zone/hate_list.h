@@ -51,7 +51,7 @@ public:
 	// Gets Hate amount for mob
 	int32 GetEntHate(Mob *ent, bool damage = false);
 	// gets top hated mob
-	Mob *GetTop(Mob *center);
+	Mob *GetTop();
 	// gets any on the list
 	Mob *GetRandom();
 	// get closest mob or nullptr if list empty

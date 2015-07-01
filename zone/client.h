@@ -843,7 +843,7 @@ public:
 	Mob *GetBindSightTarget() { return bind_sight_target; }
 	void SetBindSightTarget(Mob *n) { bind_sight_target = n; }
 	uint16 GetBoatID() const { return BoatID; }
-	uint16 GetBoatNPCID() { return m_pp.boatid; }
+	uint32 GetBoatNPCID() { return m_pp.boatid; }
 	char* GetBoatName() { return m_pp.boat; }
 	void SetBoatID(uint32 boatid);
 	void SetBoatName(const char* boatname);
@@ -910,7 +910,6 @@ public:
 	int mod_consume(Item_Struct *item, ItemUseTypes type, int change);
 	int mod_food_value(const Item_Struct *item, int change);
 	int mod_drink_value(const Item_Struct *item, int change);
-	void Starve();
 	void QuestReward(Mob* target, uint32 copper = 0, uint32 silver = 0, uint32 gold = 0, uint32 platinum = 0, uint32 itemid = 0, uint32 exp = 0, bool faction = false);
 	void RewindCommand();
 
@@ -1026,7 +1025,6 @@ private:
 	uint32				ip;
 	uint16				port;
 	CLIENT_CONN_STATUS	client_state;
-	bool				itemsinabag;
 	uint32				character_id;
 	uint32				WID;
 	uint32				account_id;
@@ -1132,7 +1130,8 @@ private:
     glm::vec3 m_Proximity;
 
 	void BulkSendInventoryItems();
-	void	BulkSendItems();
+	void BulkSendItems();
+	void SendCursorItems();
 
 	faction_map factionvalues;
 
@@ -1187,7 +1186,7 @@ private:
 			//this is the point where the client changes to the loading screen
 			ReceivedZoneEntry, //got the first packet, loading up PP
 			PlayerProfileLoaded, //our DB work is done, sending it
-			ZoneInfoSent, //includes PP, tributes, tasks, spawns, time and weather
+			ZoneInfoSent, //includes PP, spawns, time and weather
 			//this is the point where the client shows a status bar zoning in
 			NewZoneRequested, //received and sent new zone request
 			ClientSpawnRequested, //client sent ReqClientSpawn

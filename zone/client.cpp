@@ -339,6 +339,9 @@ Client::~Client() {
 	eqs->Close();
 	eqs->ReleaseFromUse();
 
+	// remove us from any feign memory
+	entity_list.ClearZoneFeignAggro(this);
+
 	UninitializeBuffSlots();
 }
 
@@ -864,6 +867,20 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				}
 			}
 
+			// allow tells to corpses
+			if (targetname) {
+				if (GetTarget() && GetTarget()->IsCorpse() && GetTarget()->CastToCorpse()->IsPlayerCorpse()) {
+					if (strcasecmp(targetname,GetTarget()->CastToCorpse()->GetName()) == 0) {
+						if (strcasecmp(GetTarget()->CastToCorpse()->GetOwnerName(),GetName()) == 0) {
+							Message_StringID(MT_DefaultText, TALKING_TO_SELF);
+							return;
+						} else {
+							targetname = GetTarget()->CastToCorpse()->GetOwnerName();
+						}
+					}
+				}
+			}
+
 			char target_name[64];
 
 			if(targetname)
@@ -1298,12 +1315,14 @@ void Client::SendManaUpdate()
 
 void Client::SendStaminaUpdate()
 {
+	m_pp.fatigue = GetFatiguePercent();
+
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	int value = RuleI(Character,ConsumptionValue);
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
+	sta->fatigue = m_pp.fatigue;
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
@@ -4626,52 +4645,21 @@ void Client::SendItemScale(ItemInst *inst) {
 
 void Client::SetHunger(int32 in_hunger)
 {
-	int value = RuleI(Character,ConsumptionValue);
-
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = in_hunger;
-	sta->water = m_pp.thirst_level > value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.hunger_level = in_hunger;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::SetThirst(int32 in_thirst)
 {
-	int value = RuleI(Character,ConsumptionValue);
-
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-	sta->water = in_thirst;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.thirst_level = in_thirst;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 {
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = in_hunger;
-	sta->water = in_thirst;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.hunger_level = in_hunger;
 	m_pp.thirst_level = in_thirst;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume)
@@ -4740,21 +4728,6 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
    }
 }
 
-void Client::Starve()
-{
-	m_pp.hunger_level = 0;
-	m_pp.thirst_level = 0;
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level;
-	sta->water = m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
-}
-
 void Client::SetBoatID(uint32 boatid)
 {
 	m_pp.boatid = boatid;
@@ -4762,7 +4735,7 @@ void Client::SetBoatID(uint32 boatid)
 
 void Client::SetBoatName(const char* boatname)
 {
-	strncpy(m_pp.boat, boatname, 16);
+	strncpy(m_pp.boat, boatname, 32);
 }
 
 void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold, uint32 platinum, uint32 itemid, uint32 exp, bool faction) {

@@ -946,11 +946,7 @@ void Client::Handle_Connect_OP_SendExpZonein(const EQApplicationPacket *app)
 	safe_delete(outapp);
 
 	SendGuildMOTD();
-
-	const ItemInst* inst = m_inv[MainCursor];
-	if (inst){
-		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
-	}
+	SendCursorItems();
 
 	return;
 }
@@ -1128,7 +1124,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if(m_pp.boatid > 0)
 		{
 			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
-			if(!boat)
+			if(!boat || !boat->IsBoat())
 			{
 				auto safePoint = zone->GetSafePoint();
 				m_pp.boatid = 0;
@@ -1299,14 +1295,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			Client *c = entity_list.GetClientByName(ln);
 			if (c)
 				group->SetLeader(c);
-
-			//group->NotifyMainTank(this, 1);
-			//group->NotifyMainAssist(this, 1);
-			//group->NotifyPuller(this, 1);
-
-			// If we are the leader, force an update of our group AAs to other members in the zone, in case
-			// we purchased a new one while out-of-zone.
-
 		}
 	}
 
@@ -1324,18 +1312,15 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	CalcBonuses();
 
 	if (m_pp.cur_hp <= 0)
+	{
 		m_pp.cur_hp = GetMaxHP();
+	}
 
 	SetHP(m_pp.cur_hp);
 
-	if (m_pp.cur_hp > 32700)
-	{
-		m_pp.cur_hp = 32700;
-		SetHP(32700);			// client will die after zoning with more than 32,767 hp
-	}
-
 	Mob::SetMana(m_pp.mana); // mob function doesn't send the packet
 	SetEndurance(m_pp.endurance);
+	m_pp.fatigue = GetFatiguePercent();
 
 	uint32 max_slots = GetMaxBuffSlots();
 	for (int i = 0; i < max_slots; i++) 
@@ -1489,7 +1474,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		if (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc))
+		if (m_pp.boatid == 0 && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)))
 		{
 			m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
 			if(size > 0)
@@ -1521,32 +1506,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	/*
 	Character Inventory Packet
-	this is not quite where live sends inventory, they do it after tribute
+	AK sent both individual item packets and a single bulk inventory packet on zonein
+	The client requires cursor items to be sent in Handle_Connect_OP_SendExpZonein, should all items be moved there as well?
 	*/
 	if (loaditems) { /* Dont load if a length error occurs */
 		BulkSendItems();
 		BulkSendInventoryItems();
-		/* Send stuff on the cursor which isnt sent in bulk */
-		for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
-			/* First item cursor is sent in bulk inventory packet */
-			if (iter == m_inv.cursor_cbegin())
-				continue;
-			const ItemInst *inst = *iter;
-			SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
-		}
-
-		//Items in cursor container
-		itemsinabag = false; // This used to provide a message when we zoned with items in a bag before that worked, now it doesn't do anything but may be useful in the future.
-		int16 slot_id = 0;
-		for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
-			const ItemInst* inst = m_inv[slot_id];
-			if (inst){
-				itemsinabag = true;
-
-				Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
-				break;
-			}
-		}
 	}
 
 	/*
@@ -1944,19 +1909,19 @@ void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app)
 void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 {
 
-	if (app->size <= 7 || app->size > 21) {
-		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 21, got %i", app->size);
+	if (app->size <= 7 || app->size > 32) {
+		Log.Out(Logs::General, Logs::None, "Size mismatch in OP_BoardBoad. Expected greater than 7 no greater than 32, got %i", app->size);
 		DumpPacket(app);
 		return;
 	}
 
-	char boatname[21];
+	char boatname[32];
 	memcpy(boatname, app->pBuffer, app->size);
-	boatname[20] = '\0';
+	boatname[31] = '\0';
 
 	Mob* boat = entity_list.GetMob(boatname);
 
-	if (!boat || (boat->GetRace() != CONTROLLED_BOAT && boat->GetRace() != SHIP && boat->GetRace() != LAUNCH))
+	if (!boat || !boat->IsBoat())
 		return;
 
 	if (boat)
@@ -2476,7 +2441,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		else if (ppu->spawn_id == BoatID) 
 		{
 			Mob* boat = entity_list.GetMob(BoatID);
-			if (boat == 0) 
+			if (!boat || !boat->IsBoat()) 
 			{	// if the boat ID is invalid, reset the id and abort
 				BoatID = 0;
 				return;
@@ -2979,16 +2944,20 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 	Log.Out(Logs::Detail, Logs::Debug, "Hit Consume! How consumed: %i. Slot: %i. Type: %i", pcs->auto_consumed, pcs->slot, pcs->type);
 	int value = RuleI(Character, ConsumptionValue);
 
+	m_pp.fatigue = GetFatiguePercent();
+
+	// We don't want to change the pp for hunger or thirst, since we want to be able to go past the client's maximium value internally.
 	if (pcs->type == 0x01)
 	{
 		if (m_pp.hunger_level > value)
 		{
+			m_pp.hunger_level = value;
 			EQApplicationPacket *outapp;
 			outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = value;
 			sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-			sta->fatigue=GetFatiguePercent();
+			sta->fatigue = m_pp.fatigue;
 
 			QueuePacket(outapp, false);
 			safe_delete(outapp);
@@ -3004,7 +2973,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 			Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 			sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 			sta->water = value;
-			sta->fatigue=GetFatiguePercent();
+			sta->fatigue = m_pp.fatigue;
 
 			QueuePacket(outapp, false);
 			safe_delete(outapp);
@@ -3030,15 +2999,7 @@ void Client::Handle_OP_Consume(const EQApplicationPacket *app)
 		return;
 	}
 
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
-	QueuePacket(outapp, false);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 	return;
 }
 

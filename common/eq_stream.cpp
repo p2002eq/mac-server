@@ -49,6 +49,8 @@
 #define _L "%s:%d: "
 #define __L , long2ip(remote_ip).c_str(), ntohs(remote_port)
 
+#pragma warning( disable : 4244 4800 4267 )
+
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init() {

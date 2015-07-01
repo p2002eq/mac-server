@@ -848,7 +848,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->expAA = atoi(row[r]); r++;											 // "aa_exp,                    "
 		pp->aapoints = atoi(row[r]); r++;										 // "aa_points,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
-		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
+		strncpy(pp->boat, row[r], 32); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
@@ -860,7 +860,10 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 bool ZoneDatabase::LoadCharacterFactionValues(uint32 character_id, faction_map & val_list) {
 	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `faction_values` WHERE `char_id` = %i", character_id);
 	auto results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) { val_list[atoi(row[0])] = atoi(row[1]); }
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{ 
+		val_list[atoi(row[0])] = atoi(row[1]); 
+	}
 	return true;
 }
 
@@ -3685,4 +3688,48 @@ bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
 	auto row = results.begin();
 	strncpy(outData, row[0], 2048);
 	return true;
+}
+
+
+bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::const_iterator &start, std::list<ItemInst*>::const_iterator &end)
+{
+		// Delete cursor items
+	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
+                                    "AND ((slotid >= %i AND slotid <= %i) "
+                                    "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
+                                    client->CharacterID(), EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
+									MainCursor, EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
+        return false;
+    }
+
+	int8 count = 0;
+	int i = EmuConstants::CURSOR_QUEUE_BEGIN;
+    for(auto it = start; it != end; ++it) {
+        ItemInst *inst = *it;
+		if(inst && inst->GetItem()->Soulbound)
+		{
+			int16 newslot = client->GetInv().FindFreeSlot(false, false, inst->GetItem()->Size);
+			if(newslot != INVALID_INDEX)
+			{
+				client->PutItemInInventory(newslot, *inst);
+				++count;
+			}
+		}
+		else if(inst)
+		{
+			int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
+			if (SaveInventory(client->CharacterID(), inst, use_slot)) 
+			{
+				++i;
+			}
+		}
+    }
+
+	if(count > 0)
+		return true;
+
+	return false;
 }

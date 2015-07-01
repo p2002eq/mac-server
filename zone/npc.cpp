@@ -450,7 +450,7 @@ void NPC::QueryLoot(Client* to) {
 		{
 			static char itemid[7];
 			sprintf(itemid, "%06d", item->ID);
-			to->Message(0, "(%i:%i) minlvl: %i maxlvl: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->lootslot, (*cur)->min_level, (*cur)->max_level, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
+			to->Message(CC_Default, "%i: min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			Log.Out(Logs::General, Logs::Error, "Database error, invalid item");
@@ -2722,4 +2722,43 @@ float NPC::ApplyPushVector(bool noglance)
 	}
 
 	return pushedDist;
+}
+
+bool NPC::AddQuestLoot(int16 itemid)
+{
+	const Item_Struct* item = database.GetItem(itemid);
+	if(item)
+	{
+		AddLootDrop(item, &itemlist, 1, 1, 127, false, false, true);
+	}
+	else
+		return false;
+
+	return true;
+}
+
+void NPC::DeleteQuestLoot(int16 itemid1, int16 itemid2, int16 itemid3, int16 itemid4)
+{
+	int16 items = itemlist.size();
+	for (int i = 0; i < items; ++i)
+	{
+		if(itemid1 == 0)
+		{
+			if(!RemoveQuestLootItems(itemid1))
+				break;
+		}
+		else
+		{
+			if(!RemoveQuestLootItems(itemid1) && !RemoveQuestLootItems(itemid2) && 
+				!RemoveQuestLootItems(itemid3) && !RemoveQuestLootItems(itemid4))
+			{
+				break;
+			}
+		}
+	}
+}
+
+bool NPC::IsBoat()
+{
+	return (GetBaseRace() == SHIP || GetBaseRace() == LAUNCH || GetBaseRace() == CONTROLLED_BOAT);
 }

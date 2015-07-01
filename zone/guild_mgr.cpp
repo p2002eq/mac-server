@@ -185,7 +185,7 @@ uint8 *ZoneGuildManager::MakeGuildMembers(uint32 guild_id, const char *prefix_na
 }
 
 void ZoneGuildManager::ListGuilds(Client *c) const {
-	c->Message(0, "Listing guilds on the server:");
+	c->Message(CC_Default, "Listing guilds on the server:");
 	char leadername[64];
 	std::map<uint32, GuildInfo *>::const_iterator cur, end;
 	cur = m_guilds.begin();
@@ -195,12 +195,12 @@ void ZoneGuildManager::ListGuilds(Client *c) const {
 		leadername[0] = '\0';
 		database.GetCharName(cur->second->leader_char_id, leadername);
 		if (leadername[0] == '\0')
-			c->Message(0, "  Guild #%i <%s>", cur->first, cur->second->name.c_str());
+			c->Message(CC_Default, "  Guild #%i <%s>", cur->first, cur->second->name.c_str());
 		else
-			c->Message(0, "  Guild #%i <%s> Leader: %s", cur->first, cur->second->name.c_str(), leadername);
+			c->Message(CC_Default, "  Guild #%i <%s> Leader: %s", cur->first, cur->second->name.c_str(), leadername);
 		r++;
 	}
-	c->Message(0, "%i guilds listed.", r);
+	c->Message(CC_Default, "%i guilds listed.", r);
 }
 
 
@@ -208,17 +208,17 @@ void ZoneGuildManager::DescribeGuild(Client *c, uint32 guild_id) const {
 	std::map<uint32, GuildInfo *>::const_iterator res;
 	res = m_guilds.find(guild_id);
 	if(res == m_guilds.end()) {
-		c->Message(0, "Guild %d not found.", guild_id);
+		c->Message(CC_Default, "Guild %d not found.", guild_id);
 		return;
 	}
 
 	const GuildInfo *info = res->second;
 
-	c->Message(0, "Guild info DB# %i <%s>", guild_id, info->name.c_str());
+	c->Message(CC_Default, "Guild info DB# %i <%s>", guild_id, info->name.c_str());
 
 	char leadername[64];
 	database.GetCharName(info->leader_char_id, leadername);
-	c->Message(0, "Guild Leader: %s", leadername);
+	c->Message(CC_Default, "Guild Leader: %s", leadername);
 
 	char permbuffer[256];
 	uint8 i;
@@ -228,8 +228,8 @@ void ZoneGuildManager::DescribeGuild(Client *c, uint32 guild_id) const {
 		for(r = 0; r < _MaxGuildAction; r++)
 			permptr += sprintf(permptr, "  %s: %c", GuildActionNames[r], info->ranks[i].permissions[r]?'Y':'N');
 
-		c->Message(0, "Rank %i: %s", i, info->ranks[i].name.c_str());
-		c->Message(0, "Permissions: %s", permbuffer);
+		c->Message(CC_Default, "Rank %i: %s", i, info->ranks[i].name.c_str());
+		c->Message(CC_Default, "Permissions: %s", permbuffer);
 	}
 
 }
