@@ -196,6 +196,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
 	{
+		if(!IsValidSpell(spell_id))
+			return false;
+
 		if(IsBlankSpellEffect(spell_id, i))
 			continue;
 

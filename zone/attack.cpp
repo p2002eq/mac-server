@@ -2067,6 +2067,12 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	if (give_exp_client)
 		hate_list.DoFactionHits(GetNPCFactionID());
 
+	// NPC is a player pet (duel/pvp)
+	if(IsPet() && GetOwner()->IsClient())
+	{
+		give_exp_client = nullptr;
+	}
+
 	if (give_exp_client && !IsCorpse() && MerchantType == 0 && class_ != MERCHANT)
 	{
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
@@ -2074,7 +2080,6 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 		int32 finalxp = EXP_FORMULA;
 		finalxp = give_exp_client->mod_client_xp(finalxp, this);
-		//log(EQMAC__LOG, "Death: finalxp: %i", finalxp);
 
 		if(kr)
 		{
