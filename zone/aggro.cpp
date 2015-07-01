@@ -49,7 +49,7 @@ void EntityList::CheckClientAggro(Client *around)
 			if (mob->IsEngaged())
 				mob->AddToHateList(around);
 			else
-				mob->AddToHateList(around, mob->GetLevel());
+				mob->AddToHateList(around, 20);
 		}
 	}
 }

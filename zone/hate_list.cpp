@@ -392,7 +392,7 @@ Mob *HateList::GetTop()
 					currentHate += defaultAggro;
 				}
 
-				if (currentHate > hateClientTypeInRange)
+				if (currentHate > hateClientTypeInRange && owner->CombatRange(cur->ent))
 				{
 					hateClientTypeInRange = currentHate;
 					topClientTypeInRange = cur->ent;

@@ -2951,7 +2951,7 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 			continue;
 		}
 
-		if (cur->IsMezzed())			// mezzed NPCs only add a small amount of witness hate, as per patch note
+		if (cur->IsMezzed() && hate > 0)			// mezzed NPCs only add a small amount of witness hate, as per patch note
 			hate /= 4;
 
 		cur->AddToHateList(caster, hate);
