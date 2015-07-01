@@ -2312,7 +2312,7 @@ bool Mob::RemoveFromHateList(Mob* mob)
 	}
 	if(GetTarget() == mob)
 	{
-		SetTarget(hate_list.GetTop(this));
+		SetTarget(hate_list.GetTop());
 	}
 
 	return bFound;

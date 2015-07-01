@@ -1336,9 +1336,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 
 	// Hate Generation is on a per swing basis, regardless of a hit, miss, or block, its always the same.
 	// If we are this far, this means we are atleast making a swing.
-
-	if (!bRiposte) // Ripostes never generate any aggro.
-		other->AddToHateList(this, hate);
+	other->AddToHateList(this, hate);
 
 	///////////////////////////////////////////////////////////
 	////// Send Attack Damage
