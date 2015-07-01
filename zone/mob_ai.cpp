@@ -1763,7 +1763,6 @@ void NPC::AI_DoMovement() {
 						roam_z = SetBestZ(newz);
 				}
 			}
-			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 
 		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
@@ -1790,7 +1789,6 @@ void NPC::AI_DoMovement() {
 		if (gridno > 0 || cur_wp==-2) {
 			if (movetimercompleted==true) { // time to pause at wp is over
 				AI_SetupNextWaypoint();
-				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 			}	// endif (movetimercompleted==true)
 			else if (!(AIwalking_timer->Enabled()))
 			{	// currently moving
