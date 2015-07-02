@@ -2945,13 +2945,13 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 	{
 		cur = *sit;
 
-		if (zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
-		{								// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+		if (cur->IsPet() || zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
+		{												// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
 			++sit;
 			continue;
 		}
 
-		if (cur->IsMezzed() && hate > 0)			// mezzed NPCs only add a small amount of witness hate, as per patch note
+		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 0)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
 			hate /= 4;
 
 		cur->AddToHateList(caster, hate);
