@@ -18,192 +18,44 @@
 #include "../common/global_define.h"
 #include "config.h"
 #include "error_log.h"
+#include <fstream>
+
+#pragma warning( disable : 4267 )
 
 extern ErrorLog *server_log;
-/**
-* Retrieves the variable we want from our title or theme
-* First gets the map from the title
-* Then gets the argument from the map we got from title
-*/
-std::string Config::GetVariable(std::string title, std::string parameter)
+
+std::string Config::LoadOption(std::string option, std::string filename)
 {
-	std::map<std::string, std::map<std::string, std::string> >::iterator iter = vars.find(title);
-	if(iter != vars.end())
+	std::ifstream file(filename);
+	std::string line;
+	if(!file)
 	{
-		std::map<std::string, std::string>::iterator arg_iter = iter->second.find(parameter);
-		if(arg_iter != iter->second.end())
-		{
-			return arg_iter->second;
-		}
+		std::string message = "Config::LoadOption(), specified file '" + std::string(filename) + "' doesn't exist.";
+		server_log->Log(log_error, message.c_str());
+		file.close();
+		return "";
 	}
-	return std::string("");
-}
-
-/**
-* Opens a file and passes it to the tokenizer
-* Then it parses the tokens returned and puts them into titles and variables.
-*/
-void Config::Parse(const char *file_name)
-{
-	if(file_name == nullptr)
+	if (file)
 	{
-		server_log->Log(log_error, "Config::Parse(), file_name passed was null.");
-		return;
-	}
-	vars.clear();
-	FILE *input = fopen(file_name, "r");
-	if(input)
-	{
-		std::list<std::string> tokens;
-		Tokenize(input, tokens);
-
-		char mode = 0;
-		std::string title, param, arg;
-		std::list<std::string>::iterator iter = tokens.begin();
-		while(iter != tokens.end())
+		while (std::getline(file, line))
 		{
-			if((*iter).compare("[") == 0)
+			size_t found;
+			found = line.find(option);
+			if (line.find(option) != std::string::npos && int(found) == 0)
 			{
-				title.clear();
-				bool first = true;
-				++iter;
-				if(iter == tokens.end())
-				{
-					server_log->Log(log_error, "Config::Parse(), EOF before title done parsing.");
-					fclose(input);
-					vars.clear();
-					return;
-				}
+				int stringposition = option.length() + 3;
+				int stringsize = line.length() - stringposition;
 
-				while((*iter).compare("]") != 0 && iter != tokens.end())
-				{
-					if(!first)
-					{
-						title += " ";
-					}
-					else
-					{
-						first = false;
-					}
-					title += (*iter);
-					++iter;
-				}
-				++iter;
-			}
-
-			if(mode == 0)
-			{
-				param = (*iter);
-				mode++;
-			}
-			else if(mode == 1)
-			{
-				mode++;
-				if((*iter).compare("=") != 0)
-				{
-					server_log->Log(log_error, "Config::Parse(), invalid parse token where = should be.");
-					fclose(input);
-					vars.clear();
-					return;
-				}
-			}
-			else
-			{
-				arg = (*iter);
-				mode = 0;
-				std::map<std::string, std::map<std::string, std::string> >::iterator map_iter = vars.find(title);
-				if(map_iter != vars.end())
-				{
-					map_iter->second[param] = arg;
-					vars[title] = map_iter->second;
-				}
-				else
-				{
-					std::map<std::string, std::string> var_map;
-					var_map[param] = arg;
-					vars[title] = var_map;
-				}
-			}
-			++iter;
-		}
-		fclose(input);
-	}
-	else
-	{
-		server_log->Log(log_error, "Config::Parse(), file was unable to be opened for parsing.");
-	}
-}
-
-/**
-* Pretty basic lexical analyzer
-* Breaks up the input character stream into tokens and puts them into the list provided.
-* Ignores # as a line comment
-*/
-void Config::Tokenize(FILE *input, std::list<std::string> &tokens)
-{
-	char c = fgetc(input);
-	std::string lexeme;
-
-	while(c != EOF)
-	{
-		if(isspace(c))
-		{
-			if(lexeme.size() > 0)
-			{
-				tokens.push_back(lexeme);
-				lexeme.clear();
-			}
-			c = fgetc(input);
-			continue;
-		}
-
-		if(isalnum(c))
-		{
-			lexeme.append((const char *)&c, 1);
-			c = fgetc(input);
-			continue;
-		}
-
-		switch(c)
-		{
-		case '#':
-			{
-				if(lexeme.size() > 0)
-				{
-					tokens.push_back(lexeme);
-					lexeme.clear();
-				}
-
-				while(c != '\n' && c != EOF)
-				{
-					c = fgetc(input);
-				}
-				break;
-			}
-		case '[':
-		case ']':
-		case '=':
-			{
-				if(lexeme.size() > 0)
-				{
-					tokens.push_back(lexeme);
-					lexeme.clear();
-				}
-				lexeme.append((const char *)&c, 1);
-				tokens.push_back(lexeme);
-				lexeme.clear();
-				break;
-			}
-		default:
-			{
-				lexeme.append((const char *)&c, 1);
+				std::string substringtemp = line.substr(stringposition, stringsize);
+				file.close();
+				return substringtemp;
 			}
 		}
-		c = fgetc(input);
+		std::string message = "Config::LoadOption(), specified option '" + std::string(option) + "' doesn't exist.";
+		server_log->Log(log_error, message.c_str());
+		file.close();
+		return "";
 	}
-
-	if(lexeme.size() > 0)
-	{
-		tokens.push_back(lexeme);
-	}
+	file.close();
+	return "";
 }

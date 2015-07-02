@@ -64,12 +64,12 @@ bool WorldServer::Process()
 	ServerPacket *app = nullptr;
 	while(app = connection->PopPacket())
 	{
-		if(server.options.IsWorldTraceOn())
+		if (server.config->LoadOption("world_trace", "login.ini") == "TRUE")
 		{
 			server_log->Log(log_network_trace, "Application packet received from server: 0x%.4X, (size %u)", app->opcode, app->size);
 		}
 
-		if(server.options.IsDumpInPacketsOn())
+		if (server.config->LoadOption("dump_packets_in", "login.ini") == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -85,9 +85,9 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if(server.options.IsWorldTraceOn())
+				if (server.config->LoadOption("world_trace", "login.ini") == "TRUE")
 				{
-					server_log->Log(log_network_trace, "New Login Info Recieved.");
+					server_log->Log(log_network_trace, "New Login Info Received.");
 				}
 				ServerNewLSInfo_Struct *info = (ServerNewLSInfo_Struct*)app->pBuffer;
 				Handle_NewLSInfo(info);
@@ -97,14 +97,14 @@ bool WorldServer::Process()
 			{
 				if(app->size < sizeof(ServerLSStatus_Struct))
 				{
-					server_log->Log(log_network_error, "Recieved application packet from server that had opcode ServerOP_LSStatus, "
+					server_log->Log(log_network_error, "Received application packet from server that had opcode ServerOP_LSStatus, "
 						"but was too small. Discarded to avoid buffer overrun.");
 					break;
 				}
 
-				if(server.options.IsWorldTraceOn())
+				if (server.config->LoadOption("world_trace", "login.ini") == "TRUE")
 				{
-					server_log->Log(log_network_trace, "World Server Status Recieved.");
+					server_log->Log(log_network_trace, "World Server Status Received.");
 				}
 				ServerLSStatus_Struct *ls_status = (ServerLSStatus_Struct*)app->pBuffer;
 				Handle_LSStatus(ls_status);
@@ -127,7 +127,7 @@ bool WorldServer::Process()
 			{
 				if(app->size < sizeof(UsertoWorldResponse_Struct))
 				{
-					server_log->Log(log_network_error, "Recieved application packet from server that had opcode ServerOP_UsertoWorldResp, "
+					server_log->Log(log_network_error, "Received application packet from server that had opcode ServerOP_UsertoWorldResp, "
 						"but was too small. Discarded to avoid buffer overrun.");
 					break;
 				}
@@ -135,7 +135,7 @@ bool WorldServer::Process()
 				//I don't use world trace for this and here is why:
 				//Because this is a part of the client login procedure it makes tracking client errors
 				//While keeping world server spam with multiple servers connected almost impossible.
-				if(server.options.IsTraceOn())
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
 					server_log->Log(log_network_trace, "User-To-World Response received.");
 				}
@@ -208,14 +208,14 @@ bool WorldServer::Process()
 						break;
 					}
 
-					if(server.options.IsTraceOn())
+					if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 					{
 						server_log->Log(log_network_trace, "Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
 							per->Allowed, per->Sequence, per->ServerNumber, per->Message);
 						server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
 					}
 
-					if(server.options.IsDumpOutPacketsOn())
+					if (server.config->LoadOption("dump_packets_out", "login.ini") == "TRUE")
 					{
 						DumpPacket(outapp);
 					}
@@ -224,7 +224,7 @@ bool WorldServer::Process()
 				}
 				else
 				{
-					server_log->Log(log_client_error, "Recieved User-To-World Response for %u but could not find the client referenced!.", utwr->lsaccountid);
+					server_log->Log(log_client_error, "Received User-To-World Response for %u but could not find the client referenced!.", utwr->lsaccountid);
 				}
 				break;
 			}
@@ -232,7 +232,7 @@ bool WorldServer::Process()
 			{
 				if(app->size < sizeof(ServerLSAccountUpdate_Struct))
 				{
-					server_log->Log(log_network_error, "Recieved application packet from server that had opcode ServerLSAccountUpdate_Struct, "
+					server_log->Log(log_network_error, "Received application packet from server that had opcode ServerLSAccountUpdate_Struct, "
 						"but was too small. Discarded to avoid buffer overrun.");
 					break;
 				}
@@ -248,13 +248,13 @@ bool WorldServer::Process()
 					name.assign(lsau->useraccount);
 					password.assign(lsau->userpassword);
 					email.assign(lsau->useremail);
-					server.db->UpdateLSAccountInfo(lsau->useraccountid, name, password, email, NULL, "", "");
+					server.db->CreateLSAccountInfo(lsau->useraccountid, name, password, email, NULL, "", "");
 				}
 				break;
 			}
 		default:
 			{
-				server_log->Log(log_network_error, "Recieved application packet from server that had an unknown operation code 0x%.4X.", app->opcode);
+				server_log->Log(log_network_error, "Received application packet from server that had an unknown operation code 0x%.4X.", app->opcode);
 			}
 		}
 		delete app;
@@ -374,7 +374,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 	server_type = i->servertype;
 	logged_in = true;
 
-	if(server.options.IsRejectingDuplicateServers())
+	if (server.config->LoadOption("reject_duplicate_servers", "login.ini") == "TRUE")
 	{
 		if(server.SM->ServerExists(long_name, short_name, this))
 		{
@@ -391,7 +391,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 	}
 
-	if(!server.options.IsUnregisteredAllowed())
+	if (server.config->LoadOption("unregistered_allowed", "login.ini") == "FALSE")
 	{
 		if(account_name.size() > 0 && account_password.size() > 0)
 		{
@@ -459,6 +459,24 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		string s_list_desc;
 		string s_acct_name;
 		string s_acct_pass;
+
+		// something here is causing a "debug assertion" if world registration table is empty, and only when empty.
+		// this shows that the previous values are null when they should not be.
+#ifdef _WINDOWS
+		//if (s_id == NULL)
+		//	MessageBox(0, "s_id returns null", "Debug", MB_OK);
+#endif
+
+		//server_log->Log(log_world, "long_name: ", long_name);
+		//server_log->Log(log_world, "short_name: ", short_name);
+		//server_log->Log(log_world, "s_id: ", std::to_string(s_id));
+		//server_log->Log(log_world, "s_desc: ", s_desc);
+		//server_log->Log(log_world, "s_list_type: ", std::to_string(s_list_type));
+		//server_log->Log(log_world, "s_trusted: ", std::to_string(s_trusted));
+		//server_log->Log(log_world, "s_list_desc: ", s_list_desc);
+		//server_log->Log(log_world, "s_acct_name: ", s_acct_name);
+		//server_log->Log(log_world, "s_acct_pass: ", s_acct_pass);
+
 		if(server.db->GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
 		{
 			if(account_name.size() > 0 && account_password.size() > 0)
@@ -506,6 +524,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 		else
 		{
+			s_id = 0; // part of trying to determine the assertion fix.
 			server_log->Log(log_world, "Server %s(%s) attempted to log in but database couldn't find an entry but unregistered servers are allowed.",
 				long_name.c_str(), short_name.c_str());
 			if(server.db->CreateWorldRegistration(long_name, short_name, s_id))
@@ -557,7 +576,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 	{
 		slsca->local = 1;
 	}
-	else if(client_address.find(server.options.GetLocalNetwork()) != string::npos)
+	else if (client_address.find(server.config->LoadOption("local_network", "login.ini")) != string::npos)
 	{
 		slsca->local = 1;
 	}
@@ -568,7 +587,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 
 	connection->SendPacket(outapp);
 
-	if(server.options.IsDumpInPacketsOn())
+	if (server.config->LoadOption("dump_packets_in", "login.ini") == "TRUE")
 	{
 		DumpPacket(outapp);
 	}
