@@ -1154,14 +1154,14 @@ bool Lua_Mob::Charmed() {
 	return self->Charmed();
 }
 
-int Lua_Mob::CheckAggroAmount(int spell_id) {
+int Lua_Mob::CheckAggroAmount(int spell_id, Lua_Mob target) {
 	Lua_Safe_Call_Int();
-	return self->CheckAggroAmount(spell_id);
+	return self->CheckAggroAmount(spell_id, target);
 }
 
-int Lua_Mob::CheckAggroAmount(int spell_id, bool is_proc) {
+int Lua_Mob::CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc) {
 	Lua_Safe_Call_Int();
-	return self->CheckAggroAmount(spell_id, is_proc);
+	return self->CheckAggroAmount(spell_id, target, is_proc);
 }
 
 int Lua_Mob::CheckHealAggroAmount(int spell_id) {
@@ -1957,8 +1957,8 @@ luabind::scope lua_register_mob() {
 		.def("NPCSpecialAttacks", (void(Lua_Mob::*)(const char*,int,bool,bool))&Lua_Mob::NPCSpecialAttacks)
 		.def("GetResist", (int(Lua_Mob::*)(int))&Lua_Mob::GetResist)
 		.def("Charmed", (bool(Lua_Mob::*)(void))&Lua_Mob::Charmed)
-		.def("CheckAggroAmount", (int(Lua_Mob::*)(int))&Lua_Mob::CheckAggroAmount)
-		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,bool))&Lua_Mob::CheckAggroAmount)
+		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob))&Lua_Mob::CheckAggroAmount)
+		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob,bool))&Lua_Mob::CheckAggroAmount)
 		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int))&Lua_Mob::CheckHealAggroAmount)
 		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int,uint32))&Lua_Mob::CheckHealAggroAmount)
 		.def("GetAA", (int(Lua_Mob::*)(int))&Lua_Mob::GetAA)

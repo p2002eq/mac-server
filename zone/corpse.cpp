@@ -682,6 +682,8 @@ bool Corpse::Save() {
 		}
 	}
 
+	safe_delete_array(dbpc);
+
 	return true;
 }
 

@@ -240,8 +240,8 @@ public:
 	void NPCSpecialAttacks(const char *parse, int perm, bool reset, bool remove);
 	int GetResist(int type);
 	bool Charmed();
-	int CheckAggroAmount(int spell_id);
-	int CheckAggroAmount(int spell_id, bool is_proc);
+	int CheckAggroAmount(int spell_id, Lua_Mob target);
+	int CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc);
 	int CheckHealAggroAmount(int spell_id);
 	int CheckHealAggroAmount(int spell_id, uint32 heal_possible);
 	int GetAA(int id);

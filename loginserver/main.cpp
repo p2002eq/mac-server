@@ -72,34 +72,149 @@ int main()
 	if (f.good())
 	{
 	}
-	else if (f.fail())
-	{
-		f.close();
-		server_log->Log(log_debug, "login.ini doesn't exist.");
-		server_log->Log(log_debug, "Trying database for settings.");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
-	}
 	else
 	{
 		f.close();
 		server_log->Log(log_debug, "login.ini errors. Incomplete or missing.");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		#ifdef WIN32 //Almost never ran in a terminal on linux, so no need to hold window open to see error.
 		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
+		std::getchar();
+		#endif
+	}
+
+	server.config->Parse("login.ini");
+
+	//Parse auto account creation option.
+	if (server.config->GetVariable("options", "auto_account_create").compare("TRUE") == 0)
+	{
+		server.options.AutoCreate(true);
+	}
+
+	//Parse auto account activation option.
+	if (server.config->GetVariable("options", "auto_account_activate").compare("TRUE") == 0)
+	{
+		server.options.AutoActivate(true);
+	}
+
+	//Parse failed access log option.
+	if (server.config->GetVariable("options", "failed_login_log").compare("TRUE") == 0)
+	{
+		server.options.LoginFails(true);
+	}
+
+	//Parse IP login access log option. For cross checking account/IP "anti cheat/box record"
+	if (server.config->GetVariable("options", "good_loginIP_log").compare("TRUE") == 0)
+	{
+		server.options.LoginGood(true);
+	}
+
+	//Parse unregistered allowed option.
+	if(server.config->GetVariable("options", "unregistered_allowed").compare("FALSE") == 0)
+	{
+		server.options.AllowUnregistered(false);
+	}
+
+	//Parse trace option.
+	if(server.config->GetVariable("options", "trace").compare("TRUE") == 0)
+	{
+		server.options.Trace(true);
+	}
+
+	//Parse trace option.
+	if(server.config->GetVariable("options", "world_trace").compare("TRUE") == 0)
+	{
+		server.options.WorldTrace(true);
+	}
+
+	//Parse packet inc dump option.
+	if(server.config->GetVariable("options", "dump_packets_in").compare("TRUE") == 0)
+	{
+		server.options.DumpInPackets(true);
+	}
+
+	//Parse packet out dump option.
+	if(server.config->GetVariable("options", "dump_packets_out").compare("TRUE") == 0)
+	{
+		server.options.DumpOutPackets(true);
+	}
+
+	//Parse encryption mode option.
+	std::string mode = server.config->GetVariable("security", "mode");
+	if(mode.size() > 0)
+	{
+		server.options.EncryptionMode(atoi(mode.c_str()));
+	}
+
+	//Parse local network option.
+	std::string ln = server.config->GetVariable("options", "local_network");
+	if(ln.size() > 0)
+	{
+		server.options.LocalNetwork(ln);
+	}
+
+	//Parse local network option.
+	std::string mip = server.config->GetVariable("options", "network_ip");
+	if(mip.size() > 0)
+	{
+		server.options.NetworkIP(mip);
+	}
+
+	//Parse local network option.
+	std::string pws = server.config->GetVariable("options", "salt");
+	if(pws.size() > 0)
+	{
+		server.options.SetSalt(pws);
+	}
+
+	//Parse reject duplicate servers option.
+	if(server.config->GetVariable("options", "reject_duplicate_servers").compare("TRUE") == 0)
+	{
+		server.options.RejectDuplicateServers(true);
+	}
+
+	//Parse account table option.
+	ln = server.config->GetVariable("schema", "account_table");
+	if(ln.size() > 0)
+	{
+		server.options.AccountTable(ln);
+	}
+
+	//Parse access log table option.
+	ln = server.config->GetVariable("schema", "access_log_table");
+	if (ln.size() > 0)
+	{
+		server.options.AccountAccessLogTable(ln);
+	}
+
+	//Parse world account table option.
+	ln = server.config->GetVariable("schema", "world_registration_table");
+	if(ln.size() > 0)
+	{
+		server.options.WorldRegistrationTable(ln);
+	}
+
+	//Parse admin world account table option.
+	ln = server.config->GetVariable("schema", "world_admin_registration_table");
+	if(ln.size() > 0)
+	{
+		server.options.WorldAdminRegistrationTable(ln);
+	}
+
+	//Parse world type table option.
+	ln = server.config->GetVariable("schema", "world_server_type_table");
+	if(ln.size() > 0)
+	{
+		server.options.WorldServerTypeTable(ln);
 	}
 
 	//Create our DB from options.
 		server_log->Log(log_debug, "MySQL Database Init.");
-		server.db = (Database*)new Database(
-			server.config->LoadOption("user", "login.ini"),
-			server.config->LoadOption("password", "login.ini"),
-			server.config->LoadOption("host", "login.ini"),
-			server.config->LoadOption("port", "login.ini"),
-			server.config->LoadOption("db", "login.ini"));
+		server.db = (Database*)new DatabaseMySQL(
+			server.config->GetVariable("database", "user"),
+			server.config->GetVariable("database", "password"),
+			server.config->GetVariable("database", "host"),
+			server.config->GetVariable("database", "port"),
+			server.config->GetVariable("database", "db"));
 
 	//Make sure our database got created okay, otherwise cleanup and exit.
 	if(!server.db)

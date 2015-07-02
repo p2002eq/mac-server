@@ -2915,55 +2915,46 @@ bool EntityList::Fighting(Mob *targ)
 	return false;
 }
 
-void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 thedam)
+void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 {
+	if (!target || !caster)
+		return;
+
 	NPC *cur = nullptr;
-	uint16 count = 0;
 	std::list<NPC *> npc_sub_list;
 	auto it = npc_list.begin();
-	while (it != npc_list.end()) {
+	while (it != npc_list.end())
+	{
 		cur = it->second;
 
-		if (!cur->CheckAggro(target)) {
+		if (!cur->CheckAggro(target))
+		{
 			++it;
 			continue;
 		}
-		if (!cur->IsMezzed() && !cur->IsStunned() && !cur->IsFeared()) {
+		if (!cur->IsFeared())
+		{
 			npc_sub_list.push_back(cur);
-			++count;
 		}
 		++it;
 	}
 
-
-	if (thedam > 1) {
-		if (count > 0)
-			thedam /= count;
-
-		if (thedam < 1)
-			thedam = 1;
-	}
-
 	cur = nullptr;
 	auto sit = npc_sub_list.begin();
-	while (sit != npc_sub_list.end()) {
+	while (sit != npc_sub_list.end())
+	{
 		cur = *sit;
 
-		if (cur->IsPet()) {
-			if (caster) {
-				if (cur->CheckAggro(caster)) {
-					cur->AddToHateList(caster, thedam);
-				}
-			}
-		} else {
-			if (caster) {
-				if (cur->CheckAggro(caster)) {
-					cur->AddToHateList(caster, thedam);
-				} else {
-					cur->AddToHateList(caster, thedam * 0.33);
-				}
-			}
+		if (cur->IsPet() || zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
+		{												// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+			++sit;
+			continue;
 		}
+
+		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 0)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
+			hate /= 4;
+
+		cur->AddToHateList(caster, hate);
 		++sit;
 	}
 }
