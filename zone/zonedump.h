@@ -140,6 +140,7 @@ namespace player_lootitem {
 		uint16	lootslot;
 		uint8	min_level;		  // 
 		uint8	max_level;		  // 
+		uint8	quest;
 	};
 }
 
