@@ -3814,10 +3814,16 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		
 		Log.Out(Logs::Detail, Logs::Spells, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
 
-		if (spelltar->IsNPC()) {
+		if (spelltar->IsNPC())
+		{
 			action->buff_unknown = 0;
-			spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
-		} else {
+			if (spells[spell_id].pushup > 0)
+				spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+			else
+				spelltar->CastToNPC()->AddPush(this->GetHeading(), spells[spell_id].pushback);
+		}
+		else
+		{
 			action->buff_unknown = 4;
 			float push_back = spells[spell_id].pushback;
 			if (push_back < 0)
