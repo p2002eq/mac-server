@@ -71,7 +71,7 @@ bool Client::Process()
 			{
 				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
-					server_log->Log(log_network, "Session ready received from client.");
+					server_log->Log(log_network, "Login received from OSX client.");
 				}
 				Handle_Login((const char*)app->pBuffer, app->Size(), "OSX");
 				break;
@@ -85,22 +85,30 @@ bool Client::Process()
 				}
 				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
-					server_log->Log(log_network, "Login received from client.");
+					server_log->Log(log_network, "Login received from PC client.");
 				}
 				Handle_Login((const char*)app->pBuffer, app->Size(), "PC");
 				break;
 			}
 		case OP_LoginComplete:
 			{
-				Handle_LoginComplete((const char*)app->pBuffer, app->Size());
-				break;
-			}
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
+				{
+					server_log->Log(log_network, "Login complete received from client.");
+				}
+					Handle_LoginComplete((const char*)app->pBuffer, app->Size());
+					break;
+				}
 		case OP_LoginUnknown1: //Seems to be related to world status in older clients; we use our own logic for that though.
 			{
-				EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginUnknown2, 0);
-				connection->QueuePacket(outapp);
-				break;
-			}
+				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
+				{
+					server_log->Log(log_network, "OP_LoginUnknown1 received from client.");
+				}
+					EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginUnknown2, 0);
+					connection->QueuePacket(outapp);
+					break;
+				}
 		case OP_ServerListRequest:
 			{
 				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
@@ -121,10 +129,10 @@ bool Client::Process()
 				break;
 			}
 		case OP_LoginBanner:
-		{
-			Handle_Banner((const char*)app->pBuffer, app->Size());
-			break;
-		}
+			{
+				Handle_Banner((const char*)app->pBuffer, app->Size());
+				break;
+			}
 		default:
 			{
 				char dump[64];
@@ -179,9 +187,11 @@ void Client::Handle_SessionReady(const char* data, unsigned int size)
 
 void Client::Handle_Login(const char* data, unsigned int size, string client)
 {
+	in_addr in;
 	if (version != cv_old)
 	{
 		//Not old client, gtfo haxxor!
+		server_log->Log(log_network_error, "Unauthorized client from %s attempted to connect, exiting them.", string(inet_ntoa(in)));
 		return;
 	}
 	else if (status != cs_waiting_for_login)
@@ -192,6 +202,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 
 	else if (size < sizeof(LoginServerInfo_Struct))
 	{
+		server_log->Log(log_network_error, "Bad Login Struct size.");
 		return;
 	}
 
@@ -234,7 +245,6 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	status = cs_logged_in;
 	unsigned int d_account_id = 0;
 	string d_pass_hash;
-	in_addr in;
 	in.s_addr = connection->GetRemoteIP();
 	bool result = false;
 	uchar sha1pass[40];

@@ -527,7 +527,7 @@ luabind::scope lua_register_packet_opcodes() {
 			luabind::value("ZoneInAvatarSet", static_cast<int>(OP_ZoneInAvatarSet)),
 			luabind::value("WorldLogout", static_cast<int>(OP_WorldLogout)),
 			luabind::value("SessionReady", static_cast<int>(OP_SessionReady)),
-			luabind::value("Login", static_cast<int>(OP_Login)),
+			luabind::value("Login", static_cast<int>(OP_LoginPC)),
 			luabind::value("ServerListRequest", static_cast<int>(OP_ServerListRequest)),
 			luabind::value("PlayEverquestRequest", static_cast<int>(OP_PlayEverquestRequest)),
 			luabind::value("ChatMessage", static_cast<int>(OP_ChatMessage)),
