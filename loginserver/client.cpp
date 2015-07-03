@@ -73,7 +73,7 @@ bool Client::Process()
 				{
 					server_log->Log(log_network, "Session ready received from client.");
 				}
-				Handle_OSXLogin((const char*)app->pBuffer, app->Size());
+				Handle_Login((const char*)app->pBuffer, app->Size(), "OSX");
 				break;
 			}
 		case OP_Login:
@@ -87,7 +87,7 @@ bool Client::Process()
 				{
 					server_log->Log(log_network, "Login received from client.");
 				}
-					Handle_PCLogin((const char*)app->pBuffer, app->Size());
+				Handle_Login((const char*)app->pBuffer, app->Size(), "PC");
 				break;
 			}
 		case OP_LoginComplete:
@@ -177,148 +177,69 @@ void Client::Handle_SessionReady(const char* data, unsigned int size)
 	}
 }
 
-void Client::Handle_OSXLogin(const char* data, unsigned int size)
+void Client::Handle_Login(const char* data, unsigned int size, string client)
 {
-	if(version != cv_old)
+	if (version != cv_old)
 	{
 		//Not old client, gtfo haxxor!
 		return;
 	}
-	
-	status = cs_logged_in;
-
-	string ourdata = data;
-	if(size < strlen("eqworld-52.989studios.com") + 1)
-		return;
-
-	//Get rid of that 989 studios part of the string, plus remove null term zero.
-	string userpass = ourdata.substr(0, ourdata.find("eqworld-52.989studios.com") - 1);
-
-	string username = userpass.substr(0, userpass.find("/"));
-	string password = userpass.substr(userpass.find("/") + 1);
-	string salt = server.config->LoadOption("salt", "login.ini");
-
-	server_log->Log(log_network, "Username: %s", username.c_str());
-	server_log->Log(log_network, "Password: %s", password.c_str());
-
-	unsigned int d_account_id = 0;
-	in_addr in;
-	string d_pass_hash;
-	uchar sha1pass[40];
-	char sha1hash[41];
-	in.s_addr = connection->GetRemoteIP();
-	bool result = false;
-	unsigned int enable;
-	string platform = "OSX";
-	macversion = intel;
-
-	string userandpass = password + salt;
-	if(server.db->GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
-	{
-		server_log->Log(log_client_error, "Error logging in, user %s does not exist in the database.", username.c_str());
-
-		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
-
-		if (server.config->LoadOption("auto_account_create", "login.ini") == "TRUE")
-		{
-			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
-			server.db->CreateLSAccountInfo(NULL, username, userandpass, "", 2, string(inet_ntoa(in)), string(inet_ntoa(in)));
-			FatalError("Account did not exist so it was created. Hit connect again to login.");
-
-			return;
-		}
-		result = false;
-	}
-	else
-	{
-		sha1::calc(userandpass.c_str(), userandpass.length(), sha1pass);
-		sha1::toHexString(sha1pass,sha1hash);
-		if(d_pass_hash.compare((char*)sha1hash) == 0)
-		{
-			result = true;
-		}
-		else
-		{
-			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "badpass");
-			server_log->Log(log_client_error, "%s", sha1hash);
-			result = false;
-		}
-	}
-
-	if(result)
-	{
-		if(!sentsessioninfo)
-		{
-			if (server.db->GetStatusLSAccountTable(username) == false)
-			{
-				FatalError("Account is not activated. Server is not allowing open logins at this time.");
-				return;
-			}
-			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
-			server.db->UpdateLSAccountData(d_account_id, string(inet_ntoa(in)));
-			GenerateKey();
-			account_id = d_account_id;
-			account_name = username.c_str();
-			EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginAccepted, sizeof(SessionId_Struct));
-			SessionId_Struct* s_id = (SessionId_Struct*)outapp->pBuffer;
-			// this is submitted to world server as "username"
-			sprintf(s_id->session_id, "LS#%i", account_id);
-			strcpy(s_id->unused, "unused");
-			s_id->unknown = 4;
-			connection->QueuePacket(outapp);
-			delete outapp;
-
-			string buf =  server.config->LoadOption("network_ip", "login.ini");
-			EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, buf.length() + 1);
-			strncpy((char*)outapp2->pBuffer, buf.c_str(), buf.length() + 1);
-			connection->QueuePacket(outapp2);
-			delete outapp2;
-			sentsessioninfo = true;
-		}
-	}
-	else
-	{
-		//FatalError("Invalid username or password.");
-	}
-	return;
-}
-
-void Client::Handle_PCLogin(const char* data, unsigned int size)
-{
-	if (status != cs_waiting_for_login)
+	else if (status != cs_waiting_for_login)
 	{
 		server_log->Log(log_network_error, "Login received after already having logged in.");
 		return;
 	}
 
-	if (size < sizeof(LoginServerInfo_Struct)) {
+	else if (size < sizeof(LoginServerInfo_Struct))
+	{
 		return;
 	}
 
-	status = cs_logged_in;
+	string username;
+	string password;
+	string platform;
+	int created;
 
-	string e_hash;
-	char *e_buffer = nullptr;
+	if (client == "OSX")
+	{
+		string ourdata = data;
+		if (size < strlen("eqworld-52.989studios.com") + 1)
+			return;
+
+		//Get rid of that 989 studios part of the string, plus remove null term zero.
+		string userpass = ourdata.substr(0, ourdata.find("eqworld-52.989studios.com") - 1);
+
+		username = userpass.substr(0, userpass.find("/"));
+		password = userpass.substr(userpass.find("/") + 1);
+		platform = "OSX";
+		macversion = intel;
+		created = 2;
+	}
+	else if (client == "PC")
+	{
+		string e_hash;
+		char *e_buffer = nullptr;
+		uchar eqlogin[40];
+		eq_crypto.DoEQDecrypt((unsigned char*)data, eqlogin, 40);
+		LoginCrypt_struct* lcs = (LoginCrypt_struct*)eqlogin;
+		username = lcs->username;
+		password = lcs->password;
+		platform = "PC";
+		macversion = pc;
+		created = 1;
+	}
+
+	string salt = server.config->LoadOption("salt", "login.ini");
+	string userandpass = password + salt;
+	status = cs_logged_in;
 	unsigned int d_account_id = 0;
 	string d_pass_hash;
-	uchar eqlogin[40];
-	uchar sha1pass[40];
-	char sha1hash[41];
-	eq_crypto.DoEQDecrypt((unsigned char*)data, eqlogin, 40);
-	LoginCrypt_struct* lcs = (LoginCrypt_struct*)eqlogin;
-
-	bool result;
 	in_addr in;
 	in.s_addr = connection->GetRemoteIP();
-
-	string username = lcs->username;
-	string password = lcs->password;
-	string salt = server.config->LoadOption("salt", "login.ini");
-
-	string userandpass = password + salt;
+	bool result = false;
+	uchar sha1pass[40];
+	char sha1hash[41];
 	unsigned int enable;
-	string platform = "PC";
-	macversion = pc;
 
 	if (server.db->GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
 	{
@@ -329,7 +250,7 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 		if (server.config->LoadOption("auto_account_create", "login.ini") == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
-			server.db->CreateLSAccountInfo(NULL, username.c_str(), userandpass.c_str(), "", 1, string(inet_ntoa(in)), string(inet_ntoa(in)));
+			server.db->CreateLSAccountInfo(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
 			FatalError("Account did not exist so it was created. Hit connect again to login.");
 
 			return;
@@ -354,29 +275,46 @@ void Client::Handle_PCLogin(const char* data, unsigned int size)
 
 	if (result)
 	{
-		if (server.db->GetStatusLSAccountTable(username) == false)
+		if (!sentsessioninfo)
 		{
-			FatalError("Account is not activated. Server is not allowing open logins at this time.");
-			return;
+			if (server.db->GetStatusLSAccountTable(username) == false)
+			{
+				FatalError("Account is not activated. Server is not allowing open logins at this time.");
+				return;
+			}
+			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
+			server.db->UpdateLSAccountData(d_account_id, string(inet_ntoa(in)));
+			GenerateKey();
+			account_id = d_account_id;
+			account_name = username.c_str();
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginAccepted, sizeof(SessionId_Struct));
+			SessionId_Struct* s_id = (SessionId_Struct*)outapp->pBuffer;
+			// this is submitted to world server as "username"
+			sprintf(s_id->session_id, "LS#%i", account_id);
+			strcpy(s_id->unused, "unused");
+			s_id->unknown = 4;
+			connection->QueuePacket(outapp);
+			delete outapp;
+
+			if (client == "OSX")
+			{
+				string buf = server.config->LoadOption("network_ip", "login.ini");
+				EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, buf.length() + 1);
+				strncpy((char*)outapp2->pBuffer, buf.c_str(), buf.length() + 1);
+				connection->QueuePacket(outapp2);
+				delete outapp2;
+				sentsessioninfo = true;
+			}
 		}
-		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
-		server.db->UpdateLSAccountData(d_account_id, string(inet_ntoa(in)));
-		GenerateKey();
-		account_id = d_account_id;
-		account_name = username;
-		EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginAccepted, sizeof(SessionId_Struct));
-		SessionId_Struct* s_id = (SessionId_Struct*)outapp->pBuffer;
-		// this is submitted to world server as "username"
-		sprintf(s_id->session_id, "LS#%i", account_id);
-		strcpy(s_id->unused, "unused");
-		s_id->unknown = 4;
-		connection->QueuePacket(outapp);
-		delete outapp;
 	}
 	else
 	{
-		FatalError("Invalid username or password.");
+		if (client == "PC")
+		{
+			FatalError("Invalid username or password.");
+		}
 	}
+	return;
 }
 
 void Client::FatalError(const char* message) {
