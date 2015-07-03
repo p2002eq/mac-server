@@ -67,7 +67,7 @@ bool Client::Process()
 				Handle_SessionReady((const char*)app->pBuffer, app->Size());
 				break;
 			}
-		case OP_SessionLogin:
+		case OP_LoginOSX:
 			{
 				if (server.config->LoadOption("trace", "login.ini") == "TRUE")
 				{
@@ -76,7 +76,7 @@ bool Client::Process()
 				Handle_Login((const char*)app->pBuffer, app->Size(), "OSX");
 				break;
 			}
-		case OP_Login:
+		case OP_LoginPC:
 			{
 				if(app->Size() < 20)
 				{
