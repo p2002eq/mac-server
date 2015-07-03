@@ -191,7 +191,8 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	if (version != cv_old)
 	{
 		//Not old client, gtfo haxxor!
-		server_log->Log(log_network_error, "Unauthorized client from %s attempted to connect, exiting them.", string(inet_ntoa(in)));
+		string error = "Unauthorized client from " + string(inet_ntoa(in)) + " , exiting them.";
+		server_log->Log(log_network_error, error.c_str());
 		return;
 	}
 	else if (status != cs_waiting_for_login)

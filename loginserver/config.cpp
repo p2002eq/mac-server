@@ -19,6 +19,7 @@
 #include "config.h"
 #include "error_log.h"
 #include <fstream>
+#include <iostream>
 
 #pragma warning( disable : 4267 )
 
@@ -58,4 +59,102 @@ std::string Config::LoadOption(std::string option, std::string filename)
 	}
 	file.close();
 	return "";
+}
+
+void Config::ReWriteLSini()
+{
+	std::string line;
+	std::ifstream readini("login.ini");
+	std::ofstream writebackup("login.ini.bak");
+	if (!readini)
+	{
+		// place holder for reading from database for values
+		server_log->Log(log_error, "ini file copy error.");
+		return;
+	}
+
+	std::string linebackup;
+
+	while (std::getline(readini, line))
+	{
+		linebackup = line;
+		linebackup += "\n";
+		writebackup << linebackup;
+	}
+	readini.close();
+	writebackup.close();
+
+	std::string lineTemp;
+
+	std::string lineReplace = "port = 6000";
+	std::string lineNew = "clientport = 6000";
+	std::ifstream readbackup("login.ini.bak");
+	std::ofstream writeini("login.ini");
+	while (std::getline(readbackup, line))
+	{
+		// If line does not need to be replaced.
+		if (line != lineReplace)
+		{
+			lineTemp = line;
+		}
+		// Line replacements here.
+		else if (line == lineReplace)
+		{
+			lineTemp = lineNew;
+		}
+		lineTemp += "\n";
+		writeini << lineTemp;
+	}
+	readbackup.close();
+	writeini.close();
+	return;
+}
+
+void Config::WriteDBini()
+{
+	bool login = std::ifstream("login.ini").good();
+	bool dbexist = std::ifstream("db.ini").good();
+	if (dbexist)
+	{
+		return;
+	}
+	if (!dbexist && login)
+	{
+		std::ofstream dbini("db.ini");
+		dbini << "[Login Server Database]\n";
+		dbini << "lshost = " + LoadOption("host", "login.ini") + "\n";
+		dbini << "lsport = " + LoadOption("port", "login.ini") + "\n";
+		dbini << "lsdb = " + LoadOption("db", "login.ini") + "\n";
+		dbini << "lsuser = " + LoadOption("user", "login.ini") + "\n";
+		dbini << "lspassword = " + LoadOption("password", "login.ini") + "\n";
+		dbini << "[Game Server Database]\n";
+		dbini << "*Game Server section not used yet.*\n";
+		dbini << "host = " + LoadOption("host", "login.ini") + "\n";
+		dbini << "port = " + LoadOption("port", "login.ini") + "\n";
+		dbini << "db = " + LoadOption("db", "login.ini") + "\n";
+		dbini << "user = " + LoadOption("user", "login.ini") + "\n";
+		dbini << "password = " + LoadOption("password", "login.ini");
+		dbini.close();
+		return;
+	}
+	if (!dbexist && !login)
+	{
+		// place holder for reading from database for values
+		std::ofstream dbini("db.ini");
+		dbini << "[Login Server Database]\n";
+		dbini << "lshost = \n";
+		dbini << "lsport = \n";
+		dbini << "lsdb = \n";
+		dbini << "lsuser = \n";
+		dbini << "lspassword = \n";
+		dbini << "[Game Server Database]\n";
+		dbini << "*Game Server section not used yet.*\n";
+		dbini << "host = \n";
+		dbini << "port = \n";
+		dbini << "db = \n";
+		dbini << "user = \n";
+		dbini << "password = ";
+		dbini.close();
+		return;
+	}
 }

@@ -67,10 +67,13 @@ int main()
 	server.config = new Config();
 	server_log->Log(log_debug, "Config System Init.");
 
+	server.config->WriteDBini();
+
 	std::string configFile = "login.ini"; 
 	ifstream f(configFile.c_str());
 	if (f.good())
 	{
+		server.config->ReWriteLSini();
 	}
 	else if (f.fail())
 	{

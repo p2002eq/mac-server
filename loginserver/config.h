@@ -31,6 +31,8 @@ public:
 	* Gets a variable if it exists.
 	*/
 	std::string LoadOption(std::string option, std::string filename);
+	void ReWriteLSini();
+	void WriteDBini();
 
 protected:
 	std::map<std::string, std::map<std::string, std::string> > vars;
