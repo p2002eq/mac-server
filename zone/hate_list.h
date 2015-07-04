@@ -78,13 +78,17 @@ public:
 	std::list<tHateEntry*>& GetHateList() { return list; }
 
 	//setting owner
-	void SetOwner(Mob *newOwner) { owner = newOwner; }
+	void SetOwner(Mob *newOwner);
 
 protected:
 	tHateEntry* Find(Mob *ent);
+	int32 GetHateBonus(tHateEntry *entry);
 private:
 	std::list<tHateEntry*> list;
 	Mob *owner;
+	int32 meleeRangeBonus = 0;
+	int32 sitBonus = 0;
+	int32 lowHealthBonus = 0;
 };
 
 #endif

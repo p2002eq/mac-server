@@ -1817,11 +1817,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 
 		damage = mod_npc_damage(damage, skillinuse, Hand, weapon, other);
 
-		int32 hate = damage;
-		if(IsPet())
-		{
-			hate = hate * 100 / GetDamageTable(skillinuse);
-		}
+		int32 hate = max_dmg + eleBane;
+		hate = hate == 0 ? 1 : hate / 2;
 
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
@@ -1860,12 +1857,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 					CommonOutgoingHitSuccess(other, damage, skillinuse);
 				}
 				Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
-				// now add done damage to the hate list
-				if(damage > 0)
-					other->AddToHateList(this, hate);
-				else
-					other->AddToHateList(this, 0);
 			}
+			other->AddToHateList(this, hate);
 		}
 
 		Log.Out(Logs::Detail, Logs::Combat, "Final damage against %s: %d", other->GetName(), damage);
@@ -4302,13 +4295,6 @@ uint16 Mob::GetDamageTable(SkillUseTypes skillinuse)
 			return 100;
 
 		return ret_table;
-	}
-	else if(GetLevel() >= 90)
-	{
-		if(GetClass() == MONK)
-			return 379;
-		else
-			return 345;
 	}
 	else
 	{

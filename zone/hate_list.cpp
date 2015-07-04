@@ -43,6 +43,42 @@ HateList::~HateList()
 {
 }
 
+void HateList::SetOwner(Mob *newOwner)
+{
+	owner = newOwner;
+
+	uint8 mobLevel = owner->GetLevel();
+
+	// the aggro amount of most offensive spells; scales by target level
+	int32 standardSpellHate = 25;
+	if (mobLevel > 35)
+	{
+		standardSpellHate = 25 + (mobLevel - 25)*(mobLevel - 25);
+	}
+	else if (mobLevel > 15)
+	{
+		standardSpellHate = 15 + (mobLevel * mobLevel) / 10;
+	}
+
+	// melee range hate bonus
+	meleeRangeBonus = standardSpellHate / 3;
+	if (meleeRangeBonus < 100)
+	{
+		meleeRangeBonus = 100;
+	}
+
+	// sitting hate bonus
+	sitBonus += standardSpellHate;
+
+	// low health hate bonus
+	lowHealthBonus = mobLevel - 15;
+	lowHealthBonus = lowHealthBonus*lowHealthBonus*lowHealthBonus / 4 + 500;
+	if (lowHealthBonus < 500)
+		lowHealthBonus = 500;
+	else if (lowHealthBonus > 10000)
+		lowHealthBonus = 10000;
+}
+
 // added for frenzy support
 // checks if target still is in frenzy mode
 void HateList::CheckFrenzyHate()
@@ -277,6 +313,37 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
+int32 HateList::GetHateBonus(tHateEntry *entry)
+{
+	int32 bonus = 0;
+
+	if (owner->CombatRange(entry->ent))
+	{
+		bonus += meleeRangeBonus;
+	}
+	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
+	{
+		// this could be replaced with a better fit
+		int32 lowHealthAggroThreshold = owner->GetLevel() - 15;
+		lowHealthAggroThreshold = lowHealthAggroThreshold*lowHealthAggroThreshold*lowHealthAggroThreshold / 4 + 500;
+		if (lowHealthAggroThreshold < 500)
+			lowHealthAggroThreshold = 500;
+		else if (lowHealthAggroThreshold > 10000)
+			lowHealthAggroThreshold = 10000;
+
+		bonus += lowHealthAggroThreshold;
+	}
+	if (entry->ent->IsClient())
+	{
+		if (entry->ent->CastToClient()->IsSitting())
+		{
+			bonus += sitBonus;
+		}
+	}
+
+	return bonus;
+}
+
 Mob *HateList::GetTop()
 {
 	Mob* top = nullptr;
@@ -290,30 +357,6 @@ Mob *HateList::GetTop()
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
-
-		uint8 mobLevel = owner->GetLevel();
-
-		// the aggro amount of most offensive spells; scales by target level
-		int32 defaultAggro = 25;
-		if (mobLevel > 35)
-		{
-			defaultAggro = 25 + (mobLevel - 25)*(mobLevel - 25);
-		}
-		else if (mobLevel > 15)
-		{
-			defaultAggro = 15 + (mobLevel * mobLevel) / 10;
-		}
-
-		// melee range hate bonus
-		int32 chargeAggroThreshold = defaultAggro / 3;
-		if (chargeAggroThreshold < 130)
-		{
-			chargeAggroThreshold = 130;
-		}
-		if (owner->IsNPC() && owner->GetSpecialAbility(PROX_AGGRO))
-		{
-			chargeAggroThreshold *= 2;
-		}
 
 		auto iterator = list.begin();
 		while (iterator != list.end())
@@ -365,32 +408,10 @@ Mob *HateList::GetTop()
 				continue;
 			}
 
-			int32 currentHate = cur->hate;
-
-			if(owner->CombatRange(cur->ent))
-			{
-				currentHate += chargeAggroThreshold;
-			}
-
-			if (cur->bFrenzy || cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP() * 100 / cur->ent->GetMaxHP()) < 20))
-			{
-				// this could be replaced with a better fit
-				int32 lowHealthAggroThreshold = mobLevel - 15;
-				lowHealthAggroThreshold = lowHealthAggroThreshold*lowHealthAggroThreshold*lowHealthAggroThreshold / 4 + 500;
-				if (lowHealthAggroThreshold < 500)
-					lowHealthAggroThreshold = 500;
-				else if (lowHealthAggroThreshold > 10000)
-					lowHealthAggroThreshold = 10000;
-
-				currentHate += lowHealthAggroThreshold;
-			}
+			int32 currentHate = cur->hate + GetHateBonus(cur);
 
 			if (cur->ent->IsClient())
 			{
-				if (cur->ent->CastToClient()->IsSitting())
-				{
-					currentHate += defaultAggro;
-				}
 
 				if (currentHate > hateClientTypeInRange && owner->CombatRange(cur->ent))
 				{
@@ -532,13 +553,26 @@ bool HateList::IsEmpty() {
 // Prints hate list to a client
 void HateList::PrintToClient(Client *c)
 {
+	int32 bonusHate = 0;
 	auto iterator = list.begin();
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
-		c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
-			(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-			e->damage, e->hate);
+
+		bonusHate = GetHateBonus(e);
+
+		if (bonusHate > 0)
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d (+%i)",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate, bonusHate);
+		}
+		else
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate);
+		}
 
 		++iterator;
 	}
