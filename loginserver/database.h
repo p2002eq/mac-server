@@ -40,19 +40,46 @@ public:
 	*/
 	virtual bool IsConnected() { return (db != nullptr); }
 
+#pragma region Player Account Info
+	/**
+	* Updates or creates the login server account with info from world server
+	*/
+	virtual void CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
+
+	/**
+	* Updates the ip address of the client with account id = id
+	*/
+	virtual void UpdateLSAccount(unsigned int id, std::string ip_address);
+
+	/**
+	* Retrieves account status to check if account is activated for login.
+	* Returns true if the record was found, false otherwise.
+	*/
+	virtual bool GetAccountLockStatus(std::string name);
+
+	/**
+	* Updates or creates the access log
+	*/
+	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
+
 	/**
 	* Retrieves the login data (password hash and account id) from the account name provided
 	* Needed for client login procedure.
 	* Returns true if the record was found, false otherwise.
 	*/
 	virtual bool GetLoginDataFromAccountName(std::string name, std::string &password, unsigned int &id);
+#pragma endregion
+
+#pragma region World Server Account Info
+	/**
+	* Creates new world registration for unregistered servers and returns new id
+	*/
+	virtual bool CreateWorldRegistration(std::string long_name, std::string short_name, unsigned int &id);
 
 	/**
-	* Retrieves account status to check for GM ability to use UF+ clients
-	* Needed for status check.
-	* Returns true if the record was found, false otherwise.
+	* Updates the ip address of the world with account id = id
 	*/
-	virtual bool GetStatusLSAccountTable(std::string name);
+	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address);
 
 	/**
 	* Retrieves the world registration from the long and short names provided.
@@ -61,31 +88,15 @@ public:
 	*/
 	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
 		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
+#pragma endregion
 
+#pragma region Server Setup
 	/**
-	* Updates the ip address of the client with account id = id
+	* Creates Server Settings table.
 	*/
-	virtual void UpdateLSAccountData(unsigned int id, std::string ip_address);
+	virtual bool CreateServerSettings();
+#pragma endregion
 
-	/**
-	* Updates or creates the login server account with info from world server
-	*/
-	virtual void CreateLSAccountInfo(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
-
-	/**
-	* Updates or creates the access log
-	*/
-	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
-
-	/**
-	* Updates the ip address of the world with account id = id
-	*/
-	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address);
-
-	/**
-	* Creates new world registration for unregistered servers and returns new id
-	*/
-	virtual bool CreateWorldRegistration(std::string long_name, std::string short_name, unsigned int &id);
 protected:
 	std::string user, pass, host, port, name;
 	MYSQL *db;

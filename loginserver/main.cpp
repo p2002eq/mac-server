@@ -67,6 +67,13 @@ int main()
 	server.config = new Config();
 	server_log->Log(log_debug, "Config System Init.");
 
+	if (server.db->CreateServerSettings() == false)
+	{
+		server_log->Log(log_error, "Server Settings check failed, LS shut down.");
+		return false;
+	}
+
+	server_log->Log(log_debug, "Continuing to ini setup.");
 	server.config->WriteDBini();
 
 	std::string configFile = "login.ini"; 
