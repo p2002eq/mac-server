@@ -19,7 +19,6 @@
 #define EQEMU_DATABASEMYSQL_H
 
 #include "database.h"
-#ifdef EQEMU_MYSQL_ENABLED
 
 #include <string>
 #include <sstream>
@@ -102,6 +101,4 @@ protected:
 	std::string user, pass, host, port, name;
 	MYSQL *db;
 };
-
-#endif
 #endif

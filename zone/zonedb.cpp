@@ -848,7 +848,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->expAA = atoi(row[r]); r++;											 // "aa_exp,                    "
 		pp->aapoints = atoi(row[r]); r++;										 // "aa_points,                 "
 		pp->boatid = atoi(row[r]); r++;											 // "boatid,					"
-		strncpy(pp->boat, row[r], 16); r++;										 // "boatname					"
+		strncpy(pp->boat, row[r], 32); r++;										 // "boatname					"
 		pp->famished = atoi(row[r]); r++;										 // "famished,					"
 		m_epp->aa_effects = atoi(row[r]); r++;									 // "`e_aa_effects`,			"
 		m_epp->perAA = atoi(row[r]); r++;										 // "`e_percent_to_aa`,			"
@@ -860,7 +860,10 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 bool ZoneDatabase::LoadCharacterFactionValues(uint32 character_id, faction_map & val_list) {
 	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `faction_values` WHERE `char_id` = %i", character_id);
 	auto results = database.QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) { val_list[atoi(row[0])] = atoi(row[1]); }
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{ 
+		val_list[atoi(row[0])] = atoi(row[1]); 
+	}
 	return true;
 }
 
@@ -928,26 +931,6 @@ bool ZoneDatabase::LoadCharacterLanguages(uint32 character_id, PlayerProfile_Str
 		if (i < MAX_PP_LANGUAGE){
 			pp->languages[i] = atoi(row[1]);
 		}
-	}
-	return true;
-}
-
-bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp){
-	std::string query = StringFormat(
-		"SELECT				  "
-		"disc_id			  "
-		"FROM				  "
-		"`character_disciplines`"
-		"WHERE `id` = %u ORDER BY `slot_id`", character_id);
-	auto results = database.QueryDatabase(query);
-	int i = 0;
-	/* Initialize Disciplines */
-	memset(pp->disciplines.values, 0, (sizeof(pp->disciplines.values[0]) * MAX_PP_DISCIPLINES));
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		if (i < MAX_PP_DISCIPLINES){
-			pp->disciplines.values[i] = atoi(row[0]);
-		}
-		i++;
 	}
 	return true;
 }
@@ -1086,13 +1069,6 @@ bool ZoneDatabase::SaveCharacterMaterialColor(uint32 character_id, uint32 slot_i
 bool ZoneDatabase::SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_skills` (id, skill_id, value) VALUES (%u, %u, %u)", character_id, skill_id, value); auto results = QueryDatabase(query);
 	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterSkill for character ID: %i, skill_id:%u value:%u done", character_id, skill_id, value);
-	return true;
-}
-
-bool ZoneDatabase::SaveCharacterDisc(uint32 character_id, uint32 slot_id, uint32 disc_id){
-	std::string query = StringFormat("REPLACE INTO `character_disciplines` (id, slot_id, disc_id) VALUES (%u, %u, %u)", character_id, slot_id, disc_id);
-	auto results = QueryDatabase(query);
-	Log.Out(Logs::General, Logs::Character, "ZoneDatabase::SaveCharacterDisc for character ID: %i, slot:%u disc_id:%u done", character_id, slot_id, disc_id);
 	return true;
 }
 
@@ -1366,12 +1342,6 @@ bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, ui
 	return true;
 }
 
-bool ZoneDatabase::DeleteCharacterDisc(uint32 character_id, uint32 slot_id){
-	std::string query = StringFormat("DELETE FROM `character_disciplines` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
-	QueryDatabase(query);
-	return true;
-}
-
 bool ZoneDatabase::DeleteCharacterAAs(uint32 character_id){
 	std::string query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", character_id);
 	QueryDatabase(query);
@@ -1449,7 +1419,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
 						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, "
 						"npc_types.armtexture, npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, "
-						"npc_types.feettexture FROM npc_types WHERE id = %d", id);
+						"npc_types.feettexture, npc_types.chesttexture FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1613,6 +1583,7 @@ const NPCType* ZoneDatabase::GetNPCType (uint32 id) {
 		tmpNPCType->handtexture = atoi(row[91]);
 		tmpNPCType->legtexture = atoi(row[92]);
 		tmpNPCType->feettexture = atoi(row[93]);
+		tmpNPCType->chesttexture = atoi(row[94]);
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
 		if (zone->npctable.find(tmpNPCType->npc_id) != zone->npctable.end()) {
@@ -1667,8 +1638,8 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
                         "npc_types.emoteid, npc_types.spellscale, npc_types.healscale, npc_types.no_target_hotkey,"
                         "npc_types.raid_target, npc_types.attack_delay, npc_types.walkspeed, npc_types.combat_hp_regen, "
 						"npc_types.combat_mana_regen, npc_types.light, npc_types.aggro_pc, npc_types.armtexture, "
-						"npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, npc_types.feettexture "
-						"FROM npc_types WHERE id = %d", id);
+						"npc_types.bracertexture, npc_types.handtexture, npc_types.legtexture, npc_types.feettexture, "
+						"npc_types.chesttexture FROM npc_types WHERE id = %d", id);
 
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1832,6 +1803,7 @@ NPCType* ZoneDatabase::GetNPCTypeTemp (uint32 id) {
 		tmpNPCType->handtexture = atoi(row[91]);
 		tmpNPCType->legtexture = atoi(row[92]);
 		tmpNPCType->feettexture = atoi(row[93]);
+		tmpNPCType->chesttexture = atoi(row[94]);
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -3716,4 +3688,48 @@ bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
 	auto row = results.begin();
 	strncpy(outData, row[0], 2048);
 	return true;
+}
+
+
+bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::const_iterator &start, std::list<ItemInst*>::const_iterator &end)
+{
+		// Delete cursor items
+	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
+                                    "AND ((slotid >= %i AND slotid <= %i) "
+                                    "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
+                                    client->CharacterID(), EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
+									MainCursor, EmuConstants::CURSOR_BAG_BEGIN, EmuConstants::CURSOR_BAG_END);
+    auto results = QueryDatabase(query);
+    if (!results.Success()) {
+        std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
+        return false;
+    }
+
+	int8 count = 0;
+	int i = EmuConstants::CURSOR_QUEUE_BEGIN;
+    for(auto it = start; it != end; ++it) {
+        ItemInst *inst = *it;
+		if(inst && inst->GetItem()->Soulbound)
+		{
+			int16 newslot = client->GetInv().FindFreeSlot(false, false, inst->GetItem()->Size);
+			if(newslot != INVALID_INDEX)
+			{
+				client->PutItemInInventory(newslot, *inst);
+				++count;
+			}
+		}
+		else if(inst)
+		{
+			int16 use_slot = (i == EmuConstants::CURSOR_QUEUE_BEGIN) ? MainCursor : i;
+			if (SaveInventory(client->CharacterID(), inst, use_slot)) 
+			{
+				++i;
+			}
+		}
+    }
+
+	if(count > 0)
+		return true;
+
+	return false;
 }

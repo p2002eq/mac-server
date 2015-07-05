@@ -197,7 +197,8 @@ Corpse::Corpse(NPC* in_npc, ItemList* in_itemlist, uint32 in_npctypeid, const NP
 	0,							// uint8		in_bracertexture,
 	0,							// uint8		in_handtexture,
 	0,							// uint8		in_legtexture,
-	0							// uint8		in_feettexture,
+	0,							// uint8		in_feettexture,
+	0							// uint8		in_chesttexture,
 ),									  
 	corpse_decay_timer(in_decaytime),
 	corpse_rez_timer(0),
@@ -301,7 +302,8 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 	0,								  // uint8		in_bracertexture,
 	0,								  // uint8		in_handtexture,
 	0,								  // uint8		in_legtexture,
-	0								  // uint8		in_feettexture,
+	0,								  // uint8		in_feettexture,
+	0								  // uint8		in_chesttexture,
 	),
 	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
@@ -370,18 +372,23 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 		// get their tints
 		memcpy(item_tint, &client->GetPP().item_tint, sizeof(item_tint));
 
-		// solar: TODO soulbound items need not be added to corpse, but they need
-		// to go into the regular slots on the player, out of bags
-
 		// worn + inventory + cursor
+		// Todo: Handle soulbound bags.
 		std::list<uint32> removed_list;
 		bool cursor = false;
 		for (i = MAIN_BEGIN; i < EmuConstants::MAP_POSSESSIONS_SIZE; i++) {
 			item = client->GetInv().GetItem(i);
-			if ((item && (!client->IsBecomeNPC())) || (item && client->IsBecomeNPC() && !item->GetItem()->NoRent)) {
-				std::list<uint32> slot_list = MoveItemToCorpse(client, item, i);
-				removed_list.merge(slot_list);
+			if(item)
+			{
+				if ((!client->IsBecomeNPC() && (!item->GetItem()->Soulbound)) || 
+					(client->IsBecomeNPC() && !item->GetItem()->NoRent && !item->GetItem()->Soulbound)) {
+						std::list<uint32> slot_list = MoveItemToCorpse(client, item, i);
+						removed_list.merge(slot_list);
+				}
+				else if(item->GetItem()->Soulbound)
+					Log.Out(Logs::Moderate, Logs::Inventory, "Skipping Soulbound item %s in slot %d", item->GetItem()->Name, i);
 			}
+
 		}
 
 		database.TransactionBegin();
@@ -407,7 +414,8 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 
 		auto start = client->GetInv().cursor_cbegin();
 		auto finish = client->GetInv().cursor_cend();
-		database.SaveCursor(client->CharacterID(), start, finish);
+		// If soulbound items were moved to the cursor, they need to be moved to a primary inventory slot.
+		database.SaveSoulboundItems(client, start, finish);
 
 		client->CalcBonuses(); // will only affect offline profile viewing of dead characters..unneeded overhead
 		client->Save();
@@ -446,10 +454,16 @@ std::list<uint32> Corpse::MoveItemToCorpse(Client *client, ItemInst *item, int16
 			interior_slot = Inventory::CalcSlotId(equipslot, bagindex);
 			interior_item = client->GetInv().GetItem(interior_slot);
 
-			if (interior_item) {
+			if (interior_item && !interior_item->GetItem()->Soulbound) {
 				AddItem(interior_item->GetItem()->ID, interior_item->GetCharges(), interior_slot);
 				returnlist.push_back(Inventory::CalcSlotId(equipslot, bagindex));
 				client->DeleteItemInInventory(interior_slot, 0, true, false);
+			}
+			else if(interior_item && interior_item->GetItem()->Soulbound)
+			{
+				client->PushItemOnCursor(*interior_item, true); // Push to cursor for now, since parent bag is about to be deleted.
+				client->DeleteItemInInventory(interior_slot);
+				Log.Out(Logs::Moderate, Logs::Inventory, "Skipping Soulbound item %s in slot %d", interior_item->GetItem()->Name, interior_slot);
 			}
 		}
 	}
@@ -508,7 +522,8 @@ Corpse::Corpse(uint32 in_dbid, uint32 in_charid, const char* in_charname, ItemLi
 	0,						// uint8		in_bracertexture,
 	0,						// uint8		in_handtexture,
 	0,						// uint8		in_legtexture,
-	0						// uint8		in_feettexture,
+	0,						// uint8		in_feettexture,
+	0						// uint8		in_chesttexture,
 	),						
 	corpse_decay_timer(RuleI(Character, EmptyCorpseDecayTimeMS)),
 	corpse_rez_timer(RuleI(Character, CorpseResTimeMS)),
@@ -1088,15 +1103,18 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			// Dont display the item if it's in a bag
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
 			if (!IsPlayerCorpse() || item_data->equip_slot <= EmuConstants::GENERAL_END || item_data->equip_slot == MainPowerSource || Loot_Request_Type >= 3 ||
-				(item_data->equip_slot >= 8000 && item_data->equip_slot <= 8999)) {
+				(item_data->equip_slot >= EmuConstants::CURSOR_QUEUE_BEGIN && item_data->equip_slot <= EmuConstants::CURSOR_QUEUE_END)) {
 				if (i < corpselootlimit) {
-					item = database.GetItem(item_data->item_id);
-					if(client && item) {
-						ItemInst* inst = database.CreateItem(item, item_data->charges);
-						if(inst) {
-							// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
-							client->SendItemPacket(i, inst, ItemPacketLoot);
-							safe_delete(inst);
+					if(!RuleB(NPC, IgnoreQuestLoot) || (RuleB(NPC, IgnoreQuestLoot) && item_data->quest == 0))
+					{
+						item = database.GetItem(item_data->item_id);
+						if(client && item) {
+							ItemInst* inst = database.CreateItem(item, item_data->charges);
+							if(inst) {
+								// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
+								client->SendItemPacket(i, inst, ItemPacketLoot);
+								safe_delete(inst);
+							}
 						}
 
 						item_data->lootslot = i;

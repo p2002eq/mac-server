@@ -129,6 +129,7 @@ struct NPCType
 	uint8	handtexture;
 	uint8	legtexture;
 	uint8	feettexture;
+	uint8	chesttexture;
 };
 
 namespace player_lootitem {
@@ -139,6 +140,7 @@ namespace player_lootitem {
 		uint16	lootslot;
 		uint8	min_level;		  // 
 		uint8	max_level;		  // 
+		uint8	quest;
 	};
 }
 

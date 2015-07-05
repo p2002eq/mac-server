@@ -624,6 +624,34 @@ typedef enum {
 //
 #define SPELL_LOAD_FIELD_COUNT 231
 
+// Disciplines
+#define disc_aggressive					1
+#define disc_precision					2
+#define disc_defensive					3
+#define disc_evasive					4
+#define disc_ashenhand					5
+#define disc_furious					6  //whirlwind, counterattack
+#define disc_stonestance				11 //protectivespirit
+#define disc_thunderkick				12
+#define disc_fortitude					13 //voiddance
+#define disc_fellstrike					14 //bestialrage, innerflame, duelist
+#define disc_hundredfist				15 //blindingspeed
+#define disc_charge						16 //deadeye
+#define disc_mightystrike				17
+#define disc_nimble						19
+#define disc_silentfist					20
+#define disc_kinesthetics				21
+#define disc_holyforge					22
+#define disc_sanctification				23
+#define disc_trueshot					24
+#define disc_weaponshield				25
+#define disc_unholyaura					26
+#define disc_leechcurse					27
+#define disc_deftdance					28
+#define disc_puretone					29
+#define disc_resistant					30
+#define disc_fearless					31
+
 struct SPDat_Spell_Struct
 {
 /* 000 */	int id;	// not used
@@ -827,8 +855,6 @@ int32 CalculateDiseaseCounters(uint16 spell_id);
 int32 CalculateCurseCounters(uint16 spell_id);
 int32 CalculateCorruptionCounters(uint16 spell_id);
 int32 CalculateCounters(uint16 spell_id);
-bool IsDisciplineBuff(uint16 spell_id);
-bool IsDiscipline(uint16 spell_id);
 bool IsCombatSkill(uint16 spell_id);
 bool IsResurrectionEffects(uint16 spell_id);
 bool IsRuneSpell(uint16 spell_id);

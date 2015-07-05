@@ -19,6 +19,8 @@
 #include "database.h"
 #include "string_util.h"
 
+#pragma warning( disable : 4267 4715 )
+
 /*	This section past here is for setting up the database in bootstrap ONLY.
 	Please put regular server changes and additions above this. 
 	Don't use this for the login server. It should never have access to the game database. */
@@ -530,6 +532,18 @@ bool Database::DBSetup_Logs()
 		if (!results3a.Success())
 		{
 			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `bazaar`.");
+			return false;
+		}
+	}
+	std::string check_query4 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Discs'");
+	auto results4 = QueryDatabase(check_query4);
+	if (results4.RowCount() == 0)
+	{
+		std::string check_query4a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('49', 'Discs', '0', '0', '0')");
+		auto results4a = QueryDatabase(check_query4a);
+		if (!results4a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `disc`.");
 			return false;
 		}
 	}

@@ -228,7 +228,7 @@ struct Spawn_Struct {
 /*0336*/ uint8 unknown0336[3];
 union
 {
-/*0339*/ uint8 equip_chest2;	// Second place in packet for chest texture (usually 0xFF in live packets)
+/*0339*/ uint8 bodytexture;	// Second place in packet for chest texture (usually 0xFF in live packets)
 								// Not sure why there are 2 of them, but it effects chest texture!
 /*0339*/ uint8 mount_color;		// drogmor: 0=white, 1=black, 2=green, 3=red
 								// horse: 0=brown, 1=white, 2=black, 3=tan
@@ -559,13 +559,6 @@ struct AA_Array
 	uint32 value;
 };
 
-static const uint32 MAX_PP_DISCIPLINES = 100;
-static const uint32 MAX_DISCIPLINE_TIMERS = 20;
-
-struct Disciplines_Struct {
-	uint32 values[MAX_PP_DISCIPLINES];
-};
-
 struct ClientDiscipline_Struct {
     uint8	disc_id;	// There are only a few discs < 60
     uint8	unknown3[3];	// Which leaves room for ??
@@ -634,7 +627,6 @@ struct PlayerProfile_Struct
 /*0242*/	uint8				anon;				// 2=roleplay, 1=anon, 0=not anon
 /*0243*/	uint8				gm;
 /*0244*/	uint8				guildrank;
-/*0245*/	uint8				guildbanker;
 /*0252*/	uint32				intoxication;
 /*0256*/	uint32				spellSlotRefresh[MAX_PP_REF_MEMSPELL];	//in ms
 /*0292*/	uint32				abilitySlotRefresh;
@@ -691,7 +683,7 @@ struct PlayerProfile_Struct
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 /*5396*/	uint32				ability_down;		// Guessing
 /*5408*/	uint32				autosplit;			//not used right now
-/*5418*/	uint16				boatid;
+/*5418*/	uint32				boatid;
 /*5420*/	uint32				zone_change_count;	// Number of times user has zoned in their career (guessing)
 /*5452*/	uint32				expansions;			// expansion setting, bit field of expansions avaliable
 /*5456*/	int32				toxicity;			//from drinking potions, seems to increase by 3 each time you drink
@@ -702,9 +694,8 @@ struct PlayerProfile_Struct
 /*5506*/	uint16				zoneInstance;		// Instance ID
 /*5508*/	SpellBuff_Struct	buffs[BUFF_COUNT];	// Buffs currently on the player
 /*6008*/	char				groupMembers[6][64];//
-			char				boat[20];
+			char				boat[32];
 /*7048*/	uint32				entityid;
-/*7264*/	Disciplines_Struct	disciplines;
 /*7664*/	uint32				recastTimers[MAX_RECAST_TYPES];	// Timers (GMT of last use)
 /*7904*/	uint32				endurance;
 /*8184*/	uint32				air_remaining;
@@ -716,6 +707,7 @@ struct PlayerProfile_Struct
 			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
+			uint8				fatigue;
 /*19568*/
 };
 
@@ -2489,13 +2481,6 @@ struct ClearObject_Struct
 /*001*/	uint8	Unknown001[7];
 };
 
-struct DisciplineTimer_Struct
-{
-/*00*/ uint32	TimerID;
-/*04*/ uint32	Duration;
-/*08*/ uint32	Unknown08;
-};
-
 struct GMSearchCorpse_Struct
 {
 /*000*/	char Unknown000[64];
@@ -2527,6 +2512,7 @@ struct ServerLootItem_Struct {
 	uint16	lootslot;	  // uint16	lootslot;
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
+	uint8	quest;
 };
 
 struct Checksum_Struct {

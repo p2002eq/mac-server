@@ -193,6 +193,8 @@
 #define NPC_ENRAGE_END				1043	//%1 is no longer enraged.
 #define NPC_RAMPAGE					1044	//%1 goes on a RAMPAGE!
 #define NPC_FLURRY					1045	//%1 executes a FLURRY of attacks on %2!
+#define DISCIPLINE_SANCTIFICATION	1066	//A sanctifying aura surrounds %1.
+#define DISCIPLINE_RESISTANT		1075	//%1 has become more resistant.
 #define DISCIPLINE_FEARLESS			1076	//%1 becomes fearless.
 #define DUEL_FINISHED				1088	//dont know text
 #define EATING_MESSAGE				1091	//Chomp, chomp, chomp... %1 takes a bite from a %2.
@@ -363,6 +365,7 @@
 #define GROUP_INVITEE_NOT_FOUND		12268	//You must target a player or use /invite <name> to invite someone to your group.
 #define GROUP_INVITEE_SELF			12270	//12270 You cannot invite yourself.
 #define	CAMP_ABANDON				12290	//You abandon your preparations to camp.
+#define TALKING_TO_SELF				12323	//Talking to yourself again?
 #define NOT_IN_CONTROL				12368	//You do not have control of yourself right now.
 #define TOO_DISTRACTED				12440   //You are too distracted to cast a spell now!
 #define ALREADY_CASTING				12442	//You are already casting a spell!

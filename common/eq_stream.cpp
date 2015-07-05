@@ -49,6 +49,8 @@
 #define _L "%s:%d: "
 #define __L , long2ip(remote_ip).c_str(), ntohs(remote_port)
 
+#pragma warning( disable : 4244 4800 4267 )
+
 uint16 EQStream::MaxWindowSize=2048;
 
 void EQStream::init() {
@@ -686,7 +688,7 @@ void EQStream::Write(int eq_fd)
 	if(GetExecutablePlatform() == ExePlatformWorld || GetExecutablePlatform() == ExePlatformZone) {
 		// if we have a timeout defined and we have not received an ack recently enough, retransmit from beginning of queue
 		if (RETRANSMIT_TIMEOUT_MULT && !SequencedQueue.empty() && NextSequencedSend &&
-			(GetState()==ESTABLISHED) && ((retransmittimer+retransmittimeout) < Timer::GetCurrentTime())) {
+			(GetState()==ESTABLISHED) && ((retransmittimer+retransmittimeout) > Timer::GetCurrentTime())) {
 			Log.Out(Logs::Detail, Logs::Netcode, _L "Timeout since last ack received, starting retransmit at the start of our unacked "
 				"buffer (seq %d, was %d)." __L, SequencedBase, SequencedBase+NextSequencedSend);
 			NextSequencedSend = 0;

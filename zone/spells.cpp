@@ -158,15 +158,15 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		IsStunned() ||
 		IsFeared() ||
 		IsMezzed() ||
-		(IsSilenced() && !IsDiscipline(spell_id)) ||
-		(IsAmnesiad() && IsDiscipline(spell_id))
+		(IsSilenced()) ||
+		(IsAmnesiad())
 	)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: not able to cast now. Valid? %d, casting %d, waiting? %d, spellend? %d, stunned? %d, feared? %d, mezed? %d, silenced? %d, amnesiad? %d",
 			IsValidSpell(spell_id), casting_spell_id, delaytimer, spellend_timer.Enabled(), IsStunned(), IsFeared(), IsMezzed(), IsSilenced(), IsAmnesiad() );
-		if(IsSilenced() && !IsDiscipline(spell_id))
+		if(IsSilenced())
 			Message_StringID(CC_Red, SILENCED_STRING);
-		if(IsAmnesiad() && IsDiscipline(spell_id))
+		if(IsAmnesiad())
 			Message_StringID(CC_Red, MELEE_SILENCE);
 		if(IsClient())
 			CastToClient()->SendSpellBarEnable(spell_id);
@@ -1297,7 +1297,7 @@ bool Mob::HasSongInstrument(uint16 spell_id){
 	if (!HasInstrument) {	// if the instrument is missing, log it and interrupt the song
 		Log.Out(Logs::Detail, Logs::Spells, "Song %d: Canceled. Missing required instrument %d", spell_id, InstComponent);
 		if (c->GetGM())
-			c->Message(0, "Your GM status allows you to finish casting even though you're missing a required instrument.");
+			c->Message(CC_Default, "Your GM status allows you to finish casting even though you're missing a required instrument.");
 		else {
 			return false;
 		}
@@ -1481,10 +1481,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && IsEngaged()) ||
 				(IsClient() && CastToClient()->GetAggroCount())){
-					if (IsDiscipline(spell_id))
-						Message_StringID(CC_User_SpellFailure,NO_ABILITY_IN_COMBAT);
-					else
-						Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
+					Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
 
 					return false;
 			}
@@ -1504,11 +1501,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && !IsEngaged()) ||
 				(IsClient() && !CastToClient()->GetAggroCount())){
-					if (IsDiscipline(spell_id))
-						Message_StringID(CC_User_SpellFailure,NO_ABILITY_OUT_OF_COMBAT);
-					else
-						Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
-
+					Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
 					return false;
 			}
 		}
@@ -2301,7 +2294,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			CastToClient()->GetPTimers().Start(casting_spell_timer, casting_spell_timer_duration);
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: Setting custom reuse timer %d to %d", spell_id, casting_spell_timer, casting_spell_timer_duration);
 		}
-		else if(spells[spell_id].recast_time > 1000 && !spells[spell_id].IsDisciplineBuff) {
+		else if(spells[spell_id].recast_time > 1000) {
 			int recast = spells[spell_id].recast_time/1000;
 			if (spell_id == SPELL_LAY_ON_HANDS)	//lay on hands
 			{
@@ -3094,10 +3087,7 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	int buff_count = GetMaxTotalSlots();
 	uint32 start_slot = 0;
 	uint32 end_slot = 0;
-	if (IsDisciplineBuff(spell_id)) {
-		start_slot = GetMaxBuffSlots() + GetMaxSongSlots();
-		end_slot = start_slot + GetCurrentDiscSlots();
-	} else if(spells[spell_id].short_buff_box) {
+	if(spells[spell_id].short_buff_box) {
 		start_slot = GetMaxBuffSlots();
 		end_slot = start_slot + GetCurrentSongSlots();
 	} else {
@@ -3722,7 +3712,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				}
 
 				if(spelltar->IsAIControlled()){
-					int32 aggro = CheckAggroAmount(spell_id);
+					int32 aggro = CheckAggroAmount(spell_id, spelltar);
 					if(aggro > 0) {
 						if(!IsHarmonySpell(spell_id))
 						spelltar->AddToHateList(this, aggro);
@@ -3758,7 +3748,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	else if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id) &&
 		     CancelMagicShouldAggro(spell_id, spelltar)) {
-		int32 aggro_amount = CheckAggroAmount(spell_id, isproc);
+		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, isproc);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
 		if(aggro_amount > 0)
 			spelltar->AddToHateList(this, aggro_amount);		else{
@@ -3771,6 +3761,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
+		&& (!spelltar->IsPet() || spelltar->IsCharmed())									// no beneficial aggro for summoned pets
 		&& (!IsNPC() || !isproc || CastToNPC()->GetInnateProcSpellId() != spell_id )		// NPC innate procs always hit the target, even if beneficial
 	)																						// we don't want beneficial procs aggroing nearby NPCs
 		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, (spelltar->GetMaxHP() - spelltar->GetHP())));
@@ -3823,10 +3814,16 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		
 		Log.Out(Logs::Detail, Logs::Spells, "Spell: %d has a pushback (%0.1f) or pushup (%0.1f) component.", spell_id, spells[spell_id].pushback, spells[spell_id].pushup);
 
-		if (spelltar->IsNPC()) {
+		if (spelltar->IsNPC())
+		{
 			action->buff_unknown = 0;
-			spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
-		} else {
+			if (spells[spell_id].pushup > 0)
+				spelltar->DoKnockback(this, spells[spell_id].pushback, spells[spell_id].pushup);
+			else
+				spelltar->CastToNPC()->AddPush(this->GetHeading(), spells[spell_id].pushback);
+		}
+		else
+		{
 			action->buff_unknown = 4;
 			float push_back = spells[spell_id].pushback;
 			if (push_back < 0)
@@ -3953,12 +3950,15 @@ bool Mob::FindBuff(uint16 spellid)
 }
 
 // removes all buffs
-void Mob::BuffFadeAll(bool death)
+void Mob::BuffFadeAll(bool death, bool skiprez)
 {
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if(buffs[j].spellid != SPELL_UNKNOWN)
-			BuffFadeBySlot(j, false, death);
+		{
+			if(!skiprez || (skiprez && !IsResurrectionEffects(buffs[j].spellid)))
+				BuffFadeBySlot(j, false, death);
+		}
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
 	CalcBonuses();
@@ -4085,7 +4085,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNMEZABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Mez spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_MEZ);
-			int32 aggro = caster->CheckAggroAmount(spell_id);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4112,7 +4112,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to Slow spells.");
 		caster->Message_StringID(MT_Shout, IMMUNE_ATKSPEED);
-		int32 aggro = caster->CheckAggroAmount(spell_id);
+		int32 aggro = caster->CheckAggroAmount(spell_id, this);
 		if(aggro > 0) {
 			AddToHateList(caster, aggro);
 		} else {
@@ -4128,7 +4128,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNFEARABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Fear spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
-			int32 aggro = caster->CheckAggroAmount(spell_id);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4145,7 +4145,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
 			caster->Message_StringID(MT_Shout, FEAR_TOO_HIGH);
-			int32 aggro = caster->CheckAggroAmount(spell_id);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4169,7 +4169,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Charm spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_CHARM);
-			int32 aggro = caster->CheckAggroAmount(spell_id);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4209,7 +4209,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNSNAREABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Snare spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_MOVEMENT);
-			int32 aggro = caster->CheckAggroAmount(spell_id);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4690,7 +4690,7 @@ int16 Mob::CalcResistChanceBonus()
 	int resistchance = spellbonuses.ResistSpellChance + itembonuses.ResistSpellChance;
 
 	if(IsClient())
-		resistchance += aabonuses.ResistSpellChance;
+		resistchance += aabonuses.ResistSpellChance + discbonuses.ResistSpellChance;
 
 	return resistchance;
 }
@@ -4700,7 +4700,7 @@ int16 Mob::CalcFearResistChance()
 	int resistchance = spellbonuses.ResistFearChance + itembonuses.ResistFearChance;
 	if(this->IsClient()) {
 		resistchance += aabonuses.ResistFearChance;
-		if(aabonuses.Fearless == true)
+		if(aabonuses.Fearless == true || discbonuses.Fearless == true)
 			resistchance = 100;
 	}
 	if(spellbonuses.Fearless == true || itembonuses.Fearless == true)
@@ -5022,32 +5022,6 @@ void Client::UnscribeSpellAll(bool update_client)
 	{
 		if(m_pp.spell_book[i] != 0xFFFFFFFF)
 			UnscribeSpell(i, update_client);
-	}
-}
-
-void Client::UntrainDisc(int slot, bool update_client)
-{
-	if(slot >= MAX_PP_DISCIPLINES || slot < 0)
-		return;
-
-	Log.Out(Logs::Detail, Logs::Spells, "Discipline %d untrained from slot %d", m_pp.disciplines.values[slot], slot);
-	m_pp.disciplines.values[slot] = 0;
-	database.DeleteCharacterDisc(this->CharacterID(), slot);
-
-	if(update_client)
-	{
-		SendDisciplineUpdate();
-	}
-}
-
-void Client::UntrainDiscAll(bool update_client)
-{
-	int i;
-
-	for(i = 0; i < MAX_PP_DISCIPLINES; i++)
-	{
-		if(m_pp.disciplines.values[i] != 0)
-			UntrainDisc(i, update_client);
 	}
 }
 

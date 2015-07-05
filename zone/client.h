@@ -443,10 +443,8 @@ public:
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
 	virtual int GetCurrentBuffSlots() const;
 	virtual int GetCurrentSongSlots() const;
-	virtual int GetCurrentDiscSlots() const { return 1; }
 	virtual int GetMaxBuffSlots() const { return 25; }
 	virtual int GetMaxSongSlots() const { return 12; }
-	virtual int GetMaxDiscSlots() const { return 1; }
 	virtual int GetMaxTotalSlots() const { return 38; }
 	virtual void InitializeBuffSlots();
 	virtual void UninitializeBuffSlots();
@@ -623,8 +621,6 @@ public:
 	void ScribeSpell(uint16 spell_id, int slot, bool update_client = true);
 	void UnscribeSpell(int slot, bool update_client = true);
 	void UnscribeSpellAll(bool update_client = true);
-	void UntrainDisc(int slot, bool update_client = true);
-	void UntrainDiscAll(bool update_client = true);
 	bool SpellGlobalCheck(uint16 Spell_ID, uint32 Char_ID);
 	uint32 GetCharMaxLevelFromQGlobal();
 
@@ -770,10 +766,9 @@ public:
 	void ResetTrade();
 	void DropInst(const ItemInst* inst);
 	void CreateGroundObject(const ItemInst* item, float x, float y, float z, float heading, uint32 decay_time = 300000);
-	bool TrainDiscipline(uint32 itemid);
-	void SendDisciplineUpdate();
-	void SendDisciplineTimer(uint32 timer_id, uint32 duration);
-	bool UseDiscipline(uint32 spell_id, uint32 target);
+	bool UseDiscipline(uint8 disc_id, Client* target);
+	uint8 DisciplineUseLevel(uint8 disc_id);
+	bool CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use);
 
 	bool CheckTitle(int titleset);
 	void EnableTitle(int titleset);
@@ -826,7 +821,6 @@ public:
 	int GetAggroCount();
 	void IncrementAggroCount();
 	void DecrementAggroCount();
-	void SendDisciplineTimers();
 
 	void CheckEmoteHail(Mob *target, const char* message);
 
@@ -849,7 +843,7 @@ public:
 	Mob *GetBindSightTarget() { return bind_sight_target; }
 	void SetBindSightTarget(Mob *n) { bind_sight_target = n; }
 	uint16 GetBoatID() const { return BoatID; }
-	uint16 GetBoatNPCID() { return m_pp.boatid; }
+	uint32 GetBoatNPCID() { return m_pp.boatid; }
 	char* GetBoatName() { return m_pp.boat; }
 	void SetBoatID(uint32 boatid);
 	void SetBoatName(const char* boatname);
@@ -916,7 +910,6 @@ public:
 	int mod_consume(Item_Struct *item, ItemUseTypes type, int change);
 	int mod_food_value(const Item_Struct *item, int change);
 	int mod_drink_value(const Item_Struct *item, int change);
-	void Starve();
 	void QuestReward(Mob* target, uint32 copper = 0, uint32 silver = 0, uint32 gold = 0, uint32 platinum = 0, uint32 itemid = 0, uint32 exp = 0, bool faction = false);
 	void RewindCommand();
 
@@ -948,7 +941,7 @@ public:
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
 
 	bool ClickyOverride() { return clicky_override; }
-
+	void SetActiveDisc(uint8 value) { active_disc = value; }
 
 protected:
 	friend class Mob;
@@ -960,6 +953,7 @@ protected:
 	void ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon);
 	void MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message = true);
 	bool client_data_loaded;
+	void CalcDiscBonuses(StatBonuses* newbon);
 
 	int16 GetFocusEffect(focusType type, uint16 spell_id);
 	int16 GetSympatheticFocusEffect(focusType type, uint16 spell_id);
@@ -1031,7 +1025,6 @@ private:
 	uint32				ip;
 	uint16				port;
 	CLIENT_CONN_STATUS	client_state;
-	bool				itemsinabag;
 	uint32				character_id;
 	uint32				WID;
 	uint32				account_id;
@@ -1132,11 +1125,13 @@ private:
 	Timer helm_toggle_timer;
 	Timer light_update_timer;
 	Timer position_update_timer;
+	Timer disc_ability_timer;
 
     glm::vec3 m_Proximity;
 
 	void BulkSendInventoryItems();
-	void	BulkSendItems();
+	void BulkSendItems();
+	void SendCursorItems();
 
 	faction_map factionvalues;
 
@@ -1191,7 +1186,7 @@ private:
 			//this is the point where the client changes to the loading screen
 			ReceivedZoneEntry, //got the first packet, loading up PP
 			PlayerProfileLoaded, //our DB work is done, sending it
-			ZoneInfoSent, //includes PP, tributes, tasks, spawns, time and weather
+			ZoneInfoSent, //includes PP, spawns, time and weather
 			//this is the point where the client shows a status bar zoning in
 			NewZoneRequested, //received and sent new zone request
 			ClientSpawnRequested, //client sent ReqClientSpawn
@@ -1225,7 +1220,7 @@ private:
 	void UpdateZoneChangeCount(uint32 zoneid);
 
 	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
-
+	uint8 active_disc;
 };
 
 #endif

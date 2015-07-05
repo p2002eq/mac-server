@@ -639,7 +639,7 @@ void PathManager::SimpleMeshTest(Client* c)
 
 	printf("Beginning Pathmanager connectivity tests.\n");
 	fflush(stdout);
-	c->Message(0,"Beginning Pathmanager connectivity tests.");
+	c->Message(CC_Default,"Beginning Pathmanager connectivity tests.");
 	for (uint32 j = 1; j < Head.PathNodeCount; ++j)
 	{
 		std::deque<int> Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
@@ -648,15 +648,15 @@ void PathManager::SimpleMeshTest(Client* c)
 		{
 			++NoConnections;
 			printf("FindRoute(%i, %i) **** NO ROUTE FOUND ****\n", PathNodes[0].id, PathNodes[j].id);
-			c->Message(0,"FindRoute(%i, %i) **** NO ROUTE FOUND ****", PathNodes[0].id, PathNodes[j].id);
+			c->Message(CC_Default,"FindRoute(%i, %i) **** NO ROUTE FOUND ****", PathNodes[0].id, PathNodes[j].id);
 		}
 		++TotalTests;
 	}
 	printf("Executed %i route searches.\n", TotalTests);
 	printf("Failed to find %i routes.\n", NoConnections);
 	fflush(stdout);
-	c->Message(0,"Executed %i route searches.", TotalTests);
-	c->Message(0,"Failed to find %i routes.", NoConnections);
+	c->Message(CC_Default,"Executed %i route searches.", TotalTests);
+	c->Message(CC_Default,"Failed to find %i routes.", NoConnections);
 }
 
 glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &WaypointChanged, bool &NodeReached)
@@ -1341,10 +1341,10 @@ void PathManager::ShowPathNodeNeighbours(Client *c)
 
 	if (!Node)
 	{
-		c->Message(0, "Unable to find path node.");
+		c->Message(CC_Default, "Unable to find path node.");
 		return;
 	}
-	c->Message(0, "Path node %4i", Node->id);
+	c->Message(CC_Default, "Path node %4i", Node->id);
 
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
@@ -1387,7 +1387,7 @@ void PathManager::ShowPathNodeNeighbours(Client *c)
 		if (m)
 			m->SendIllusionPacket(46);
 	}
-	c->Message(0, "Neighbours: %s", Neighbours.str().c_str());
+	c->Message(CC_Default, "Neighbours: %s", Neighbours.str().c_str());
 }
 
 void PathManager::NodeInfo(Client *c)
@@ -1399,7 +1399,7 @@ void PathManager::NodeInfo(Client *c)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -1409,7 +1409,7 @@ void PathManager::NodeInfo(Client *c)
 		return;
 	}
 
-	c->Message(0, "Pathing node: %i at (%.2f, %.2f, %.2f) with bestz %.2f",
+	c->Message(CC_Default, "Pathing node: %i at (%.2f, %.2f, %.2f) with bestz %.2f",
 		Node->id, Node->v.x, Node->v.y, Node->v.z, Node->bestz);
 
 	bool neighbour = false;
@@ -1419,10 +1419,10 @@ void PathManager::NodeInfo(Client *c)
 		{
 			if (!neighbour)
 			{
-				c->Message(0, "Neighbours found:");
+				c->Message(CC_Default, "Neighbours found:");
 				neighbour = true;
 			}
-			c->Message(0, "id: %i, distance: %.2f, door id: %i, is teleport: %i",
+			c->Message(CC_Default, "id: %i, distance: %.2f, door id: %i, is teleport: %i",
 				Node->Neighbours[x].id, Node->Neighbours[x].distance,
 				Node->Neighbours[x].DoorID, Node->Neighbours[x].Teleport);
 		}
@@ -1430,7 +1430,7 @@ void PathManager::NodeInfo(Client *c)
 
 	if (!neighbour)
 	{
-		c->Message(0, "No neighbours found!");
+		c->Message(CC_Default, "No neighbours found!");
 	}
 	return;
 }
@@ -1668,7 +1668,7 @@ bool PathManager::DeleteNode(Client *c)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return false;
 	}
 
@@ -1749,7 +1749,7 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -1759,7 +1759,7 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 		return;
 	}
 
-	c->Message(0, "Connecting %i to %i", Node->id, Node2);
+	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
 	if (doorid == 0)
 		ConnectNodeToNode(Node->id, Node2, teleport);
@@ -1839,7 +1839,7 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -1849,7 +1849,7 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 		return;
 	}
 
-	c->Message(0, "Connecting %i to %i", Node->id, Node2);
+	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
 	if (doorid == 0)
 		ConnectNode(Node->id, Node2, teleport);
@@ -1909,7 +1909,7 @@ void PathManager::DisconnectNodeToNode(Client *c, int32 Node2)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -1993,7 +1993,7 @@ void PathManager::MoveNode(Client *c)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -2016,7 +2016,7 @@ void PathManager::MoveNode(Client *c)
 	{
 		Node->bestz = Node->v.z;
 	}
-	c->Message(0,"Node Moved.");
+	c->Message(CC_Default,"Node Moved.");
 	c->GetTarget()->Teleport(Node->v);
 	c->GetTarget()->SendPosition();
 
@@ -2055,7 +2055,7 @@ void PathManager::DisconnectAll(Client *c)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -2230,7 +2230,7 @@ void PathManager::QuickConnect(Client *c, bool set)
 
 	if (!c->GetTarget())
 	{
-		c->Message(0, "You must target a node.");
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -2242,7 +2242,7 @@ void PathManager::QuickConnect(Client *c, bool set)
 
 	if (set)
 	{
-		c->Message(0, "Setting %i to the quick connect target", Node->id);
+		c->Message(CC_Default, "Setting %i to the quick connect target", Node->id);
 		QuickConnectTarget = Node->id;
 	}
 	else

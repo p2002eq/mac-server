@@ -240,8 +240,8 @@ public:
 	void NPCSpecialAttacks(const char *parse, int perm, bool reset, bool remove);
 	int GetResist(int type);
 	bool Charmed();
-	int CheckAggroAmount(int spell_id);
-	int CheckAggroAmount(int spell_id, bool is_proc);
+	int CheckAggroAmount(int spell_id, Lua_Mob target);
+	int CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc);
 	int CheckHealAggroAmount(int spell_id);
 	int CheckHealAggroAmount(int spell_id, uint32 heal_possible);
 	int GetAA(int id);
@@ -327,7 +327,8 @@ public:
 	void BuffFadeBySpellID(int spell_id);
 	void BuffFadeByEffect(int effect_id);
 	void BuffFadeByEffect(int effect_id, int skipslot);
-	void BuffFadeAll(bool death);
+	void BuffFadeAll();
+	void BuffFadeAll(bool skiprez);
 	void BuffFadeBySlot(int slot);
 	void BuffFadeBySlot(int slot, bool recalc_bonuses, bool death);
 	int CanBuffStack(int spell_id, int caster_level);

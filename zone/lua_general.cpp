@@ -365,10 +365,6 @@ void lua_repop_zone() {
 	quest_manager.repopzone();
 }
 
-bool lua_is_disc_tome(int item_id) {
-	return quest_manager.isdisctome(item_id);
-}
-
 void lua_safe_move() {
 	quest_manager.safemove();
 }
@@ -387,14 +383,6 @@ int lua_scribe_spells(int max) {
 
 int lua_scribe_spells(int max, int min) {
 	return quest_manager.scribespells(max, min);
-}
-
-int lua_train_discs(int max) {
-	return quest_manager.traindiscs(max);
-}
-
-int lua_train_discs(int max, int min) {
-	return quest_manager.traindiscs(max, min);
 }
 
 void lua_set_sky(int sky) {
@@ -1303,14 +1291,11 @@ luabind::scope lua_register_general() {
 		luabind::def("depop_all", (void(*)(int))&lua_depop_all),
 		luabind::def("depop_zone", &lua_depop_zone),
 		luabind::def("repop_zone", &lua_repop_zone),
-		luabind::def("is_disc_tome", &lua_is_disc_tome),
 		luabind::def("safe_move", &lua_safe_move),
 		luabind::def("rain", &lua_rain),
 		luabind::def("snow", &lua_snow),
 		luabind::def("scribe_spells", (int(*)(int))&lua_scribe_spells),
 		luabind::def("scribe_spells", (int(*)(int,int))&lua_scribe_spells),
-		luabind::def("train_discs", (int(*)(int))&lua_train_discs),
-		luabind::def("train_discs", (int(*)(int,int))&lua_train_discs),
 		luabind::def("set_sky", &lua_set_sky),
 		luabind::def("set_guild", &lua_set_guild),
 		luabind::def("create_guild", &lua_create_guild),

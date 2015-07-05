@@ -111,6 +111,7 @@ Client::Client(EQStreamInterface* ieqs)
 	0,
 	0,
 	0,
+	0,
 	0
 	),
 	//these must be listed in the order they appear in client.h
@@ -272,6 +273,7 @@ Client::Client(EQStreamInterface* ieqs)
 	client_position_update = false;
 	ignore_zone_count = false;
 	clicky_override = false;
+	active_disc = 0;
 }
 
 Client::~Client() {
@@ -336,6 +338,9 @@ Client::~Client() {
 	//let the stream factory know were done with this stream
 	eqs->Close();
 	eqs->ReleaseFromUse();
+
+	// remove us from any feign memory
+	entity_list.ClearZoneFeignAggro(this);
 
 	UninitializeBuffSlots();
 }
@@ -862,6 +867,20 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 				}
 			}
 
+			// allow tells to corpses
+			if (targetname) {
+				if (GetTarget() && GetTarget()->IsCorpse() && GetTarget()->CastToCorpse()->IsPlayerCorpse()) {
+					if (strcasecmp(targetname,GetTarget()->CastToCorpse()->GetName()) == 0) {
+						if (strcasecmp(GetTarget()->CastToCorpse()->GetOwnerName(),GetName()) == 0) {
+							Message_StringID(MT_DefaultText, TALKING_TO_SELF);
+							return;
+						} else {
+							targetname = GetTarget()->CastToCorpse()->GetOwnerName();
+						}
+					}
+				}
+			}
+
 			char target_name[64];
 
 			if(targetname)
@@ -1296,12 +1315,14 @@ void Client::SendManaUpdate()
 
 void Client::SendStaminaUpdate()
 {
+	m_pp.fatigue = GetFatiguePercent();
+
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
 	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
 	int value = RuleI(Character,ConsumptionValue);
 	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 	sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
+	sta->fatigue = m_pp.fatigue;
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
@@ -3104,27 +3125,6 @@ void Client::DecrementAggroCount() {
 	}
 }
 
-void Client::SendDisciplineTimers()
-{
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineTimer, sizeof(DisciplineTimer_Struct));
-	DisciplineTimer_Struct *dts = (DisciplineTimer_Struct *)outapp->pBuffer;
-
-	for(unsigned int i = 0; i < MAX_DISCIPLINE_TIMERS; ++i)
-	{
-		uint32 RemainingTime = p_timers.GetRemainingTime(pTimerDisciplineReuseStart + i);
-
-		if(RemainingTime > 0)
-		{
-			dts->TimerID = i;
-			dts->Duration = RemainingTime;
-			QueuePacket(outapp);
-		}
-	}
-
-	safe_delete(outapp);
-}
-
 void Client::SummonAndRezzAllCorpses()
 {
 	PendingRezzXP = -1;
@@ -3991,7 +3991,7 @@ void Client::SendStats(Client* client)
 	client->Message(0, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(0, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(0, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
-	client->Message(0, " AFK: %i LFG: %i Anon: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
+	client->Message(0, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
@@ -4021,7 +4021,7 @@ void Client::SendStats(Client* client)
 		client->Message(0, " GroupID: %i Count: %i GroupLeader: %s GroupLeaderCached: %s", g->GetID(), g->GroupCount(), g->GetLeaderName(), g->GetOldLeaderName());
 	}
 	client->Message(0, " Hidden: %i ImpHide: %i Sneaking: %i Invisible: %i InvisVsUndead: %i InvisVsAnimals: %i", hidden, improved_hidden, sneaking, invisible, invisible_undead, invisible_animals);
-	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i", feigned, invulnerable, see_invis, has_zomm);
+	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i Disc: %i", feigned, invulnerable, see_invis, has_zomm, active_disc);
 
 	Extra_Info:
 
@@ -4645,52 +4645,21 @@ void Client::SendItemScale(ItemInst *inst) {
 
 void Client::SetHunger(int32 in_hunger)
 {
-	int value = RuleI(Character,ConsumptionValue);
-
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = in_hunger;
-	sta->water = m_pp.thirst_level > value ? value : m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.hunger_level = in_hunger;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::SetThirst(int32 in_thirst)
 {
-	int value = RuleI(Character,ConsumptionValue);
-
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
-	sta->water = in_thirst;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.thirst_level = in_thirst;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::SetConsumption(int32 in_hunger, int32 in_thirst)
 {
-	EQApplicationPacket *outapp;
-	outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = in_hunger;
-	sta->water = in_thirst;
-	sta->fatigue=GetFatiguePercent();
-
 	m_pp.hunger_level = in_hunger;
 	m_pp.thirst_level = in_thirst;
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+	SendStaminaUpdate();
 }
 
 void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume)
@@ -4759,21 +4728,6 @@ void Client::Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_
    }
 }
 
-void Client::Starve()
-{
-	m_pp.hunger_level = 0;
-	m_pp.thirst_level = 0;
-
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Stamina, sizeof(Stamina_Struct));
-	Stamina_Struct* sta = (Stamina_Struct*)outapp->pBuffer;
-	sta->food = m_pp.hunger_level;
-	sta->water = m_pp.thirst_level;
-	sta->fatigue=GetFatiguePercent();
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
-}
-
 void Client::SetBoatID(uint32 boatid)
 {
 	m_pp.boatid = boatid;
@@ -4781,7 +4735,7 @@ void Client::SetBoatID(uint32 boatid)
 
 void Client::SetBoatName(const char* boatname)
 {
-	strncpy(m_pp.boat, boatname, 16);
+	strncpy(m_pp.boat, boatname, 32);
 }
 
 void Client::QuestReward(Mob* target, uint32 copper, uint32 silver, uint32 gold, uint32 platinum, uint32 itemid, uint32 exp, bool faction) {

@@ -121,7 +121,8 @@ public:
 		uint8		in_bracertexture,
 		uint8		in_handtexture,
 		uint8		in_legtexture,
-		uint8		in_feettexture
+		uint8		in_feettexture,
+		uint8		in_chesttexture
 	);
 	virtual ~Mob();
 
@@ -255,7 +256,7 @@ public:
 	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0, int instrumentmod = 10);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
-	void BuffFadeAll(bool death = false);
+	void BuffFadeAll(bool death = false, bool skiprez = false);
 	void BuffFadeNonPersistDeath();
 	void BuffFadeDetrimental();
 	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool death = false);
@@ -267,10 +268,8 @@ public:
 	int CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caster_level_override = -1);
 	virtual int GetCurrentBuffSlots() const { return 0; }
 	virtual int GetCurrentSongSlots() const { return 0; }
-	virtual int GetCurrentDiscSlots() const { return 0; }
 	virtual int GetMaxBuffSlots() const { return 0; }
 	virtual int GetMaxSongSlots() const { return 0; }
-	virtual int GetMaxDiscSlots() const { return 0; }
 	virtual int GetMaxTotalSlots() const { return 0; }
 	virtual void InitializeBuffSlots() { buffs = nullptr; current_buff_count = 0; }
 	virtual void UninitializeBuffSlots() { }
@@ -329,6 +328,12 @@ public:
 	inline uint8 GetGender() const { return gender; }
 	inline uint8 GetTexture() const { return texture; }
 	inline uint8 GetHelmTexture() const { return helmtexture; }
+	inline uint8 GetChestTexture() const { return chesttexture; }
+	inline uint8 GetArmTexture() const { return armtexture; }
+	inline uint8 GetBracerTexture() const { return bracertexture; }
+	inline uint8 GetHandTexture() const { return handtexture; }
+	inline uint8 GetLegTexture() const { return legtexture; }
+	inline uint8 GetFeetTexture() const { return feettexture; }
 	inline uint8 GetHairColor() const { return haircolor; }
 	inline uint8 GetBeardColor() const { return beardcolor; }
 	inline uint8 GetEyeColor1() const { return eyecolor1; }
@@ -469,7 +474,7 @@ public:
 	void DoubleAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate ? in_hate * 2 : 1)); }
 	uint32 GetHateAmount(Mob* tmob, bool is_dam = false) { return hate_list.GetEntHate(tmob,is_dam);}
 	uint32 GetDamageAmount(Mob* tmob) { return hate_list.GetEntHate(tmob, true);}
-	Mob* GetHateTop() { return hate_list.GetTop(this);}
+	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
 	Mob* GetHateMost() { return hate_list.GetMostHate();}
@@ -839,7 +844,7 @@ public:
 	bool Charmed() const { return charmed; }
 	static uint32 GetLevelHP(uint8 tlevel);
 	uint32 GetZoneID() const; //for perl
-	virtual int32 CheckAggroAmount(uint16 spell_id, bool isproc = false);
+	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc = false);
 	virtual int32 CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible = 0);
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
@@ -979,6 +984,7 @@ protected:
 	bool pendinggroup;
 	uint16 entity_id_being_looted; //the id of the entity being looted, 0 if not looting.
 	uint8 texture;
+	uint8 chesttexture;
 	uint8 helmtexture;
 	uint8 armtexture;
 	uint8 bracertexture;
@@ -1022,6 +1028,7 @@ protected:
 	StatBonuses itembonuses;
 	StatBonuses spellbonuses;
 	StatBonuses aabonuses;
+	StatBonuses discbonuses;
 	uint16 petid;
 	uint16 ownerid;
 	PetType typeofpet;
