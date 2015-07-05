@@ -67,12 +67,6 @@ int main()
 	server.config = new Config();
 	server_log->Log(log_debug, "Config System Init.");
 
-	if (server.db->CreateServerSettings() == false)
-	{
-		server_log->Log(log_error, "Server Settings check failed, LS shut down.");
-		return false;
-	}
-
 	server_log->Log(log_debug, "Continuing to ini setup.");
 	server.config->WriteDBini();
 
@@ -115,6 +109,19 @@ int main()
 	if(!server.db)
 	{
 		server_log->Log(log_error, "Database Initialization Failure.");
+		server_log->Log(log_debug, "Config System Shutdown.");
+		delete server.config;
+		server_log->Log(log_debug, "Log System Shutdown.");
+		delete server_log;
+		return 1;
+	}
+
+	//Create our settings table in the database.
+	if (server.db->CreateServerSettings() == false)
+	{
+		server_log->Log(log_error, "Server Settings check failed, LS shutting down.");
+		server_log->Log(log_debug, "Database System Shutdown.");
+		delete server.db;
 		server_log->Log(log_debug, "Config System Shutdown.");
 		delete server.config;
 		server_log->Log(log_debug, "Log System Shutdown.");

@@ -396,41 +396,40 @@ bool Database::CreateServerSettings()
 
 	server_log->Log(log_debug, "MySQL is connected, continuing.");
 
-	//string check_table_query = "SHOW TABLES LIKE 'tblloginserversettings'";
+	string check_table_query = "SHOW TABLES LIKE 'tblloginserversettings'";
 
-	//if (mysql_query(db, check_table_query.c_str()) == 0)
-	//{
-	//	server_log->Log(log_database, "Server Settings tables exist, continuing.");
-	//}
+	if (mysql_query(db, check_table_query.c_str()) == 0)
+	{
+		//no idea why this fails.
+		server_log->Log(log_debug, "Server Settings table does not exist, creating.");
+		string create_table_query =
+			"CREATE TABLE `tblloginserversettings` ("
+			"`type` varchar(50) NOT NULL,"
+			"`value` varchar(50) NOT NULL,"
+			"`category` varchar(20) NOT NULL,"
+			"`description` varchar(99) NOT NULL,"
+			"`defaults` varchar(50) NOT NULL,"
+			"PRIMARY KEY(`type`)"
+			") ENGINE = InnoDB DEFAULT CHARSET = latin1";
 
-	//server_log->Log(log_debug, "Server Settings table does not exist, creating.");
+		if (mysql_query(db, create_table_query.c_str()) != 0)
+		{
+			server_log->Log(log_error, "Mysql query failed: %s", create_table_query.c_str());
+			return false;
+		}
+		server_log->Log(log_database, "Server Settings table created, continuing.");
+	}
 
-	//if (mysql_query(db, check_table_query.c_str()) != 0)
-	//{
-	//	string create_table_query =
-	//	"CREATE TABLE `tblloginserversettings` (			"
-	//		"	`type` varchar(50) NOT NULL,				"
-	//		"	`value` varchar(50) NOT NULL,				"
-	//		"	`category` varchar(20) NOT NULL,			"
-	//		"	`description` varchar(99) NOT NULL,			"
-	//		"	`defaults` varchar(50) NOT NULL,			"
-	//		"	PRIMARY KEY(`type`)							"
-	//		"	) ENGINE = InnoDB DEFAULT CHARSET = latin1;	";
+	if (mysql_query(db, check_table_query.c_str()) != 0)
+	{
+		server_log->Log(log_database, "Server Settings tables exist, continuing.");
+	}
 
-	//	if (mysql_query(db, create_table_query.c_str()) != 0)
-	//	{
-	//		server_log->Log(log_error, "Mysql query failed: %s", create_table_query.c_str());
-	//		return;
-	//	}
-	//}
-
-	//server_log->Log(log_database, "Server Settings table created, continuing.");
-
-	//string check_settings_query = "SELECT * FROM `type`";
-	//server_log->Log(log_database, "Server Settings table exists but settings tables do not, creating settings entries.");
+	//string check_settings_query = "SELECT * FROM `tblloginserversettings` WHERE `type`";
 
 	//if (mysql_query(db, check_settings_query.c_str()) != 0)
 	//{
+	//	server_log->Log(log_database, "Server Settings table exists but settings tables do not, creating settings entries.");
 	//	string query =
 	//		"INSERT INTO `tblloginserversettings` VALUES ('access_log_table', '', 'schema', 'location for access logs, failed logins and goodIP.', 'tblaccountaccesslog');"
 	//		"INSERT INTO `tblloginserversettings` VALUES('account_table', '', 'schema', 'location of all client account info for login server only.', 'tblLoginServerAccounts');"
@@ -459,7 +458,7 @@ bool Database::CreateServerSettings()
 	//	if (mysql_query(db, query.c_str()) != 0)
 	//	{
 	//		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
-	//		return;
+	//		return false;
 	//	}
 	//}
 	return true;
