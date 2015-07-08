@@ -3982,7 +3982,10 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 	if (HasOwner() && GetOwner()->IsClient() && !IsCharmed() && !death)
 	{
 		Mob* notify = GetOwner();
-		notify->Message_StringID(MT_WornOff, PET_SPELL_WORN_OFF, spellname);
+		if(notify)
+		{
+			notify->Message_StringID(MT_WornOff, PET_SPELL_WORN_OFF, spellname);
+		}
 	}
 	//All other entities
 	else if (p && p != this && !death && !IsBeneficialSpell(buffs[slot].spellid))
@@ -3990,7 +3993,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 		Mob *notify = p;
 		if(p->IsPet() && IsCharmed())
 			notify = p->GetOwner();
-		if(p)
+		if(notify)
 		{
 			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
