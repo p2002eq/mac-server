@@ -1763,7 +1763,6 @@ void NPC::AI_DoMovement() {
 						roam_z = SetBestZ(newz);
 				}
 			}
-			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 
 		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",

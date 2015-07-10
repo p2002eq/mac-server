@@ -145,6 +145,7 @@
 #define SUMMONING_CORPSE_OTHER		430		//Summoning %1's corpse.
 #define MISSING_SPELL_COMP_ITEM		433		//You are missing %1.
 #define OTHER_HIT_NONMELEE			434		//%1 was hit by non-melee for %2 points of damage.
+#define PET_SPELL_WORN_OFF			435		//Your pet's %1 spell has worn off.
 #define SPELL_WORN_OFF_OF			436		//Your %1 spell has worn off of %2.
 #define SPELL_WORN_OFF				437		//Your %1 spell has worn off.
 #define PET_TAUNTING				438		//Taunting attacker, Master.
