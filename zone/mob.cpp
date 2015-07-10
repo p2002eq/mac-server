@@ -1350,8 +1350,8 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
-				if (HasOwner())
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 300, nullptr, false);
+				if (HasOwner() || (IsNPC() && Route.size() > 0))
 					move_tic_count = 0;
 				else
 					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
@@ -1359,7 +1359,7 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1389,7 +1389,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
@@ -1401,7 +1401,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1627,6 +1627,8 @@ void Mob::SetCurrentSpeed(float speed) {
 			SetRunAnimSpeed(0);
 			SetMoving(false);
 			SendPosition();
+		} else {
+			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 	} 
 }
