@@ -450,7 +450,7 @@ void NPC::QueryLoot(Client* to) {
 		{
 			static char itemid[7];
 			sprintf(itemid, "%06d", item->ID);
-			to->Message(CC_Default, "%i: min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
+			to->Message(CC_Default, "slot: %i min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			Log.Out(Logs::General, Logs::Error, "Database error, invalid item");

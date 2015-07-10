@@ -279,6 +279,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 	item->min_level = minlevel;
 	item->max_level = maxlevel;
 	item->quest = quest;
+	item->equip_slot = MainCursor;
 	if (equipit) {
 		uint8 eslot = 0xFF;
 		char newid[20];
@@ -418,6 +419,12 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 		else if (foundslot == MainFeet) {
 			eslot = MaterialFeet;
 			item->equip_slot = MainFeet;
+		}
+		else if (foundslot == MainEar1 || foundslot == MainEar2 || foundslot == MainFace || foundslot ==  MainNeck || foundslot == MainShoulders ||
+			foundslot == MainBack || foundslot == MainRange || foundslot == MainFinger1 || foundslot == MainFinger2 || foundslot == MainWaist ||
+			foundslot == MainAmmo)
+		{
+				item->equip_slot = foundslot;
 		}
 
 		//if we found an open slot it goes in...
