@@ -415,6 +415,8 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 		if (IsClient()) {
 			skill = CastToClient()->GetSkill(SkillBlock);
 			CastToClient()->CheckIncreaseSkill(SkillBlock, other, -10);
+		} else {
+			skill = GetSkill(SkillBlock);
 		}
 
 		if (!ghit) {	//if they are not using a garunteed hit discipline
