@@ -554,6 +554,9 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (!mob)
 			continue;
 
+		if(mob->CheckAggro(attacker))
+			continue;
+
 		float r = mob->GetAssistRange();
 		r = r * r;
 
