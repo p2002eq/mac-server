@@ -400,6 +400,7 @@ Mob::Mob(const char* in_name,
 	PathingLOSState = UnknownLOS;
 	PathingLoopCount = 0;
 	PathingLastNodeVisited = -1;
+	PathingLastNodeSearched = -1;
 	PathingLOSCheckTimer = new Timer(RuleI(Pathing, LOSCheckFrequency));
 	PathingRouteUpdateTimerShort = new Timer(RuleI(Pathing, RouteUpdateFrequencyShort));
 	PathingRouteUpdateTimerLong = new Timer(RuleI(Pathing, RouteUpdateFrequencyLong));

@@ -447,70 +447,6 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 	}
 	noderoute = FindRoute(ClosestPathNodeToStart, ClosestPathNodeToEnd);
 
-	int NodesToAttemptToCull = RuleI(Pathing, CullNodesFromStart);
-
-	if (NodesToAttemptToCull > 0)
-	{
-		int CulledNodes = 0;
-
-		std::deque<int>::iterator First, Second;
-
-		while ((noderoute.size() >= 2) && (CulledNodes < NodesToAttemptToCull))
-		{
-			First = noderoute.begin();
-
-			Second = First;
-
-			++Second;
-
-			if ((*Second) < 0)
-				break;
-
-			if (!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Second)].v, 1.0f, nullptr)
-				&& zone->pathing->NoHazards(Start, PathNodes[(*Second)].v))
-			{
-				noderoute.erase(First);
-
-				++CulledNodes;
-			}
-			else
-				break;
-		}
-	}
-
-	NodesToAttemptToCull = RuleI(Pathing, CullNodesFromEnd);
-
-	if (NodesToAttemptToCull > 0)
-	{
-		int CulledNodes = 0;
-
-		std::deque<int>::iterator First, Second;
-
-		while ((noderoute.size() >= 2) && (CulledNodes < NodesToAttemptToCull))
-		{
-			First = noderoute.end();
-
-			--First;
-
-			Second = First;
-
-			--Second;
-
-			if ((*Second) < 0)
-				break;
-
-			if (!zone->zonemap->LineIntersectsZone(End, PathNodes[(*Second)].v, 1.0f, nullptr)
-				&& zone->pathing->NoHazards(End, PathNodes[(*Second)].v))
-			{
-				noderoute.erase(First);
-
-				++CulledNodes;
-			}
-			else
-				break;
-		}
-	}
-
 	return noderoute;
 }
 
@@ -950,7 +886,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			}
 			// If the nearest path node to our new destination is the same as for the previous
 			// one, we will carry on on our path.
-			if (DestinationPathNode == Route.back())
+			if (DestinationPathNode == Route.back() || DestinationPathNode == PathingLastNodeSearched)
 			{
 				Log.Out(Logs::Detail, Logs::Pathing, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
 
@@ -1065,6 +1001,75 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	Log.Out(Logs::Detail, Logs::Pathing, "  Calculating new route to target.");
 
 	Route = zone->pathing->FindRoute(From, To);
+
+	if (Route.size() == 0)
+		PathingLastNodeSearched = -1;
+	else
+		PathingLastNodeSearched = Route.back();
+
+	int NodesToAttemptToCull = RuleI(Pathing, CullNodesFromStart);
+
+	if (NodesToAttemptToCull > 0)
+	{
+		int CulledNodes = 0;
+
+		std::deque<int>::iterator First, Second;
+
+		while ((Route.size() >= 2) && (CulledNodes < NodesToAttemptToCull))
+		{
+			First = Route.begin();
+
+			Second = First;
+
+			++Second;
+
+			if ((*Second) < 0)
+				break;
+
+			if (!zone->zonemap->LineIntersectsZone(From, zone->pathing->GetPathNodeCoordinates(*Second), 1.0f, nullptr)
+				&& zone->pathing->NoHazards(From, zone->pathing->GetPathNodeCoordinates(*Second)))
+			{
+				Route.erase(First);
+
+				++CulledNodes;
+			}
+			else
+				break;
+		}
+	}
+
+	NodesToAttemptToCull = RuleI(Pathing, CullNodesFromEnd);
+
+	if (NodesToAttemptToCull > 0)
+	{
+		int CulledNodes = 0;
+
+		std::deque<int>::iterator First, Second;
+
+		while ((Route.size() >= 2) && (CulledNodes < NodesToAttemptToCull))
+		{
+			First = Route.end();
+
+			--First;
+
+			Second = First;
+
+			--Second;
+
+			if ((*Second) < 0)
+				break;
+
+			if (!zone->zonemap->LineIntersectsZone(To, zone->pathing->GetPathNodeCoordinates(*Second), 1.0f, nullptr)
+				&& zone->pathing->NoHazards(To, zone->pathing->GetPathNodeCoordinates(*Second)))
+			{
+				Route.erase(First);
+
+				++CulledNodes;
+			}
+			else
+				break;
+		}
+	}
 
 	PathingTraversedNodes = 0;
 
