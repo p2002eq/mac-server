@@ -1337,7 +1337,7 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 		for (int i = 0; i < petfocusItemsize; i++) {
 			if (focuscomponent == petfocusItems[i]) 
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus, additonal checks will be skipped.", spell_id);
+				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus %d, additonal checks will be skipped.", spell_id, petfocusItems[i]);
 				petfocuscomponent = true;
 				break;
 			}
@@ -1347,7 +1347,12 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags))
+		const Item_Struct *item = database.GetItem(focuscomponent);
+		if(!item && focuscomponent != -1)
+		{
+			Log.Out(Logs::Detail, Logs::Spells, "UNKNOWN item found in spell data. Please make sure your database is correct.");
+		}
+		else if (item && !HasReagent(spell_id, focuscomponent, 1, missingreags))
 		{
 			missingreags = true;
 		}
