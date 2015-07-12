@@ -213,6 +213,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		}
 		
 		ServerListServerFlags_Struct* slsf = (ServerListServerFlags_Struct*)data_ptr;
+		// bit 0x1 is set name green - higher bits set language
 		slsf->greenname = 0;
 		switch((*iter)->GetServerListID())
 		{
@@ -231,7 +232,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 
 		slsf->flags = 0x1;
 		slsf->worldid = (*iter)->GetRuntimeID();
-		slsf->usercount = (*iter)->GetPlayersOnline();
+		slsf->usercount = (*iter)->GetStatus();
 		data_ptr += sizeof(ServerListServerFlags_Struct);
 		++iter;
 	}

@@ -8433,7 +8433,7 @@ void command_aggrozone(Client *c, const Seperator *sep){
 	if (!c)
 		return;
 
-	Mob *m = c->CastToMob();
+	Mob *m = c->GetTarget() ? c->GetTarget() : c->CastToMob();
 
 	if (!m)
 		return;

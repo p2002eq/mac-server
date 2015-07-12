@@ -1235,6 +1235,24 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 			delete inst;
 			return;
 		}
+		// search through bags for lore items
+		if (item && item->ItemClass == ItemClassContainer) {
+			for (int i = 0; i < 10; i++) {
+				if(bag_item_data[i])
+				{
+					const Item_Struct* bag_item = 0;
+					bag_item = database.GetItem(bag_item_data[i]->item_id);
+					if (bag_item && client->CheckLoreConflict(bag_item))
+					{
+						client->Message(0, "You cannot loot this container. The %s inside is a Lore Item and you already have one.", bag_item->Name);
+						SendEndLootErrorPacket(client);
+						being_looted_by = 0;
+						delete inst;
+						return;
+					}
+				}
+			}
+		}
 
 		char buf[88];
 		char corpse_name[64];
