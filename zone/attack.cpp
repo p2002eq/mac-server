@@ -1945,8 +1945,16 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 
 	attacked_timer.Start(CombatEventTimer_expire);
 
+	
+	if(!HasBeenAttacked())
+	{
+		BeenAttacked = true;
+	}
+
 	if (!IsEngaged())
+	{
 		zone->AddAggroMob();
+	}
 
 	//do a majority of the work...
 	CommonDamage(other, damage, spell_id, attack_skill, avoidable, buffslot, iBuffTic);
@@ -2422,10 +2430,13 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
-	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) { // I have a pet, add other to it
-		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO))
+	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) 
+	{ // I have a pet, add other to it
+		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO) && HasBeenAttacked())
 			mypet->hate_list.Add(other, 0, 0, bFrenzy);
-	} else if (myowner) { // I am a pet, add other to owner if it's NPC/LD
+	} 
+	else if (myowner) 
+	{ // I am a pet, add other to owner if it's NPC/LD
 		if (myowner->IsAIControlled() && !myowner->GetSpecialAbility(IMMUNE_AGGRO))
 			myowner->hate_list.Add(other, 0, 0, bFrenzy);
 	}

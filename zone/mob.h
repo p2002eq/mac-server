@@ -298,6 +298,8 @@ public:
 	inline virtual uint32 GetNimbusEffect3() const { return nimbus_effect3; }
 	inline bool HasEndurUpkeep() const { return endur_upkeep; }
 	inline void SetEndurUpkeep(bool val) { endur_upkeep = val; }
+	bool IsBuffed();
+	bool IsDebuffed();
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
@@ -479,6 +481,8 @@ public:
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
 	Mob* GetHateMost() { return hate_list.GetMostHate();}
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
+	bool HasBeenAttacked() { return BeenAttacked; }
+	void SetBeenAttacked(bool value) { BeenAttacked = value; }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
@@ -951,6 +955,11 @@ public:
 	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
 	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
 	float CalcZOffset();
+	uint8 NPCAssistCap() { return npc_assist_cap; }
+	void AddAssistCap() { ++npc_assist_cap; }
+	void DelAssistCap() { --npc_assist_cap; }
+	void ResetAssistCap() { npc_assist_cap = 0; }
+	bool IsInCombat();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1241,6 +1250,8 @@ protected:
 	glm::vec3 m_FearWalkTarget;
 	bool curfp;
 
+	Timer	assist_cap_timer; //clear assist cap so more nearby mobs can be called for help
+
 	// Pathing
 	//
 	glm::vec3 PathingDestination;
@@ -1291,6 +1302,8 @@ protected:
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
 	bool iszomm;
+	bool BeenAttacked; // Determines if an NPC has been attacked while in combat 
+	uint8 npc_assist_cap;
 
 private:
 	void _StopSong(); //this is not what you think it is

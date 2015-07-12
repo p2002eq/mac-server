@@ -279,7 +279,7 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 	item->min_level = minlevel;
 	item->max_level = maxlevel;
 	item->quest = quest;
-	item->equip_slot = MainCursor;
+	item->equip_slot = MainGeneral1; //Set default slot to general inventory. NPCs can have multiple items in the same slot.
 	if (equipit) {
 		uint8 eslot = 0xFF;
 		char newid[20];

@@ -289,6 +289,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;
+	npc_assist_cap = 0;
 }
 
 NPC::~NPC()
@@ -579,8 +580,28 @@ bool NPC::Process()
 	}
 
 	//Handle assists...
-	if(assist_timer.Check() && IsEngaged() && !Charmed()) {
-		entity_list.AIYellForHelp(this, GetTarget());
+	if(assist_cap_timer.Check())
+	{
+		if(NPCAssistCap() > 0)
+		{
+			DelAssistCap();
+		}
+		else
+		{
+			assist_cap_timer.Disable();
+		}
+	}
+
+	if(assist_timer.Check())
+	{
+		if(!Charmed() && (IsInCombat() && (GetSpecialAbility(ALWAYS_CALL_HELP) || NPCAssistCap() < RuleI(Combat, NPCAssistCap)))) 
+		{
+			entity_list.AIYellForHelp(this, GetTarget());
+			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
+			{
+				assist_cap_timer.Start(NPCAssistCapTimer);
+			}
+		}
 	}
 
 	if(qGlobals)
