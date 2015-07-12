@@ -1258,6 +1258,7 @@ protected:
 	glm::vec3 PathingLastPosition;
 	int PathingLoopCount;
 	int PathingLastNodeVisited;
+	int PathingLastNodeSearched;
 	std::deque<int> Route;
 	LOSType PathingLOSState;
 	Timer *PathingLOSCheckTimer;

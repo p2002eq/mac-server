@@ -554,6 +554,9 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (!mob)
 			continue;
 
+		if(mob->CheckAggro(attacker))
+			continue;
+
 		//Check if we have been attacked and are over our assist aggro cap
 		if (!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && (!sender->IsInCombat() || sender->NPCAssistCap() >= RuleI(Combat, NPCAssistCap)))
 			break;
