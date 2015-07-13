@@ -82,12 +82,13 @@ public:
 
 protected:
 	tHateEntry* Find(Mob *ent);
-	int32 GetHateBonus(tHateEntry *entry);
+	int32 GetHateBonus(tHateEntry *entry, bool combatRange);
 private:
 	std::list<tHateEntry*> list;
 	Mob *owner;
-	int32 meleeRangeBonus = 0;
-	int32 sitBonus = 0;
+	int32 combatRangeBonus = 0;
+	int32 sitInsideBonus = 0;
+	int32 sitOutsideBonus = 0;
 	int32 lowHealthBonus = 0;
 };
 

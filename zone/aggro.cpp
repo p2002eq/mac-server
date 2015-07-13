@@ -45,11 +45,9 @@ void EntityList::CheckClientAggro(Client *around)
 		if (mob->IsClient())	//also ensures that mob != around
 			continue;
 
-		if (mob->CheckWillAggro(around)) {
-			if (mob->IsEngaged())
-				mob->AddToHateList(around);
-			else
-				mob->AddToHateList(around, 20);
+		if (mob->CheckWillAggro(around) && !mob->CheckAggro(around))
+		{
+			mob->AddToHateList(around, 20);
 		}
 	}
 }
@@ -1108,22 +1106,24 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	int32 AggroAmount = 0;
 	int32 nonModifiedAggro = 0;
 	uint16 slevel = GetLevel();
-	uint16 tlevel = slevel;
-	if (target)
-		tlevel = target->GetLevel();
-	bool addDefault = false;
+	bool addStandard = false;
 	bool isStunProc = false;
-	int32 defaultAggro = 25;	// level 1-15 aggro is 25
 
-	// most aggressive spells apply the same amount of hate at the given level
-	// the amount of hate scales by target level
-	// Sony's function is unknown, but this approximates it fairly well
-	if (tlevel >= 60)
-		defaultAggro = 1200;
-	else if (tlevel > 35)
-		defaultAggro = 25 + (tlevel - 25)*(tlevel - 25);
-	else if (tlevel > 15)
-		defaultAggro = 15 + (tlevel * tlevel) / 10;
+	// Spell hate for non-damaging spells scales by target NPC hitpoints
+	int32 thp = 10000;
+	if (target)
+	{
+		thp = target->GetMaxHP();
+		if (thp < 375)
+		{
+			thp = 375;		// force a minimum of 25 hate
+		}
+	}
+	int32 standardSpellHate = thp / 15;
+	if (standardSpellHate > 1200)
+	{
+		standardSpellHate = 1200;
+	}
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
 	{
@@ -1141,7 +1141,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addDefault = true;
+					addStandard = true;
 				break;
 			}
 			case SE_AttackSpeed:
@@ -1150,12 +1150,12 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 100)
-					addDefault = true;
+					addStandard = true;
 				break;
 			}
 			case SE_Stun:
 			{
-				addDefault = true;
+				addStandard = true;
 				if (isproc)
 					isStunProc = true;
 				break;
@@ -1165,7 +1165,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Charm:
 			case SE_Fear:
 			{
-				addDefault = true;
+				addStandard = true;
 				break;
 			}
 			case SE_ATK:
@@ -1174,13 +1174,13 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addDefault = true;
+					addStandard = true;
 				break;
 			}
 			case SE_DiseaseCounter:
 			case SE_PoisonCounter:
 			{
-				AggroAmount += defaultAggro / 3;		// old EQ counters had +hate.  this is a wild guess
+				AggroAmount += standardSpellHate / 3;		// old EQ counters had +hate.  this is a wild guess
 				break;
 			}
 			case SE_Root:
@@ -1233,7 +1233,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Silence:
 			case SE_Destroy:
 			{
-				addDefault = true;
+				addStandard = true;
 				break;
 			}
 			case SE_Harmony:
@@ -1281,14 +1281,14 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		}
 	}
 
-	if (addDefault)
+	if (addStandard)
 	{
-		if (isStunProc && RuleI(Aggro, MaxStunProcAggro) > -1 && (defaultAggro > RuleI(Aggro, MaxStunProcAggro)))
+		if (isStunProc && RuleI(Aggro, MaxStunProcAggro) > -1 && (standardSpellHate > RuleI(Aggro, MaxStunProcAggro)))
 			AggroAmount += RuleI(Aggro, MaxStunProcAggro);
-		else if (IsBardSong(spell_id) && defaultAggro > 40)
+		else if (IsBardSong(spell_id) && standardSpellHate > 40)
 			AggroAmount += 40;		// bard song aggro caps at 40 for most non-damaging spell effects
 		else
-			AggroAmount += defaultAggro;
+			AggroAmount += standardSpellHate;
 	}
 
 	if (spells[spell_id].HateAdded > 0)

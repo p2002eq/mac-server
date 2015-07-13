@@ -47,36 +47,62 @@ void HateList::SetOwner(Mob *newOwner)
 {
 	owner = newOwner;
 
-	uint8 mobLevel = owner->GetLevel();
+	// see http://www.eqemulator.org/forums/showthread.php?t=39819
+	// for the data this came from.  This is accurate to EQ Live as of 2015
 
-	// the aggro amount of most offensive spells; scales by target level
-	int32 standardSpellHate = 25;
-	if (mobLevel > 35)
-	{
-		standardSpellHate = 25 + (mobLevel - 25)*(mobLevel - 25);
-	}
-	else if (mobLevel > 15)
-	{
-		standardSpellHate = 15 + (mobLevel * mobLevel) / 10;
-	}
+	int32 hitpoints = owner->GetMaxHP();
 
 	// melee range hate bonus
-	meleeRangeBonus = standardSpellHate / 3;
-	if (meleeRangeBonus < 100)
+	combatRangeBonus = 100;
+	if (hitpoints > 60000)
 	{
-		meleeRangeBonus = 100;
+		combatRangeBonus = 250 + hitpoints / 100;
+		if (combatRangeBonus > 2250)
+		{
+			combatRangeBonus = 2250;
+		}
+	}
+	else if (hitpoints > 4000)
+	{
+		combatRangeBonus = (hitpoints - 4000) / 75 + 100;
 	}
 
-	// sitting hate bonus
-	sitBonus += standardSpellHate;
+	// inside melee range sitting hate bonus
+	sitInsideBonus = 15;
+	if (hitpoints > 13500)
+	{
+		sitInsideBonus = -hitpoints / 100 + 1000;
+		if (sitInsideBonus < 0)
+		{
+			sitInsideBonus = 0;
+		}
+	}
+	else if (hitpoints > 225)
+	{
+		sitInsideBonus = hitpoints / 15;
+	}
+
+	// ouside melee range sitting hate bonus
+	sitOutsideBonus = 15;
+	if (hitpoints > 225)
+	{
+		sitOutsideBonus = hitpoints / 15;
+		if (sitOutsideBonus > 1000)
+		{
+			sitOutsideBonus = 1000;
+		}
+	}
 
 	// low health hate bonus
-	lowHealthBonus = mobLevel - 15;
-	lowHealthBonus = lowHealthBonus*lowHealthBonus*lowHealthBonus / 4 + 500;
+	lowHealthBonus = hitpoints;
 	if (lowHealthBonus < 500)
+	{
 		lowHealthBonus = 500;
+	}
 	else if (lowHealthBonus > 10000)
+	{
 		lowHealthBonus = 10000;
+	}
 }
 
 // added for frenzy support
@@ -313,32 +339,34 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
-int32 HateList::GetHateBonus(tHateEntry *entry)
+int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange)
 {
 	int32 bonus = 0;
 
-	if (owner->CombatRange(entry->ent))
-	{
-		bonus += meleeRangeBonus;
-	}
-	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
-	{
-		// this could be replaced with a better fit
-		int32 lowHealthAggroThreshold = owner->GetLevel() - 15;
-		lowHealthAggroThreshold = lowHealthAggroThreshold*lowHealthAggroThreshold*lowHealthAggroThreshold / 4 + 500;
-		if (lowHealthAggroThreshold < 500)
-			lowHealthAggroThreshold = 500;
-		else if (lowHealthAggroThreshold > 10000)
-			lowHealthAggroThreshold = 10000;
-
-		bonus += lowHealthAggroThreshold;
-	}
 	if (entry->ent->IsClient())
 	{
-		if (entry->ent->CastToClient()->IsSitting())
+		if (combatRange)
 		{
-			bonus += sitBonus;
+			bonus += combatRangeBonus;
+
+			if (entry->ent->CastToClient()->IsSitting())
+			{
+				bonus += sitInsideBonus;
+			}
 		}
+		else if (entry->ent->CastToClient()->IsSitting())
+		{
+			bonus += sitOutsideBonus;
+		}
+	}
+	else if (combatRange)
+	{
+		bonus += combatRangeBonus;
+	}
+
+	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
+	{
+		bonus += lowHealthBonus;
 	}
 
 	return bonus;
@@ -357,6 +385,7 @@ Mob *HateList::GetTop()
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
+		bool firstInRangeBonus = false;
 
 		auto iterator = list.begin();
 		while (iterator != list.end())
@@ -408,12 +437,19 @@ Mob *HateList::GetTop()
 				continue;
 			}
 
-			int32 currentHate = cur->hate + GetHateBonus(cur);
+			bool combatRange = owner->CombatRange(cur->ent);
+			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange);
+
+			if (!firstInRangeBonus && combatRange)
+			{
+				firstInRangeBonus = true;
+				currentHate += 35;
+			}
 
 			if (cur->ent->IsClient())
 			{
 
-				if (currentHate > hateClientTypeInRange && owner->CombatRange(cur->ent))
+				if (currentHate > hateClientTypeInRange && combatRange)
 				{
 					hateClientTypeInRange = currentHate;
 					topClientTypeInRange = cur->ent;
@@ -555,11 +591,19 @@ void HateList::PrintToClient(Client *c)
 {
 	int32 bonusHate = 0;
 	auto iterator = list.begin();
+	bool firstInRangeBonus = false;
+
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
+		bool combatRange = owner->CombatRange(e->ent);
 
-		bonusHate = GetHateBonus(e);
+		bonusHate = GetHateBonus(e, combatRange);
+		if (!firstInRangeBonus && combatRange)
+		{
+			firstInRangeBonus = true;
+			bonusHate += 35;
+		}
 
 		if (bonusHate > 0)
 		{
