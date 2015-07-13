@@ -552,20 +552,26 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (!mob)
 			continue;
 
+		if(mob->CheckAggro(attacker))
+			continue;
+
+		//Check if we have been attacked and are over our assist aggro cap
+		if (!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && (!sender->IsInCombat() || sender->NPCAssistCap() >= RuleI(Combat, NPCAssistCap)))
+			break;
+
 		float r = mob->GetAssistRange();
 		r = r * r;
 
 		if (
 			mob != sender
 			&& mob != attacker
-			&& mob->GetClass() != 41
+			&& mob->GetClass() != MERCHANT
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
 			&& DistanceSquared(mob->GetPosition(), sender->GetPosition()) <= r
 			&& !mob->IsEngaged()
-			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient()))
-				// If we're a pet we don't react to any calls for help if our owner is a client
+			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient() && mob->GetOwner() == sender)) // If we're a pet we don't react to any calls for help if our owner is a client or if our owner was not the one calling for help.
 			)
 		{
 			//if they are in range, make sure we are not green...
@@ -592,12 +598,14 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				{
 					//attacking someone on same faction, or a friend
 					//make sure we can see them.
-					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
-#if (EQDEBUG>=11)
-						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
+					if(zone->SkipLoS() || mob->CheckLosFN(sender)) 
+					{
+
+						Log.Out(Logs::Detail, Logs::Aggro, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
-#endif
+
 						mob->AddToHateList(attacker, 1, 0, false);
+						sender->AddAssistCap();
 					}
 				}
 			}

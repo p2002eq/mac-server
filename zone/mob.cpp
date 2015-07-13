@@ -400,6 +400,7 @@ Mob::Mob(const char* in_name,
 	PathingLOSState = UnknownLOS;
 	PathingLoopCount = 0;
 	PathingLastNodeVisited = -1;
+	PathingLastNodeSearched = -1;
 	PathingLOSCheckTimer = new Timer(RuleI(Pathing, LOSCheckFrequency));
 	PathingRouteUpdateTimerShort = new Timer(RuleI(Pathing, RouteUpdateFrequencyShort));
 	PathingRouteUpdateTimerLong = new Timer(RuleI(Pathing, RouteUpdateFrequencyLong));
@@ -418,6 +419,7 @@ Mob::Mob(const char* in_name,
 	combat_mana_regen = 0;
 	iszomm = false;
 	adjustedz = 0;
+	BeenAttacked = false;
 }
 
 Mob::~Mob()
@@ -1350,8 +1352,8 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
-				if (HasOwner())
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 300, nullptr, false);
+				if (HasOwner() || (IsNPC() && Route.size() > 0))
 					move_tic_count = 0;
 				else
 					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
@@ -1359,7 +1361,7 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1389,7 +1391,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
@@ -1401,7 +1403,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1527,7 +1529,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
 			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
-			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
+			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f Attacked: %d AssistCap: %d", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed(), HasBeenAttacked(), NPCAssistCap());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
@@ -1627,6 +1629,8 @@ void Mob::SetCurrentSpeed(float speed) {
 			SetRunAnimSpeed(0);
 			SetMoving(false);
 			SendPosition();
+		} else {
+			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 	} 
 }
@@ -2308,6 +2312,10 @@ bool Mob::RemoveFromHateList(Mob* mob)
 		{
 			AI_Event_NoLongerEngaged();
 			zone->DelAggroMob();
+			if(IsNPC() && !RuleB(AlKabor, AllowTickSplit))
+			{
+				ResetAssistCap();
+			}
 		}
 	}
 	if(GetTarget() == mob)
@@ -5365,4 +5373,15 @@ float Mob::CalcZOffset()
 		mysize = RuleR(Map, BestZSizeMax);
 
 	return (RuleR(Map, BestZMultiplier) * mysize);
+}
+
+
+bool Mob::IsInCombat()
+{
+	if(IsEngaged() && HasBeenAttacked())
+	{
+		return true;
+	}
+
+	return false;
 }

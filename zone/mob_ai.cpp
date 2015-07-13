@@ -1763,7 +1763,6 @@ void NPC::AI_DoMovement() {
 						roam_z = SetBestZ(newz);
 				}
 			}
-			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 
 		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
@@ -1976,11 +1975,19 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 		SetAppearance(eaStanding);
 	}
 
-	if (iYellForHelp) {
-		if(IsPet()) {
+	if (iYellForHelp) 
+	{
+		if(IsPet()) 
+		{
 			GetOwner()->AI_Event_Engaged(attacker, iYellForHelp);
-		} else {
+		} 
+		else if(IsInCombat() || GetSpecialAbility(ALWAYS_CALL_HELP))
+		{
 			entity_list.AIYellForHelp(this, attacker);
+			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
+			{
+				assist_cap_timer.Start(NPCAssistCapTimer);
+			}
 		}
 	}
 
@@ -2041,6 +2048,8 @@ void Mob::AI_Event_NoLongerEngaged() {
 
 	if(IsNPC())
 	{
+		BeenAttacked = false;
+
 		if(CastToNPC()->GetCombatEvent() && GetHP() > 0)
 		{
 			if(entity_list.GetNPCByID(this->GetID()))

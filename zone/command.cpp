@@ -1649,14 +1649,18 @@ void command_petition(Client *c, const Seperator *sep)
 }
 
 void command_listnpcs(Client *c, const Seperator *sep){
-	if (strcasecmp(sep->arg[1], "all") == 0)
+	if (strcasecmp(sep->arg[1], "attacked") == 0)
+	{
+		entity_list.ListNPCs(c, "null", "null", 3);
+	}
+	else if (strcasecmp(sep->arg[1], "all") == 0)
 		entity_list.ListNPCs(c, sep->arg[1], sep->arg[2], 0);
 	else if (sep->IsNumber(1) && sep->IsNumber(2))
 		entity_list.ListNPCs(c, sep->arg[1], sep->arg[2], 2);
 	else if (sep->arg[1][0] != 0)
 		entity_list.ListNPCs(c, sep->arg[1], sep->arg[2], 1);
 	else {
-		c->Message(CC_Default, "Usage of #listnpcs:");
+		c->Message(CC_Default, "Usage of #listnpcs: (all/attacked/npc_name/#) (#)");
 		c->Message(CC_Default, "#listnpcs [#] [#] (Each number would search by ID, ex. #listnpcs 1 30, searches 1-30)");
 		c->Message(CC_Default, "#listnpcs [name] (Would search for a npc with [name])");
 	}
@@ -8433,7 +8437,7 @@ void command_aggrozone(Client *c, const Seperator *sep){
 	if (!c)
 		return;
 
-	Mob *m = c->CastToMob();
+	Mob *m = c->GetTarget() ? c->GetTarget() : c->CastToMob();
 
 	if (!m)
 		return;

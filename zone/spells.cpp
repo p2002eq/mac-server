@@ -1337,7 +1337,7 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 		for (int i = 0; i < petfocusItemsize; i++) {
 			if (focuscomponent == petfocusItems[i]) 
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus, additonal checks will be skipped.", spell_id);
+				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus %d, additonal checks will be skipped.", spell_id, petfocusItems[i]);
 				petfocuscomponent = true;
 				break;
 			}
@@ -1347,7 +1347,12 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags))
+		const Item_Struct *item = database.GetItem(focuscomponent);
+		if(!item && focuscomponent != -1)
+		{
+			Log.Out(Logs::Detail, Logs::Spells, "UNKNOWN item found in spell data. Please make sure your database is correct.");
+		}
+		else if (item && !HasReagent(spell_id, focuscomponent, 1, missingreags))
 		{
 			missingreags = true;
 		}
@@ -3711,20 +3716,36 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 					spelltar->Message_StringID(MT_SpellFailure, YOU_RESIST, spells[spell_id].name);
 				}
 
-				if(spelltar->IsAIControlled()){
+				if(spelltar->IsAIControlled())
+				{
 					int32 aggro = CheckAggroAmount(spell_id, spelltar);
-					if(aggro > 0) {
+					if(aggro > 0) 
+					{
 						if(!IsHarmonySpell(spell_id))
-						spelltar->AddToHateList(this, aggro);
+						{
+							spelltar->SetBeenAttacked(true);
+							spelltar->AddToHateList(this, aggro);
+						}
 						else
+						{
 							if(!spelltar->PassCharismaCheck(this, spell_id))
+							{
+								spelltar->SetBeenAttacked(true);
 								spelltar->AddToHateList(this, aggro);
+							}
+						}
 					}
-					else{
+					else
+					{
 						int32 newhate = spelltar->GetHateAmount(this) + aggro;
-						if (newhate < 1) {
+						if (newhate < 1) 
+						{
+							spelltar->SetBeenAttacked(true);
 							spelltar->SetHate(this,1);
-						} else {
+						} 
+						else 
+						{
+							spelltar->SetBeenAttacked(true);
 							spelltar->SetHate(this,newhate);
 						}
 					}
@@ -3751,11 +3772,21 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, isproc);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
 		if(aggro_amount > 0)
-			spelltar->AddToHateList(this, aggro_amount);		else{
+		{
+			spelltar->SetBeenAttacked(true);
+			spelltar->AddToHateList(this, aggro_amount);	
+		}
+		else
+		{
 			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
-			if (newhate < 1) {
+			if (newhate < 1)
+			{
+				spelltar->SetBeenAttacked(true);
 				spelltar->SetHate(this,1);
-			} else {
+			} 
+			else 
+			{
+				spelltar->SetBeenAttacked(true);
 				spelltar->SetHate(this,newhate);
 			}
 		}
@@ -3796,7 +3827,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		CheckNumHitsRemaining(NUMHIT_OutgoingSpells);
 
 		if (spelltar)
+		{
 			spelltar->CheckNumHitsRemaining(NUMHIT_IncomingSpells);
+		}
 	}
 
 	// send the action packet again now that the spell is successful
@@ -5418,4 +5451,32 @@ void Client::SendSpellAnim(uint16 targetid, uint16 spell_id)
 
 	app.priority = 1;
 	entity_list.QueueCloseClients(this, &app);
+}
+
+bool Mob::IsBuffed()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsBeneficialSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
+}
+
+bool Mob::IsDebuffed()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsDetrimentalSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
 }

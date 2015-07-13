@@ -2527,7 +2527,8 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			z++;
 			++it;
 		}
-	} else if (searchtype == 1) {
+	} 
+	else if (searchtype == 1) {
 		client->Message(0, "Searching by name method. (%s)",arg1);
 		char* tmp = new char[strlen(arg1) + 1];
 		strcpy(tmp, arg1);
@@ -2544,12 +2545,25 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			++it;
 		}
 		safe_delete_array(tmp);
-	} else if (searchtype == 2) {
+	} 
+	else if (searchtype == 2) {
 		client->Message(0, "Searching by number method. (%s %s)",arg1,arg2);
 		while (it != npc_list.end()) {
 			z++;
 			if ((it->second->GetID() >= atoi(arg1)) && (it->second->GetID() <= atoi(arg2)) && (atoi(arg1) <= atoi(arg2))) {
 				client->Message(0, "  %5d: %s", it->second->GetID(), it->second->GetName());
+				x++;
+			}
+			++it;
+		}
+	}
+	else if (searchtype == 3) {
+		while (it != npc_list.end()) {
+			z++;
+			NPC *n = it->second;
+			if(n->IsInCombat())
+			{
+				client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
 			}
 			++it;
