@@ -86,10 +86,10 @@ protected:
 private:
 	std::list<tHateEntry*> list;
 	Mob *owner;
-	int32 combatRangeBonus = 0;
-	int32 sitInsideBonus = 0;
-	int32 sitOutsideBonus = 0;
-	int32 lowHealthBonus = 0;
+	int32 combatRangeBonus;
+	int32 sitInsideBonus;
+	int32 sitOutsideBonus;
+	int32 lowHealthBonus;
 };
 
 #endif

@@ -1822,7 +1822,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		damage = mod_npc_damage(damage, skillinuse, Hand, weapon, other);
 
 		int32 hate = max_dmg + eleBane;
-		hate = hate == 0 ? 1 : hate / 2;
+		hate = hate < 2 ? 1 : hate / 2;
 
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
