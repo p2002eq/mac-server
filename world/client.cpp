@@ -927,16 +927,15 @@ void Client::SendGuildList() {
 	outapp = new EQApplicationPacket(OP_GuildsList);
 
 	//ask the guild manager to build us a nice guild list packet
-	OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
-	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
-	//safe_delete_array(guildstruct);
-
+	outapp->pBuffer = guild_mgr.MakeOldGuildList(outapp->size);
 	if(outapp->pBuffer == nullptr) {
-		safe_delete(outapp);
+		Log.Out(Logs::Detail, Logs::Guilds, "Unable to make guild list!");
 		return;
 	}
 
-	eqs->FastQueuePacket((EQApplicationPacket **)&outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildsList of length %d", outapp->size);
+
+	eqs->FastQueuePacket(&outapp);
 }
 
 // @merth: I have no idea what this struct is for, so it's hardcoded for now
