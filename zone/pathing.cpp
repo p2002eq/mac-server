@@ -144,6 +144,28 @@ bool PathManager::loadPaths(FILE *PathFile)
 		}
 	}
 
+	if (PathFileValid) {
+		// update distances between nodes
+		
+		for(int i = 0; i < Head.PathNodeCount; ++i)
+		{
+			if(PathNodes[i].Neighbours[0].id == -1)
+				continue;
+
+			for(int j=0; j<PATHNODENEIGHBOURS; j++) {
+				if(PathNodes[i].Neighbours[j].id == -1)
+					continue;
+				PathNode* Neighbour = FindPathNodeById(PathNodes[i].Neighbours[j].id);
+				if (Neighbour != NULL) {
+					PathNodes[i].Neighbours[j].distance = VectorDistance(Neighbour->v, PathNodes[i].v);
+				} else {
+					PathNodes[i].Neighbours[j].distance = 0.0f;
+				}
+			}
+		}
+		PreCalcNodeDistances();
+	}
+
 	if (!PathFileValid)
 	{
 		safe_delete_array(PathNodes);
@@ -282,8 +304,9 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 			AStarEntry.Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
 
 			// HCost is the estimated cost to get from this node to the end.
-			AStarEntry.HCost = VectorDistance(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v,
-				PathNodes[endID].v);
+			//AStarEntry.HCost = VectorDistanceNoRoot(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v,
+			//	PathNodes[endID].v);
+			AStarEntry.HCost = node_distance[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id][endID];
 
 			AStarEntry.GCost = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
 
@@ -526,12 +549,17 @@ void PathManager::SpawnNode(PathNode *node)
 	entity_list.AddNPC(npc, true, true);
 }
 
-void PathManager::SpawnPathNodes()
+void PathManager::SpawnPathNodes(float x, float y, float z)
 {
-
+	glm::vec3 around(x, y, z);
 	for(int i = 0; i < Head.PathNodeCount; ++i)
 	{
-		SpawnNode(&PathNodes[i]);
+		if (x != 0.0f || y!= 0.0f || z != 0.0f) {
+			if (VectorDistanceNoRoot(PathNodes[i].v, around) < 40000)
+				SpawnNode(&PathNodes[i]);
+		} else {
+			SpawnNode(&PathNodes[i]);
+		}
 	}
 }
 
@@ -660,6 +688,41 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 	if (Route.size() > 0)
 	{
+		if (!SameDestination) {
+						// We are already pathing, destination changed, no LOS. Find the nearest node to our destination.
+			int DestinationPathNode = zone->pathing->FindNearestPathNode(To);
+
+			// Destination unreachable via pathing, return direct route.
+			if (DestinationPathNode == -1)
+			{
+				Log.Out(Logs::Detail, Logs::Pathing, "  Unable to find path node for new destination. Running straight to target.");
+				Route.clear();
+				return To;
+			}
+			// If the nearest path node to our new destination is the same as for the previous
+			// one, we will carry on on our path.
+			if (DestinationPathNode == Route.back() || DestinationPathNode == PathingLastNodeSearched)
+			{
+				Log.Out(Logs::Detail, Logs::Pathing, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
+				SameDestination = true;
+				PathingDestination = To;
+			} else {
+				if (Route.size() > 5) {
+					std::deque<int>::iterator Last;
+					Last = Route.end();
+					--Last;
+					if (DestinationPathNode == (*Last))
+					{
+						// we are one off from end.  So chop it off and continue.
+						Log.Out(Logs::Detail, Logs::Pathing, "  Destination is next to last node (%i). Chopping off end.  Continue with current path.", DestinationPathNode);
+						Route.erase(Last);
+						SameDestination = true;
+						PathingLastNodeSearched = Route.back();
+						PathingDestination = To;
+					}
+				}
+			}
+		}
 
 		// If we are already pathing, and the destination is the same as before ...
 		if (SameDestination)
@@ -723,6 +786,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					}
 					else
 						PathingLOSState = UnknownLOS;
+					PathingTraversedNodes = 0;
 				}
 				// We are on the same route, no LOS (or not checking this time, so pop off the node we just reached
 				//
@@ -815,6 +879,8 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				}
 				else
 					PathingLOSState = UnknownLOS;
+
+				PathingTraversedNodes = 0;
 			}
 			return NodeLoc;
 		}
@@ -873,105 +939,9 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 				}
 				Log.Out(Logs::Detail, Logs::Pathing, "Long route update timer expired.");
 			}
-
-			// We are already pathing, destination changed, no LOS. Find the nearest node to our destination.
-			int DestinationPathNode = zone->pathing->FindNearestPathNode(To);
-
-			// Destination unreachable via pathing, return direct route.
-			if (DestinationPathNode == -1)
-			{
-				Log.Out(Logs::Detail, Logs::Pathing, "  Unable to find path node for new destination. Running straight to target.");
-				Route.clear();
-				return To;
-			}
-			// If the nearest path node to our new destination is the same as for the previous
-			// one, we will carry on on our path.
-			if (DestinationPathNode == Route.back() || DestinationPathNode == PathingLastNodeSearched)
-			{
-				Log.Out(Logs::Detail, Logs::Pathing, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
-
-				NodeLoc = zone->pathing->GetPathNodeCoordinates(Route.front());
-
-				// May need to refine this as rounding errors may mean we never have equality
-				// Check if we have reached a path node.
-				if (NodeLoc == From)
-				{
-					Log.Out(Logs::Detail, Logs::Pathing, "  Arrived at node %i, moving to next one.\n", Route.front());
-
-					NodeReached = true;
-
-					PathingLastNodeVisited = Route.front();
-
-					Route.pop_front();
-
-					++PathingTraversedNodes;
-
-					WaypointChanged = true;
-
-					if (Route.size() > 0)
-					{
-						NextNode = Route.front();
-
-						if (NextNode == -1)
-						{
-							// -1 indicates a teleport to the next node
-							Route.pop_front();
-
-							if (Route.size() == 0)
-							{
-								Log.Out(Logs::Detail, Logs::Pathing, "Missing node after teleport.");
-								return To;
-							}
-
-							NextNode = Route.front();
-
-							NodeLoc = zone->pathing->GetPathNodeCoordinates(NextNode);
-
-							Teleport(NodeLoc);
-
-							Log.Out(Logs::Detail, Logs::Pathing, "  TELEPORTED to %8.3f, %8.3f, %8.3f\n", NodeLoc.x, NodeLoc.y, NodeLoc.z);
-
-							Route.pop_front();
-
-							if (Route.size() == 0)
-								return To;
-
-							NextNode = Route.front();
-						}
-						// Return the coords of our next path node on the route.
-						Log.Out(Logs::Detail, Logs::Pathing, "  Now moving to node %i", NextNode);
-
-						zone->pathing->OpenDoors(PathingLastNodeVisited, NextNode, this);
-
-						return zone->pathing->GetPathNodeCoordinates(NextNode);
-					}
-					else
-					{
-						Log.Out(Logs::Detail, Logs::Pathing, "  Reached end of path grid. Running direct to target.");
-						return To;
-					}
-				}
-				return NodeLoc;
-			}
-			else
-			{
-				Log.Out(Logs::Detail, Logs::Pathing, "  Target moved. End node is different. Clearing route.");
-
-				Route.clear();
-				// We will now fall through to get a new route.
-			}
-
 		}
-
-
 	}
 	Log.Out(Logs::Detail, Logs::Pathing, "  Our route list is empty.");
-
-	if ((SameDestination) && !PathingLOSCheckTimer->Check())
-	{
-		Log.Out(Logs::Detail, Logs::Pathing, "  Destination same as before, LOS check timer not reached. Returning To.");
-		return To;
-	}
 
 	PathingLOSState = UnknownLOS;
 
@@ -1080,14 +1050,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		return To;
 	}
 
-	if (SameDestination && (Route.front() == PathingLastNodeVisited))
-	{
-		Log.Out(Logs::Detail, Logs::Pathing, "  Probable loop detected. Same destination and Route.front() == PathingLastNodeVisited.");
-
-		Route.clear();
-
-		return To;
-	}
 	NodeLoc = zone->pathing->GetPathNodeCoordinates(Route.front());
 
 	Log.Out(Logs::Detail, Logs::Pathing, "  New route determined, heading for node %i", Route.front());
@@ -1528,6 +1490,8 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		delete[] PathNodes;
 		PathNodes = t_PathNodes;
 
+		PreCalcNodeDistances();
+
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (new_id < 10)
@@ -1588,6 +1552,8 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 			PathNodes[0].Neighbours[n].id = new_node.Neighbours[n].id;
 			PathNodes[0].Neighbours[n].Teleport = new_node.Neighbours[n].Teleport;
 		}
+
+		PreCalcNodeDistances();
 
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
@@ -1743,6 +1709,33 @@ bool PathManager::DeleteNode(int32 id)
 		PathNodes = nullptr;
 	}
 	return true;
+}
+
+void PathManager::PreCalcNodeDistances()
+{
+	if (Head.PathNodeCount > 0) {
+		//adjust distance vector size
+		node_distance.resize(Head.PathNodeCount);
+		for(int i = 0 ; i < Head.PathNodeCount ; ++i)
+		{
+	    	node_distance[i].resize(Head.PathNodeCount);
+		}
+		// calculate distances between nodes
+		for (int i = 0; i < Head.PathNodeCount ; ++i) {
+			for (int j = Head.PathNodeCount - 1 ; j != 0 ; j--) {
+				if (i != j && PathNodes[i].id != -1 && PathNodes[j].id != -1)
+				{
+					float dist = VectorDistance(PathNodes[i].v, PathNodes[j].v);
+					if (dist < 65535)
+						node_distance[j][j] = (uint16)dist;
+					else
+						node_distance[i][j] = 65535;
+				} else {
+					node_distance[j][j-1] = 0;
+				}
+			}
+		}
+	}
 }
 
 void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int32 doorid)
@@ -2047,8 +2040,7 @@ void PathManager::MoveNode(Client *c)
 		}
 
 	}
-
-
+	PreCalcNodeDistances();
 }
 
 void PathManager::DisconnectAll(Client *c)
@@ -2163,7 +2155,7 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 
 				if (!NodesConnected(&PathNodes[x], &PathNodes[y]))
 				{
-					if (VectorDistance(PathNodes[x].v, PathNodes[y].v) <= 200)
+					if (VectorDistanceNoRoot(PathNodes[x].v, PathNodes[y].v) <= 40000)
 					{
 						if (CheckLosFN(PathNodes[x].v, PathNodes[y].v))
 						{
@@ -2178,6 +2170,7 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 		}
 		zone->pathing->SortNodes();
 		zone->pathing->ResortConnections();
+		zone->pathing->PreCalcNodeDistances();
 	}
 	DumpPath(filename);
 }
