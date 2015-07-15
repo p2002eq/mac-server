@@ -396,6 +396,7 @@ public:
 
 	void GetBoatInfo(Client* client);
 	uint8 GetClientCountByBoatID(uint32 boatid);
+	bool TranfserPrimaryAggro(Mob* other);
 
 protected:
 	friend class Zone;

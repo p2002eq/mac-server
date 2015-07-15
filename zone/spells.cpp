@@ -3723,29 +3723,26 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 					{
 						if(!IsHarmonySpell(spell_id))
 						{
-							spelltar->SetBeenAttacked(true);
 							spelltar->AddToHateList(this, aggro);
 						}
 						else
 						{
 							if(!spelltar->PassCharismaCheck(this, spell_id))
 							{
-								spelltar->SetBeenAttacked(true);
 								spelltar->AddToHateList(this, aggro);
 							}
 						}
 					}
 					else
 					{
+						spelltar->SetPrimaryAggro(true);
 						int32 newhate = spelltar->GetHateAmount(this) + aggro;
 						if (newhate < 1) 
 						{
-							spelltar->SetBeenAttacked(true);
 							spelltar->SetHate(this,1);
 						} 
 						else 
 						{
-							spelltar->SetBeenAttacked(true);
 							spelltar->SetHate(this,newhate);
 						}
 					}
@@ -3773,20 +3770,18 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
 		if(aggro_amount > 0)
 		{
-			spelltar->SetBeenAttacked(true);
 			spelltar->AddToHateList(this, aggro_amount);	
 		}
 		else
 		{
+			spelltar->SetPrimaryAggro(true);
 			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
 			if (newhate < 1)
 			{
-				spelltar->SetBeenAttacked(true);
 				spelltar->SetHate(this,1);
 			} 
 			else 
 			{
-				spelltar->SetBeenAttacked(true);
 				spelltar->SetHate(this,newhate);
 			}
 		}

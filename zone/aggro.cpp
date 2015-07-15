@@ -546,6 +546,8 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		return;
 	if (sender->GetPrimaryFaction() == 0 )
 		return; // well, if we dont have a faction set, we're gonna be indiff to everybody
+	if(!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && sender->HasAssistAggro())
+		return;
 
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC *mob = it->second;
@@ -555,8 +557,8 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if(mob->CheckAggro(attacker))
 			continue;
 
-		//Check if we have been attacked and are over our assist aggro cap
-		if (!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && (!sender->IsInCombat() || sender->NPCAssistCap() >= RuleI(Combat, NPCAssistCap)))
+		//Check if we are over our assist aggro cap
+		if (!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && sender->NPCAssistCap() >= RuleI(Combat, NPCAssistCap))
 			break;
 
 		float r = mob->GetAssistRange();
