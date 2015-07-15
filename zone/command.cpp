@@ -7142,7 +7142,7 @@ void command_path(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help"))
 	{
-		c->Message(CC_Default, "Syntax: #path shownodes: Spawns a npc to represent every npc node.");
+		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns a npc to represent every npc node.  The around option only shows within a range of 200.");
 		c->Message(CC_Default, "#path info node_id: Gives information about node info (requires shownode target).");
 		c->Message(CC_Default, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
@@ -7157,9 +7157,12 @@ void command_path(Client *c, const Seperator *sep)
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
 	{
-		if (zone->pathing)
-			zone->pathing->SpawnPathNodes();
-
+		if (zone->pathing) {
+			if (!strcasecmp(sep->arg[2], "around"))
+				zone->pathing->SpawnPathNodes(c->GetX(), c->GetY(), c->GetZ());
+			else
+				zone->pathing->SpawnPathNodes();
+		}
 		return;
 	}
 
@@ -7181,6 +7184,7 @@ void command_path(Client *c, const Seperator *sep)
 			
 			zone->pathing->SortNodes();
 			zone->pathing->ResortConnections();
+			zone->pathing->PreCalcNodeDistances();
 			zone->pathing->DumpPath(sep->arg[2]);
 			c->Message(CC_Default, "Path file saved as %s", sep->arg[2]);
 		}
@@ -7342,11 +7346,13 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "nodes"))
 			{
 				zone->pathing->SortNodes();
+				zone->pathing->PreCalcNodeDistances();
 				c->Message(CC_Default, "Nodes resorted...");
 			}
 			else
 			{
 				zone->pathing->ResortConnections();
+				zone->pathing->PreCalcNodeDistances();
 				c->Message(CC_Default, "Connections resorted...");
 				c->Message(CC_Default, "Spawned Nodes will need respawned to display proper node id.");
 				zone->pathing->CheckNodeErrors(c);
@@ -8444,7 +8450,10 @@ void command_aggrozone(Client *c, const Seperator *sep){
 
 	int hate = atoi(sep->arg[1]); //should default to 0 if we don't enter anything
 	entity_list.AggroZone(m, hate);
-	c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
+	if (!c->GetTarget())
+		c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
+	else
+		c->Message(CC_Default, "Train to %s! Watch them die!!!", c->GetTarget()->GetCleanName());
 }
 
 void command_modifynpcstat(Client *c, const Seperator *sep){
