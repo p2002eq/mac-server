@@ -43,6 +43,68 @@ HateList::~HateList()
 {
 }
 
+void HateList::SetOwner(Mob *newOwner)
+{
+	owner = newOwner;
+
+	// see http://www.eqemulator.org/forums/showthread.php?t=39819
+	// for the data this came from.  This is accurate to EQ Live as of 2015
+
+	int32 hitpoints = owner->GetMaxHP();
+
+	// melee range hate bonus
+	combatRangeBonus = 100;
+	if (hitpoints > 60000)
+	{
+		combatRangeBonus = 250 + hitpoints / 100;
+		if (combatRangeBonus > 2250)
+		{
+			combatRangeBonus = 2250;
+		}
+	}
+	else if (hitpoints > 4000)
+	{
+		combatRangeBonus = (hitpoints - 4000) / 75 + 100;
+	}
+
+	// inside melee range sitting hate bonus
+	sitInsideBonus = 15;
+	if (hitpoints > 13500)
+	{
+		sitInsideBonus = -hitpoints / 100 + 1000;
+		if (sitInsideBonus < 0)
+		{
+			sitInsideBonus = 0;
+		}
+	}
+	else if (hitpoints > 225)
+	{
+		sitInsideBonus = hitpoints / 15;
+	}
+
+	// ouside melee range sitting hate bonus
+	sitOutsideBonus = 15;
+	if (hitpoints > 225)
+	{
+		sitOutsideBonus = hitpoints / 15;
+		if (sitOutsideBonus > 1000)
+		{
+			sitOutsideBonus = 1000;
+		}
+	}
+
+	// low health hate bonus
+	lowHealthBonus = hitpoints;
+	if (lowHealthBonus < 500)
+	{
+		lowHealthBonus = 500;
+	}
+	else if (lowHealthBonus > 10000)
+	{
+		lowHealthBonus = 10000;
+	}
+}
+
 // added for frenzy support
 // checks if target still is in frenzy mode
 void HateList::CheckFrenzyHate()
@@ -277,6 +339,39 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
+int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange)
+{
+	int32 bonus = 0;
+
+	if (entry->ent->IsClient())
+	{
+		if (combatRange)
+		{
+			bonus += combatRangeBonus;
+
+			if (entry->ent->CastToClient()->IsSitting())
+			{
+				bonus += sitInsideBonus;
+			}
+		}
+		else if (entry->ent->CastToClient()->IsSitting())
+		{
+			bonus += sitOutsideBonus;
+		}
+	}
+	else if (combatRange)
+	{
+		bonus += combatRangeBonus;
+	}
+
+	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
+	{
+		bonus += lowHealthBonus;
+	}
+
+	return bonus;
+}
+
 Mob *HateList::GetTop()
 {
 	Mob* top = nullptr;
@@ -290,30 +385,7 @@ Mob *HateList::GetTop()
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
-
-		uint8 mobLevel = owner->GetLevel();
-
-		// the aggro amount of most offensive spells; scales by target level
-		int32 defaultAggro = 25;
-		if (mobLevel > 35)
-		{
-			defaultAggro = 25 + (mobLevel - 25)*(mobLevel - 25);
-		}
-		else if (mobLevel > 15)
-		{
-			defaultAggro = 15 + (mobLevel * mobLevel) / 10;
-		}
-
-		// melee range hate bonus
-		int32 chargeAggroThreshold = defaultAggro / 3;
-		if (chargeAggroThreshold < 130)
-		{
-			chargeAggroThreshold = 130;
-		}
-		if (owner->IsNPC() && owner->GetSpecialAbility(PROX_AGGRO))
-		{
-			chargeAggroThreshold *= 2;
-		}
+		bool firstInRangeBonus = false;
 
 		auto iterator = list.begin();
 		while (iterator != list.end())
@@ -365,34 +437,19 @@ Mob *HateList::GetTop()
 				continue;
 			}
 
-			int32 currentHate = cur->hate;
+			bool combatRange = owner->CombatRange(cur->ent);
+			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange);
 
-			if(owner->CombatRange(cur->ent))
+			if (!firstInRangeBonus && combatRange)
 			{
-				currentHate += chargeAggroThreshold;
-			}
-
-			if (cur->bFrenzy || cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP() * 100 / cur->ent->GetMaxHP()) < 20))
-			{
-				// this could be replaced with a better fit
-				int32 lowHealthAggroThreshold = mobLevel - 15;
-				lowHealthAggroThreshold = lowHealthAggroThreshold*lowHealthAggroThreshold*lowHealthAggroThreshold / 4 + 500;
-				if (lowHealthAggroThreshold < 500)
-					lowHealthAggroThreshold = 500;
-				else if (lowHealthAggroThreshold > 10000)
-					lowHealthAggroThreshold = 10000;
-
-				currentHate += lowHealthAggroThreshold;
+				firstInRangeBonus = true;
+				currentHate += 35;
 			}
 
 			if (cur->ent->IsClient())
 			{
-				if (cur->ent->CastToClient()->IsSitting())
-				{
-					currentHate += defaultAggro;
-				}
 
-				if (currentHate > hateClientTypeInRange && owner->CombatRange(cur->ent))
+				if (currentHate > hateClientTypeInRange && combatRange)
 				{
 					hateClientTypeInRange = currentHate;
 					topClientTypeInRange = cur->ent;
@@ -532,13 +589,34 @@ bool HateList::IsEmpty() {
 // Prints hate list to a client
 void HateList::PrintToClient(Client *c)
 {
+	int32 bonusHate = 0;
 	auto iterator = list.begin();
+	bool firstInRangeBonus = false;
+
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
-		c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
-			(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-			e->damage, e->hate);
+		bool combatRange = owner->CombatRange(e->ent);
+
+		bonusHate = GetHateBonus(e, combatRange);
+		if (!firstInRangeBonus && combatRange)
+		{
+			firstInRangeBonus = true;
+			bonusHate += 35;
+		}
+
+		if (bonusHate > 0)
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d (+%i)",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate, bonusHate);
+		}
+		else
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate);
+		}
 
 		++iterator;
 	}

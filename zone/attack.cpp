@@ -372,6 +372,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	if (CanRiposte && damage > 0 && CanThisClassRiposte() && other->InFrontMob(this, other->GetX(), other->GetY()))
 	{
 		riposte_chance = (100.0f + (float)defender->aabonuses.RiposteChance + (float)defender->spellbonuses.RiposteChance + (float)defender->itembonuses.RiposteChance) / 100.0f;
+
 		skill = GetSkill(SkillRiposte);
 		if (IsClient()) {
 			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, -10);
@@ -412,8 +413,9 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	float block_chance = 0.0f;
 	if (damage > 0 && CanThisClassBlock() && (other->InFrontMob(this, other->GetX(), other->GetY()) || bBlockFromRear)) {
 		block_chance = (100.0f + (float)spellbonuses.IncreaseBlockChance + (float)itembonuses.IncreaseBlockChance) / 100.0f;
+
+		skill = GetSkill(SkillBlock);
 		if (IsClient()) {
-			skill = CastToClient()->GetSkill(SkillBlock);
 			CastToClient()->CheckIncreaseSkill(SkillBlock, other, -10);
 		}
 
@@ -453,8 +455,9 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	if (damage > 0 && CanThisClassParry() && other->InFrontMob(this, other->GetX(), other->GetY()))
 	{
 		parry_chance = (100.0f + (float)defender->spellbonuses.ParryChance + (float)defender->itembonuses.ParryChance) / 100.0f;
+
+		skill = GetSkill(SkillParry);
 		if (IsClient()) {
-			skill = CastToClient()->GetSkill(SkillParry);
 			CastToClient()->CheckIncreaseSkill(SkillParry, other, -10);
 		}
 
@@ -476,8 +479,9 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	if (damage > 0 && CanThisClassDodge() && other->InFrontMob(this, other->GetX(), other->GetY()))
 	{
 		dodge_chance = (100.0f + (float)defender->spellbonuses.DodgeChance + (float)defender->itembonuses.DodgeChance) / 100.0f;
+
+		skill = GetSkill(SkillDodge);
 		if (IsClient()) {
-			skill = CastToClient()->GetSkill(SkillDodge);
 			CastToClient()->CheckIncreaseSkill(SkillDodge, other, -10);
 		}
 
@@ -1817,11 +1821,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 
 		damage = mod_npc_damage(damage, skillinuse, Hand, weapon, other);
 
-		int32 hate = damage;
-		if(IsPet())
-		{
-			hate = hate * 100 / GetDamageTable(skillinuse);
-		}
+		int32 hate = max_dmg + eleBane;
+		hate = hate < 2 ? 1 : hate / 2;
 
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
@@ -1860,12 +1861,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 					CommonOutgoingHitSuccess(other, damage, skillinuse);
 				}
 				Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
-				// now add done damage to the hate list
-				if(damage > 0)
-					other->AddToHateList(this, hate);
-				else
-					other->AddToHateList(this, 0);
 			}
+			other->AddToHateList(this, hate);
 		}
 
 		Log.Out(Logs::Detail, Logs::Combat, "Final damage against %s: %d", other->GetName(), damage);
@@ -1941,8 +1938,16 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 
 	attacked_timer.Start(CombatEventTimer_expire);
 
+	
+	if(!HasBeenAttacked())
+	{
+		BeenAttacked = true;
+	}
+
 	if (!IsEngaged())
+	{
 		zone->AddAggroMob();
+	}
 
 	//do a majority of the work...
 	CommonDamage(other, damage, spell_id, attack_skill, avoidable, buffslot, iBuffTic);
@@ -2418,10 +2423,13 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
-	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) { // I have a pet, add other to it
-		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO))
+	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) 
+	{ // I have a pet, add other to it
+		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO) && HasBeenAttacked())
 			mypet->hate_list.Add(other, 0, 0, bFrenzy);
-	} else if (myowner) { // I am a pet, add other to owner if it's NPC/LD
+	} 
+	else if (myowner) 
+	{ // I am a pet, add other to owner if it's NPC/LD
 		if (myowner->IsAIControlled() && !myowner->GetSpecialAbility(IMMUNE_AGGRO))
 			myowner->hate_list.Add(other, 0, 0, bFrenzy);
 	}
@@ -4302,13 +4310,6 @@ uint16 Mob::GetDamageTable(SkillUseTypes skillinuse)
 			return 100;
 
 		return ret_table;
-	}
-	else if(GetLevel() >= 90)
-	{
-		if(GetClass() == MONK)
-			return 379;
-		else
-			return 345;
 	}
 	else
 	{

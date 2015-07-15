@@ -193,6 +193,7 @@ RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
+RULE_BOOL( AlKabor, AllowTickSplit, false)
 RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
 RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
@@ -416,6 +417,7 @@ RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
 RULE_REAL ( Combat, PushBackAmount, 1.5)
 RULE_BOOL ( Combat, NewACCurves, true)
+RULE_INT ( Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )
