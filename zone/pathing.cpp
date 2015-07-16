@@ -1727,11 +1727,11 @@ void PathManager::PreCalcNodeDistances()
 				{
 					float dist = VectorDistance(PathNodes[i].v, PathNodes[j].v);
 					if (dist < 65535)
-						node_distance[j][j] = (uint16)dist;
+						node_distance[i][j] = (uint16)dist;
 					else
 						node_distance[i][j] = 65535;
 				} else {
-					node_distance[j][j-1] = 0;
+					node_distance[i][j] = 0;
 				}
 			}
 		}
