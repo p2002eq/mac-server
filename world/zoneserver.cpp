@@ -55,6 +55,7 @@ ZoneServer::ZoneServer(EmuTCPConnection* itcpc)
 	instanceID = 0;
 
 	memset(clientaddress, 0, sizeof(clientaddress));
+	memset(clientlocaladdress, 0, sizeof(clientlocaladdress));
 	clientport = 0;
 	BootingUp = false;
 	authenticated = false;
@@ -558,7 +559,7 @@ bool ZoneServer::Process() {
 				ServerConnectInfo* sci = (ServerConnectInfo*) pack->pBuffer;
 
 				if (!sci->port) {
-					clientport=zoneserver_list.GetAvailableZonePort();
+					clientport = zoneserver_list.GetAvailableZonePort();
 
 					ServerPacket p(ServerOP_SetConnectInfo, sizeof(ServerConnectInfo));
 					memset(p.pBuffer,0,sizeof(ServerConnectInfo));
@@ -567,8 +568,18 @@ bool ZoneServer::Process() {
 					SendPacket(&p);
 					Log.Out(Logs::Detail, Logs::World_Server,"Auto zone port configuration. Telling zone to use port %d",clientport);
 				} else {
-					clientport=sci->port;
-					Log.Out(Logs::Detail, Logs::World_Server,"Zone specified port %d, must be a previously allocated zone reconnecting.",clientport);
+					clientport = sci->port;
+					Log.Out(Logs::Detail, Logs::World_Server,"Zone specified port %d.",clientport);
+				}
+
+				if(sci->address[0]) {
+					strn0cpy(clientaddress, sci->address, 250);
+					Log.Out(Logs::Detail, Logs::World_Server, "Zone specified address %s.", sci->address);
+				}
+
+				if(sci->local_address[0]) {
+					strn0cpy(clientlocaladdress, sci->local_address, 250);
+					Log.Out(Logs::Detail, Logs::World_Server, "Zone specified local address %s.", sci->address);
 				}
 
 			}

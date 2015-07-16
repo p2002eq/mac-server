@@ -154,6 +154,7 @@ int command_init(void){
 		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target.", 250, command_ai) ||
 		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information.", 170, command_altactivate) ||
 		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target.", 250, command_appearance) ||
+		command_add("apply_shared_memory", "[shared_memory_name] - Tells every zone and world to apply a specific shared memory segment by name.", 250, command_apply_shared_memory) ||
 		command_add("attack", "[targetname] - Make your NPC target attack targetname.", 160, command_attack) ||
 
 		command_add("ban", "[name][reason] - Ban by character name.", 100, command_ban) ||
@@ -242,7 +243,7 @@ int command_init(void){
 		command_add("helm", "- Change the helm of your target.", 250, command_helm) ||
 		command_add("help", "[search term] - List available commands and their description, specify partial command as argument to search.", 0, command_help) ||
 		command_add("hideme", "[on/off] - Hide yourself from spawn lists.", 81, command_hideme) ||
-		command_add("hotfix", "[hotfix_name] - Reloads shared memory into a hotfix", 250, command_hotfix) ||
+		command_add("hotfix", "[hotfix_name] - Reloads shared memory into a hotfix, equiv to load_shared_memory followed by apply_shared_memory", 250, command_hotfix) ||
 		command_add("hp", "- Refresh your HP bar from the server.", 255, command_hp) ||
 
 		command_add("instance", "- Modify Instances.", 255, command_instance) ||
@@ -265,6 +266,7 @@ int command_init(void){
 		command_add("lastname", "[new lastname] - Set your or your player target's lastname.", 90, command_lastname) ||
 		command_add("level", "[level] - Set your or your target's level.", 80, command_level) ||
 		command_add("listnpcs", "[name/range] - Search NPCs.", 90, command_listnpcs) ||
+		command_add("load_shared_memory", "[shared_memory_name] - Reloads shared memory and uses the input as output", 250, command_load_shared_memory) ||
 		command_add("loc", "- Print out your or your target's current location and heading.", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver.", 250, command_lock) ||
 		command_add("logs", "Manage anything to do with logs.", 180, command_logs) ||
@@ -10978,10 +10980,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		hotfix_name = "hotfix_";
 	}
 
-
 	c->Message(0, "Creating and applying hotfix");
-	//Not 100% certain on the thread safety of this.
-	//I think it's okay however
 	std::thread t1([c, hotfix_name]() {
 #ifdef WIN32
 		if (hotfix_name.length() > 0) {
@@ -11010,4 +11009,53 @@ void command_hotfix(Client *c, const Seperator *sep) {
 	});
 
 	t1.detach();
+}
+
+void command_load_shared_memory(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string current_hotfix = hotfix;
+
+	std::string hotfix_name;
+	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
+		c->Message(0, "Cannot attempt to load this shared memory segment as it is already loaded.");
+		return;
+	}
+
+	hotfix_name = sep->arg[1];
+	c->Message(0, "Loading shared memory segment %s", hotfix_name.c_str());
+	std::thread t1([c,hotfix_name]() {
+#ifdef WIN32
+		if(hotfix_name.length() > 0) {
+			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		} else {
+			system(StringFormat("shared_memory").c_str());
+		}
+#else
+		if(hotfix_name.length() > 0) {
+			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("./shared_memory").c_str());
+		}
+#endif
+		c->Message(0, "Shared memory segment finished loading.");
+	});
+
+	t1.detach();
+}
+
+void command_apply_shared_memory(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string hotfix_name = sep->arg[1];
+	
+	c->Message(0, "Applying shared memory segment %s", hotfix_name.c_str());
+	database.SetVariable("hotfix_name", hotfix_name.c_str());
+
+	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
+	if(hotfix_name.length() > 0) {
+		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+	}
+	worldserver.SendPacket(&pack);
 }
