@@ -15,4 +15,3 @@ notifications:
   irc:
     channels: "irc.eqemulator.net#takp-dev"
 os: linux
-sudo: false
