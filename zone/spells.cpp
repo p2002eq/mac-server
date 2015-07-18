@@ -5475,3 +5475,18 @@ bool Mob::IsDebuffed()
 	
 	return false;
 }
+
+//This will return true for the Pacify, Harmony, and Lull line of spells.
+bool Mob::IsPacified()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsDetrimentalSpell(buffs[j].spellid) && IsCrowdControlSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
+}

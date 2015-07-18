@@ -280,6 +280,10 @@ bool Mob::CheckWillAggro(Mob *mob) {
 
 	float iAggroRange = GetAggroRange();
 
+	if(GetOwner() && iAggroRange > GetOwner()->GetAggroRange() && GetOwner()->IsPacified() && !GetOwner()->HasPrimaryAggro())
+		iAggroRange = GetOwner()->GetAggroRange();
+
+
 	// Check If it's invisible and if we can see invis
 	// Check if it's a client, and that the client is connected and not linkdead,
 	// and that the client isn't Playing an NPC, with thier gm flag on

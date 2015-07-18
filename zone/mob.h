@@ -300,6 +300,7 @@ public:
 	inline void SetEndurUpkeep(bool val) { endur_upkeep = val; }
 	bool IsBuffed();
 	bool IsDebuffed();
+	bool IsPacified();
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
