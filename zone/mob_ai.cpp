@@ -1212,13 +1212,14 @@ void Mob::AI_Process() {
 			SetTarget(hate_list.GetClosest(this));
 		else
 		{
-			if(AItarget_check_timer->Check())
+			if (AItarget_check_timer->Check())
 			{
 				if (IsFocused()) {
 					if (!target) {
 						SetTarget(hate_list.GetTop());
 					}
-				} else {
+				}
+				else {
 					if (!ImprovedTaunt())
 						SetTarget(hate_list.GetTop());
 				}
@@ -1231,10 +1232,10 @@ void Mob::AI_Process() {
 			CastToNPC()->ApplyPushVector();
 			CastToNPC()->ResetPushTimer();
 		}
+	}
 
-		if (!target)
-			return;
-
+	if (target)
+	{
 		if (target->IsCorpse())
 		{
 			RemoveFromHateList(this);
@@ -1523,7 +1524,7 @@ void Mob::AI_Process() {
 				}
 			}
 		}
-	}
+	} // if (target)
 	else
 	{
 		if(AIfeignremember_timer->Check()) {

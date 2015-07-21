@@ -1164,14 +1164,14 @@ int Lua_Mob::CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc) {
 	return self->CheckAggroAmount(spell_id, target, is_proc);
 }
 
-int Lua_Mob::CheckHealAggroAmount(int spell_id) {
+int Lua_Mob::CheckHealAggroAmount(int spell_id, Lua_Mob target) {
 	Lua_Safe_Call_Int();
-	return self->CheckHealAggroAmount(spell_id);
+	return self->CheckHealAggroAmount(spell_id, target);
 }
 
-int Lua_Mob::CheckHealAggroAmount(int spell_id, uint32 heal_possible) {
+int Lua_Mob::CheckHealAggroAmount(int spell_id, Lua_Mob target, uint32 heal_possible) {
 	Lua_Safe_Call_Int();
-	return self->CheckHealAggroAmount(spell_id, heal_possible);
+	return self->CheckHealAggroAmount(spell_id, target, heal_possible);
 }
 
 int Lua_Mob::GetAA(int id) {
@@ -1959,8 +1959,8 @@ luabind::scope lua_register_mob() {
 		.def("Charmed", (bool(Lua_Mob::*)(void))&Lua_Mob::Charmed)
 		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob))&Lua_Mob::CheckAggroAmount)
 		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob,bool))&Lua_Mob::CheckAggroAmount)
-		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int))&Lua_Mob::CheckHealAggroAmount)
-		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int,uint32))&Lua_Mob::CheckHealAggroAmount)
+		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob))&Lua_Mob::CheckHealAggroAmount)
+		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob,uint32))&Lua_Mob::CheckHealAggroAmount)
 		.def("GetAA", (int(Lua_Mob::*)(int))&Lua_Mob::GetAA)
 		.def("DivineAura", (bool(Lua_Mob::*)(void))&Lua_Mob::DivineAura)
 		.def("SetOOCRegen", (void(Lua_Mob::*)(int))&Lua_Mob::SetOOCRegen)

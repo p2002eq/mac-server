@@ -570,7 +570,6 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
 			&& DistanceSquared(mob->GetPosition(), sender->GetPosition()) <= r
-			&& !mob->IsEngaged()
 			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient() && mob->GetOwner() == sender)) // If we're a pet we don't react to any calls for help if our owner is a client or if our owner was not the one calling for help.
 			)
 		{
@@ -604,7 +603,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 						Log.Out(Logs::Detail, Logs::Aggro, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
 
-						mob->AddToHateList(attacker, 1, 0, false);
+						mob->AddToHateList(attacker, 20, 0, false);
 						sender->AddAssistCap();
 					}
 				}
@@ -1115,7 +1114,6 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	int32 nonModifiedAggro = 0;
 	uint16 slevel = GetLevel();
 	bool addStandard = false;
-	bool isStunProc = false;
 
 	// Spell hate for non-damaging spells scales by target NPC hitpoints
 	int32 thp = 10000;
@@ -1131,6 +1129,10 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	if (standardSpellHate > 1200)
 	{
 		standardSpellHate = 1200;
+	}
+	if (isproc && standardSpellHate > 400)
+	{
+		standardSpellHate = 400;
 	}
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
@@ -1164,8 +1166,6 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Stun:
 			{
 				addStandard = true;
-				if (isproc)
-					isStunProc = true;
 				break;
 			}
 			case SE_Blind:
@@ -1291,9 +1291,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 
 	if (addStandard)
 	{
-		if (isStunProc && RuleI(Aggro, MaxStunProcAggro) > -1 && (standardSpellHate > RuleI(Aggro, MaxStunProcAggro)))
-			AggroAmount += RuleI(Aggro, MaxStunProcAggro);
-		else if (IsBardSong(spell_id) && standardSpellHate > 40)
+		if (IsBardSong(spell_id) && standardSpellHate > 40)
 			AggroAmount += 40;		// bard song aggro caps at 40 for most non-damaging spell effects
 		else
 			AggroAmount += standardSpellHate;
@@ -1312,6 +1310,9 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		if (IsClient())
 			HateMod += CastToClient()->GetFocusEffect(focusSpellHateMod, spell_id);
 
+		//Live AA - Spell casting subtlety
+		HateMod += aabonuses.hatemod + spellbonuses.hatemod + itembonuses.hatemod;
+
 		AggroAmount = (AggroAmount * HateMod) / 100;
 	}
 
@@ -1319,10 +1320,13 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 }
 
 //healing and buffing aggro
-int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
+int32 Mob::CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible)
 {
 	int32 AggroAmount = 0;
 	uint8 slevel = GetLevel();
+	uint8 tlevel = slevel;
+	if (target)
+		tlevel = target->GetLevel();
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
 	{
@@ -1339,7 +1343,7 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
 					if (val > 0)
 						val = 1 + 2 * val / 3;		// heal aggro is 2/3rds amount healed
 
-					if (slevel <= 50 && val > 800)	// heal aggro is capped.  800 was stated in a patch note
+					if (tlevel <= 50 && val > 800)	// heal aggro is capped.  800 was stated in a patch note
 						val = 800;
 					else if (val > 1500)			// cap after level 50 is 1500 on EQLive as of 2015
 						val = 1500;

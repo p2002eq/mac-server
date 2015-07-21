@@ -254,6 +254,7 @@ public:
 	inline int32	GetPrimaryFaction()	const { return primary_faction; }
 	int32	GetNPCHate(Mob* in_ent) {return hate_list.GetEntHate(in_ent);}
 	bool	IsOnHatelist(Mob*p) { return hate_list.IsOnHateList(p);}
+	void	SetRememberDistantMobs(bool state) { hate_list.SetRememberDistantMobs(state); }
 
 	void	SetNPCFactionID(int32 in) { npc_faction_id = in; database.GetFactionIdsForNPC(npc_faction_id, &faction_list, &primary_faction); }
 	void	SetPreCharmNPCFactionID(int32 in) { precharm_npc_faction_id = in; }
