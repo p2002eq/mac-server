@@ -479,7 +479,7 @@ public:
 	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
-	Mob* GetHateMost() { return hate_list.GetMostHate();}
+	Mob* GetHateMost(bool includeBonus = true) { return hate_list.GetMostHate(includeBonus);}
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
 	bool HasBeenAttacked() { return BeenAttacked; }
 	void SetBeenAttacked(bool value) { BeenAttacked = value; }

@@ -2454,22 +2454,28 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 
 		case GroupSpell:
 		{
-			if(spell_target->IsGrouped()) {
+			if(spell_target->IsGrouped())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group targeting group of %s", spell_id, spell_target->GetName());
 				Group *target_group = entity_list.GetGroupByMob(spell_target);
 				if(target_group)
 					target_group->GroupBardPulse(this, spell_id);
 			}
-			else if(spell_target->IsRaidGrouped() && spell_target->IsClient()) {
+			else if(spell_target->IsRaidGrouped() && spell_target->IsClient())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Raid group targeting raid group of %s", spell_id, spell_target->GetName());
 				Raid *r = entity_list.GetRaidByClient(spell_target->CastToClient());
-				if(r){
+				if(r)
+				{
 					uint32 gid = r->GetGroup(spell_target->GetName());
-					if(gid < 12){
+					if(gid < 12)
+					{
 						r->GroupBardPulse(this, spell_id, gid);
 					}
-					else{
+					else
+					{
 						BardPulse(spell_id, this);
+						entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 						if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 							GetPet()->BardPulse(spell_id, this);
@@ -2477,9 +2483,11 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 					}
 				}
 			}
-			else {
+			else
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group target without group. Affecting caster.", spell_id);
 				BardPulse(spell_id, this);
+				entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 				if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 					GetPet()->BardPulse(spell_id, this);

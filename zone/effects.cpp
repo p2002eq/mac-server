@@ -1104,6 +1104,8 @@ void EntityList::AEBardPulse(Mob *caster, Mob *center, uint16 spell_id, bool aff
 				continue;
 			if (caster->CheckAggro(curmob))
 				continue;
+
+			AddHealAggro(curmob, caster, caster->CheckHealAggroAmount(spell_id, curmob));
 		}
 
 		//if we get here... cast the spell.

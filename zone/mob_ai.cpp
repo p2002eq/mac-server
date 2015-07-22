@@ -1889,6 +1889,10 @@ void NPC::AI_DoMovement() {
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				ClearFeignMemory();
+				if (IsEngaged())
+				{
+					WipeHateList();
+				}
 				moved=false;
 				SetMoving(false);
 				if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )

@@ -1113,7 +1113,6 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	int32 AggroAmount = 0;
 	int32 nonModifiedAggro = 0;
 	uint16 slevel = GetLevel();
-	bool addStandard = false;
 
 	// Spell hate for non-damaging spells scales by target NPC hitpoints
 	int32 thp = 10000;
@@ -1151,7 +1150,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addStandard = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_AttackSpeed:
@@ -1160,29 +1159,24 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 100)
-					addStandard = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_Stun:
-			{
-				addStandard = true;
-				break;
-			}
 			case SE_Blind:
 			case SE_Mez:
 			case SE_Charm:
 			case SE_Fear:
 			{
-				addStandard = true;
+				AggroAmount += standardSpellHate;
 				break;
 			}
-			case SE_ATK:
 			case SE_ACv2:
 			case SE_ArmorClass:
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addStandard = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_DiseaseCounter:
@@ -1208,6 +1202,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_INT:
 			case SE_WIS:
 			case SE_CHA:
+			case SE_ATK:
 			{
 				// note: the enchanter tash line has a 'hate added' component which overrides this (Sony's data)
 				// which is how it does not-trivial amounts of hate.  malo spells all do 40 hate
@@ -1241,7 +1236,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Silence:
 			case SE_Destroy:
 			{
-				addStandard = true;
+				AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_Harmony:
@@ -1263,8 +1258,9 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Accuracy:
 			case SE_DamageShield:
 			case SE_SpellDamageShield:
-			case SE_ReverseDS: {
-				AggroAmount += slevel * 2;
+			case SE_ReverseDS:
+			{
+				AggroAmount += slevel * 2;		// this is wrong, but don't know what to set these yet; most implemented after PoP
 				break;
 			}
 			case SE_CurrentMana:
@@ -1273,7 +1269,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_CurrentEndurance: {
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					AggroAmount -= val * 2;
+					AggroAmount -= val * 2;		// also wrong
 				break;
 			}
 			case SE_CancelMagic:
@@ -1289,12 +1285,16 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		}
 	}
 
-	if (addStandard)
+	if (AggroAmount > 40 && IsBardSong(spell_id))
 	{
-		if (IsBardSong(spell_id) && standardSpellHate > 40)
-			AggroAmount += 40;		// bard song aggro caps at 40 for most non-damaging spell effects
-		else
-			AggroAmount += standardSpellHate;
+		if (target && target->GetLevel() >= 20)
+		{
+			AggroAmount = 40;
+		}
+		else if (slevel >= 20)
+		{
+			AggroAmount = 40;
+		}
 	}
 
 	if (spells[spell_id].HateAdded > 0)
@@ -1368,6 +1368,19 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possib
 			}
 		}
 	}
+
+	if (AggroAmount < 9 && IsBuffSpell(spell_id))
+	{
+		if (IsBardSong(spell_id) && AggroAmount < 2)
+		{
+			AggroAmount = 2;
+		}
+		else
+		{
+			AggroAmount = 9;
+		}
+	}
+
 	if (GetOwner() && IsPet())
 		AggroAmount = AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
 

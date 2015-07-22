@@ -356,28 +356,24 @@ int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange, bool firstInRa
 {
 	int32 bonus = 0;
 
-	if (entry->ent->IsClient())
-	{
-		if (combatRange)
-		{
-			bonus += combatRangeBonus;
-
-			if (entry->ent->CastToClient()->IsSitting())
-			{
-				bonus += sitInsideBonus;
-			}
-		}
-		else if (entry->ent->CastToClient()->IsSitting())
-		{
-			bonus += sitOutsideBonus;
-		}
-	}
-	else if (combatRange)
+	if (combatRange)
 	{
 		bonus += combatRangeBonus;
 		if (firstInRange)
 		{
 			bonus += 35;
+		}
+	}
+
+	if (entry->ent->IsClient() && entry->ent->CastToClient()->IsSitting())
+	{
+		if (combatRange)
+		{
+			bonus += sitInsideBonus;
+		}
+		else
+		{
+			bonus += sitOutsideBonus;
 		}
 	}
 
@@ -652,30 +648,39 @@ Mob *HateList::GetRandom()
 int32 HateList::GetEntHate(Mob *ent, bool damage, bool includeBonus)
 {
 	bool firstInRangeBonusApplied = false;
-	int32 bonus = 0;
+	bool combatRange;
 
 	auto iterator = list.begin();
 	while (iterator != list.end())
 	{
 		tHateEntry *p = (*iterator);
 
-		if (p && p->ent == ent)
+		if (!p)
+		{
+			++iterator;
+			continue;
+		}
+		
+		if (!damage && includeBonus)
+		{
+			combatRange = owner->CombatRange(p->ent);
+
+			if (!firstInRangeBonusApplied && combatRange)
+			{
+				firstInRangeBonusApplied = true;
+			}
+		}
+
+		if (p->ent == ent)
 		{
 			if (damage)
+			{
 				return p->damage;
+			}
 
 			if (includeBonus)
 			{
-				bool combatRange = owner->CombatRange(p->ent);
-
-				bonus = GetHateBonus(p, combatRange, !firstInRangeBonusApplied);
-
-				if (!firstInRangeBonusApplied && combatRange)
-				{
-					firstInRangeBonusApplied = true;
-				}
-
-				return (p->hate + bonus);
+				return (p->hate + GetHateBonus(p, combatRange, !firstInRangeBonusApplied));
 			}
 			else
 			{
@@ -704,7 +709,9 @@ void HateList::PrintToClient(Client *c)
 		tHateEntry *e = (*iterator);
 		uint32 timer = e->timer.GetDuration() - e->timer.GetRemainingTime();
 		if (timer > 0)
+		{
 			timer /= 1000;
+		}
 		bool combatRange = owner->CombatRange(e->ent);
 
 		bonusHate = GetHateBonus(e, combatRange, !firstInRangeBonusApplied);

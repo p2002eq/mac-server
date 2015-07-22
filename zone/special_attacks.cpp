@@ -1852,58 +1852,61 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 	}
 
 	//All values used based on live parses after taunt was updated in 2006.
-	if ((hate_top && hate_top->GetHPRatio() >= 20) || hate_top == nullptr) {
+	int32 newhate = 0;
+	float tauntchance = 50.0f;
 
-		int32 newhate = 0;
-		float tauntchance = 50.0f;
+	if(always_succeed)
+		tauntchance = 101.0f;
 
-		if(always_succeed)
-			tauntchance = 101.0f;
-
-		else {
-
-			if (level_difference < 0){
-				tauntchance += static_cast<float>(level_difference)*3.0f;
-				if (tauntchance < 20)
-					tauntchance = 20.0f;
-			}
-
-			else {
-				tauntchance += static_cast<float>(level_difference)*5.0f;
-				if (tauntchance > 65)
-					tauntchance = 65.0f;
-			}
+	else
+	{
+		if (level_difference < 0)
+		{
+			tauntchance += static_cast<float>(level_difference)*3.0f;
+			if (tauntchance < 20)
+				tauntchance = 20.0f;
 		}
-
-		//TauntSkillFalloff rate is not based on any real data. Default of 33% gives a reasonable result.
-		if (IsClient() && !always_succeed)
-			tauntchance -= (RuleR(Combat,TauntSkillFalloff) * (CastToClient()->MaxSkill(SkillTaunt) - GetSkill(SkillTaunt)));
-
-		//From SE_Taunt (Does a taunt with a chance modifier)
-		if (chance_bonus)
-			tauntchance += tauntchance*chance_bonus/100.0f;
-
-		if (tauntchance < 1)
-			tauntchance = 1.0f;
-
-		tauntchance /= 100.0f;
-
-		if (tauntchance > zone->random.Real(0, 1)) {
-			if (hate_top && hate_top != this){
-				newhate = (who->GetNPCHate(hate_top) - who->GetNPCHate(this)) + 1;
-				who->CastToNPC()->AddToHateList(this, newhate);
-				Success = true;
-			}
-			else
-				who->CastToNPC()->AddToHateList(this,12);
-
-			if (who->CanTalk())
-				who->Say_StringID(SUCCESSFUL_TAUNT,GetCleanName());
+		else
+		{
+			tauntchance += static_cast<float>(level_difference)*5.0f;
+			if (tauntchance > 65)
+				tauntchance = 65.0f;
 		}
-	//	else{
-		//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
-	//	}
 	}
+
+	//TauntSkillFalloff rate is not based on any real data. Default of 33% gives a reasonable result.
+	if (IsClient() && !always_succeed)
+		tauntchance -= (RuleR(Combat,TauntSkillFalloff) * (CastToClient()->MaxSkill(SkillTaunt) - GetSkill(SkillTaunt)));
+
+	//From SE_Taunt (Does a taunt with a chance modifier)
+	if (chance_bonus)
+		tauntchance += tauntchance*chance_bonus/100.0f;
+
+	if (tauntchance < 1)
+		tauntchance = 1.0f;
+
+	tauntchance /= 100.0f;
+
+	if (tauntchance > zone->random.Real(0, 1))
+	{
+		if (hate_top && hate_top != this)
+		{
+			newhate = (who->GetNPCHate(hate_top, false) - who->GetNPCHate(this, false));
+			if (newhate > 0)
+			{
+				who->CastToNPC()->AddToHateList(this, newhate);
+			}
+			Success = true;
+		}
+		else
+			who->CastToNPC()->AddToHateList(this,12);
+
+		if (who->CanTalk())
+			who->Say_StringID(SUCCESSFUL_TAUNT,GetCleanName());
+	}
+//	else{
+	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
+//	}
 
 	//else
 	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
