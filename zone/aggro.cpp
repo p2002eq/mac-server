@@ -1293,9 +1293,12 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 
 	if (AggroAmount > 40 && IsBardSong(spell_id))
 	{
-		if (target && target->GetLevel() >= 20)
+		if (target)
 		{
-			AggroAmount = 40;
+			if (target->GetLevel() >= 20)
+			{
+				AggroAmount = 40;
+			}
 		}
 		else if (slevel >= 20)
 		{
