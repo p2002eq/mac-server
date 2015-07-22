@@ -218,7 +218,7 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	}
 
-	who->AddToHateList(this, hate, 0, false);
+	who->AddToHateList(this, hate, 0);
 	who->Damage(this, max_damage, SPELL_UNKNOWN, skill, false);
 
 	//Make sure 'this' has not killed the target and 'this' is not dead (Damage shield ect).
@@ -986,7 +986,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 					TotalDmg = mod_archery_damage(TotalDmg, dobonus, RangeWeapon);
 
 					TryCriticalHit(other, SkillArchery, TotalDmg);
-					other->AddToHateList(this, hate, 0, false);
+					other->AddToHateList(this, hate, 0);
 					CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
 				}
 			}
@@ -1129,9 +1129,9 @@ void NPC::RangedAttack(Mob* other)
 				TotalDmg = -5;
 
 			if (TotalDmg > 0)
-				other->AddToHateList(this, TotalDmg, 0, false);
+				other->AddToHateList(this, TotalDmg, 0);
 			else
-				other->AddToHateList(this, 0, 0, false);
+				other->AddToHateList(this, 0, 0);
 
 			other->Damage(this, TotalDmg, SPELL_UNKNOWN, skillinuse);
 
@@ -1309,7 +1309,7 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 		else
 			TotalDmg = -5;
 
-		other->AddToHateList(this, 2*WDmg, 0, false);
+		other->AddToHateList(this, 2*WDmg, 0);
 		other->Damage(this, TotalDmg, SPELL_UNKNOWN, SkillThrowing);
 
 		if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && other && !other->HasDied()){
@@ -2156,7 +2156,7 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 		CanSkillProc = false; //Disable skill procs
 	}
 
-	other->AddToHateList(this, hate, 0, false);
+	other->AddToHateList(this, hate, 0);
 	other->Damage(this, damage, SPELL_UNKNOWN, skillinuse);
 
 	if (HasDied())

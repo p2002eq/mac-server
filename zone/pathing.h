@@ -66,7 +66,7 @@ public:
 
 	glm::vec3 GetPathNodeCoordinates(int NodeNumber, bool BestZ = true);
 	bool CheckLosFN(glm::vec3 a, glm::vec3 b);
-	void SpawnPathNodes();
+	void SpawnPathNodes(float x = 0.0f, float y = 0.0f, float z = 0.0f);
 	void SpawnNode(PathNode *node);
 	void MeshTest();
 	void SimpleMeshTest(Client *c);
@@ -82,6 +82,7 @@ public:
 
 	void NodeInfo(Client *c);
 	int32 AddNode(float x, float y, float z, float best_z, int32 requested_id = 0); //return -1 on failure, else returns the id of this node
+	void PreCalcNodeDistances();
 	bool DeleteNode(Client *c);
 	bool DeleteNode(int32 id); //returns true on success, false on failure, tries to delete a node from this map
 	void ConnectNodeToNode(Client *c, int32 Node2, int32 teleport = 0, int32 doorid = -1); //connects a node both ways
@@ -104,7 +105,7 @@ private:
 	PathFileHeader Head;
 	PathNode *PathNodes;
 	int QuickConnectTarget;
-
+	std::vector< std::vector< uint16 > > node_distance;
 	int *ClosedListFlag;
 };
 

@@ -418,6 +418,7 @@ RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon pe
 RULE_REAL ( Combat, PushBackAmount, 1.5)
 RULE_BOOL ( Combat, NewACCurves, true)
 RULE_INT ( Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
+RULE_INT ( Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will take to clear assist aggro cap space
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )

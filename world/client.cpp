@@ -564,9 +564,17 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 
 	uint32 char_acct_id = database.GetAccountIDByChar((char*)app->pBuffer);
+	uint32 level = database.GetLevelByChar((char*)app->pBuffer);
 	if(char_acct_id == GetAccountID()) {
 		Log.Out(Logs::Detail, Logs::World_Server,"Delete character: %s",app->pBuffer);
-		database.DeleteCharacter((char *)app->pBuffer);
+		if(level >= 30)
+		{
+			database.MarkCharacterDeleted((char *)app->pBuffer);
+		}
+		else
+		{
+			database.DeleteCharacter((char *)app->pBuffer);
+		}
 		SendCharInfo();
 	}
 
@@ -927,16 +935,15 @@ void Client::SendGuildList() {
 	outapp = new EQApplicationPacket(OP_GuildsList);
 
 	//ask the guild manager to build us a nice guild list packet
-	OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
-	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
-	//safe_delete_array(guildstruct);
-
+	outapp->pBuffer = guild_mgr.MakeOldGuildList(outapp->size);
 	if(outapp->pBuffer == nullptr) {
-		safe_delete(outapp);
+		Log.Out(Logs::Detail, Logs::Guilds, "Unable to make guild list!");
 		return;
 	}
 
-	eqs->FastQueuePacket((EQApplicationPacket **)&outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildsList of length %d", outapp->size);
+
+	eqs->FastQueuePacket(&outapp);
 }
 
 // @merth: I have no idea what this struct is for, so it's hardcoded for now

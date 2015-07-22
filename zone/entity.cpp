@@ -2561,7 +2561,7 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 		while (it != npc_list.end()) {
 			z++;
 			NPC *n = it->second;
-			if(n->IsInCombat())
+			if(n->HasPrimaryAggro())
 			{
 				client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
@@ -4288,4 +4288,23 @@ uint8 EntityList::GetClientCountByBoatID(uint32 boatid)
 		++it;
 	}
 	return count;
+}
+
+bool EntityList::TranfserPrimaryAggro(Mob *other)
+{
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		Mob *m = it->second;
+
+		if (!m)
+			continue;
+
+		if(m->IsNPC() && !m->IsPet() && !m->HasPrimaryAggro() && m->CastToNPC()->IsOnHatelist(other))
+		{
+			m->SetPrimaryAggro(true);
+			return true;
+		}
+		++it;
+	}
+	return false;
 }

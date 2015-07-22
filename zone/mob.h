@@ -300,6 +300,7 @@ public:
 	inline void SetEndurUpkeep(bool val) { endur_upkeep = val; }
 	bool IsBuffed();
 	bool IsDebuffed();
+	bool IsPacified();
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
@@ -481,8 +482,10 @@ public:
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
 	Mob* GetHateMost(bool includeBonus = true) { return hate_list.GetMostHate(includeBonus);}
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
-	bool HasBeenAttacked() { return BeenAttacked; }
-	void SetBeenAttacked(bool value) { BeenAttacked = value; }
+	bool HasPrimaryAggro() { return PrimaryAggro; }
+	void SetPrimaryAggro(bool value) { PrimaryAggro = value; if(value) AssistAggro = false; }
+	void SetAssistAggro(bool value) { AssistAggro = value; if(PrimaryAggro) AssistAggro = false; }
+	bool HasAssistAggro() { return AssistAggro; }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
@@ -959,7 +962,6 @@ public:
 	void AddAssistCap() { ++npc_assist_cap; }
 	void DelAssistCap() { --npc_assist_cap; }
 	void ResetAssistCap() { npc_assist_cap = 0; }
-	bool IsInCombat();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1303,7 +1305,8 @@ protected:
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
 	bool iszomm;
-	bool BeenAttacked; // Determines if an NPC has been attacked while in combat 
+	bool PrimaryAggro;
+	bool AssistAggro;
 	uint8 npc_assist_cap;
 
 private:

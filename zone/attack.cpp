@@ -1937,12 +1937,7 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 	}
 
 	attacked_timer.Start(CombatEventTimer_expire);
-
-	
-	if(!HasBeenAttacked())
-	{
-		BeenAttacked = true;
-	}
+	SetPrimaryAggro(true);
 
 	if (!IsEngaged())
 	{
@@ -2009,6 +2004,12 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	Mob* killer = GetHateDamageTop(this);
 
 	entity_list.RemoveFromTargets(this);
+
+	if(killer && HasPrimaryAggro())
+	{
+		if(!entity_list.TranfserPrimaryAggro(killer))
+			Log.Out(Logs::Detail, Logs::Aggro, "%s failed to transfer primary aggro.", GetName());
+	}
 
 	if(p_depop == true)
 		return false;
@@ -2328,6 +2329,15 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		hate = 1;
 	}
 
+	if(!iYellForHelp)
+	{
+		SetAssistAggro(true);
+	}
+	else
+	{
+		SetPrimaryAggro(true);
+	}
+
 	bool wasengaged = IsEngaged();
 	Mob* owner = other->GetOwner();
 	Mob* mypet = this->GetPet();
@@ -2425,7 +2435,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 
 	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) 
 	{ // I have a pet, add other to it
-		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO) && HasBeenAttacked())
+		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO) && HasPrimaryAggro())
 			mypet->hate_list.Add(other, 0, 0, bFrenzy);
 	} 
 	else if (myowner) 

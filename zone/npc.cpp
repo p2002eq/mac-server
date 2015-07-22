@@ -594,12 +594,14 @@ bool NPC::Process()
 
 	if(assist_timer.Check())
 	{
-		if(!Charmed() && (IsInCombat() && (GetSpecialAbility(ALWAYS_CALL_HELP) || NPCAssistCap() < RuleI(Combat, NPCAssistCap)))) 
+		if(!Charmed() && IsEngaged() && 
+			(GetSpecialAbility(ALWAYS_CALL_HELP) || 
+			(!HasAssistAggro() && NPCAssistCap() < RuleI(Combat, NPCAssistCap))))
 		{
 			entity_list.AIYellForHelp(this, GetTarget());
 			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
 			{
-				assist_cap_timer.Start(NPCAssistCapTimer);
+				assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
 			}
 		}
 	}

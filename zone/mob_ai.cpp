@@ -766,12 +766,12 @@ void Client::AI_Process()
 	{
 		if(ow)
 		{
-			if(ow->IsEngaged())
+			if(ow->IsEngaged() && ow->HasPrimaryAggro())
 			{
 				Mob *tar = ow->GetTarget();
 				if(tar)
 				{
-					AddToHateList(tar, 1, 0, false);
+					AddToHateList(tar, 1, 0, false); // This is a pet, don't yell for help.
 				}
 			}
 		}
@@ -1986,12 +1986,13 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 		{
 			GetOwner()->AI_Event_Engaged(attacker, iYellForHelp);
 		} 
-		else if(IsInCombat() || GetSpecialAbility(ALWAYS_CALL_HELP))
+		//If AlKabor:AllowTickSplit is false, NPCAssistCap() will always be 0 here
+		else if(GetSpecialAbility(ALWAYS_CALL_HELP) || (!HasAssistAggro() && NPCAssistCap() < RuleI(Combat, NPCAssistCap)))
 		{
 			entity_list.AIYellForHelp(this, attacker);
 			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
 			{
-				assist_cap_timer.Start(NPCAssistCapTimer);
+				assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
 			}
 		}
 	}
@@ -2053,7 +2054,8 @@ void Mob::AI_Event_NoLongerEngaged() {
 
 	if(IsNPC())
 	{
-		BeenAttacked = false;
+		PrimaryAggro = false;
+		AssistAggro = false;
 
 		if(CastToNPC()->GetCombatEvent() && GetHP() > 0)
 		{

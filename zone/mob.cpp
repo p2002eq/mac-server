@@ -419,7 +419,8 @@ Mob::Mob(const char* in_name,
 	combat_mana_regen = 0;
 	iszomm = false;
 	adjustedz = 0;
-	BeenAttacked = false;
+	PrimaryAggro = false;
+	AssistAggro = false;
 }
 
 Mob::~Mob()
@@ -1529,13 +1530,13 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
 			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
-			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f Attacked: %d AssistCap: %d", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed(), HasBeenAttacked(), NPCAssistCap());
+			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
-			client->Message(0, "  AggroRange: %1.0f  AssistRange: %1.0f", GetAggroRange(), GetAssistRange());
+			client->Message(0, "  AggroRange: %1.0f  AssistRange: %1.0f  Aggro: Pri/Asst %d %d AssistCap: %d", GetAggroRange(), GetAssistRange(), HasPrimaryAggro(), HasAssistAggro(), NPCAssistCap());
 		}
 	}
 }
@@ -5373,15 +5374,4 @@ float Mob::CalcZOffset()
 		mysize = RuleR(Map, BestZSizeMax);
 
 	return (RuleR(Map, BestZMultiplier) * mysize);
-}
-
-
-bool Mob::IsInCombat()
-{
-	if(IsEngaged() && HasBeenAttacked())
-	{
-		return true;
-	}
-
-	return false;
 }
