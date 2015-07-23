@@ -1119,6 +1119,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	int32 AggroAmount = 0;
 	int32 nonModifiedAggro = 0;
 	uint16 slevel = GetLevel();
+	int32 damage = 0;
 
 	// Spell hate for non-damaging spells scales by target NPC hitpoints
 	int32 thp = 10000;
@@ -1149,7 +1150,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if(val < 0)
-					AggroAmount -= val;
+					damage -= val;
 				break;
 			}
 			case SE_MovementSpeed:
@@ -1291,19 +1292,30 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		}
 	}
 
-	if (AggroAmount > 40 && IsBardSong(spell_id))
+	if (GetClass() == BARD)
 	{
-		if (target)
+		if (damage > 0)
 		{
-			if (target->GetLevel() >= 20)
+			AggroAmount = damage;
+		}
+		else if (AggroAmount > 40)
+		{
+			if (target)
+			{
+				if (target->GetLevel() >= 20)
+				{
+					AggroAmount = 40;
+				}
+			}
+			else if (slevel >= 20)
 			{
 				AggroAmount = 40;
 			}
 		}
-		else if (slevel >= 20)
-		{
-			AggroAmount = 40;
-		}
+	}
+	else
+	{
+		AggroAmount += damage;
 	}
 
 	if (spells[spell_id].HateAdded > 0)
