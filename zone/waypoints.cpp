@@ -56,19 +56,43 @@ void NPC::AI_SetRoambox(float iDist, float iMaxX, float iMinX, float iMaxY, floa
 
 void NPC::DisplayWaypointInfo(Client *c) {
 
-	c->Message(0, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
-		GetGrid(),
-		GetSp2(),
-		GetCurWp(),
-		GetMaxWp() );
+	SpawnGroup* sg = zone->spawn_group_list.GetSpawnGroup(GetSp2());
 
+	//Mob is on a roambox.
+	if(sg && GetGrid() == 0 && sg->roamdist != 0)
+	{
+		c->Message(CC_Default, "Mob in spawn group %d is on a roambox.", GetSp2());
+		c->Message(CC_Default, "MinX: %0.2f MaxX: %0.2f MinY: %0.2f MaxY: %0.2f", sg->roambox[1], sg->roambox[0], sg->roambox[3], sg->roambox[2]);
+		c->Message(CC_Default, "Distance: %0.2f MinDelay: %d Delay: %d", sg->roamdist, sg->min_delay, sg->delay);
+		return;
+	}
+	//Mob either doesn't have a grid, or has a quest assigned grid. 
+	else if(GetGrid() == 0)
+	{
+		c->Message(CC_Default, "Mob in spawn group %d is not on a permanent grid.", GetSp2());
+	}
+	//Mob is on a normal grid.
+	else
+	{
+		int MaxWp = GetMaxWp();
+		//If the Mob hasn't moved yet, this will be 0. Set to 1 so it looks correct.
+		if(MaxWp == 0)
+			MaxWp = 1;
 
+		c->Message(CC_Default, "Mob is on grid %d, in spawn group %d, on waypoint %d/%d",
+			GetGrid(),
+			GetSp2(),
+			GetCurWp()+1, //We start from 0 internally, but in the DB and lua functions we start from 1.
+			MaxWp );
+	}
+
+	//Waypoints won't load into memory until the Mob moves.
 	std::vector<wplist>::iterator cur, end;
 	cur = Waypoints.begin();
 	end = Waypoints.end();
 	for(; cur != end; ++cur) {
-		c->Message(0,"Waypoint %d: (%.2f,%.2f,%.2f,%.2f) pause %d",
-				cur->index,
+		c->Message(CC_Default,"Waypoint %d: (%.2f,%.2f,%.2f,%.2f) pause %d",
+				cur->index+1, //We start from 0 internally, but in the DB and lua functions we start from 1.
 				cur->x,
 				cur->y,
 				cur->z,
@@ -213,7 +237,7 @@ void NPC::UpdateWaypoint(int wp_index)
 	Log.Out(Logs::Detail, Logs::AI, "Next waypoint %d: (%.3f, %.3f, %.3f, %.3f)", wp_index, m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, m_CurrentWayPoint.w);
 
 	//fix up pathing Z
-	if(zone->HasMap() && RuleB(Map, FixPathingZAtWaypoints))
+	if(zone->HasMap() && RuleB(Map, FixPathingZAtWaypoints) && !IsBoat())
 	{
 
 		if(!RuleB(Watermap, CheckForWaterAtWaypoints) || !zone->HasWaterMap() ||
@@ -590,7 +614,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 		}
 
 		//fix up pathing Z
-		if(!NPCFlyMode && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving))
+		if(!NPCFlyMode && !IsBoat() && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving))
 		{
 			if(!RuleB(Watermap, CheckForWaterWhenMoving) || !zone->HasWaterMap() ||
 			   (zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))
@@ -719,10 +743,11 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	if(IsNPC()) {
 		if(CastToNPC()->GetFlyMode() == 1 || CastToNPC()->GetFlyMode() == 2)
 			NPCFlyMode = 1;
+
 	}
 
 	//fix up pathing Z
-	if(!NPCFlyMode && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving)) {
+	if(!NPCFlyMode && !IsBoat() && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving)) {
 
 		if(!RuleB(Watermap, CheckForWaterWhenMoving) || !zone->HasWaterMap() ||
 		   (zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))
@@ -878,7 +903,7 @@ bool Mob::CalculateNewPosition(float x, float y, float z, float speed, bool chec
 	}
 
 	//fix up pathing Z
-	if(!NPCFlyMode && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving))
+	if(!NPCFlyMode && !IsBoat() && checkZ && zone->HasMap() && RuleB(Map, FixPathingZWhenMoving))
 	{
 		if(!RuleB(Watermap, CheckForWaterWhenMoving) || !zone->HasWaterMap() ||
 			(zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))
@@ -980,10 +1005,10 @@ void NPC::AssignWaypoints(int32 grid)
 		newwp.y = atof(row[1]);
 		newwp.z = atof(row[2]);
 
-		if(zone->HasMap() && RuleB(Map, FixPathingZWhenLoading) )
+		if(zone->HasMap() && RuleB(Map, FixPathingZWhenLoading) && !IsBoat())
 		{
 			auto positon = glm::vec3(newwp.x,newwp.y,newwp.z);
-			if(RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
+			if(!RuleB(Watermap, CheckWaypointsInWaterWhenLoading) || !zone->HasWaterMap() ||
 				(zone->HasWaterMap() && !zone->watermap->InWater(positon)))
 			{
 				glm::vec3 dest(newwp.x, newwp.y, newwp.z);
@@ -1029,7 +1054,7 @@ void Mob::SendTo(float new_x, float new_y, float new_z) {
 
 	//fix up pathing Z, this shouldent be needed IF our waypoints
 	//are corrected instead
-	if(zone->HasMap() && RuleB(Map, FixPathingZOnSendTo) )
+	if(zone->HasMap() && RuleB(Map, FixPathingZOnSendTo) && !IsBoat())
 	{
 		if(!RuleB(Watermap, CheckForWaterOnSendTo) || !zone->HasWaterMap() ||
 			(zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))
@@ -1063,7 +1088,7 @@ void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 	//fix up pathing Z, this shouldent be needed IF our waypoints
 	//are corrected instead
 
-	if(zone->HasMap() && RuleB(Map, FixPathingZOnSendTo))
+	if(zone->HasMap() && RuleB(Map, FixPathingZOnSendTo) && !IsBoat())
 	{
 		if(!RuleB(Watermap, CheckForWaterOnSendTo) || !zone->HasWaterMap() ||
 			(zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))

@@ -18,10 +18,11 @@
 #include "../common/global_define.h"
 #include "database.h"
 
-#ifdef EQEMU_MYSQL_ENABLED
 #include "database_mysql.h"
 #include "error_log.h"
 #include "login_server.h"
+
+#pragma warning( disable : 4267 )
 
 extern ErrorLog *server_log;
 extern LoginServer server;
@@ -351,5 +352,3 @@ bool DatabaseMySQL::CreateWorldRegistration(string long_name, string short_name,
 	server_log->Log(log_database, "World registration did not exist in the database for %s %s", long_name.c_str(), short_name.c_str());
 	return false;
 }
-
-#endif

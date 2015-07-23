@@ -2527,7 +2527,8 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			z++;
 			++it;
 		}
-	} else if (searchtype == 1) {
+	} 
+	else if (searchtype == 1) {
 		client->Message(0, "Searching by name method. (%s)",arg1);
 		char* tmp = new char[strlen(arg1) + 1];
 		strcpy(tmp, arg1);
@@ -2544,12 +2545,25 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			++it;
 		}
 		safe_delete_array(tmp);
-	} else if (searchtype == 2) {
+	} 
+	else if (searchtype == 2) {
 		client->Message(0, "Searching by number method. (%s %s)",arg1,arg2);
 		while (it != npc_list.end()) {
 			z++;
 			if ((it->second->GetID() >= atoi(arg1)) && (it->second->GetID() <= atoi(arg2)) && (atoi(arg1) <= atoi(arg2))) {
 				client->Message(0, "  %5d: %s", it->second->GetID(), it->second->GetName());
+				x++;
+			}
+			++it;
+		}
+	}
+	else if (searchtype == 3) {
+		while (it != npc_list.end()) {
+			z++;
+			NPC *n = it->second;
+			if(n->HasPrimaryAggro())
+			{
+				client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
 			}
 			++it;
@@ -2915,55 +2929,46 @@ bool EntityList::Fighting(Mob *targ)
 	return false;
 }
 
-void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 thedam)
+void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 {
+	if (!target || !caster)
+		return;
+
 	NPC *cur = nullptr;
-	uint16 count = 0;
 	std::list<NPC *> npc_sub_list;
 	auto it = npc_list.begin();
-	while (it != npc_list.end()) {
+	while (it != npc_list.end())
+	{
 		cur = it->second;
 
-		if (!cur->CheckAggro(target)) {
+		if (!cur->CheckAggro(target))
+		{
 			++it;
 			continue;
 		}
-		if (!cur->IsMezzed() && !cur->IsStunned() && !cur->IsFeared()) {
+		if (!cur->IsFeared())
+		{
 			npc_sub_list.push_back(cur);
-			++count;
 		}
 		++it;
 	}
 
-
-	if (thedam > 1) {
-		if (count > 0)
-			thedam /= count;
-
-		if (thedam < 1)
-			thedam = 1;
-	}
-
 	cur = nullptr;
 	auto sit = npc_sub_list.begin();
-	while (sit != npc_sub_list.end()) {
+	while (sit != npc_sub_list.end())
+	{
 		cur = *sit;
 
-		if (cur->IsPet()) {
-			if (caster) {
-				if (cur->CheckAggro(caster)) {
-					cur->AddToHateList(caster, thedam);
-				}
-			}
-		} else {
-			if (caster) {
-				if (cur->CheckAggro(caster)) {
-					cur->AddToHateList(caster, thedam);
-				} else {
-					cur->AddToHateList(caster, thedam * 0.33);
-				}
-			}
+		if (cur->IsPet() || zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
+		{												// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+			++sit;
+			continue;
 		}
+
+		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 0)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
+			hate /= 4;
+
+		cur->AddToHateList(caster, hate);
 		++sit;
 	}
 }
@@ -4262,4 +4267,53 @@ void EntityList::StopMobAI()
 		mob.second->AI_Stop();
 		mob.second->AI_ShutDown();
 	}
+}
+
+void EntityList::GetBoatInfo(Client* client)
+{
+	uint8 count = 0;
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		// We don't want to include player controlled boats.
+		if (it->second->IsNPC() && (it->second->GetBaseRace() == SHIP || it->second->GetBaseRace() == LAUNCH))
+		{
+			uint8 passengers = GetClientCountByBoatID(it->second->GetNPCTypeID());
+			client->Message(CC_Default, " Boat: %s (%d) found at %0.2f,%0.2f,%0.2f. Waypoint: %d Passengers: %d", it->second->GetName(), it->second->GetNPCTypeID(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCurWp()+1, passengers);
+			++count;
+		}
+		++it;
+	}
+
+	client->Message(CC_Default, "%d boats found.", count);
+}
+
+uint8 EntityList::GetClientCountByBoatID(uint32 boatid)
+{
+	uint8 count = 0;
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		if (it->second->GetBoatNPCID() == boatid)
+			++count;
+		++it;
+	}
+	return count;
+}
+
+bool EntityList::TranfserPrimaryAggro(Mob *other)
+{
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		Mob *m = it->second;
+
+		if (!m)
+			continue;
+
+		if(m->IsNPC() && !m->IsPet() && !m->HasPrimaryAggro() && m->CastToNPC()->IsOnHatelist(other))
+		{
+			m->SetPrimaryAggro(true);
+			return true;
+		}
+		++it;
+	}
+	return false;
 }

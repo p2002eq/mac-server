@@ -14,6 +14,8 @@
 #include "mac_structs.h"
 #include "../rulesys.h"
 
+#pragma warning( disable : 4244 4267 4309 )
+
 namespace Mac {
 
 	static const char *name = "Mac";
@@ -277,12 +279,6 @@ namespace Mac {
 		OUT(copper_cursor);
 		OUT_array(skills, structs::MAX_PP_SKILL);  // 1:1 direct copy (100 dword)
 
-		//for(r = 0; r < 50; r++) {
-		//	eq->innate[r] = 255;
-		//}
-		//OUT(ATR_PET_LOH_timer);
-		//OUT(UnknownTimer);
-		//OUT(HarmTouchTimer);
 		int value = RuleI(Character,ConsumptionValue);
 
 		float tpercent = (float)emu->thirst_level/(float)value;
@@ -349,6 +345,7 @@ namespace Mac {
 		OUT(abilitySlotRefresh);
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
+		OUT(fatigue);
 
 		//Log.Out(Logs::General, Logs::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 

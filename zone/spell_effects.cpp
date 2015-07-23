@@ -196,6 +196,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
 	{
+		if(!IsValidSpell(spell_id))
+			return false;
+
 		if(IsBlankSpellEffect(spell_id, i))
 			continue;
 
@@ -3965,23 +3968,33 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 		}
 	}
 
-	// notify caster (or their master) of buff that it's worn off
+	// notify caster (or their master) of spell that it's worn off
+	char spellname[32];
+	if(IsCharmSpell(buffs[slot].spellid))
+		strcpy(spellname, "charm");
+	else if(IsFearSpell(buffs[slot].spellid))
+		strcpy(spellname, "fear");
+	else
+		strcpy(spellname, spells[buffs[slot].spellid].name);
+
 	Mob *p = entity_list.GetMob(buffs[slot].casterid);
-	if (p && p != this && !death && !IsBeneficialSpell(buffs[slot].spellid))
+	//Non-charmed pets
+	if (HasOwner() && GetOwner()->IsClient() && !IsCharmed() && !death)
+	{
+		Mob* notify = GetOwner();
+		if(notify)
+		{
+			notify->Message_StringID(MT_WornOff, PET_SPELL_WORN_OFF, spellname);
+		}
+	}
+	//All other entities
+	else if (p && p != this && !death && !IsBeneficialSpell(buffs[slot].spellid))
 	{
 		Mob *notify = p;
-		if(p->IsPet())
+		if(p->IsPet() && IsCharmed())
 			notify = p->GetOwner();
-		if(p)
+		if(notify)
 		{
-			char spellname[32];
-			if(IsCharmSpell(buffs[slot].spellid))
-				strcpy(spellname, "charm");
-			else if(IsFearSpell(buffs[slot].spellid))
-				strcpy(spellname, "fear");
-			else
-				strcpy(spellname, spells[buffs[slot].spellid].name);
-
 			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
 	}

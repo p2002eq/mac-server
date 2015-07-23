@@ -770,7 +770,7 @@ int16 Inventory::CalcSlotId(int16 bagslot_id, uint8 bagidx) {
 
 	int16 slot_id = INVALID_INDEX;
 
-	if (bagslot_id == MainCursor || bagslot_id == 8000)
+	if (bagslot_id == MainCursor || bagslot_id == EmuConstants::CURSOR_QUEUE_BEGIN)
 		slot_id = EmuConstants::CURSOR_BAG_BEGIN + bagidx;
 
 	else if (bagslot_id >= EmuConstants::GENERAL_BEGIN && bagslot_id <= EmuConstants::GENERAL_END)

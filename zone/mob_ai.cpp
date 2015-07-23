@@ -765,12 +765,12 @@ void Client::AI_Process()
 	{
 		if(ow)
 		{
-			if(ow->IsEngaged())
+			if(ow->IsEngaged() && ow->HasPrimaryAggro())
 			{
 				Mob *tar = ow->GetTarget();
 				if(tar)
 				{
-					AddToHateList(tar, 1, 0, false);
+					AddToHateList(tar, 1, 0, false); // This is a pet, don't yell for help.
 				}
 			}
 		}
@@ -844,7 +844,7 @@ void Client::AI_Process()
 		{
 			if(AItarget_check_timer->Check())
 			{
-				SetTarget(hate_list.GetTop(this));
+				SetTarget(hate_list.GetTop());
 			}
 		}
 
@@ -1215,11 +1215,11 @@ void Mob::AI_Process() {
 			{
 				if (IsFocused()) {
 					if (!target) {
-						SetTarget(hate_list.GetTop(this));
+						SetTarget(hate_list.GetTop());
 					}
 				} else {
 					if (!ImprovedTaunt())
-						SetTarget(hate_list.GetTop(this));
+						SetTarget(hate_list.GetTop());
 				}
 
 			}
@@ -1457,7 +1457,7 @@ void Mob::AI_Process() {
 			if(IsNPC() && CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
                 auto targetPosition = glm::vec3(target->GetX(), target->GetY(), target->GetZ());
 				if(!zone->watermap->InLiquid(targetPosition)) {
-					Mob *tar = hate_list.GetTop(this);
+					Mob *tar = hate_list.GetTop();
 					if(tar == target) {
 						WipeHateList();
 						Heal();
@@ -1788,6 +1788,7 @@ void NPC::AI_DoMovement() {
 		if (gridno > 0 || cur_wp==-2) {
 			if (movetimercompleted==true) { // time to pause at wp is over
 				AI_SetupNextWaypoint();
+				move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 			}	// endif (movetimercompleted==true)
 			else if (!(AIwalking_timer->Enabled()))
 			{	// currently moving
@@ -1973,11 +1974,20 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 		SetAppearance(eaStanding);
 	}
 
-	if (iYellForHelp) {
-		if(IsPet()) {
+	if (iYellForHelp) 
+	{
+		if(IsPet()) 
+		{
 			GetOwner()->AI_Event_Engaged(attacker, iYellForHelp);
-		} else {
+		} 
+		//If AlKabor:AllowTickSplit is false, NPCAssistCap() will always be 0 here
+		else if(GetSpecialAbility(ALWAYS_CALL_HELP) || (!HasAssistAggro() && NPCAssistCap() < RuleI(Combat, NPCAssistCap)))
+		{
 			entity_list.AIYellForHelp(this, attacker);
+			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
+			{
+				assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
+			}
 		}
 	}
 
@@ -2038,6 +2048,9 @@ void Mob::AI_Event_NoLongerEngaged() {
 
 	if(IsNPC())
 	{
+		PrimaryAggro = false;
+		AssistAggro = false;
+
 		if(CastToNPC()->GetCombatEvent() && GetHP() > 0)
 		{
 			if(entity_list.GetNPCByID(this->GetID()))
@@ -2899,7 +2912,7 @@ void NPC::AISpellsList(Client *c)
 		return;
 
 	for (std::vector<AISpells_Struct>::iterator it = AIspells.begin(); it != AIspells.end(); ++it)
-		c->Message(0, "%s (%d): Type %d, Priority %d",
+		c->Message(CC_Default, "%s (%d): Type %d, Priority %d",
 				spells[it->spellid].name, it->spellid, it->type, it->priority);
 
 	return;

@@ -380,8 +380,8 @@ Mob::Mob(const char* in_name,
 	hasTempPet = false;
 	count_TempPet = 0;
 
-	//Boats always "run"
-	if(race == SHIP && RuleB(NPC, BoatsRunByDefault))
+	//Boats always "run." Ignore launches and player controlled ships.
+	if(GetBaseRace() == SHIP && RuleB(NPC, BoatsRunByDefault))
 	{
 		m_is_running = true;
 	}
@@ -400,6 +400,7 @@ Mob::Mob(const char* in_name,
 	PathingLOSState = UnknownLOS;
 	PathingLoopCount = 0;
 	PathingLastNodeVisited = -1;
+	PathingLastNodeSearched = -1;
 	PathingLOSCheckTimer = new Timer(RuleI(Pathing, LOSCheckFrequency));
 	PathingRouteUpdateTimerShort = new Timer(RuleI(Pathing, RouteUpdateFrequencyShort));
 	PathingRouteUpdateTimerLong = new Timer(RuleI(Pathing, RouteUpdateFrequencyLong));
@@ -418,6 +419,8 @@ Mob::Mob(const char* in_name,
 	combat_mana_regen = 0;
 	iszomm = false;
 	adjustedz = 0;
+	PrimaryAggro = false;
+	AssistAggro = false;
 }
 
 Mob::~Mob()
@@ -1350,8 +1353,8 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
 				spu2->num_updates = 1; // hack - only one spawn position per update
 				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 450, nullptr, false);
-				if (HasOwner())
+				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 300, nullptr, false);
+				if (HasOwner() || (IsNPC() && Route.size() > 0))
 					move_tic_count = 0;
 				else
 					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
@@ -1359,7 +1362,7 @@ void Mob::SendPositionNearby(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1389,7 +1392,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),450,nullptr,false);
+				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),300,nullptr,false);
 		}
 		else
 		{
@@ -1401,7 +1404,7 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 450, nullptr, false);
+				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 300, nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1514,7 +1517,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
 		client->Message(0, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
 		if (client->Admin() >= 100)
-			client->Message(0, "  EntityID: %i  PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
+			client->Message(0, "  EntityID: %i IsPet: %i PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), IsPet(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
@@ -1533,7 +1536,7 @@ void Mob::ShowStats(Client* client)
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
-			client->Message(0, "  AggroRange: %1.0f  AssistRange: %1.0f", GetAggroRange(), GetAssistRange());
+			client->Message(0, "  AggroRange: %1.0f  AssistRange: %1.0f  Aggro: Pri/Asst %d %d AssistCap: %d", GetAggroRange(), GetAssistRange(), HasPrimaryAggro(), HasAssistAggro(), NPCAssistCap());
 		}
 	}
 }
@@ -1627,6 +1630,8 @@ void Mob::SetCurrentSpeed(float speed) {
 			SetRunAnimSpeed(0);
 			SetMoving(false);
 			SendPosition();
+		} else {
+			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 	} 
 }
@@ -2308,11 +2313,15 @@ bool Mob::RemoveFromHateList(Mob* mob)
 		{
 			AI_Event_NoLongerEngaged();
 			zone->DelAggroMob();
+			if(IsNPC() && !RuleB(AlKabor, AllowTickSplit))
+			{
+				ResetAssistCap();
+			}
 		}
 	}
 	if(GetTarget() == mob)
 	{
-		SetTarget(hate_list.GetTop(this));
+		SetTarget(hate_list.GetTop());
 	}
 
 	return bFound;
@@ -4406,8 +4415,9 @@ void Mob::SpreadVirus(uint16 spell_id, uint16 casterID)
 	}
 }
 
-bool Mob::IsBoat() const {
-	return (race == 72 || race == 73 || race == 114 || race == 404 || race == 550 || race == 551 || race == 552);
+bool Mob::IsBoat() const 
+{
+	return (GetBaseRace() == SHIP || GetBaseRace() == LAUNCH || GetBaseRace() == CONTROLLED_BOAT);
 }
 
 void Mob::SetBodyType(bodyType new_body, bool overwrite_orig) {

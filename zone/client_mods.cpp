@@ -244,15 +244,18 @@ int32 Client::CalcMaxHP() {
 
 	max_hp += max_hp * ((spellbonuses.MaxHPChange + itembonuses.MaxHPChange) / 10000.0f);
 
-	if (cur_hp > max_hp)
-		cur_hp = max_hp;
-
 	int hp_perc_cap = spellbonuses.HPPercCap[0];
 	if(hp_perc_cap) {
 		int curHP_cap = (max_hp * hp_perc_cap) / 100;
 		if (cur_hp > curHP_cap || (spellbonuses.HPPercCap[1] && cur_hp > spellbonuses.HPPercCap[1]))
 			cur_hp = curHP_cap;
 	}
+
+	if(max_hp > 32767)
+		max_hp = 32767;
+
+	if (cur_hp > max_hp)
+		cur_hp = max_hp;
 
 	return max_hp;
 }
@@ -921,15 +924,18 @@ int32 Client::CalcMaxMana()
 		max_mana = 0;
 	}
 
-	if (cur_mana > max_mana) {
-		cur_mana = max_mana;
-	}
-
 	int mana_perc_cap = spellbonuses.ManaPercCap[0];
 	if(mana_perc_cap) {
 		int curMana_cap = (max_mana * mana_perc_cap) / 100;
 		if (cur_mana > curMana_cap || (spellbonuses.ManaPercCap[1] && cur_mana > spellbonuses.ManaPercCap[1]))
 			cur_mana = curMana_cap;
+	}
+
+	if(max_mana > 32767)
+		max_mana = 32767;
+
+	if (cur_mana > max_mana) {
+		cur_mana = max_mana;
 	}
 
 	Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
@@ -1836,15 +1842,18 @@ void Client::CalcMaxEndurance()
 		max_end = 0;
 	}
 
-	if (cur_end > max_end) {
-		cur_end = max_end;
-	}
-
 	int end_perc_cap = spellbonuses.EndPercCap[0];
 	if(end_perc_cap) {
 		int curEnd_cap = (max_end * end_perc_cap) / 100;
 		if (cur_end > curEnd_cap || (spellbonuses.EndPercCap[1] && cur_end > spellbonuses.EndPercCap[1]))
 			cur_end = curEnd_cap;
+	}
+
+	if(max_end > 32767)
+		max_end = 32767;
+
+	if (cur_end > max_end) {
+		cur_end = max_end;
 	}
 }
 

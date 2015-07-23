@@ -1366,6 +1366,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 		// When we have a bag on the cursor filled with items that is new (zoned with it, summoned it, picked it up from the ground)
 		// the client is only aware of the bag. So, we have to send packets for each item within the bag once it is placed in the inventory.
+		// This is a workaround hack until we can figure out how to send these items to the client while they are still on the cursor.
 		const ItemInst* baginst = m_inv[dst_slot_id];
 		if(src_slot_id == MainCursor && baginst && baginst->IsType(ItemClassContainer))
 		{
@@ -2131,7 +2132,7 @@ bool Client::InterrogateInventory(Client* requester, bool log, bool silent, bool
 		if (cursor_itr == m_inv.cursor_cbegin())
 			continue;
 
-		instmap[8000 + limbo] = *cursor_itr;
+		instmap[EmuConstants::CURSOR_QUEUE_BEGIN + limbo] = *cursor_itr;
 	}
 
 	if (m_inv[MainPowerSource])
@@ -2228,7 +2229,7 @@ bool Client::InterrogateInventory_error(int16 head, int16 index, const ItemInst*
 	if ((head == MainCursor) ||
 		(head >= EmuConstants::EQUIPMENT_BEGIN && head <= EmuConstants::EQUIPMENT_END) ||
 		(head >= EmuConstants::WORLD_BEGIN && head <= EmuConstants::WORLD_END) ||
-		(head >= 8000 && head <= 8101) ||
+		(head >= EmuConstants::CURSOR_QUEUE_BEGIN && head <= EmuConstants::CURSOR_QUEUE_END) ||
 		(head == MainPowerSource)) {
 		switch (depth)
 		{
@@ -2332,3 +2333,4 @@ std::string Inventory::GetCustomItemData(int16 slot_id, std::string identifier) 
 	}
 	return "";
 }
+

@@ -304,7 +304,7 @@ public:
 	void	SendAlarm(Trap* trap, Mob* currenttarget, uint8 kos);
 	Trap*	FindNearbyTrap(Mob* searcher, float max_dist);
 
-	void	AddHealAggro(Mob* target, Mob* caster, uint16 thedam);
+	void	AddHealAggro(Mob* target, Mob* caster, uint16 hate);
 	Mob*	FindDefenseNPC(uint32 npcid);
 	void	OpenDoorsNear(NPC* opener);
 	void	OpenDoorsNearCoords(NPC* opener, glm::vec4 position);
@@ -393,6 +393,10 @@ public:
 
 	uint16 GetFreeID();
 	void SendLFG(Client* client, bool lfg);
+
+	void GetBoatInfo(Client* client);
+	uint8 GetClientCountByBoatID(uint32 boatid);
+	bool TranfserPrimaryAggro(Mob* other);
 
 protected:
 	friend class Zone;

@@ -51,7 +51,7 @@ public:
 	// Gets Hate amount for mob
 	int32 GetEntHate(Mob *ent, bool damage = false);
 	// gets top hated mob
-	Mob *GetTop(Mob *center);
+	Mob *GetTop();
 	// gets any on the list
 	Mob *GetRandom();
 	// get closest mob or nullptr if list empty
@@ -78,13 +78,18 @@ public:
 	std::list<tHateEntry*>& GetHateList() { return list; }
 
 	//setting owner
-	void SetOwner(Mob *newOwner) { owner = newOwner; }
+	void SetOwner(Mob *newOwner);
 
 protected:
 	tHateEntry* Find(Mob *ent);
+	int32 GetHateBonus(tHateEntry *entry, bool combatRange);
 private:
 	std::list<tHateEntry*> list;
 	Mob *owner;
+	int32 combatRangeBonus;
+	int32 sitInsideBonus;
+	int32 sitOutsideBonus;
+	int32 lowHealthBonus;
 };
 
 #endif

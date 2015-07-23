@@ -1103,8 +1103,8 @@ struct PlayerProfile_Struct
 	/*0149*/	char	levelchar[3];		// ***Placeholder
 	/*0152*/	uint32	exp;				// Current Experience
 	/*0156*/	uint16	points;				// Players Points
-	/*0158*/	uint16	mana;				// Player Mana
-	/*0160*/	uint16	cur_hp;				// Player Health
+	/*0158*/	int16	mana;				// Player Mana
+	/*0160*/	int16	cur_hp;				// Player Health
 	/*0162*/	uint16	status;				
 	/*0164*/	uint16	STR;				// Player Strength
 	/*0166*/	uint16	STA;				// Player Stamina
@@ -1166,8 +1166,8 @@ struct PlayerProfile_Struct
 	/*3244*/	float	width;
 	/*3248*/	float   length;
 	/*3252*/	float   view_height;
-	/*3256*/    char    boat[16];
-	/*3272*/    uint8   unknown[76];
+	/*3256*/    char    boat[32];
+	/*3280*/    uint8   unknown[60];
 	/*3348*/	uint8	autosplit;
 	/*3349*/	uint8	unknown3449[43];
 	/*3392*/	uint8	expansions;			//Effects features such as /disc, AA, raid

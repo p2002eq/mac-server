@@ -1154,14 +1154,14 @@ bool Lua_Mob::Charmed() {
 	return self->Charmed();
 }
 
-int Lua_Mob::CheckAggroAmount(int spell_id) {
+int Lua_Mob::CheckAggroAmount(int spell_id, Lua_Mob target) {
 	Lua_Safe_Call_Int();
-	return self->CheckAggroAmount(spell_id);
+	return self->CheckAggroAmount(spell_id, target);
 }
 
-int Lua_Mob::CheckAggroAmount(int spell_id, bool is_proc) {
+int Lua_Mob::CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc) {
 	Lua_Safe_Call_Int();
-	return self->CheckAggroAmount(spell_id, is_proc);
+	return self->CheckAggroAmount(spell_id, target, is_proc);
 }
 
 int Lua_Mob::CheckHealAggroAmount(int spell_id) {
@@ -1717,9 +1717,14 @@ void Lua_Mob::BuffFadeByEffect(int effect_id, int skipslot) {
 	self->BuffFadeByEffect(effect_id, skipslot);
 }
 
-void Lua_Mob::BuffFadeAll(bool death) {
+void Lua_Mob::BuffFadeAll() {
 	Lua_Safe_Call_Void();
-	self->BuffFadeAll(death);
+	self->BuffFadeAll();
+}
+
+void Lua_Mob::BuffFadeAll(bool skiprez) {
+	Lua_Safe_Call_Void();
+	self->BuffFadeAll(false, skiprez);
 }
 
 void Lua_Mob::BuffFadeBySlot(int slot) {
@@ -1952,8 +1957,8 @@ luabind::scope lua_register_mob() {
 		.def("NPCSpecialAttacks", (void(Lua_Mob::*)(const char*,int,bool,bool))&Lua_Mob::NPCSpecialAttacks)
 		.def("GetResist", (int(Lua_Mob::*)(int))&Lua_Mob::GetResist)
 		.def("Charmed", (bool(Lua_Mob::*)(void))&Lua_Mob::Charmed)
-		.def("CheckAggroAmount", (int(Lua_Mob::*)(int))&Lua_Mob::CheckAggroAmount)
-		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,bool))&Lua_Mob::CheckAggroAmount)
+		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob))&Lua_Mob::CheckAggroAmount)
+		.def("CheckAggroAmount", (int(Lua_Mob::*)(int,Lua_Mob,bool))&Lua_Mob::CheckAggroAmount)
 		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int))&Lua_Mob::CheckHealAggroAmount)
 		.def("CheckHealAggroAmount", (int(Lua_Mob::*)(int,uint32))&Lua_Mob::CheckHealAggroAmount)
 		.def("GetAA", (int(Lua_Mob::*)(int))&Lua_Mob::GetAA)
@@ -2038,6 +2043,7 @@ luabind::scope lua_register_mob() {
 		.def("BuffFadeBySpellID", (void(Lua_Mob::*)(int))&Lua_Mob::BuffFadeBySpellID)
 		.def("BuffFadeByEffect", (void(Lua_Mob::*)(int))&Lua_Mob::BuffFadeByEffect)
 		.def("BuffFadeByEffect", (void(Lua_Mob::*)(int,int))&Lua_Mob::BuffFadeByEffect)
+		.def("BuffFadeAll", (void(Lua_Mob::*)(void))&Lua_Mob::BuffFadeAll)
 		.def("BuffFadeAll", (void(Lua_Mob::*)(bool))&Lua_Mob::BuffFadeAll)
 		.def("BuffFadeBySlot", (void(Lua_Mob::*)(int))&Lua_Mob::BuffFadeBySlot)
 		.def("BuffFadeBySlot", (void(Lua_Mob::*)(int,bool,bool))&Lua_Mob::BuffFadeBySlot)

@@ -422,7 +422,7 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 500, GetTarget(), false);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 300, GetTarget(), false);
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;
@@ -757,7 +757,7 @@ void Client::BulkSendItems()
 
 	// LINKDEAD TRADE ITEMS
 	// Move trade slot items back into normal inventory..need them there now for the proceeding validity checks -U
-	for(slot_id = 3000; slot_id <= 3007; slot_id++) {
+	for(slot_id = EmuConstants::TRADE_BEGIN; slot_id <= EmuConstants::TRADE_END; slot_id++) {
 		ItemInst* inst = m_inv.PopItem(slot_id);
 		if(inst) {
 			bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
@@ -807,6 +807,29 @@ void Client::BulkSendItems()
 			SendItemPacket(slot_id, inst, ItemPacketCharInventory);
 		}
 	}
+}
+
+void Client::SendCursorItems()
+{
+	/* Send stuff on the cursor which isnt sent in bulk */
+	for (auto iter = m_inv.cursor_cbegin(); iter != m_inv.cursor_cend(); ++iter) {
+		const ItemInst *inst = *iter;
+		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
+	}
+
+	//Items in cursor container
+	//The client ignores these items. I couldn't find a packet from AK with bag cursor items being sent and
+	//have tried every packet type without luck. Perhaps our slotids are wrong? Workaround hack is in SwapItem.
+
+	/*int16 slot_id = 0;
+	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			SendItemPacket(slot_id, inst, ItemPacketTrade);
+			Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
+			break;
+		}
+	}*/
 }
 
 void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
@@ -1625,7 +1648,6 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			case SkillFletching:
 			case SkillJewelryMaking:
 			case SkillPottery:
-			case SkillFishing:
 				if(skilllevel >= RuleI(Skills, MaxTrainTradeskills)) {
 					Message_StringID(CC_Red, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
 					SetSkill(skill, skilllevel);
@@ -1803,7 +1825,8 @@ void Client::DoStaminaUpdate() {
 	bool aamod = false;
 	//This is our stomach size. It probably shouldn't be changed from 6000. 
 	int value = RuleI(Character,ConsumptionValue);
-	if(zone->GetZoneID() != bazaar && !GetGM()) {
+	if(zone->GetZoneID() != bazaar && !GetGM()) 
+	{
 		//Change this rule to raise or lower rate of food consumption.
 		float loss = RuleR(Character, FoodLossPerUpdate);
 
@@ -1875,16 +1898,18 @@ void Client::DoStaminaUpdate() {
 
 		Log.Out(Logs::Detail, Logs::None, "We digested %f units of food and %f units of water. Our hunger is: %i and our thirst is: %i. Our race is: %i and timer is set to: %i. Famished is: %i. Endurance is: %i (%i percent) Fatigue is: %i Desert: %i Horse: %i AAMod: %i", loss, loss+waterloss, m_pp.hunger_level, m_pp.thirst_level, GetRace(), stamina_timer.GetDuration(), m_pp.famished, GetEndurance(), GetEndurancePercent(), GetFatiguePercent(), desert, horse, aamod);
 
+		m_pp.fatigue = GetFatiguePercent();
 		sta->food = m_pp.hunger_level > value ? value : m_pp.hunger_level;
 		sta->water = m_pp.thirst_level> value ? value : m_pp.thirst_level;
-		sta->fatigue=GetFatiguePercent();
+		sta->fatigue = m_pp.fatigue;
 
 	}
-	else {
+	else 
+	{
 		// No auto food/drink consumption in the Bazaar or for GMs
 		sta->food = value;
 		sta->water = value;
-		sta->fatigue=GetFatiguePercent();
+		sta->fatigue = m_pp.fatigue;
 	}
 	FastQueuePacket(&outapp);
 }

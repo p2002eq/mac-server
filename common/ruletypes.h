@@ -193,6 +193,7 @@ RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
 RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
+RULE_BOOL( AlKabor, AllowTickSplit, false)
 RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
 RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
@@ -416,6 +417,8 @@ RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
 RULE_REAL ( Combat, PushBackAmount, 1.5)
 RULE_BOOL ( Combat, NewACCurves, true)
+RULE_INT ( Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
+RULE_INT ( Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will take to clear assist aggro cap space
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( NPC )
@@ -442,16 +445,12 @@ RULE_BOOL ( NPC, EnableMeritBasedFaction, false) // If set to true, faction will
 RULE_INT ( NPC, NPCTemplateID, 153076)
 RULE_BOOL ( NPC, BoatsRunByDefault, true) // Mainly to make it easier to adjust boats' timing on the fly.
 RULE_BOOL(NPC, CheckSoWBuff, false)
+RULE_BOOL( NPC, IgnoreQuestLoot, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Aggro )
 RULE_BOOL ( Aggro, SmartAggroList, true )
-RULE_INT ( Aggro, SittingAggroMod, 35 ) //35%
-RULE_INT ( Aggro, MeleeRangeAggroMod, 10 ) //10%
-RULE_INT ( Aggro, CurrentTargetAggroMod, 0 ) //0% -- will prefer our current target to any other; makes it harder for our npcs to switch targets.
-RULE_INT ( Aggro, CriticallyWoundedAggroMod, 100 ) //100%
 RULE_INT ( Aggro, SpellAggroMod, 100 )
-RULE_INT ( Aggro, SongAggroMod, 33 )
 RULE_INT ( Aggro, PetSpellAggroMod, 10 )
 RULE_REAL ( Aggro, TunnelVisionAggroMod, 0.75 ) //people not currently the top hate generate this much hate on a Tunnel Vision mob
 RULE_INT ( Aggro, MaxStunProcAggro, 400 ) // Set to -1 for no limit. Maxmimum amount of aggro that a stun based proc will add.

@@ -96,12 +96,6 @@ public:
 	static const int16 BANK_BAGS_END_OFFSET = 79;
 	static const int16 BANK_BAGS_END = BANK_BAGS_BEGIN + BANK_BAGS_END_OFFSET;
 
-	static const int16 SHARED_BANK_BEGIN = 2500;
-	static const int16 SHARED_BANK_END = 2501;
-	static const int16 SHARED_BANK_BAGS_BEGIN = 2531;
-	static const int16 SHARED_BANK_BAGS_END_OFFSET = 19;
-	static const int16 SHARED_BANK_BAGS_END = SHARED_BANK_BAGS_BEGIN + SHARED_BANK_BAGS_END_OFFSET;
-
 	static const int16 TRADE_BEGIN = 3000;
 	static const int16 TRADE_END = 3007;
 	static const int16 TRADE_NPC_END = 3003;
@@ -114,7 +108,6 @@ public:
 	static const int16 WORLD_SIZE = MAP_WORLD_SIZE;
 
 	static const int16 CORPSE_BEGIN = 22;
-	//static const int16 CORPSE_END = RoF::consts::CORPSE_END; // not ready for use
 
 	static const int16 MATERIAL_BEGIN = MaterialHead;
 	static const int16 MATERIAL_END = MaterialSecondary;
@@ -125,6 +118,9 @@ public:
 	// common and container sizes will not increase until the new 'location' struct is implemented
 	static const uint16 ITEM_COMMON_SIZE = MAC::consts::ITEM_COMMON_SIZE;
 	static const uint16 ITEM_CONTAINER_SIZE = MAC::consts::ITEM_CONTAINER_SIZE;
+
+	static const int16 CURSOR_QUEUE_BEGIN = 8000;
+	static const int16 CURSOR_QUEUE_END = 8999;
 
 	// player profile
 	//static const uint32 CLASS_BITMASK = 0;	// needs value

@@ -145,6 +145,7 @@
 #define SUMMONING_CORPSE_OTHER		430		//Summoning %1's corpse.
 #define MISSING_SPELL_COMP_ITEM		433		//You are missing %1.
 #define OTHER_HIT_NONMELEE			434		//%1 was hit by non-melee for %2 points of damage.
+#define PET_SPELL_WORN_OFF			435		//Your pet's %1 spell has worn off.
 #define SPELL_WORN_OFF_OF			436		//Your %1 spell has worn off of %2.
 #define SPELL_WORN_OFF				437		//Your %1 spell has worn off.
 #define PET_TAUNTING				438		//Taunting attacker, Master.
@@ -365,6 +366,7 @@
 #define GROUP_INVITEE_NOT_FOUND		12268	//You must target a player or use /invite <name> to invite someone to your group.
 #define GROUP_INVITEE_SELF			12270	//12270 You cannot invite yourself.
 #define	CAMP_ABANDON				12290	//You abandon your preparations to camp.
+#define TALKING_TO_SELF				12323	//Talking to yourself again?
 #define NOT_IN_CONTROL				12368	//You do not have control of yourself right now.
 #define TOO_DISTRACTED				12440   //You are too distracted to cast a spell now!
 #define ALREADY_CASTING				12442	//You are already casting a spell!

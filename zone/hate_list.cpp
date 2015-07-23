@@ -43,6 +43,68 @@ HateList::~HateList()
 {
 }
 
+void HateList::SetOwner(Mob *newOwner)
+{
+	owner = newOwner;
+
+	// see http://www.eqemulator.org/forums/showthread.php?t=39819
+	// for the data this came from.  This is accurate to EQ Live as of 2015
+
+	int32 hitpoints = owner->GetMaxHP();
+
+	// melee range hate bonus
+	combatRangeBonus = 100;
+	if (hitpoints > 60000)
+	{
+		combatRangeBonus = 250 + hitpoints / 100;
+		if (combatRangeBonus > 2250)
+		{
+			combatRangeBonus = 2250;
+		}
+	}
+	else if (hitpoints > 4000)
+	{
+		combatRangeBonus = (hitpoints - 4000) / 75 + 100;
+	}
+
+	// inside melee range sitting hate bonus
+	sitInsideBonus = 15;
+	if (hitpoints > 13500)
+	{
+		sitInsideBonus = -hitpoints / 100 + 1000;
+		if (sitInsideBonus < 0)
+		{
+			sitInsideBonus = 0;
+		}
+	}
+	else if (hitpoints > 225)
+	{
+		sitInsideBonus = hitpoints / 15;
+	}
+
+	// ouside melee range sitting hate bonus
+	sitOutsideBonus = 15;
+	if (hitpoints > 225)
+	{
+		sitOutsideBonus = hitpoints / 15;
+		if (sitOutsideBonus > 1000)
+		{
+			sitOutsideBonus = 1000;
+		}
+	}
+
+	// low health hate bonus
+	lowHealthBonus = hitpoints;
+	if (lowHealthBonus < 500)
+	{
+		lowHealthBonus = 500;
+	}
+	else if (lowHealthBonus > 10000)
+	{
+		lowHealthBonus = 10000;
+	}
+}
+
 // added for frenzy support
 // checks if target still is in frenzy mode
 void HateList::CheckFrenzyHate()
@@ -277,46 +339,85 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
-Mob *HateList::GetTop(Mob *center)
+int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange)
+{
+	int32 bonus = 0;
+
+	if (entry->ent->IsClient())
+	{
+		if (combatRange)
+		{
+			bonus += combatRangeBonus;
+
+			if (entry->ent->CastToClient()->IsSitting())
+			{
+				bonus += sitInsideBonus;
+			}
+		}
+		else if (entry->ent->CastToClient()->IsSitting())
+		{
+			bonus += sitOutsideBonus;
+		}
+	}
+	else if (combatRange)
+	{
+		bonus += combatRangeBonus;
+	}
+
+	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
+	{
+		bonus += lowHealthBonus;
+	}
+
+	return bonus;
+}
+
+Mob *HateList::GetTop()
 {
 	Mob* top = nullptr;
 	int32 hate = -1;
 
-	if(center == nullptr)
+	if(owner == nullptr)
 		return nullptr;
 
-	if (RuleB(Aggro,SmartAggroList)){
+	if (RuleB(Aggro,SmartAggroList))
+	{
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
+		bool firstInRangeBonus = false;
 
 		auto iterator = list.begin();
-		while(iterator != list.end())
+		while (iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
-			int16 aggroMod = 0;
 
-			if(!cur){
+			if (!cur)
+			{
 				++iterator;
 				continue;
 			}
 
-			if(!cur->ent){
+			if (!cur->ent)
+			{
 				++iterator;
 				continue;
 			}
 
-            auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
-			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(hateEntryPosition)) {
+			auto hateEntryPosition = glm::vec3(cur->ent->GetX(), cur->ent->GetY(), cur->ent->GetZ());
+
+			if (owner->IsNPC() && owner->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
+			{
+				if (!zone->watermap->InLiquid(hateEntryPosition)) {
 					skipped_count++;
 					++iterator;
 					continue;
 				}
 			}
 
-			if (cur->ent->Sanctuary()) {
-				if(hate == -1)
+			if (cur->ent->Sanctuary())
+			{
+				if (hate == -1)
 				{
 					top = cur->ent;
 					hate = 1;
@@ -325,8 +426,9 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			if(cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing())){
-				if(hate == -1)
+			if (cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing()))
+			{
+				if (hate == -1)
 				{
 					top = cur->ent;
 					hate = 0;
@@ -335,53 +437,27 @@ Mob *HateList::GetTop(Mob *center)
 				continue;
 			}
 
-			int32 currentHate = cur->hate;
+			bool combatRange = owner->CombatRange(cur->ent);
+			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange);
 
-			if(cur->ent->IsClient()){
-
-				if(cur->ent->CastToClient()->IsSitting()){
-					aggroMod += RuleI(Aggro, SittingAggroMod);
-				}
-
-				if(center){
-					if(center->GetTarget() == cur->ent)
-						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
-					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
-					{
-						if(center->CombatRange(cur->ent)){
-							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
-
-							if(currentHate > hateClientTypeInRange || cur->bFrenzy){
-								hateClientTypeInRange = currentHate;
-								topClientTypeInRange = cur->ent;
-							}
-						}
-					}
-				}
-
+			if (!firstInRangeBonus && combatRange)
+			{
+				firstInRangeBonus = true;
+				currentHate += 35;
 			}
-			else{
-				if(center){
-					if(center->GetTarget() == cur->ent)
-						aggroMod += RuleI(Aggro, CurrentTargetAggroMod);
-					if(RuleI(Aggro, MeleeRangeAggroMod) != 0)
-					{
-						if(center->CombatRange(cur->ent)){
-							aggroMod += RuleI(Aggro, MeleeRangeAggroMod);
-						}
-					}
+
+			if (cur->ent->IsClient())
+			{
+
+				if (currentHate > hateClientTypeInRange && combatRange)
+				{
+					hateClientTypeInRange = currentHate;
+					topClientTypeInRange = cur->ent;
 				}
 			}
 
-			if(cur->ent->GetMaxHP() != 0 && ((cur->ent->GetHP()*100/cur->ent->GetMaxHP()) < 20)){
-				aggroMod += RuleI(Aggro, CriticallyWoundedAggroMod);
-			}
-
-			if(aggroMod){
-				currentHate += (currentHate * aggroMod / 100);
-			}
-
-			if(currentHate > hate || cur->bFrenzy){
+			if(currentHate > hate)
+			{
 				hate = currentHate;
 				top = cur->ent;
 			}
@@ -389,11 +465,15 @@ Mob *HateList::GetTop(Mob *center)
 			++iterator;
 		}
 
-		if(topClientTypeInRange != nullptr && top != nullptr) {
+		// this is mostly to make sure NPCs attack players instead of pets in melee range
+		if(topClientTypeInRange != nullptr && top != nullptr)
+		{
 			bool isTopClientType = top->IsClient();
 
-			if (!isTopClientType) {
-				if (top->GetSpecialAbility(ALLOW_TO_TANK)){
+			if (!isTopClientType)
+			{
+				if (top->GetSpecialAbility(ALLOW_TO_TANK))
+				{
 					isTopClientType = true;
 					topClientTypeInRange = top;
 				}
@@ -404,21 +484,26 @@ Mob *HateList::GetTop(Mob *center)
 
 			return top ? top : nullptr;
 		}
-		else {
-			if(top == nullptr && skipped_count > 0) {
-				return center->GetTarget() ? center->GetTarget() : nullptr;
+		else
+		{
+			if(top == nullptr && skipped_count > 0)
+			{
+				return owner->GetTarget() ? owner->GetTarget() : nullptr;
 			}
 			return top ? top : nullptr;
 		}
-	}
-	else{
+	}	// if (RuleB(Aggro,SmartAggroList))
+	else
+	{
 		auto iterator = list.begin();
 		int skipped_count = 0;
 		while(iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
- 			if(center->IsNPC() && center->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap()) {
-				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition()))) {
+ 			if(owner->IsNPC() && owner->CastToNPC()->IsUnderwaterOnly() && zone->HasWaterMap())
+			{
+				if(!zone->watermap->InLiquid(glm::vec3(cur->ent->GetPosition())))
+				{
 					skipped_count++;
 					++iterator;
 					continue;
@@ -432,8 +517,9 @@ Mob *HateList::GetTop(Mob *center)
 			}
 			++iterator;
 		}
-		if(top == nullptr && skipped_count > 0) {
-			return center->GetTarget() ? center->GetTarget() : nullptr;
+		if(top == nullptr && skipped_count > 0)
+		{
+			return owner->GetTarget() ? owner->GetTarget() : nullptr;
 		}
 		return top ? top : nullptr;
 	}
@@ -503,13 +589,34 @@ bool HateList::IsEmpty() {
 // Prints hate list to a client
 void HateList::PrintToClient(Client *c)
 {
+	int32 bonusHate = 0;
 	auto iterator = list.begin();
+	bool firstInRangeBonus = false;
+
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
-		c->Message(0, "- name: %s, damage: %d, hate: %d",
-			(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-			e->damage, e->hate);
+		bool combatRange = owner->CombatRange(e->ent);
+
+		bonusHate = GetHateBonus(e, combatRange);
+		if (!firstInRangeBonus && combatRange)
+		{
+			firstInRangeBonus = true;
+			bonusHate += 35;
+		}
+
+		if (bonusHate > 0)
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d (+%i)",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate, bonusHate);
+		}
+		else
+		{
+			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
+				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
+				e->damage, e->hate);
+		}
 
 		++iterator;
 	}

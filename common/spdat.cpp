@@ -200,12 +200,23 @@ bool IsHasteSpell(uint16 spell_id)
 
 bool IsHarmonySpell(uint16 spell_id)
 {
+	//This will also return true for Pacify
 	return (IsEffectInSpell(spell_id, SE_Harmony) || IsEffectInSpell(spell_id, SE_ChangeFrenzyRad));
 }
 
 bool IsPacifySpell(uint16 spell_id)
 {
 	return IsEffectInSpell(spell_id, SE_ChangeFrenzyRad);
+}
+
+bool IsLullSpell(uint16 spell_id)
+{
+	return IsEffectInSpell(spell_id, SE_Lull);
+}
+
+bool IsCrowdControlSpell(uint16 spell_id)
+{
+	return (IsEffectInSpell(spell_id, SE_Harmony) || IsEffectInSpell(spell_id, SE_ChangeFrenzyRad) || IsEffectInSpell(spell_id, SE_Lull));
 }
 
 bool IsPercentalHealSpell(uint16 spell_id)

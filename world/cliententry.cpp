@@ -81,6 +81,7 @@ ClientListEntry::~ClientListEntry() {
 	for (auto &elem : tell_queue)
 		safe_delete_array(elem);
 	tell_queue.clear();
+	SetOnline(CLE_Status_Offline);
 }
 
 void ClientListEntry::SetChar(uint32 iCharID, const char* iCharName) {
@@ -94,9 +95,9 @@ void ClientListEntry::SetOnline(ZoneServer* iZS, int8 iOnline) {
 }
 
 void ClientListEntry::SetOnline(int8 iOnline) {
-	if (iOnline >= CLE_Status_Online && pOnline < CLE_Status_Online)
+	if (iOnline >= CLE_Status_Zoning && pOnline < CLE_Status_Zoning)
 		numplayers++;
-	else if (iOnline < CLE_Status_Online && pOnline >= CLE_Status_Online) {
+	else if (iOnline < CLE_Status_Zoning && iOnline != CLE_Status_Online && pOnline >= CLE_Status_Zoning) {
 		numplayers--;
 	}
 	if (iOnline != CLE_Status_Online || pOnline < CLE_Status_Online)
