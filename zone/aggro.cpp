@@ -44,7 +44,8 @@ void EntityList::CheckClientAggro(Client *around)
 		Mob *mob = it->second;
 		if (mob->IsClient())	//also ensures that mob != around
 			continue;
-
+		if (mob->IsPet())
+			continue;
 		if (mob->CheckWillAggro(around) && !mob->CheckAggro(around))
 		{
 			mob->AddToHateList(around, 20);
@@ -280,10 +281,6 @@ bool Mob::CheckWillAggro(Mob *mob) {
 
 	float iAggroRange = GetAggroRange();
 
-	if(GetOwner() && iAggroRange > GetOwner()->GetAggroRange() && GetOwner()->IsPacified() && !GetOwner()->HasPrimaryAggro())
-		iAggroRange = GetOwner()->GetAggroRange();
-
-
 	// Check If it's invisible and if we can see invis
 	// Check if it's a client, and that the client is connected and not linkdead,
 	// and that the client isn't Playing an NPC, with thier gm flag on
@@ -434,6 +431,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	return(false);
 }
 
+// This is for npc_aggro npc->npc only.
 Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssistRange) {
 	if (!sender || !sender->IsNPC())
 		return(nullptr);
@@ -443,7 +441,6 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
 		Mob *mob = it->second;
-
 		if (sender->CheckWillAggro(mob))
 			return mob;
 		++it;
