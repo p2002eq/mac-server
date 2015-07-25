@@ -1319,27 +1319,6 @@ struct	ItemViewRequest_Struct
 	/*066*/
 };
 
-/*_MAC_NET_MSG_rpServer, size: 244*/
-struct LogServer_Struct
-{
-	/*000*/	uint32	enable_FV; //Is FV ruleset?
-	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
-	/*008*/	uint32	auto_identify; //Dunno, keep 0
-	/*012*/	uint32	NameGen;	// Name generator enabled?
-	/*016*/	uint32	Gibberish;	// Disables chat if enabled.
-	/*020*/	uint32	test_server;
-	/*024*/	uint32	Locale;
-	/*028*/	uint32	ProfanityFilter;
-	/*032*/	char	worldshortname[32]; //ServerName on disasm
-	/*064*/	uint8	unknown064[32]; //  loggingServerPassword
-	/*096*/	char	unknown096[16];	// 'pacman' on live
-	/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-	/*126*/	uint8	unknown128[48];
-	/*176*/	uint32	unknown176;
-	/*180*/	char	unknown180[64];	// 'eqdataexceptions@mail.station.sony.com' on live
-	/*244*/
-};
-
 /* _MAC_NET_MSG_reward_MacMsg, OP_Sound, Size: 48 */
 struct QuestReward_Struct
 {

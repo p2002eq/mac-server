@@ -105,19 +105,23 @@ void Client::SendLogServer()
 {
 	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
 	LogServer_Struct *l=(LogServer_Struct *)outapp->pBuffer;
-	const char *wsn=WorldConfig::get()->ShortName.c_str();
-	memcpy(l->worldshortname,wsn,strlen(wsn));
-
-	if(RuleB(Mail, EnableMailSystem))
-		l->enablemail = 1;
-
-	l->enable_pvp = (RuleI(World, PVPSettings));
-
-	if(RuleB(World, IsGMPetitionWindowEnabled))
-		l->enable_petition_wnd = 1;
 
 	if(RuleI(World, FVNoDropFlag) == 1 || RuleI(World, FVNoDropFlag) == 2 && GetAdmin() > RuleI(Character, MinStatusForNoDropExemptions))
 		l->enable_FV = 1;
+
+	l->enable_pvp = (RuleI(World, PVPSettings));
+
+	l->auto_identify = 0;
+	l->NameGen = 1;
+	l->Gibberish = 1;
+	l->test_server = 0;
+	l->Locale = 0;
+	l->ProfanityFilter = 0;
+
+	const char *wsn=WorldConfig::get()->ShortName.c_str();
+	memcpy(l->worldshortname,wsn,strlen(wsn));
+	memcpy(l->loggingServerAddress, "127.0.0.1", 16);
+	l->loggingServerPort = 9878;
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -248,11 +252,10 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		//if (!pZoning && ClientVersionBit != 0)
-			//SendGuildList();
-			SendLogServer();
-			SendApproveWorld();
-			SendEnterWorld(cle->name());
+		SendLogServer();
+		SendApproveWorld();
+		SendEnterWorld(cle->name());
+
 		if (!pZoning) {
 			SendExpansionInfo();
 			SendCharInfo();

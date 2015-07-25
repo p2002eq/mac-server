@@ -1964,31 +1964,24 @@ struct sPickPocket_Struct {
 	char itemname[64];
 };
 
-struct LogServer_Struct {
-// Op_Code OP_LOGSERVER
-/*000*/	uint32	unknown000;
-/*004*/	uint8	enable_pvp;
-/*005*/	uint8	unknown005;
-/*006*/	uint8	unknown006;
-/*007*/	uint8	unknown007;
-/*008*/	uint8	enable_FV;
-/*009*/	uint8	unknown009;
-/*010*/	uint8	unknown010;
-/*011*/	uint8	unknown011;
-/*012*/	uint32	unknown012;	// htonl(1) on live
-/*016*/	uint32	unknown016;	// htonl(1) on live
-/*020*/	uint8	unknown020[12];
-/*032*/	char	worldshortname[32];
-/*064*/	uint8	unknown064[32];
-/*096*/	char	unknown096[16];	// 'pacman' on live
-/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-/*126*/	uint8	unknown128[48];
-/*176*/	uint32	unknown176;	// htonl(0x00002695)
-/*180*/	char	unknown180[80];	// 'eqdataexceptions@mail.station.sony.com' on live
-/*260*/	uint8	enable_petition_wnd;
-/*261*/	uint8	enablevoicemacros;
-/*262*/	uint8	enablemail;
-/*264*/
+struct LogServer_Struct
+{
+	/*000*/	uint32	enable_FV; //Is FV ruleset?
+	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
+	/*008*/	uint32	auto_identify; //Dunno, keep 0
+	/*012*/	uint32	NameGen;	// Name generator enabled?
+	/*016*/	uint32	Gibberish;
+	/*020*/	uint32	test_server;
+	/*024*/	uint32	Locale;
+	/*028*/	uint32	ProfanityFilter;
+	/*032*/	char	worldshortname[32]; //ServerName on disasm
+	/*064*/	uint8	loggingServerPassword[32]; //  loggingServerPassword
+	/*096*/	char	unknown096[16];	// 'pacman' on live
+	/*112*/	char	loggingServerAddress[16];	// '64.37,148,36' on live
+	/*126*/	uint8	unknown128[48];
+	/*176*/	uint32	loggingServerPort;
+	/*180*/	char	localizedEmailAddress[64];	// 'eqdataexceptions@mail.station.sony.com' on live
+	/*244*/
 };
 
 struct ApproveWorld_Struct {
