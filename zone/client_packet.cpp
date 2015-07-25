@@ -1323,35 +1323,25 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_pp.fatigue = GetFatiguePercent();
 
 	uint32 max_slots = GetMaxBuffSlots();
+	bool stripbuffs = false;
+
+	if(RuleB(AlKabor, StripBuffsOnLowHP) && GetHP() < itembonuses.HP)
+		stripbuffs = true;
+
 	for (int i = 0; i < max_slots; i++) 
 	{
-		if (buffs[i].spellid != SPELL_UNKNOWN) {
-			if (!RuleB(AlKabor, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
-			{
-				m_pp.buffs[i].spellid = buffs[i].spellid;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 2;
-				m_pp.buffs[i].player_id = 0x2211;
-				m_pp.buffs[i].level = buffs[i].casterlevel;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = buffs[i].ticsremaining;
-				m_pp.buffs[i].counters = buffs[i].counters;
-			}
-			else
-			{
-				m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 0;
-				m_pp.buffs[i].player_id = 0;
-				m_pp.buffs[i].level = 0;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = 0;
-				m_pp.buffs[i].counters = 0;
-				Log.Out(Logs::General, Logs::EQMac, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
-				BuffFadeAll();
-			}
+		if (buffs[i].spellid != SPELL_UNKNOWN && !stripbuffs)
+		{
+			m_pp.buffs[i].spellid = buffs[i].spellid;
+			m_pp.buffs[i].bard_modifier = 10;
+			m_pp.buffs[i].slotid = 2;
+			m_pp.buffs[i].player_id = 0x2211;
+			m_pp.buffs[i].level = buffs[i].casterlevel;
+			m_pp.buffs[i].effect = 0;
+			m_pp.buffs[i].duration = buffs[i].ticsremaining;
+			m_pp.buffs[i].counters = buffs[i].counters;
 		}
-		else 
+		else
 		{
 			m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
 			m_pp.buffs[i].bard_modifier = 10;
@@ -1362,6 +1352,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			m_pp.buffs[i].duration = 0;
 			m_pp.buffs[i].counters = 0;
 		}
+	}
+
+	if(stripbuffs)
+	{
+		Log.Out(Logs::General, Logs::EQMac, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
+		BuffFadeAll();
 	}
 
 	if (m_pp.z <= zone->newzone_data.underworld) 
