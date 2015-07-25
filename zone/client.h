@@ -1132,6 +1132,7 @@ private:
 	void BulkSendInventoryItems();
 	void BulkSendItems();
 	void SendCursorItems();
+	void FillPPItems();
 
 	faction_map factionvalues;
 

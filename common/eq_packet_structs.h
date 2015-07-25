@@ -589,6 +589,14 @@ struct SuspendedMinion_Struct
 	/*610*/
 };
 
+struct OldItemProperties_Struct
+{
+
+	/*000*/	uint8	unknown01[2];
+	/*002*/	int8	charges;				// Comment: signed int because unlimited charges are -1
+	/*003*/	uint8	unknown02[7];
+	/*010*/
+};
 
 /*
 ** Player Profile
@@ -703,11 +711,19 @@ struct PlayerProfile_Struct
 /*12800*/	uint32				expAA;
 /*12804*/	uint32				aapoints;			//avaliable, unspent
 /*12808*/	uint8				perAA;				//For Mac
-/*14124*/	uint32				ATR_PET_LOH_timer;
-			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
 			uint8				fatigue;
+			int16				inventory[30];
+			struct  OldItemProperties_Struct	invItemProperties[30];
+			int16				containerinv[80];
+			struct  OldItemProperties_Struct	bagItemProperties[80];
+			int16				cursorbaginventory[10];
+			struct  OldItemProperties_Struct	cursorItemProperties[10];
+			int16				bank_inv[8];
+			struct  OldItemProperties_Struct	bankinvitemproperties[8];
+			int16				bank_cont_inv[80];
+			struct  OldItemProperties_Struct	bankbagitemproperties[80];
 /*19568*/
 };
 

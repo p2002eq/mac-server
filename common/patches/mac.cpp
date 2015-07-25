@@ -346,6 +346,31 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 		OUT(fatigue);
+		OUT_array(cursorbaginventory,pp_cursorbaginventory_size);
+		for(r = 0; r < pp_cursorbaginventory_size; r++)
+		{
+			OUT(cursorItemProperties[r].charges);
+		}
+		OUT_array(inventory,pp_inventory_size);
+		for(r = 0; r < pp_inventory_size; r++)
+		{
+			OUT(invItemProperties[r].charges);
+		}
+		OUT_array(containerinv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bagItemProperties[r].charges);
+		}
+		OUT_array(bank_inv,pp_bank_inv_size);
+		for(r = 0; r < pp_bank_inv_size; r++)
+		{
+			OUT(bankinvitemproperties[r].charges);
+		}
+		OUT_array(bank_cont_inv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bankbagitemproperties[r].charges);
+		}
 
 		//Log.Out(Logs::General, Logs::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
