@@ -189,7 +189,7 @@ enum {	//some random constants
 #define MAX_NPC_FACTIONS 20
 
 //individual faction pool
-#define MAX_PERSONAL_FACTION 1200
+#define MAX_PERSONAL_FACTION 2200
 #define MIN_PERSONAL_FACTION -3000
 
 //The Level Cap:
