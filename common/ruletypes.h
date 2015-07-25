@@ -452,7 +452,6 @@ RULE_BOOL ( Aggro, SmartAggroList, true )
 RULE_INT ( Aggro, SpellAggroMod, 100 )
 RULE_INT ( Aggro, PetSpellAggroMod, 10 )
 RULE_REAL ( Aggro, TunnelVisionAggroMod, 0.75 ) //people not currently the top hate generate this much hate on a Tunnel Vision mob
-RULE_INT ( Aggro, MaxStunProcAggro, 400 ) // Set to -1 for no limit. Maxmimum amount of aggro that a stun based proc will add.
 RULE_INT ( Aggro, IntAggroThreshold, 75 ) // Int <= this will aggro regardless of level difference.
 RULE_BOOL ( Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardless of level difference. (this will disabled Rule:IntAggroThreshold if set to true)
 RULE_CATEGORY_END()

@@ -480,7 +480,7 @@ public:
 	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
-	Mob* GetHateMost() { return hate_list.GetMostHate();}
+	Mob* GetHateMost(bool includeBonus = true) { return hate_list.GetMostHate(includeBonus);}
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
 	bool HasPrimaryAggro() { return PrimaryAggro; }
 	void SetPrimaryAggro(bool value) { PrimaryAggro = value; if(value) AssistAggro = false; }
@@ -852,7 +852,7 @@ public:
 	static uint32 GetLevelHP(uint8 tlevel);
 	uint32 GetZoneID() const; //for perl
 	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc = false);
-	virtual int32 CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible = 0);
+	virtual int32 CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible = 0);
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
 	uint32 GetInstrumentMod(uint16 spell_id) const;

@@ -1140,6 +1140,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	// if this was cast from an inventory slot, check out the item that's there
 
 	int16 DeleteChargeFromSlot = -1;
+	bool castFromInv = false;				// clicked spells are hate capped like procs
 
 	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT))
 		&& inventory_slot != 0xFFFFFFFF)	// 10 is an item
@@ -1147,6 +1148,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		const ItemInst* inst = CastToClient()->GetInv()[inventory_slot];
 		uint32 recastdelay = 0;
 		uint32 recasttype = 0;
+		castFromInv = true;
 
 		if (inst && inst->IsType(ItemClassCommon) && (inst->GetItem()->Click.Effect == spell_id) && inst->GetCharges())
 		{
@@ -1179,7 +1181,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	TryTriggerOnCast(spell_id, 0);
 
 	// we're done casting, now try to apply the spell
-	if( !SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust) )
+	if (!SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust, castFromInv))
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Casting of %d canceled: SpellFinished returned false.", spell_id);
 		InterruptSpell();
@@ -2452,22 +2454,28 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 
 		case GroupSpell:
 		{
-			if(spell_target->IsGrouped()) {
+			if(spell_target->IsGrouped())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group targeting group of %s", spell_id, spell_target->GetName());
 				Group *target_group = entity_list.GetGroupByMob(spell_target);
 				if(target_group)
 					target_group->GroupBardPulse(this, spell_id);
 			}
-			else if(spell_target->IsRaidGrouped() && spell_target->IsClient()) {
+			else if(spell_target->IsRaidGrouped() && spell_target->IsClient())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Raid group targeting raid group of %s", spell_id, spell_target->GetName());
 				Raid *r = entity_list.GetRaidByClient(spell_target->CastToClient());
-				if(r){
+				if(r)
+				{
 					uint32 gid = r->GetGroup(spell_target->GetName());
-					if(gid < 12){
+					if(gid < 12)
+					{
 						r->GroupBardPulse(this, spell_id, gid);
 					}
-					else{
+					else
+					{
 						BardPulse(spell_id, this);
+						entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 						if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 							GetPet()->BardPulse(spell_id, this);
@@ -2475,9 +2483,11 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 					}
 				}
 			}
-			else {
+			else
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group target without group. Affecting caster.", spell_id);
 				BardPulse(spell_id, this);
+				entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 				if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 					GetPet()->BardPulse(spell_id, this);
@@ -3788,7 +3798,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		&& (!spelltar->IsPet() || spelltar->IsCharmed())									// no beneficial aggro for summoned pets
 		&& (!IsNPC() || !isproc || CastToNPC()->GetInnateProcSpellId() != spell_id )		// NPC innate procs always hit the target, even if beneficial
 	)																						// we don't want beneficial procs aggroing nearby NPCs
-		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, (spelltar->GetMaxHP() - spelltar->GetHP())));
+		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
 
 	// make sure spelltar is high enough level for the buff
 	if(RuleB(Spells, BuffLevelRestrictions) && !spelltar->CheckSpellLevelRestriction(spell_id))
