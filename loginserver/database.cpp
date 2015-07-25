@@ -417,8 +417,7 @@ bool Database::CreateServerSettings()
 				"`value` varchar(50) NOT NULL,"
 				"`category` varchar(20) NOT NULL,"
 				"`description` varchar(99) NOT NULL,"
-				"`defaults` varchar(50) NOT NULL,"
-				"PRIMARY KEY(`type`)"
+				"`defaults` varchar(50) NOT NULL"
 				") ENGINE=InnoDB DEFAULT CHARSET=latin1";
 
 			if (mysql_query(db, create_table_query.c_str()) != 0)
@@ -433,8 +432,8 @@ bool Database::CreateServerSettings()
 		{
 			server_log->Log(log_database, "Server Settings tables exists, continuing.");
 		}
-		mysql_free_result(res);
 	}
+	mysql_free_result(res);
 
 	string check_settings_query = "SELECT * FROM `tblloginserversettings` WHERE `type`";
 
@@ -449,6 +448,7 @@ bool Database::CreateServerSettings()
 	{
 		// if exists it still enters this
 		if ((row = mysql_fetch_row(res)) == nullptr)
+		//if (res->row_count == NULL)
 		{
 			server_log->Log(log_database, "Server Settings table exists but settings tables do not, creating settings entries.");
 
@@ -487,11 +487,12 @@ bool Database::CreateServerSettings()
 		}
 		//doesn't work
 		else if ((row = mysql_fetch_row(res)) != nullptr)
+		//else if (res->row_count != NULL)
 		{
 			server_log->Log(log_database, "Server Settings entries exist, continuing.");
 		}
-		mysql_free_result(res);
 	}
+	mysql_free_result(res);
 	return true;
 }
 #pragma endregion
