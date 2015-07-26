@@ -441,7 +441,7 @@ public:
 	int32 GetActDoTDamage(uint16 spell_id, int32 value, Mob* target = nullptr);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
-	virtual int GetCurrentBuffSlots() const;void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
+	virtual int GetCurrentBuffSlots() const;
 	virtual int GetCurrentSongSlots() const;
 	virtual int GetMaxBuffSlots() const { return 25; }
 	virtual int GetMaxSongSlots() const { return 12; }

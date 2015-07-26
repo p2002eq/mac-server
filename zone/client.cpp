@@ -4481,35 +4481,28 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 	if (database.GetFactionName(faction_id, name, sizeof(name)) == false)
 		snprintf(name, sizeof(name), "Faction%i", faction_id);
 
-	//We need to get total faction here, including racial, class, and deity modifiers.
-	int32 fac = GetModCharacterFactionLevel(faction_id) + tmpvalue;
-	totalvalue = fac;
-
 	bool gained = true;
 	if (tmpvalue == 0 || temp == 1 || temp == 2)
 		return;
 	else if (faction_value >= MAX_PERSONAL_FACTION)
 		Message_StringID(CC_Default, FACTION_BEST, name);
-	else if (tmpvalue > 0 && totalvalue < MAX_PERSONAL_FACTION)
+	else if (faction_value <= MIN_PERSONAL_FACTION)
+	{
+		gained = false;
+		Message_StringID(CC_Default, FACTION_WORST, name);
+	}
+	else if (tmpvalue > 0 && faction_value < MAX_PERSONAL_FACTION)
 		Message_StringID(CC_Default, FACTION_BETTER, name);
-	else if (tmpvalue < 0 && totalvalue > MIN_PERSONAL_FACTION)
+	else if (tmpvalue < 0 && faction_value > MIN_PERSONAL_FACTION)
 	{
 		gained = false;
 		Message_StringID(CC_Default, FACTION_WORSE, name);
 	}
-	else if (faction_value <= MIN_PERSONAL_FACTION)
-		Message_StringID(15, FACTION_WORST, name);
-	else if (tmpvalue > 0 && faction_value < MAX_PERSONAL_FACTION && !RuleB(Client, UseLiveFactionMessage))
-		Message_StringID(15, FACTION_BETTER, name);
-	else if (tmpvalue < 0 && faction_value > MIN_PERSONAL_FACTION && !RuleB(Client, UseLiveFactionMessage))
-		Message_StringID(15, FACTION_WORSE, name);
-	else if (RuleB(Client, UseLiveFactionMessage))
-		Message(15, "Your faction standing with %s has been adjusted by %i.", name, tmpvalue); //New Live faction message (14261)
 
 	std::string type = "gained";
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, totalvalue);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, faction_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
