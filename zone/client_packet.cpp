@@ -400,10 +400,9 @@ void Client::CompleteConnect()
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
 
-	if (IsInAGuild()){
-		uint8 rank = GuildRank();
+	if (IsInAGuild())
+	{
 		SendAppearancePacket(AT_GuildID, GuildID(), false);
-		SendAppearancePacket(AT_GuildRank, rank, false);
 	}
 	for (uint32 spellInt = 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
 	{

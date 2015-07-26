@@ -401,26 +401,6 @@ bool BaseGuildManager::SetGuildMOTD(uint32 guild_id, const char* motd, const cha
 	return(true);
 }
 
-bool BaseGuildManager::SetGuildURL(uint32 GuildID, const char* URL)
-{
-	if(!DBSetGuildURL(GuildID, URL))
-		return(false);
-
-	SendGuildRefresh(GuildID, false, true, false, false);
-
-	return(true);
-}
-
-bool BaseGuildManager::SetGuildChannel(uint32 GuildID, const char* Channel)
-{
-	if(!DBSetGuildChannel(GuildID, Channel))
-		return(false);
-
-	SendGuildRefresh(GuildID, false, true, false, false);
-
-	return(true);
-}
-
 bool BaseGuildManager::SetGuild(uint32 charid, uint32 guild_id, uint8 rank) {
 	if(rank > GUILD_MAX_RANK && guild_id != GUILD_NONE)
 		return(false);

@@ -198,7 +198,7 @@ namespace Mac {
 				eq->GuildID = 0xFFFF;
 			eq->guildrank = emu->player.spawn.guildrank;
 			if(eq->guildrank == 0)
-				eq->guildrank = 0xFF;
+				eq->guildrank = 0xFFFF;
 			strncpy(eq->Surname, emu->player.spawn.lastName, 32);
 			eq->walkspeed = emu->player.spawn.walkspeed;
 			eq->runspeed = emu->player.spawn.runspeed;
