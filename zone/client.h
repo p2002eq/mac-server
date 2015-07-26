@@ -943,6 +943,9 @@ public:
 	bool ClickyOverride() { return clicky_override; }
 	void SetActiveDisc(uint8 value) { active_disc = value; }
 
+	void SendClientVersion();
+	void FixClientXP();
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);

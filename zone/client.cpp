@@ -4898,3 +4898,63 @@ bool Client::WaterFamished()
 	return false;
 }
 
+void Client::SendClientVersion()
+{
+	if(GetClientVersion() == EQClientMac)
+	{
+		std::string string("Mac");
+		std::string type;
+		if(GetClientVersionBit() == BIT_MacIntel)
+			type = "Intel";
+		else if(GetClientVersionBit() == BIT_MacPPC)
+			type = "PowerPC";
+		else if(GetClientVersionBit() == BIT_MacPC)
+			type = "PC";
+		else
+			type = "Invalid";
+
+		if(GetGM())
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
+		else
+			Log.Out(Logs::Detail, Logs::Debug, "%s: Client version is: %s. The client type is: %s.", GetName(), string.c_str(), type.c_str());
+
+	}
+	else
+	{
+		std::string string;
+		if(GetClientVersion() == EQClientEvolution)
+			string = "Evolution";
+		if(GetClientVersion() == EQClientUnused)
+			string = "Unused";
+		else
+			string = "Unknown";
+
+		if(GetGM())
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+		else
+			Log.Out(Logs::Detail, Logs::Debug, "%s: Client version is: %s.", GetName(), string.c_str());
+	}
+}
+
+void Client::FixClientXP()
+{
+	//This is only necessary when the XP formula changes. However, it should be left for toons that have not been converted.
+
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		if(Admin() == 0 && level > 1)
+		{
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+			SetEXP(totalrequiredxp, currentaa);
+			Save();
+			Kick();
+		}
+		else if(Admin() > 0 && level > 1)
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+	}
+}
