@@ -2864,7 +2864,7 @@ void Client::Sacrifice(Client *caster)
 			app.priority = 6;
 			entity_list.QueueClients(this, &app);
 
-			BuffFadeAll(true);
+			BuffFadeAll();
 			UnmemSpellAll();
 			Group *g = GetGroup();
 			if(g){

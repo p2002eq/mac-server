@@ -1724,7 +1724,7 @@ void Lua_Mob::BuffFadeAll() {
 
 void Lua_Mob::BuffFadeAll(bool skiprez) {
 	Lua_Safe_Call_Void();
-	self->BuffFadeAll(false, skiprez);
+	self->BuffFadeAll(skiprez, false);
 }
 
 void Lua_Mob::BuffFadeBySlot(int slot) {

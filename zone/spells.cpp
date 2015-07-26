@@ -2755,8 +2755,16 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 	{
 		if(!IsDetrimentalSpell(spellid1) && !IsDetrimentalSpell(spellid2))
 		{
-			Log.Out(Logs::Detail, Logs::Spells, "%s and %s are beneficial, and one is a bard song, no action needs to be taken", sp1.name, sp2.name);
-			return (0);
+			if(IsBardSong(spellid2) && IsSpeedBuff(spellid1) && IsSpeedBuff(spellid2))
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "%s is a bard movement speed song, it cannot overwrite %s which is a movement speed spell.", sp2.name, sp1.name);
+				return -1;
+			}
+			else
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "%s and %s are beneficial, and one is a bard song, no action needs to be taken", sp1.name, sp2.name);
+				return (0);
+			}
 		}
 	}
 
@@ -2948,23 +2956,18 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 		/*
 		If the effects are the same and
-		sp1 = beneficial & sp2 = detrimental or
-		sp1 = detrimental & sp2 = beneficial
+		sp1 = beneficial & sp2 = detrimental 
 		Then this effect should be ignored for stacking purposes.
 		*/
 		if (sp_det_mismatch)
 		{
-			if (effect1 != SE_MovementSpeed){	
-				Log.Out(Logs::Detail, Logs::Spells, "The effects are the same but the spell types are not, passing the effect");
-				continue;
-			}
-			else if (!sp2_detrimental && sp1_detrimental)
+			if (!sp2_detrimental && sp1_detrimental)
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "Blocking spell because a buff to movement speed cannot replace a debuff to movement speed.");
+				Log.Out(Logs::Detail, Logs::Spells, "Blocking spell because % is beneficial and it cannot overwrite %s which is detrimental.", sp2.name, sp1.name);
 				return (-1);
 			}
 			else{
-				Log.Out(Logs::Detail, Logs::Spells, "Stacking code decided that because of the movement speed debuff effect of %s it should overwrite %s.", sp2.name, sp1.name);
+				Log.Out(Logs::Detail, Logs::Spells, "Stacking code decided that because %s is detrimental it should overwrite %s.", sp2.name, sp1.name);
 				return(1);
 			}
 		}
@@ -3169,8 +3172,12 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 		cur = overwrite_slots.begin();
 		end = overwrite_slots.end();
 		for (; cur != end; ++cur) {
+			int16 oldspellid = GetSpellIDFromSlot(*cur);
+			bool message = true;
+			if(oldspellid == spell_id)
+				message = false;
 			// strip spell
-			BuffFadeBySlot(*cur, false);
+			BuffFadeBySlot(*cur, false, message);
 
 			// if we hadn't found a free slot before, or if this is earlier
 			// we use it
@@ -3986,14 +3993,14 @@ bool Mob::FindBuff(uint16 spellid)
 }
 
 // removes all buffs
-void Mob::BuffFadeAll(bool death, bool skiprez)
+void Mob::BuffFadeAll(bool skiprez, bool message)
 {
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if(buffs[j].spellid != SPELL_UNKNOWN)
 		{
 			if(!skiprez || (skiprez && !IsResurrectionEffects(buffs[j].spellid)))
-				BuffFadeBySlot(j, false, death);
+				BuffFadeBySlot(j, false, message);
 		}
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
@@ -4005,7 +4012,7 @@ void Mob::BuffFadeNonPersistDeath()
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if (buffs[j].spellid != SPELL_UNKNOWN && !IsPersistDeathSpell(buffs[j].spellid))
-			BuffFadeBySlot(j, false, true);
+			BuffFadeBySlot(j, false, false);
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
 	CalcBonuses();

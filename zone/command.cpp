@@ -4240,9 +4240,9 @@ void command_spawnstatus(Client *c, const Seperator *sep){
 
 void command_nukebuffs(Client *c, const Seperator *sep){
 	if (c->GetTarget() == 0)
-		c->BuffFadeAll();
+		c->BuffFadeAll(false, true);
 	else
-		c->GetTarget()->BuffFadeAll();
+		c->GetTarget()->BuffFadeAll(false, true);
 }
 
 void command_zuwcoords(Client *c, const Seperator *sep){
