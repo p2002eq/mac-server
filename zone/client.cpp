@@ -4275,9 +4275,9 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		}
 
 		if (change)
-			{
-				SendFactionMessage(npc_value[i], faction_id[i], faction_before_hit, current_value, temp[i], this_faction_min, this_faction_max);
-			}
+		{
+			SendFactionMessage(npc_value[i], faction_id[i], faction_before_hit, current_value, temp[i], this_faction_min, this_faction_max);
+		}
 	}
 	return;
 }
@@ -4514,13 +4514,17 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 	else if (faction_value >= this_faction_max)
 		Message_StringID(CC_Default, FACTION_BEST, name);
 	else if (faction_value <= this_faction_min)
+	{
+		gained = false;
 		Message_StringID(15, FACTION_WORST, name);
-	else if (tmpvalue > 0 && faction_value < this_faction_max && !RuleB(Client, UseLiveFactionMessage))
+	}
+	else if (tmpvalue > 0 && faction_value < this_faction_max)
 		Message_StringID(15, FACTION_BETTER, name);
-	else if (tmpvalue < 0 && faction_value > this_faction_min && !RuleB(Client, UseLiveFactionMessage))
+	else if (tmpvalue < 0 && faction_value > this_faction_min)
+	{
+		gained = false;
 		Message_StringID(15, FACTION_WORSE, name);
-	else if (RuleB(Client, UseLiveFactionMessage))
-		Message(15, "Your faction standing with %s has been adjusted by %i.", name, tmpvalue); //New Live faction message (14261)
+	}
 
 	std::string type = "gained";
 	if(!gained)
