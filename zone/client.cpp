@@ -4247,8 +4247,17 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		// Find out starting faction for this faction
 		// It needs to be used to adj max and min personal
 		// The range is still the same, 1200-3000(4200), but adjusted for base
-		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(), 
+		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(),
 			faction_id[i]);
+
+		if (quest)
+		{
+			//The ole switcheroo
+			if (npc_value[i] > 0)
+				npc_value[i] = -abs(npc_value[i]);
+			else if (npc_value[i] < 0)
+				npc_value[i] = abs(npc_value[i]);
+		}
 
 		// Adjust the amount you can go up or down so the resulting range
 		// is PERSONAL_MAX - PERSONAL_MIN
@@ -4264,14 +4273,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		current_value = GetCharacterFactionLevel(faction_id[i]);
 		faction_before_hit = current_value;
 
-		if (quest)
-		{
-			//The ole switcheroo
-			if (npc_value[i] > 0)
-				npc_value[i] = -abs(npc_value[i]);
-			else if (npc_value[i] < 0)
-				npc_value[i] = abs(npc_value[i]);
-		}
+		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
 
 		//Message(14, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
 
@@ -4525,10 +4527,14 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 		Message_StringID(15, FACTION_WORSE, name);
 	}
 
+	//We need to get total faction here, including racial, class, and deity modifiers.
+	int32 total = GetModCharacterFactionLevel(faction_id);
+	int32 new_value = faction_value + tmpvalue;
 	std::string type = "gained";
+
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, faction_value);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, total, new_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
