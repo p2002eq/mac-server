@@ -360,7 +360,10 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		cast_time = orgcasttime = spell.cast_time;
 		// if there's a cast time, check if they have a modifier for it
 		if(cast_time) {
-			cast_time = GetActSpellCasttime(spell_id, cast_time);
+			if(IsClient())
+				cast_time = CastToClient()->GetActSpellCasttime(spell_id, cast_time);
+			else
+				cast_time = GetActSpellCasttime(spell_id, cast_time);
 		}
 	}
 	else

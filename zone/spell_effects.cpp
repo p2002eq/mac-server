@@ -2949,9 +2949,10 @@ snare has both of them negative, yet their range should work the same:
 		// values are calculated up
 		updownsign = 1;
 	}
-
-	Log.Out(Logs::Detail, Logs::Spells, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
-		spell_id, formula, base, max, caster_level, updownsign);
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
+			spell_id, formula, base, max, caster_level, updownsign);
+	#endif
 
 	switch(formula)
 	{
@@ -3171,8 +3172,9 @@ snare has both of them negative, yet their range should work the same:
 	// if base is less than zero, then the result need to be negative too
 	if (base < 0 && result > 0)
 		result *= -1;
-
-	Log.Out(Logs::Detail, Logs::Spells, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
+	#endif
 
 	return result;
 }
@@ -4626,19 +4628,31 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 			break;
 
 		case SE_LimitMinDur:
-				if (focus_spell.base[i] > CalcBuffDuration_formula(GetLevel(), spell.buffdurationformula, spell.buffduration))
-					return(0);
+			// The client seems to ignore this check for spell haste effects so we will too.
+			if (focus_spell.base[i] > CalcBuffDuration_formula(GetLevel(), spell.buffdurationformula, spell.buffduration) && type != focusSpellHaste)
+			{
+				return(0);
+			}
 			break;
 
 		case SE_LimitEffect:
 			if(focus_spell.base[i] < 0){
 				if(IsEffectInSpell(spell_id,-focus_spell.base[i])) //Exclude
-					return 0;
+				{
+					return (0);
 				}
-			else{
+			}
+			else {
 				LimitInclude[4] = true;
-				if(IsEffectInSpell(spell_id,focus_spell.base[i])) //Include
+				// Affliction Haste
+				if(focus_spell.base[i] == SE_CurrentHP && type == focusSpellHaste) 
+				{
 					LimitInclude[5] = true;
+				}
+				else if(IsEffectInSpell(spell_id,focus_spell.base[i])) //Include
+				{
+					LimitInclude[5] = true;
+				}
 			}
 			break;
 
@@ -5001,7 +5015,9 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 
 	for(int e = 0; e < MaxLimitInclude; e+=2) {
 		if (LimitInclude[e] && !LimitInclude[e+1])
+		{
 			return 0;
+		}
 	}
 	
 	if (Caston_spell_id){
