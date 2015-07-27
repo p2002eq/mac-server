@@ -4275,7 +4275,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 
 		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
 
-		//Message(14, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
+		Log.Out(Logs::General, Logs::Faction, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
 
 		SendFactionMessage(npc_value[i], faction_id[i], faction_before_hit, current_value, temp[i], this_faction_min, this_faction_max);
 	}
@@ -4318,7 +4318,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 
 		UpdatePersonalFaction(char_id, value, faction_id, &current_value, temp, this_faction_min, this_faction_max);
 
-		//Message(14, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
+		Log.Out(Logs::General, Logs::Faction, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
 
 		SendFactionMessage(value, faction_id, faction_before_hit, current_value, temp, this_faction_min, this_faction_max);
 	}
@@ -4517,14 +4517,14 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 	else if (faction_value <= this_faction_min)
 	{
 		gained = false;
-		Message_StringID(15, FACTION_WORST, name);
+		Message_StringID(CC_Default, FACTION_WORST, name);
 	}
 	else if (tmpvalue > 0 && faction_value < this_faction_max)
-		Message_StringID(15, FACTION_BETTER, name);
+		Message_StringID(CC_Default, FACTION_BETTER, name);
 	else if (tmpvalue < 0 && faction_value > this_faction_min)
 	{
 		gained = false;
-		Message_StringID(15, FACTION_WORSE, name);
+		Message_StringID(CC_Default, FACTION_WORSE, name);
 	}
 
 	//We need to get total faction here, including racial, class, and deity modifiers.
