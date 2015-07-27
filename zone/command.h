@@ -324,6 +324,7 @@ void command_undeletechar(Client *c, const Seperator *sep);
 void command_hotfix(Client *c, const Seperator *sep);
 void command_load_shared_memory(Client *c, const Seperator *sep);
 void command_apply_shared_memory(Client *c, const Seperator *sep);
+void command_keyring(Client *c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);

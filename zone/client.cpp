@@ -215,6 +215,7 @@ Client::Client(EQStreamInterface* ieqs)
 	UpdateWindowTitle();
 	horseId = 0;
 	tgb = false;
+	keyring.clear();
 	bind_sight_target = nullptr;
 	logging_enabled = CLIENT_DEFAULT_LOGGING_ENABLED;
 
@@ -5029,5 +5030,112 @@ void Client::FixClientXP()
 		}
 		else if(Admin() > 0 && level > 1)
 			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+	}
+}
+
+void Client::KeyRingLoad()
+{
+	std::string query = StringFormat("SELECT item_id FROM character_keyring "
+									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		return;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row)
+		keyring.push_back(atoi(row[0]));
+
+}
+
+void Client::KeyRingAdd(uint32 item_id)
+{
+	if(0==item_id)
+		return;
+
+	bool found = KeyRingCheck(item_id);
+	if (found)
+		return;
+
+	std::string query = StringFormat("INSERT INTO character_keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		return;
+	}
+
+	if(Admin() >= 10)
+		Message(CC_Blue,"Added to keyring.");
+
+	keyring.push_back(item_id);
+}
+
+bool Client::KeyRingCheck(uint32 item_id)
+{
+	for(std::list<uint32>::iterator iter = keyring.begin();
+		iter != keyring.end();
+		++iter)
+	{
+		if(*iter == item_id)
+			return true;
+	}
+	return false;
+}
+
+void Client::KeyRingList(Client* notifier)
+{
+	notifier->Message(CC_Default,"Keys on %s's Keyring:", GetName());
+	const Item_Struct *item = 0;
+	for(std::list<uint32>::iterator iter = keyring.begin();
+		iter != keyring.end();
+		++iter)
+	{
+		if ((item = database.GetItem(*iter))!=nullptr) {
+			notifier->Message(CC_Default,item->Name);
+		}
+	}
+}
+
+void Client::ZoneFlagList(Client* notifier)
+{
+	// Todo: Figure out how to get the client to spit these messages out for us.
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		uint32 zoneid = zfs->zoneid;
+		uint8 key = zfs->key;
+
+		const char *short_name = database.GetZoneName(zoneid);
+
+		float safe_x, safe_y, safe_z;
+		int16 minstatus = 0;
+		uint8 minlevel = 0;
+		char flag_name[128];
+		// Unfortunately, we have to hit the DB here. We can't assume the target zone will be booted to check its zone_data.
+		if(database.GetSafePoints(short_name, 0, &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_name)) 
+		{
+			if(zoneid == vexthal)
+			{
+				if(key == 0 || key == 1)
+					notifier->Message(CC_Yellow, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					notifier->Message(CC_Yellow, "North Tower Key (Vex Thal)"); //Flag within the zone.
+			}
+			if(zoneid == ssratemple)
+				notifier->Message(CC_Yellow, "Ring of the Shissar"); //Flag within the zone.
+			if(zoneid == frozenshadow)
+				notifier->Message(CC_Yellow, "Tower of Frozen Shadows: %d", key); //Flag within the zone.
+			if(zoneid == bothunder)
+			{
+				if(key == 0 || key == 1)
+					notifier->Message(CC_Yellow, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					notifier->Message(CC_Yellow, "Enchanted Ring of Torden"); //Flag within the zone.
+			}
+			else
+				notifier->Message(CC_Yellow, "%s", flag_name); //All other flags
+		}
+
+		iterator.Advance();
 	}
 }

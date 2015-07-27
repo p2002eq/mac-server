@@ -199,6 +199,11 @@ public:
 	void	Trader_EndTrader();
 	void	Trader_StartTrader();
 	uint8	WithCustomer(uint16 NewCustomer);
+	void	KeyRingLoad();
+	void	KeyRingAdd(uint32 item_id);
+	bool	KeyRingCheck(uint32 item_id);
+	void	KeyRingList(Client* notifier);
+	void	ZoneFlagList(Client* notifier);
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
@@ -1040,6 +1045,7 @@ private:
 	uint8				guildrank; // player's rank in the guild, 0-GUILD_MAX_RANK
 	uint16				duel_target;
 	bool				duelaccepted;
+	std::list<uint32>	keyring;
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;

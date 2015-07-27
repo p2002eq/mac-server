@@ -259,7 +259,7 @@ int command_init(void){
 		command_add("iteminfo", "- Get information about the item on your cursor.", 50, command_iteminfo) ||
 		command_add("itemsearch", "[search criteria] - Search for an item.", 100, command_itemsearch) ||
 		command_add("itemtest", "- merth's test function.", 255, command_itemtest) ||
-
+		command_add("keyring", "Displays target's keyring items.", 90, command_keyring) ||
 		command_add("kick", "[charname] - Disconnect charname.", 90, command_kick) ||
 		command_add("kill", "- Kill your target.", 150, command_kill) ||
 
@@ -11058,4 +11058,18 @@ void command_apply_shared_memory(Client *c, const Seperator *sep) {
 		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
 	}
 	worldserver.SendPacket(&pack);
+}
+
+void command_keyring(Client *c, const Seperator *sep)
+{
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	t->KeyRingList(c);
+	c->Message(CC_Default, "Zone Flag List:");
+	t->ZoneFlagList(c);
 }
