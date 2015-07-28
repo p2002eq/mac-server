@@ -23,6 +23,7 @@
 #include "client.h"
 #include "entity.h"
 #include "mob.h"
+#include "beacon.h"
 
 #include "string_ids.h"
 #include "worldserver.h"
@@ -945,10 +946,12 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 	float min_range2 = spells[spell_id].min_range * spells[spell_id].min_range;
 	float dist_targ = 0;
 
-	bool bad = IsDetrimentalSpell(spell_id);
-	bool isnpc = caster->IsNPC();
+	bool detrimental = IsDetrimentalSpell(spell_id);
+	bool clientcaster = caster->IsClient();
 	const int MAX_TARGETS_ALLOWED = 4;
-	int iCounter = 0;
+	int targets_hit = 0;
+	if(center->IsBeacon())
+		targets_hit = center->CastToBeacon()->GetTargetsHit();
 
 	for (auto it = mob_list.begin(); it != mob_list.end(); ++it) {
 		curmob = it->second;
@@ -966,9 +969,9 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			continue;
 		if (dist_targ < min_range2)	//make sure they are in range
 			continue;
-		if (isnpc && curmob->IsNPC()) {	//check npc->npc casting
+		if (!clientcaster && curmob->IsNPC()) {	//check npc->npc casting
 			FACTION_VALUE f = curmob->GetReverseFactionCon(caster);
-			if (bad) {
+			if (detrimental) {
 				//affect mobs that are on our hate list, or
 				//which have bad faction with us
 				if (!(caster->CheckAggro(curmob) || f == FACTION_THREATENLY || f == FACTION_SCOWLS))
@@ -981,7 +984,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			}
 		}
 		//finally, make sure they are within range
-		if (bad) {
+		if (detrimental) {
 			if (!caster->IsAttackAllowed(curmob, true))
 			{
 				Log.Out(Logs::Detail, Logs::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
@@ -1008,18 +1011,26 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		curmob->CalcSpellPowerDistanceMod(spell_id, dist_targ);
 
 		//if we get here... cast the spell.
-		if (IsTargetableAESpell(spell_id) && bad) {
-			if (iCounter < MAX_TARGETS_ALLOWED) {
+		if (IsTargetableAESpell(spell_id) && detrimental) 
+		{
+			if (targets_hit < MAX_TARGETS_ALLOWED || (clientcaster && curmob == caster)) 
+			{
 				caster->SpellOnTarget(spell_id, curmob, false, true, resist_adjust);
+				Log.Out(Logs::Detail, Logs::Spells, "AE Rain Spell: %d has hit target #%d: %s", spell_id, targets_hit, curmob->GetCleanName());
+
+				if (clientcaster && curmob != caster) //npcs are not target limited, pc caster does not count towards the limit.
+					++targets_hit;
 			}
 		}
-		else {
+		else 
+		{
 			caster->SpellOnTarget(spell_id, curmob, false, true, resist_adjust);
 		}
 
-		if (!isnpc) //npcs are not target limited...
-			iCounter++;
 	}
+
+	if(center->IsBeacon())
+		center->CastToBeacon()->SetTargetsHit(targets_hit);
 }
 
 void EntityList::MassGroupBuff(Mob *caster, Mob *center, uint16 spell_id, bool affect_caster)

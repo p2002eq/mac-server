@@ -5590,11 +5590,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsNoCast()) {
-				Message_StringID(MT_PetResponse, PET_CASTING);
 				mypet->CastToNPC()->SetNoCast(false);
 			}
 			else {
-				Message_StringID(MT_PetResponse, PET_NOT_CASTING);
 				mypet->CastToNPC()->SetNoCast(true);
 			}
 		}
@@ -5605,11 +5603,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOT_FOCUSING);
 				mypet->CastToNPC()->SetFocused(false);
 			}
 			else {
-				Message_StringID(MT_PetResponse, PET_NOW_FOCUSING);
 				mypet->CastToNPC()->SetFocused(true);
 			}
 		}
@@ -5620,7 +5616,6 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (!mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOW_FOCUSING);
 				mypet->CastToNPC()->SetFocused(true);
 			}
 		}
@@ -5631,7 +5626,6 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOT_FOCUSING);
 				mypet->CastToNPC()->SetFocused(false);
 			}
 		}

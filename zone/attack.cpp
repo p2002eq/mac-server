@@ -1328,7 +1328,6 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
 			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
-				Message_StringID(MT_StrikeThrough, STRIKETHROUGH_STRING); // You strike through your opponents defenses!
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
@@ -3532,8 +3531,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				} else {
 					// Normal stun resist check.
 					if (stun_resist && zone->random.Roll(stun_resist)) {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
 					} else {
 						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);

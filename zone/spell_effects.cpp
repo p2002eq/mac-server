@@ -721,8 +721,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 						Stun(effect_value, caster);
 					} else {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. We had %d percent resist chance.", stun_resist);
 					}

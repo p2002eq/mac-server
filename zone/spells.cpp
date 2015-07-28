@@ -1491,7 +1491,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && IsEngaged()) ||
 				(IsClient() && CastToClient()->GetAggroCount())){
-					Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
 
 					return false;
 			}
@@ -1511,7 +1510,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && !IsEngaged()) ||
 				(IsClient() && !CastToClient()->GetAggroCount())){
-					Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
 					return false;
 			}
 		}
@@ -3704,7 +3702,6 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				break;
 		}
 		if(reflect_chance) {
-			Message_StringID(MT_Spells, SPELL_REFLECT, GetCleanName(), spelltar->GetCleanName());
 			CheckNumHitsRemaining(NUMHIT_ReflectSpell);
 			SpellOnTarget(spell_id, this, true, use_resist_adjust, resist_adjust);
 			safe_delete(action_packet);
@@ -4190,7 +4187,6 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		else if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
-			caster->Message_StringID(MT_Shout, FEAR_TOO_HIGH);
 			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
@@ -4635,6 +4631,21 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
+	}
+
+	// NPCs use special rules for rain spells in our era.
+	if(IsRainSpell(spell_id) && IsNPC())
+	{
+		//20% innate resist
+		if(resist_chance < 0)
+			resist_chance = 40;
+		else
+			resist_chance += 40;
+		uint8 hp_percent = (uint8)((float)GetHP() / (float)GetMaxHP() * 100.0f);
+		if(GetLevel() > 20 && hp_percent < 10)
+		{
+			return 0;
+		}
 	}
 
 	//Finally our roll
