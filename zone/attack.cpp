@@ -1328,6 +1328,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
 			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
+				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
