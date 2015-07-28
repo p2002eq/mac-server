@@ -31,7 +31,7 @@ ServerManager::ServerManager()
 {
 	char error_buffer[TCPConnection_ErrorBufferSize];
 
-	int listen_port = atoi(server.config->LoadOption("listen_port", "login.ini").c_str());
+	int listen_port = atoi(server.config->LoadOption("options", "listen_port", "login.ini").c_str());
 	tcps = new EmuTCPServer(listen_port, true);
 	if(tcps->Open(listen_port, error_buffer))
 	{
@@ -156,7 +156,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
-		else if (client_ip.find(server.config->LoadOption("local_network", "login.ini")) != string::npos)
+		else if (client_ip.find(server.config->LoadOption("options", "local_network", "login.ini")) != string::npos)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
@@ -201,7 +201,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);
 		}
-		else if (client_ip.find(server.config->LoadOption("local_network", "login.ini")) != string::npos)
+		else if (client_ip.find(server.config->LoadOption("options", "local_network", "login.ini")) != string::npos)
 		{
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);
@@ -254,7 +254,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 			(*iter)->GetConnection()->SendPacket(outapp);
 			found = true;
 
-			if (server.config->LoadOption("dump_packets_in", "login.ini") == "TRUE")
+			if (server.config->LoadOption("options", "dump_packets_in", "login.ini") == "TRUE")
 			{
 				DumpPacket(outapp);
 			}
@@ -263,7 +263,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 		++iter;
 	}
 
-	if (!found && server.config->LoadOption("trace", "login.ini") == "TRUE")
+	if (!found && server.config->LoadOption("options", "trace", "login.ini") == "TRUE")
 	{
 		server_log->Log(log_client_error, "Client requested a user to world but supplied an invalid id of %s.", server_id);
 	}

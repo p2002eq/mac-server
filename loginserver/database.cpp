@@ -68,7 +68,7 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 	{
 		return;
 	}
-	if (server.config->LoadOption("auto_account_activate", "login.ini") == "TRUE")
+	if (server.config->LoadOption("options", "auto_account_activate", "login.ini") == "TRUE")
 	{
 		activate = 1;
 	}
@@ -76,7 +76,7 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 	mysql_real_escape_string(db, tmpUN, name.c_str(), name.length());
 
 	string query = "INSERT INTO " +
-						server.config->LoadOption("account_table", "login.ini") +
+						server.config->LoadOption("schema", "account_table", "login.ini") +
 					" SET LoginServerID = " + std::to_string(id) + ", " +
 						"AccountName = '" + tmpUN + "', " +
 						"AccountPassword = sha('" +	password + "'), " +
@@ -101,7 +101,7 @@ void Database::UpdateLSAccount(unsigned int id, string ip_address)
 	}
 
 	string query = "UPDATE " +
-		server.config->LoadOption("account_table", "login.ini") +
+		server.config->LoadOption("schema", "account_table", "login.ini") +
 		" SET " +
 		"LastIPAddress = '" + ip_address + "', " +
 		"LastLoginDate = now() " +
@@ -124,7 +124,7 @@ bool Database::GetAccountLockStatus(std::string name)
 	string query = "SELECT "
 						"client_unlock "
 					"FROM " +
-						server.config->LoadOption("account_table", "login.ini") +
+						server.config->LoadOption("schema", "account_table", "login.ini") +
 					" WHERE "
 						"AccountName = '" + name + "'";
 
@@ -167,7 +167,7 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 	mysql_real_escape_string(db, tmpUN, account_name.c_str(), account_name.length());
 
 	string query = "INSERT INTO " +
-						server.config->LoadOption("access_log_table", "login.ini") +
+						server.config->LoadOption("schema", "access_log_table", "login.ini") +
 					" SET " +
 						"account_id = " + std::to_string(account_id) + ", " +
 						"account_name = '" + tmpUN +"', " +
@@ -194,7 +194,7 @@ bool Database::GetLoginDataFromAccountName(string name, string &password, unsign
 	string query = "SELECT "
 						"LoginServerID, AccountPassword "
 					"FROM " +
-						server.config->LoadOption("account_table", "login.ini") +
+						server.config->LoadOption("schema", "account_table", "login.ini") +
 					" WHERE " +
 						"AccountName = '" + tmpUN + "'";
 
@@ -237,7 +237,7 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 	length = mysql_real_escape_string(db, escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
 	escaped_short_name[length + 1] = 0;
 
-	string query = "SELECT max(ServerID) FROM " + server.config->LoadOption("world_registration_table", "login.ini");
+	string query = "SELECT max(ServerID) FROM " + server.config->LoadOption("schema", "world_registration_table", "login.ini");
 
 	if (mysql_query(db, query.c_str()) != 0)
 	{
@@ -254,7 +254,7 @@ bool Database::CreateWorldRegistration(string long_name, string short_name, unsi
 			mysql_free_result(res);
 
 			string query = "INSERT INTO " +
-				server.config->LoadOption("world_registration_table", "login.ini") +
+				server.config->LoadOption("schema", "world_registration_table", "login.ini") +
 				" SET " +
 				"ServerID = '" + std::to_string(id) + "', " +
 				"ServerLongName = '" + escaped_long_name + "', " +
@@ -289,7 +289,7 @@ void Database::UpdateWorldRegistration(unsigned int id, string long_name, string
 	escaped_long_name[length + 1] = 0;
 
 	string query = "UPDATE " +
-		server.config->LoadOption("world_registration_table", "login.ini") +
+		server.config->LoadOption("schema", "world_registration_table", "login.ini") +
 		" SET " +
 		"ServerLastLoginDate = now(), " +
 		"ServerLastIPAddr = '" + ip_address + "', " +
@@ -319,9 +319,9 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 	string query = "SELECT "
 						"WSR.ServerID, WSR.ServerTagDescription, WSR.ServerTrusted, SLT.ServerListTypeID, SLT.ServerListTypeDescription, WSR.ServerAdminID "
 					"FROM " +
-						server.config->LoadOption("world_registration_table", "login.ini") +
+						server.config->LoadOption("schema", "world_registration_table", "login.ini") +
 					" AS WSR JOIN " +
-						server.config->LoadOption("world_server_type_table", "login.ini") +
+						server.config->LoadOption("schema", "world_server_type_table", "login.ini") +
 					" AS SLT ON "
 						"WSR.ServerListTypeID = SLT.ServerListTypeID"
 					" WHERE "
@@ -351,7 +351,7 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 				string query = "SELECT "
 									"AccountName, AccountPassword "
 								"FROM " +
-									server.config->LoadOption("world_admin_registration_table", "login.ini") +
+									server.config->LoadOption("schema", "world_admin_registration_table", "login.ini") +
 								" WHERE "
 									"ServerAdminID = " + std::to_string(db_account_id);
 

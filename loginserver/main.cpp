@@ -74,7 +74,7 @@ int main()
 	ifstream f(configFile.c_str());
 	if (f.good())
 	{
-		server.config->ReWriteLSini();
+		//server.config->ReWriteLSini();
 	}
 	else if (f.fail())
 	{
@@ -99,11 +99,11 @@ int main()
 	//Create our DB from options.
 		server_log->Log(log_debug, "MySQL Database Init.");
 		server.db = (Database*)new Database(
-			server.config->LoadOption("user", "login.ini"),
-			server.config->LoadOption("password", "login.ini"),
-			server.config->LoadOption("host", "login.ini"),
-			server.config->LoadOption("port", "login.ini"),
-			server.config->LoadOption("db", "login.ini"));
+			server.config->LoadOption("database", "user", "login.ini"),
+			server.config->LoadOption("database", "password", "login.ini"),
+			server.config->LoadOption("database", "host", "login.ini"),
+			server.config->LoadOption("database", "port", "login.ini"),
+			server.config->LoadOption("database", "db", "login.ini"));
 
 	//Make sure our database got created okay, otherwise cleanup and exit.
 	if(!server.db)

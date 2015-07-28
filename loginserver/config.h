@@ -18,6 +18,7 @@
 #ifndef EQEMU_CONFIG_H
 #define EQEMU_CONFIG_H
 
+#include <list>
 #include <map>
 #include <string>
 
@@ -28,9 +29,14 @@ public:
 	~Config() { }
 
 	/**
+	* Parses the selected file for variables, will clear current variables if selected.
+	*/
+	virtual void Parse(const char *file_name);
+
+	/**
 	* Gets a variable if it exists.
 	*/
-	std::string LoadOption(std::string option, std::string filename);
+	std::string LoadOption(std::string title, std::string parameter, std::string filename);
 	void ReWriteLSini();
 	void WriteDBini();
 
@@ -38,6 +44,13 @@ protected:
 	std::map<std::string, std::map<std::string, std::string> > vars;
 
 private:
+	/**
+	* Breaks our input up into tokens for Parse().
+	* This is private because it's not intended to be overloaded by a derived class which
+	* may get it's input from other places than a C file pointer. (a http get request for example).
+	* The programmer of a derived class would be expected to make their own Tokenize function for their own Parse().
+	*/
+	void Tokenize(FILE* input, std::list<std::string> &tokens);
 };
 
 #endif
