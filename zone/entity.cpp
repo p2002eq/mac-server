@@ -2878,6 +2878,7 @@ void EntityList::AggroZone(Mob *who, int hate)
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
 		it->second->AddToHateList(who, hate);
+		it->second->SetRememberDistantMobs(true);
 		++it;
 	}
 }
@@ -2935,41 +2936,31 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 		return;
 
 	NPC *cur = nullptr;
-	std::list<NPC *> npc_sub_list;
 	auto it = npc_list.begin();
 	while (it != npc_list.end())
 	{
 		cur = it->second;
 
-		if (!cur->CheckAggro(target))
+		if (cur->IsPet() || !cur->CheckAggro(target) || cur->IsFeared())
 		{
 			++it;
 			continue;
 		}
-		if (!cur->IsFeared())
-		{
-			npc_sub_list.push_back(cur);
-		}
-		++it;
-	}
-
-	cur = nullptr;
-	auto sit = npc_sub_list.begin();
-	while (sit != npc_sub_list.end())
-	{
-		cur = *sit;
-
-		if (cur->IsPet() || zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
-		{												// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
-			++sit;
+		if (zone->random.Roll(50))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
+		{								// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+			++it;
 			continue;
 		}
 
-		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 0)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
-			hate /= 4;
-
-		cur->AddToHateList(caster, hate);
-		++sit;
+		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 1)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
+		{
+			cur->AddToHateList(caster, hate / 4);
+		}
+		else
+		{
+			cur->AddToHateList(caster, hate);
+		}
+		++it;
 	}
 }
 

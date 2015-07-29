@@ -1230,3 +1230,15 @@ bool IsSpeedBuff(uint16 spell_id)
 	}
 	return false;
 }
+
+bool IsRainSpell(uint16 spell_id)
+{
+	if(IsDetrimentalSpell(spell_id) && 
+		(spells[spell_id].targettype == ST_AETarget || spells[spell_id].targettype == ST_AECaster) &&
+		(spells[spell_id].spell_category == 12 || spells[spell_id].spell_category == 150 || spells[spell_id].spell_category == 151 || spells[spell_id].spell_category == 152))
+	{
+		return true;
+	}
+
+	return false;
+}

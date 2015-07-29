@@ -332,6 +332,8 @@ public:
 	bool	CreateCharacter(uint32 account_id, char* name, uint16 gender, uint16 race, uint16 class_, uint8 str, uint8 sta, uint8 cha, uint8 dex, uint8 int_, uint8 agi, uint8 wis, uint8 face);
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inventory* inv);
 	bool	DeleteCharacter(char* name);
+	bool	MarkCharacterDeleted(char* name);
+	bool	UnDeleteCharacter(const char* name);
 
 	/* General Information Queries */
 
@@ -354,6 +356,7 @@ public:
 	void	ClearAllActive();
 	void	ClearAccountActive(uint32 AccountID);
 	void	SetAccountActive(uint32 AccountID);
+	uint32	GetLevelByChar(const char* charname);
 
 	/*
 	* Instancing Stuff

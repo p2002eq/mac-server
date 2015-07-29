@@ -1328,7 +1328,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
 			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
-				Message_StringID(MT_StrikeThrough, STRIKETHROUGH_STRING); // You strike through your opponents defenses!
+				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
@@ -2015,7 +2015,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		return false;
 
 	HasAISpellEffects = false;
-	BuffFadeAll(true);
+	BuffFadeAll();
 	uint8 killed_level = GetLevel();
 
 	EQApplicationPacket* app= new EQApplicationPacket(OP_Death,sizeof(Death_Struct));
@@ -3532,8 +3532,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				} else {
 					// Normal stun resist check.
 					if (stun_resist && zone->random.Roll(stun_resist)) {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
 					} else {
 						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);

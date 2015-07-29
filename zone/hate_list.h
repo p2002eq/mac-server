@@ -30,6 +30,7 @@ struct tHateEntry
 	Mob *ent;
 	int32 damage, hate;
 	bool bFrenzy;
+	Timer timer;
 };
 
 class HateList
@@ -49,7 +50,7 @@ public:
 	// ???
 	void DoFactionHits(int32 nfl_id);
 	// Gets Hate amount for mob
-	int32 GetEntHate(Mob *ent, bool damage = false);
+	int32 GetEntHate(Mob *ent, bool damage = false, bool includeBonus = true);
 	// gets top hated mob
 	Mob *GetTop();
 	// gets any on the list
@@ -63,9 +64,11 @@ public:
 	// used to remove or add frenzy hate
 	void CheckFrenzyHate();
 	//Gets the target with the most hate regardless of things like frenzy etc.
-	Mob* GetMostHate();
+	Mob* GetMostHate(bool includeBonus = true);
 	// Count 'Summoned' pets on hatelist
 	int SummonedPetCount(Mob *hater);
+	// setting this true will allow the NPC to persue targets outside the 600 distance limit
+	void SetRememberDistantMobs(bool state) { rememberDistantMobs = state; }
 
 	int AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts);
 
@@ -82,7 +85,7 @@ public:
 
 protected:
 	tHateEntry* Find(Mob *ent);
-	int32 GetHateBonus(tHateEntry *entry, bool combatRange);
+	int32 GetHateBonus(tHateEntry *entry, bool combatRange, bool firstInRange = false, float distSquared = -1.0f);
 private:
 	std::list<tHateEntry*> list;
 	Mob *owner;
@@ -90,6 +93,8 @@ private:
 	int32 sitInsideBonus;
 	int32 sitOutsideBonus;
 	int32 lowHealthBonus;
+	bool rememberDistantMobs;
+	bool nobodyInMeleeRange;
 };
 
 #endif

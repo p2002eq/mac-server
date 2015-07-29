@@ -4144,7 +4144,7 @@ bool Mob::TrySpellOnDeath()
 			}
 		}
 
-	BuffFadeAll(true);
+	BuffFadeAll();
 	return false;
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result
@@ -4531,7 +4531,7 @@ void Mob::CastOnNumHitFade(uint32 spell_id)
 
 void Mob::SlowMitigation(Mob* caster)
 {
-	if (GetSlowMitigation() && caster && caster->IsClient())
+	/*if (GetSlowMitigation() && caster && caster->IsClient())
 	{
 		if ((GetSlowMitigation() > 0) && (GetSlowMitigation() < 26))
 			caster->Message_StringID(MT_SpellFailure, SLOW_MOSTLY_SUCCESSFUL);
@@ -4544,7 +4544,7 @@ void Mob::SlowMitigation(Mob* caster)
 
 		else if (GetSlowMitigation() > 100)
 			caster->Message_StringID(MT_SpellFailure, SPELL_OPPOSITE_EFFECT);
-	}
+	}*/
 }
 
 uint16 Mob::GetSkillByItemType(int ItemType)

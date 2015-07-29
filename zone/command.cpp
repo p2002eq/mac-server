@@ -37,6 +37,7 @@
 #include <sstream>
 #include <algorithm>
 #include <ctime>
+#include <thread>
 
 #ifdef _WINDOWS
 #define strcasecmp _stricmp
@@ -153,6 +154,7 @@ int command_init(void){
 		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target.", 250, command_ai) ||
 		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information.", 170, command_altactivate) ||
 		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target.", 250, command_appearance) ||
+		command_add("apply_shared_memory", "[shared_memory_name] - Tells every zone and world to apply a specific shared memory segment by name.", 250, command_apply_shared_memory) ||
 		command_add("attack", "[targetname] - Make your NPC target attack targetname.", 160, command_attack) ||
 
 		command_add("ban", "[name][reason] - Ban by character name.", 100, command_ban) ||
@@ -241,6 +243,7 @@ int command_init(void){
 		command_add("helm", "- Change the helm of your target.", 250, command_helm) ||
 		command_add("help", "[search term] - List available commands and their description, specify partial command as argument to search.", 0, command_help) ||
 		command_add("hideme", "[on/off] - Hide yourself from spawn lists.", 81, command_hideme) ||
+		command_add("hotfix", "[hotfix_name] - Reloads shared memory into a hotfix, equiv to load_shared_memory followed by apply_shared_memory", 250, command_hotfix) ||
 		command_add("hp", "- Refresh your HP bar from the server.", 255, command_hp) ||
 
 		command_add("instance", "- Modify Instances.", 255, command_instance) ||
@@ -256,13 +259,14 @@ int command_init(void){
 		command_add("iteminfo", "- Get information about the item on your cursor.", 50, command_iteminfo) ||
 		command_add("itemsearch", "[search criteria] - Search for an item.", 100, command_itemsearch) ||
 		command_add("itemtest", "- merth's test function.", 255, command_itemtest) ||
-
+		command_add("keyring", "Displays target's keyring items.", 90, command_keyring) ||
 		command_add("kick", "[charname] - Disconnect charname.", 90, command_kick) ||
 		command_add("kill", "- Kill your target.", 150, command_kill) ||
 
 		command_add("lastname", "[new lastname] - Set your or your player target's lastname.", 90, command_lastname) ||
 		command_add("level", "[level] - Set your or your target's level.", 80, command_level) ||
 		command_add("listnpcs", "[name/range] - Search NPCs.", 90, command_listnpcs) ||
+		command_add("load_shared_memory", "[shared_memory_name] - Reloads shared memory and uses the input as output", 250, command_load_shared_memory) ||
 		command_add("loc", "- Print out your or your target's current location and heading.", 0, command_loc) ||
 		command_add("lock", "- Lock the worldserver.", 250, command_lock) ||
 		command_add("logs", "Manage anything to do with logs.", 180, command_logs) ||
@@ -415,7 +419,7 @@ int command_init(void){
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title.", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix.", 255, command_titlesuffix) ||
 		command_add("tune", "Calculate ideal statical values related to combat.", 250, command_tune) ||
-
+		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots.", 255, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target.", 160, command_unfreeze) ||
 		command_add("unlock", "- Unlock the worldserver.", 250, command_unlock) ||
@@ -4236,9 +4240,9 @@ void command_spawnstatus(Client *c, const Seperator *sep){
 
 void command_nukebuffs(Client *c, const Seperator *sep){
 	if (c->GetTarget() == 0)
-		c->BuffFadeAll();
+		c->BuffFadeAll(false, true);
 	else
-		c->GetTarget()->BuffFadeAll();
+		c->GetTarget()->BuffFadeAll(false, true);
 }
 
 void command_zuwcoords(Client *c, const Seperator *sep){
@@ -7142,7 +7146,7 @@ void command_path(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help"))
 	{
-		c->Message(CC_Default, "Syntax: #path shownodes: Spawns a npc to represent every npc node.");
+		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns a npc to represent every npc node.  The around option only shows within a range of 200.");
 		c->Message(CC_Default, "#path info node_id: Gives information about node info (requires shownode target).");
 		c->Message(CC_Default, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
@@ -7157,9 +7161,12 @@ void command_path(Client *c, const Seperator *sep)
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
 	{
-		if (zone->pathing)
-			zone->pathing->SpawnPathNodes();
-
+		if (zone->pathing) {
+			if (!strcasecmp(sep->arg[2], "around"))
+				zone->pathing->SpawnPathNodes(c->GetX(), c->GetY(), c->GetZ());
+			else
+				zone->pathing->SpawnPathNodes();
+		}
 		return;
 	}
 
@@ -7181,6 +7188,7 @@ void command_path(Client *c, const Seperator *sep)
 			
 			zone->pathing->SortNodes();
 			zone->pathing->ResortConnections();
+			zone->pathing->PreCalcNodeDistances();
 			zone->pathing->DumpPath(sep->arg[2]);
 			c->Message(CC_Default, "Path file saved as %s", sep->arg[2]);
 		}
@@ -7342,11 +7350,13 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "nodes"))
 			{
 				zone->pathing->SortNodes();
+				zone->pathing->PreCalcNodeDistances();
 				c->Message(CC_Default, "Nodes resorted...");
 			}
 			else
 			{
 				zone->pathing->ResortConnections();
+				zone->pathing->PreCalcNodeDistances();
 				c->Message(CC_Default, "Connections resorted...");
 				c->Message(CC_Default, "Spawned Nodes will need respawned to display proper node id.");
 				zone->pathing->CheckNodeErrors(c);
@@ -8444,7 +8454,10 @@ void command_aggrozone(Client *c, const Seperator *sep){
 
 	int hate = atoi(sep->arg[1]); //should default to 0 if we don't enter anything
 	entity_list.AggroZone(m, hate);
-	c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
+	if (!c->GetTarget())
+		c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
+	else
+		c->Message(CC_Default, "Train to %s! Watch them die!!!", c->GetTarget()->GetCleanName());
 }
 
 void command_modifynpcstat(Client *c, const Seperator *sep){
@@ -10933,4 +10946,130 @@ void command_boatinfo(Client *c, const Seperator *sep)
 	{
 		entity_list.GetBoatInfo(c);
 	}
+}
+
+void command_undeletechar(Client *c, const Seperator *sep)
+{
+	if (sep->arg[1][0] != 0)
+	{
+		if(!database.UnDeleteCharacter(sep->arg[1]))
+		{
+			c->Message(CC_Red, "%s could not be undeleted. Check the spelling of their name.", sep->arg[1]);
+		}
+		else
+		{
+			c->Message(CC_Green, "%s successfully undeleted!", sep->arg[1]);
+		}
+	}
+	else
+	{
+		c->Message(CC_Default, "Usage: undeletechar [charname]");
+	}
+}
+
+void command_hotfix(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string current_hotfix = hotfix;
+
+	std::string hotfix_name;
+	if (!strcasecmp(current_hotfix.c_str(), "hotfix_")) {
+		hotfix_name = "";
+	}
+	else {
+		hotfix_name = "hotfix_";
+	}
+
+	c->Message(0, "Creating and applying hotfix");
+	std::thread t1([c, hotfix_name]() {
+#ifdef WIN32
+		if (hotfix_name.length() > 0) {
+			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("shared_memory").c_str());
+		}
+#else
+		if (hotfix_name.length() > 0) {
+			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("./shared_memory").c_str());
+		}
+#endif
+		database.SetVariable("hotfix_name", hotfix_name.c_str());
+
+		ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
+		if (hotfix_name.length() > 0) {
+			strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+		}
+		worldserver.SendPacket(&pack);
+
+		c->Message(0, "Hotfix applied");
+	});
+
+	t1.detach();
+}
+
+void command_load_shared_memory(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string current_hotfix = hotfix;
+
+	std::string hotfix_name;
+	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
+		c->Message(0, "Cannot attempt to load this shared memory segment as it is already loaded.");
+		return;
+	}
+
+	hotfix_name = sep->arg[1];
+	c->Message(0, "Loading shared memory segment %s", hotfix_name.c_str());
+	std::thread t1([c,hotfix_name]() {
+#ifdef WIN32
+		if(hotfix_name.length() > 0) {
+			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		} else {
+			system(StringFormat("shared_memory").c_str());
+		}
+#else
+		if(hotfix_name.length() > 0) {
+			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else {
+			system(StringFormat("./shared_memory").c_str());
+		}
+#endif
+		c->Message(0, "Shared memory segment finished loading.");
+	});
+
+	t1.detach();
+}
+
+void command_apply_shared_memory(Client *c, const Seperator *sep) {
+	char hotfix[256] = { 0 };
+	database.GetVariable("hotfix_name", hotfix, 256);
+	std::string hotfix_name = sep->arg[1];
+	
+	c->Message(0, "Applying shared memory segment %s", hotfix_name.c_str());
+	database.SetVariable("hotfix_name", hotfix_name.c_str());
+
+	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
+	if(hotfix_name.length() > 0) {
+		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
+	}
+	worldserver.SendPacket(&pack);
+}
+
+void command_keyring(Client *c, const Seperator *sep)
+{
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	t->KeyRingList(c);
+	c->Message(CC_Default, "Zone Flag List:");
+	t->ZoneFlagList(c);
 }
