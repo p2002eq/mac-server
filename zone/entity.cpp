@@ -2873,12 +2873,13 @@ void EntityList::ClearZoneFeignAggro(Client *targ)
 	}
 }
 
-void EntityList::AggroZone(Mob *who, int hate)
+void EntityList::AggroZone(Mob *who, int hate, bool use_ignore_dist)
 {
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
 		it->second->AddToHateList(who, hate);
-		it->second->SetRememberDistantMobs(true);
+		if(!use_ignore_dist)
+			it->second->SetRememberDistantMobs(true);
 		++it;
 	}
 }
