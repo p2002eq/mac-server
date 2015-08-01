@@ -400,10 +400,9 @@ void Client::CompleteConnect()
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
 
-	if (IsInAGuild()){
-		uint8 rank = GuildRank();
+	if (IsInAGuild())
+	{
 		SendAppearancePacket(AT_GuildID, GuildID(), false);
-		SendAppearancePacket(AT_GuildRank, rank, false);
 	}
 	for (uint32 spellInt = 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
 	{
@@ -652,60 +651,9 @@ void Client::CompleteConnect()
 	}
 
 	SendStaminaUpdate();
+	SendClientVersion();
+	FixClientXP();
 
-	if(GetClientVersion() == EQClientMac)
-	{
-		std::string string("Mac");
-		std::string type;
-		if(GetClientVersionBit() == BIT_MacIntel)
-			type = "Intel";
-		else if(GetClientVersionBit() == BIT_MacPPC)
-			type = "PowerPC";
-		else if(GetClientVersionBit() == BIT_MacPC)
-			type = "PC";
-		else
-			type = "Invalid";
-
-		if(GetGM())
-			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
-		else
-			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s. The client type is: %s.", string.c_str(), type.c_str());
-
-	}
-	else
-	{
-		std::string string;
-		if(GetClientVersion() == EQClientEvolution)
-			string = "Evolution";
-		if(GetClientVersion() == EQClientUnused)
-			string = "Unused";
-		else
-			string = "Unknown";
-
-		if(GetGM())
-			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
-		else
-			Log.Out(Logs::Detail, Logs::Client_Server_Packet, "Client version is: %s.", string.c_str());
-	}
-
-	uint16 level = GetLevel();
-	uint32 totalrequiredxp = GetEXPForLevel(level);
-	float currentxp = GetEXP();
-	uint32 currentaa = GetAAXP();
-
-	if(currentxp < totalrequiredxp)
-	{
-		if(Admin() == 0 && level > 1)
-		{
-			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
-			SetEXP(totalrequiredxp, currentaa);
-			Save();
-			Kick();
-		}
-		else if(Admin() > 0 && level > 1)
-			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
-
-	}
 
 	worldserver.RequestTellQueue(GetName());
 }
@@ -1135,7 +1083,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			}
 		}
 	}
-			
+	
+	/* Load Character Key Ring */
+	KeyRingLoad();
 		
 	/* Set Total Seconds Played */
 	m_pp.lastlogin = time(nullptr);
@@ -1323,35 +1273,25 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_pp.fatigue = GetFatiguePercent();
 
 	uint32 max_slots = GetMaxBuffSlots();
+	bool stripbuffs = false;
+
+	if(RuleB(AlKabor, StripBuffsOnLowHP) && GetHP() < itembonuses.HP)
+		stripbuffs = true;
+
 	for (int i = 0; i < max_slots; i++) 
 	{
-		if (buffs[i].spellid != SPELL_UNKNOWN) {
-			if (!RuleB(AlKabor, StripBuffsOnLowHP) || GetHP() > itembonuses.HP)
-			{
-				m_pp.buffs[i].spellid = buffs[i].spellid;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 2;
-				m_pp.buffs[i].player_id = 0x2211;
-				m_pp.buffs[i].level = buffs[i].casterlevel;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = buffs[i].ticsremaining;
-				m_pp.buffs[i].counters = buffs[i].counters;
-			}
-			else
-			{
-				m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
-				m_pp.buffs[i].bard_modifier = 10;
-				m_pp.buffs[i].slotid = 0;
-				m_pp.buffs[i].player_id = 0;
-				m_pp.buffs[i].level = 0;
-				m_pp.buffs[i].effect = 0;
-				m_pp.buffs[i].duration = 0;
-				m_pp.buffs[i].counters = 0;
-				Log.Out(Logs::General, Logs::EQMac, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
-				BuffFadeAll();
-			}
+		if (buffs[i].spellid != SPELL_UNKNOWN && !stripbuffs)
+		{
+			m_pp.buffs[i].spellid = buffs[i].spellid;
+			m_pp.buffs[i].bard_modifier = 10;
+			m_pp.buffs[i].slotid = 2;
+			m_pp.buffs[i].player_id = 0x2211;
+			m_pp.buffs[i].level = buffs[i].casterlevel;
+			m_pp.buffs[i].effect = 0;
+			m_pp.buffs[i].duration = buffs[i].ticsremaining;
+			m_pp.buffs[i].counters = buffs[i].counters;
 		}
-		else 
+		else
 		{
 			m_pp.buffs[i].spellid = SPELLBOOK_UNKNOWN;
 			m_pp.buffs[i].bard_modifier = 10;
@@ -1362,6 +1302,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			m_pp.buffs[i].duration = 0;
 			m_pp.buffs[i].counters = 0;
 		}
+	}
+
+	if(stripbuffs)
+	{
+		Log.Out(Logs::General, Logs::EQMac, "Removing buffs. HP is: %i MaxHP is: %i BaseHP is: %i HP from items is: %i HP from spells is: %i", GetHP(), GetMaxHP(), GetBaseHP(), itembonuses.HP, spellbonuses.HP);
+		BuffFadeAll();
 	}
 
 	if (m_pp.z <= zone->newzone_data.underworld) 
@@ -1408,6 +1354,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.pvp = 1;
 	/* Time entitled on Account: Move to account */
 	m_pp.timeentitledonaccount = database.GetTotalTimeEntitledOnAccount(AccountID()) / 1440;
+
+	FillPPItems();
 
 	/* This checksum should disappear once dynamic structs are in... each struct strategy will do it */
 	CRC32::SetEQChecksum((unsigned char*)&m_pp, sizeof(PlayerProfile_Struct) - 4);
@@ -5647,11 +5595,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsNoCast()) {
-				Message_StringID(MT_PetResponse, PET_CASTING);
 				mypet->CastToNPC()->SetNoCast(false);
 			}
 			else {
-				Message_StringID(MT_PetResponse, PET_NOT_CASTING);
 				mypet->CastToNPC()->SetNoCast(true);
 			}
 		}
@@ -5662,11 +5608,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOT_FOCUSING);
 				mypet->CastToNPC()->SetFocused(false);
 			}
 			else {
-				Message_StringID(MT_PetResponse, PET_NOW_FOCUSING);
 				mypet->CastToNPC()->SetFocused(true);
 			}
 		}
@@ -5677,7 +5621,6 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (!mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOW_FOCUSING);
 				mypet->CastToNPC()->SetFocused(true);
 			}
 		}
@@ -5688,7 +5631,6 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->IsFeared())
 				break;
 			if (mypet->IsFocused()) {
-				Message_StringID(MT_PetResponse, PET_NOT_FOCUSING);
 				mypet->CastToNPC()->SetFocused(false);
 			}
 		}
@@ -8837,48 +8779,7 @@ void Client::Handle_OP_Key(const EQApplicationPacket *app)
 		return;
 	}
 
-	// Todo: Figure out how to get the client to spit these messages out for us.
-	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
-	iterator.Reset();
-	while (iterator.MoreElements())
-	{
-		ZoneFlags_Struct* zfs = iterator.GetData();
-		uint32 zoneid = zfs->zoneid;
-		uint8 key = zfs->key;
-
-		const char *short_name = database.GetZoneName(zoneid);
-
-		float safe_x, safe_y, safe_z;
-		int16 minstatus = 0;
-		uint8 minlevel = 0;
-		char flag_name[128];
-		// Unfortunately, we have to hit the DB here. We can't assume the target zone will be booted to check its zone_data.
-		if(database.GetSafePoints(short_name, 0, &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_name)) 
-		{
-			if(zoneid == vexthal)
-			{
-				if(key == 0 || key == 1)
-					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
-				if(key == 1)
-					Message(CC_Default, "North Tower Key (Vex Thal)"); //Flag within the zone.
-			}
-			if(zoneid == ssratemple)
-				Message(CC_Default, "Ring of the Shissar"); //Flag within the zone.
-			if(zoneid == frozenshadow)
-				Message(CC_Default, "Tower of Frozen Shadows: %d", key); //Flag within the zone.
-			if(zoneid == bothunder)
-			{
-				if(key == 0 || key == 1)
-					Message(CC_Default, "%s", flag_name); //Flag to enter zone.
-				if(key == 1)
-					Message(CC_Default, "Enchanted Ring of Torden"); //Flag within the zone.
-			}
-			else
-				Message(CC_Default, "%s", flag_name);
-		}
-
-		iterator.Advance();
-	}
+	ZoneFlagList(this);
 
 	return;
 }

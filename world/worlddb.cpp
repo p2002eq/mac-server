@@ -67,7 +67,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, CharacterSelect_Struct*
 		"zone_id		            "  // 16
 		"FROM                       "
 		"character_data             "
-		"WHERE `account_id` = %i ORDER BY `name` LIMIT 10   ", account_id);
+		"WHERE `account_id` = %i AND is_deleted = 0 ORDER BY `name` LIMIT 10   ", account_id);
 	auto results = database.QueryDatabase(cquery); int char_num = 0;
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		PlayerProfile_Struct pp;

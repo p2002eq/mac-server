@@ -493,6 +493,19 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "key_ column created.");
 	}
+
+	std::string check_queryb = StringFormat("SHOW COLUMNS FROM `character_data` LIKE 'is_deleted'");
+	auto resultsb = QueryDatabase(check_queryb);
+	if (resultsb.RowCount() == 0){
+		std::string create_queryb = StringFormat("ALTER table `character_data` add column `is_deleted` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add is_deleted column to character_data...");
+		auto create_resultsb = QueryDatabase(create_queryb);
+		if (!create_resultsb.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating is_deleted column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "is_deleted column created.");
+	}
 	return true;
 }
 

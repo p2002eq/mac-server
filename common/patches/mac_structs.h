@@ -1087,7 +1087,6 @@ struct PlayerProfile_Struct
 	#define pp_containerinv_size 80
 	#define pp_cursorbaginventory_size 10
 	#define pp_bank_inv_size 8
-	#define pp_bank_cont_inv_size 80
 	/* ***************** */
 	/*0000*/	uint32  checksum;		    // Checksum
 	/*0004*/	uint8	unknown0004[2];		// ***Placeholder
@@ -1116,15 +1115,15 @@ struct PlayerProfile_Struct
 	/*0178*/	uint8	oldface;               //
 	/*0179*/    int8    EquipType[9];       // i think its the visible parts of the body armor
 	/*0188*/    int32   EquipColor[9];      //
-	/*0224*/	uint16	inventory[30];		// Player Inventory Item Numbers
+	/*0224*/	int16	inventory[pp_inventory_size];		// Player Inventory Item Numbers
 	/*0284*/	uint8	languages[26];		// Player Languages
 	/*0310*/	uint8	unknown0310[6];		// ***Placeholder
-	/*0316*/	struct	OldItemProperties_Struct	invItemProprieties[30];	// These correlate with inventory[30]
+	/*0316*/	struct	OldItemProperties_Struct	invItemProperties[pp_inventory_size];	// These correlate with inventory[30]
 	/*0616*/	struct	OldSpellBuff_Struct	buffs[15];	// Player Buffs Currently On
-	/*0766*/	uint16	containerinv[pp_containerinv_size];	// Player Items In "Bags" -- If a bag is in slot 0, this is where the bag's items are
-	/*0926*/	uint16   cursorbaginventory[10];
-	/*0946*/	struct	OldItemProperties_Struct	bagItemProprieties[pp_containerinv_size];	// Just like InvItemProperties
-	/*1746*/    struct  OldItemProperties_Struct	cursorItemProprieties[10];	  //just like invitemprops[]
+	/*0766*/	int16	containerinv[pp_containerinv_size];	
+	/*0926*/	int16   cursorbaginventory[pp_cursorbaginventory_size]; // If a bag is in slot 0, this is where the bag's items are
+	/*0946*/	struct	OldItemProperties_Struct	bagItemProperties[pp_containerinv_size];	// Just like InvItemProperties
+	/*1746*/    struct  OldItemProperties_Struct	cursorItemProperties[pp_cursorbaginventory_size];	  //just like invitemprops[]
 	/*1846*/	int16	spell_book[256];	// Player spells scribed in their book
 	/*2358*/	uint8	unknown2374[512];	// 0xFF
 	/*2870*/	int16	mem_spells[8];	// Player spells memorized
@@ -1179,11 +1178,11 @@ struct PlayerProfile_Struct
 	/*3824*/	float	bind_x[5];
 	/*3844*/	float	bind_z[5];
 	/*3864*/	float	bind_heading[5];
-	/*3884*/	OldItemProperties_Struct	bankinvitemproperties[8];
-	/*3964*/	OldItemProperties_Struct	bankbagitemproperties[80];
+	/*3884*/	OldItemProperties_Struct	bankinvitemproperties[pp_bank_inv_size];
+	/*3964*/	OldItemProperties_Struct	bankbagitemproperties[pp_containerinv_size];
 	/*4764*/	uint32	login_time;
-	/*4768*/	uint16	bank_inv[8];		// Player Bank Inventory Item Numbers
-	/*4784*/	uint16	bank_cont_inv[80];	// Player Bank Inventory Item Numbers (Bags)
+	/*4768*/	int16	bank_inv[pp_bank_inv_size];		// Player Bank Inventory Item Numbers
+	/*4784*/	int16	bank_cont_inv[pp_containerinv_size];	// Player Bank Inventory Item Numbers (Bags)
 	/*4944*/	uint16	deity;		// ***Placeholder
 	/*4946*/	uint16	guild_id;			// Player Guild ID Number
 	/*4948*/	uint32  birthday;
@@ -1318,27 +1317,6 @@ struct	ItemViewRequest_Struct
 	/*000*/int16	item_id;
 	/*002*/char	item_name[64];
 	/*066*/
-};
-
-/*_MAC_NET_MSG_rpServer, size: 244*/
-struct LogServer_Struct
-{
-	/*000*/	uint32	enable_FV; //Is FV ruleset?
-	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
-	/*008*/	uint32	auto_identify; //Dunno, keep 0
-	/*012*/	uint32	NameGen;	// Name generator enabled?
-	/*016*/	uint32	Gibberish;	// Disables chat if enabled.
-	/*020*/	uint32	test_server;
-	/*024*/	uint32	Locale;
-	/*028*/	uint32	ProfanityFilter;
-	/*032*/	char	worldshortname[32]; //ServerName on disasm
-	/*064*/	uint8	unknown064[32]; //  loggingServerPassword
-	/*096*/	char	unknown096[16];	// 'pacman' on live
-	/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-	/*126*/	uint8	unknown128[48];
-	/*176*/	uint32	unknown176;
-	/*180*/	char	unknown180[64];	// 'eqdataexceptions@mail.station.sony.com' on live
-	/*244*/
 };
 
 /* _MAC_NET_MSG_reward_MacMsg, OP_Sound, Size: 48 */

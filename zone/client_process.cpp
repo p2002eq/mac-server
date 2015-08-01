@@ -816,20 +816,85 @@ void Client::SendCursorItems()
 		const ItemInst *inst = *iter;
 		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 	}
+}
 
-	//Items in cursor container
-	//The client ignores these items. I couldn't find a packet from AK with bag cursor items being sent and
-	//have tried every packet type without luck. Perhaps our slotids are wrong? Workaround hack is in SwapItem.
-
-	/*int16 slot_id = 0;
-	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
+void Client::FillPPItems()
+{
+	int16 slot_id = 0;
+	int i = 0;
+	memset(m_pp.invItemProperties, 0, sizeof(OldItemProperties_Struct)*30);
+	for (slot_id = MainCursor; slot_id <= EmuConstants::GENERAL_END; slot_id++) 
+	{
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
-			SendItemPacket(slot_id, inst, ItemPacketTrade);
-			Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
-			break;
+			m_pp.inventory[i] = inst->GetItem()->ID;
+			m_pp.invItemProperties[i].charges = inst->GetCharges();
 		}
-	}*/
+		else
+			m_pp.inventory[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bagItemProperties, 0, sizeof(OldItemProperties_Struct)*80);
+	for (slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::GENERAL_BAGS_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.containerinv[i] = inst->GetItem()->ID;
+			m_pp.bagItemProperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.containerinv[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.cursorItemProperties, 0, sizeof(OldItemProperties_Struct)*10);
+	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.cursorbaginventory[i] = inst->GetItem()->ID;
+			m_pp.cursorItemProperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.cursorbaginventory[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bankinvitemproperties, 0, sizeof(OldItemProperties_Struct)*8);
+	for (slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.bank_inv[i] = inst->GetItem()->ID;
+			m_pp.bankinvitemproperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.bank_inv[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bankbagitemproperties, 0, sizeof(OldItemProperties_Struct)*80);
+	for (slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.bank_cont_inv[i] = inst->GetItem()->ID;
+			m_pp.bankbagitemproperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.bank_cont_inv[i] = 0xFFFF;
+
+		++i;
+	}
 }
 
 void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {

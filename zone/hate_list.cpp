@@ -37,6 +37,12 @@ extern Zone *zone;
 HateList::HateList()
 {
 	owner = nullptr;
+	combatRangeBonus = 0;
+	sitInsideBonus = 0;
+	sitOutsideBonus = 0;
+	lowHealthBonus = 0;
+	rememberDistantMobs = false;
+	nobodyInMeleeRange = false;
 }
 
 HateList::~HateList()
@@ -254,7 +260,12 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 		p->hate+=in_hate;
 		p->bFrenzy = bFrenzy;
 	}
-	else if (iAddIfNotExist) {
+	else if (iAddIfNotExist)
+	{
+		// the first-to-aggro hate on animals does nearly no hate, regardless of what it would normally be
+		if (owner->IsNPC() && owner->CastToNPC()->IsAnimal())
+			in_hate = 1;
+
 		p = new tHateEntry;
 		p->ent = ent;
 		p->damage = (in_dam>=0)?in_dam:0;
@@ -268,6 +279,12 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 				ent->CastToClient()->SetEngagedRaidTarget(true);
 			ent->CastToClient()->IncrementAggroCount();
 		}
+
+	}
+
+	if (p)
+	{
+		p->timer.Start(600000);
 	}
 }
 
@@ -339,29 +356,29 @@ int HateList::SummonedPetCount(Mob *hater) {
 	return petcount;
 }
 
-int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange)
+int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange, bool firstInRange, float distSquared)
 {
 	int32 bonus = 0;
 
-	if (entry->ent->IsClient())
+	if (combatRange)
+	{
+		bonus += combatRangeBonus;
+		if (firstInRange)
+		{
+			bonus += 35;
+		}
+	}
+
+	if (entry->ent->IsClient() && entry->ent->CastToClient()->IsSitting())
 	{
 		if (combatRange)
 		{
-			bonus += combatRangeBonus;
-
-			if (entry->ent->CastToClient()->IsSitting())
-			{
-				bonus += sitInsideBonus;
-			}
+			bonus += sitInsideBonus;
 		}
-		else if (entry->ent->CastToClient()->IsSitting())
+		else
 		{
 			bonus += sitOutsideBonus;
 		}
-	}
-	else if (combatRange)
-	{
-		bonus += combatRangeBonus;
 	}
 
 	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
@@ -369,13 +386,34 @@ int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange)
 		bonus += lowHealthBonus;
 	}
 
+	// if nobody in melee range but entry is nearby, apply a bonus that scales with distance to target
+	// this has the effect of the melee range bonus tapering off gradually over 100 distance
+	if (nobodyInMeleeRange && list.size() > 1)
+	{
+		if (distSquared == -1.0f)
+		{
+			float distX = entry->ent->GetX() - owner->GetX();
+			float distY = entry->ent->GetY() - owner->GetY();
+			distSquared = distX * distX + distY * distY;
+		}
+
+		if (distSquared < 10000.0f)
+		{
+			int32 dist = sqrtf(distSquared);
+			if (dist < 100 && dist > 0)
+			{
+				bonus += combatRangeBonus * static_cast<int32>(100.0f - dist) / 100;
+			}
+		}
+	}
 	return bonus;
 }
 
 Mob *HateList::GetTop()
 {
-	Mob* top = nullptr;
-	int32 hate = -1;
+	Mob* topMob = nullptr;
+	int32 topHate = -1;
+	nobodyInMeleeRange = true;
 
 	if(owner == nullptr)
 		return nullptr;
@@ -385,20 +423,28 @@ Mob *HateList::GetTop()
 		Mob* topClientTypeInRange = nullptr;
 		int32 hateClientTypeInRange = -1;
 		int skipped_count = 0;
-		bool firstInRangeBonus = false;
+		bool firstInRangeBonusApplied = false;
 
 		auto iterator = list.begin();
 		while (iterator != list.end())
 		{
 			tHateEntry *cur = (*iterator);
 
-			if (!cur)
+			// remove mobs that have not added hate in 10 minutes
+			if (cur->timer.Check())
 			{
-				++iterator;
+				RemoveEnt(cur->ent);
+
+				if (list.size() == 0)
+					return nullptr;
+
+				iterator = list.begin();
+				skipped_count = 0;
+				firstInRangeBonusApplied = false;
 				continue;
 			}
 
-			if (!cur->ent)
+			if (!cur || !cur->ent)
 			{
 				++iterator;
 				continue;
@@ -415,12 +461,23 @@ Mob *HateList::GetTop()
 				}
 			}
 
+			float distX = hateEntryPosition.x - owner->GetX();
+			float distY = hateEntryPosition.y - owner->GetY();
+			float distSquared = distX * distX + distY * distY;
+
+			// ignore players father away than 600 distance
+			if (!rememberDistantMobs && distSquared > 360000.0f)
+			{
+				++iterator;
+				continue;
+			}
+
 			if (cur->ent->Sanctuary())
 			{
-				if (hate == -1)
+				if (topHate == -1)
 				{
-					top = cur->ent;
-					hate = 1;
+					topMob = cur->ent;
+					topHate = 1;
 				}
 				++iterator;
 				continue;
@@ -428,27 +485,31 @@ Mob *HateList::GetTop()
 
 			if (cur->ent->DivineAura() || cur->ent->IsMezzed() || (cur->ent->IsFeared() && !cur->ent->IsFleeing()))
 			{
-				if (hate == -1)
+				if (topHate == -1)
 				{
-					top = cur->ent;
-					hate = 0;
+					topMob = cur->ent;
+					topHate = 0;
 				}
 				++iterator;
 				continue;
 			}
 
 			bool combatRange = owner->CombatRange(cur->ent);
-			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange);
+			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange, !firstInRangeBonusApplied, distSquared);
 
-			if (!firstInRangeBonus && combatRange)
+			if (!firstInRangeBonusApplied && combatRange)
 			{
-				firstInRangeBonus = true;
-				currentHate += 35;
+				firstInRangeBonusApplied = true;
+			}
+
+			// favor targets inside 600 distance
+			if (distSquared > 360000.0f)
+			{
+				currentHate = 0;
 			}
 
 			if (cur->ent->IsClient())
 			{
-
 				if (currentHate > hateClientTypeInRange && combatRange)
 				{
 					hateClientTypeInRange = currentHate;
@@ -456,41 +517,46 @@ Mob *HateList::GetTop()
 				}
 			}
 
-			if(currentHate > hate)
+			if (currentHate > topHate)
 			{
-				hate = currentHate;
-				top = cur->ent;
+				topHate = currentHate;
+				topMob = cur->ent;
+
+				if (combatRange)
+				{
+					nobodyInMeleeRange = false;
+				}
 			}
 
 			++iterator;
 		}
 
 		// this is mostly to make sure NPCs attack players instead of pets in melee range
-		if(topClientTypeInRange != nullptr && top != nullptr)
+		if (topClientTypeInRange != nullptr && topMob != nullptr)
 		{
-			bool isTopClientType = top->IsClient();
+			bool isTopClientType = topMob->IsClient();
 
 			if (!isTopClientType)
 			{
-				if (top->GetSpecialAbility(ALLOW_TO_TANK))
+				if (topMob->GetSpecialAbility(ALLOW_TO_TANK))
 				{
 					isTopClientType = true;
-					topClientTypeInRange = top;
+					topClientTypeInRange = topMob;
 				}
 			}
 
 			if(!isTopClientType)
 				return topClientTypeInRange ? topClientTypeInRange : nullptr;
 
-			return top ? top : nullptr;
+			return topMob ? topMob : nullptr;
 		}
 		else
 		{
-			if(top == nullptr && skipped_count > 0)
+			if (topMob == nullptr && skipped_count > 0)
 			{
 				return owner->GetTarget() ? owner->GetTarget() : nullptr;
 			}
-			return top ? top : nullptr;
+			return topMob ? topMob : nullptr;
 		}
 	}	// if (RuleB(Aggro,SmartAggroList))
 	else
@@ -510,38 +576,54 @@ Mob *HateList::GetTop()
 				}
 			}
 
-			if(cur->ent != nullptr && ((cur->hate > hate) || cur->bFrenzy ))
+			if (cur->ent != nullptr && ((cur->hate > topHate) || cur->bFrenzy))
 			{
-				top = cur->ent;
-				hate = cur->hate;
+				topMob = cur->ent;
+				topHate = cur->hate;
 			}
 			++iterator;
 		}
-		if(top == nullptr && skipped_count > 0)
+		if (topMob == nullptr && skipped_count > 0)
 		{
 			return owner->GetTarget() ? owner->GetTarget() : nullptr;
 		}
-		return top ? top : nullptr;
+		return topMob ? topMob : nullptr;
 	}
 	return nullptr;
 }
 
-Mob *HateList::GetMostHate(){
-	Mob* top = nullptr;
-	int32 hate = -1;
+Mob *HateList::GetMostHate(bool includeBonus)
+{
+	Mob* topMob = nullptr;
+	int32 topHate = -1;
+	bool firstInRangeBonusApplied = false;
 
 	auto iterator = list.begin();
 	while(iterator != list.end())
 	{
 		tHateEntry *cur = (*iterator);
-		if(cur->ent != nullptr && (cur->hate > hate))
+		int32 bonus = 0;
+
+		if (includeBonus)
 		{
-			top = cur->ent;
-			hate = cur->hate;
+			bool combatRange = owner->CombatRange(cur->ent);
+
+			bonus = GetHateBonus(cur, combatRange, !firstInRangeBonusApplied);
+
+			if (!firstInRangeBonusApplied && combatRange)
+			{
+				firstInRangeBonusApplied = true;
+			}
+		}
+
+		if(cur->ent != nullptr && ((cur->hate + bonus) > topHate))
+		{
+			topMob = cur->ent;
+			topHate = cur->hate + bonus;
 		}
 		++iterator;
 	}
-	return top;
+	return topMob;
 }
 
 
@@ -567,18 +649,51 @@ Mob *HateList::GetRandom()
 	return (*iterator)->ent;
 }
 
-int32 HateList::GetEntHate(Mob *ent, bool damage)
+int32 HateList::GetEntHate(Mob *ent, bool damage, bool includeBonus)
 {
-	tHateEntry *p;
+	bool firstInRangeBonusApplied = false;
+	bool combatRange;
 
-	p = Find(ent);
+	auto iterator = list.begin();
+	while (iterator != list.end())
+	{
+		tHateEntry *p = (*iterator);
 
-	if ( p && damage)
-		return p->damage;
-	else if (p)
-		return p->hate;
-	else
-		return 0;
+		if (!p)
+		{
+			++iterator;
+			continue;
+		}
+		
+		if (!damage && includeBonus)
+		{
+			combatRange = owner->CombatRange(p->ent);
+
+			if (!firstInRangeBonusApplied && combatRange)
+			{
+				firstInRangeBonusApplied = true;
+			}
+		}
+
+		if (p->ent == ent)
+		{
+			if (damage)
+			{
+				return p->damage;
+			}
+
+			if (includeBonus)
+			{
+				return (p->hate + GetHateBonus(p, combatRange, !firstInRangeBonusApplied));
+			}
+			else
+			{
+				return p->hate;
+			}
+		}
+		++iterator;
+	}
+	return 0;
 }
 
 //looking for any mob with hate > -1
@@ -591,31 +706,35 @@ void HateList::PrintToClient(Client *c)
 {
 	int32 bonusHate = 0;
 	auto iterator = list.begin();
-	bool firstInRangeBonus = false;
+	bool firstInRangeBonusApplied = false;
 
 	while (iterator != list.end())
 	{
 		tHateEntry *e = (*iterator);
+		uint32 timer = e->timer.GetDuration() - e->timer.GetRemainingTime();
+		if (timer > 0)
+		{
+			timer /= 1000;
+		}
 		bool combatRange = owner->CombatRange(e->ent);
 
-		bonusHate = GetHateBonus(e, combatRange);
-		if (!firstInRangeBonus && combatRange)
+		bonusHate = GetHateBonus(e, combatRange, !firstInRangeBonusApplied);
+		if (!firstInRangeBonusApplied && combatRange)
 		{
-			firstInRangeBonus = true;
-			bonusHate += 35;
+			firstInRangeBonusApplied = true;
 		}
 
 		if (bonusHate > 0)
 		{
-			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d (+%i)",
+			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d (+%i)",
 				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-				e->damage, e->hate, bonusHate);
+				timer, e->damage, e->hate, bonusHate);
 		}
 		else
 		{
-			c->Message(CC_Default, "- name: %s, damage: %d, hate: %d",
+			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d",
 				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-				e->damage, e->hate);
+				timer, e->damage, e->hate);
 		}
 
 		++iterator;
@@ -700,4 +819,3 @@ void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_cent
 		iter++;
 	}
 }
-

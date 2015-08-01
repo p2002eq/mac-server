@@ -908,5 +908,6 @@ int32 GetFuriousBash(uint16 spell_id);
 bool IsShortDurationBuff(uint16 spell_id);
 bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
+bool IsRainSpell(uint16 spell_id);
 
 #endif

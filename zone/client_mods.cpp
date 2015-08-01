@@ -937,8 +937,9 @@ int32 Client::CalcMaxMana()
 	if (cur_mana > max_mana) {
 		cur_mana = max_mana;
 	}
-
-	Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	#endif
 	return max_mana;
 }
 

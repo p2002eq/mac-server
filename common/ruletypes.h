@@ -151,7 +151,6 @@ RULE_BOOL ( World, GMAccountIPList, false) // Check ip list against GM Accounts,
 RULE_INT ( World, MinGMAntiHackStatus, 1 ) //Minimum GM status to check against AntiHack list
 RULE_INT ( World, SoFStartZoneID, -1 ) //Sets the Starting Zone for SoF Clients separate from Titanium Clients (-1 is disabled)
 RULE_INT ( World, PVPSettings, 0) // Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.
-RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
 RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
 RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_INT (World, TellQueueSize, 20) 
@@ -453,7 +452,6 @@ RULE_BOOL ( Aggro, SmartAggroList, true )
 RULE_INT ( Aggro, SpellAggroMod, 100 )
 RULE_INT ( Aggro, PetSpellAggroMod, 10 )
 RULE_REAL ( Aggro, TunnelVisionAggroMod, 0.75 ) //people not currently the top hate generate this much hate on a Tunnel Vision mob
-RULE_INT ( Aggro, MaxStunProcAggro, 400 ) // Set to -1 for no limit. Maxmimum amount of aggro that a stun based proc will add.
 RULE_INT ( Aggro, IntAggroThreshold, 75 ) // Int <= this will aggro regardless of level difference.
 RULE_BOOL ( Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardless of level difference. (this will disabled Rule:IntAggroThreshold if set to true)
 RULE_CATEGORY_END()
@@ -491,7 +489,6 @@ RULE_BOOL ( Bazaar, EnableWarpToTrader, true)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Mail )
-RULE_BOOL ( Mail, EnableMailSystem, true) // If false, client won't bring up the Mail window.
 RULE_INT ( Mail, ExpireTrash, 0) // Time in seconds. 0 will delete all messages in the trash when the mailserver starts
 RULE_INT ( Mail, ExpireRead, 31536000 ) // 1 Year. Set to -1 for never
 RULE_INT ( Mail, ExpireUnread, 31536000 ) // 1 Year. Set to -1 for never
@@ -533,7 +530,7 @@ RULE_BOOL( QueryServ, PlayerLogConnectDisconnect, false) // Logs Player Connect 
 RULE_BOOL( QueryServ, PlayerLogLevels, false) // Logs Player Leveling/Deleveling
 RULE_BOOL( QueryServ, PlayerLogAARate, false) // Logs Player AA Experience Rates 
 RULE_BOOL( QueryServ, PlayerLogQGlobalUpdate, false) // Logs Player QGlobal Updates
-RULE_BOOL( QueryServ, PlayerLogTaskUpdates, false) // Logs Player Task Updates
+RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring additions
 RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
