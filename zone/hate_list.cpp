@@ -281,7 +281,11 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 		}
 
 	}
-	p->timer.Start(600000);
+
+	if (p)
+	{
+		p->timer.Start(600000);
+	}
 }
 
 bool HateList::RemoveEnt(Mob *ent)
