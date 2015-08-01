@@ -460,9 +460,12 @@ Mob *HateList::GetTop()
 			float distX = hateEntryPosition.x - owner->GetX();
 			float distY = hateEntryPosition.y - owner->GetY();
 			float distSquared = distX * distX + distY * distY;
+			float distance = 0.0f;
+			if(owner->IsNPC())
+				distance = owner->CastToNPC()->GetIgnoreDistance();
 
-			// ignore players father away than 600 distance
-			if (!rememberDistantMobs && distSquared > 360000.0f)
+			// ignore players farther away than distance specified in the database.
+			if (!rememberDistantMobs && distance > 0 && distSquared > distance*distance)
 			{
 				++iterator;
 				continue;
