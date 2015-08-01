@@ -1510,7 +1510,7 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 		time(nullptr)						  // last_login
 		);
 	auto join_results = QueryDatabase(join_query);
-	Log.Out(Logs::Detail, Logs::Debug, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
+	Log.Out(Logs::Detail, Logs::Character, "CharacterJoin should have wrote to database for %s with ID %i at %i and last_seen should be zero.", char_name, char_id, time(nullptr));
 
 	if (!join_results.Success()){
 		return false;
@@ -1521,12 +1521,12 @@ bool Database::CharacterJoin(uint32 char_id, char* char_name) {
 bool Database::CharacterQuit(uint32 char_id) {
 	std::string query = StringFormat("UPDATE `webdata_character` SET `last_seen`='%i' WHERE `id` = '%i'", time(nullptr), char_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
+	
 	if (!results.Success()){
 		Log.Out(Logs::Detail, Logs::Debug, "Error updating character_data table from CharacterQuit.");
 		return false;
 	}
-	Log.Out(Logs::Detail, Logs::Debug, "CharacterQuit should have wrote to database for %i...", char_id);
+	Log.Out(Logs::Detail, Logs::Character, "CharacterQuit should have wrote to database for %i at %i", char_id, time(nullptr));
 	return true;
 }
 
