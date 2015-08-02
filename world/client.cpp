@@ -105,19 +105,23 @@ void Client::SendLogServer()
 {
 	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
 	LogServer_Struct *l=(LogServer_Struct *)outapp->pBuffer;
-	const char *wsn=WorldConfig::get()->ShortName.c_str();
-	memcpy(l->worldshortname,wsn,strlen(wsn));
-
-	if(RuleB(Mail, EnableMailSystem))
-		l->enablemail = 1;
-
-	l->enable_pvp = (RuleI(World, PVPSettings));
-
-	if(RuleB(World, IsGMPetitionWindowEnabled))
-		l->enable_petition_wnd = 1;
 
 	if(RuleI(World, FVNoDropFlag) == 1 || RuleI(World, FVNoDropFlag) == 2 && GetAdmin() > RuleI(Character, MinStatusForNoDropExemptions))
 		l->enable_FV = 1;
+
+	l->enable_pvp = (RuleI(World, PVPSettings));
+
+	l->auto_identify = 0;
+	l->NameGen = 1;
+	l->Gibberish = 1;
+	l->test_server = 0;
+	l->Locale = 0;
+	l->ProfanityFilter = 0;
+
+	const char *wsn=WorldConfig::get()->ShortName.c_str();
+	memcpy(l->worldshortname,wsn,strlen(wsn));
+	memcpy(l->loggingServerAddress, "127.0.0.1", 16);
+	l->loggingServerPort = 9878;
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -248,11 +252,10 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		//if (!pZoning && ClientVersionBit != 0)
-			//SendGuildList();
-			SendLogServer();
-			SendApproveWorld();
-			SendEnterWorld(cle->name());
+		SendLogServer();
+		SendApproveWorld();
+		SendEnterWorld(cle->name());
+
 		if (!pZoning) {
 			SendExpansionInfo();
 			SendCharInfo();
@@ -564,9 +567,17 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 
 	uint32 char_acct_id = database.GetAccountIDByChar((char*)app->pBuffer);
+	uint32 level = database.GetLevelByChar((char*)app->pBuffer);
 	if(char_acct_id == GetAccountID()) {
 		Log.Out(Logs::Detail, Logs::World_Server,"Delete character: %s",app->pBuffer);
-		database.DeleteCharacter((char *)app->pBuffer);
+		if(level >= 30)
+		{
+			database.MarkCharacterDeleted((char *)app->pBuffer);
+		}
+		else
+		{
+			database.DeleteCharacter((char *)app->pBuffer);
+		}
 		SendCharInfo();
 	}
 
@@ -856,30 +867,39 @@ void Client::Clearance(int8 response)
 		return;
 	}
 
-	// @bp This is the chat server
-	/*
-	char packetData[] = "64.37.148.34.9876,MyServer,Testchar,23cd2c95";
-	outapp = new EQApplicationPacket(OP_0x0282, sizeof(packetData));
-	strcpy((char*)outapp->pBuffer, packetData);
-	QueuePacket(outapp);
-	delete outapp;
-	*/
-
 	// Send zone server IP data
 	outapp = new EQApplicationPacket(OP_ZoneServerInfo, sizeof(ZoneServerInfo_Struct));
 	ZoneServerInfo_Struct* zsi = (ZoneServerInfo_Struct*)outapp->pBuffer;
-	const char *zs_addr=zs->GetCAddress();
-	if (!zs_addr[0]) {
-		if (cle->IsLocalClient()) {
+
+	const char *zs_addr = nullptr;
+	if(cle && cle->IsLocalClient()) {
+		const char *local_addr = zs->GetCLocalAddress();
+
+		if(local_addr[0]) {
+			zs_addr = local_addr;
+		} else {
 			struct in_addr in;
 			in.s_addr = zs->GetIP();
-			zs_addr=inet_ntoa(in);
-			if (!strcmp(zs_addr,"127.0.0.1"))
-				zs_addr=WorldConfig::get()->LocalAddress.c_str();
+			zs_addr = inet_ntoa(in);
+
+			if(strcmp(zs_addr, "127.0.0.1") == 0)
+			{
+				Log.Out(Logs::Detail, Logs::World_Server, "Local zone address was %s, setting local address to: %s", zs_addr, WorldConfig::get()->LocalAddress.c_str());
+				zs_addr = WorldConfig::get()->LocalAddress.c_str();
+			} else {
+				Log.Out(Logs::Detail, Logs::World_Server, "Local zone address %s", zs_addr);
+			}
+		}
+
+	} else {
+		const char *addr = zs->GetCAddress();
+		if(addr[0]) {
+			zs_addr = addr;
 		} else {
-			zs_addr=WorldConfig::get()->WorldAddress.c_str();
+			zs_addr = WorldConfig::get()->WorldAddress.c_str();
 		}
 	}
+
 	strcpy(zsi->ip, zs_addr);
 	zsi->port =zs->GetCPort();
 	Log.Out(Logs::Detail, Logs::World_Server,"Sending client to zone %s (%d:%d) at %s:%d",zonename,zoneID,instanceID,zsi->ip,zsi->port);
@@ -927,16 +947,15 @@ void Client::SendGuildList() {
 	outapp = new EQApplicationPacket(OP_GuildsList);
 
 	//ask the guild manager to build us a nice guild list packet
-	OldGuildsList_Struct* guildstruct = guild_mgr.MakeOldGuildList(outapp->size);
-	outapp->pBuffer = reinterpret_cast<uchar*>(guildstruct);
-	//safe_delete_array(guildstruct);
-
+	outapp->pBuffer = guild_mgr.MakeOldGuildList(outapp->size);
 	if(outapp->pBuffer == nullptr) {
-		safe_delete(outapp);
+		Log.Out(Logs::Detail, Logs::Guilds, "Unable to make guild list!");
 		return;
 	}
 
-	eqs->FastQueuePacket((EQApplicationPacket **)&outapp);
+	Log.Out(Logs::Detail, Logs::Guilds, "Sending OP_GuildsList of length %d", outapp->size);
+
+	eqs->FastQueuePacket(&outapp);
 }
 
 // @merth: I have no idea what this struct is for, so it's hardcoded for now

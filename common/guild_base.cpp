@@ -401,26 +401,6 @@ bool BaseGuildManager::SetGuildMOTD(uint32 guild_id, const char* motd, const cha
 	return(true);
 }
 
-bool BaseGuildManager::SetGuildURL(uint32 GuildID, const char* URL)
-{
-	if(!DBSetGuildURL(GuildID, URL))
-		return(false);
-
-	SendGuildRefresh(GuildID, false, true, false, false);
-
-	return(true);
-}
-
-bool BaseGuildManager::SetGuildChannel(uint32 GuildID, const char* Channel)
-{
-	if(!DBSetGuildChannel(GuildID, Channel))
-		return(false);
-
-	SendGuildRefresh(GuildID, false, true, false, false);
-
-	return(true);
-}
-
 bool BaseGuildManager::SetGuild(uint32 charid, uint32 guild_id, uint8 rank) {
 	if(rank > GUILD_MAX_RANK && guild_id != GUILD_NONE)
 		return(false);
@@ -963,35 +943,7 @@ bool BaseGuildManager::GetCharInfo(uint32 char_id, CharGuildInfo &into) {
 
 }
 
-//returns ownership of the buffer.
-uint8 *BaseGuildManager::MakeGuildList(const char *head_name, uint32 &length) const {
-	//dynamic structs will make this a lot less painful.
-
-	length = sizeof(GuildsList_Struct);
-	uint8 *buffer = new uint8[length];
-
-	//a bit little better than memsetting the whole thing...
-	uint32 r,pos;
-	for(r = 0, pos = 0; r <= RuleI(Guild, MaxGuilds); r++, pos += 64) {
-		//strcpy((char *) buffer+pos, "BAD GUILD");
-		// These 'BAD GUILD' entries were showing in the drop-downs for selecting guilds in the LFP window,
-		// so just fill unused entries with an empty string instead.
-		buffer[pos] = '\0';
-	}
-
-	strn0cpy((char *) buffer, head_name, 64);
-
-	std::map<uint32, GuildInfo *>::const_iterator cur, end;
-	cur = m_guilds.begin();
-	end = m_guilds.end();
-	for(; cur != end; ++cur) {
-		pos = 64 + (64 * cur->first);
-		strn0cpy((char *) buffer + pos, cur->second->name.c_str(), 64);
-	}
-	return(buffer);
-}
-
-struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) const {
+unsigned char *BaseGuildManager::MakeOldGuildList(uint32 &length) const {
 
 	int32 size = 4;
 	OldGuildsList_Struct* gl = new struct OldGuildsList_Struct;
@@ -1017,7 +969,12 @@ struct OldGuildsList_Struct *BaseGuildManager::MakeOldGuildList(uint32 &length) 
 		size += sizeof(OldGuildsListEntry_Struct);
 	}
 	length = size;
-	return(gl);
+
+	unsigned char *buffer = new uint8[length];
+	memcpy(buffer, gl, length);
+	safe_delete(gl);
+
+	return(buffer);
 }
 
 const char *BaseGuildManager::GetRankName(uint32 guild_id, uint8 rank) const {

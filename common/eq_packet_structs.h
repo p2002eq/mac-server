@@ -589,6 +589,14 @@ struct SuspendedMinion_Struct
 	/*610*/
 };
 
+struct OldItemProperties_Struct
+{
+
+	/*000*/	uint8	unknown01[2];
+	/*002*/	int8	charges;				// Comment: signed int because unlimited charges are -1
+	/*003*/	uint8	unknown02[7];
+	/*010*/
+};
 
 /*
 ** Player Profile
@@ -703,11 +711,19 @@ struct PlayerProfile_Struct
 /*12800*/	uint32				expAA;
 /*12804*/	uint32				aapoints;			//avaliable, unspent
 /*12808*/	uint8				perAA;				//For Mac
-/*14124*/	uint32				ATR_PET_LOH_timer;
-			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
 			uint8				fatigue;
+			int16				inventory[30];
+			struct  OldItemProperties_Struct	invItemProperties[30];
+			int16				containerinv[80];
+			struct  OldItemProperties_Struct	bagItemProperties[80];
+			int16				cursorbaginventory[10];
+			struct  OldItemProperties_Struct	cursorItemProperties[10];
+			int16				bank_inv[8];
+			struct  OldItemProperties_Struct	bankinvitemproperties[8];
+			int16				bank_cont_inv[80];
+			struct  OldItemProperties_Struct	bankbagitemproperties[80];
 /*19568*/
 };
 
@@ -1948,31 +1964,24 @@ struct sPickPocket_Struct {
 	char itemname[64];
 };
 
-struct LogServer_Struct {
-// Op_Code OP_LOGSERVER
-/*000*/	uint32	unknown000;
-/*004*/	uint8	enable_pvp;
-/*005*/	uint8	unknown005;
-/*006*/	uint8	unknown006;
-/*007*/	uint8	unknown007;
-/*008*/	uint8	enable_FV;
-/*009*/	uint8	unknown009;
-/*010*/	uint8	unknown010;
-/*011*/	uint8	unknown011;
-/*012*/	uint32	unknown012;	// htonl(1) on live
-/*016*/	uint32	unknown016;	// htonl(1) on live
-/*020*/	uint8	unknown020[12];
-/*032*/	char	worldshortname[32];
-/*064*/	uint8	unknown064[32];
-/*096*/	char	unknown096[16];	// 'pacman' on live
-/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-/*126*/	uint8	unknown128[48];
-/*176*/	uint32	unknown176;	// htonl(0x00002695)
-/*180*/	char	unknown180[80];	// 'eqdataexceptions@mail.station.sony.com' on live
-/*260*/	uint8	enable_petition_wnd;
-/*261*/	uint8	enablevoicemacros;
-/*262*/	uint8	enablemail;
-/*264*/
+struct LogServer_Struct
+{
+	/*000*/	uint32	enable_FV; //Is FV ruleset?
+	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
+	/*008*/	uint32	auto_identify; //Dunno, keep 0
+	/*012*/	uint32	NameGen;	// Name generator enabled?
+	/*016*/	uint32	Gibberish;
+	/*020*/	uint32	test_server;
+	/*024*/	uint32	Locale;
+	/*028*/	uint32	ProfanityFilter;
+	/*032*/	char	worldshortname[32]; //ServerName on disasm
+	/*064*/	uint8	loggingServerPassword[32]; //  loggingServerPassword
+	/*096*/	char	unknown096[16];	// 'pacman' on live
+	/*112*/	char	loggingServerAddress[16];	// '64.37,148,36' on live
+	/*126*/	uint8	unknown128[48];
+	/*176*/	uint32	loggingServerPort;
+	/*180*/	char	localizedEmailAddress[64];	// 'eqdataexceptions@mail.station.sony.com' on live
+	/*244*/
 };
 
 struct ApproveWorld_Struct {

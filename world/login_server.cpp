@@ -210,7 +210,6 @@ bool LoginServer::InitLoginServer() {
 }
 
 bool LoginServer::Connect() {
-	char tmp[25];
 
 	char errbuf[TCPConnection_ErrorBufferSize];
 	if ((LoginServerIP = ResolveIP(LoginServerAddress, errbuf)) == 0) {
@@ -298,9 +297,9 @@ void LoginServer::SendStatus() {
 	if (WorldConfig::get()->Locked)
 		lss->status = -2;
 	else if (numzones <= 0)
-		lss->status = -2;
+		lss->status = -1;
 	else
-		lss->status = numplayers;
+		lss->status = numplayers > 0 ? numplayers : 0;
 
 	lss->num_zones = numzones;
 	lss->num_players = numplayers;

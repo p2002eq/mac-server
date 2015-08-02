@@ -215,6 +215,7 @@ Client::Client(EQStreamInterface* ieqs)
 	UpdateWindowTitle();
 	horseId = 0;
 	tgb = false;
+	keyring.clear();
 	bind_sight_target = nullptr;
 	logging_enabled = CLIENT_DEFAULT_LOGGING_ENABLED;
 
@@ -2864,7 +2865,7 @@ void Client::Sacrifice(Client *caster)
 			app.priority = 6;
 			entity_list.QueueClients(this, &app);
 
-			BuffFadeAll(true);
+			BuffFadeAll();
 			UnmemSpellAll();
 			Group *g = GetGroup();
 			if(g){
@@ -4227,11 +4228,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 	int32 faction_id[MAX_NPC_FACTIONS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int32 npc_value[MAX_NPC_FACTIONS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	uint8 temp[MAX_NPC_FACTIONS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	int32 mod;
-	int32 tmpValue;
 	int32 current_value;
-	FactionMods fm;
-	bool change = false;
 	bool repair = false;
 
 	// Get the npc faction list
@@ -4239,89 +4236,94 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		return;
 	for (int i = 0; i < MAX_NPC_FACTIONS; i++)
 	{
+		int32 faction_before_hit;
+		int32 faction_to_use_for_messaging;
+		FactionMods fm;
+		int32 this_faction_max;
+		int32 this_faction_min;
+
 		if (faction_id[i] <= 0)
 			continue;
 
-		// Get the faction modifiers
-		if (database.GetFactionData(&fm, char_class, char_race, char_deity, faction_id[i]))
+		// Find out starting faction for this faction
+		// It needs to be used to adj max and min personal
+		// The range is still the same, 1200-3000(4200), but adjusted for base
+		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(),
+			faction_id[i]);
+
+		if (quest)
 		{
-			// Get the characters current value with that faction
-			current_value = GetCharacterFactionLevel(faction_id[i]);
-
-			if (quest)
-			{
-				//The ole switcheroo
-				if (npc_value[i] > 0)
-					npc_value[i] = -abs(npc_value[i]);
-				else if (npc_value[i] < 0)
-					npc_value[i] = abs(npc_value[i]);
-			}
-
-			if (this->itembonuses.HeroicCHA)
-			{
-				int faction_mod = itembonuses.HeroicCHA / 5;
-				// If our result isn't truncated, then just do that
-				if (npc_value[i] * faction_mod / 100 != 0)
-					npc_value[i] += npc_value[i] * faction_mod / 100;
-				// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
-				else
-				{
-					if (zone->random.Int(0, 100) < faction_mod)
-						npc_value[i] *= 2;
-				}
-			}
-			// Set flag when to update db
-			if (!quest)
-			{
-				if (current_value > MAX_PERSONAL_FACTION)
-				{
-					current_value = MAX_PERSONAL_FACTION;
-					repair = true;
-				}
-				else if (current_value < MIN_PERSONAL_FACTION)
-				{
-					current_value = MIN_PERSONAL_FACTION;
-					repair = true;
-				}
-				else if ((m_pp.gm != 1) && (npc_value[i] != 0) && ((current_value != MAX_PERSONAL_FACTION) || (current_value != MIN_PERSONAL_FACTION)))
-					change = true;
-			}
-
-			current_value += npc_value[i];
-
-			if (current_value > MAX_PERSONAL_FACTION)
-				current_value = MAX_PERSONAL_FACTION;
-			else if (current_value < MIN_PERSONAL_FACTION)
-				current_value = MIN_PERSONAL_FACTION;
-
-			if (change || repair)
-			{
-				database.SetCharacterFactionLevel(char_id, faction_id[i], current_value, temp[i], factionvalues);
-
-				if (change)
-				{
-					mod = fm.base + fm.class_mod + fm.race_mod + fm.deity_mod;
-					tmpValue = current_value + mod + npc_value[i];
-					SendFactionMessage(npc_value[i], faction_id[i], tmpValue, temp[i]);
-				}
-			}
+			//The ole switcheroo
+			if (npc_value[i] > 0)
+				npc_value[i] = -abs(npc_value[i]);
+			else if (npc_value[i] < 0)
+				npc_value[i] = abs(npc_value[i]);
 		}
+
+		// Adjust the amount you can go up or down so the resulting range
+		// is PERSONAL_MAX - PERSONAL_MIN
+		//
+		// Adjust these values for cases where starting faction is below
+		// min or above max by not allowing any earn in those directions.
+		this_faction_min = MIN_PERSONAL_FACTION - fm.base;
+		this_faction_min = std::min(0, this_faction_min);
+		this_faction_max = MAX_PERSONAL_FACTION - fm.base;
+		this_faction_max = std::max(0, this_faction_max);
+
+		// Get the characters current value with that faction
+		current_value = GetCharacterFactionLevel(faction_id[i]);
+		faction_before_hit = current_value;
+
+		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
+
+		Log.Out(Logs::General, Logs::Faction, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
+
+		SendFactionMessage(npc_value[i], faction_id[i], faction_before_hit, current_value, temp[i], this_faction_min, this_faction_max);
 	}
+
 	return;
 }
 
 void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp)
 {
 	int32 current_value;
+
 	//Get the npc faction list
 	if(faction_id > 0 && value != 0) {
-		//Get the faction modifiers
-		current_value = GetCharacterFactionLevel(faction_id) + value;
-		if(!(database.SetCharacterFactionLevel(char_id, faction_id, current_value, temp, factionvalues)))
-			return;
+		int32 faction_before_hit;
+		FactionMods fm;
+		int32 this_faction_max;
+		int32 this_faction_min;
 
-		SendFactionMessage(value, faction_id, current_value, temp);
+		// Find out starting faction for this faction
+		// It needs to be used to adj max and min personal
+		// The range is still the same, 1200-3000(4200), but adjusted for base
+		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(), 
+			faction_id);
+
+		// Adjust the amount you can go up or down so the resulting range
+		// is PERSONAL_MAX - PERSONAL_MIN
+		//
+		// Adjust these values for cases where starting faction is below
+		// min or above max by not allowing any earn/loss in those directions.
+		// At least one faction starts out way below min, so we don't want
+		// to allow loses in those cases, just massive gains.
+		this_faction_min = MIN_PERSONAL_FACTION - fm.base;
+		this_faction_min = std::min(0, this_faction_min);
+		this_faction_max = MAX_PERSONAL_FACTION - fm.base;
+		this_faction_max = std::max(0, this_faction_max);
+
+		//Get the faction modifiers
+		current_value = GetCharacterFactionLevel(faction_id);
+		faction_before_hit = current_value;
+
+		UpdatePersonalFaction(char_id, value, faction_id, &current_value, temp, this_faction_min, this_faction_max);
+
+		Log.Out(Logs::General, Logs::Faction, "Min(%d) Max(%d) Before(%d), After(%d)\n", this_faction_min, this_faction_max, faction_before_hit, current_value);
+
+		SendFactionMessage(value, faction_id, faction_before_hit, current_value, temp, this_faction_min, this_faction_max);
 	}
+
 	return;
 }
 
@@ -4337,6 +4339,63 @@ int32 Client::GetCharacterFactionLevel(int32 faction_id)
 	if (res == factionvalues.end())
 		return 0;
 	return res->second;
+}
+
+// Common code to set faction level.
+// Applies HeroicCHA is it applies
+// Checks for bottom out and max faction and old faction db entries
+// Updates the faction if we are not minned, maxed or we need to repair
+
+void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction_id, int32 *current_value, int32 temp, int32 this_faction_min, int32 this_faction_max)
+{
+	bool repair = false;
+	bool change = false;
+
+	if (this->itembonuses.HeroicCHA)
+	{
+		int faction_mod = itembonuses.HeroicCHA / 5;
+		// If our result isn't truncated, then just do that
+		if (npc_value * faction_mod / 100 != 0)
+			npc_value += npc_value * faction_mod / 100;
+		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
+		else
+		{
+			if (zone->random.Int(0, 100) < faction_mod)
+				npc_value *= 2;
+		}
+	}
+
+	// Set flag when to update db
+	// Repair needed, as db changes could modify a base value for a faction
+	// and we need to auto correct when that happens.
+	if (*current_value > this_faction_max)
+	{
+		*current_value = this_faction_max;
+		repair = true;
+	}
+	else if (*current_value < this_faction_min)
+	{
+		*current_value = this_faction_min;
+		repair = true;
+	}
+	else if ((m_pp.gm != 1) && (npc_value != 0) &&
+		((npc_value > 0 && *current_value != this_faction_max) ||
+		((npc_value < 0 && *current_value != this_faction_min))))
+		change = true;
+
+	if (change || repair)
+	{
+		*current_value += npc_value;
+
+		if (*current_value > this_faction_max)
+			*current_value = this_faction_max;
+		else if (*current_value < this_faction_min)
+			*current_value = this_faction_min;
+
+		database.SetCharacterFactionLevel(char_id, faction_id, *current_value, temp, factionvalues);
+	}
+
+return;
 }
 
 // returns the character's faction level, adjusted for racial, class, and deity modifiers
@@ -4428,40 +4487,55 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 //o--------------------------------------------------------------
 //| Purpose: Send faction change message to client
 //o--------------------------------------------------------------
-void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalvalue, uint8 temp)
+void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp, int32 this_faction_min, int32 this_faction_max)
 {
 	char name[50];
+	int32 faction_value;
+
+	// If we're dropping from MAX or raising from MIN or repairing, 
+	// we should base the message on the new updated value so we don't show
+	// a min MAX message
+	//
+	// If we're changing any other place, we use the value before the
+	// hit.  For example, if we go from 1199 to 1200 which is the MAX
+	// we still want to say faction got better this time around.
+	
+	if ( (faction_before_hit >= this_faction_max) ||
+	     (faction_before_hit <= this_faction_min))
+		faction_value = totalvalue;
+	else
+		faction_value = faction_before_hit;
 
 	// default to Faction# if we couldn't get the name from the ID
 	if (database.GetFactionName(faction_id, name, sizeof(name)) == false)
 		snprintf(name, sizeof(name), "Faction%i", faction_id);
 
-	//We need to get total faction here, including racial, class, and deity modifiers.
-	int32 fac = GetModCharacterFactionLevel(faction_id) + tmpvalue;
-	totalvalue = fac;
-
 	bool gained = true;
 	if (tmpvalue == 0 || temp == 1 || temp == 2)
 		return;
-	else if (totalvalue >= MAX_PERSONAL_FACTION)
+	else if (faction_value >= this_faction_max)
 		Message_StringID(CC_Default, FACTION_BEST, name);
-	else if (tmpvalue > 0 && totalvalue < MAX_PERSONAL_FACTION)
-		Message_StringID(CC_Default, FACTION_BETTER, name);
-	else if (tmpvalue < 0 && totalvalue > MIN_PERSONAL_FACTION)
-	{
-		gained = false;
-		Message_StringID(CC_Default, FACTION_WORSE, name);
-	}
-	else if (totalvalue <= MIN_PERSONAL_FACTION)
+	else if (faction_value <= this_faction_min)
 	{
 		gained = false;
 		Message_StringID(CC_Default, FACTION_WORST, name);
 	}
+	else if (tmpvalue > 0 && faction_value < this_faction_max)
+		Message_StringID(CC_Default, FACTION_BETTER, name);
+	else if (tmpvalue < 0 && faction_value > this_faction_min)
+	{
+		gained = false;
+		Message_StringID(CC_Default, FACTION_WORSE, name);
+	}
 
+	//We need to get total faction here, including racial, class, and deity modifiers.
+	int32 total = GetModCharacterFactionLevel(faction_id);
+	int32 new_value = faction_value + tmpvalue;
 	std::string type = "gained";
+
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d", type.c_str(), tmpvalue, name, totalvalue);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, total, new_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
@@ -4898,3 +4972,170 @@ bool Client::WaterFamished()
 	return false;
 }
 
+void Client::SendClientVersion()
+{
+	if(GetClientVersion() == EQClientMac)
+	{
+		std::string string("Mac");
+		std::string type;
+		if(GetClientVersionBit() == BIT_MacIntel)
+			type = "Intel";
+		else if(GetClientVersionBit() == BIT_MacPPC)
+			type = "PowerPC";
+		else if(GetClientVersionBit() == BIT_MacPC)
+			type = "PC";
+		else
+			type = "Invalid";
+
+		if(GetGM())
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i). Your client type is: %s.", string.c_str(), GetClientVersion(), type.c_str());
+		else
+			Log.Out(Logs::Detail, Logs::Debug, "%s: Client version is: %s. The client type is: %s.", GetName(), string.c_str(), type.c_str());
+
+	}
+	else
+	{
+		std::string string;
+		if(GetClientVersion() == EQClientEvolution)
+			string = "Evolution";
+		if(GetClientVersion() == EQClientUnused)
+			string = "Unused";
+		else
+			string = "Unknown";
+
+		if(GetGM())
+			Message(CC_Yellow, "[GM Debug] Your client version is: %s (%i).", string.c_str(), GetClientVersion());	
+		else
+			Log.Out(Logs::Detail, Logs::Debug, "%s: Client version is: %s.", GetName(), string.c_str());
+	}
+}
+
+void Client::FixClientXP()
+{
+	//This is only necessary when the XP formula changes. However, it should be left for toons that have not been converted.
+
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		if(Admin() == 0 && level > 1)
+		{
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+			SetEXP(totalrequiredxp, currentaa);
+			Save();
+			Kick();
+		}
+		else if(Admin() > 0 && level > 1)
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+	}
+}
+
+void Client::KeyRingLoad()
+{
+	std::string query = StringFormat("SELECT item_id FROM character_keyring "
+									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		return;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row)
+		keyring.push_back(atoi(row[0]));
+
+}
+
+void Client::KeyRingAdd(uint32 item_id)
+{
+	if(0==item_id)
+		return;
+
+	bool found = KeyRingCheck(item_id);
+	if (found)
+		return;
+
+	std::string query = StringFormat("INSERT INTO character_keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		return;
+	}
+
+	if(Admin() >= 10)
+		Message(CC_Blue,"Added to keyring.");
+
+	keyring.push_back(item_id);
+}
+
+bool Client::KeyRingCheck(uint32 item_id)
+{
+	for(std::list<uint32>::iterator iter = keyring.begin();
+		iter != keyring.end();
+		++iter)
+	{
+		if(*iter == item_id)
+			return true;
+	}
+	return false;
+}
+
+void Client::KeyRingList(Client* notifier)
+{
+	notifier->Message(CC_Default,"Keys on %s's Keyring:", GetName());
+	const Item_Struct *item = 0;
+	for(std::list<uint32>::iterator iter = keyring.begin();
+		iter != keyring.end();
+		++iter)
+	{
+		if ((item = database.GetItem(*iter))!=nullptr) {
+			notifier->Message(CC_Default,item->Name);
+		}
+	}
+}
+
+void Client::ZoneFlagList(Client* notifier)
+{
+	// Todo: Figure out how to get the client to spit these messages out for us.
+	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
+	iterator.Reset();
+	while (iterator.MoreElements())
+	{
+		ZoneFlags_Struct* zfs = iterator.GetData();
+		uint32 zoneid = zfs->zoneid;
+		uint8 key = zfs->key;
+
+		const char *short_name = database.GetZoneName(zoneid);
+
+		float safe_x, safe_y, safe_z;
+		int16 minstatus = 0;
+		uint8 minlevel = 0;
+		char flag_name[128];
+		// Unfortunately, we have to hit the DB here. We can't assume the target zone will be booted to check its zone_data.
+		if(database.GetSafePoints(short_name, 0, &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_name)) 
+		{
+			if(zoneid == vexthal)
+			{
+				if(key == 0 || key == 1)
+					notifier->Message(CC_Yellow, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					notifier->Message(CC_Yellow, "North Tower Key (Vex Thal)"); //Flag within the zone.
+			}
+			if(zoneid == ssratemple)
+				notifier->Message(CC_Yellow, "Ring of the Shissar"); //Flag within the zone.
+			if(zoneid == frozenshadow)
+				notifier->Message(CC_Yellow, "Tower of Frozen Shadows: %d", key); //Flag within the zone.
+			if(zoneid == bothunder)
+			{
+				if(key == 0 || key == 1)
+					notifier->Message(CC_Yellow, "%s", flag_name); //Flag to enter zone.
+				if(key == 1)
+					notifier->Message(CC_Yellow, "Enchanted Ring of Torden"); //Flag within the zone.
+			}
+			else
+				notifier->Message(CC_Yellow, "%s", flag_name); //All other flags
+		}
+
+		iterator.Advance();
+	}
+}

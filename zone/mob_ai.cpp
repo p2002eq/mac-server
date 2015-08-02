@@ -766,12 +766,12 @@ void Client::AI_Process()
 	{
 		if(ow)
 		{
-			if(ow->IsEngaged())
+			if(ow->IsEngaged() && ow->HasPrimaryAggro())
 			{
 				Mob *tar = ow->GetTarget();
 				if(tar)
 				{
-					AddToHateList(tar, 1, 0, false);
+					AddToHateList(tar, 1, 0, false); // This is a pet, don't yell for help.
 				}
 			}
 		}
@@ -1212,13 +1212,14 @@ void Mob::AI_Process() {
 			SetTarget(hate_list.GetClosest(this));
 		else
 		{
-			if(AItarget_check_timer->Check())
+			if (AItarget_check_timer->Check())
 			{
 				if (IsFocused()) {
 					if (!target) {
 						SetTarget(hate_list.GetTop());
 					}
-				} else {
+				}
+				else {
 					if (!ImprovedTaunt())
 						SetTarget(hate_list.GetTop());
 				}
@@ -1231,10 +1232,10 @@ void Mob::AI_Process() {
 			CastToNPC()->ApplyPushVector();
 			CastToNPC()->ResetPushTimer();
 		}
+	}
 
-		if (!target)
-			return;
-
+	if (target)
+	{
 		if (target->IsCorpse())
 		{
 			RemoveFromHateList(this);
@@ -1523,7 +1524,7 @@ void Mob::AI_Process() {
 				}
 			}
 		}
-	}
+	} // if (target)
 	else
 	{
 		if(AIfeignremember_timer->Check()) {
@@ -1763,7 +1764,6 @@ void NPC::AI_DoMovement() {
 						roam_z = SetBestZ(newz);
 				}
 			}
-			move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount);
 		}
 
 		Log.Out(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
@@ -1889,6 +1889,10 @@ void NPC::AI_DoMovement() {
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				ClearFeignMemory();
+				if (IsEngaged())
+				{
+					WipeHateList();
+				}
 				moved=false;
 				SetMoving(false);
 				if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
@@ -1976,11 +1980,20 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 		SetAppearance(eaStanding);
 	}
 
-	if (iYellForHelp) {
-		if(IsPet()) {
+	if (iYellForHelp) 
+	{
+		if(IsPet()) 
+		{
 			GetOwner()->AI_Event_Engaged(attacker, iYellForHelp);
-		} else {
+		} 
+		//If AlKabor:AllowTickSplit is false, NPCAssistCap() will always be 0 here
+		else if(GetSpecialAbility(ALWAYS_CALL_HELP) || (!HasAssistAggro() && NPCAssistCap() < RuleI(Combat, NPCAssistCap)))
+		{
 			entity_list.AIYellForHelp(this, attacker);
+			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
+			{
+				assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
+			}
 		}
 	}
 
@@ -2041,6 +2054,9 @@ void Mob::AI_Event_NoLongerEngaged() {
 
 	if(IsNPC())
 	{
+		PrimaryAggro = false;
+		AssistAggro = false;
+
 		if(CastToNPC()->GetCombatEvent() && GetHP() > 0)
 		{
 			if(entity_list.GetNPCByID(this->GetID()))

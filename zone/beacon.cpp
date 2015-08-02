@@ -66,6 +66,7 @@ Beacon::Beacon(Mob *at_mob, int lifetime)
 	resist_adjust = 0;
 	spell_iterations = 0;
 	caster_id = 0;
+	targets_hit = 0;
 
 	if(lifetime)
 	{
@@ -110,6 +111,8 @@ bool Beacon::Process()
 			spell_iterations = 0;
 			spell_timer.Disable();
 			caster_id = 0;
+			targets_hit = 0;
+
 		}
 	}
 

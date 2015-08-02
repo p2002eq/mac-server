@@ -218,7 +218,7 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	}
 
-	who->AddToHateList(this, hate, 0, false);
+	who->AddToHateList(this, hate, 0);
 	who->Damage(this, max_damage, SPELL_UNKNOWN, skill, false);
 
 	//Make sure 'this' has not killed the target and 'this' is not dead (Damage shield ect).
@@ -986,7 +986,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 					TotalDmg = mod_archery_damage(TotalDmg, dobonus, RangeWeapon);
 
 					TryCriticalHit(other, SkillArchery, TotalDmg);
-					other->AddToHateList(this, hate, 0, false);
+					other->AddToHateList(this, hate, 0);
 					CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
 				}
 			}
@@ -1129,9 +1129,9 @@ void NPC::RangedAttack(Mob* other)
 				TotalDmg = -5;
 
 			if (TotalDmg > 0)
-				other->AddToHateList(this, TotalDmg, 0, false);
+				other->AddToHateList(this, TotalDmg, 0);
 			else
-				other->AddToHateList(this, 0, 0, false);
+				other->AddToHateList(this, 0, 0);
 
 			other->Damage(this, TotalDmg, SPELL_UNKNOWN, skillinuse);
 
@@ -1309,7 +1309,7 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 		else
 			TotalDmg = -5;
 
-		other->AddToHateList(this, 2*WDmg, 0, false);
+		other->AddToHateList(this, 2*WDmg, 0);
 		other->Damage(this, TotalDmg, SPELL_UNKNOWN, SkillThrowing);
 
 		if (TotalDmg > 0 && HasSkillProcSuccess() && GetTarget() && other && !other->HasDied()){
@@ -1852,58 +1852,61 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 	}
 
 	//All values used based on live parses after taunt was updated in 2006.
-	if ((hate_top && hate_top->GetHPRatio() >= 20) || hate_top == nullptr) {
+	int32 newhate = 0;
+	float tauntchance = 50.0f;
 
-		int32 newhate = 0;
-		float tauntchance = 50.0f;
+	if(always_succeed)
+		tauntchance = 101.0f;
 
-		if(always_succeed)
-			tauntchance = 101.0f;
-
-		else {
-
-			if (level_difference < 0){
-				tauntchance += static_cast<float>(level_difference)*3.0f;
-				if (tauntchance < 20)
-					tauntchance = 20.0f;
-			}
-
-			else {
-				tauntchance += static_cast<float>(level_difference)*5.0f;
-				if (tauntchance > 65)
-					tauntchance = 65.0f;
-			}
+	else
+	{
+		if (level_difference < 0)
+		{
+			tauntchance += static_cast<float>(level_difference)*3.0f;
+			if (tauntchance < 20)
+				tauntchance = 20.0f;
 		}
-
-		//TauntSkillFalloff rate is not based on any real data. Default of 33% gives a reasonable result.
-		if (IsClient() && !always_succeed)
-			tauntchance -= (RuleR(Combat,TauntSkillFalloff) * (CastToClient()->MaxSkill(SkillTaunt) - GetSkill(SkillTaunt)));
-
-		//From SE_Taunt (Does a taunt with a chance modifier)
-		if (chance_bonus)
-			tauntchance += tauntchance*chance_bonus/100.0f;
-
-		if (tauntchance < 1)
-			tauntchance = 1.0f;
-
-		tauntchance /= 100.0f;
-
-		if (tauntchance > zone->random.Real(0, 1)) {
-			if (hate_top && hate_top != this){
-				newhate = (who->GetNPCHate(hate_top) - who->GetNPCHate(this)) + 1;
-				who->CastToNPC()->AddToHateList(this, newhate);
-				Success = true;
-			}
-			else
-				who->CastToNPC()->AddToHateList(this,12);
-
-			if (who->CanTalk())
-				who->Say_StringID(SUCCESSFUL_TAUNT,GetCleanName());
+		else
+		{
+			tauntchance += static_cast<float>(level_difference)*5.0f;
+			if (tauntchance > 65)
+				tauntchance = 65.0f;
 		}
-	//	else{
-		//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
-	//	}
 	}
+
+	//TauntSkillFalloff rate is not based on any real data. Default of 33% gives a reasonable result.
+	if (IsClient() && !always_succeed)
+		tauntchance -= (RuleR(Combat,TauntSkillFalloff) * (CastToClient()->MaxSkill(SkillTaunt) - GetSkill(SkillTaunt)));
+
+	//From SE_Taunt (Does a taunt with a chance modifier)
+	if (chance_bonus)
+		tauntchance += tauntchance*chance_bonus/100.0f;
+
+	if (tauntchance < 1)
+		tauntchance = 1.0f;
+
+	tauntchance /= 100.0f;
+
+	if (tauntchance > zone->random.Real(0, 1))
+	{
+		if (hate_top && hate_top != this)
+		{
+			newhate = (who->GetNPCHate(hate_top, false) - who->GetNPCHate(this, false));
+			if (newhate > 0)
+			{
+				who->CastToNPC()->AddToHateList(this, newhate);
+			}
+			Success = true;
+		}
+		else
+			who->CastToNPC()->AddToHateList(this,12);
+
+		if (who->CanTalk())
+			who->Say_StringID(SUCCESSFUL_TAUNT,GetCleanName());
+	}
+//	else{
+	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
+//	}
 
 	//else
 	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
@@ -2153,7 +2156,7 @@ void Mob::DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes 
 		CanSkillProc = false; //Disable skill procs
 	}
 
-	other->AddToHateList(this, hate, 0, false);
+	other->AddToHateList(this, hate, 0);
 	other->Damage(this, damage, SPELL_UNKNOWN, skillinuse);
 
 	if (HasDied())

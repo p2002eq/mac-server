@@ -242,8 +242,8 @@ public:
 	bool Charmed();
 	int CheckAggroAmount(int spell_id, Lua_Mob target);
 	int CheckAggroAmount(int spell_id, Lua_Mob target, bool is_proc);
-	int CheckHealAggroAmount(int spell_id);
-	int CheckHealAggroAmount(int spell_id, uint32 heal_possible);
+	int CheckHealAggroAmount(int spell_id, Lua_Mob target);
+	int CheckHealAggroAmount(int spell_id, Lua_Mob target, uint32 heal_possible);
 	int GetAA(int id);
 	bool DivineAura();
 	void SetOOCRegen(int regen);

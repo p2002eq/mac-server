@@ -198,7 +198,7 @@ namespace Mac {
 				eq->GuildID = 0xFFFF;
 			eq->guildrank = emu->player.spawn.guildrank;
 			if(eq->guildrank == 0)
-				eq->guildrank = 0xFF;
+				eq->guildrank = 0xFFFF;
 			strncpy(eq->Surname, emu->player.spawn.lastName, 32);
 			eq->walkspeed = emu->player.spawn.walkspeed;
 			eq->runspeed = emu->player.spawn.runspeed;
@@ -346,6 +346,31 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 		OUT(fatigue);
+		OUT_array(cursorbaginventory,pp_cursorbaginventory_size);
+		for(r = 0; r < pp_cursorbaginventory_size; r++)
+		{
+			OUT(cursorItemProperties[r].charges);
+		}
+		OUT_array(inventory,pp_inventory_size);
+		for(r = 0; r < pp_inventory_size; r++)
+		{
+			OUT(invItemProperties[r].charges);
+		}
+		OUT_array(containerinv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bagItemProperties[r].charges);
+		}
+		OUT_array(bank_inv,pp_bank_inv_size);
+		for(r = 0; r < pp_bank_inv_size; r++)
+		{
+			OUT(bankinvitemproperties[r].charges);
+		}
+		OUT_array(bank_cont_inv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bankbagitemproperties[r].charges);
+		}
 
 		//Log.Out(Logs::General, Logs::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
@@ -1485,20 +1510,6 @@ namespace Mac {
 		FINISH_DIRECT_DECODE();
 	}
 
-	ENCODE(OP_LogServer) 
-	{
-		ENCODE_LENGTH_EXACT(LogServer_Struct);
-		SETUP_DIRECT_ENCODE(LogServer_Struct, structs::LogServer_Struct);
-		strcpy(eq->worldshortname, "alkabor");
-		strcpy(eq->unknown096, "pacman");
-		OUT(enable_pvp);
-		OUT(enable_FV);
-		eq->NameGen = 1;
-		eq->Gibberish = 1;
-		eq->ProfanityFilter = 0;
-		FINISH_ENCODE();
-	}
-
 	ENCODE(OP_RequestClientZoneChange)
 	{
 		SETUP_DIRECT_ENCODE(RequestClientZoneChange_Struct, structs::RequestClientZoneChange_Struct);
@@ -1849,7 +1860,7 @@ namespace Mac {
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
 		if(item->GMFlag == -1)
-			Log.Out(Logs::Moderate, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
+			Log.Out(Logs::Detail, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
 
 		// General items
   		if(type == 0)

@@ -289,6 +289,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;
+	npc_assist_cap = 0;
+	ignore_distance = d->ignore_distance;
 }
 
 NPC::~NPC()
@@ -450,7 +452,7 @@ void NPC::QueryLoot(Client* to) {
 		{
 			static char itemid[7];
 			sprintf(itemid, "%06d", item->ID);
-			to->Message(CC_Default, "%i: min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
+			to->Message(CC_Default, "slot: %i min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			Log.Out(Logs::General, Logs::Error, "Database error, invalid item");
@@ -579,8 +581,30 @@ bool NPC::Process()
 	}
 
 	//Handle assists...
-	if(assist_timer.Check() && IsEngaged() && !Charmed()) {
-		entity_list.AIYellForHelp(this, GetTarget());
+	if(assist_cap_timer.Check())
+	{
+		if(NPCAssistCap() > 0)
+		{
+			DelAssistCap();
+		}
+		else
+		{
+			assist_cap_timer.Disable();
+		}
+	}
+
+	if(assist_timer.Check())
+	{
+		if(!Charmed() && IsEngaged() && 
+			(GetSpecialAbility(ALWAYS_CALL_HELP) || 
+			(!HasAssistAggro() && NPCAssistCap() < RuleI(Combat, NPCAssistCap))))
+		{
+			entity_list.AIYellForHelp(this, GetTarget());
+			if(NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
+			{
+				assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
+			}
+		}
 	}
 
 	if(qGlobals)

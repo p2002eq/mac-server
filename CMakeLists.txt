@@ -246,7 +246,7 @@ ENDIF(EQEMU_DISABLE_LOGSYS)
 OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
 OPTION(EQEMU_BUILD_LOGIN "Build the login server." ON)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
-OPTION(EQEMU_BUILD_PERL "Build Perl parser." ON)
+OPTION(EQEMU_BUILD_PERL "Build Perl parser." OFF)
 OPTION(EQEMU_BUILD_LUA "Build Lua parser." ON)
 OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Inport/Export Data Programs." OFF)
 

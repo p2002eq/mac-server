@@ -44,12 +44,11 @@ void EntityList::CheckClientAggro(Client *around)
 		Mob *mob = it->second;
 		if (mob->IsClient())	//also ensures that mob != around
 			continue;
-
-		if (mob->CheckWillAggro(around)) {
-			if (mob->IsEngaged())
-				mob->AddToHateList(around);
-			else
-				mob->AddToHateList(around, 20);
+		if (mob->IsPet())
+			continue;
+		if (mob->CheckWillAggro(around) && !mob->CheckAggro(around))
+		{
+			mob->AddToHateList(around, 20);
 		}
 	}
 }
@@ -432,6 +431,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	return(false);
 }
 
+// This is for npc_aggro npc->npc only.
 Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssistRange) {
 	if (!sender || !sender->IsNPC())
 		return(nullptr);
@@ -441,7 +441,6 @@ Mob* EntityList::AICheckCloseAggro(Mob* sender, float iAggroRange, float iAssist
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
 		Mob *mob = it->second;
-
 		if (sender->CheckWillAggro(mob))
 			return mob;
 		++it;
@@ -548,11 +547,20 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		return;
 	if (sender->GetPrimaryFaction() == 0 )
 		return; // well, if we dont have a faction set, we're gonna be indiff to everybody
+	if(!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && sender->HasAssistAggro())
+		return;
 
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC *mob = it->second;
 		if (!mob)
 			continue;
+
+		if(mob->CheckAggro(attacker))
+			continue;
+
+		//Check if we are over our assist aggro cap
+		if (!sender->GetSpecialAbility(ALWAYS_CALL_HELP) && sender->NPCAssistCap() >= RuleI(Combat, NPCAssistCap))
+			break;
 
 		float r = mob->GetAssistRange();
 		r = r * r;
@@ -560,14 +568,12 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		if (
 			mob != sender
 			&& mob != attacker
-			&& mob->GetClass() != 41
+			&& mob->GetClass() != MERCHANT
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
 			&& DistanceSquared(mob->GetPosition(), sender->GetPosition()) <= r
-			&& !mob->IsEngaged()
-			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient()))
-				// If we're a pet we don't react to any calls for help if our owner is a client
+			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient() && mob->GetOwner() == sender)) // If we're a pet we don't react to any calls for help if our owner is a client or if our owner was not the one calling for help.
 			)
 		{
 			//if they are in range, make sure we are not green...
@@ -594,12 +600,14 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				{
 					//attacking someone on same faction, or a friend
 					//make sure we can see them.
-					if(zone->SkipLoS() || mob->CheckLosFN(sender)) {
-#if (EQDEBUG>=11)
-						Log.Out(Logs::General, Logs::None, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
+					if(zone->SkipLoS() || mob->CheckLosFN(sender)) 
+					{
+
+						Log.Out(Logs::Detail, Logs::Aggro, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f",
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), DistanceSquared(mob->GetPosition(), sender->GetPosition()), std::abs(sender->GetZ()+mob->GetZ()));
-#endif
-						mob->AddToHateList(attacker, 1, 0, false);
+
+						mob->AddToHateList(attacker, 20, 0, false);
+						sender->AddAssistCap();
 					}
 				}
 			}
@@ -1108,22 +1116,27 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 	int32 AggroAmount = 0;
 	int32 nonModifiedAggro = 0;
 	uint16 slevel = GetLevel();
-	uint16 tlevel = slevel;
-	if (target)
-		tlevel = target->GetLevel();
-	bool addDefault = false;
-	bool isStunProc = false;
-	int32 defaultAggro = 25;	// level 1-15 aggro is 25
+	int32 damage = 0;
 
-	// most aggressive spells apply the same amount of hate at the given level
-	// the amount of hate scales by target level
-	// Sony's function is unknown, but this approximates it fairly well
-	if (tlevel >= 60)
-		defaultAggro = 1200;
-	else if (tlevel > 35)
-		defaultAggro = 25 + (tlevel - 25)*(tlevel - 25);
-	else if (tlevel > 15)
-		defaultAggro = 15 + (tlevel * tlevel) / 10;
+	// Spell hate for non-damaging spells scales by target NPC hitpoints
+	int32 thp = 10000;
+	if (target)
+	{
+		thp = target->GetMaxHP();
+		if (thp < 375)
+		{
+			thp = 375;		// force a minimum of 25 hate
+		}
+	}
+	int32 standardSpellHate = thp / 15;
+	if (standardSpellHate > 1200)
+	{
+		standardSpellHate = 1200;
+	}
+	if (isproc && standardSpellHate > 400)
+	{
+		standardSpellHate = 400;
+	}
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
 	{
@@ -1134,14 +1147,14 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if(val < 0)
-					AggroAmount -= val;
+					damage -= val;
 				break;
 			}
 			case SE_MovementSpeed:
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addDefault = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_AttackSpeed:
@@ -1150,37 +1163,30 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 100)
-					addDefault = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_Stun:
-			{
-				addDefault = true;
-				if (isproc)
-					isStunProc = true;
-				break;
-			}
 			case SE_Blind:
 			case SE_Mez:
 			case SE_Charm:
 			case SE_Fear:
 			{
-				addDefault = true;
+				AggroAmount += standardSpellHate;
 				break;
 			}
-			case SE_ATK:
 			case SE_ACv2:
 			case SE_ArmorClass:
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					addDefault = true;
+					AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_DiseaseCounter:
 			case SE_PoisonCounter:
 			{
-				AggroAmount += defaultAggro / 3;		// old EQ counters had +hate.  this is a wild guess
+				AggroAmount += standardSpellHate / 3;		// old EQ counters had +hate.  this is a wild guess
 				break;
 			}
 			case SE_Root:
@@ -1200,6 +1206,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_INT:
 			case SE_WIS:
 			case SE_CHA:
+			case SE_ATK:
 			{
 				// note: the enchanter tash line has a 'hate added' component which overrides this (Sony's data)
 				// which is how it does not-trivial amounts of hate.  malo spells all do 40 hate
@@ -1233,7 +1240,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Silence:
 			case SE_Destroy:
 			{
-				addDefault = true;
+				AggroAmount += standardSpellHate;
 				break;
 			}
 			case SE_Harmony:
@@ -1255,8 +1262,9 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_Accuracy:
 			case SE_DamageShield:
 			case SE_SpellDamageShield:
-			case SE_ReverseDS: {
-				AggroAmount += slevel * 2;
+			case SE_ReverseDS:
+			{
+				AggroAmount += slevel * 2;		// this is wrong, but don't know what to set these yet; most implemented after PoP
 				break;
 			}
 			case SE_CurrentMana:
@@ -1265,7 +1273,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 			case SE_CurrentEndurance: {
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val < 0)
-					AggroAmount -= val * 2;
+					AggroAmount -= val * 2;		// also wrong
 				break;
 			}
 			case SE_CancelMagic:
@@ -1281,14 +1289,30 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		}
 	}
 
-	if (addDefault)
+	if (GetClass() == BARD)
 	{
-		if (isStunProc && RuleI(Aggro, MaxStunProcAggro) > -1 && (defaultAggro > RuleI(Aggro, MaxStunProcAggro)))
-			AggroAmount += RuleI(Aggro, MaxStunProcAggro);
-		else if (IsBardSong(spell_id) && defaultAggro > 40)
-			AggroAmount += 40;		// bard song aggro caps at 40 for most non-damaging spell effects
-		else
-			AggroAmount += defaultAggro;
+		if (damage > 0)
+		{
+			AggroAmount = damage;
+		}
+		else if (AggroAmount > 40)
+		{
+			if (target)
+			{
+				if (target->GetLevel() >= 20)
+				{
+					AggroAmount = 40;
+				}
+			}
+			else if (slevel >= 20)
+			{
+				AggroAmount = 40;
+			}
+		}
+	}
+	else
+	{
+		AggroAmount += damage;
 	}
 
 	if (spells[spell_id].HateAdded > 0)
@@ -1304,6 +1328,9 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 		if (IsClient())
 			HateMod += CastToClient()->GetFocusEffect(focusSpellHateMod, spell_id);
 
+		//Live AA - Spell casting subtlety
+		HateMod += aabonuses.hatemod + spellbonuses.hatemod + itembonuses.hatemod;
+
 		AggroAmount = (AggroAmount * HateMod) / 100;
 	}
 
@@ -1311,10 +1338,13 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc)
 }
 
 //healing and buffing aggro
-int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
+int32 Mob::CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible)
 {
 	int32 AggroAmount = 0;
 	uint8 slevel = GetLevel();
+	uint8 tlevel = slevel;
+	if (target)
+		tlevel = target->GetLevel();
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
 	{
@@ -1331,7 +1361,7 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
 					if (val > 0)
 						val = 1 + 2 * val / 3;		// heal aggro is 2/3rds amount healed
 
-					if (slevel <= 50 && val > 800)	// heal aggro is capped.  800 was stated in a patch note
+					if (tlevel <= 50 && val > 800)	// heal aggro is capped.  800 was stated in a patch note
 						val = 800;
 					else if (val > 1500)			// cap after level 50 is 1500 on EQLive as of 2015
 						val = 1500;
@@ -1356,6 +1386,19 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible)
 			}
 		}
 	}
+
+	if (AggroAmount < 9 && IsBuffSpell(spell_id))
+	{
+		if (IsBardSong(spell_id) && AggroAmount < 2)
+		{
+			AggroAmount = 2;
+		}
+		else
+		{
+			AggroAmount = 9;
+		}
+	}
+
 	if (GetOwner() && IsPet())
 		AggroAmount = AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
 

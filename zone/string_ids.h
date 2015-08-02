@@ -145,6 +145,7 @@
 #define SUMMONING_CORPSE_OTHER		430		//Summoning %1's corpse.
 #define MISSING_SPELL_COMP_ITEM		433		//You are missing %1.
 #define OTHER_HIT_NONMELEE			434		//%1 was hit by non-melee for %2 points of damage.
+#define PET_SPELL_WORN_OFF			435		//Your pet's %1 spell has worn off.
 #define SPELL_WORN_OFF_OF			436		//Your %1 spell has worn off of %2.
 #define SPELL_WORN_OFF				437		//Your %1 spell has worn off.
 #define PET_TAUNTING				438		//Taunting attacker, Master.
@@ -324,26 +325,6 @@
 #define DOORS_NO_PICK				7564	//You must have a lock pick in your inventory to do this.
 #define CURRENT_SPELL_EFFECTS		8757	//%1's current spell effects:
 #define BUFF_MINUTES_REMAINING		8799	//%1 (%2 minutes remaining)
-#define FEAR_TOO_HIGH				9035	//Your target is too high of a level for your fear spell.
-#define SLOW_MOSTLY_SUCCESSFUL		9029	//Your spell was mostly successful.
-#define SLOW_PARTIALLY_SUCCESSFUL	9030	// Your spell was partially successful.
-#define SLOW_SLIGHTLY_SUCCESSFUL	9031	//Your spell was slightly successful.
-#define SPELL_OPPOSITE_EFFECT		9032	//Your spell may have had the opposite effect of what you desired.
-#define YOU_HEAL					9068	//You have healed %1 for %2 points of damage.
-#define HIT_NON_MELEE				9073	//%1 hit %2 for %3 points of non-melee damage.
-#define SHAKE_OFF_STUN				9077
-#define STRIKETHROUGH_STRING		9078	//You strike through your opponent's defenses!
-#define SPELL_REFLECT				9082	//%1's spell has been reflected by %2.
-#define NEW_SPELLS_AVAIL			9149	//You have new spells available to you. Check the merchants near your guild master.
-#define SNEAK_RESTRICT				9240	//You can not use this ability because you have not been hidden for long enough.
-#define PET_NOW_FOCUSING			9254	//Focusing on one target, Master.
-#define PET_NOT_FOCUSING			9263	//No longer focusing on one target, Master.
-#define PET_NOT_CASTING				9264	//Not casting spells, Master.
-#define PET_CASTING					9291	//Casting spells normally, Master.
-#define NO_CAST_IN_COMBAT			9190	//You can not cast this spell while in combat.
-#define NO_CAST_OUT_OF_COMBAT		9191	//You can not cast this spell while out of combat.
-#define NO_ABILITY_IN_COMBAT		9192	//You can not use this ability while in combat.
-#define NO_ABILITY_OUT_OF_COMBAT	9194	//You can not use this ability while out of combat.
 #define AE_RAMPAGE					11015	//%1 goes on a WILD RAMPAGE!
 #define FACE_ACCEPTED				12028	//Facial features accepted.
 #define ABORTED_SCRIBING_SPELL		12044   //Aborting scribing of spell.
