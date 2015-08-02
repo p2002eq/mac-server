@@ -5027,8 +5027,88 @@ void Client::Handle_OP_ItemLinkResponse(const EQApplicationPacket *app)
 		Log.Out(Logs::General, Logs::Error, "OP size error: OP_ItemLinkResponse expected:%i got:%i", sizeof(ItemViewRequest_Struct), app->size);
 		return;
 	}
-	ItemViewRequest_Struct* item = (ItemViewRequest_Struct*)app->pBuffer;
-	ItemInst* inst = database.CreateItem(item->item_id);
+
+	ItemViewRequest_Struct* ivrs = (ItemViewRequest_Struct*)app->pBuffer;
+	const Item_Struct* item = database.GetItem(ivrs->item_id);
+	if (!item) {
+		if (ivrs->item_id > 0 && ivrs->item_id  < 1001)
+		{
+			std::string response = "";
+			int sayid = ivrs->item_id;
+			bool silentsaylink = false;
+
+			if (sayid > 500)	//Silent Saylink
+			{
+				sayid = sayid - 500;
+				silentsaylink = true;
+			}
+
+			if (sayid > 0)
+			{
+
+				std::string query = StringFormat("SELECT `phrase` FROM saylink WHERE `id` = '%i'", sayid);
+				auto results = database.QueryDatabase(query);
+				if (!results.Success()) {
+					Message(CC_Red, "Error: The saylink (%s) was not found in the database.", response.c_str());
+					return;
+				}
+
+				if (results.RowCount() != 1) {
+					Message(CC_Red, "Error: The saylink (%s) was not found in the database.", response.c_str());
+					return;
+				}
+
+				auto row = results.begin();
+				response = row[0];
+
+			}
+
+			if ((response).size() > 0)
+			{
+				if (!mod_saylink(response, silentsaylink)) { return; }
+
+				if (GetTarget() && GetTarget()->IsNPC())
+				{
+					if (silentsaylink)
+					{
+						parse->EventNPC(EVENT_SAY, GetTarget()->CastToNPC(), this, response.c_str(), 0);
+						parse->EventPlayer(EVENT_SAY, this, response.c_str(), 0);
+					}
+					else
+					{
+						Message(CC_Say, "You say, '%s'", response.c_str());
+						ChannelMessageReceived(8, 0, 100, response.c_str());
+					}
+					return;
+				}
+				else
+				{
+					if (silentsaylink)
+					{
+						parse->EventPlayer(EVENT_SAY, this, response.c_str(), 0);
+					}
+					else
+					{
+						Message(CC_Say, "You say, '%s'", response.c_str());
+						ChannelMessageReceived(8, 0, 100, response.c_str());
+					}
+					return;
+				}
+			}
+			else
+			{
+				Message(CC_Red, "Error: Say Link not found or is too long.");
+				return;
+			}
+		}
+		else {
+			Message(CC_Red, "Error: The item for the link you have clicked on does not exist!");
+			return;
+		}
+
+	}
+
+	ItemInst* inst = database.CreateItem(ivrs->item_id);
 	if (inst) {
 		SendItemPacket(0, inst, ItemPacketViewLink);
 		safe_delete(inst);
