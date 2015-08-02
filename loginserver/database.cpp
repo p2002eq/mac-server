@@ -425,32 +425,6 @@ bool Database::CreateServerSettings()
 				server_log->Log(log_error, "Mysql query failed: %s", create_table_query.c_str());
 				return false;
 			}
-			server_log->Log(log_database, "Server Settings table created, continuing.");
-		}
-		//doesn't work
-		else if ((row = mysql_fetch_row(res)) != nullptr)
-		{
-			server_log->Log(log_database, "Server Settings tables exists, continuing.");
-		}
-	}
-	mysql_free_result(res);
-
-	string check_settings_query = "SELECT * FROM `tblloginserversettings` WHERE `type`";
-
-	if (mysql_query(db, check_settings_query.c_str()) != 0)
-	{
-		server_log->Log(log_error, "Mysql query failed: %s", check_table_query.c_str());
-		return false;
-	}
-
-	res = mysql_use_result(db);
-	if (res)
-	{
-		// if exists it still enters this
-		if ((row = mysql_fetch_row(res)) == nullptr)
-		//if (res->row_count == NULL)
-		{
-			server_log->Log(log_database, "Server Settings table exists but settings tables do not, creating settings entries.");
 
 			string query =
 				"INSERT INTO `tblloginserversettings` (type, value, category, description, defaults)"
@@ -484,12 +458,12 @@ bool Database::CreateServerSettings()
 				server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 				return false;
 			}
+			server_log->Log(log_database, "Server Settings table created, continuing.");
 		}
-		//doesn't work
-		else if ((row = mysql_fetch_row(res)) != nullptr)
-		//else if (res->row_count != NULL)
+
+		else
 		{
-			server_log->Log(log_database, "Server Settings entries exist, continuing.");
+			server_log->Log(log_database, "Server Settings tables exists, continuing.");
 		}
 	}
 	mysql_free_result(res);
