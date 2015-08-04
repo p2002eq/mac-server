@@ -469,14 +469,14 @@ bool Database::CreateServerSettings()
 		}
 	}
 	mysql_free_result(res);
-	if (SetServerSettings())
+	if (GetServerSettings())
 	{
 		return true;
 	}
 	return false;
 }
 
-bool Database::SetServerSettings()
+bool Database::GetServerSettings()
 {
 	string check_query = "SELECT * FROM tblloginserversettings";
 
@@ -499,7 +499,7 @@ bool Database::SetServerSettings()
 
 			if (value.empty())
 			{
-				std::string newValue = "";
+				std::string loadValue = "";
 
 				Config* newval = new Config;
 				std::string loadINIvalue = newval->LoadOption(category, type, "login.ini");
@@ -509,38 +509,15 @@ bool Database::SetServerSettings()
 				if (loadINIvalue.empty())
 				{
 					server_log->Log(log_database, "LoadOption returns NO value for type %s", type.c_str());
-					newValue = defaults.c_str();
+					loadValue = defaults.c_str();
 				}
 				else if (!loadINIvalue.empty())
 				{
 					server_log->Log(log_database, "LoadOption returns `value`: %s for type %s", loadINIvalue.c_str(), type.c_str());
-					newValue = loadINIvalue.c_str();
+					loadValue = loadINIvalue.c_str();
 				}
-				//string update_value = StringFormat("UPDATE `tblloginserversettings` "
-				//	"SET `value`='%s' "
-				//	"WHERE (`type`='%s') "
-				//	"AND (`value`='') "
-				//	"AND (`category`='%s') "
-				//	"AND (`defaults`='%s') "
-				//	"LIMIT 1", newValue.c_str(), type.c_str(), category.c_str(), defaults.c_str());
-
-				//string update_value = "UPDATE "
-				//	"tblloginserversettings "
-				//	"SET "
-				//	"value = '" + newValue + "' "
-				//	"WHERE "
-				//	"type = '" + type + "' "
-				//	"AND "
-				//	"category = '" + category + "' "
-				//	"AND "
-				//	"defaults = '" + defaults + "'";
-
-				// This refuses to write from the code, but the query is fine in navicat...
-				string update_value = "UPDATE tblloginserversettings SET value = 'test' WHERE type = 'account_table' AND category = 'schema'";
-
-				if (mysql_query(db, update_value.c_str()) != 0)
+				if (!SetServerSettings(type, loadValue, category, defaults))
 				{
-					server_log->Log(log_error, "Mysql check_query failed: %s", update_value.c_str());
 					return false;
 				}
 			}
@@ -549,6 +526,26 @@ bool Database::SetServerSettings()
 				server_log->Log(log_database, "Mysql check_query returns `value`: %s for type %s", value.c_str(), type.c_str());
 			}
 		}
+	}
+	return true;
+}
+
+bool Database::SetServerSettings(std::string type, std::string value, std::string category, std::string defaults)
+{
+	string update_value = "UPDATE tblloginserversettings SET value = 'test' WHERE type = 'account_table' AND category = 'schema'";
+	//string update_value = StringFormat("UPDATE tblloginserversettings "
+	//	"SET value = '%s' "
+	//	"WHERE type = '%s' "
+	//	"AND value = '' "
+	//	"AND category = '%s' "
+	//	"AND defaults = '%s' "
+	//	"LIMIT 1", newValue.c_str(), type.c_str(), category.c_str(), defaults.c_str());
+
+	if (mysql_query(db, update_value.c_str()) != 0)
+	{
+		server_log->Log(log_error, "Mysql check_query failed: %s", update_value.c_str());
+		server_log->Log(log_error, "Mysql Error: %s", mysql_error(db));
+		return false;
 	}
 	return true;
 }

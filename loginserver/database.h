@@ -98,7 +98,11 @@ public:
 	/**
 	* Gets values for server settings, tries ini first, if not grabs default.
 	*/
-	virtual bool SetServerSettings();
+	virtual bool GetServerSettings();
+	/**
+	* Writes values for server settings.
+	*/
+	virtual bool SetServerSettings(std::string type, std::string value, std::string category, std::string defaults);
 #pragma endregion
 
 protected:
