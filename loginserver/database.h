@@ -95,6 +95,10 @@ public:
 	* Creates Server Settings table.
 	*/
 	virtual bool CreateServerSettings();
+	/**
+	* Gets values for server settings, tries ini first, if not grabs default.
+	*/
+	virtual bool SetServerSettings();
 #pragma endregion
 
 protected:

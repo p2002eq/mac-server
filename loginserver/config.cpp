@@ -27,38 +27,6 @@ extern ErrorLog *server_log;
 
 std::string Config::LoadOption(std::string title, std::string parameter, std::string filename)
 {
-	//std::ifstream file(filename);
-	//std::string line;
-	//if(!file)
-	//{
-	//	std::string message = "Config::LoadOption(), specified file '" + std::string(filename) + "' doesn't exist.";
-	//	server_log->Log(log_error, message.c_str());
-	//	file.close();
-	//	return "";
-	//}
-	//if (file)
-	//{
-	//	while (std::getline(file, line))
-	//	{
-	//		size_t found;
-	//		found = line.find(option);
-	//		if (line.find(option) != std::string::npos && int(found) == 0)
-	//		{
-	//			int stringposition = option.length() + 3;
-	//			int stringsize = line.length() - stringposition;
-
-	//			std::string substringtemp = line.substr(stringposition, stringsize);
-	//			file.close();
-	//			return substringtemp;
-	//		}
-	//	}
-	//	std::string message = "Config::LoadOption(), specified option '" + std::string(option) + "' doesn't exist.";
-	//	server_log->Log(log_error, message.c_str());
-	//	file.close();
-	//	return "";
-	//}
-	//file.close();
-	//return "";
 	Parse(filename.c_str());
 	std::map<std::string, std::map<std::string, std::string> >::iterator iter = vars.find(title);
 	if (iter != vars.end())
@@ -71,55 +39,6 @@ std::string Config::LoadOption(std::string title, std::string parameter, std::st
 	}
 	return std::string("");
 }
-
-//void Config::ReWriteLSini()
-//{
-//	std::string line;
-//	std::ifstream readini("login.ini");
-//	std::ofstream writebackup("login.ini.bak");
-//	if (!readini)
-//	{
-//		// place holder for reading from database for values
-//		server_log->Log(log_error, "ini file copy error.");
-//		return;
-//	}
-//
-//	std::string linebackup;
-//
-//	while (std::getline(readini, line))
-//	{
-//		linebackup = line;
-//		linebackup += "\n";
-//		writebackup << linebackup;
-//	}
-//	readini.close();
-//	writebackup.close();
-//
-//	std::string lineTemp;
-//
-//	std::string lineReplace = "port = 6000";
-//	std::string lineNew = "clientport = 6000";
-//	std::ifstream readbackup("login.ini.bak");
-//	std::ofstream writeini("login.ini");
-//	while (std::getline(readbackup, line))
-//	{
-//		// If line does not need to be replaced.
-//		if (line != lineReplace)
-//		{
-//			lineTemp = line;
-//		}
-//		// Line replacements here.
-//		else if (line == lineReplace)
-//		{
-//			lineTemp = lineNew;
-//		}
-//		lineTemp += "\n";
-//		writeini << lineTemp;
-//	}
-//	readbackup.close();
-//	writeini.close();
-//	return;
-//}
 
 void Config::WriteDBini()
 {

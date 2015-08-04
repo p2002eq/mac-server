@@ -37,7 +37,6 @@ public:
 	* Gets a variable if it exists.
 	*/
 	std::string LoadOption(std::string title, std::string parameter, std::string filename);
-	void ReWriteLSini();
 	void WriteDBini();
 
 protected:

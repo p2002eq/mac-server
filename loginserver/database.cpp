@@ -20,6 +20,8 @@
 #include "error_log.h"
 #include "login_server.h"
 
+#include "../common/string_util.h"
+
 #pragma warning( disable : 4267 )
 
 extern ErrorLog *server_log;
@@ -433,7 +435,7 @@ bool Database::CreateServerSettings()
 				"('account_table', '', 'schema', 'location of all client account info for login server only.', 'tblLoginServerAccounts'),"
 				"('auto_account_activate', '', 'options', 'set this to TRUE to allow new accounts to log in.', 'TRUE'),"
 				"('auto_account_create', '', 'options', 'set this to TRUE to auto create accounts on player first log in.', 'TRUE'),"
-				"('clientport', '', 'Old', 'port for clients to connect to.', '6000'),"
+				"('port', '', 'Old', 'port for clients to connect to.', '6000'),"
 				"('dump_packets_in', '', 'options', 'debugging', 'FALSE'),"
 				"('dump_packets_out', '', 'options', 'debugging', 'FALSE'),"
 				"('failed_login_log', '', 'options', 'set this to TRUE to log failed log in attempts.', 'TRUE'),"
@@ -467,6 +469,87 @@ bool Database::CreateServerSettings()
 		}
 	}
 	mysql_free_result(res);
+	if (SetServerSettings())
+	{
+		return true;
+	}
+	return false;
+}
+
+bool Database::SetServerSettings()
+{
+	string check_query = "SELECT * FROM tblloginserversettings";
+
+	if (mysql_query(db, check_query.c_str()) != 0)
+	{
+		server_log->Log(log_error, "Mysql check_query failed: %s", check_query.c_str());
+		return false;
+	}
+
+	res = mysql_use_result(db);
+	if (res)
+	{
+		while ((row = mysql_fetch_row(res)))
+		{
+			std::string type = row[0];
+			std::string value = row[1];
+			std::string category = row[2];
+			std::string description = row[3];
+			std::string defaults = row[4];
+
+			if (value.empty())
+			{
+				std::string newValue = "";
+
+				Config* newval = new Config;
+				std::string loadINIvalue = newval->LoadOption(category, type, "login.ini");
+
+				server_log->Log(log_database, "Mysql check_query returns NO value for type %s", type.c_str());
+
+				if (loadINIvalue.empty())
+				{
+					server_log->Log(log_database, "LoadOption returns NO value for type %s", type.c_str());
+					newValue = defaults.c_str();
+				}
+				else if (!loadINIvalue.empty())
+				{
+					server_log->Log(log_database, "LoadOption returns `value`: %s for type %s", loadINIvalue.c_str(), type.c_str());
+					newValue = loadINIvalue.c_str();
+				}
+				//string update_value = StringFormat("UPDATE `tblloginserversettings` "
+				//	"SET `value`='%s' "
+				//	"WHERE (`type`='%s') "
+				//	"AND (`value`='') "
+				//	"AND (`category`='%s') "
+				//	"AND (`defaults`='%s') "
+				//	"LIMIT 1", newValue.c_str(), type.c_str(), category.c_str(), defaults.c_str());
+
+				//string update_value = "UPDATE "
+				//	"tblloginserversettings "
+				//	"SET "
+				//	"value = '" + newValue + "' "
+				//	"WHERE "
+				//	"type = '" + type + "' "
+				//	"AND "
+				//	"category = '" + category + "' "
+				//	"AND "
+				//	"defaults = '" + defaults + "'";
+
+				// This refuses to write from the code, but the query is fine in navicat...
+				string update_value = "UPDATE tblloginserversettings SET value = 'test' WHERE type = 'account_table' AND category = 'schema'";
+
+				if (mysql_query(db, update_value.c_str()) != 0)
+				{
+					server_log->Log(log_error, "Mysql check_query failed: %s", update_value.c_str());
+					return false;
+				}
+			}
+			else if (!value.empty())
+			{
+				server_log->Log(log_database, "Mysql check_query returns `value`: %s for type %s", value.c_str(), type.c_str());
+			}
+		}
+	}
 	return true;
 }
 #pragma endregion
