@@ -50,7 +50,7 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 
 	strn0cpy(LowerCaseZoneName, ZoneName, 64);
 
-	_strlwr(LowerCaseZoneName);
+	strlwr(LowerCaseZoneName);
 
 	snprintf(ZonePathFileName, 250, MAP_DIR "/%s.path", LowerCaseZoneName);
 
