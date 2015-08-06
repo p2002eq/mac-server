@@ -325,9 +325,9 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 1, &args);
 
 #if EQDEBUG >= 10
-			//Log.Out(Logs::General, Logs::Error, "HandlePacket() Opcode error: Unexpected packet during CLIENT_CONNECTING: opcode:"
-			//	" %s (#%d eq=0x%04x), size: %i", OpcodeNames[opcode], opcode, 0, app->size);
-			Log.Out(Logs::General, Logs::Error,"Received unknown EQApplicationPacket during CLIENT_CONNECTING");
+			Log.Out(Logs::General, Logs::Error, "HandlePacket() Opcode error: Unexpected packet during CLIENT_CONNECTING: opcode:"
+				" %s (#%d eq=0x%04x), size: %i", OpcodeNames[opcode], opcode, 0, app->size);
+			//Log.Out(Logs::General, Logs::Error,"Received unknown EQApplicationPacket during CLIENT_CONNECTING");
 			//DumpPacket(app);
 #endif
 			break;
@@ -653,8 +653,7 @@ void Client::CompleteConnect()
 	SendStaminaUpdate();
 	SendClientVersion();
 	FixClientXP();
-
-
+	SendToBoat(true);
 	worldserver.RequestTellQueue(GetName());
 }
 
@@ -1058,32 +1057,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
 	ignore_zone_count = false;
-
-	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
-	// This can lead difficulty entering the zone, since some people's client's don't like
-	// the boat timeout period.
-	if(!zone->IsBoatZone())
-	{
-		m_pp.boatid = 0;
-		m_pp.boat[0] = 0;
-	}
-	else
-	{
-		if(m_pp.boatid > 0)
-		{
-			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
-			if(!boat || !boat->IsBoat())
-			{
-				auto safePoint = zone->GetSafePoint();
-				m_pp.boatid = 0;
-				m_pp.boat[0] = 0;
-				m_pp.x = safePoint.x;
-				m_pp.y = safePoint.y;
-				m_pp.z = safePoint.z;
-			}
-		}
-	}
 	
+	
+	SendToBoat();
+
 	/* Load Character Key Ring */
 	KeyRingLoad();
 		
@@ -1399,6 +1376,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				pps->skills[s] = 255;
 		}
 	}
+	
+	if(m_pp.boatid > 0 && (zone->GetZoneID() == timorous || zone->GetZoneID() == firiona))
+		pps->boat[0] = 0;
+
 	// The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA
 	m_pp.entityid = GetID();
 	memcpy(outapp->pBuffer, pps, outapp->size);
@@ -1866,6 +1847,8 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 	char boatname[32];
 	memcpy(boatname, app->pBuffer, app->size);
 	boatname[31] = '\0';
+
+	Log.Out(Logs::Moderate, Logs::Boats, "%s is attempting to board boat %s", GetName(), boatname);
 
 	Mob* boat = entity_list.GetMob(boatname);
 
@@ -5124,8 +5107,19 @@ void Client::Handle_OP_Jump(const EQApplicationPacket *app)
 
 void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 {
+
+	if(m_pp.boatid > 0)
+	{
+		Log.Out(Logs::Moderate, Logs::Boats, "%s is attempting to leave boat %s at %0.2f,%0.2f,%0.2f ", GetName(), m_pp.boat, GetX(), GetY(), GetZ());
+	}
+	else
+	{
+		Log.Out(Logs::Moderate, Logs::Boats, "%s recieved OP_LeaveBoat", GetName());
+	}
+
 	Mob* boat = entity_list.GetMob(this->BoatID);	// find the mob corresponding to the boat id
-	if (boat) {
+	if (boat) 
+	{
 		if ((boat->GetTarget() == this) && boat->GetHateAmount(this) == 0)	// if the client somehow left while still controlling the boat (and the boat isn't attacking them)
 			boat->SetTarget(0);			// fix it to stop later problems
 

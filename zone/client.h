@@ -951,6 +951,7 @@ public:
 
 	void SendClientVersion();
 	void FixClientXP();
+	void SendToBoat(bool messageonly = false);
 
 protected:
 	friend class Mob;
