@@ -7138,8 +7138,10 @@ void command_path(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help"))
 	{
-		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns a npc to represent every npc node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns an npc to represent every path node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [#]: Spawns an npc to represent every path node.  Adding a number will start at this node number."); 
 		c->Message(CC_Default, "#path info node_id: Gives information about node info (requires shownode target).");
+		c->Message(CC_Default, "#path optimize: Optimizes pathfile to v4.");
 		c->Message(CC_Default, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
 		c->Message(CC_Default, "#path connect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node and connects that node back (requires shownode target).");
@@ -7149,6 +7151,7 @@ void command_path(Client *c, const Seperator *sep)
 		c->Message(CC_Default, "#path move: Moves your targeted node to your current position");
 		c->Message(CC_Default, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
+		c->Message(CC_Default, "#path nearest [all]: When a mob is targeted, it checks for nearby path nodes.  Using all option checks nearby nodes to all NPCs.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
@@ -7156,8 +7159,12 @@ void command_path(Client *c, const Seperator *sep)
 		if (zone->pathing) {
 			if (!strcasecmp(sep->arg[2], "around"))
 				zone->pathing->SpawnPathNodes(c->GetX(), c->GetY(), c->GetZ());
-			else
-				zone->pathing->SpawnPathNodes();
+			else {
+				if (sep->IsNumber(2))
+					zone->pathing->SpawnPathNodes(0.0f, 0.0f, 0.0f, atoi(sep->arg[2]));
+				else
+					zone->pathing->SpawnPathNodes();
+			}
 		}
 		return;
 	}
@@ -7170,19 +7177,32 @@ void command_path(Client *c, const Seperator *sep)
 		}
 		return;
 	}
+	if (!strcasecmp(sep->arg[1], "optimize"))
+	{
+		if (zone->pathing)
+		{
+			if (zone->pathing->GetVersion() == 4) {
+				c->Message(CC_Default, "Path file is already optimized to v4.");
+				return;
+			}
+			c->Message(CC_Default, "Path file is optimizing.  You may go LD.");
+			zone->pathing->Optimize();
+			c->Message(CC_Default, "Path file optimized to v4");
+		}
+		return;
+	}
 
 	if (!strcasecmp(sep->arg[1], "dump"))
 	{
 		if (zone->pathing)
 		{
-			if (sep->arg[2][0] == '\0')
+			if (sep->arg[2][0] == '\0') {
+				c->Message(CC_Default, "You must specify a filename.  Usage: #path dump <filename.path>");
 				return;
+			}
 			
-			zone->pathing->SortNodes();
-			zone->pathing->ResortConnections();
-			zone->pathing->PreCalcNodeDistances();
 			zone->pathing->DumpPath(sep->arg[2]);
-			c->Message(CC_Default, "Path file saved as %s", sep->arg[2]);
+			c->Message(CC_Default, "Path file v%d saved as %s", zone->pathing->GetVersion(), sep->arg[2]);
 		}
 		return;
 	}
@@ -7342,13 +7362,13 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "nodes"))
 			{
 				zone->pathing->SortNodes();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Nodes resorted...");
 			}
 			else
 			{
 				zone->pathing->ResortConnections();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Connections resorted...");
 				c->Message(CC_Default, "Spawned Nodes will need respawned to display proper node id.");
 				zone->pathing->CheckNodeErrors(c);
@@ -7433,24 +7453,30 @@ void command_path(Client *c, const Seperator *sep)
 
 	if (!strcasecmp(sep->arg[1], "nearest"))
 	{
-		if (!c->GetTarget() || !c->GetTarget()->IsMob())
+		if (c->GetTarget() && !c->GetTarget()->IsMob())
 		{
-			c->Message(CC_Default, "You must target something.");
+			c->Message(CC_Default, "You must target a mob.");
 			return;
 		}
 
 		if (zone->pathing)
 		{
-			Mob *m = c->GetTarget();
+			if (c->GetTarget())
+			{
+				Mob *m = c->GetTarget();
 
-			glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
+				glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
 
-			int Node = zone->pathing->FindNearestPathNode(Position);
+				int Node = zone->pathing->FindNearestPathNode(Position);
 
-			if (Node == -1)
-				c->Message(CC_Default, "Unable to locate a path node within range.");
-			else
-				c->Message(CC_Default, "Nearest path node is %i", Node);
+				if (Node == -1)
+					c->Message(CC_Default, "Unable to locate a path node within range.");
+				else
+					c->Message(CC_Default, "Nearest path node is %i", Node);
+			} else if (!strcasecmp(sep->arg[2], "all")) {
+				c->Message(CC_Default, "Checking all mobs can find a path node nearby.");
+				entity_list.CheckNearbyNodes(c);
+			}
 
 			return;
 		}
