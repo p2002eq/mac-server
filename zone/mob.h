@@ -256,10 +256,10 @@ public:
 	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0, int instrumentmod = 10);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
-	void BuffFadeAll(bool death = false, bool skiprez = false);
+	void BuffFadeAll(bool skiprez = false, bool message = false);
 	void BuffFadeNonPersistDeath();
 	void BuffFadeDetrimental();
-	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool death = false);
+	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool message = true);
 	void BuffFadeDetrimentalByCaster(Mob *caster);
 	void BuffFadeBySitModifier();
 	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration);
@@ -298,6 +298,9 @@ public:
 	inline virtual uint32 GetNimbusEffect3() const { return nimbus_effect3; }
 	inline bool HasEndurUpkeep() const { return endur_upkeep; }
 	inline void SetEndurUpkeep(bool val) { endur_upkeep = val; }
+	bool IsBuffed();
+	bool IsDebuffed();
+	bool IsPacified();
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
@@ -477,8 +480,12 @@ public:
 	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}
 	Mob* GetHateRandom() { return hate_list.GetRandom();}
-	Mob* GetHateMost() { return hate_list.GetMostHate();}
+	Mob* GetHateMost(bool includeBonus = true) { return hate_list.GetMostHate(includeBonus);}
 	bool IsEngaged() { return(!hate_list.IsEmpty()); }
+	bool HasPrimaryAggro() { return PrimaryAggro; }
+	void SetPrimaryAggro(bool value) { PrimaryAggro = value; if(value) AssistAggro = false; }
+	void SetAssistAggro(bool value) { AssistAggro = value; if(PrimaryAggro) AssistAggro = false; }
+	bool HasAssistAggro() { return AssistAggro; }
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
@@ -845,7 +852,7 @@ public:
 	static uint32 GetLevelHP(uint8 tlevel);
 	uint32 GetZoneID() const; //for perl
 	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc = false);
-	virtual int32 CheckHealAggroAmount(uint16 spell_id, uint32 heal_possible = 0);
+	virtual int32 CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible = 0);
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
 	uint32 GetInstrumentMod(uint16 spell_id) const;
@@ -951,6 +958,10 @@ public:
 	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
 	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
 	float CalcZOffset();
+	uint8 NPCAssistCap() { return npc_assist_cap; }
+	void AddAssistCap() { ++npc_assist_cap; }
+	void DelAssistCap() { --npc_assist_cap; }
+	void ResetAssistCap() { npc_assist_cap = 0; }
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1241,6 +1252,8 @@ protected:
 	glm::vec3 m_FearWalkTarget;
 	bool curfp;
 
+	Timer	assist_cap_timer; //clear assist cap so more nearby mobs can be called for help
+
 	// Pathing
 	//
 	glm::vec3 PathingDestination;
@@ -1292,6 +1305,9 @@ protected:
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;
 	bool iszomm;
+	bool PrimaryAggro;
+	bool AssistAggro;
+	uint8 npc_assist_cap;
 
 private:
 	void _StopSong(); //this is not what you think it is

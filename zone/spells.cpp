@@ -360,7 +360,10 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		cast_time = orgcasttime = spell.cast_time;
 		// if there's a cast time, check if they have a modifier for it
 		if(cast_time) {
-			cast_time = GetActSpellCasttime(spell_id, cast_time);
+			if(IsClient())
+				cast_time = CastToClient()->GetActSpellCasttime(spell_id, cast_time);
+			else
+				cast_time = GetActSpellCasttime(spell_id, cast_time);
 		}
 	}
 	else
@@ -1140,6 +1143,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	// if this was cast from an inventory slot, check out the item that's there
 
 	int16 DeleteChargeFromSlot = -1;
+	bool castFromInv = false;				// clicked spells are hate capped like procs
 
 	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT))
 		&& inventory_slot != 0xFFFFFFFF)	// 10 is an item
@@ -1147,6 +1151,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 		const ItemInst* inst = CastToClient()->GetInv()[inventory_slot];
 		uint32 recastdelay = 0;
 		uint32 recasttype = 0;
+		castFromInv = true;
 
 		if (inst && inst->IsType(ItemClassCommon) && (inst->GetItem()->Click.Effect == spell_id) && inst->GetCharges())
 		{
@@ -1179,7 +1184,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	TryTriggerOnCast(spell_id, 0);
 
 	// we're done casting, now try to apply the spell
-	if( !SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust) )
+	if (!SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust, castFromInv))
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "Casting of %d canceled: SpellFinished returned false.", spell_id);
 		InterruptSpell();
@@ -1337,7 +1342,7 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 		for (int i = 0; i < petfocusItemsize; i++) {
 			if (focuscomponent == petfocusItems[i]) 
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus, additonal checks will be skipped.", spell_id);
+				Log.Out(Logs::Detail, Logs::Spells, "Spell %d uses a pet focus %d, additonal checks will be skipped.", spell_id, petfocusItems[i]);
 				petfocuscomponent = true;
 				break;
 			}
@@ -1347,7 +1352,12 @@ bool Mob::HasSpellReagent(uint16 spell_id)
 			continue;
 		}
 
-		if (!HasReagent(spell_id, focuscomponent, 1, missingreags))
+		const Item_Struct *item = database.GetItem(focuscomponent);
+		if(!item && focuscomponent != -1)
+		{
+			Log.Out(Logs::Detail, Logs::Spells, "UNKNOWN item found in spell data. Please make sure your database is correct.");
+		}
+		else if (item && !HasReagent(spell_id, focuscomponent, 1, missingreags))
 		{
 			missingreags = true;
 		}
@@ -1481,7 +1491,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && IsEngaged()) ||
 				(IsClient() && CastToClient()->GetAggroCount())){
-					Message_StringID(CC_User_SpellFailure,NO_CAST_IN_COMBAT);
 
 					return false;
 			}
@@ -1501,7 +1510,6 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		else if (IsBeneficialSpell(spell_id)) {
 			if ( (IsNPC() && !IsEngaged()) ||
 				(IsClient() && !CastToClient()->GetAggroCount())){
-					Message_StringID(CC_User_SpellFailure,NO_CAST_OUT_OF_COMBAT);
 					return false;
 			}
 		}
@@ -2447,22 +2455,28 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 
 		case GroupSpell:
 		{
-			if(spell_target->IsGrouped()) {
+			if(spell_target->IsGrouped())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group targeting group of %s", spell_id, spell_target->GetName());
 				Group *target_group = entity_list.GetGroupByMob(spell_target);
 				if(target_group)
 					target_group->GroupBardPulse(this, spell_id);
 			}
-			else if(spell_target->IsRaidGrouped() && spell_target->IsClient()) {
+			else if(spell_target->IsRaidGrouped() && spell_target->IsClient())
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Raid group targeting raid group of %s", spell_id, spell_target->GetName());
 				Raid *r = entity_list.GetRaidByClient(spell_target->CastToClient());
-				if(r){
+				if(r)
+				{
 					uint32 gid = r->GetGroup(spell_target->GetName());
-					if(gid < 12){
+					if(gid < 12)
+					{
 						r->GroupBardPulse(this, spell_id, gid);
 					}
-					else{
+					else
+					{
 						BardPulse(spell_id, this);
+						entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 						if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 							GetPet()->BardPulse(spell_id, this);
@@ -2470,9 +2484,11 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 					}
 				}
 			}
-			else {
+			else
+			{
 				Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse: spell %d, Group target without group. Affecting caster.", spell_id);
 				BardPulse(spell_id, this);
+				entity_list.AddHealAggro(this, this, this->CheckHealAggroAmount(spell_id, this));
 #ifdef GROUP_BUFF_PETS
 				if (GetPet() && HasPetAffinity() && !GetPet()->IsCharmed())
 					GetPet()->BardPulse(spell_id, this);
@@ -2740,8 +2756,16 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 	{
 		if(!IsDetrimentalSpell(spellid1) && !IsDetrimentalSpell(spellid2))
 		{
-			Log.Out(Logs::Detail, Logs::Spells, "%s and %s are beneficial, and one is a bard song, no action needs to be taken", sp1.name, sp2.name);
-			return (0);
+			if(IsBardSong(spellid2) && IsSpeedBuff(spellid1) && IsSpeedBuff(spellid2))
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "%s is a bard movement speed song, it cannot overwrite %s which is a movement speed spell.", sp2.name, sp1.name);
+				return -1;
+			}
+			else
+			{
+				Log.Out(Logs::Detail, Logs::Spells, "%s and %s are beneficial, and one is a bard song, no action needs to be taken", sp1.name, sp2.name);
+				return (0);
+			}
 		}
 	}
 
@@ -2933,23 +2957,18 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 		/*
 		If the effects are the same and
-		sp1 = beneficial & sp2 = detrimental or
-		sp1 = detrimental & sp2 = beneficial
+		sp1 = beneficial & sp2 = detrimental 
 		Then this effect should be ignored for stacking purposes.
 		*/
 		if (sp_det_mismatch)
 		{
-			if (effect1 != SE_MovementSpeed){	
-				Log.Out(Logs::Detail, Logs::Spells, "The effects are the same but the spell types are not, passing the effect");
-				continue;
-			}
-			else if (!sp2_detrimental && sp1_detrimental)
+			if (!sp2_detrimental && sp1_detrimental)
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "Blocking spell because a buff to movement speed cannot replace a debuff to movement speed.");
+				Log.Out(Logs::Detail, Logs::Spells, "Blocking spell because % is beneficial and it cannot overwrite %s which is detrimental.", sp2.name, sp1.name);
 				return (-1);
 			}
 			else{
-				Log.Out(Logs::Detail, Logs::Spells, "Stacking code decided that because of the movement speed debuff effect of %s it should overwrite %s.", sp2.name, sp1.name);
+				Log.Out(Logs::Detail, Logs::Spells, "Stacking code decided that because %s is detrimental it should overwrite %s.", sp2.name, sp1.name);
 				return(1);
 			}
 		}
@@ -3154,8 +3173,12 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 		cur = overwrite_slots.begin();
 		end = overwrite_slots.end();
 		for (; cur != end; ++cur) {
+			int16 oldspellid = GetSpellIDFromSlot(*cur);
+			bool message = true;
+			if(oldspellid == spell_id)
+				message = false;
 			// strip spell
-			BuffFadeBySlot(*cur, false);
+			BuffFadeBySlot(*cur, false, message);
 
 			// if we hadn't found a free slot before, or if this is earlier
 			// we use it
@@ -3679,7 +3702,6 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 				break;
 		}
 		if(reflect_chance) {
-			Message_StringID(MT_Spells, SPELL_REFLECT, GetCleanName(), spelltar->GetCleanName());
 			CheckNumHitsRemaining(NUMHIT_ReflectSpell);
 			SpellOnTarget(spell_id, this, true, use_resist_adjust, resist_adjust);
 			safe_delete(action_packet);
@@ -3709,20 +3731,33 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 					spelltar->Message_StringID(MT_SpellFailure, YOU_RESIST, spells[spell_id].name);
 				}
 
-				if(spelltar->IsAIControlled()){
+				if(spelltar->IsAIControlled())
+				{
 					int32 aggro = CheckAggroAmount(spell_id, spelltar);
-					if(aggro > 0) {
+					if(aggro > 0) 
+					{
 						if(!IsHarmonySpell(spell_id))
-						spelltar->AddToHateList(this, aggro);
+						{
+							spelltar->AddToHateList(this, aggro);
+						}
 						else
+						{
 							if(!spelltar->PassCharismaCheck(this, spell_id))
+							{
 								spelltar->AddToHateList(this, aggro);
+							}
+						}
 					}
-					else{
+					else
+					{
+						spelltar->SetPrimaryAggro(true);
 						int32 newhate = spelltar->GetHateAmount(this) + aggro;
-						if (newhate < 1) {
+						if (newhate < 1) 
+						{
 							spelltar->SetHate(this,1);
-						} else {
+						} 
+						else 
+						{
 							spelltar->SetHate(this,newhate);
 						}
 					}
@@ -3749,11 +3784,19 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, isproc);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
 		if(aggro_amount > 0)
-			spelltar->AddToHateList(this, aggro_amount);		else{
+		{
+			spelltar->AddToHateList(this, aggro_amount);	
+		}
+		else
+		{
+			spelltar->SetPrimaryAggro(true);
 			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
-			if (newhate < 1) {
+			if (newhate < 1)
+			{
 				spelltar->SetHate(this,1);
-			} else {
+			} 
+			else 
+			{
 				spelltar->SetHate(this,newhate);
 			}
 		}
@@ -3762,7 +3805,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		&& (!spelltar->IsPet() || spelltar->IsCharmed())									// no beneficial aggro for summoned pets
 		&& (!IsNPC() || !isproc || CastToNPC()->GetInnateProcSpellId() != spell_id )		// NPC innate procs always hit the target, even if beneficial
 	)																						// we don't want beneficial procs aggroing nearby NPCs
-		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, (spelltar->GetMaxHP() - spelltar->GetHP())));
+		entity_list.AddHealAggro(spelltar, this, CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
 
 	// make sure spelltar is high enough level for the buff
 	if(RuleB(Spells, BuffLevelRestrictions) && !spelltar->CheckSpellLevelRestriction(spell_id))
@@ -3794,7 +3837,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		CheckNumHitsRemaining(NUMHIT_OutgoingSpells);
 
 		if (spelltar)
+		{
 			spelltar->CheckNumHitsRemaining(NUMHIT_IncomingSpells);
+		}
 	}
 
 	// send the action packet again now that the spell is successful
@@ -3948,14 +3993,14 @@ bool Mob::FindBuff(uint16 spellid)
 }
 
 // removes all buffs
-void Mob::BuffFadeAll(bool death, bool skiprez)
+void Mob::BuffFadeAll(bool skiprez, bool message)
 {
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if(buffs[j].spellid != SPELL_UNKNOWN)
 		{
 			if(!skiprez || (skiprez && !IsResurrectionEffects(buffs[j].spellid)))
-				BuffFadeBySlot(j, false, death);
+				BuffFadeBySlot(j, false, message);
 		}
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
@@ -3967,7 +4012,7 @@ void Mob::BuffFadeNonPersistDeath()
 	int buff_count = GetMaxTotalSlots();
 	for (int j = 0; j < buff_count; j++) {
 		if (buffs[j].spellid != SPELL_UNKNOWN && !IsPersistDeathSpell(buffs[j].spellid))
-			BuffFadeBySlot(j, false, true);
+			BuffFadeBySlot(j, false, false);
 	}
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
 	CalcBonuses();
@@ -4142,7 +4187,6 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		else if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
-			caster->Message_StringID(MT_Shout, FEAR_TOO_HIGH);
 			int32 aggro = caster->CheckAggroAmount(spell_id, this);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
@@ -4587,6 +4631,21 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
+	}
+
+	// NPCs use special rules for rain spells in our era.
+	if(IsRainSpell(spell_id) && IsNPC())
+	{
+		//20% innate resist
+		if(resist_chance < 0)
+			resist_chance = 40;
+		else
+			resist_chance += 40;
+		uint8 hp_percent = (uint8)((float)GetHP() / (float)GetMaxHP() * 100.0f);
+		if(GetLevel() > 20 && hp_percent < 10)
+		{
+			return 0;
+		}
 	}
 
 	//Finally our roll
@@ -5416,4 +5475,47 @@ void Client::SendSpellAnim(uint16 targetid, uint16 spell_id)
 
 	app.priority = 1;
 	entity_list.QueueCloseClients(this, &app);
+}
+
+bool Mob::IsBuffed()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsBeneficialSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
+}
+
+bool Mob::IsDebuffed()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsDetrimentalSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
+}
+
+//This will return true for the Pacify, Harmony, and Lull line of spells.
+bool Mob::IsPacified()
+{
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if(buffs[j].spellid != SPELL_UNKNOWN)
+		{
+			if(IsDetrimentalSpell(buffs[j].spellid) && IsCrowdControlSpell(buffs[j].spellid))
+				return true;
+		}
+	}
+	
+	return false;
 }

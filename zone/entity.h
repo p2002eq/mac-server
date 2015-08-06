@@ -335,8 +335,12 @@ public:
 	void	ClearAggro(Mob* targ);
 	void	ClearFeignAggro(Mob* targ);
 	void	ClearZoneFeignAggro(Client* targ);
+<<<<<<< HEAD
 	void	AggroZone(Mob* who, int hate = 0);
 	void	CheckNearbyNodes(Client* c);
+=======
+	void	AggroZone(Mob* who, int hate = 0, bool use_ignore_dist = false);
+>>>>>>> remotes/EQMacEmu/Dev
 
 	bool	Fighting(Mob* targ);
 	void	RemoveFromHateLists(Mob* mob, bool settoone = false);
@@ -397,6 +401,7 @@ public:
 
 	void GetBoatInfo(Client* client);
 	uint8 GetClientCountByBoatID(uint32 boatid);
+	bool TranfserPrimaryAggro(Mob* other);
 
 protected:
 	friend class Zone;

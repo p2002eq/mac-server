@@ -2527,7 +2527,8 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			z++;
 			++it;
 		}
-	} else if (searchtype == 1) {
+	} 
+	else if (searchtype == 1) {
 		client->Message(0, "Searching by name method. (%s)",arg1);
 		char* tmp = new char[strlen(arg1) + 1];
 		strcpy(tmp, arg1);
@@ -2544,12 +2545,25 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			++it;
 		}
 		safe_delete_array(tmp);
-	} else if (searchtype == 2) {
+	} 
+	else if (searchtype == 2) {
 		client->Message(0, "Searching by number method. (%s %s)",arg1,arg2);
 		while (it != npc_list.end()) {
 			z++;
 			if ((it->second->GetID() >= atoi(arg1)) && (it->second->GetID() <= atoi(arg2)) && (atoi(arg1) <= atoi(arg2))) {
 				client->Message(0, "  %5d: %s", it->second->GetID(), it->second->GetName());
+				x++;
+			}
+			++it;
+		}
+	}
+	else if (searchtype == 3) {
+		while (it != npc_list.end()) {
+			z++;
+			NPC *n = it->second;
+			if(n->HasPrimaryAggro())
+			{
+				client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
 			}
 			++it;
@@ -2859,10 +2873,11 @@ void EntityList::ClearZoneFeignAggro(Client *targ)
 	}
 }
 
-void EntityList::AggroZone(Mob *who, int hate)
+void EntityList::AggroZone(Mob *who, int hate, bool use_ignore_dist)
 {
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
+<<<<<<< HEAD
 		if ((it->second->GetBodyType() != BT_NoTarget) && (it->second->GetBodyType() != BT_NoTarget2))
 			it->second->AddToHateList(who, hate);
 		++it;
@@ -2881,6 +2896,11 @@ void EntityList::CheckNearbyNodes(Client *c)
 			if (Node == -1)
 				c->Message(CC_Default, "Unable to locate a path node around %s at %.2f, %.2f, %.2f.", it->second->GetName(), it->second->GetX(),it->second->GetY(),it->second->GetZ());
 		}
+=======
+		it->second->AddToHateList(who, hate);
+		if(!use_ignore_dist)
+			it->second->SetRememberDistantMobs(true);
+>>>>>>> remotes/EQMacEmu/Dev
 		++it;
 	}
 }
@@ -2938,41 +2958,31 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 		return;
 
 	NPC *cur = nullptr;
-	std::list<NPC *> npc_sub_list;
 	auto it = npc_list.begin();
 	while (it != npc_list.end())
 	{
 		cur = it->second;
 
-		if (!cur->CheckAggro(target))
+		if (cur->IsPet() || !cur->CheckAggro(target) || cur->IsFeared())
 		{
 			++it;
 			continue;
 		}
-		if (!cur->IsFeared())
-		{
-			npc_sub_list.push_back(cur);
-		}
-		++it;
-	}
-
-	cur = nullptr;
-	auto sit = npc_sub_list.begin();
-	while (sit != npc_sub_list.end())
-	{
-		cur = *sit;
-
-		if (cur->IsPet() || zone->random.Roll(15))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
-		{												// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
-			++sit;
+		if (zone->random.Roll(50))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
+		{								// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+			++it;
 			continue;
 		}
 
-		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 0)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
-			hate /= 4;
-
-		cur->AddToHateList(caster, hate);
-		++sit;
+		if ((cur->IsMezzed() || cur->IsStunned()) && hate > 1)		// mezzed & stunned NPCs only add a small amount of witness hate, as per patch note
+		{
+			cur->AddToHateList(caster, hate / 4);
+		}
+		else
+		{
+			cur->AddToHateList(caster, hate);
+		}
+		++it;
 	}
 }
 
@@ -4300,4 +4310,23 @@ uint8 EntityList::GetClientCountByBoatID(uint32 boatid)
 		++it;
 	}
 	return count;
+}
+
+bool EntityList::TranfserPrimaryAggro(Mob *other)
+{
+	auto it = mob_list.begin();
+	while (it != mob_list.end()) {
+		Mob *m = it->second;
+
+		if (!m)
+			continue;
+
+		if(m->IsNPC() && !m->IsPet() && !m->HasPrimaryAggro() && m->CastToNPC()->IsOnHatelist(other))
+		{
+			m->SetPrimaryAggro(true);
+			return true;
+		}
+		++it;
+	}
+	return false;
 }

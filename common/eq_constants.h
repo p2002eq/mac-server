@@ -388,6 +388,7 @@ enum ChatColor
 	CC_Blue						= 4, // Skills/Spells/Emote
 	CC_Purple					= 5, // Item Tags
 	CC_LightGrey				= 6, 
+	CC_Say						= 7,
 	CC_Red						= 13, // Shout/Fizzles
 	CC_LightGreen				= 14, // Guild
 	CC_Yellow					= 15, // Spell Worn Off/Broadcast

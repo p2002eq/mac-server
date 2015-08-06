@@ -419,6 +419,8 @@ Mob::Mob(const char* in_name,
 	combat_mana_regen = 0;
 	iszomm = false;
 	adjustedz = 0;
+	PrimaryAggro = false;
+	AssistAggro = false;
 }
 
 Mob::~Mob()
@@ -1529,6 +1531,7 @@ void Mob::ShowStats(Client* client)
 			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
 			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
 			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
+			client->Message(0, "  Aggro: Pri/Asst %d %d AssistCap: %d IgnoreDistance: %0.2f",  HasPrimaryAggro(), HasAssistAggro(), NPCAssistCap(), n->GetIgnoreDistance());
 			if(flee_mode)
 				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
@@ -2311,6 +2314,10 @@ bool Mob::RemoveFromHateList(Mob* mob)
 		{
 			AI_Event_NoLongerEngaged();
 			zone->DelAggroMob();
+			if(IsNPC() && !RuleB(AlKabor, AllowTickSplit))
+			{
+				ResetAssistCap();
+			}
 		}
 	}
 	if(GetTarget() == mob)
@@ -4138,7 +4145,7 @@ bool Mob::TrySpellOnDeath()
 			}
 		}
 
-	BuffFadeAll(true);
+	BuffFadeAll();
 	return false;
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result
@@ -4525,7 +4532,7 @@ void Mob::CastOnNumHitFade(uint32 spell_id)
 
 void Mob::SlowMitigation(Mob* caster)
 {
-	if (GetSlowMitigation() && caster && caster->IsClient())
+	/*if (GetSlowMitigation() && caster && caster->IsClient())
 	{
 		if ((GetSlowMitigation() > 0) && (GetSlowMitigation() < 26))
 			caster->Message_StringID(MT_SpellFailure, SLOW_MOSTLY_SUCCESSFUL);
@@ -4538,7 +4545,7 @@ void Mob::SlowMitigation(Mob* caster)
 
 		else if (GetSlowMitigation() > 100)
 			caster->Message_StringID(MT_SpellFailure, SPELL_OPPOSITE_EFFECT);
-	}
+	}*/
 }
 
 uint16 Mob::GetSkillByItemType(int ItemType)

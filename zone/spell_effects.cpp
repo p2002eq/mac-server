@@ -721,8 +721,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 						Stun(effect_value, caster);
 					} else {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. We had %d percent resist chance.", stun_resist);
 					}
@@ -2949,9 +2947,10 @@ snare has both of them negative, yet their range should work the same:
 		// values are calculated up
 		updownsign = 1;
 	}
-
-	Log.Out(Logs::Detail, Logs::Spells, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
-		spell_id, formula, base, max, caster_level, updownsign);
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "CSEV: spell %d, formula %d, base %d, max %d, lvl %d. Up/Down %d",
+			spell_id, formula, base, max, caster_level, updownsign);
+	#endif
 
 	switch(formula)
 	{
@@ -3171,8 +3170,9 @@ snare has both of them negative, yet their range should work the same:
 	// if base is less than zero, then the result need to be negative too
 	if (base < 0 && result > 0)
 		result *= -1;
-
-	Log.Out(Logs::Detail, Logs::Spells, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "Result: %d (orig %d), cap %d %s", result, oresult, max, (base < 0 && result > 0)?"Inverted due to negative base":"");
+	#endif
 
 	return result;
 }
@@ -3575,7 +3575,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 }
 
 // removes the buff in the buff slot 'slot'
-void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
+void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 {
 	if(slot < 0 || slot > GetMaxTotalSlots())
 		return;
@@ -3968,34 +3968,31 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool death)
 		}
 	}
 
-	// notify caster (or their master) of spell that it's worn off
-	char spellname[32];
-	if(IsCharmSpell(buffs[slot].spellid))
-		strcpy(spellname, "charm");
-	else if(IsFearSpell(buffs[slot].spellid))
-		strcpy(spellname, "fear");
-	else
-		strcpy(spellname, spells[buffs[slot].spellid].name);
-
+	// Generate worn off messages.
 	Mob *p = entity_list.GetMob(buffs[slot].casterid);
-	//Non-charmed pets
-	if (HasOwner() && GetOwner()->IsClient() && !IsCharmed() && !death)
+	if(p && message)
 	{
-		Mob* notify = GetOwner();
-		if(notify)
+		char spellname[32];
+		if(IsCharmSpell(buffs[slot].spellid))
+			strcpy(spellname, "charm");
+		else if(IsFearSpell(buffs[slot].spellid))
+			strcpy(spellname, "fear");
+		else
+			strcpy(spellname, spells[buffs[slot].spellid].name);
+
+		// A spell has worn off a pet. Send the message to its master.
+		if (HasOwner() && GetOwner()->IsClient() && !IsCharmed())
 		{
-			notify->Message_StringID(MT_WornOff, PET_SPELL_WORN_OFF, spellname);
+			Mob* notify = GetOwner();
+			if(notify)
+			{
+				notify->Message_StringID(MT_WornOff, PET_SPELL_WORN_OFF, spellname);
+			}
 		}
-	}
-	//All other entities
-	else if (p && p != this && !death && !IsBeneficialSpell(buffs[slot].spellid))
-	{
-		Mob *notify = p;
-		if(p->IsPet() && IsCharmed())
-			notify = p->GetOwner();
-		if(notify)
+		// Our spell has worn off another NPC or client.
+		else if (p != this && !p->IsPet() && !IsBeneficialSpell(buffs[slot].spellid))
 		{
-			notify->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
+			p->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
 	}
 
@@ -4629,19 +4626,30 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 			break;
 
 		case SE_LimitMinDur:
-				if (focus_spell.base[i] > CalcBuffDuration_formula(GetLevel(), spell.buffdurationformula, spell.buffduration))
-					return(0);
+			if (focus_spell.base[i] > CalcBuffDuration_formula(GetLevel(), spell.buffdurationformula, spell.buffduration))
+			{
+				return(0);
+			}
 			break;
 
 		case SE_LimitEffect:
 			if(focus_spell.base[i] < 0){
 				if(IsEffectInSpell(spell_id,-focus_spell.base[i])) //Exclude
-					return 0;
+				{
+					return (0);
 				}
-			else{
+			}
+			else {
 				LimitInclude[4] = true;
-				if(IsEffectInSpell(spell_id,focus_spell.base[i])) //Include
+				// Affliction Haste
+				if(focus_spell.base[i] == SE_CurrentHP && type == focusSpellHaste) 
+				{
 					LimitInclude[5] = true;
+				}
+				else if(IsEffectInSpell(spell_id,focus_spell.base[i])) //Include
+				{
+					LimitInclude[5] = true;
+				}
 			}
 			break;
 
@@ -5004,7 +5012,9 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 
 	for(int e = 0; e < MaxLimitInclude; e+=2) {
 		if (LimitInclude[e] && !LimitInclude[e+1])
+		{
 			return 0;
+		}
 	}
 	
 	if (Caston_spell_id){
@@ -5514,7 +5524,7 @@ bool Mob::TryDeathSave() {
 					entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, DEATH_PACT, GetCleanName());
 
 				SendHPUpdate();
-				BuffFadeBySlot(buffSlot);
+				BuffFadeBySlot(buffSlot, true, false);
 				return true;
 			}
 			else if (UD_HealMod) {
@@ -5547,13 +5557,13 @@ bool Mob::TryDeathSave() {
 						entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, DEATH_PACT, GetCleanName());
 
 					SendHPUpdate();
-					BuffFadeBySlot(buffSlot);
+					BuffFadeBySlot(buffSlot, true, false);
 					return true;
 				}
 			}
 		}
 
-		BuffFadeBySlot(buffSlot);
+		BuffFadeBySlot(buffSlot, true, false);
 	}
 	return false;
 }

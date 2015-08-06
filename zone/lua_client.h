@@ -189,6 +189,8 @@ public:
 	void RefundAA();
 	int GetModCharacterFactionLevel(int faction);
 	int GetStartZone();
+	void KeyRingAdd(uint32 item);
+	bool KeyRingCheck(uint32 item);
 	void QuestReadBook(const char *text, int type);
 	void LearnRecipe(uint32 recipe);
 	int GetEndurance();

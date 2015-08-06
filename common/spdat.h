@@ -799,6 +799,8 @@ bool IsSlowSpell(uint16 spell_id);
 bool IsHasteSpell(uint16 spell_id);
 bool IsHarmonySpell(uint16 spell_id);
 bool IsPacifySpell(uint16 spell_id);
+bool IsLullSpell(uint16 spell_id);
+bool IsCrowdControlSpell(uint16 spell_id);
 bool IsPercentalHealSpell(uint16 spell_id);
 bool IsGroupOnlySpell(uint16 spell_id);
 bool IsBeneficialSpell(uint16 spell_id);
@@ -906,5 +908,6 @@ int32 GetFuriousBash(uint16 spell_id);
 bool IsShortDurationBuff(uint16 spell_id);
 bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
+bool IsRainSpell(uint16 spell_id);
 
 #endif

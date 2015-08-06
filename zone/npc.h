@@ -252,8 +252,9 @@ public:
 	inline int32	GetNPCFactionID()	const { return npc_faction_id; }
 	inline int32	GetPreCharmNPCFactionID()	const { return precharm_npc_faction_id; }
 	inline int32	GetPrimaryFaction()	const { return primary_faction; }
-	int32	GetNPCHate(Mob* in_ent) {return hate_list.GetEntHate(in_ent);}
+	int32	GetNPCHate(Mob* in_ent, bool includeBonus = true) {return hate_list.GetEntHate(in_ent, false, includeBonus);}
 	bool	IsOnHatelist(Mob*p) { return hate_list.IsOnHateList(p);}
+	void	SetRememberDistantMobs(bool state) { hate_list.SetRememberDistantMobs(state); }
 
 	void	SetNPCFactionID(int32 in) { npc_faction_id = in; database.GetFactionIdsForNPC(npc_faction_id, &faction_list, &primary_faction); }
 	void	SetPreCharmNPCFactionID(int32 in) { precharm_npc_faction_id = in; }
@@ -338,6 +339,8 @@ public:
 	int32	GetAvoidanceRating() const { return (avoidance_rating); }
 	void	SetAvoidanceRating(int32 d) { avoidance_rating = d;}
 	int32 GetRawAC() const { return AC; }
+	void	SetIgnoreDistance(float distance) { ignore_distance = distance; }
+	float	GetIgnoreDistance() { return ignore_distance; }
 
 	void	ModifyNPCStat(const char *identifier, const char *newValue);
 	virtual void SetLevel(uint8 in_level, bool command = false);
@@ -494,6 +497,7 @@ protected:
 	QGlobalCache *qGlobals;
 
 	bool raid_target;
+	float ignore_distance;
 
 private:
 	uint32	loottable_id;

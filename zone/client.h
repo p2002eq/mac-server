@@ -199,6 +199,11 @@ public:
 	void	Trader_EndTrader();
 	void	Trader_StartTrader();
 	uint8	WithCustomer(uint16 NewCustomer);
+	void	KeyRingLoad();
+	void	KeyRingAdd(uint32 item_id);
+	bool	KeyRingCheck(uint32 item_id);
+	void	KeyRingList(Client* notifier);
+	void	ZoneFlagList(Client* notifier);
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
@@ -518,17 +523,18 @@ public:
 	void GoToDeath();
 	inline const int32 GetInstanceID() const { return zone->GetInstanceID(); }
 
-	FACTION_VALUE	GetReverseFactionCon(Mob* iOther);
-	FACTION_VALUE	GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
-	int32	GetCharacterFactionLevel(int32 faction_id);
-	int32	GetModCharacterFactionLevel(int32 faction_id);
-	void	MerchantRejectMessage(Mob *merchant, int primaryfaction);
-	void	SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalvalue, uint8 temp);
+	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
+	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
+	int32 GetCharacterFactionLevel(int32 faction_id);
+	int32 GetModCharacterFactionLevel(int32 faction_id);
+	void MerchantRejectMessage(Mob *merchant, int primaryfaction);
+	void SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp,  int32 this_faction_min, int32 this_faction_max);
 
-	void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
-	void	SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
-	int32	GetRawItemAC();
-	uint16	GetCombinedAC_TEST();
+	void UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction_id, int32 *current_value, int32 temp, int32 this_faction_min, int32 this_faction_max);
+	void SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
+	void SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
+	int32 GetRawItemAC();
+	uint16 GetCombinedAC_TEST();
 
 	inline uint32 LSAccountID() const { return lsaccountid; }
 	inline uint32 GetWID() const { return WID; }
@@ -943,6 +949,9 @@ public:
 	bool ClickyOverride() { return clicky_override; }
 	void SetActiveDisc(uint8 value) { active_disc = value; }
 
+	void SendClientVersion();
+	void FixClientXP();
+
 protected:
 	friend class Mob;
 	void CalcItemBonuses(StatBonuses* newbon);
@@ -1036,6 +1045,7 @@ private:
 	uint8				guildrank; // player's rank in the guild, 0-GUILD_MAX_RANK
 	uint16				duel_target;
 	bool				duelaccepted;
+	std::list<uint32>	keyring;
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;
@@ -1132,6 +1142,7 @@ private:
 	void BulkSendInventoryItems();
 	void BulkSendItems();
 	void SendCursorItems();
+	void FillPPItems();
 
 	faction_map factionvalues;
 

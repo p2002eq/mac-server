@@ -1328,7 +1328,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
 			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
-				Message_StringID(MT_StrikeThrough, STRIKETHROUGH_STRING); // You strike through your opponents defenses!
+				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
@@ -1821,11 +1821,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 
 		damage = mod_npc_damage(damage, skillinuse, Hand, weapon, other);
 
-		int32 hate = damage;
-		if(IsPet())
-		{
-			hate = hate * 100 / GetDamageTable(skillinuse);
-		}
+		int32 hate = max_dmg + eleBane;
+		hate = hate < 2 ? 1 : hate / 2;
 
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
@@ -1864,12 +1861,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 					CommonOutgoingHitSuccess(other, damage, skillinuse);
 				}
 				Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
-				// now add done damage to the hate list
-				if(damage > 0)
-					other->AddToHateList(this, hate);
-				else
-					other->AddToHateList(this, 0);
 			}
+			other->AddToHateList(this, hate);
 		}
 
 		Log.Out(Logs::Detail, Logs::Combat, "Final damage against %s: %d", other->GetName(), damage);
@@ -1944,9 +1937,12 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 	}
 
 	attacked_timer.Start(CombatEventTimer_expire);
+	SetPrimaryAggro(true);
 
 	if (!IsEngaged())
+	{
 		zone->AddAggroMob();
+	}
 
 	//do a majority of the work...
 	CommonDamage(other, damage, spell_id, attack_skill, avoidable, buffslot, iBuffTic);
@@ -2009,11 +2005,17 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 	entity_list.RemoveFromTargets(this);
 
+	if(killer && HasPrimaryAggro())
+	{
+		if(!entity_list.TranfserPrimaryAggro(killer))
+			Log.Out(Logs::Detail, Logs::Aggro, "%s failed to transfer primary aggro.", GetName());
+	}
+
 	if(p_depop == true)
 		return false;
 
 	HasAISpellEffects = false;
-	BuffFadeAll(true);
+	BuffFadeAll();
 	uint8 killed_level = GetLevel();
 
 	EQApplicationPacket* app= new EQApplicationPacket(OP_Death,sizeof(Death_Struct));
@@ -2327,6 +2329,15 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		hate = 1;
 	}
 
+	if(!iYellForHelp)
+	{
+		SetAssistAggro(true);
+	}
+	else
+	{
+		SetPrimaryAggro(true);
+	}
+
 	bool wasengaged = IsEngaged();
 	Mob* owner = other->GetOwner();
 	Mob* mypet = this->GetPet();
@@ -2422,10 +2433,13 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		}
 	}
 
-	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) { // I have a pet, add other to it
-		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO))
+	if (mypet && (!(GetAA(aaPetDiscipline) && mypet->IsHeld()))) 
+	{ // I have a pet, add other to it
+		if(!mypet->IsFamiliar() && !mypet->GetSpecialAbility(IMMUNE_AGGRO) && HasPrimaryAggro())
 			mypet->hate_list.Add(other, 0, 0, bFrenzy);
-	} else if (myowner) { // I am a pet, add other to owner if it's NPC/LD
+	} 
+	else if (myowner) 
+	{ // I am a pet, add other to owner if it's NPC/LD
 		if (myowner->IsAIControlled() && !myowner->GetSpecialAbility(IMMUNE_AGGRO))
 			myowner->hate_list.Add(other, 0, 0, bFrenzy);
 	}
@@ -3518,8 +3532,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				} else {
 					// Normal stun resist check.
 					if (stun_resist && zone->random.Roll(stun_resist)) {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
 					} else {
 						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);
@@ -4306,13 +4318,6 @@ uint16 Mob::GetDamageTable(SkillUseTypes skillinuse)
 			return 100;
 
 		return ret_table;
-	}
-	else if(GetLevel() >= 90)
-	{
-		if(GetClass() == MONK)
-			return 379;
-		else
-			return 345;
 	}
 	else
 	{
