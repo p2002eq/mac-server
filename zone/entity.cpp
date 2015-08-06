@@ -2877,9 +2877,10 @@ void EntityList::AggroZone(Mob *who, int hate, bool use_ignore_dist)
 {
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
-<<<<<<< HEAD
 		if ((it->second->GetBodyType() != BT_NoTarget) && (it->second->GetBodyType() != BT_NoTarget2))
 			it->second->AddToHateList(who, hate);
+		if(!use_ignore_dist)
+			it->second->SetRememberDistantMobs(true);
 		++it;
 	}
 }
@@ -2896,11 +2897,6 @@ void EntityList::CheckNearbyNodes(Client *c)
 			if (Node == -1)
 				c->Message(CC_Default, "Unable to locate a path node around %s at %.2f, %.2f, %.2f.", it->second->GetName(), it->second->GetX(),it->second->GetY(),it->second->GetZ());
 		}
-=======
-		it->second->AddToHateList(who, hate);
-		if(!use_ignore_dist)
-			it->second->SetRememberDistantMobs(true);
->>>>>>> remotes/EQMacEmu/Dev
 		++it;
 	}
 }
