@@ -400,10 +400,6 @@ void Client::CompleteConnect()
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
 
-	if (IsInAGuild())
-	{
-		SendAppearancePacket(AT_GuildID, GuildID(), false);
-	}
 	for (uint32 spellInt = 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
 	{
 		if (m_pp.spell_book[spellInt] < 3 || m_pp.spell_book[spellInt] > 50000)
@@ -1115,6 +1111,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	if (!IsInAGuild()) { m_pp.guild_id = GUILD_NONE; }
 	else {
 		m_pp.guild_id = GuildID();
+		m_pp.guildrank = GuildRank();
 	}
 
 	switch (race)

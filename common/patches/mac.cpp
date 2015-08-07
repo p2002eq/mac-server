@@ -307,6 +307,7 @@ namespace Mac {
 		OUT(anon);
 		OUT(gm);
 		OUT(guildrank);
+		eq->uniqueGuildID = emu->guild_id;
 		OUT(exp);
 		OUT_array(languages, 26);
 		OUT(x);
