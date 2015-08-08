@@ -343,6 +343,7 @@ int command_init(void){
 		command_add("reloadallrules", "Executes a reload of all rules.", 180, command_reloadallrules) ||
 		command_add("reloademote", "Reloads NPC Emotes.", 180, command_reloademote) ||
 		command_add("reloadlevelmods", nullptr, 255, command_reloadlevelmods) ||
+		command_add("reloadmerchants", "Reloads NPC merchant list.", 255, command_reloadmerchants) ||
 		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadquest", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
@@ -3131,10 +3132,10 @@ void command_reloadworld(Client *c, const Seperator *sep){
 	RW->Option = 0; //Keep it, maybe we'll use it in the future.
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, and repopping zones worldwide."))
+	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide."))
 		c->Message(CC_Default, "Error: World server disconnected");
 
-	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, and repopping zones worldwide.");
+	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide.");
 }
 
 void command_reloadlevelmods(Client *c, const Seperator *sep){
@@ -11101,4 +11102,12 @@ void command_keyring(Client *c, const Seperator *sep)
 	t->KeyRingList(c);
 	c->Message(CC_Default, "Zone Flag List:");
 	t->ZoneFlagList(c);
+}
+
+void command_reloadmerchants(Client *c, const Seperator *sep)
+{
+	zone->ClearMerchantLists();
+	zone->GetMerchantDataForZoneLoad();
+	zone->LoadTempMerchantData();
+	c->Message(CC_Default, "Merchant list reloaded for %s.", zone->GetShortName());
 }

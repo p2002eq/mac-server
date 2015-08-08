@@ -209,6 +209,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 
 	MerchantType = d->merchanttype;
 	merchant_open = GetClass() == MERCHANT;
+	if(MerchantType > 0 && GetClass() == MERCHANT)
+		zone->ResetMerchantQuantity(MerchantType);
 	flymode = iflymode;
 	guard_anim = eaStanding;
 	roambox_distance = 0;

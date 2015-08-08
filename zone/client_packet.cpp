@@ -6980,6 +6980,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	merchantid = tmp->CastToNPC()->MerchantType;
 
 	uint32 item_id = 0;
+	uint8 quantity_left = 0;
 	std::list<MerchantList> merlist = zone->merchanttable[merchantid];
 	std::list<MerchantList>::const_iterator itr;
 	for (itr = merlist.begin(); itr != merlist.end(); ++itr){
@@ -6993,8 +6994,17 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			continue;
 		}
 
+		if(ml.quantity > 0 && ml.qty_left <= 0)
+		{
+			continue;
+		}
+
 		if (mp->itemslot == ml.slot){
 			item_id = ml.item;
+			if(ml.quantity > 0 && ml.qty_left > 0)
+			{
+				quantity_left = ml.qty_left;
+			}
 			break;
 		}
 	}
@@ -7017,7 +7027,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	item = database.GetItem(item_id);
 	if (!item){
 		//error finding item, client didnt get the update packet for whatever reason, roleplay a tad
-		Message(0, "%s tells you 'Sorry, that item is for display purposes only.' as they take the item off the shelf.", tmp->GetCleanName());
+		Message(CC_Default, "%s tells you 'Sorry, that item is for display purposes only.' as they take the item off the shelf.", tmp->GetCleanName());
 		EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 		Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
 		delitem->itemslot = mp->itemslot;
@@ -7033,13 +7043,22 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(CC_Yellow, "You can only have one of a lore item.");
 		return;
 	}
-	// This makes sure the vendor deletes charged items from their temp list properly.
-	if (tmpmer_used && (mp->quantity > prevcharges || item->MaxCharges > 1))
+
+	// This makes sure the vendor deletes charged items from their lists properly.
+	uint8 tmp_qty = 0;
+	// Temp merchantlist
+	if(tmpmer_used)
+		tmp_qty = prevcharges;
+	// Regular merchantlist with limited supplies
+	else if(quantity_left > 0)
+		tmp_qty = quantity_left;
+
+	if ((tmpmer_used || quantity_left > 0) && (mp->quantity > tmp_qty || item->MaxCharges > 1))
 	{
-		if (prevcharges > item->MaxCharges && item->MaxCharges > 1)
+		if (tmp_qty > item->MaxCharges && item->MaxCharges > 1)
 			mp->quantity = item->MaxCharges;
 		else
-			mp->quantity = prevcharges;
+			mp->quantity = tmp_qty;
 	}
 	uint8 quantity = mp->quantity;
 	//This sets the correct price for items with charges.
@@ -7141,9 +7160,18 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	QueuePacket(outapp);
 
-	if (inst && tmpmer_used){
-		int32 new_charges = prevcharges - mp->quantity;
-		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+	if (inst && (tmpmer_used || quantity_left > 0)){
+		int32 new_charges = 0;
+		if(tmpmer_used)
+		{
+			new_charges = prevcharges - mp->quantity;
+			zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+		}
+		else if(quantity_left > 0)
+		{
+			new_charges = quantity_left - mp->quantity;
+			zone->SaveMerchantItem(merchantid,item_id, new_charges, mp->itemslot);
+		}
 		if (new_charges <= 0){
 			EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;

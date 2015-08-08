@@ -506,6 +506,18 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "is_deleted column created.");
 	}
+	std::string check_queryc = StringFormat("SHOW COLUMNS FROM `merchantlist` LIKE 'quantity'");
+	auto resultsc = QueryDatabase(check_queryc);
+	if (resultsc.RowCount() == 0){
+		std::string create_queryc = StringFormat("ALTER table `merchantlist` add column `quantity` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add quantity column to merchantlist...");
+		auto create_resultsc = QueryDatabase(create_queryc);
+		if (!create_resultsc.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating merchantlist column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "quantity column created.");
+	}
 	return true;
 }
 
