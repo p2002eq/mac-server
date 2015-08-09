@@ -99,6 +99,7 @@ public:
 	bool NodesConnected(PathNode *a, PathNode *b);
 	void DumpPath(std::string filename);
 	void ProcessNodesAndSave(std::string filename);
+	void ConnectNearbyNodes(PathNode *center);
 	void ResortConnections();
 	void QuickConnect(Client *c, bool set = false);
 	void SortNodes();
