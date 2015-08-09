@@ -130,9 +130,10 @@ bool PathManager::loadPaths(FILE *PathFile)
 	int MaxNodeID = Head.PathNodeCount - 1;
 
 	bool PathFileValid = true;
-	SortNodes();
-	ResortConnections();
-
+	if (Head.version != 4) {
+		SortNodes();
+		ResortConnections();
+	}
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
 		if (PathNodes[i].id != i) {
@@ -155,7 +156,8 @@ bool PathManager::loadPaths(FILE *PathFile)
 
 	if (PathFileValid) {
 		Log.Out(Logs::General, Logs::Zone_Server, "Pathfile v%d loaded.", Head.version);
-		RecalcDistances();
+		if (Head.version != 4)
+			RecalcDistances();
 		ResizePathingVectors();
 		if (Head.version == 4)
 		{
@@ -664,8 +666,35 @@ void PathManager::SimpleMeshTest(Client* c)
 	}
 	Log.Out(Logs::General, Logs::Zone_Server, "Executed %i route searches.", TotalTests);
 	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
-	if (firstbad != -1)
+	if (firstbad != -1) {
 		c->Message(CC_Default,"First Bad Node at %i.", firstbad);
+		char Name[64];
+
+		if (firstbad < 10)
+			sprintf(Name, "%s000", DigitToWord(firstbad));
+		else if (firstbad < 100)
+			sprintf(Name, "%s_%s000", DigitToWord(firstbad / 10), DigitToWord(firstbad));
+		else if (firstbad < 1000)
+			sprintf(Name, "%s_%s_%s000", DigitToWord(firstbad / 100), DigitToWord((firstbad % 100) / 10), DigitToWord(((firstbad % 100) % 10)));
+		else
+			sprintf(Name, "%s_%s_%s_%s000", DigitToWord(firstbad / 1000), DigitToWord((firstbad % 1000)/100), DigitToWord(((firstbad % 1000) %100) /10), DigitToWord((((firstbad % 1000) %100) %10)));
+
+		Mob *m = entity_list.GetMob(Name);
+		if (m) {
+			if (c->GetTarget()) {
+				if (c->GetTarget() != m) {
+					c->GetTarget()->IsTargeted(-1);
+					c->SetTarget(m);
+					m->IsTargeted(1);
+				}
+			} else {
+				c->SetTarget(m);
+				m->IsTargeted(1);
+			}
+			c->SendTargetCommand(m->GetID());
+		}
+	}
+			
 	c->Message(CC_Default,"Executed %i route searches.", TotalTests);
 	c->Message(CC_Default,"Failed to find %i routes.", NoConnections);
 }
@@ -2300,6 +2329,47 @@ bool PathManager::CheckLosFN(glm::vec3 a, glm::vec3 b)
 	return true;
 }
 
+void PathManager::ConnectNearbyNodes(PathNode *center)
+{
+	if (!center)
+		return;
+
+	std::deque<PathNodeSortStruct> SortedByDistance;
+
+	PathNodeSortStruct TempNode;
+
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+	{
+		if (center->id == PathNodes[i].id) //can't connect to ourselves.
+			continue;
+
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+		{
+			if (!NodesConnected(center, &PathNodes[i]))
+			{
+				TempNode.id = i;
+				TempNode.Distance = VectorDistanceNoRoot(center->v, PathNodes[i].v);
+				if (TempNode.Distance < 40000)
+					SortedByDistance.push_back(TempNode);
+			}
+		}
+
+		std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
+
+		for (auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
+		{
+			if (CheckLosFN(center->v, PathNodes[(*Iterator).id].v))
+			{
+				if (NoHazardsAccurate(center->v, PathNodes[(*Iterator).id].v))
+				{
+					ConnectNodeToNode(center->id, PathNodes[(*Iterator).id].id);
+				}
+			}
+		}
+		SortedByDistance.clear();
+	}
+}
+
 void PathManager::ProcessNodesAndSave(std::string filename)
 {
 	if (zone->zonemap)
@@ -2317,25 +2387,7 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 
 		for (uint32 x = 0; x < Head.PathNodeCount; ++x)
 		{
-			for (uint32 y = 0; y < Head.PathNodeCount; ++y)
-			{
-				if (y == x) //can't connect to ourselves.
-					continue;
-
-				if (!NodesConnected(&PathNodes[x], &PathNodes[y]))
-				{
-					if (VectorDistanceNoRoot(PathNodes[x].v, PathNodes[y].v) <= 40000)
-					{
-						if (CheckLosFN(PathNodes[x].v, PathNodes[y].v))
-						{
-							if (NoHazardsAccurate(PathNodes[x].v, PathNodes[y].v))
-							{
-								ConnectNodeToNode(PathNodes[x].id, PathNodes[y].id, 0, 0);
-							}
-						}
-					}
-				}
-			}
+			ConnectNearbyNodes(&PathNodes[x]);
 		}
 		
 		if (Head.version != 4) {

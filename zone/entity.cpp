@@ -2886,6 +2886,7 @@ void EntityList::AggroZone(Mob *who, int hate, bool use_ignore_dist)
 
 void EntityList::CheckNearbyNodes(Client *c)
 {
+	Mob *m = nullptr;
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
 		if ((it->second->GetBodyType() != BT_NoTarget) && (it->second->GetBodyType() != BT_NoTarget2)) {
@@ -2893,11 +2894,20 @@ void EntityList::CheckNearbyNodes(Client *c)
 
 			int Node = zone->pathing->FindNearestPathNode(Position);
 
-			if (Node == -1)
+			if (Node == -1) {
 				c->Message(CC_Default, "Unable to locate a path node around %s at %.2f, %.2f, %.2f.", it->second->GetName(), it->second->GetX(),it->second->GetY(),it->second->GetZ());
+				if (!m)
+					m = it->second;
+			}
 		}
 		++it;
 	}
+	if (m) {
+		c->SetTarget(m);
+		m->IsTargeted(1);
+		c->SendTargetCommand(m->GetID());
+	}
+
 }
 
 // Signal Quest command function
