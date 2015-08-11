@@ -413,7 +413,7 @@ Mob *HateList::GetTop()
 {
 	Mob* topMob = nullptr;
 	int32 topHate = -1;
-	nobodyInMeleeRange = true;
+	bool somebodyInMeleeRange = false;
 
 	if(owner == nullptr)
 		return nullptr;
@@ -498,6 +498,11 @@ Mob *HateList::GetTop()
 			}
 
 			bool combatRange = owner->CombatRange(cur->ent);
+			if (combatRange)
+			{
+				somebodyInMeleeRange = true;
+			}
+
 			int32 currentHate = cur->hate + GetHateBonus(cur, combatRange, !firstInRangeBonusApplied, distSquared);
 
 			if (!firstInRangeBonusApplied && combatRange)
@@ -524,15 +529,11 @@ Mob *HateList::GetTop()
 			{
 				topHate = currentHate;
 				topMob = cur->ent;
-
-				if (combatRange)
-				{
-					nobodyInMeleeRange = false;
-				}
 			}
 
 			++iterator;
 		}
+		nobodyInMeleeRange = !somebodyInMeleeRange;
 
 		// this is mostly to make sure NPCs attack players instead of pets in melee range
 		if (topClientTypeInRange != nullptr && topMob != nullptr)

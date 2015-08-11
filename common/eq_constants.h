@@ -388,6 +388,7 @@ enum ChatColor
 	CC_Blue						= 4, // Skills/Spells/Emote
 	CC_Purple					= 5, // Item Tags
 	CC_LightGrey				= 6, 
+	CC_Say						= 7,
 	CC_Red						= 13, // Shout/Fizzles
 	CC_LightGreen				= 14, // Guild
 	CC_Yellow					= 15, // Spell Worn Off/Broadcast
@@ -1052,6 +1053,22 @@ enum Zones
 	nightmareb=221,
 	poearthb=222,
 	potimeb=223,
+};
+
+//These are NPCIDs in the database. All of these boats send a BoardBoat opcode when boarded.
+enum Boats
+{
+	Stormbreaker = 770, //freporte-oot-butcherblock
+	SirensBane  = 771,
+	Sea_King = 772, //erudext-erudsxing-qeynos
+	Golden_Maiden  = 773,
+	Maidens_Voyage  = 838, //timorous-firiona
+	Bloated_Belly = 839, //timorous-overthere
+	Barrel_Barge = 840, //Shuttle timorous-oasis
+	Muckskimmer = 841,
+	Sabrina = 24056, //Shuttle in Erud
+	Island_Shuttle = 96075 //Shuttle to Elf docks in timorous
+	//Captains_Skiff = //Shuttle timorous-butcherblock
 };
 
 static const uint32 MAX_SPELL_DB_ID_VAL = 65535;

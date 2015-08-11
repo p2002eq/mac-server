@@ -194,7 +194,7 @@ void Client::ActivateAA(aaID activate){
 	case aaTargetCurrent:
 	case aaTargetCurrentGroup:
 		if (GetTarget() == nullptr) {
-			Message_StringID(MT_DefaultText, AA_NO_TARGET);	//You must first select a target for this ability!
+			Message(MT_DefaultText, "You must first select a target for this ability!");
 			p_timers.Clear(&database, AATimerID + pTimerAAStart);
 			return;
 		}
@@ -462,7 +462,7 @@ void Client::HandleAAAction(aaID activate) {
 	case aaTargetCurrent:
 	case aaTargetCurrentGroup:
 		if (GetTarget() == nullptr) {
-			Message_StringID(MT_DefaultText, AA_NO_TARGET);	//You must first select a target for this ability!
+			Message(MT_DefaultText, "You must first select a target for this ability!");
 			p_timers.Clear(&database, timer_id + pTimerAAEffectStart);
 			return;
 		}
@@ -1077,11 +1077,11 @@ void Client::SendAATimers() {
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_AAAction, sizeof(UseAA_Struct));
 	UseAA_Struct* uaaout = (UseAA_Struct*)outapp->pBuffer;
 
-	//EQMac sends timers for all the abilities you have, even if they have never been used.
+	//Al'Kabor sent timers for all the abilities you have, even if they have never been used.
 	uint8 macaaid = 0;
 	for (uint32 i = 0; i < MAX_PP_AA_ARRAY; i++)
 	{
-		if (aa[i]->AA > 0)
+		if (aa[i] && aa[i]->AA > 0)
 		{
 			SendAA_Struct* aa2 = nullptr;
 			aa2 = zone->FindAA(aa[i]->AA);
@@ -1100,17 +1100,12 @@ void Client::SendAATimers() {
 						starttime = cur->GetStartTime();
 						break;
 					}
-					uaaout->begin = starttime;
-					uaaout->end = static_cast<uint32>(time(nullptr));
-					uaaout->ability = zone->EmuToEQMacAA(aa2->id);
-					QueuePacket(outapp);
-					Log.Out(Logs::Detail, Logs::AA, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
 				}
 				uaaout->begin = starttime;
 				uaaout->end = static_cast<uint32>(time(nullptr));
 				uaaout->ability = zone->EmuToEQMacAA(aa2->id);
 				QueuePacket(outapp);
-				Log.Out(Logs::General, Logs::Status, "Sending out timer for AA: %i. Timer start: %i Timer end: %i Recast Time: %i", uaaout->ability, uaaout->begin, uaaout->end, aa2->spell_refresh);
+				Log.Out(Logs::Moderate, Logs::AA, "Sending out timer for AA: %d (%s). Timer start: %d Timer end: %d Recast Time: %d", uaaout->ability, aa2->name, uaaout->begin, uaaout->end, aa2->spell_refresh);
 			}
 		}
 	}

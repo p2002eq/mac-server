@@ -506,6 +506,18 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "is_deleted column created.");
 	}
+	std::string check_queryc = StringFormat("SHOW COLUMNS FROM `merchantlist` LIKE 'quantity'");
+	auto resultsc = QueryDatabase(check_queryc);
+	if (resultsc.RowCount() == 0){
+		std::string create_queryc = StringFormat("ALTER table `merchantlist` add column `quantity` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add quantity column to merchantlist...");
+		auto create_resultsc = QueryDatabase(create_queryc);
+		if (!create_resultsc.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating merchantlist column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "quantity column created.");
+	}
 	return true;
 }
 
@@ -557,6 +569,18 @@ bool Database::DBSetup_Logs()
 		if (!results4a.Success())
 		{
 			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `disc`.");
+			return false;
+		}
+	}
+	std::string check_query5 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Boats'");
+	auto results5 = QueryDatabase(check_query5);
+	if (results5.RowCount() == 0)
+	{
+		std::string check_query5a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('50', 'Boats', '0', '0', '0')");
+		auto results5a = QueryDatabase(check_query5a);
+		if (!results5a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `boats`.");
 			return false;
 		}
 	}
