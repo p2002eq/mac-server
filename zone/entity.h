@@ -336,7 +336,6 @@ public:
 	void	ClearFeignAggro(Mob* targ);
 	void	ClearZoneFeignAggro(Client* targ);
 	void	AggroZone(Mob* who, int hate = 0, bool use_ignore_dist = false);
-	void	CheckNearbyNodes(Client* c);
 
 	bool	Fighting(Mob* targ);
 	void	RemoveFromHateLists(Mob* mob, bool settoone = false);

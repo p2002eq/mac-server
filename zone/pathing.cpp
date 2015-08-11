@@ -50,7 +50,7 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 
 	strn0cpy(LowerCaseZoneName, ZoneName, 64);
 
-	_strlwr(LowerCaseZoneName);
+	strlwr(LowerCaseZoneName);
 
 	snprintf(ZonePathFileName, 250, MAP_DIR "/%s.path", LowerCaseZoneName);
 
@@ -111,7 +111,7 @@ bool PathManager::loadPaths(FILE *PathFile)
 	Log.Out(Logs::General, Logs::Status, "Path File Header: Version %ld, PathNodes %ld",
 		(long)Head.version, (long)Head.PathNodeCount);
 
-	if (Head.version != 2 && Head.version != 3 && Head.version != 4)
+	if (Head.version != 2)
 	{
 		Log.Out(Logs::General, Logs::Error, "Unsupported path file version.");
 		return false;
@@ -130,18 +130,9 @@ bool PathManager::loadPaths(FILE *PathFile)
 	int MaxNodeID = Head.PathNodeCount - 1;
 
 	bool PathFileValid = true;
-	SortNodes();
-	ResortConnections();
 
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
-		if (PathNodes[i].id != i) {
-
-			Log.Out(Logs::General, Logs::Error, "Path Node id %i Not aligned with array at %i.", PathNodes[i].id, i);
-			
-			PathFileValid = false;
-		}
-			
 		for (uint32 j = 0; j < PATHNODENEIGHBOURS; ++j)
 		{
 			if (PathNodes[i].Neighbours[j].id > MaxNodeID)
@@ -154,17 +145,25 @@ bool PathManager::loadPaths(FILE *PathFile)
 	}
 
 	if (PathFileValid) {
-		Log.Out(Logs::General, Logs::Zone_Server, "Pathfile v%d loaded.", Head.version);
-		RecalcDistances();
-		ResizePathingVectors();
-		if (Head.version == 4)
+		// update distances between nodes
+		
+		for(int i = 0; i < Head.PathNodeCount; ++i)
 		{
-			// load path tree
-			for(uint32 i = 0; i < Head.PathNodeCount; i++)
-			{
-				fread(&path_tree[i][0], sizeof(int16) * Head.PathNodeCount, 1, PathFile);
+			if(PathNodes[i].Neighbours[0].id == -1)
+				continue;
+
+			for(int j=0; j<PATHNODENEIGHBOURS; j++) {
+				if(PathNodes[i].Neighbours[j].id == -1)
+					continue;
+				PathNode* Neighbour = FindPathNodeById(PathNodes[i].Neighbours[j].id);
+				if (Neighbour != NULL) {
+					PathNodes[i].Neighbours[j].distance = VectorDistance(Neighbour->v, PathNodes[i].v);
+				} else {
+					PathNodes[i].Neighbours[j].distance = 0.0f;
+				}
 			}
 		}
+		PreCalcNodeDistances();
 	}
 
 	if (!PathFileValid)
@@ -231,22 +230,12 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 {
 	Log.Out(Logs::Detail, Logs::Pathing, "FindRoute from node %i to %i", startID, endID);
 
-	std::deque<int>Route;
-	for (int i = 0; i < PATHNODENEIGHBOURS; ++i) {
-		if(PathNodes[startID].Neighbours[i].id == -1)
-			break;
-		if(PathNodes[startID].Neighbours[i].id == endID) {
-			Route.push_back(startID);
-			if (PathNodes[startID].Neighbours[i].Teleport)
-				Route.push_back(-1);
-			Route.push_back(endID);
-			return Route;
-		}
-	}
-
 	memset(ClosedListFlag, 0, sizeof(int) * Head.PathNodeCount);
 
 	std::deque<AStarNode> OpenList, ClosedList;
+
+	std::deque<int>Route;
+
 	AStarNode AStarEntry, CurrentNode;
 
 	AStarEntry.PathNodeID = startID;
@@ -315,7 +304,9 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 			AStarEntry.Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
 
 			// HCost is the estimated cost to get from this node to the end.
-			AStarEntry.HCost = VectorDistance(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v, PathNodes[endID].v);
+			//AStarEntry.HCost = VectorDistanceNoRoot(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v,
+			//	PathNodes[endID].v);
+			AStarEntry.HCost = node_distance[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id][endID];
 
 			AStarEntry.GCost = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
 
@@ -359,32 +350,11 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 			if (!AlreadyInOpenList)
 				OpenList.insert(InsertionPoint, AStarEntry);
 		}
+
 	}
 	Log.Out(Logs::Detail, Logs::Pathing, "Unable to find a route.");
 	return Route;
 
-}
-
-std::deque<int> PathManager::FindRoutev4(int startID, int endID)
-{
-	std::deque<int>Route;
-	int curid = endID;
-	int previd = -1;
-	Route.push_front(endID);
-	bool tele = false;
-	while(curid != startID && curid != -1)
-	{
-		previd = path_tree[startID][curid];
-		if (previd == -1) {
-			Route.clear();
-		} else {
-			if (teleports[previd][curid])
-				Route.push_front(-1);
-			Route.push_front(previd);
-		}
-		curid = previd;
-	}
-	return Route;
 }
 
 bool CheckLOSBetweenPoints(glm::vec3 start, glm::vec3 end) {
@@ -498,10 +468,7 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 		noderoute.push_back(ClosestPathNodeToStart);
 		return noderoute;
 	}
-	if (Head.version == 4)
-		noderoute = FindRoutev4(ClosestPathNodeToStart, ClosestPathNodeToEnd);
-	else
-		noderoute = FindRoute(ClosestPathNodeToStart, ClosestPathNodeToEnd);
+	noderoute = FindRoute(ClosestPathNodeToStart, ClosestPathNodeToEnd);
 
 	return noderoute;
 }
@@ -544,10 +511,9 @@ void PathManager::SpawnNode(PathNode *node)
 		sprintf(npc_type->name, "%s", DigitToWord(node->id));
 	else if(node->id < 100)
 		sprintf(npc_type->name, "%s_%s", DigitToWord(node->id/10), DigitToWord(node->id % 10));
-	else if(node->id < 1000)
-		sprintf(npc_type->name, "%s_%s_%s", DigitToWord(node->id/100), DigitToWord((node->id % 100)/10), DigitToWord(((node->id % 100) %10)));
 	else
-		sprintf(npc_type->name, "%s_%s_%s_%s", DigitToWord(node->id/1000), DigitToWord((node->id % 1000)/100), DigitToWord(((node->id % 1000) %100) /10), DigitToWord((((node->id % 1000) %100) %10)));
+		sprintf(npc_type->name, "%s_%s_%s", DigitToWord(node->id/100), DigitToWord((node->id % 100)/10), 
+			DigitToWord(((node->id % 100) %10)));
 
 	npc_type->cur_hp = 4000000;
 	npc_type->max_hp = 4000000;
@@ -583,11 +549,10 @@ void PathManager::SpawnNode(PathNode *node)
 	entity_list.AddNPC(npc, true, true);
 }
 
-void PathManager::SpawnPathNodes(float x, float y, float z, int startid)
+void PathManager::SpawnPathNodes(float x, float y, float z)
 {
 	glm::vec3 around(x, y, z);
-	uint32 startID = startid < Head.PathNodeCount ? startid : 0;
-	for(uint32 i = startID; i < Head.PathNodeCount; ++i)
+	for(int i = 0; i < Head.PathNodeCount; ++i)
 	{
 		if (x != 0.0f || y!= 0.0f || z != 0.0f) {
 			if (VectorDistanceNoRoot(PathNodes[i].v, around) < 40000)
@@ -601,11 +566,11 @@ void PathManager::SpawnPathNodes(float x, float y, float z, int startid)
 void PathManager::MeshTest()
 {
 	// This will test connectivity between all path nodes
-	if (Head.version != 4)
-		Optimize();
+
 	int TotalTests = 0;
 	int NoConnections = 0;
-	Log.Out(Logs::General, Logs::Zone_Server, "Beginning Pathmanager connectivity tests.");
+
+	printf("Beginning Pathmanager connectivity tests.\n"); fflush(stdout);
 
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
@@ -613,59 +578,47 @@ void PathManager::MeshTest()
 		{
 			if (j == i)
 				continue;
-			std::deque <int> Route;
-			if (Head.version == 4)
-				Route = FindRoutev4(PathNodes[i].id, PathNodes[j].id);
-			else
-				Route = FindRoute(PathNodes[i].id, PathNodes[j].id);
+
+			std::deque<int> Route = FindRoute(PathNodes[i].id, PathNodes[j].id);
 
 			if (Route.size() == 0)
 			{
 				++NoConnections;
-				Log.Out(Logs::General, Logs::Zone_Server, "FindRoute(%i, %i) **** NO ROUTE FOUND ****", PathNodes[i].id, PathNodes[j].id);
+				printf("FindRoute(%i, %i) **** NO ROUTE FOUND ****\n", PathNodes[i].id, PathNodes[j].id);
 			}
 			++TotalTests;
 		}
 	}
-	Log.Out(Logs::General, Logs::Zone_Server, "Executed %i route searches.", TotalTests);
-	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
+	printf("Executed %i route searches.\n", TotalTests);
+	printf("Failed to find %i routes.\n", NoConnections);
+	fflush(stdout);
 }
 
 void PathManager::SimpleMeshTest(Client* c)
 {
 	// This will test connectivity between the first path node and all other nodes
-	if (Head.version != 4)
-		Optimize();
+
 	int TotalTests = 0;
 	int NoConnections = 0;
-	int firstbad = -1;
 
-	Log.Out(Logs::General, Logs::Zone_Server, "Beginning Pathmanager connectivity tests.");
+	printf("Beginning Pathmanager connectivity tests.\n");
 	fflush(stdout);
 	c->Message(CC_Default,"Beginning Pathmanager connectivity tests.");
-	std::deque<int> Route;
 	for (uint32 j = 1; j < Head.PathNodeCount; ++j)
 	{
-		if (Head.version == 4)
-			Route = FindRoutev4(PathNodes[0].id, PathNodes[j].id);
-		else
-			Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
+		std::deque<int> Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
 
 		if (Route.size() == 0)
 		{
-			if (firstbad == -1)
-				firstbad = PathNodes[j].id;
 			++NoConnections;
-			Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[0].id, (int)PathNodes[j].id);
-			c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[0].id, PathNodes[j].id);
+			printf("FindRoute(%i, %i) **** NO ROUTE FOUND ****\n", PathNodes[0].id, PathNodes[j].id);
+			c->Message(CC_Default,"FindRoute(%i, %i) **** NO ROUTE FOUND ****", PathNodes[0].id, PathNodes[j].id);
 		}
-		Route.clear();
 		++TotalTests;
 	}
-	Log.Out(Logs::General, Logs::Zone_Server, "Executed %i route searches.", TotalTests);
-	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
-	if (firstbad != -1)
-		c->Message(CC_Default,"First Bad Node at %i.", firstbad);
+	printf("Executed %i route searches.\n", TotalTests);
+	printf("Failed to find %i routes.\n", NoConnections);
+	fflush(stdout);
 	c->Message(CC_Default,"Executed %i route searches.", TotalTests);
 	c->Message(CC_Default,"Failed to find %i routes.", NoConnections);
 }
@@ -774,8 +727,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		// If we are already pathing, and the destination is the same as before ...
 		if (SameDestination)
 		{
-			if (!PathingRouteUpdateTimerLong->Check() && PathingLOSState == Direct)
-				return To;
 			Log.Out(Logs::Detail, Logs::Pathing, "  Still pathing to the same destination.");
 
 			// Get the coordinates of the first path node we are going to.
@@ -819,13 +770,13 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 							PathingLOSState = HaveLOS;
 						else
 							PathingLOSState = NoLOS;
-						Log.Out(Logs::Detail, Logs::Pathing, "LOSState = %s", PathingLOSState == HaveLOS ? "HaveLOS" : "NoLOS");
+						Log.Out(Logs::Detail, Logs::Pathing, "NoLOS");
 
 						if ((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 						{
 							Log.Out(Logs::Detail, Logs::Pathing, "  No hazards. Running directly to target.");
 							Route.clear();
-							PathingLOSState = Direct;
+
 							return To;
 						}
 						else
@@ -887,7 +838,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					// we have run all the nodes, all that is left is the direct path from the last node
 					// to the destination
 					Log.Out(Logs::Detail, Logs::Pathing, "  Reached end of node path, running direct to target.");
-					PathingLOSState = Direct;
+
 					return To;
 				}
 			}
@@ -918,7 +869,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					{
 						Log.Out(Logs::Detail, Logs::Pathing, "  No hazards. Running directly to target.");
 						Route.clear();
-						PathingLOSState = Direct;
+
 						return To;
 					}
 					else
@@ -937,8 +888,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		{
 			// We get here if we were already pathing, but our destination has now changed.
 			//
-			if(PathingLOSState == Direct)
-				PathingLOSState = UnknownLOS;
 			Log.Out(Logs::Detail, Logs::Pathing, "  Target has changed position.");
 			// Update our record of where we are going to.
 			PathingDestination = To;
@@ -961,7 +910,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					{
 						Log.Out(Logs::Detail, Logs::Pathing, "  No hazards. Running directly to target.");
 						Route.clear();
-						PathingLOSState = Direct;
 						return To;
 					}
 					else
@@ -994,8 +942,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		}
 	}
 	Log.Out(Logs::Detail, Logs::Pathing, "  Our route list is empty.");
-	if (SameDestination && PathingLOSState == Direct)
-		return To;
+
 	PathingLOSState = UnknownLOS;
 
 	PathingDestination = To;
@@ -1018,7 +965,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		if ((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 		{
 			Log.Out(Logs::Detail, Logs::Pathing, "Target is reachable. Running directly there.");
-			PathingLOSState = Direct;
 			return To;
 		}
 	}
@@ -1100,7 +1046,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	if (Route.size() == 0)
 	{
 		Log.Out(Logs::Detail, Logs::Pathing, "  No route available, running direct.");
-		PathingLOSState = Direct;
+
 		return To;
 	}
 
@@ -1339,7 +1285,7 @@ PathNode* PathManager::FindPathNodeByCoordinates(float x, float y, float z)
 
 PathNode* PathManager::FindPathNodeById(uint16 nodeid)
 {
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
+	for(int i = 0; i < Head.PathNodeCount; ++i)
 		if(PathNodes[i].id == nodeid)
 			return &PathNodes[i];
 
@@ -1375,10 +1321,9 @@ void PathManager::ShowPathNodeNeighbours(Client *c)
 			sprintf(Name, "%s000", DigitToWord(PathNodes[i].id));
 		else if (PathNodes[i].id < 100)
 			sprintf(Name, "%s_%s000", DigitToWord(PathNodes[i].id / 10), DigitToWord(PathNodes[i].id % 10));
-		else if (PathNodes[i].id < 1000)
-			sprintf(Name, "%s_%s_%s000", DigitToWord(PathNodes[i].id / 100), DigitToWord((PathNodes[i].id % 100) / 10), DigitToWord(((PathNodes[i].id % 100) % 10)));
 		else
-			sprintf(Name, "%s_%s_%s_%s000", DigitToWord(PathNodes[i].id / 1000), DigitToWord((PathNodes[i].id % 1000)/100), DigitToWord(((PathNodes[i].id % 1000) %100) /10), DigitToWord((((PathNodes[i].id % 1000) %100) %10)));
+			sprintf(Name, "%s_%s_%s000", DigitToWord(PathNodes[i].id / 100), DigitToWord((PathNodes[i].id % 100) / 10),
+			DigitToWord(((PathNodes[i].id % 100) % 10)));
 
 		Mob *m = entity_list.GetMob(Name);
 
@@ -1400,11 +1345,10 @@ void PathManager::ShowPathNodeNeighbours(Client *c)
 			sprintf(Name, "%s000", DigitToWord(Node->Neighbours[i].id));
 		else if (Node->Neighbours[i].id < 100)
 			sprintf(Name, "%s_%s000", DigitToWord(Node->Neighbours[i].id / 10), DigitToWord(Node->Neighbours[i].id % 10));
-		else if (Node->Neighbours[i].id < 1000)
-			sprintf(Name, "%s_%s_%s000", DigitToWord(Node->Neighbours[i].id / 100), DigitToWord((Node->Neighbours[i].id % 100) / 10), DigitToWord(((Node->Neighbours[i].id % 100) % 10)));
 		else
-			sprintf(Name, "%s_%s_%s_%s000", DigitToWord(Node->Neighbours[i].id / 1000), DigitToWord((Node->Neighbours[i].id % 1000)/100), DigitToWord(((Node->Neighbours[i].id % 1000) %100) /10), DigitToWord((((Node->Neighbours[i].id % 1000) %100) %10)));
-		
+			sprintf(Name, "%s_%s_%s000", DigitToWord(Node->Neighbours[i].id / 100), DigitToWord((Node->Neighbours[i].id % 100) / 10),
+			DigitToWord(((Node->Neighbours[i].id % 100) % 10)));
+
 		Mob *m = entity_list.GetMob(Name);
 
 		if (m)
@@ -1422,8 +1366,7 @@ void PathManager::NodeInfo(Client *c)
 
 	if (!c->GetTarget())
 	{
-		c->Message(CC_Default, "Pathing v%d.", Head.version);
-		c->Message(CC_Default, "Total Nodes %d.", Head.PathNodeCount);
+		c->Message(CC_Default, "You must target a node.");
 		return;
 	}
 
@@ -1461,19 +1404,11 @@ void PathManager::NodeInfo(Client *c)
 
 void PathManager::DumpPath(std::string filename)
 {
-	if (Head.version != 4)
-		Optimize();
 	std::ofstream o_file;
 	o_file.open(filename.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
 	o_file.write("EQEMUPATH", 9);
 	o_file.write((const char*)&Head, sizeof(Head));
 	o_file.write((const char*)PathNodes, (sizeof(PathNode)*Head.PathNodeCount));
-	if (Head.version == 4 && Head.PathNodeCount > 0) {
-		for(uint32 i = 0; i < Head.PathNodeCount; i++)
-		{
-			o_file.write((const char*)&path_tree[i][0], sizeof(int16) * Head.PathNodeCount);
-		}
-	}
 	o_file.close();
 }
 
@@ -1555,17 +1490,18 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		delete[] PathNodes;
 		PathNodes = t_PathNodes;
 
+		PreCalcNodeDistances();
+
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (new_id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(new_id));
 		else if (new_id < 100)
 			sprintf(npc_type->name, "%s_%s", DigitToWord(new_id / 10), DigitToWord(new_id % 10));
-		else if (new_id < 1000)
-			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id / 100), DigitToWord((new_id % 100) / 10), DigitToWord(((new_id % 100) % 10)));
 		else
-			sprintf(npc_type->name, "%s_%s_%s_%s", DigitToWord(new_id / 1000), DigitToWord((new_id % 1000)/100), DigitToWord(((new_id % 1000) %100) /10), DigitToWord((((new_id % 1000) %100) %10)));
-		
+			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id / 100), DigitToWord((new_id % 100) / 10),
+			DigitToWord(((new_id % 100) % 10)));
+
 		sprintf(npc_type->lastname, "%i", new_id);
 		npc_type->cur_hp = 4000000;
 		npc_type->max_hp = 4000000;
@@ -1597,10 +1533,8 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
 		entity_list.AddNPC(npc, true, true);
 
-		ResizePathingVectors();
 		safe_delete_array(ClosedListFlag);
 		ClosedListFlag = new int[Head.PathNodeCount];
-		Head.version = 2;
 		return new_id;
 	}
 	else
@@ -1619,16 +1553,17 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 			PathNodes[0].Neighbours[n].Teleport = new_node.Neighbours[n].Teleport;
 		}
 
+		PreCalcNodeDistances();
+
 		NPCType* npc_type = database.GetNPCTypeTemp(RuleI(NPC, NPCTemplateID));
 
 		if (new_id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(new_id));
 		else if (new_id < 100)
 			sprintf(npc_type->name, "%s_%s", DigitToWord(new_id / 10), DigitToWord(new_id % 10));
-		else if (new_id < 1000)
-			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id / 100), DigitToWord((new_id % 100) / 10), DigitToWord(((new_id % 100) % 10)));
 		else
-			sprintf(npc_type->name, "%s_%s_%s_%s", DigitToWord(new_id / 1000), DigitToWord((new_id % 1000)/100), DigitToWord(((new_id % 1000) %100) /10), DigitToWord((((new_id % 1000) %100) %10)));
+			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id / 100), DigitToWord((new_id % 100) / 10),
+			DigitToWord(((new_id % 100) % 10)));
 
 		sprintf(npc_type->lastname, "%i", new_id);
 		npc_type->cur_hp = 4000000;
@@ -1661,10 +1596,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		NPC* npc = new NPC(npc_type, nullptr, position, FlyMode1);
 		entity_list.AddNPC(npc, true, true);
 
-		ResizePathingVectors();
-
 		ClosedListFlag = new int[Head.PathNodeCount];
-		Head.version = 2;
 
 		return new_id;
 	}
@@ -1680,7 +1612,7 @@ void PathManager::CheckNodeErrors(Client *c)
 	if (Head.PathNodeCount > 0 && PathNodes[Head.PathNodeCount-1].id != (Head.PathNodeCount-1)) {
 		c->Message(15, "The path (Head.NodeCount - 1) %d, does not match the highest node number %d.", Head.PathNodeCount - 1, PathNodes[Head.PathNodeCount-1].id);
 	}
-	for (uint32 j = 0; j < Head.PathNodeCount; j++) {
+	for (int j=0;j<Head.PathNodeCount;j++) {
 		bool badid = false;
 		bool badv = false;
 		if (PathNodes[j].id != j) {
@@ -1768,7 +1700,6 @@ bool PathManager::DeleteNode(int32 id)
 				}
 			}
 		}
-		ResizePathingVectors();
 		safe_delete_array(ClosedListFlag);
 		ClosedListFlag = new int[Head.PathNodeCount];
 	}
@@ -1777,110 +1708,33 @@ bool PathManager::DeleteNode(int32 id)
 		delete[] PathNodes;
 		PathNodes = nullptr;
 	}
-	Head.version = 2;
 	return true;
 }
 
-void PathManager::RecalcDistances()
+void PathManager::PreCalcNodeDistances()
 {
-	// update distances between nodes
-		
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-	{
-		for(int j=0; j<PATHNODENEIGHBOURS; j++) {
-			if(PathNodes[i].Neighbours[j].id == -1)
-				continue;
-			PathNode* Neighbour = FindPathNodeById(PathNodes[i].Neighbours[j].id);
-			if (Neighbour != NULL) {
-				if (PathNodes[i].Neighbours[j].Teleport)
-					PathNodes[i].Neighbours[j].distance = 0.0f;
-				else
-					PathNodes[i].Neighbours[j].distance = VectorDistance(Neighbour->v, PathNodes[i].v);
-			} else {
-				PathNodes[i].Neighbours[j].distance = 0.0f;
-			}
-		}
-	}
-	if (Head.version == 3)
-		Head.version = 2;
-}
-
-void PathManager::ResizePathingVectors()
-{
-	// this resizes pathing vectors.
 	if (Head.PathNodeCount > 0) {
 		//adjust distance vector size
-		path_tree.resize(Head.PathNodeCount);
-		teleports.resize(Head.PathNodeCount);
-		for(uint32 i = 0 ; i < Head.PathNodeCount ; ++i)
+		node_distance.resize(Head.PathNodeCount);
+		for(int i = 0 ; i < Head.PathNodeCount ; ++i)
 		{
-	    	path_tree[i].resize(Head.PathNodeCount);
-			teleports[i].resize(Head.PathNodeCount);
+	    	node_distance[i].resize(Head.PathNodeCount);
 		}
-
-		for (uint32 i = 0; i < Head.PathNodeCount ; ++i)
-			for (uint32 j = 0; j < Head.PathNodeCount ; ++j)
-				teleports[i][j] = false;
-
-
-	}
-}
-void PathManager::Optimize()
-{
-	// this converts a v2 pathfile to v4
-	SortNodes();
-	ResortConnections();
-	ResizePathingVectors();
-	if (Head.PathNodeCount > 0) {
-		std::vector<float> distances;
-		distances.resize(Head.PathNodeCount);
-		// initialize pathing tree
-		for (uint32 i = 0; i < Head.PathNodeCount; i++)
-		{
-			for (uint32 j = 0 ; j < Head.PathNodeCount ; j++) {
-				path_tree[i][j] = -1;
-			}
-		}
-		// update teleports matrix
-		for (uint32 i = 0; i < Head.PathNodeCount ; ++i) {
-			for (int j = 0; j < PATHNODENEIGHBOURS; ++j) {
-				if (PathNodes[i].Neighbours[j].id == -1)
-					break;
-				if (PathNodes[i].Neighbours[j].Teleport)
-					teleports[i][PathNodes[i].Neighbours[j].id] = true;
-			}
-		}
-		int16 closestnode = -1;
-		// calculate distances and paths between nodes
-		for (uint32 i = 0; i < Head.PathNodeCount ; i++) {
-			memset(ClosedListFlag, 0, sizeof(int) * Head.PathNodeCount);
-			for (uint32 j = 0; j < Head.PathNodeCount ; j++)
-				distances[j] = 999999.0f;
-			distances[PathNodes[i].id] = 0.0f;
-			int count = 0;
-			while (count < Head.PathNodeCount)
-			{
-				int mindist = 999999.0f;
-				// find closest node
-				for (int t = 0; t < Head.PathNodeCount; t++ ) {
-					if (!ClosedListFlag[PathNodes[t].id] && mindist >= distances[PathNodes[t].id]) {
-						closestnode = PathNodes[t].id;
-						mindist = distances[closestnode];
-					}
+		// calculate distances between nodes
+		for (int i = 0; i < Head.PathNodeCount ; ++i) {
+			for (int j = Head.PathNodeCount - 1 ; j != 0 ; j--) {
+				if (i != j && PathNodes[i].id != -1 && PathNodes[j].id != -1)
+				{
+					float dist = VectorDistance(PathNodes[i].v, PathNodes[j].v);
+					if (dist < 65535)
+						node_distance[i][j] = (uint16)dist;
+					else
+						node_distance[i][j] = 65535;
+				} else {
+					node_distance[i][j] = 0;
 				}
-				ClosedListFlag[closestnode] = true;
-				for (int k = 0; k < PATHNODENEIGHBOURS; ++k) {
-					if (PathNodes[closestnode].Neighbours[k].id == -1)
-						break;
-					if (distances[PathNodes[closestnode].Neighbours[k].id] > (distances[closestnode] + PathNodes[closestnode].Neighbours[k].distance)) {
-						distances[PathNodes[closestnode].Neighbours[k].id] = distances[closestnode] + PathNodes[closestnode].Neighbours[k].distance;
-						path_tree[i][PathNodes[closestnode].Neighbours[k].id] = closestnode;
-					}
-				}
-				count++;
 			}
 		}
-		Head.version = 4;
 	}
 }
 
@@ -1905,7 +1759,7 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 
 	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
-	if (doorid >= 0)
+	if (doorid == 0)
 		ConnectNodeToNode(Node->id, Node2, teleport);
 	else
 		ConnectNodeToNode(Node->id, Node2, teleport, doorid);
@@ -1952,14 +1806,10 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 				a->Neighbours[a_i].id = b->id;
 				a->Neighbours[a_i].DoorID = doorid;
 				a->Neighbours[a_i].Teleport = teleport;
-				if (teleport)
-					a->Neighbours[a_i].distance = 0.0f;
-				else
-					a->Neighbours[a_i].distance = VectorDistance(a->v, b->v);
+				a->Neighbours[a_i].distance = VectorDistance(a->v, b->v);
 				break;
 			}
 		}
-		Head.version = 2;
 	}
 
 	if (connect_b_to_a)
@@ -1971,14 +1821,10 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 				b->Neighbours[b_i].id = a->id;
 				b->Neighbours[b_i].DoorID = doorid;
 				b->Neighbours[b_i].Teleport = teleport;
-				if (teleport)
-					b->Neighbours[b_i].distance = 0.0f;
-				else
-					b->Neighbours[b_i].distance = VectorDistance(a->v, b->v);
+				b->Neighbours[b_i].distance = VectorDistance(a->v, b->v);
 				break;
 			}
 		}
-		Head.version = 2;
 	}
 }
 
@@ -2003,7 +1849,7 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 
 	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
-	if (doorid >= 0)
+	if (doorid == 0)
 		ConnectNode(Node->id, Node2, teleport);
 	else
 		ConnectNode(Node->id, Node2, teleport, doorid);
@@ -2045,14 +1891,10 @@ void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 do
 				a->Neighbours[a_i].id = b->id;
 				a->Neighbours[a_i].DoorID = doorid;
 				a->Neighbours[a_i].Teleport = teleport;
-				if (teleport)
-					a->Neighbours[a_i].distance = 0.0f;
-				else
-					a->Neighbours[a_i].distance = VectorDistance(a->v, b->v);
+				a->Neighbours[a_i].distance = VectorDistance(a->v, b->v);
 				break;
 			}
 		}
-		Head.version = 2;
 	}
 }
 
@@ -2122,7 +1964,6 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 				break;
 			}
 		}
-		Head.version = 2;
 	}
 
 	if (disconnect_b_from_a)
@@ -2138,7 +1979,6 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 				break;
 			}
 		}
-		Head.version = 2;
 	}
 }
 
@@ -2183,31 +2023,24 @@ void PathManager::MoveNode(Client *c)
 		if (Node->Neighbours[j].id != -1) {
 			PathNode *Neighbour = FindPathNodeById(Node->Neighbours[j].id);
 			if (Neighbour != NULL) {
-				if (Node->Neighbours[j].Teleport)
-					Node->Neighbours[j].distance = 0.0f;
-				else
-					Node->Neighbours[j].distance = VectorDistance(Node->v, Neighbour->v);
+				Node->Neighbours[j].distance = VectorDistance(Node->v, Neighbour->v);
 			}
 		}
 	}
 
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
+	for(int i = 0; i < Head.PathNodeCount; ++i)
 	{
 		if(PathNodes[i].id == Node->id)
 			continue;
 
 		for(int j=0; j<PATHNODENEIGHBOURS; j++) {
 			if(PathNodes[i].Neighbours[j].id == Node->id) {
-				if (PathNodes[i].Neighbours[j].Teleport)
-					PathNodes[i].Neighbours[j].distance = 0.0f;
-				else
-					PathNodes[i].Neighbours[j].distance = VectorDistance(Node->v, PathNodes[i].v);
+				PathNodes[i].Neighbours[j].distance = VectorDistance(Node->v, PathNodes[i].v);
 			}
 		}
 
 	}
-	ResizePathingVectors();
-	Head.version = 2;
+	PreCalcNodeDistances();
 }
 
 void PathManager::DisconnectAll(Client *c)
@@ -2253,8 +2086,6 @@ void PathManager::DisconnectAll(Client *c)
 			}
 		}
 	}
-	ResizePathingVectors();
-	Head.version = 2;
 }
 
 //checks if anything in a points to b
@@ -2337,12 +2168,9 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 				}
 			}
 		}
-		
-		if (Head.version != 4) {
-			SortNodes();
-			ResortConnections();
-			ResizePathingVectors();
-		}
+		zone->pathing->SortNodes();
+		zone->pathing->ResortConnections();
+		zone->pathing->PreCalcNodeDistances();
 	}
 	DumpPath(filename);
 }
@@ -2389,7 +2217,6 @@ void PathManager::ResortConnections()
 			PathNodes[x].Neighbours[z].Teleport = Neigh[z].Teleport;
 		}
 	}
-	Head.version = 2;
 }
 
 void PathManager::QuickConnect(Client *c, bool set)
@@ -2420,10 +2247,9 @@ void PathManager::QuickConnect(Client *c, bool set)
 	{
 		if (QuickConnectTarget >= 0)
 		{
-			c->Message(CC_Default, "Connecting %i to %i", Node->id, QuickConnectTarget);
 			ConnectNodeToNode(QuickConnectTarget, Node->id);
 		}
-	}	
+	}
 }
 
 struct InternalPathSort
@@ -2488,6 +2314,5 @@ void PathManager::SortNodes()
 	}
 	safe_delete_array(PathNodes);
 	PathNodes = t_PathNodes;
-	Head.version = 2;
 }
 
