@@ -633,7 +633,7 @@ void PathManager::MeshTest()
 	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
 }
 
-void PathManager::SimpleMeshTest(Client* c)
+void PathManager::SimpleMeshTest(Client* c, int origin)
 {
 	// This will test connectivity between the first path node and all other nodes
 	if (Head.version != 4)
@@ -641,28 +641,64 @@ void PathManager::SimpleMeshTest(Client* c)
 	int TotalTests = 0;
 	int NoConnections = 0;
 	int firstbad = -1;
+	bool reverse = false;
+
+	if (abs(origin) >= Head.PathNodeCount)
+		return;
+
+	int start = abs(origin);
+
+	if (origin < 0)
+		reverse = true;
 
 	Log.Out(Logs::General, Logs::Zone_Server, "Beginning Pathmanager connectivity tests.");
 	fflush(stdout);
 	c->Message(CC_Default,"Beginning Pathmanager connectivity tests.");
 	std::deque<int> Route;
-	for (uint32 j = 1; j < Head.PathNodeCount; ++j)
+	if (reverse)
 	{
-		if (Head.version == 4)
-			Route = FindRoutev4(PathNodes[0].id, PathNodes[j].id);
-		else
-			Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
-
-		if (Route.size() == 0)
+		for (int j = start; j >= 0; j--)
 		{
-			if (firstbad == -1)
-				firstbad = PathNodes[j].id;
-			++NoConnections;
-			Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[0].id, (int)PathNodes[j].id);
-			c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[0].id, PathNodes[j].id);
+			if (j == start)
+				continue;
+			if (Head.version == 4)
+				Route = FindRoutev4(PathNodes[start].id, PathNodes[j].id);
+			else
+				Route = FindRoute(PathNodes[start].id, PathNodes[j].id);
+
+			if (Route.size() == 0)
+			{
+				if (firstbad == -1)
+					firstbad = PathNodes[j].id;
+				++NoConnections;
+				Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[start].id, (int)PathNodes[j].id);
+				c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[start].id, PathNodes[j].id);
+			}
+			Route.clear();
+			++TotalTests;
 		}
-		Route.clear();
-		++TotalTests;
+
+	} else {
+		for (int j = start; j < Head.PathNodeCount; ++j)
+		{
+			if (j == start)
+				continue;
+			if (Head.version == 4)
+				Route = FindRoutev4(PathNodes[start].id, PathNodes[j].id);
+			else
+				Route = FindRoute(PathNodes[start].id, PathNodes[j].id);
+
+			if (Route.size() == 0)
+			{
+				if (firstbad == -1)
+					firstbad = PathNodes[j].id;
+				++NoConnections;
+				Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[start].id, (int)PathNodes[j].id);
+				c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[start].id, PathNodes[j].id);
+			}
+			Route.clear();
+			++TotalTests;
+		}
 	}
 	Log.Out(Logs::General, Logs::Zone_Server, "Executed %i route searches.", TotalTests);
 	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
@@ -1913,6 +1949,33 @@ void PathManager::Optimize()
 	}
 }
 
+void PathManager::SetDoor(Client *c, int32 Node2, int32 doorid)
+{
+	if (!c->GetTarget())
+	{
+		c->Message(CC_Default, "You must target a node.");
+		return;
+	}
+
+	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+	if (!Node)
+	{
+		return;
+	}
+	for (int i = 0; i < PATHNODENEIGHBOURS; ++i)
+	{
+		if (Node->Neighbours[i].id == -1)
+			return;
+		
+		if (Node->Neighbours[i].id == Node2)
+		{
+			Node->Neighbours[i].DoorID = doorid;
+			c->Message(CC_Default, "DoorID set to %i for Node: %i to neighbor %i", doorid, Node->id, Node2);
+			return;
+		}
+	}
+}
+
 void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int32 doorid)
 {
 	if (!c)
@@ -2033,9 +2096,9 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
 	if (doorid >= 0)
-		ConnectNode(Node->id, Node2, teleport);
-	else
 		ConnectNode(Node->id, Node2, teleport, doorid);
+	else
+		ConnectNode(Node->id, Node2, teleport);
 }
 
 void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 doorid)
