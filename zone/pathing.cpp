@@ -130,9 +130,10 @@ bool PathManager::loadPaths(FILE *PathFile)
 	int MaxNodeID = Head.PathNodeCount - 1;
 
 	bool PathFileValid = true;
-	SortNodes();
-	ResortConnections();
-
+	if (Head.version != 4) {
+		SortNodes();
+		ResortConnections();
+	}
 	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
 		if (PathNodes[i].id != i) {
@@ -155,7 +156,8 @@ bool PathManager::loadPaths(FILE *PathFile)
 
 	if (PathFileValid) {
 		Log.Out(Logs::General, Logs::Zone_Server, "Pathfile v%d loaded.", Head.version);
-		RecalcDistances();
+		if (Head.version != 4)
+			RecalcDistances();
 		ResizePathingVectors();
 		if (Head.version == 4)
 		{
@@ -631,7 +633,7 @@ void PathManager::MeshTest()
 	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
 }
 
-void PathManager::SimpleMeshTest(Client* c)
+void PathManager::SimpleMeshTest(Client* c, int origin)
 {
 	// This will test connectivity between the first path node and all other nodes
 	if (Head.version != 4)
@@ -639,33 +641,96 @@ void PathManager::SimpleMeshTest(Client* c)
 	int TotalTests = 0;
 	int NoConnections = 0;
 	int firstbad = -1;
+	bool reverse = false;
+
+	if (abs(origin) >= Head.PathNodeCount)
+		return;
+
+	int start = abs(origin);
+
+	if (origin < 0)
+		reverse = true;
 
 	Log.Out(Logs::General, Logs::Zone_Server, "Beginning Pathmanager connectivity tests.");
 	fflush(stdout);
 	c->Message(CC_Default,"Beginning Pathmanager connectivity tests.");
 	std::deque<int> Route;
-	for (uint32 j = 1; j < Head.PathNodeCount; ++j)
+	if (reverse)
 	{
-		if (Head.version == 4)
-			Route = FindRoutev4(PathNodes[0].id, PathNodes[j].id);
-		else
-			Route = FindRoute(PathNodes[0].id, PathNodes[j].id);
-
-		if (Route.size() == 0)
+		for (int j = start; j >= 0; j--)
 		{
-			if (firstbad == -1)
-				firstbad = PathNodes[j].id;
-			++NoConnections;
-			Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[0].id, (int)PathNodes[j].id);
-			c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[0].id, PathNodes[j].id);
+			if (j == start)
+				continue;
+			if (Head.version == 4)
+				Route = FindRoutev4(PathNodes[start].id, PathNodes[j].id);
+			else
+				Route = FindRoute(PathNodes[start].id, PathNodes[j].id);
+
+			if (Route.size() == 0)
+			{
+				if (firstbad == -1)
+					firstbad = PathNodes[j].id;
+				++NoConnections;
+				Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[start].id, (int)PathNodes[j].id);
+				c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[start].id, PathNodes[j].id);
+			}
+			Route.clear();
+			++TotalTests;
 		}
-		Route.clear();
-		++TotalTests;
+
+	} else {
+		for (int j = start; j < Head.PathNodeCount; ++j)
+		{
+			if (j == start)
+				continue;
+			if (Head.version == 4)
+				Route = FindRoutev4(PathNodes[start].id, PathNodes[j].id);
+			else
+				Route = FindRoute(PathNodes[start].id, PathNodes[j].id);
+
+			if (Route.size() == 0)
+			{
+				if (firstbad == -1)
+					firstbad = PathNodes[j].id;
+				++NoConnections;
+				Log.Out(Logs::General, Logs::Zone_Server, "FindRoute[%i][%i] **** NO ROUTE FOUND ****", (int)PathNodes[start].id, (int)PathNodes[j].id);
+				c->Message(CC_Default,"FindRoute From: %i To: %i  NO ROUTE FOUND ", PathNodes[start].id, PathNodes[j].id);
+			}
+			Route.clear();
+			++TotalTests;
+		}
 	}
 	Log.Out(Logs::General, Logs::Zone_Server, "Executed %i route searches.", TotalTests);
 	Log.Out(Logs::General, Logs::Zone_Server, "Failed to find %i routes.", NoConnections);
-	if (firstbad != -1)
+	if (firstbad != -1) {
 		c->Message(CC_Default,"First Bad Node at %i.", firstbad);
+		char Name[64];
+
+		if (firstbad < 10)
+			sprintf(Name, "%s000", DigitToWord(firstbad));
+		else if (firstbad < 100)
+			sprintf(Name, "%s_%s000", DigitToWord(firstbad / 10), DigitToWord(firstbad));
+		else if (firstbad < 1000)
+			sprintf(Name, "%s_%s_%s000", DigitToWord(firstbad / 100), DigitToWord((firstbad % 100) / 10), DigitToWord(((firstbad % 100) % 10)));
+		else
+			sprintf(Name, "%s_%s_%s_%s000", DigitToWord(firstbad / 1000), DigitToWord((firstbad % 1000)/100), DigitToWord(((firstbad % 1000) %100) /10), DigitToWord((((firstbad % 1000) %100) %10)));
+
+		Mob *m = entity_list.GetMob(Name);
+		if (m) {
+			if (c->GetTarget()) {
+				if (c->GetTarget() != m) {
+					c->GetTarget()->IsTargeted(-1);
+					c->SetTarget(m);
+					m->IsTargeted(1);
+				}
+			} else {
+				c->SetTarget(m);
+				m->IsTargeted(1);
+			}
+			c->SendTargetCommand(m->GetID());
+		}
+	}
+			
 	c->Message(CC_Default,"Executed %i route searches.", TotalTests);
 	c->Message(CC_Default,"Failed to find %i routes.", NoConnections);
 }
@@ -1884,6 +1949,33 @@ void PathManager::Optimize()
 	}
 }
 
+void PathManager::SetDoor(Client *c, int32 Node2, int32 doorid)
+{
+	if (!c->GetTarget())
+	{
+		c->Message(CC_Default, "You must target a node.");
+		return;
+	}
+
+	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+	if (!Node)
+	{
+		return;
+	}
+	for (int i = 0; i < PATHNODENEIGHBOURS; ++i)
+	{
+		if (Node->Neighbours[i].id == -1)
+			return;
+		
+		if (Node->Neighbours[i].id == Node2)
+		{
+			Node->Neighbours[i].DoorID = doorid;
+			c->Message(CC_Default, "DoorID set to %i for Node: %i to neighbor %i", doorid, Node->id, Node2);
+			return;
+		}
+	}
+}
+
 void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int32 doorid)
 {
 	if (!c)
@@ -2004,9 +2096,9 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 	c->Message(CC_Default, "Connecting %i to %i", Node->id, Node2);
 
 	if (doorid >= 0)
-		ConnectNode(Node->id, Node2, teleport);
-	else
 		ConnectNode(Node->id, Node2, teleport, doorid);
+	else
+		ConnectNode(Node->id, Node2, teleport);
 }
 
 void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 doorid)
@@ -2300,6 +2392,47 @@ bool PathManager::CheckLosFN(glm::vec3 a, glm::vec3 b)
 	return true;
 }
 
+void PathManager::ConnectNearbyNodes(PathNode *center)
+{
+	if (!center)
+		return;
+
+	std::deque<PathNodeSortStruct> SortedByDistance;
+
+	PathNodeSortStruct TempNode;
+
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+	{
+		if (center->id == PathNodes[i].id) //can't connect to ourselves.
+			continue;
+
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+		{
+			if (!NodesConnected(center, &PathNodes[i]))
+			{
+				TempNode.id = i;
+				TempNode.Distance = VectorDistanceNoRoot(center->v, PathNodes[i].v);
+				if (TempNode.Distance < 40000)
+					SortedByDistance.push_back(TempNode);
+			}
+		}
+
+		std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
+
+		for (auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
+		{
+			if (CheckLosFN(center->v, PathNodes[(*Iterator).id].v))
+			{
+				if (NoHazardsAccurate(center->v, PathNodes[(*Iterator).id].v))
+				{
+					ConnectNodeToNode(center->id, PathNodes[(*Iterator).id].id);
+				}
+			}
+		}
+		SortedByDistance.clear();
+	}
+}
+
 void PathManager::ProcessNodesAndSave(std::string filename)
 {
 	if (zone->zonemap)
@@ -2317,25 +2450,7 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 
 		for (uint32 x = 0; x < Head.PathNodeCount; ++x)
 		{
-			for (uint32 y = 0; y < Head.PathNodeCount; ++y)
-			{
-				if (y == x) //can't connect to ourselves.
-					continue;
-
-				if (!NodesConnected(&PathNodes[x], &PathNodes[y]))
-				{
-					if (VectorDistanceNoRoot(PathNodes[x].v, PathNodes[y].v) <= 40000)
-					{
-						if (CheckLosFN(PathNodes[x].v, PathNodes[y].v))
-						{
-							if (NoHazardsAccurate(PathNodes[x].v, PathNodes[y].v))
-							{
-								ConnectNodeToNode(PathNodes[x].id, PathNodes[y].id, 0, 0);
-							}
-						}
-					}
-				}
-			}
+			ConnectNearbyNodes(&PathNodes[x]);
 		}
 		
 		if (Head.version != 4) {

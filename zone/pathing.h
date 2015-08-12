@@ -70,7 +70,7 @@ public:
 	void SpawnPathNodes(float x = 0.0f, float y = 0.0f, float z = 0.0f, int startid = 0);
 	void SpawnNode(PathNode *node);
 	void MeshTest();
-	void SimpleMeshTest(Client *c);
+	void SimpleMeshTest(Client *c, int origin = 0);
 	int FindNearestPathNode(glm::vec3 Position);
 	bool NoHazards(glm::vec3 From, glm::vec3 To);
 	bool NoHazardsAccurate(glm::vec3 From, glm::vec3 To);
@@ -92,6 +92,7 @@ public:
 	void ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport = 0, int32 doorid = -1);
 	void ConnectNode(Client *c, int32 Node2, int32 teleport = 0, int32 doorid = -1); //connects a node one way
 	void ConnectNode(int32 Node1, int32 Node2, int32 teleport = 0, int32 doorid = -1);
+	void SetDoor(Client *c, int32 Node2, int32 doorid = -1);
 	void DisconnectNodeToNode(Client *c, int32 Node2);
 	void DisconnectNodeToNode(int32 Node1, int32 Node2);
 	void MoveNode(Client *c);
@@ -99,6 +100,7 @@ public:
 	bool NodesConnected(PathNode *a, PathNode *b);
 	void DumpPath(std::string filename);
 	void ProcessNodesAndSave(std::string filename);
+	void ConnectNearbyNodes(PathNode *center);
 	void ResortConnections();
 	void QuickConnect(Client *c, bool set = false);
 	void SortNodes();
