@@ -339,6 +339,8 @@ public:
 	int32	GetAvoidanceRating() const { return (avoidance_rating); }
 	void	SetAvoidanceRating(int32 d) { avoidance_rating = d;}
 	int32 GetRawAC() const { return AC; }
+	void	SetIgnoreDistance(float distance) { ignore_distance = distance; }
+	float	GetIgnoreDistance() { return ignore_distance; }
 
 	void	ModifyNPCStat(const char *identifier, const char *newValue);
 	virtual void SetLevel(uint8 in_level, bool command = false);
@@ -386,7 +388,7 @@ public:
 	void	mod_npc_killed(Mob* oos);
 	void	AISpellsList(Client *c);
 
-	bool IsRaidTarget() const { return raid_target; };
+	bool IsRaidTarget() const { return raid_target; }
 
 	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
 	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }
@@ -495,6 +497,7 @@ protected:
 	QGlobalCache *qGlobals;
 
 	bool raid_target;
+	float ignore_distance;
 
 private:
 	uint32	loottable_id;

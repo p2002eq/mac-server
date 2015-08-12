@@ -933,6 +933,19 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		if (fac != 0 && GetModCharacterFactionLevel(fac) < ml.faction_required)
 			continue;
 
+		if(ml.quantity > 0)
+		{
+			if(ml.qty_left <= 0)
+			{
+				Log.Out(Logs::General, Logs::Trading, "Merchant is skipping item %d that has %d left.", ml.item, ml.qty_left);
+				continue;
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Trading, "Merchant is sending item %d that has %d left in slot %d.", ml.item, ml.qty_left, ml.slot);
+			}
+		}
+
 		handychance = zone->random.Int(0, merlist.size() + tmp_merlist.size() - 1);
 
 		item = database.GetItem(ml.item);
@@ -970,7 +983,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		// Account for merchant lists with gaps.
 		if (ml.slot >= i) {
 			if (ml.slot > i)
-				Log.Out(Logs::General, Logs::None, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
+				Log.Out(Logs::General, Logs::Trading, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
 			i = ml.slot + 1;
 		}
 	}

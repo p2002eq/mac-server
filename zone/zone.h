@@ -164,6 +164,9 @@ public:
 	void	LoadTempMerchantData();
 	uint32	GetTempMerchantQuantity(uint32 NPCID, uint32 Slot);
 	int		SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold=false);
+	void	SaveMerchantItem(uint32 merchantid, int16 item, int8 charges, int8 slot);
+	void	ResetMerchantQuantity(uint32 merchantid);
+	void	ClearMerchantLists();
 	void LoadLevelEXPMods();
 
 	void SetInstanceTimer(uint32 new_duration);

@@ -307,6 +307,7 @@ namespace Mac {
 		OUT(anon);
 		OUT(gm);
 		OUT(guildrank);
+		eq->uniqueGuildID = emu->guild_id;
 		OUT(exp);
 		OUT_array(languages, 26);
 		OUT(x);
@@ -1860,7 +1861,7 @@ namespace Mac {
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
 		if(item->GMFlag == -1)
-			Log.Out(Logs::Moderate, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
+			Log.Out(Logs::Detail, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
 
 		// General items
   		if(type == 0)

@@ -196,6 +196,7 @@ public:
 	void	ProcessProximitySay(const char *Message, Client *c, uint8 language = 0);
 	void	SendAATimer(uint32 charid,UseAA_Struct* uaa);
 	Doors *FindDoor(uint8 door_id);
+	Doors	*FindNearestDoor(Client* c);
 	Object *FindObject(uint32 object_id);
 	Object*	FindNearbyObject(float x, float y, float z, float radius);
 	bool	MakeDoorSpawnPacket(EQApplicationPacket* app, Client *client);
@@ -335,7 +336,8 @@ public:
 	void	ClearAggro(Mob* targ);
 	void	ClearFeignAggro(Mob* targ);
 	void	ClearZoneFeignAggro(Client* targ);
-	void	AggroZone(Mob* who, int hate = 0);
+	void	CheckNearbyNodes(Client* c);
+	void	AggroZone(Mob* who, int hate = 0, bool use_ignore_dist = false);
 
 	bool	Fighting(Mob* targ);
 	void	RemoveFromHateLists(Mob* mob, bool settoone = false);

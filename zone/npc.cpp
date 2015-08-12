@@ -209,6 +209,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 
 	MerchantType = d->merchanttype;
 	merchant_open = GetClass() == MERCHANT;
+	if(MerchantType > 0 && GetClass() == MERCHANT)
+		zone->ResetMerchantQuantity(MerchantType);
 	flymode = iflymode;
 	guard_anim = eaStanding;
 	roambox_distance = 0;
@@ -290,6 +292,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	CalcBonuses();
 	raid_target = d->raid_target;
 	npc_assist_cap = 0;
+	ignore_distance = d->ignore_distance;
 }
 
 NPC::~NPC()

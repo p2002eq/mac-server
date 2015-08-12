@@ -2277,6 +2277,8 @@ struct MerchantList {
 	int8	level_required;
 	uint32	classes_required;
 	uint8	probability;
+	uint8	quantity;
+	uint8	qty_left; // Not stored in the DB
 };
 
 struct TempMerchantList {

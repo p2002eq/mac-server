@@ -941,6 +941,7 @@ public:
 
 	bool has_zomm;
 	bool client_position_update;
+	int update_count;
 	bool ignore_zone_count; 
 
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
@@ -951,6 +952,7 @@ public:
 
 	void SendClientVersion();
 	void FixClientXP();
+	void SendToBoat(bool messageonly = false);
 
 protected:
 	friend class Mob;

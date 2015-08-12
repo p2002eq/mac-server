@@ -56,7 +56,6 @@ extern uint32 numclients;
 extern PetitionList petition_list;
 
 extern char errorname[32];
-extern uint16 adverrornum;
 
 Entity::Entity()
 {
@@ -757,6 +756,35 @@ void EntityList::CheckSpawnQueue()
 		tsFirstSpawnOnQueue = 0xFFFFFFFF;
 		NumSpawnsOnQueue = 0;
 	}
+}
+
+Doors *EntityList::FindNearestDoor(Client* c)
+{
+	if (!c || door_list.empty())
+		return nullptr;
+
+	Doors *nearest = nullptr;
+	float closest = 999999.0f;
+
+	auto it = door_list.begin();
+	while (it != door_list.end()) {
+
+		if (!it->second)
+			continue;
+
+		auto diff = c->GetPosition() - it->second->GetPosition();
+
+		float curdist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+
+		if (curdist < closest)
+		{
+			closest = curdist;
+			nearest = it->second;
+		}
+		++it;
+	}
+	return nearest;
+
 }
 
 Doors *EntityList::FindDoor(uint8 door_id)
@@ -2437,7 +2465,7 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 			&& (mob->IsClient() || iSendEvenIfNotChanged || (mob->LastChange() >= cLastUpdate))
 			&& (!it->second->IsClient() || !it->second->CastToClient()->GMHideMe(client))) {
 
-			if (range == 0 || (it->second == alwayssend) || mob->IsClient() || (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range)) {
+			if (range == 0 || (it->second == alwayssend) || iSendEvenIfNotChanged || mob->IsClient() || (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range)) {
 				mob->MakeSpawnUpdate(&ppu->spawn_update);
 				ppu->num_updates = 1;
 			}
@@ -2873,14 +2901,42 @@ void EntityList::ClearZoneFeignAggro(Client *targ)
 	}
 }
 
-void EntityList::AggroZone(Mob *who, int hate)
+void EntityList::AggroZone(Mob *who, int hate, bool use_ignore_dist)
 {
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
-		it->second->AddToHateList(who, hate);
-		it->second->SetRememberDistantMobs(true);
+		if ((it->second->GetBodyType() != BT_NoTarget) && (it->second->GetBodyType() != BT_NoTarget2))
+			it->second->AddToHateList(who, hate);
+		if(!use_ignore_dist)
+			it->second->SetRememberDistantMobs(true);
 		++it;
 	}
+}
+
+void EntityList::CheckNearbyNodes(Client *c)
+{
+	Mob *m = nullptr;
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		if ((it->second->GetBodyType() != BT_NoTarget) && (it->second->GetBodyType() != BT_NoTarget2)) {
+			glm::vec3 Position(it->second->GetX(), it->second->GetY(), it->second->GetZ());
+
+			int Node = zone->pathing->FindNearestPathNode(Position);
+
+			if (Node == -1) {
+				c->Message(CC_Default, "Unable to locate a path node around %s at %.2f, %.2f, %.2f.", it->second->GetName(), it->second->GetX(),it->second->GetY(),it->second->GetZ());
+				if (!m)
+					m = it->second;
+			}
+		}
+		++it;
+	}
+	if (m) {
+		c->SetTarget(m);
+		m->IsTargeted(1);
+		c->SendTargetCommand(m->GetID());
+	}
+
 }
 
 // Signal Quest command function

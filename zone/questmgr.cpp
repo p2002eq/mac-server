@@ -2195,9 +2195,9 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 	safe_delete_array(escaped_string);
 
 	if (silent)
-		sayid = sayid + 750000;
+		sayid = sayid + 500;
 	else
-		sayid = sayid + 500000;
+		sayid = sayid + 0;
 
 	//Create the say link as an item link hash
 	char linktext[250];
@@ -2205,9 +2205,7 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 	if (initiator) {
 			static char itemid[7];
 			sprintf(itemid, "%06d", sayid);
-			sprintf(linktext,"%c%c%s%s%s%c",0x12,0x30,itemid,"",LinkName,0x12);
-	} else { // If no initiator, create an RoF saylink, since older clients handle RoF ones better than RoF handles older ones.
-		sprintf(linktext,"%c%06X%s%s%c",0x12,sayid,"0000000000000000000000000000000000000000000000000",LinkName,0x12);
+			sprintf(linktext,"%c%c%s%s%c",0x12,0x30,itemid,LinkName,0x12);
 	}
 
 	strcpy(Phrase,linktext);

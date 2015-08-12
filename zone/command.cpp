@@ -150,7 +150,7 @@ int command_init(void){
 		command_add("advnpc", "analog for advnpcspawn [maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox].", 250, command_advnpcspawn) ||
 		command_add("advnpcspawn", "[maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox].", 250, command_advnpcspawn) ||
 		command_add("aggro", "(range) [-v] - Display aggro information for all mobs 'range' distance from your target. -v is verbose faction info.", 95, command_aggro) ||
-		command_add("aggrozone", "[aggro] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 250, command_aggrozone) ||
+		command_add("aggrozone", "[aggro] [0/1: Enforce ignore distance. If 0 or not set, all will come] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 250, command_aggrozone) ||
 		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target.", 250, command_ai) ||
 		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information.", 170, command_altactivate) ||
 		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target.", 250, command_appearance) ||
@@ -343,6 +343,7 @@ int command_init(void){
 		command_add("reloadallrules", "Executes a reload of all rules.", 180, command_reloadallrules) ||
 		command_add("reloademote", "Reloads NPC Emotes.", 180, command_reloademote) ||
 		command_add("reloadlevelmods", nullptr, 255, command_reloadlevelmods) ||
+		command_add("reloadmerchants", "Reloads NPC merchant list.", 255, command_reloadmerchants) ||
 		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadquest", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
@@ -3131,10 +3132,10 @@ void command_reloadworld(Client *c, const Seperator *sep){
 	RW->Option = 0; //Keep it, maybe we'll use it in the future.
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, and repopping zones worldwide."))
+	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide."))
 		c->Message(CC_Default, "Error: World server disconnected");
 
-	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, and repopping zones worldwide.");
+	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide.");
 }
 
 void command_reloadlevelmods(Client *c, const Seperator *sep){
@@ -7146,17 +7147,23 @@ void command_path(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help"))
 	{
-		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns a npc to represent every npc node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns an npc to represent every path node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [#]: Spawns an npc to represent every path node.  Adding a number will start at this node number."); 
 		c->Message(CC_Default, "#path info node_id: Gives information about node info (requires shownode target).");
+		c->Message(CC_Default, "#path optimize: Optimizes pathfile to v4.");
 		c->Message(CC_Default, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
 		c->Message(CC_Default, "#path connect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node and connects that node back (requires shownode target).");
 		c->Message(CC_Default, "#path sconnect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node (requires shownode target).");
 		c->Message(CC_Default, "#path qconnect [set]: short cut connect, connects the targeted node to the node you set with #path qconnect set (requires shownode target).");
+		c->Message(CC_Default, "#path setdoor neighbour_id [doorid]:  Sets the doorid for the neighbour of the targeted node.  A doorid of -1 resets doorid in neighbour.  No door id, searches for nearest door.");
+		c->Message(CC_Default, "#path teleport neighbour_id [0/1]:  Sets the teleport for the neighbour of the targeted node.");
 		c->Message(CC_Default, "#path disconnect [all]/disconnect_from_id: Disconnects the currently targeted node to disconnect from disconnect from id's node (requires shownode target), if passed all as the second argument it will disconnect this node from every other node.");
 		c->Message(CC_Default, "#path move: Moves your targeted node to your current position");
 		c->Message(CC_Default, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
+		c->Message(CC_Default, "#path nearest [all]: When a mob is targeted, it checks for nearby path nodes.  Using all option checks nearby nodes to all NPCs.");
+		c->Message(CC_Default, "#path meshtest [simple/complex] [startnode]: Performs a connectivity test between nodes.  For simple, it starts at node 0 by default.  The [startnode] parameter will change this.  Using a negative start number, will do the search in reverse. Complex tests all possible route combinations.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
@@ -7164,8 +7171,12 @@ void command_path(Client *c, const Seperator *sep)
 		if (zone->pathing) {
 			if (!strcasecmp(sep->arg[2], "around"))
 				zone->pathing->SpawnPathNodes(c->GetX(), c->GetY(), c->GetZ());
-			else
-				zone->pathing->SpawnPathNodes();
+			else {
+				if (sep->IsNumber(2))
+					zone->pathing->SpawnPathNodes(0.0f, 0.0f, 0.0f, atoi(sep->arg[2]));
+				else
+					zone->pathing->SpawnPathNodes();
+			}
 		}
 		return;
 	}
@@ -7178,19 +7189,32 @@ void command_path(Client *c, const Seperator *sep)
 		}
 		return;
 	}
+	if (!strcasecmp(sep->arg[1], "optimize"))
+	{
+		if (zone->pathing)
+		{
+			if (zone->pathing->GetVersion() == 4) {
+				c->Message(CC_Default, "Path file is already optimized to v4.");
+				return;
+			}
+			c->Message(CC_Default, "Path file is optimizing.  You may go LD.");
+			zone->pathing->Optimize();
+			c->Message(CC_Default, "Path file optimized to v4");
+		}
+		return;
+	}
 
 	if (!strcasecmp(sep->arg[1], "dump"))
 	{
 		if (zone->pathing)
 		{
-			if (sep->arg[2][0] == '\0')
+			if (sep->arg[2][0] == '\0') {
+				c->Message(CC_Default, "You must specify a filename.  Usage: #path dump <filename.path>");
 				return;
+			}
 			
-			zone->pathing->SortNodes();
-			zone->pathing->ResortConnections();
-			zone->pathing->PreCalcNodeDistances();
 			zone->pathing->DumpPath(sep->arg[2]);
-			c->Message(CC_Default, "Path file saved as %s", sep->arg[2]);
+			c->Message(CC_Default, "Path file v%d saved as %s", zone->pathing->GetVersion(), sep->arg[2]);
 		}
 		return;
 	}
@@ -7288,6 +7312,27 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
+	if (!strcasecmp(sep->arg[1], "setdoor"))
+	{
+		
+		if (zone->pathing)
+		{
+			if (sep->IsNumber(2) && sep->IsNumber(3)) {
+				zone->pathing->SetDoor(c, atoi(sep->arg[2]), atoi(sep->arg[3]));
+			} else if (sep->IsNumber(2)) {
+				Doors* door = entity_list.FindNearestDoor(c);
+				if (door)
+					zone->pathing->SetDoor(c, atoi(sep->arg[2]), door->GetDoorID());
+				else
+					c->Message(CC_Default, "Unable to find a door nearby.");
+			} else {
+				c->Message(CC_Default, "Usage: #path setdoor neighbour_id [doorid].  Without a doorid value, searches for nearest door. Using a [doorid] = -1 will unset door.");
+			}
+
+		}
+		return;
+	}
+
 	if (!strcasecmp(sep->arg[1], "qconnect"))
 	{
 		if (zone->pathing)
@@ -7350,13 +7395,13 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "nodes"))
 			{
 				zone->pathing->SortNodes();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Nodes resorted...");
 			}
 			else
 			{
 				zone->pathing->ResortConnections();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Connections resorted...");
 				c->Message(CC_Default, "Spawned Nodes will need respawned to display proper node id.");
 				zone->pathing->CheckNodeErrors(c);
@@ -7414,7 +7459,10 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "simple"))
 			{
 				c->Message(CC_Default, "You may go linkdead. Results will be in the log file.");
-				zone->pathing->SimpleMeshTest(c);
+				if (sep->IsNumber(3))
+					zone->pathing->SimpleMeshTest(c, atoi(sep->arg[3]));
+				else
+					zone->pathing->SimpleMeshTest(c);
 				return;
 			}
 			else if(!strcasecmp(sep->arg[2], "complex"))
@@ -7441,24 +7489,30 @@ void command_path(Client *c, const Seperator *sep)
 
 	if (!strcasecmp(sep->arg[1], "nearest"))
 	{
-		if (!c->GetTarget() || !c->GetTarget()->IsMob())
+		if (c->GetTarget() && !c->GetTarget()->IsMob())
 		{
-			c->Message(CC_Default, "You must target something.");
+			c->Message(CC_Default, "You must target a mob.");
 			return;
 		}
 
 		if (zone->pathing)
 		{
-			Mob *m = c->GetTarget();
+			if (c->GetTarget())
+			{
+				Mob *m = c->GetTarget();
 
-			glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
+				glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
 
-			int Node = zone->pathing->FindNearestPathNode(Position);
+				int Node = zone->pathing->FindNearestPathNode(Position);
 
-			if (Node == -1)
-				c->Message(CC_Default, "Unable to locate a path node within range.");
-			else
-				c->Message(CC_Default, "Nearest path node is %i", Node);
+				if (Node == -1)
+					c->Message(CC_Default, "Unable to locate a path node within range.");
+				else
+					c->Message(CC_Default, "Nearest path node is %i", Node);
+			} else if (!strcasecmp(sep->arg[2], "all")) {
+				c->Message(CC_Default, "Checking all mobs can find a path node nearby.");
+				entity_list.CheckNearbyNodes(c);
+			}
 
 			return;
 		}
@@ -8453,7 +8507,10 @@ void command_aggrozone(Client *c, const Seperator *sep){
 		return;
 
 	int hate = atoi(sep->arg[1]); //should default to 0 if we don't enter anything
-	entity_list.AggroZone(m, hate);
+	bool use_ignore_dist = false;
+	if(sep->IsNumber(2))
+		use_ignore_dist = atoi(sep->arg[2]);
+	entity_list.AggroZone(m, hate, use_ignore_dist);
 	if (!c->GetTarget())
 		c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
 	else
@@ -11072,4 +11129,12 @@ void command_keyring(Client *c, const Seperator *sep)
 	t->KeyRingList(c);
 	c->Message(CC_Default, "Zone Flag List:");
 	t->ZoneFlagList(c);
+}
+
+void command_reloadmerchants(Client *c, const Seperator *sep)
+{
+	zone->ClearMerchantLists();
+	zone->GetMerchantDataForZoneLoad();
+	zone->LoadTempMerchantData();
+	c->Message(CC_Default, "Merchant list reloaded for %s.", zone->GetShortName());
 }
