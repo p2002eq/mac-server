@@ -2355,7 +2355,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 					SpawnPositionUpdates_Struct* ppus = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
 					zommnpc->SetSpawnUpdate(ppu, &ppus->spawn_update);
 					ppus->num_updates = 1;
-					entity_list.QueueCloseClients(zommnpc,outapp,true,300,this,false);
+					entity_list.QueueCloseClients(zommnpc,outapp,true,500,this,false);
 					safe_delete(outapp);
 
 					pLastUpdate = Timer::GetCurrentTime();
@@ -2577,6 +2577,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		m_Proximity = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
+	bool send_update = (m_Position.w != ppu->heading && ppu->delta_heading == 0) || (ppu->delta_heading != m_Delta.w) || 
+		((ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x) && ppu->anim_type == 0) || (ppu->anim_type != animation) || (ppu->anim_type > 0 && ++update_count > 3);
 	// Update internal state
 	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 	m_Position.w = ppu->heading;
@@ -2585,6 +2587,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(zone->random.Real(0, 100) < 70)//should be good
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
+	
 
 	// Break Hide, Trader, and fishing mode if moving and set rewind timer
 	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
@@ -2620,16 +2623,18 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
+
 	m_Position.x = ppu->x_pos;
 	m_Position.y = ppu->y_pos;
 	m_Position.z = m_EQPosition.z;
 
 	animation = ppu->anim_type;
-
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
-	SendPosUpdate();
-	pLastUpdate = Timer::GetCurrentTime();
-
+	if (send_update) {
+		update_count = 0;
+		SendPosUpdate();
+		pLastUpdate = Timer::GetCurrentTime();
+	}
 	if(zone->watermap)
 	{
 		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
