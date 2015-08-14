@@ -39,6 +39,7 @@
 #include "spawn2.h"
 #include "zone.h"
 #include "water_map.h"
+#include "quest_parser_collection.h"
 
 #include <cctype>
 #include <stdio.h>
@@ -537,6 +538,7 @@ bool NPC::Process()
 
 	if(tic_timer.Check())
 	{
+		parse->EventNPC(EVENT_TICK, this, nullptr, "", 0);
 		BuffProcess();
 
 		if(curfp)

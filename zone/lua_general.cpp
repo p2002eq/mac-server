@@ -1480,7 +1480,8 @@ luabind::scope lua_register_events() {
 			luabind::value("death_complete", static_cast<int>(EVENT_DEATH_COMPLETE)),
 			luabind::value("unhandled_opcode", static_cast<int>(EVENT_UNHANDLED_OPCODE)),
 			luabind::value("board_boat", static_cast<int>(EVENT_BOARD_BOAT)),
-			luabind::value("leave_boat", static_cast<int>(EVENT_LEAVE_BOAT))
+			luabind::value("leave_boat", static_cast<int>(EVENT_LEAVE_BOAT)),
+			luabind::value("tick", static_cast<int>(EVENT_TICK))
 		];
 }
 
