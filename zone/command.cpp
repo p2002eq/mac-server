@@ -7156,11 +7156,14 @@ void command_path(Client *c, const Seperator *sep)
 		c->Message(CC_Default, "#path connect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node and connects that node back (requires shownode target).");
 		c->Message(CC_Default, "#path sconnect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node (requires shownode target).");
 		c->Message(CC_Default, "#path qconnect [set]: short cut connect, connects the targeted node to the node you set with #path qconnect set (requires shownode target).");
+		c->Message(CC_Default, "#path setdoor neighbour_id [doorid]:  Sets the doorid for the neighbour of the targeted node.  A doorid of -1 resets doorid in neighbour.  No door id, searches for nearest door.");
+		c->Message(CC_Default, "#path teleport neighbour_id [0/1]:  Sets the teleport for the neighbour of the targeted node.");
 		c->Message(CC_Default, "#path disconnect [all]/disconnect_from_id: Disconnects the currently targeted node to disconnect from disconnect from id's node (requires shownode target), if passed all as the second argument it will disconnect this node from every other node.");
 		c->Message(CC_Default, "#path move: Moves your targeted node to your current position");
 		c->Message(CC_Default, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
 		c->Message(CC_Default, "#path nearest [all]: When a mob is targeted, it checks for nearby path nodes.  Using all option checks nearby nodes to all NPCs.");
+		c->Message(CC_Default, "#path meshtest [simple/complex] [startnode]: Performs a connectivity test between nodes.  For simple, it starts at node 0 by default.  The [startnode] parameter will change this.  Using a negative start number, will do the search in reverse. Complex tests all possible route combinations.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
@@ -7309,6 +7312,27 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
+	if (!strcasecmp(sep->arg[1], "setdoor"))
+	{
+		
+		if (zone->pathing)
+		{
+			if (sep->IsNumber(2) && sep->IsNumber(3)) {
+				zone->pathing->SetDoor(c, atoi(sep->arg[2]), atoi(sep->arg[3]));
+			} else if (sep->IsNumber(2)) {
+				Doors* door = entity_list.FindNearestDoor(c);
+				if (door)
+					zone->pathing->SetDoor(c, atoi(sep->arg[2]), door->GetDoorID());
+				else
+					c->Message(CC_Default, "Unable to find a door nearby.");
+			} else {
+				c->Message(CC_Default, "Usage: #path setdoor neighbour_id [doorid].  Without a doorid value, searches for nearest door. Using a [doorid] = -1 will unset door.");
+			}
+
+		}
+		return;
+	}
+
 	if (!strcasecmp(sep->arg[1], "qconnect"))
 	{
 		if (zone->pathing)
@@ -7435,7 +7459,10 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "simple"))
 			{
 				c->Message(CC_Default, "You may go linkdead. Results will be in the log file.");
-				zone->pathing->SimpleMeshTest(c);
+				if (sep->IsNumber(3))
+					zone->pathing->SimpleMeshTest(c, atoi(sep->arg[3]));
+				else
+					zone->pathing->SimpleMeshTest(c);
 				return;
 			}
 			else if(!strcasecmp(sep->arg[2], "complex"))

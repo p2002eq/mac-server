@@ -161,6 +161,7 @@ void ClientList::GetCLEIP(uint32 iIP) {
 	while(iterator.MoreElements()) {
 
 		countCLEIPs = iterator.GetData();
+		int exemptcount = database.CheckExemption(iterator.GetData()->AccountID());
 
 		// If the IP matches, and the connection admin status is below the exempt status,
 		// or exempt status is less than 0 (no-one is exempt)
@@ -168,11 +169,15 @@ void ClientList::GetCLEIP(uint32 iIP) {
 			((countCLEIPs->Admin() < (RuleI(World, ExemptMaxClientsStatus))) ||
 			(RuleI(World, ExemptMaxClientsStatus) < 0))) {
 
-			// Increment the occurences of this IP address
+			// Increment the occurrences of this IP address
 			IPInstances++;
 
-			// If the number of connections exceeds the lower limit
-			if (IPInstances > (RuleI(World, MaxClientsPerIP))) {
+			// If the number of connections exceeds the lower limit divided by number of exemptions allowed.
+			// Set exemptions in account/ip_exemption_multiplier, default is 1.
+			// 1 means 1 set of MaxClientsPerIP online allowed.
+			// example MaxClientsPerIP set to 3 and ip_exemption_multiplier 1, only 3 accounts will be allowed.
+			// Whereas MaxClientsPerIP set to 3 and ip_exemption_multiplier 2 = a max of 6 accounts allowed.
+			if (IPInstances / exemptcount > (RuleI(World, MaxClientsPerIP))) {
 
 				// If MaxClientsSetByStatus is set to True, override other IP Limit Rules
 				if (RuleB(World, MaxClientsSetByStatus)) {
