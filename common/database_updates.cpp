@@ -37,7 +37,6 @@ bool Database::DBSetup() {
 	GITInfo();
 	DBSetup_player_updates();
 	DBSetup_Logs();
-	DBSetup_IP_Multiplier();
 	return true;
 }
 
@@ -333,7 +332,7 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		"PRIMARY KEY(`id`)		  "
 		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"
 		);
-		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_corpses_backup..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attepting to create table character_corpses_backup..");
 		auto cb_create_results = QueryDatabase(cb_create_query);
 		if (!cb_create_results.Success()){
 			Log.Out(Logs::Detail, Logs::Error, "Error creating character_corpses_backup table.");
@@ -585,21 +584,4 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
-}
-
-bool Database::DBSetup_IP_Multiplier()
-{
-	std::string check_query1 = StringFormat("SELECT ip_exemption_multiplier FROM `account`");
-	auto results1 = QueryDatabase(check_query1);
-	if (results1.RowCount() == 0)
-	{
-		std::string check_query1a = StringFormat("ALTER TABLE `account` ADD COLUMN `ip_exemption_multiplier`  int(5) NULL DEFAULT 1 AFTER `active`");
-		auto results1a = QueryDatabase(check_query1a);
-		if (!results1a.Success())
-		{
-			Log.Out(Logs::Detail, Logs::Error, "Error creating ip_exemption_multiplier in account table.");
-			return false;
-		}
-	}
-	return true;
 }

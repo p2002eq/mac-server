@@ -394,7 +394,6 @@ public:
 	void	GetAccountFromID(uint32 id, char* oAccountName, int16* oStatus);
 	uint32	CheckLogin(const char* name, const char* password, int16* oStatus = 0);
 	int16	CheckStatus(uint32 account_id);
-	int16	CheckExemption(uint32 account_id);
 	uint32	CreateAccount(const char* name, const char* password, int16 status, uint32 lsaccount_id = 0);
 	bool	DeleteAccount(const char* name);
 	bool	SetAccountStatus(const char* name, int16 status);
@@ -441,7 +440,6 @@ public:
 	bool DBSetup_Rules();
 	bool DBSetup_Logs();
 	bool GITInfo();
-	bool DBSetup_IP_Multiplier();
 
 	/*
 	* Database Variables

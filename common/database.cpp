@@ -229,28 +229,6 @@ int16 Database::CheckStatus(uint32 account_id) {
 	return status;
 }
 
-int16 Database::CheckExemption(uint32 account_id)
-{
-	std::string query = StringFormat("SELECT `ip_exemption_multiplier` FROM `account` WHERE `id` = %i", account_id);
-	Log.Out(Logs::General, Logs::World_Server, "Checking exemption on account ID: '%i'.", account_id);
-
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-	{
-		return 1;
-	}
-
-	if (results.RowCount() != 1)
-	{
-		return 1;
-	}
-
-	auto row = results.begin();
-	int16 exemption = atoi(row[0]);
-
-	return exemption;
-}
-
 uint32 Database::CreateAccount(const char* name, const char* password, int16 status, uint32 lsaccount_id) {
 	std::string query;
 
