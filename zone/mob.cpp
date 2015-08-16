@@ -2333,6 +2333,7 @@ void Mob::WipeHateList()
 	if(IsEngaged())
 	{
 		hate_list.Wipe();
+		SetTarget(nullptr);
 		AI_Event_NoLongerEngaged();
 	}
 	else

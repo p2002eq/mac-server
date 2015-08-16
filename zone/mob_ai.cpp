@@ -1223,7 +1223,6 @@ void Mob::AI_Process() {
 					if (!ImprovedTaunt())
 						SetTarget(hate_list.GetTop());
 				}
-
 			}
 		}
 
