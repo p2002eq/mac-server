@@ -454,15 +454,46 @@ bool Database::CreateServerSettings()
 				"('world_registration_table', '', 'schema', 'location of registered or connection records of servers connecting to this loginserver.', 'tblWorldServerRegistration'),"
 				"('world_server_type_table', '', 'schema', 'location of server type descriptions.', 'tblServerListType'),"
 				"('world_trace', '', 'options', 'debugging', 'FALSE');";
-			;
+
 			if (mysql_query(db, query.c_str()) != 0)
 			{
 				server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
 				return false;
 			}
+			
+			
+			// type, category, default
+			bool failed = false;
+			failed |= (!SetServerSettings("access_log_table", "schema", "tblaccountaccesslog"));
+			failed |= (!SetServerSettings("account_table", "schema", "tblLoginServerAccounts"));
+			failed |= !SetServerSettings("auto_account_activate", "options", "TRUE");
+			failed |= !SetServerSettings("auto_account_create", "options", "TRUE");
+			failed |= !SetServerSettings("port", "Old", "6000");
+			failed |= !SetServerSettings("dump_packets_in", "options", "FALSE");
+			failed |= !SetServerSettings("dump_packets_out", "options", "FALSE");
+			failed |= !SetServerSettings("failed_login_log", "options", "TRUE");
+			failed |= !SetServerSettings("good_loginIP_log", "options", "TRUE");
+			failed |= !SetServerSettings("listen_port", "options", "5998");
+			failed |= !SetServerSettings("local_network", "options", "127.0.0.1");
+			failed |= !SetServerSettings("mode", "security", "5");
+			failed |= !SetServerSettings("network_ip", "options", "127.0.0.1");
+			failed |= !SetServerSettings("opcodes", "Old", "login_opcodes_oldver.conf");
+			failed |= !SetServerSettings("plugin", "security", "EQEmuAuthCrypto");
+			failed |= !SetServerSettings("reject_duplicate_servers", "options", "TRUE");
+			failed |= !SetServerSettings("salt", "options", "12345678");
+			failed |= !SetServerSettings("trace", "options", "FALSE");
+			failed |= !SetServerSettings("unregistered_allowed", "options", "TRUE");
+			failed |= !SetServerSettings("world_admin_registration_table", "schema", "tblServerAdminRegistration");
+			failed |= !SetServerSettings("world_registration_table", "schema", "tblWorldServerRegistration");
+			failed |= !SetServerSettings("world_server_type_table", "schema", "tblServerListType");
+			failed |= !SetServerSettings("world_trace", "options", "FALSE");
+
+			if (failed)
+			{
+				return false;
+			}
 			server_log->Log(log_database, "Server Settings table created, continuing.");
 		}
-
 		else
 		{
 			server_log->Log(log_database, "Server Settings tables exists, continuing.");
@@ -485,7 +516,7 @@ bool Database::GetServerSettings()
 		server_log->Log(log_error, "Mysql check_query failed: %s", check_query.c_str());
 		return false;
 	}
-
+	bool result = true;
 	res = mysql_use_result(db);
 	if (res)
 	{
@@ -499,27 +530,8 @@ bool Database::GetServerSettings()
 
 			if (value.empty())
 			{
-				std::string loadValue = "";
-
-				Config* newval = new Config;
-				std::string loadINIvalue = newval->LoadOption(category, type, "login.ini");
-
 				server_log->Log(log_database, "Mysql check_query returns NO value for type %s", type.c_str());
-
-				if (loadINIvalue.empty())
-				{
-					server_log->Log(log_database, "LoadOption returns NO value for type %s", type.c_str());
-					loadValue = defaults.c_str();
-				}
-				else if (!loadINIvalue.empty())
-				{
-					server_log->Log(log_database, "LoadOption returns `value`: %s for type %s", loadINIvalue.c_str(), type.c_str());
-					loadValue = loadINIvalue.c_str();
-				}
-				if (!SetServerSettings(type, loadValue, category, defaults))
-				{
-					return false;
-				}
+				result = false;
 			}
 			else if (!value.empty())
 			{
@@ -527,20 +539,19 @@ bool Database::GetServerSettings()
 			}
 		}
 	}
-	return true;
+	return result;
 }
 
-bool Database::SetServerSettings(std::string type, std::string value, std::string category, std::string defaults)
+bool Database::SetServerSettings(std::string type, std::string category, std::string defaults)
 {
-	string update_value = "UPDATE tblloginserversettings SET value = 'test' WHERE type = 'account_table' AND category = 'schema'";
-	//string update_value = StringFormat("UPDATE tblloginserversettings "
-	//	"SET value = '%s' "
-	//	"WHERE type = '%s' "
-	//	"AND value = '' "
-	//	"AND category = '%s' "
-	//	"AND defaults = '%s' "
-	//	"LIMIT 1", newValue.c_str(), type.c_str(), category.c_str(), defaults.c_str());
-
+	Config* newval = new Config;
+	std::string loadINIvalue = newval->LoadOption(category, type, "login.ini");
+	string update_value = StringFormat("UPDATE tblloginserversettings "
+		"SET value = '%s' "
+		"WHERE type = '%s' "
+		"AND category = '%s' "
+		"LIMIT 1", loadINIvalue.empty() ? defaults.c_str() : loadINIvalue.c_str(), type.c_str(), category.c_str());
+	safe_delete(newval);
 	if (mysql_query(db, update_value.c_str()) != 0)
 	{
 		server_log->Log(log_error, "Mysql check_query failed: %s", update_value.c_str());

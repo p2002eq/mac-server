@@ -102,7 +102,7 @@ public:
 	/**
 	* Writes values for server settings.
 	*/
-	virtual bool SetServerSettings(std::string type, std::string value, std::string category, std::string defaults);
+	virtual bool SetServerSettings(std::string type, std::string category, std::string defaults);
 #pragma endregion
 
 protected:
