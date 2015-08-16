@@ -360,7 +360,6 @@ void ClientList::CLCheckStale() {
 			Log.Out(Logs::Detail, Logs::World_Server,"Removing stale client on account %d from %s", iterator.GetData()->AccountID(), inet_ntoa(in));
 			uint32 accountid = iterator.GetData()->AccountID();
 			iterator.RemoveCurrent();
-			database.ClearAccountActive(accountid);
 		}
 		else
 			iterator.Advance();
