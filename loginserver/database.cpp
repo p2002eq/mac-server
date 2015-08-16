@@ -464,8 +464,8 @@ bool Database::CreateServerSettings()
 			
 			// type, category, default
 			bool failed = false;
-			failed |= (!SetServerSettings("access_log_table", "schema", "tblaccountaccesslog"));
-			failed |= (!SetServerSettings("account_table", "schema", "tblLoginServerAccounts"));
+			failed |= !SetServerSettings("access_log_table", "schema", "tblaccountaccesslog");
+			failed |= !SetServerSettings("account_table", "schema", "tblLoginServerAccounts");
 			failed |= !SetServerSettings("auto_account_activate", "options", "TRUE");
 			failed |= !SetServerSettings("auto_account_create", "options", "TRUE");
 			failed |= !SetServerSettings("port", "Old", "6000");
