@@ -24,6 +24,7 @@
 
 extern ErrorLog *server_log;
 extern LoginServer server;
+extern Database LoadSettings;
 
 WorldServer::WorldServer(EmuTCPConnection *c)
 {
@@ -64,12 +65,12 @@ bool WorldServer::Process()
 	ServerPacket *app = nullptr;
 	while(app = connection->PopPacket())
 	{
-		if (server.config->LoadOption("options", "world_trace", "login.ini") == "TRUE")
+		if (LoadSettings.LoadServerSettings("options", "world_trace") == "TRUE")
 		{
 			server_log->Log(log_network_trace, "Application packet received from server: 0x%.4X, (size %u)", app->opcode, app->size);
 		}
 
-		if (server.config->LoadOption("options", "dump_packets_in", "login.ini") == "TRUE")
+		if (LoadSettings.LoadServerSettings("options", "dump_packets_in") == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -85,7 +86,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (server.config->LoadOption("options", "world_trace", "login.ini") == "TRUE")
+				if (LoadSettings.LoadServerSettings("options", "world_trace") == "TRUE")
 				{
 					server_log->Log(log_network_trace, "New Login Info Received.");
 				}
@@ -102,7 +103,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (server.config->LoadOption("options", "world_trace", "login.ini") == "TRUE")
+				if (LoadSettings.LoadServerSettings("options", "world_trace") == "TRUE")
 				{
 					server_log->Log(log_network_trace, "World Server Status Received.");
 				}
@@ -135,7 +136,7 @@ bool WorldServer::Process()
 				//I don't use world trace for this and here is why:
 				//Because this is a part of the client login procedure it makes tracking client errors
 				//While keeping world server spam with multiple servers connected almost impossible.
-				if (server.config->LoadOption("options", "trace", "login.ini") == "TRUE")
+				if (LoadSettings.LoadServerSettings("options", "trace") == "TRUE")
 				{
 					server_log->Log(log_network_trace, "User-To-World Response received.");
 				}
@@ -208,14 +209,14 @@ bool WorldServer::Process()
 						break;
 					}
 
-					if (server.config->LoadOption("options", "trace", "login.ini") == "TRUE")
+					if (LoadSettings.LoadServerSettings("options", "trace") == "TRUE")
 					{
 						server_log->Log(log_network_trace, "Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
 							per->Allowed, per->Sequence, per->ServerNumber, per->Message);
 						server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
 					}
 
-					if (server.config->LoadOption("options", "dump_packets_out", "login.ini") == "TRUE")
+					if (LoadSettings.LoadServerSettings("options", "dump_packets_out") == "TRUE")
 					{
 						DumpPacket(outapp);
 					}
@@ -374,7 +375,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 	server_type = i->servertype;
 	logged_in = true;
 
-	if (server.config->LoadOption("options", "reject_duplicate_servers", "login.ini") == "TRUE")
+	if (LoadSettings.LoadServerSettings("options", "reject_duplicate_servers") == "TRUE")
 	{
 		if(server.SM->ServerExists(long_name, short_name, this))
 		{
@@ -391,7 +392,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 	}
 
-	if (server.config->LoadOption("options", "unregistered_allowed", "login.ini") == "FALSE")
+	if (LoadSettings.LoadServerSettings("options", "unregistered_allowed") == "FALSE")
 	{
 		if(account_name.size() > 0 && account_password.size() > 0)
 		{
@@ -576,7 +577,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 	{
 		slsca->local = 1;
 	}
-	else if (client_address.find(server.config->LoadOption("options", "local_network", "login.ini")) != string::npos)
+	else if (client_address.find(LoadSettings.LoadServerSettings("options", "local_network")) != string::npos)
 	{
 		slsca->local = 1;
 	}
@@ -587,7 +588,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 
 	connection->SendPacket(outapp);
 
-	if (server.config->LoadOption("options", "dump_packets_in", "login.ini") == "TRUE")
+	if (LoadSettings.LoadServerSettings("options", "dump_packets_in") == "TRUE")
 	{
 		DumpPacket(outapp);
 	}

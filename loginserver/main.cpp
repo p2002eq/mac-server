@@ -70,40 +70,85 @@ int main()
 	server_log->Log(log_debug, "Continuing to ini setup.");
 	server.config->WriteDBini();
 
-	std::string configFile = "login.ini"; 
-	ifstream f(configFile.c_str());
-	if (f.good())
+	bool loginini = false;
+	bool dbini = false;
+
+	std::string configFile;
+
+	bool login = std::ifstream("login.ini").good();
+	bool dbexist = std::ifstream("db.ini").good();
+
+	if (login && !dbexist)
 	{
-		//server.config->ReWriteLSini();
+		configFile = "login.ini";
+		loginini = true;
 	}
-	else if (f.fail())
+	else if (!login && dbexist)
 	{
-		f.close();
-		server_log->Log(log_debug, "login.ini doesn't exist.");
-		server_log->Log(log_debug, "Trying database for settings.");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
+		configFile = "db.ini";
+		dbini = true;
+	}
+	else if (login && dbexist)
+	{
+		configFile = "db.ini";
+		dbini = true;
 	}
 	else
 	{
-		f.close();
-		server_log->Log(log_debug, "login.ini errors. Incomplete or missing.");
+		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
+		server_log->Log(log_debug, "Server failure, can't start without database connection..");
 #ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
 		server_log->Log(log_debug, "Press any key to close");
 		getchar();
 #endif
+		return 1;
+	}
+
+	bool config = std::ifstream(configFile.c_str()).good();
+
+	if (!config)
+	{
+		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
+		server_log->Log(log_debug, "Server failure, can't start without database connection..");
+#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		server_log->Log(log_debug, "Press any key to close");
+		getchar();
+#endif
+		return 1;
 	}
 
 	//Create our DB from options.
-		server_log->Log(log_debug, "MySQL Database Init.");
+	server_log->Log(log_debug, "MySQL Database Init.");
+	if (loginini)
+	{
 		server.db = (Database*)new Database(
 			server.config->LoadOption("database", "user", "login.ini"),
 			server.config->LoadOption("database", "password", "login.ini"),
 			server.config->LoadOption("database", "host", "login.ini"),
 			server.config->LoadOption("database", "port", "login.ini"),
-			server.config->LoadOption("database", "db", "login.ini"));
+			server.config->LoadOption("database", "db", "login.ini")
+		);
+	}
+	else if (dbini)
+	{
+		server.db = (Database*)new Database(
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
+		);
+	}
+	else
+	{
+		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
+		server_log->Log(log_debug, "Server failure, can't start without database connection..");
+#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		server_log->Log(log_debug, "Press any key to close");
+		getchar();
+#endif
+		return 1;
+	}
 
 	//Make sure our database got created okay, otherwise cleanup and exit.
 	if(!server.db)

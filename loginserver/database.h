@@ -90,7 +90,7 @@ public:
 		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
 #pragma endregion
 
-#pragma region Server Setup
+#pragma region Create Server Setup
 	/**
 	* Creates Server Settings table.
 	*/
@@ -103,6 +103,13 @@ public:
 	* Writes values for server settings.
 	*/
 	virtual bool SetServerSettings(std::string type, std::string category, std::string defaults);
+#pragma endregion
+
+#pragma region Load Server Setup
+	/**
+	* Loads values for server settings from db.
+	*/
+	std::string LoadServerSettings(std::string category, std::string type);
 #pragma endregion
 
 protected:

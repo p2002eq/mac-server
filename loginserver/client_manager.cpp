@@ -24,16 +24,17 @@
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
+extern Database LoadSettings;
 
 ClientManager::ClientManager()
 {
-	int old_port = atoi(server.config->LoadOption("Old", "port", "login.ini").c_str());
+	int old_port = atoi(LoadSettings.LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
-	if (!old_ops->LoadOpcodes(server.config->LoadOption("Old", "opcodes", "login.ini").c_str()))
+	if (!old_ops->LoadOpcodes(LoadSettings.LoadServerSettings("Old", "opcodes").c_str()))
 	{
 		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.",
-			server.config->LoadOption("Old", "opcodes", "login.ini").c_str());
+			LoadSettings.LoadServerSettings("Old", "opcodes").c_str());
 		run_server = false;
 	}
 	if(old_stream->Open())

@@ -72,11 +72,11 @@ void Config::WriteDBini()
 		// place holder for reading from database for values
 		std::ofstream dbini("db.ini");
 		dbini << "[Login Server Database]\n";
-		dbini << "lshost = \n";
-		dbini << "lsport = \n";
-		dbini << "lsdb = \n";
-		dbini << "lsuser = \n";
-		dbini << "lspassword = \n";
+		dbini << "host = \n";
+		dbini << "port = \n";
+		dbini << "db = \n";
+		dbini << "user = \n";
+		dbini << "password = \n";
 		dbini << "[Game Server Database]\n";
 		dbini << "*Game Server section not used yet.*\n";
 		dbini << "host = \n";
@@ -181,6 +181,11 @@ void Config::Parse(const char *file_name)
 	else
 	{
 		server_log->Log(log_error, "Config::Parse(), file was unable to be opened for parsing.");
+		server_log->Log(log_error, "%s", file_name);
+		server_log->Log(log_error, "%s", file_name);
+		server_log->Log(log_error, "%s", file_name);
+		server_log->Log(log_error, "%s", file_name);
+		server_log->Log(log_error, "%s", file_name);
 	}
 }
 
