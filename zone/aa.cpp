@@ -194,7 +194,7 @@ void Client::ActivateAA(aaID activate){
 	case aaTargetCurrent:
 	case aaTargetCurrentGroup:
 		if (GetTarget() == nullptr) {
-			Message_StringID(MT_DefaultText, AA_NO_TARGET);	//You must first select a target for this ability!
+			Message(MT_DefaultText, "You must first select a target for this ability!");
 			p_timers.Clear(&database, AATimerID + pTimerAAStart);
 			return;
 		}
@@ -462,7 +462,7 @@ void Client::HandleAAAction(aaID activate) {
 	case aaTargetCurrent:
 	case aaTargetCurrentGroup:
 		if (GetTarget() == nullptr) {
-			Message_StringID(MT_DefaultText, AA_NO_TARGET);	//You must first select a target for this ability!
+			Message(MT_DefaultText, "You must first select a target for this ability!");
 			p_timers.Clear(&database, timer_id + pTimerAAEffectStart);
 			return;
 		}

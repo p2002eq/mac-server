@@ -209,6 +209,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 
 	MerchantType = d->merchanttype;
 	merchant_open = GetClass() == MERCHANT;
+	if(MerchantType > 0 && GetClass() == MERCHANT)
+		zone->ResetMerchantQuantity(MerchantType);
 	flymode = iflymode;
 	guard_anim = eaStanding;
 	roambox_distance = 0;
@@ -2773,10 +2775,21 @@ void NPC::DeleteQuestLoot(int16 itemid1, int16 itemid2, int16 itemid3, int16 ite
 		}
 		else
 		{
-			if(!RemoveQuestLootItems(itemid1) && !RemoveQuestLootItems(itemid2) && 
-				!RemoveQuestLootItems(itemid3) && !RemoveQuestLootItems(itemid4))
+			if(itemid1 != 0)
 			{
-				break;
+				RemoveQuestLootItems(itemid1);
+			}
+			if(itemid2 != 0)
+			{
+				RemoveQuestLootItems(itemid2);
+			}
+			if(itemid3 != 0)
+			{
+				RemoveQuestLootItems(itemid3);
+			}
+			if(itemid4 != 0)
+			{
+				RemoveQuestLootItems(itemid4);
 			}
 		}
 	}

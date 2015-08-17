@@ -325,9 +325,9 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 			parse->EventPlayer(EVENT_UNHANDLED_OPCODE, this, "", 1, &args);
 
 #if EQDEBUG >= 10
-			//Log.Out(Logs::General, Logs::Error, "HandlePacket() Opcode error: Unexpected packet during CLIENT_CONNECTING: opcode:"
-			//	" %s (#%d eq=0x%04x), size: %i", OpcodeNames[opcode], opcode, 0, app->size);
-			Log.Out(Logs::General, Logs::Error,"Received unknown EQApplicationPacket during CLIENT_CONNECTING");
+			Log.Out(Logs::General, Logs::Error, "HandlePacket() Opcode error: Unexpected packet during CLIENT_CONNECTING: opcode:"
+				" %s (#%d eq=0x%04x), size: %i", OpcodeNames[opcode], opcode, 0, app->size);
+			//Log.Out(Logs::General, Logs::Error,"Received unknown EQApplicationPacket during CLIENT_CONNECTING");
 			//DumpPacket(app);
 #endif
 			break;
@@ -400,10 +400,6 @@ void Client::CompleteConnect()
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
 
-	if (IsInAGuild())
-	{
-		SendAppearancePacket(AT_GuildID, GuildID(), false);
-	}
 	for (uint32 spellInt = 0; spellInt < MAX_PP_SPELLBOOK; spellInt++)
 	{
 		if (m_pp.spell_book[spellInt] < 3 || m_pp.spell_book[spellInt] > 50000)
@@ -653,8 +649,7 @@ void Client::CompleteConnect()
 	SendStaminaUpdate();
 	SendClientVersion();
 	FixClientXP();
-
-
+	SendToBoat(true);
 	worldserver.RequestTellQueue(GetName());
 }
 
@@ -1058,32 +1053,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	m_pp.zone_id = zone->GetZoneID();
 	m_pp.zoneInstance = 0;
 	ignore_zone_count = false;
-
-	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
-	// This can lead difficulty entering the zone, since some people's client's don't like
-	// the boat timeout period.
-	if(!zone->IsBoatZone())
-	{
-		m_pp.boatid = 0;
-		m_pp.boat[0] = 0;
-	}
-	else
-	{
-		if(m_pp.boatid > 0)
-		{
-			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
-			if(!boat || !boat->IsBoat())
-			{
-				auto safePoint = zone->GetSafePoint();
-				m_pp.boatid = 0;
-				m_pp.boat[0] = 0;
-				m_pp.x = safePoint.x;
-				m_pp.y = safePoint.y;
-				m_pp.z = safePoint.z;
-			}
-		}
-	}
 	
+	
+	SendToBoat();
+
 	/* Load Character Key Ring */
 	KeyRingLoad();
 		
@@ -1138,6 +1111,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	if (!IsInAGuild()) { m_pp.guild_id = GUILD_NONE; }
 	else {
 		m_pp.guild_id = GuildID();
+		m_pp.guildrank = GuildRank();
 	}
 
 	switch (race)
@@ -1399,6 +1373,10 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 				pps->skills[s] = 255;
 		}
 	}
+	
+	if(m_pp.boatid > 0 && (zone->GetZoneID() == timorous || zone->GetZoneID() == firiona))
+		pps->boat[0] = 0;
+
 	// The entityid field in the Player Profile is used by the Client in relation to Group Leadership AA
 	m_pp.entityid = GetID();
 	memcpy(outapp->pBuffer, pps, outapp->size);
@@ -1866,6 +1844,8 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 	char boatname[32];
 	memcpy(boatname, app->pBuffer, app->size);
 	boatname[31] = '\0';
+
+	Log.Out(Logs::Moderate, Logs::Boats, "%s is attempting to board boat %s", GetName(), boatname);
 
 	Mob* boat = entity_list.GetMob(boatname);
 
@@ -2375,7 +2355,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 					SpawnPositionUpdates_Struct* ppus = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
 					zommnpc->SetSpawnUpdate(ppu, &ppus->spawn_update);
 					ppus->num_updates = 1;
-					entity_list.QueueCloseClients(zommnpc,outapp,true,300,this,false);
+					entity_list.QueueCloseClients(zommnpc,outapp,true,500,this,false);
 					safe_delete(outapp);
 
 					pLastUpdate = Timer::GetCurrentTime();
@@ -2597,6 +2577,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		m_Proximity = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
+	bool send_update = (m_Position.w != ppu->heading && ppu->delta_heading == 0) || (ppu->delta_heading != m_Delta.w) || 
+		((ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x) && ppu->anim_type == 0) || (ppu->anim_type != animation) || (ppu->anim_type > 0 && ++update_count > 3);
 	// Update internal state
 	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 	m_Position.w = ppu->heading;
@@ -2605,6 +2587,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(zone->random.Real(0, 100) < 70)//should be good
 			CheckIncreaseSkill(SkillTracking, nullptr, -20);
 	}
+	
 
 	// Break Hide, Trader, and fishing mode if moving and set rewind timer
 	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
@@ -2640,16 +2623,18 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	float water_x = m_Position.x;
 	float water_y = m_Position.y;
+
 	m_Position.x = ppu->x_pos;
 	m_Position.y = ppu->y_pos;
 	m_Position.z = m_EQPosition.z;
 
 	animation = ppu->anim_type;
-
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
-	SendPosUpdate();
-	pLastUpdate = Timer::GetCurrentTime();
-
+	if (send_update) {
+		update_count = 0;
+		SendPosUpdate();
+		pLastUpdate = Timer::GetCurrentTime();
+	}
 	if(zone->watermap)
 	{
 		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
@@ -5124,8 +5109,19 @@ void Client::Handle_OP_Jump(const EQApplicationPacket *app)
 
 void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 {
+
+	if(m_pp.boatid > 0)
+	{
+		Log.Out(Logs::Moderate, Logs::Boats, "%s is attempting to leave boat %s at %0.2f,%0.2f,%0.2f ", GetName(), m_pp.boat, GetX(), GetY(), GetZ());
+	}
+	else
+	{
+		Log.Out(Logs::Moderate, Logs::Boats, "%s recieved OP_LeaveBoat", GetName());
+	}
+
 	Mob* boat = entity_list.GetMob(this->BoatID);	// find the mob corresponding to the boat id
-	if (boat) {
+	if (boat) 
+	{
 		if ((boat->GetTarget() == this) && boat->GetHateAmount(this) == 0)	// if the client somehow left while still controlling the boat (and the boat isn't attacking them)
 			boat->SetTarget(0);			// fix it to stop later problems
 
@@ -6989,6 +6985,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	merchantid = tmp->CastToNPC()->MerchantType;
 
 	uint32 item_id = 0;
+	uint8 quantity_left = 0;
 	std::list<MerchantList> merlist = zone->merchanttable[merchantid];
 	std::list<MerchantList>::const_iterator itr;
 	for (itr = merlist.begin(); itr != merlist.end(); ++itr){
@@ -7002,8 +6999,17 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			continue;
 		}
 
+		if(ml.quantity > 0 && ml.qty_left <= 0)
+		{
+			continue;
+		}
+
 		if (mp->itemslot == ml.slot){
 			item_id = ml.item;
+			if(ml.quantity > 0 && ml.qty_left > 0)
+			{
+				quantity_left = ml.qty_left;
+			}
 			break;
 		}
 	}
@@ -7026,7 +7032,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	item = database.GetItem(item_id);
 	if (!item){
 		//error finding item, client didnt get the update packet for whatever reason, roleplay a tad
-		Message(0, "%s tells you 'Sorry, that item is for display purposes only.' as they take the item off the shelf.", tmp->GetCleanName());
+		Message(CC_Default, "%s tells you 'Sorry, that item is for display purposes only.' as they take the item off the shelf.", tmp->GetCleanName());
 		EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 		Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
 		delitem->itemslot = mp->itemslot;
@@ -7042,13 +7048,22 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(CC_Yellow, "You can only have one of a lore item.");
 		return;
 	}
-	// This makes sure the vendor deletes charged items from their temp list properly.
-	if (tmpmer_used && (mp->quantity > prevcharges || item->MaxCharges > 1))
+
+	// This makes sure the vendor deletes charged items from their lists properly.
+	uint8 tmp_qty = 0;
+	// Temp merchantlist
+	if(tmpmer_used)
+		tmp_qty = prevcharges;
+	// Regular merchantlist with limited supplies
+	else if(quantity_left > 0)
+		tmp_qty = quantity_left;
+
+	if ((tmpmer_used || quantity_left > 0) && (mp->quantity > tmp_qty || item->MaxCharges > 1))
 	{
-		if (prevcharges > item->MaxCharges && item->MaxCharges > 1)
+		if (tmp_qty > item->MaxCharges && item->MaxCharges > 1)
 			mp->quantity = item->MaxCharges;
 		else
-			mp->quantity = prevcharges;
+			mp->quantity = tmp_qty;
 	}
 	uint8 quantity = mp->quantity;
 	//This sets the correct price for items with charges.
@@ -7150,9 +7165,18 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	QueuePacket(outapp);
 
-	if (inst && tmpmer_used){
-		int32 new_charges = prevcharges - mp->quantity;
-		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+	if (inst && (tmpmer_used || quantity_left > 0)){
+		int32 new_charges = 0;
+		if(tmpmer_used)
+		{
+			new_charges = prevcharges - mp->quantity;
+			zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+		}
+		else if(quantity_left > 0)
+		{
+			new_charges = quantity_left - mp->quantity;
+			zone->SaveMerchantItem(merchantid,item_id, new_charges, mp->itemslot);
+		}
 		if (new_charges <= 0){
 			EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;

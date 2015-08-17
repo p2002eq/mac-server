@@ -37,6 +37,7 @@ bool Database::DBSetup() {
 	GITInfo();
 	DBSetup_player_updates();
 	DBSetup_Logs();
+	DBSetup_IP_Multiplier();
 	return true;
 }
 
@@ -332,7 +333,7 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 		"PRIMARY KEY(`id`)		  "
 		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"
 		);
-		Log.Out(Logs::Detail, Logs::Debug, "Attepting to create table character_corpses_backup..");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_corpses_backup..");
 		auto cb_create_results = QueryDatabase(cb_create_query);
 		if (!cb_create_results.Success()){
 			Log.Out(Logs::Detail, Logs::Error, "Error creating character_corpses_backup table.");
@@ -506,6 +507,18 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "is_deleted column created.");
 	}
+	std::string check_queryc = StringFormat("SHOW COLUMNS FROM `merchantlist` LIKE 'quantity'");
+	auto resultsc = QueryDatabase(check_queryc);
+	if (resultsc.RowCount() == 0){
+		std::string create_queryc = StringFormat("ALTER table `merchantlist` add column `quantity` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add quantity column to merchantlist...");
+		auto create_resultsc = QueryDatabase(create_queryc);
+		if (!create_resultsc.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating merchantlist column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "quantity column created.");
+	}
 	return true;
 }
 
@@ -560,4 +573,33 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
+	std::string check_query5 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Boats'");
+	auto results5 = QueryDatabase(check_query5);
+	if (results5.RowCount() == 0)
+	{
+		std::string check_query5a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('50', 'Boats', '0', '0', '0')");
+		auto results5a = QueryDatabase(check_query5a);
+		if (!results5a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `boats`.");
+			return false;
+		}
+	}
+}
+
+bool Database::DBSetup_IP_Multiplier()
+{
+	std::string check_query1 = StringFormat("SELECT ip_exemption_multiplier FROM `account`");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		std::string check_query1a = StringFormat("ALTER TABLE `account` ADD COLUMN `ip_exemption_multiplier`  int(5) NULL DEFAULT 1 AFTER `active`");
+		auto results1a = QueryDatabase(check_query1a);
+		if (!results1a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating ip_exemption_multiplier in account table.");
+			return false;
+		}
+	}
+	return true;
 }

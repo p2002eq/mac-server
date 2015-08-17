@@ -388,7 +388,7 @@ public:
 	void	mod_npc_killed(Mob* oos);
 	void	AISpellsList(Client *c);
 
-	bool IsRaidTarget() const { return raid_target; };
+	bool IsRaidTarget() const { return raid_target; }
 
 	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
 	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }

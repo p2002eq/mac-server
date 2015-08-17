@@ -188,6 +188,7 @@ RULE_INT (Zone, SpawnEventMin, 5) // When strict is set in spawn_events, specifi
 RULE_REAL ( Zone, GroupEXPRange, 500 )
 RULE_BOOL ( Zone, IdleWhenEmpty, true) // After timer is expired, if zone is empty it will idle. Boat zones are excluded, as this will break boat functionality.
 RULE_INT ( Zone, IdleTimer, 600000) // 10 minutes
+RULE_INT ( Zone, BoatDistance, 50) //In zones where boat name is not set in the PP, this is how far away from the boat the client must be to move them to the boat's current location.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )

@@ -1204,6 +1204,8 @@ void Mob::AI_Process() {
 		CastToNPC()->CheckSignal();
 	}
 
+	Mob *oldTarget = target;
+
 	if (engaged)
 	{
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1223,7 +1225,6 @@ void Mob::AI_Process() {
 					if (!ImprovedTaunt())
 						SetTarget(hate_list.GetTop());
 				}
-
 			}
 		}
 
@@ -1240,6 +1241,10 @@ void Mob::AI_Process() {
 		{
 			RemoveFromHateList(this);
 			return;
+		}
+		if (oldTarget != target)
+		{
+			FaceTarget(target);
 		}
 
 		if(DivineAura())
@@ -1482,11 +1487,7 @@ void Mob::AI_Process() {
 					doranged = true;
 
 				// Now pursue
-				// TODO: Check here for another person on hate list with close hate value
-				if(AI_PursueCastCheck()){
-					//we did something, so do not process movement.
-				}
-				else if (AImovement_timer->Check())
+				if (!AI_PursueCastCheck() && AImovement_timer->Check())
 				{
 					if(!IsRooted()) {
 						Log.Out(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", target->GetName());

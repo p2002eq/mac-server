@@ -273,6 +273,7 @@ Client::Client(EQStreamInterface* ieqs)
 	has_zomm = false;
 	client_position_update = false;
 	ignore_zone_count = false;
+	update_count = 0;
 	clicky_override = false;
 	active_disc = 0;
 }
@@ -5137,5 +5138,77 @@ void Client::ZoneFlagList(Client* notifier)
 		}
 
 		iterator.Advance();
+	}
+}
+
+void Client::SendToBoat(bool messageonly)
+{
+	// Sometimes, the client doesn't send OP_LeaveBoat, so the boat values don't get cleared.
+	// This can lead difficulty entering the zone, since some people's client's don't like
+	// the boat timeout period.
+	if(!zone->IsBoatZone())
+	{
+		m_pp.boatid = 0;
+		m_pp.boat[0] = 0;
+		return;
+	}
+	else
+	{
+		if(m_pp.boatid > 0)
+		{
+			Log.Out(Logs::Moderate, Logs::Boats, "%s's boatid is %d boatname is %s", GetName(), m_pp.boatid, m_pp.boat);
+
+			if(messageonly)
+			{
+				Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
+				if(boat && boat->IsBoat())
+				{
+					Log.Out(Logs::Moderate, Logs::Boats, "%s's boat %s (%d) location is %0.2f,%0.2f,%0.2f", GetName(), boat->GetCleanName(), m_pp.boatid, boat->GetX(), boat->GetY(), boat->GetZ());
+					Log.Out(Logs::Moderate, Logs::Boats, "%s's location is: %0.2f,%0.2f,%0.2f", GetName(), m_Position.x, m_Position.y, m_Position.z);
+				}
+				if(!boat)
+				{
+					Log.Out(Logs::Moderate, Logs::Boats, "%s's boat is not spawned.", GetName());
+				}
+
+				return;
+			}
+
+			Mob* boat = entity_list.GetNPCByNPCTypeID(m_pp.boatid);
+			if(!boat || !boat->IsBoat())
+			{
+				Log.Out(Logs::Moderate, Logs::Boats, "Boat %d is not spawned. Sending %s to safe points.", m_pp.boatid, GetName());
+				auto safePoint = zone->GetSafePoint();
+				m_pp.boatid = 0;
+				m_pp.boat[0] = 0;
+				m_pp.x = safePoint.x;
+				m_pp.y = safePoint.y;
+				m_pp.z = safePoint.z;
+			}
+			else
+			{
+				//The Kunark zones force the client to the wrong coords if boat name is set in PP, this is the workaround
+				if(zone->GetZoneID() == timorous || zone->GetZoneID() == firiona)
+				{
+					auto PPPos = glm::vec4(m_pp.x, m_pp.y, m_pp.z, m_pp.heading);
+					float distance = DistanceNoZ(PPPos, boat->GetPosition());
+					if(distance >= RuleI(Zone,BoatDistance))
+					{
+						float z_mod = 0.0f;
+						if(m_pp.boatid == Maidens_Voyage)
+							z_mod = 76.0f;
+						else if(m_pp.boatid == Bloated_Belly)
+							z_mod = 20.0f;
+						m_pp.x = boat->GetX();
+						m_pp.y = boat->GetY();
+						m_pp.z = boat->GetZ() + z_mod;
+						Log.Out(Logs::Moderate, Logs::Boats, "Kunark boat %s found at %0.2f,%0.2f,%0.2f! %s's location changed to match.", boat->GetName(), boat->GetX(), boat->GetY(), boat->GetZ(), GetName());
+						return;
+					}
+				}
+
+				Log.Out(Logs::Moderate, Logs::Boats, "Boat %s found at %0.2f,%0.2f,%0.2f! %s's location (%0.2f,%0.2f,%0.2f) unchanged.", boat->GetName(), boat->GetX(), boat->GetY(), boat->GetZ(), GetName(), m_pp.x, m_pp.y, m_pp.z);
+			}
+		}
 	}
 }
