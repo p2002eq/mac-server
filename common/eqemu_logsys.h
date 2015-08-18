@@ -90,6 +90,7 @@ namespace Logs{
 		Bazaar,
 		Discs,
 		Boats,
+		Traps,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -146,6 +147,7 @@ namespace Logs{
 		"Bazaar",
 		"Discs",
 		"Boats",
+		"Traps",
 	};
 }
 

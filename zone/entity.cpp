@@ -881,7 +881,8 @@ bool EntityList::SendZoneDoorsBulk(EQApplicationPacket* app, Client *client, uin
 			nd->xPos = position.x;
 			nd->yPos = position.y;
 			nd->zPos = position.z;
-			nd->heading = position.w;			nd->incline = door->GetIncline();
+			nd->heading = position.w;			
+			nd->incline = door->GetIncline();
 			nd->size = door->GetSize();
 			nd->doorid = door->GetDoorID();
 			nd->opentype = door->GetOpenType();
@@ -898,7 +899,7 @@ bool EntityList::SendZoneDoorsBulk(EQApplicationPacket* app, Client *client, uin
 	}
 		
 	int32 deflength = sizeof(OldDoor_Struct)*count;
-	int buffer = 2;
+	int buffer = 2; //Length of count that preceeds the packet.
 
 	app->SetOpcode(OP_SpawnDoor);
 	app->pBuffer = new uchar[sizeof(OldDoor_Struct)*count];

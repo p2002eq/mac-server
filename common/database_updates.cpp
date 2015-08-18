@@ -585,6 +585,18 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
+	std::string check_query6 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Traps'");
+	auto results6 = QueryDatabase(check_query6);
+	if (results6.RowCount() == 0)
+	{
+		std::string check_query6a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('51', 'Traps', '0', '0', '0')");
+		auto results6a = QueryDatabase(check_query6a);
+		if (!results6a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `traps`.");
+			return false;
+		}
+	}
 }
 
 bool Database::DBSetup_IP_Multiplier()
