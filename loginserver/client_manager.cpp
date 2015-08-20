@@ -24,17 +24,19 @@
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
-extern Database LoadSettings;
 
 ClientManager::ClientManager()
 {
-	int old_port = atoi(LoadSettings.LoadServerSettings("Old", "port").c_str());
+	server_log->Log(log_debug, "ClientManager Entered.");
+	server_log->Log(log_debug, "ClientManager Got: %s from the database for port.", server.db->LoadServerSettings("Old", "port").c_str());
+	server_log->Log(log_debug, "ClientManager Got: %s from the database for opcode location.", server.db->LoadServerSettings("Old", "opcodes").c_str());
+	int old_port = stoi(server.db->LoadServerSettings("Old", "port"));
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
-	if (!old_ops->LoadOpcodes(LoadSettings.LoadServerSettings("Old", "opcodes").c_str()))
+	if (!old_ops->LoadOpcodes(server.db->LoadServerSettings("Old", "opcodes").c_str()))
 	{
 		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.",
-			LoadSettings.LoadServerSettings("Old", "opcodes").c_str());
+			server.db->LoadServerSettings("Old", "opcodes").c_str());
 		run_server = false;
 	}
 	if(old_stream->Open())

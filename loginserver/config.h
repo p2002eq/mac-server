@@ -18,6 +18,10 @@
 #ifndef EQEMU_CONFIG_H
 #define EQEMU_CONFIG_H
 
+#include "../common/global_define.h"
+//#include "login_server.h"
+#include "error_log.h"
+
 #include <list>
 #include <map>
 #include <string>
@@ -27,6 +31,12 @@ class Config
 public:
 	Config() { }
 	~Config() { }
+
+	/**
+	* Runs all configuration routines and sets loginserver settings.
+	*/
+	bool Config::ConfigSetup();
+
 
 	/**
 	* Parses the selected file for variables, will clear current variables if selected.
@@ -50,6 +60,7 @@ private:
 	* The programmer of a derived class would be expected to make their own Tokenize function for their own Parse().
 	*/
 	void Tokenize(FILE* input, std::list<std::string> &tokens);
+	void SetDBAccess(std::string file);
 };
 
 #endif

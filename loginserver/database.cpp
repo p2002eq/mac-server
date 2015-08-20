@@ -386,17 +386,47 @@ bool Database::GetWorldRegistration(string long_name, string short_name, unsigne
 #pragma endregion
 
 #pragma region Create Server Setup
-bool Database::CreateServerSettings()
+bool Database::CheckSettings(int type)
 {
-	server_log->Log(log_debug, "Entering Server Settings database setup.");
-
+	server_log->Log(log_debug, "Checking for database structure with type %s", std::to_string(type).c_str());
 	if (!db)
 	{
 		server_log->Log(log_error, "MySQL Not connected.");
 		return false;
 	}
+	if (type == 1)
+	{
+		string check_table_query = "SHOW TABLES LIKE 'tblloginserversettings'";
 
-	server_log->Log(log_debug, "MySQL is connected, continuing.");
+		if (mysql_query(db, check_table_query.c_str()) != 0)
+		{
+			server_log->Log(log_error, "Mysql query failed: %s", check_table_query.c_str());
+			return false;
+		}
+		server_log->Log(log_debug, "tblloginserversettings exists sending continue.");
+		return true;
+	}
+	if (type == 2)
+	{
+		string check_query = "SELECT * FROM tblloginserversettings";
+
+		if (mysql_query(db, check_query.c_str()) != 0)
+		{
+			server_log->Log(log_error, "Mysql check_query failed: %s", check_query.c_str());
+			return false;
+		}
+		server_log->Log(log_debug, "tblloginserversettings entries exist sending continue.");
+		return true;
+	}
+	else
+	{
+		server_log->Log(log_debug, "tblloginserversettings does not exist.");
+		return false;
+	}
+}
+bool Database::CreateServerSettings()
+{
+	server_log->Log(log_debug, "Entering Server Settings database setup.");
 
 	string check_table_query = "SHOW TABLES LIKE 'tblloginserversettings'";
 
@@ -516,11 +546,12 @@ bool Database::GetServerSettings()
 		server_log->Log(log_error, "Mysql check_query failed: %s", check_query.c_str());
 		return false;
 	}
+
 	bool result = true;
 	res = mysql_use_result(db);
 	if (res)
 	{
-		while ((row = mysql_fetch_row(res)))
+		while (row = mysql_fetch_row(res))
 		{
 			std::string type = row[0];
 			std::string value = row[1];
@@ -563,27 +594,41 @@ bool Database::SetServerSettings(std::string type, std::string category, std::st
 #pragma endregion
 
 #pragma region Load Server Setup
-
 std::string Database::LoadServerSettings(std::string category, std::string type)
 {
-	string query = StringFormat("SELECT "
-			"tblloginserversettings.`value` "
-		"FROM "
-			"tblloginserversettings "
-		"WHERE "
-			"tblloginserversettings.type = '%s' AND "
-			"tblloginserversettings.category = '%s'", type, category);
+	//mysql_free_result(res);
+	if (!db)
+	{
+		server_log->Log(log_error, "MySQL Not connected.");
+		return false;
+	}
+
+	server_log->Log(log_debug, "Mysql LoadServerSettings got: %s : %s", category.c_str(), type.c_str());
+	string query = "SELECT "
+						"* "
+					"FROM "
+						"tblloginserversettings "
+					"WHERE "
+						"type = '" + type + "' "
+					"AND "
+						"category = '" + category + "'";
+
+	server_log->Log(log_debug, "Mysql LoadServerSettings query is: %s", query.c_str());
 
 	if (mysql_query(db, query.c_str()) != 0)
 	{
-		server_log->Log(log_error, "Mysql check_query failed: %s", query.c_str());
+		server_log->Log(log_error, "Mysql LoadServerSettings query failed: %s", query.c_str());
 	}
+
 	res = mysql_use_result(db);
+
 	if (res)
 	{
-		while ((row = mysql_fetch_row(res)))
+		while (row = mysql_fetch_row(res))
 		{
-			return row[0];
+			std::string value = row[1];
+			server_log->Log(log_debug, "Mysql LoadServerSettings result: %s", value.c_str());
+			return value.c_str();
 		}
 	}
 	return "";

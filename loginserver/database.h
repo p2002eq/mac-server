@@ -91,6 +91,7 @@ public:
 #pragma endregion
 
 #pragma region Create Server Setup
+	bool Database::CheckSettings(int type);
 	/**
 	* Creates Server Settings table.
 	*/

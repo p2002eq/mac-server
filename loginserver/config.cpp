@@ -16,14 +16,17 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/global_define.h"
-#include "config.h"
+//#include "config.h"
+#include "login_server.h"
 #include "error_log.h"
+
 #include <fstream>
 #include <iostream>
 
 #pragma warning( disable : 4267 )
 
 extern ErrorLog *server_log;
+extern LoginServer server;
 
 std::string Config::LoadOption(std::string title, std::string parameter, std::string filename)
 {
@@ -40,24 +43,127 @@ std::string Config::LoadOption(std::string title, std::string parameter, std::st
 	return std::string("");
 }
 
+/**
+* Runs all configuration routines and sets loginserver settings.
+*/
+bool Config::ConfigSetup()
+{
+	std::string configFile;
+
+	bool login = std::ifstream("login.ini").good();
+	bool dbini = std::ifstream("db.ini").good();
+
+	//create db.ini and if all goes well copy login.ini to db table and continue starting the server.
+	if (login && !dbini)
+	{
+		server_log->Log(log_debug, "login.ini found but db.ini missing.");
+		SetDBAccess("login.ini");
+		//write db.ini based on login.ini entries
+		server.config->WriteDBini();
+		//check if table exists and set the field values based on the login.ini
+		if (!server.db->CreateServerSettings())
+		{
+			//send shutdown to main.cpp critical failure.
+			return false;
+		}
+	}
+	else if (!login && dbini)
+	{
+		server_log->Log(log_debug, "db.ini found but login.ini missing. We are able to continue.");
+		//check if settings exist in database.
+		SetDBAccess("db.ini");
+		if (!server.db->CheckSettings(2))
+		{
+			//send shutdown to main.cpp critical failure.
+			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+			return false;
+		}
+		//db.ini was already set up. Settings are fine in database.
+	}
+	else if (login && dbini)
+	{
+		//check if settings exist in database.
+		SetDBAccess("db.ini");
+		if (!server.db->CheckSettings(2))
+		{
+			//send shutdown to main.cpp critical failure.
+			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+			return false;
+		}
+		//db.ini was already set up. Settings are fine in database.
+		server_log->Log(log_debug, "login.ini and db.ini found.");
+	}
+	//no ini found, can't start the server this way.
+	//write the default ini and prompt user to edit it.
+	else
+	{
+		server.config->WriteDBini();
+		//send shutdown to main.cpp critical failure.
+		return false;
+	}
+
+	//ini processing succeeded, continue on.
+
+	//Create our DB from options.
+	server_log->Log(log_debug, "MySQL Database Init.");
+
+	bool config = std::ifstream("db.ini").good();
+
+	if (config)
+	{
+		SetDBAccess("db.ini");
+	}
+	else
+	{
+		//send shutdown to main.cpp critical failure.
+		server_log->Log(log_error, "db.ini not processed, unknown error allowed us to get this far.");
+		return false;
+	}
+
+	//Make sure our database got created okay, otherwise cleanup and exit.
+	if (!server.db)
+	{
+		//send shutdown to main.cpp critical failure.
+		server_log->Log(log_error, "database access not set.");
+		return false;
+	}
+	return true;
+}
+
+void Config::SetDBAccess(std::string file)
+{
+	server_log->Log(log_debug, "Using %s for database access.", file.c_str());
+	if (server.db)
+	{
+		delete server.db;
+	}
+	server.db = (Database*)new Database(
+		server.config->LoadOption("LoginServerDatabase", "user", file),
+		server.config->LoadOption("LoginServerDatabase", "password", file),
+		server.config->LoadOption("LoginServerDatabase", "host", file),
+		server.config->LoadOption("LoginServerDatabase", "port", file),
+		server.config->LoadOption("LoginServerDatabase", "db", file)
+		);
+}
+
 void Config::WriteDBini()
 {
 	bool login = std::ifstream("login.ini").good();
 	bool dbexist = std::ifstream("db.ini").good();
-	if (dbexist)
+	if (dbexist && !login)
 	{
 		return;
 	}
-	if (!dbexist && login)
+	else if (!dbexist && login)
 	{
 		std::ofstream dbini("db.ini");
-		dbini << "[Login Server Database]\n";
-		dbini << "lshost = " + LoadOption("database", "host", "login.ini") + "\n";
-		dbini << "lsport = " + LoadOption("database", "port", "login.ini") + "\n";
-		dbini << "lsdb = " + LoadOption("database", "db", "login.ini") + "\n";
-		dbini << "lsuser = " + LoadOption("database", "user", "login.ini") + "\n";
-		dbini << "lspassword = " + LoadOption("database", "password", "login.ini") + "\n";
-		dbini << "[Game Server Database]\n";
+		dbini << "[LoginServerDatabase]\n";
+		dbini << "host = " + LoadOption("database", "host", "login.ini") + "\n";
+		dbini << "port = " + LoadOption("database", "port", "login.ini") + "\n";
+		dbini << "db = " + LoadOption("database", "db", "login.ini") + "\n";
+		dbini << "user = " + LoadOption("database", "user", "login.ini") + "\n";
+		dbini << "password = " + LoadOption("database", "password", "login.ini") + "\n";
+		dbini << "[GameServerDatabase]\n";
 		dbini << "*Game Server section not used yet.*\n";
 		dbini << "host = " + LoadOption("database", "host", "login.ini") + "\n";
 		dbini << "port = " + LoadOption("database", "port", "login.ini") + "\n";
@@ -67,17 +173,17 @@ void Config::WriteDBini()
 		dbini.close();
 		return;
 	}
-	if (!dbexist && !login)
+	else if (!dbexist && !login)
 	{
 		// place holder for reading from database for values
 		std::ofstream dbini("db.ini");
-		dbini << "[Login Server Database]\n";
+		dbini << "[LoginServerDatabase]\n";
 		dbini << "host = \n";
 		dbini << "port = \n";
 		dbini << "db = \n";
 		dbini << "user = \n";
 		dbini << "password = \n";
-		dbini << "[Game Server Database]\n";
+		dbini << "[GameServerDatabase]\n";
 		dbini << "*Game Server section not used yet.*\n";
 		dbini << "host = \n";
 		dbini << "port = \n";
@@ -87,6 +193,7 @@ void Config::WriteDBini()
 		dbini.close();
 		return;
 	}
+	return;
 }
 
 /**

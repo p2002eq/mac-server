@@ -67,110 +67,19 @@ int main()
 	server.config = new Config();
 	server_log->Log(log_debug, "Config System Init.");
 
-	server_log->Log(log_debug, "Continuing to ini setup.");
-	server.config->WriteDBini();
-
-	bool loginini = false;
-	bool dbini = false;
-
-	std::string configFile;
-
-	bool login = std::ifstream("login.ini").good();
-	bool dbexist = std::ifstream("db.ini").good();
-
-	if (login && !dbexist)
+	if (!server.config->ConfigSetup())
 	{
-		configFile = "login.ini";
-		loginini = true;
-	}
-	else if (!login && dbexist)
-	{
-		configFile = "db.ini";
-		dbini = true;
-	}
-	else if (login && dbexist)
-	{
-		configFile = "db.ini";
-		dbini = true;
-	}
-	else
-	{
-		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
-		server_log->Log(log_debug, "Server failure, can't start without database connection..");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
-		return 1;
-	}
-
-	bool config = std::ifstream(configFile.c_str()).good();
-
-	if (!config)
-	{
-		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
-		server_log->Log(log_debug, "Server failure, can't start without database connection..");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
-		return 1;
-	}
-
-	//Create our DB from options.
-	server_log->Log(log_debug, "MySQL Database Init.");
-	if (loginini)
-	{
-		server.db = (Database*)new Database(
-			server.config->LoadOption("database", "user", "login.ini"),
-			server.config->LoadOption("database", "password", "login.ini"),
-			server.config->LoadOption("database", "host", "login.ini"),
-			server.config->LoadOption("database", "port", "login.ini"),
-			server.config->LoadOption("database", "db", "login.ini")
-		);
-	}
-	else if (dbini)
-	{
-		server.db = (Database*)new Database(
-			server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
-			server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
-			server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
-			server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
-			server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
-		);
-	}
-	else
-	{
-		server_log->Log(log_debug, "ini errors. Incomplete or missing.");
-		server_log->Log(log_debug, "Server failure, can't start without database connection..");
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
-		return 1;
-	}
-
-	//Make sure our database got created okay, otherwise cleanup and exit.
-	if(!server.db)
-	{
-		server_log->Log(log_error, "Database Initialization Failure.");
-		server_log->Log(log_debug, "Config System Shutdown.");
-		delete server.config;
-		server_log->Log(log_debug, "Log System Shutdown.");
-		delete server_log;
-		return 1;
-	}
-
-	//Create our settings table in the database.
-	if (server.db->CreateServerSettings() == false)
-	{
-		server_log->Log(log_error, "Server Settings check failed, LS shutting down.");
+		server_log->Log(log_error, "Server Config Setup failed, LS shutting down.");
 		server_log->Log(log_debug, "Database System Shutdown.");
 		delete server.db;
 		server_log->Log(log_debug, "Config System Shutdown.");
 		delete server.config;
 		server_log->Log(log_debug, "Log System Shutdown.");
 		delete server_log;
+#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		server_log->Log(log_debug, "Press any key to close");
+		getchar();
+#endif
 		return 1;
 	}
 
@@ -187,6 +96,10 @@ int main()
 		delete server.config;
 		server_log->Log(log_debug, "Log System Shutdown.");
 		delete server_log;
+#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		server_log->Log(log_debug, "Press any key to close");
+		getchar();
+#endif
 		return 1;
 	}
 
@@ -205,6 +118,10 @@ int main()
 		delete server.config;
 		server_log->Log(log_debug, "Log System Shutdown.");
 		delete server_log;
+#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
+		server_log->Log(log_debug, "Press any key to close");
+		getchar();
+#endif
 		return 1;
 	}
 
