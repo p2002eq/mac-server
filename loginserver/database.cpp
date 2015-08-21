@@ -400,7 +400,7 @@ bool Database::CheckSettings(int type)
 
 		if (mysql_query(db, check_table_query.c_str()) != 0)
 		{
-			server_log->Log(log_error, "Mysql query failed: %s", check_table_query.c_str());
+			server_log->Log(log_error, "CheckSettings Mysql query failed: %s", check_table_query.c_str());
 			return false;
 		}
 		server_log->Log(log_debug, "tblloginserversettings exists sending continue.");
@@ -412,7 +412,7 @@ bool Database::CheckSettings(int type)
 
 		if (mysql_query(db, check_query.c_str()) != 0)
 		{
-			server_log->Log(log_error, "Mysql check_query failed: %s", check_query.c_str());
+			server_log->Log(log_error, "CheckSettings Mysql check_query failed: %s", check_query.c_str());
 			return false;
 		}
 		server_log->Log(log_debug, "tblloginserversettings entries exist sending continue.");
@@ -424,6 +424,7 @@ bool Database::CheckSettings(int type)
 		return false;
 	}
 }
+
 bool Database::CreateServerSettings()
 {
 	server_log->Log(log_debug, "Entering Server Settings database setup.");
@@ -596,14 +597,14 @@ bool Database::SetServerSettings(std::string type, std::string category, std::st
 #pragma region Load Server Setup
 std::string Database::LoadServerSettings(std::string category, std::string type)
 {
-	//mysql_free_result(res);
+	bool disectmysql = false;
 	if (!db)
 	{
 		server_log->Log(log_error, "MySQL Not connected.");
 		return false;
 	}
 
-	server_log->Log(log_debug, "Mysql LoadServerSettings got: %s : %s", category.c_str(), type.c_str());
+	if (disectmysql) { server_log->Log(log_debug, "Mysql LoadServerSettings got: %s : %s", category.c_str(), type.c_str()); }
 	string query = "SELECT "
 						"* "
 					"FROM "
@@ -613,7 +614,7 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 					"AND "
 						"category = '" + category + "'";
 
-	server_log->Log(log_debug, "Mysql LoadServerSettings query is: %s", query.c_str());
+	if (disectmysql) { server_log->Log(log_debug, "Mysql LoadServerSettings query is: %s", query.c_str()); }
 
 	if (mysql_query(db, query.c_str()) != 0)
 	{
@@ -627,7 +628,8 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 		while (row = mysql_fetch_row(res))
 		{
 			std::string value = row[1];
-			server_log->Log(log_debug, "Mysql LoadServerSettings result: %s", value.c_str());
+			if (disectmysql) { server_log->Log(log_debug, "Mysql LoadServerSettings result: %s", value.c_str()); }
+			mysql_free_result(res);
 			return value.c_str();
 		}
 	}

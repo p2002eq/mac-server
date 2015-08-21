@@ -86,9 +86,16 @@ bool Config::ConfigSetup()
 		SetDBAccess("db.ini");
 		if (!server.db->CheckSettings(2))
 		{
-			//send shutdown to main.cpp critical failure.
-			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
-			return false;
+			if (server.db->CheckSettings(1))
+			{
+				//server.db->ResetDBSettings();
+			}
+			if (!server.db->CreateServerSettings())
+			{
+				//send shutdown to main.cpp critical failure.
+				server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+				return false;
+			}
 		}
 		//db.ini was already set up. Settings are fine in database.
 		server_log->Log(log_debug, "login.ini and db.ini found.");
@@ -130,9 +137,9 @@ bool Config::ConfigSetup()
 	return true;
 }
 
-void Config::SetDBAccess(std::string file)
+void Config::SetDBAccess(const char* file)
 {
-	server_log->Log(log_debug, "Using %s for database access.", file.c_str());
+	server_log->Log(log_debug, "Using %s for database access.", file);
 	if (server.db)
 	{
 		delete server.db;
@@ -202,6 +209,7 @@ void Config::WriteDBini()
 */
 void Config::Parse(const char *file_name)
 {
+	server_log->Log(log_debug, "Parsing file: %s.", file_name);
 	if (file_name == nullptr)
 	{
 		server_log->Log(log_error, "Config::Parse(), file_name passed was null.");
@@ -211,6 +219,7 @@ void Config::Parse(const char *file_name)
 	FILE *input = fopen(file_name, "r");
 	if (input)
 	{
+		server_log->Log(log_debug, "Parsing: %s for server settings consumption.", input);
 		std::list<std::string> tokens;
 		Tokenize(input, tokens);
 
@@ -288,10 +297,6 @@ void Config::Parse(const char *file_name)
 	else
 	{
 		server_log->Log(log_error, "Config::Parse(), file was unable to be opened for parsing.");
-		server_log->Log(log_error, "%s", file_name);
-		server_log->Log(log_error, "%s", file_name);
-		server_log->Log(log_error, "%s", file_name);
-		server_log->Log(log_error, "%s", file_name);
 		server_log->Log(log_error, "%s", file_name);
 	}
 }

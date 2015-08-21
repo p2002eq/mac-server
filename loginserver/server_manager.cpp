@@ -33,7 +33,7 @@ ServerManager::ServerManager()
 
 	server_log->Log(log_debug, "ServerManager Entered.");
 	server_log->Log(log_debug, "ServerManager Got: %s from the database for listen_port.", server.db->LoadServerSettings("options", "listen_port").c_str());
-	int listen_port = stoi(server.db->LoadServerSettings("options", "listen_port"));
+	int listen_port = stoi(server.db->LoadServerSettings("options", "listen_port").c_str());
 	tcps = new EmuTCPServer(listen_port, true);
 	if(tcps->Open(listen_port, error_buffer))
 	{

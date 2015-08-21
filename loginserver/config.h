@@ -60,7 +60,7 @@ private:
 	* The programmer of a derived class would be expected to make their own Tokenize function for their own Parse().
 	*/
 	void Tokenize(FILE* input, std::list<std::string> &tokens);
-	void SetDBAccess(std::string file);
+	void SetDBAccess(const char* file);
 };
 
 #endif

@@ -30,7 +30,7 @@ ClientManager::ClientManager()
 	server_log->Log(log_debug, "ClientManager Entered.");
 	server_log->Log(log_debug, "ClientManager Got: %s from the database for port.", server.db->LoadServerSettings("Old", "port").c_str());
 	server_log->Log(log_debug, "ClientManager Got: %s from the database for opcode location.", server.db->LoadServerSettings("Old", "opcodes").c_str());
-	int old_port = stoi(server.db->LoadServerSettings("Old", "port"));
+	int old_port = stoi(server.db->LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
 	if (!old_ops->LoadOpcodes(server.db->LoadServerSettings("Old", "opcodes").c_str()))
