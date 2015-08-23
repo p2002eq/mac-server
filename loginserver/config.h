@@ -48,6 +48,7 @@ public:
 	*/
 	std::string LoadOption(std::string title, std::string parameter, std::string filename);
 	void WriteDBini();
+	void UpdateSettings();
 
 protected:
 	std::map<std::string, std::map<std::string, std::string> > vars;
@@ -60,7 +61,7 @@ private:
 	* The programmer of a derived class would be expected to make their own Tokenize function for their own Parse().
 	*/
 	void Tokenize(FILE* input, std::list<std::string> &tokens);
-	void SetDBAccess(const char* file);
+	//void SetDBAccess(const char* file);
 };
 
 #endif

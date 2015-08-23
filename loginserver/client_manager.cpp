@@ -41,7 +41,8 @@ ClientManager::ClientManager()
 	}
 	if(old_stream->Open())
 	{
-		server_log->Log(log_network, "ClientManager listening on Old stream.");
+		std::string port = std::to_string(old_port);
+		server_log->Log(log_network, "ClientManager listening on Old stream with port: %s.", port.c_str());
 	}
 	else
 	{

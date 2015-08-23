@@ -380,8 +380,8 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 	outapp->pBuffer;
 	memset(buf, 0, sizeof(buf));
 
-	strcpy(buf, "Welcome to The Al'Kabor Project!");
-	outapp->size += strlen("Welcome to The Al'Kabor Project!");
+	strcpy(buf, server.db->LoadServerSettings("options", "ticker").c_str());
+	outapp->size += strlen(server.db->LoadServerSettings("options", "ticker").c_str());
 
 	if (strlen(buf) == 0)
 	{

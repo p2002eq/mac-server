@@ -62,7 +62,6 @@ int main()
 
 	server_log = new ErrorLog(log_name.str().c_str());
 	server_log->Log(log_debug, "Logging System Init.");
-
 	//Create our subsystem and parse the ini file.
 	server.config = new Config();
 	server_log->Log(log_debug, "Config System Init.");

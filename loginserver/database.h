@@ -91,6 +91,9 @@ public:
 #pragma endregion
 
 #pragma region Create Server Setup
+	/**
+	* Checks if table or entries exist in the database for settings.
+	*/
 	bool Database::CheckSettings(int type);
 	/**
 	* Creates Server Settings table.
@@ -104,6 +107,14 @@ public:
 	* Writes values for server settings.
 	*/
 	virtual bool SetServerSettings(std::string type, std::string category, std::string defaults);
+	/**
+	* Check if non-legacy settings were written to db.
+	*/
+	bool Database::CheckMissingSettings(std::string type);
+	/**
+	* Add settings that didn't exist in legacy login.ini setups.
+	*/
+	void Database::InsertMissingSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults);
 #pragma endregion
 
 #pragma region Load Server Setup

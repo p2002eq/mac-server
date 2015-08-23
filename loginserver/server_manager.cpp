@@ -158,7 +158,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
-		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network")) != string::npos)
+		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
@@ -175,7 +175,13 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ServerListRequest, packet_size);
 	ServerList_Struct *sl = (ServerList_Struct*)outapp->pBuffer;
 	sl->numservers = server_count;
-	sl->showusercount = 0xFF;
+
+	uint8 showcount = 0x0;
+	if (server.db->LoadServerSettings("options", "pop_count") == "1")
+	{
+		showcount = 0xFF;
+	}
+	sl->showusercount = showcount;
 
 	unsigned char *data_ptr = outapp->pBuffer;
 	data_ptr += sizeof(ServerList_Struct);
@@ -203,7 +209,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);
 		}
-		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network")) != string::npos)
+		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
 		{
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);

@@ -398,7 +398,7 @@ bool Database::CheckSettings(int type)
 	{
 		string check_table_query = "SHOW TABLES LIKE 'tblloginserversettings'";
 
-		if (mysql_query(db, check_table_query.c_str()) != 0)
+		if (mysql_query(db, check_table_query.c_str()) == NULL)//!= 0)
 		{
 			server_log->Log(log_error, "CheckSettings Mysql query failed: %s", check_table_query.c_str());
 			return false;
@@ -433,8 +433,11 @@ bool Database::CreateServerSettings()
 
 	if (mysql_query(db, check_table_query.c_str()) != 0)
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", check_table_query.c_str());
-		return false;
+		server_log->Log(log_error, "CreateServerSettings Mysql query returned, table does not exist: %s", check_table_query.c_str());
+	}
+	else
+	{
+		return true;
 	}
 
 	res = mysql_use_result(db);
@@ -455,7 +458,7 @@ bool Database::CreateServerSettings()
 
 			if (mysql_query(db, create_table_query.c_str()) != 0)
 			{
-				server_log->Log(log_error, "Mysql query failed: %s", create_table_query.c_str());
+				server_log->Log(log_error, "CreateServerSettings Mysql query failed to create table: %s", create_table_query.c_str());
 				return false;
 			}
 
@@ -477,8 +480,10 @@ bool Database::CreateServerSettings()
 				"('network_ip', '', 'options', 'set to the network ip that world server is on.', '127.0.0.1'),"
 				"('opcodes', '', 'Old', 'opcode file for client compatibility. (Old means classic/mac)', 'login_opcodes_oldver.conf'),"
 				"('plugin', '', 'security', 'the encryption type the login server uses.', 'EQEmuAuthCrypto'),"
+				"('pop_count', '', 'options', '0 to only display UP or DOWN or 1 to show population count in server select.', '0'),"
 				"('reject_duplicate_servers', '', 'options', 'set this to TRUE to force unique server name connections.', 'TRUE'),"
 				"('salt', '', 'options', 'for account security make this a numeric random number.', '12345678'),"
+				"('ticker', '', 'options', 'Sets the welcome message in server select.', 'Welcome'),"
 				"('trace', '', 'options', 'debugging', 'FALSE'),"
 				"('unregistered_allowed', '', 'options', 'set this to TRUE to allow any server to connect.', 'TRUE'),"
 				"('world_admin_registration_table', '', 'schema', 'location of administrator account info for this login server.', 'tblServerAdminRegistration'),"
@@ -510,8 +515,10 @@ bool Database::CreateServerSettings()
 			failed |= !SetServerSettings("network_ip", "options", "127.0.0.1");
 			failed |= !SetServerSettings("opcodes", "Old", "login_opcodes_oldver.conf");
 			failed |= !SetServerSettings("plugin", "security", "EQEmuAuthCrypto");
+			failed |= !SetServerSettings("pop_count", "options", "0");
 			failed |= !SetServerSettings("reject_duplicate_servers", "options", "TRUE");
 			failed |= !SetServerSettings("salt", "options", "12345678");
+			failed |= !SetServerSettings("ticker", "options", "Welcome");
 			failed |= !SetServerSettings("trace", "options", "FALSE");
 			failed |= !SetServerSettings("unregistered_allowed", "options", "TRUE");
 			failed |= !SetServerSettings("world_admin_registration_table", "schema", "tblServerAdminRegistration");
@@ -563,6 +570,7 @@ bool Database::GetServerSettings()
 			if (value.empty())
 			{
 				server_log->Log(log_database, "Mysql check_query returns NO value for type %s", type.c_str());
+				//mysql_free_result(res);
 				result = false;
 			}
 			else if (!value.empty())
@@ -571,6 +579,7 @@ bool Database::GetServerSettings()
 			}
 		}
 	}
+	//mysql_free_result(res);
 	return result;
 }
 
@@ -592,12 +601,46 @@ bool Database::SetServerSettings(std::string type, std::string category, std::st
 	}
 	return true;
 }
+// This is not working right, returns false regardless, if changed on line 609 if returns true even if they don't exist.
+bool Database::CheckMissingSettings(std::string type)
+{
+	string check_query = "SELECT * FROM tblloginserversettings WHERE type = '" + type + "';";
+
+	if (mysql_query(db, check_query.c_str()) != 0)
+	{
+		server_log->Log(log_error, "CheckMissingSettings Mysql check_query returned - not existing type: %s", check_query.c_str());
+		res = mysql_use_result(db);
+		mysql_free_result(res);
+		return false;
+	}
+	server_log->Log(log_debug, "tblloginserversettings '%s' entries exist sending continue.", type.c_str());
+	res = mysql_use_result(db);
+	mysql_free_result(res);
+	return true;
+}
+
+void Database::InsertMissingSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults)
+{
+		string query = StringFormat("INSERT INTO `tblloginserversettings` (`type`, `value`, category, description, defaults)"
+			"VALUES('%s', '%s', '%s', '%s', '%s');", type.c_str(), value.c_str(), category.c_str(), description.c_str(), defaults.c_str());
+
+		if (mysql_query(db, query.c_str()) != 0)
+		{
+			server_log->Log(log_error, "InsertMissingSettings query failed: %s", query.c_str());
+			res = mysql_use_result(db);
+			mysql_free_result(res);
+			return;
+		}
+		res = mysql_use_result(db);
+		mysql_free_result(res);
+	return;
+}
 #pragma endregion
 
 #pragma region Load Server Setup
 std::string Database::LoadServerSettings(std::string category, std::string type)
 {
-	bool disectmysql = false;
+	bool disectmysql = false; // for debugging what gets returned.
 	if (!db)
 	{
 		server_log->Log(log_error, "MySQL Not connected.");
@@ -619,6 +662,7 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 	if (mysql_query(db, query.c_str()) != 0)
 	{
 		server_log->Log(log_error, "Mysql LoadServerSettings query failed: %s", query.c_str());
+		return "";
 	}
 
 	res = mysql_use_result(db);

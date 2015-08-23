@@ -16,7 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/global_define.h"
-//#include "config.h"
+#include "config.h"
 #include "login_server.h"
 #include "error_log.h"
 
@@ -48,6 +48,9 @@ std::string Config::LoadOption(std::string title, std::string parameter, std::st
 */
 bool Config::ConfigSetup()
 {
+	//server_log->Log(log_debug, "Debugging parse error: %s", LoadOption("LoginServerDatabase", "user", "db.ini").c_str());
+	//return false;
+
 	std::string configFile;
 
 	bool login = std::ifstream("login.ini").good();
@@ -57,7 +60,16 @@ bool Config::ConfigSetup()
 	if (login && !dbini)
 	{
 		server_log->Log(log_debug, "login.ini found but db.ini missing.");
-		SetDBAccess("login.ini");
+
+		if (server.db) { delete server.db; }
+		server.db = (Database*)new Database(
+			server.config->LoadOption("database", "user", "login.ini"),
+			server.config->LoadOption("database", "password", "login.ini"),
+			server.config->LoadOption("database", "host", "login.ini"),
+			server.config->LoadOption("database", "port", "login.ini"),
+			server.config->LoadOption("database", "db", "login.ini")
+			);
+
 		//write db.ini based on login.ini entries
 		server.config->WriteDBini();
 		//check if table exists and set the field values based on the login.ini
@@ -70,8 +82,17 @@ bool Config::ConfigSetup()
 	else if (!login && dbini)
 	{
 		server_log->Log(log_debug, "db.ini found but login.ini missing. We are able to continue.");
+
 		//check if settings exist in database.
-		SetDBAccess("db.ini");
+		if (server.db) { delete server.db; }
+		server.db = (Database*)new Database(
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
+			);
+
 		if (!server.db->CheckSettings(2))
 		{
 			//send shutdown to main.cpp critical failure.
@@ -82,16 +103,29 @@ bool Config::ConfigSetup()
 	}
 	else if (login && dbini)
 	{
+		server_log->Log(log_debug, "db.ini and login.ini found. We are able to continue.");
+
+		if (server.db) { delete server.db; }
+		server.db = (Database*)new Database(
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
+			);
+
 		//check if settings exist in database.
-		SetDBAccess("db.ini");
 		if (!server.db->CheckSettings(2))
 		{
+			server_log->Log(log_debug, "Settings entries not found in database.");
 			if (server.db->CheckSettings(1))
 			{
+				server_log->Log(log_debug, "Settings entries not found in database but table was.");
 				//server.db->ResetDBSettings();
 			}
 			if (!server.db->CreateServerSettings())
 			{
+				server_log->Log(log_debug, "Settings entries not found in database creating base settings from ini files.");
 				//send shutdown to main.cpp critical failure.
 				server_log->Log(log_error, "Missing settings in tblloginserversettings.");
 				return false;
@@ -118,7 +152,14 @@ bool Config::ConfigSetup()
 
 	if (config)
 	{
-		SetDBAccess("db.ini");
+		if (server.db) { delete server.db; }
+		server.db = (Database*)new Database(
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
+			);
 	}
 	else
 	{
@@ -134,23 +175,8 @@ bool Config::ConfigSetup()
 		server_log->Log(log_error, "database access not set.");
 		return false;
 	}
+	UpdateSettings();
 	return true;
-}
-
-void Config::SetDBAccess(const char* file)
-{
-	server_log->Log(log_debug, "Using %s for database access.", file);
-	if (server.db)
-	{
-		delete server.db;
-	}
-	server.db = (Database*)new Database(
-		server.config->LoadOption("LoginServerDatabase", "user", file),
-		server.config->LoadOption("LoginServerDatabase", "password", file),
-		server.config->LoadOption("LoginServerDatabase", "host", file),
-		server.config->LoadOption("LoginServerDatabase", "port", file),
-		server.config->LoadOption("LoginServerDatabase", "db", file)
-		);
 }
 
 void Config::WriteDBini()
@@ -170,8 +196,9 @@ void Config::WriteDBini()
 		dbini << "db = " + LoadOption("database", "db", "login.ini") + "\n";
 		dbini << "user = " + LoadOption("database", "user", "login.ini") + "\n";
 		dbini << "password = " + LoadOption("database", "password", "login.ini") + "\n";
+		dbini << "\n";
 		dbini << "[GameServerDatabase]\n";
-		dbini << "*Game Server section not used yet.*\n";
+		dbini << "#Game Server section not used yet.\n";
 		dbini << "host = " + LoadOption("database", "host", "login.ini") + "\n";
 		dbini << "port = " + LoadOption("database", "port", "login.ini") + "\n";
 		dbini << "db = " + LoadOption("database", "db", "login.ini") + "\n";
@@ -190,8 +217,9 @@ void Config::WriteDBini()
 		dbini << "db = \n";
 		dbini << "user = \n";
 		dbini << "password = \n";
+		dbini << "\n";
 		dbini << "[GameServerDatabase]\n";
-		dbini << "*Game Server section not used yet.*\n";
+		dbini << "#Game Server section not used yet.\n";
 		dbini << "host = \n";
 		dbini << "port = \n";
 		dbini << "db = \n";
@@ -201,6 +229,15 @@ void Config::WriteDBini()
 		return;
 	}
 	return;
+}
+
+void Config::UpdateSettings()
+{
+	//formatting for adding loginserver settings.
+	//server.db->InsertMissingSettings("type", "value", "category", "description", "defaults");
+
+	if (!server.db->CheckMissingSettings("pop_count")) { server.db->InsertMissingSettings("pop_count", "0", "options", "0 to only display UP or DOWN or 1 to show population count in server select.", "0"); }
+	if (!server.db->CheckMissingSettings("ticker")) { server.db->InsertMissingSettings("ticker", "Welcome", "options", "Sets the welcome message in server select.", "Welcome"); }
 }
 
 /**
@@ -219,7 +256,6 @@ void Config::Parse(const char *file_name)
 	FILE *input = fopen(file_name, "r");
 	if (input)
 	{
-		server_log->Log(log_debug, "Parsing: %s for server settings consumption.", input);
 		std::list<std::string> tokens;
 		Tokenize(input, tokens);
 

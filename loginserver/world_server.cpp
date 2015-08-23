@@ -576,7 +576,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 	{
 		slsca->local = 1;
 	}
-	else if (client_address.find(server.db->LoadServerSettings("options", "local_network")) != string::npos)
+	else if (client_address.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
 	{
 		slsca->local = 1;
 	}
