@@ -4868,6 +4868,11 @@ void Mob::Stun(int duration, Mob* attacker)
 	{
 		stunned = true;
 		stunned_timer.Start(duration);
+		if (IsAIControlled())
+		{
+			SetRunAnimSpeed(0);
+			SendPosition();
+		}
 	}
 
 	//if(attacker)
@@ -4909,14 +4914,12 @@ void Client::UnStun() {
 
 void NPC::Stun(int duration, Mob* attacker) {
 	Mob::Stun(duration, attacker);
-	SetRunAnimSpeed(0);
-	//SendPosition();
 }
 
 void NPC::UnStun() {
 	Mob::UnStun();
-	SetRunAnimSpeed(static_cast<int8>(GetRunspeed()));
-	SendPosition();
+	tar_ndx = 20;
+	move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 1;
 }
 
 void Mob::Mesmerize()

@@ -16,6 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "clientlist.h"
 #include "zoneserver.h"
 #include "zonelist.h"
@@ -249,9 +250,82 @@ void ClientList::DisconnectByIP(uint32 iIP) {
 			}
 			countCLEIPs->SetOnline(CLE_Status_Offline);
 			iterator.RemoveCurrent();
+			continue;
 		}
 		iterator.Advance();
 	}
+}
+
+bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin) {
+
+	ClientListEntry* countCLEIPs = 0;
+	LinkedListIterator<ClientListEntry*> iterator(clientlist);
+	int exemptcount = database.CheckExemption(iAccID);
+	int exemptadd = 0;
+	if (RuleI(World, AddMaxClientsPerIP) > 0)
+		exemptadd = RuleI(World, AddMaxClientsPerIP);
+	int IPInstances = 1;
+	iterator.Reset();
+
+	while(iterator.MoreElements()) {
+
+		countCLEIPs = iterator.GetData();
+		
+		// If the IP matches, and the connection admin status is below the exempt status,
+		// or exempt status is less than 0 (no-one is exempt)
+		if ((countCLEIPs->GetIP() == iIP) &&
+			((admin < (RuleI(World, ExemptMaxClientsStatus))) ||
+			(RuleI(World, ExemptMaxClientsStatus) < 0))) {
+
+			// Increment the occurrences of this IP address
+			if (countCLEIPs->Online() > CLE_Status_Offline)
+				IPInstances++;
+
+			
+		}
+		iterator.Advance();
+	}
+	// Thie ip_exemption_multiplier modifies the World:MaxClientsPerIP
+	// example MaxClientsPerIP set to 3 and ip_exemption_multiplier 1, only 3 accounts will be allowed.
+	// Whereas MaxClientsPerIP set to 3 and ip_exemption_multiplier 2 = a max of 6 accounts allowed.
+	if (IPInstances > (exemptcount * (RuleI(World, MaxClientsPerIP)))) {
+
+		// If MaxClientsSetByStatus is set to True, override other IP Limit Rules
+		if (RuleB(World, MaxClientsSetByStatus)) {
+
+			// The IP Limit is set by the status of the account if status > MaxClientsPerIP
+			if (IPInstances > admin) {
+				return false;
+			}
+		}
+		// Else if the Admin status of the connection is not eligible for the higher limit,
+		// or there is no higher limit (AddMaxClientStatus<0)
+		else if ((admin < (RuleI(World, AddMaxClientsPerIP)) ||
+				(RuleI(World, AddMaxClientsStatus) < 0) || (RuleI(World, AddMaxClientsPerIP) < 0))) {
+			return false;
+		}
+		// else they are eligible for the higher limit, but if they exceed that
+		else if (IPInstances > (exemptcount * (RuleI(World, MaxClientsPerIP) + RuleI(World, AddMaxClientsPerIP)))) {
+
+			return false;
+		}
+	}
+	return true;
+}
+
+bool ClientList::CheckAccountActive(uint32 iAccID) {
+
+	ClientListEntry* countCLEIPs = 0;
+	LinkedListIterator<ClientListEntry*> iterator(clientlist);
+	iterator.Reset();
+
+	while(iterator.MoreElements()) {
+		if (iterator.GetData()->AccountID() == iAccID && iterator.GetData()->Online() > CLE_Status_Offline) {
+			return true;
+		}
+		iterator.Advance();
+	}
+	return false;
 }
 
 ClientListEntry* ClientList::FindCharacter(const char* name) {
@@ -360,6 +434,8 @@ void ClientList::CLCheckStale() {
 			Log.Out(Logs::Detail, Logs::World_Server,"Removing stale client on account %d from %s", iterator.GetData()->AccountID(), inet_ntoa(in));
 			uint32 accountid = iterator.GetData()->AccountID();
 			iterator.RemoveCurrent();
+			if(!ActiveConnection(accountid))
+				database.ClearAccountActive(accountid);
 		}
 		else
 			iterator.Advance();
