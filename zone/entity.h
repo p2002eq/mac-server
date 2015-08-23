@@ -402,7 +402,8 @@ public:
 	void UpdateAllTraps(bool respawn, bool repopnow = false);
 	void ClearTrapPointers();
 	uint8 GetClientCountByBoatID(uint32 boatid);
-	bool TranfserPrimaryAggro(Mob* other);
+	bool TransferPrimaryAggro(Mob* other);
+
 
 protected:
 	friend class Zone;

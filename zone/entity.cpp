@@ -4347,7 +4347,7 @@ uint8 EntityList::GetClientCountByBoatID(uint32 boatid)
 	return count;
 }
 
-bool EntityList::TranfserPrimaryAggro(Mob *other)
+bool EntityList::TransferPrimaryAggro(Mob *other)
 {
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {

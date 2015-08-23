@@ -166,7 +166,8 @@ void Client::SendCharInfo() {
 	auto outapp = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
 	CharacterSelect_Struct* cs = (CharacterSelect_Struct*)outapp->pBuffer;
 
-	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
+	charcount = 0;
+	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit, charcount);
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -1024,6 +1025,13 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 {
 	if (!RuleB(Character, CanCreate))
 		return false;
+
+	if(charcount >= 8)
+	{
+		Log.Out(Logs::General, Logs::World_Server, "%s already has %d characters. OPCharCreate returning false.", name, charcount);
+		return false;
+	}
+
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
@@ -1158,6 +1166,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		return false;
 	}
 	Log.Out(Logs::Detail, Logs::World_Server,"Character creation successful: %s", pp.name);
+	++charcount;
 	return true;
 }
 
