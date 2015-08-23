@@ -1,4 +1,5 @@
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/eq_packet.h"
 #include "../common/eq_stream_intf.h"
 #include "../common/misc.h"
@@ -450,9 +451,9 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		return true;
 	}
 
-	if (RuleI(World, MaxClientsPerIP) >= 0) {
-		client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
-	}
+	//if (RuleI(World, MaxClientsPerIP) >= 0) {
+	//	client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
+	//}
 
 	EnterWorld_Struct *ew=(EnterWorld_Struct *)app->pBuffer;
 	strn0cpy(char_name, ew->name, 64);
@@ -726,9 +727,6 @@ bool Client::Process() {
 
 void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
-		return;
-
-	if(GetSessionLimit())
 		return;
 
 	ZoneServer* zs = nullptr;
@@ -1468,7 +1466,7 @@ bool Client::GetSessionLimit()
 {
 	if (RuleI(World, AccountSessionLimit) >= 0 && cle->Admin() < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1)) 
 	{
-		if(database.CheckAccountActive(cle->AccountID()))
+		if(client_list.CheckAccountActive(cle->AccountID()))
 		{
 			Log.Out(Logs::Detail, Logs::World_Server,"Account %d attempted to login with an active player in the world.", cle->AccountID());
 			return true;

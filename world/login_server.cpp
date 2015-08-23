@@ -140,6 +140,19 @@ bool LoginServer::Process() {
 				if(status == -2)
 					utwrs->response = -2;
 
+				if (utwrs->response == 1)
+				{
+					// active account checks
+					if (RuleI(World, AccountSessionLimit) >= 0 && status < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1) && client_list.CheckAccountActive(id))
+						utwrs->response = -4;
+				}
+				if (utwrs->response == 1)
+				{
+					// ip limit checks
+					if (RuleI(World, AccountSessionLimit) >= 0 && status < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1) && !client_list.CheckIPLimit(id, utwr->ip, status))
+						utwrs->response = -5;
+				}
+
 				utwrs->worldid = utwr->worldid;
 				SendPacket(outpack);
 				delete outpack;

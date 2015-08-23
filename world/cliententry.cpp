@@ -16,6 +16,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "cliententry.h"
 #include "clientlist.h"
 #include "login_server.h"
@@ -95,6 +96,7 @@ void ClientListEntry::SetOnline(ZoneServer* iZS, int8 iOnline) {
 }
 
 void ClientListEntry::SetOnline(int8 iOnline) {
+	//Log.Out(Logs::Detail, Logs::World_Server,"SetOnline Account: %i %i -> %i",AccountID(), pOnline, iOnline);
 	if (iOnline >= CLE_Status_Zoning && pOnline < CLE_Status_Zoning)
 		numplayers++;
 	else if (iOnline < CLE_Status_Zoning && iOnline != CLE_Status_Online && pOnline >= CLE_Status_Zoning) {

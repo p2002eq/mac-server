@@ -352,7 +352,6 @@ public:
 	bool	CheckGMIPs(const char* loginIP, uint32 account_id);
 	bool	AddGMIP(char* ip_address, char* name);
 	void	LoginIP(uint32 AccountID, const char* LoginIP);
-	bool	CheckAccountActive(uint32 AccountID);
 	void	ClearAllActive();
 	void	ClearAccountActive(uint32 AccountID);
 	void	SetAccountActive(uint32 AccountID);
