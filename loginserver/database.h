@@ -18,78 +18,50 @@
 #ifndef EQEMU_DATABASE_H
 #define EQEMU_DATABASE_H
 
+#define AUTHENTICATION_TIMEOUT	60
+#define INVALID_ID				0xFFFFFFFF
+
+#include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
+#include "../common/types.h"
+#include "../common/dbcore.h"
+#include "../common/linked_list.h"
+#include "../common/eq_packet_structs.h"
+
+#include <cmath>
 #include <string>
-#include <stdlib.h>
-#include <mysql.h>
+#include <vector>
+#include <map>
 
-/**
-* Base database class, intended to be extended.
-*/
-class Database
-{
+//atoi is not uint32 or uint32 safe!!!!
+#define atoul(str) strtoul(str, nullptr, 10)
+
+class MySQLRequestResult;
+
+struct VarCache_Struct {
+	char varname[26];
+	char value[0];
+};
+
+class PTimerList;
+
+#pragma pack()
+
+class Database : public DBcore {
+
 public:
-	/**
-	* Constructor, tries to set our database to connect to the supplied options.
-	*/
-	Database(std::string user, std::string pass, std::string host, std::string port, std::string name);
+	Database();
+	Database(const char* host, const char* user, const char* passwd, const char* database, uint32 port);
+	bool Connect(const char* host, const char* user, const char* passwd, const char* database, uint32 port);
+	~Database();
+	bool	ThrowDBError(std::string ErrorMessage, std::string query_title, std::string query);
 
-	virtual ~Database();
-
+#pragma region Load Server Setup
 	/**
-	* @return Returns true if the database successfully connected.
+	* Loads values for server settings from db.
 	*/
-	virtual bool IsConnected() { return (db != nullptr); }
-
-#pragma region Player Account Info
-	/**
-	* Updates or creates the login server account with info from world server
-	*/
-	virtual void CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
-
-	/**
-	* Updates the ip address of the client with account id = id
-	*/
-	virtual void UpdateLSAccount(unsigned int id, std::string ip_address);
-
-	/**
-	* Retrieves account status to check if account is activated for login.
-	* Returns true if the record was found, false otherwise.
-	*/
-	virtual bool GetAccountLockStatus(std::string name);
-
-	/**
-	* Updates or creates the access log
-	*/
-	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
-
-	/**
-	* Retrieves the login data (password hash and account id) from the account name provided
-	* Needed for client login procedure.
-	* Returns true if the record was found, false otherwise.
-	*/
-	virtual bool GetLoginDataFromAccountName(std::string name, std::string &password, unsigned int &id);
+	std::string LoadServerSettings(std::string category, std::string type);
 #pragma endregion
-
-#pragma region World Server Account Info
-	/**
-	* Creates new world registration for unregistered servers and returns new id
-	*/
-	virtual bool CreateWorldRegistration(std::string long_name, std::string short_name, unsigned int &id);
-
-	/**
-	* Updates the ip address of the world with account id = id
-	*/
-	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address);
-
-	/**
-	* Retrieves the world registration from the long and short names provided.
-	* Needed for world login procedure.
-	* Returns true if the record was found, false otherwise.
-	*/
-	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
-		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
-#pragma endregion
-
 #pragma region Create Server Setup
 	/**
 	* Checks if table or entries exist in the database for settings.
@@ -116,19 +88,60 @@ public:
 	*/
 	void Database::InsertMissingSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults);
 #pragma endregion
-
-#pragma region Load Server Setup
+#pragma region World Server Account Info
 	/**
-	* Loads values for server settings from db.
+	* Creates new world registration for unregistered servers and returns new id
 	*/
-	std::string LoadServerSettings(std::string category, std::string type);
+	virtual bool CreateWorldRegistration(std::string long_name, std::string short_name, unsigned int &id);
+	
+	/**
+	* Updates the ip address of the world with account id = id
+	*/
+	virtual void UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address);
+	
+	/**
+	* Retrieves the world registration from the long and short names provided.
+	* Needed for world login procedure.
+	* Returns true if the record was found, false otherwise.
+	*/
+	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
+		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
+#pragma endregion
+#pragma region Player Account Info
+	/**
+	* Updates or creates the login server account with info from world server
+	*/
+	virtual void CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
+	
+	/**
+	* Updates the ip address of the client with account id = id
+	*/
+	virtual void UpdateLSAccount(unsigned int id, std::string ip_address);
+	
+	/**
+	* Retrieves account status to check if account is activated for login.
+	* Returns true if the record was found, false otherwise.
+	*/
+	virtual bool GetAccountLockStatus(std::string name);
+	
+	/**
+	* Updates or creates the access log
+	*/
+	virtual void UpdateAccessLog(unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason);
+	
+	/**
+	* Retrieves the login data (password hash and account id) from the account name provided
+	* Needed for client login procedure.
+	* Returns true if the record was found, false otherwise.
+	*/
+	virtual bool GetLoginDataFromAccountName(std::string name, std::string &password, unsigned int &id);
 #pragma endregion
 
-protected:
-	std::string user, pass, host, port, name;
-	MYSQL *db;
-	MYSQL_ROW row;
-	MYSQL_RES *res;
+private:
+	void DBInitVars();
+	Mutex				Mvarcache;
+	uint32				varcache_max;
+	VarCache_Struct**	varcache_array;
+	uint32				varcache_lastupdate;
 };
-
 #endif
