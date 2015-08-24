@@ -149,7 +149,7 @@ bool LoginServer::Process() {
 				if (utwrs->response == 1)
 				{
 					// ip limit checks
-					if (RuleI(World, AccountSessionLimit) >= 0 && status < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1) && !client_list.CheckIPLimit(id, utwr->ip, status))
+					if (RuleI(World, MaxClientsPerIP) >= 0 && !client_list.CheckIPLimit(id, utwr->ip, status))
 						utwrs->response = -5;
 				}
 
