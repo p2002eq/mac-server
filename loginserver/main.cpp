@@ -69,61 +69,43 @@ int main()
 	if (!server.config->ConfigSetup())
 	{
 		server_log->Log(log_error, "Server Config Setup failed, LS shutting down.");
-		server_log->Log(log_debug, "Database System Shutdown.");
-		delete server.db;
 		server_log->Log(log_debug, "Config System Shutdown.");
 		delete server.config;
 		server_log->Log(log_debug, "Log System Shutdown.");
 		delete server_log;
-#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-		server_log->Log(log_debug, "Press any key to close");
-		getchar();
-#endif
 		return 1;
 	}
 
-//	//create our server manager.
-//	server_log->Log(log_debug, "Server Manager Initialize.");
-//	server.SM = new ServerManager();
-//	if(!server.SM)
-//	{
-//		//We can't run without a server manager, cleanup and exit.
-//		server_log->Log(log_error, "Server Manager Failed to Start.");
-//		server_log->Log(log_debug, "Database System Shutdown.");
-//		delete server.db;
-//		server_log->Log(log_debug, "Config System Shutdown.");
-//		delete server.config;
-//		server_log->Log(log_debug, "Log System Shutdown.");
-//		delete server_log;
-//#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-//		server_log->Log(log_debug, "Press any key to close");
-//		getchar();
-//#endif
-//		return 1;
-//	}
+	//create our server manager.
+	server_log->Log(log_debug, "Server Manager Initialize.");
+	server.SM = new ServerManager();
+	if(!server.SM)
+	{
+		//We can't run without a server manager, cleanup and exit.
+		server_log->Log(log_error, "Server Manager Failed to Start.");
+		server_log->Log(log_debug, "Config System Shutdown.");
+		delete server.config;
+		server_log->Log(log_debug, "Log System Shutdown.");
+		delete server_log;
+		return 1;
+	}
 
-//	//create our client manager.
-//	server_log->Log(log_debug, "Client Manager Initialize.");
-//	server.CM = new ClientManager();
-//	if(!server.CM)
-//	{
-//		//We can't run without a client manager, cleanup and exit.
-//		server_log->Log(log_error, "Client Manager Failed to Start.");
-//		server_log->Log(log_debug, "Server Manager Shutdown.");
-//		delete server.SM;
-//		server_log->Log(log_debug, "Database System Shutdown.");
-//		delete server.db;
-//		server_log->Log(log_debug, "Config System Shutdown.");
-//		delete server.config;
-//		server_log->Log(log_debug, "Log System Shutdown.");
-//		delete server_log;
-//#ifdef _WINDOWS //Almost never ran in a terminal on linux, so no need to hold window open to see error.
-//		server_log->Log(log_debug, "Press any key to close");
-//		getchar();
-//#endif
-//		return 1;
-//	}
-	return 1;
+	//create our client manager.
+	server_log->Log(log_debug, "Client Manager Initialize.");
+	server.CM = new ClientManager();
+	if(!server.CM)
+	{
+		//We can't run without a client manager, cleanup and exit.
+		server_log->Log(log_error, "Client Manager Failed to Start.");
+		server_log->Log(log_debug, "Server Manager Shutdown.");
+		delete server.SM;
+		server_log->Log(log_debug, "Config System Shutdown.");
+		delete server.config;
+		server_log->Log(log_debug, "Log System Shutdown.");
+		delete server_log;
+		return 1;
+	}
+
 #ifdef WIN32
 #ifdef UNICODE
 	SetConsoleTitle(L"EQEmu Login Server");
@@ -146,8 +128,6 @@ int main()
 	delete server.CM;
 	server_log->Log(log_debug, "Server Manager Shutdown.");
 	delete server.SM;
-	server_log->Log(log_debug, "Database System Shutdown.");
-	delete server.db;
 	server_log->Log(log_debug, "Config System Shutdown.");
 	delete server.config;
 	server_log->Log(log_debug, "Log System Shutdown.");

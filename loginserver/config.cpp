@@ -27,6 +27,7 @@
 
 extern ErrorLog *server_log;
 extern LoginServer server;
+Database db;
 
 std::string Config::LoadOption(std::string title, std::string parameter, std::string filename)
 {
@@ -48,101 +49,109 @@ std::string Config::LoadOption(std::string title, std::string parameter, std::st
 */
 bool Config::ConfigSetup()
 {
-	//server_log->Log(log_debug, "Debugging parse error: %s", LoadOption("LoginServerDatabase", "user", "db.ini").c_str());
-	//return false;
-
 	std::string configFile;
 
 	bool login = std::ifstream("login.ini").good();
 	bool dbini = std::ifstream("db.ini").good();
 
 	//create db.ini and if all goes well copy login.ini to db table and continue starting the server.
-	//if (login && !dbini)
-	//{
-	//	server_log->Log(log_debug, "login.ini found but db.ini missing.");
+	if (login && !dbini)
+	{
+		server_log->Log(log_debug, "login.ini found but db.ini missing.");
 
-	//	if (server.db) { delete server.db; }
-	//	server.db = (Database*)new Database(
-	//		server.config->LoadOption("database", "user", "login.ini"),
-	//		server.config->LoadOption("database", "password", "login.ini"),
-	//		server.config->LoadOption("database", "host", "login.ini"),
-	//		server.config->LoadOption("database", "port", "login.ini"),
-	//		server.config->LoadOption("database", "db", "login.ini")
-	//		);
+		//if (server.db) { delete server.db; }
+		server_log->Log(log_debug, "Connecting to database to create db.ini and settings...");
+		if (!db.Connect(
+			server.config->LoadOption("LoginServerDatabase", "host", "login.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "user", "login.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "password", "login.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "db", "login.ini").c_str(),
+			atoul(server.config->LoadOption("LoginServerDatabase", "port", "login.ini").c_str())))
+		{
+			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			return false;
+		}
 
-	//	//write db.ini based on login.ini entries
-	//	server.config->WriteDBini();
-	//	//check if table exists and set the field values based on the login.ini
-	//	if (!server.db->CreateServerSettings())
-	//	{
-	//		//send shutdown to main.cpp critical failure.
-	//		return false;
-	//	}
-	//}
-	//else if (!login && dbini)
-	//{
-	//	server_log->Log(log_debug, "db.ini found but login.ini missing. We are able to continue.");
+		//write db.ini based on login.ini entries
+		server.config->WriteDBini();
+		//check if table exists and set the field values based on the login.ini
+		if (db.CreateServerSettings())
+		{
+			//send shutdown to main.cpp critical failure.
+			return false;
+		}
+	}
+	else if (!login && dbini)
+	{
+		server_log->Log(log_debug, "db.ini found but login.ini missing. We are able to continue.");
 
-	//	//check if settings exist in database.
-	//	if (server.db) { delete server.db; }
-	//	server.db = (Database*)new Database(
-	//		server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
-	//		);
+		//check if settings exist in database.
+		//if (server.db) { delete server.db; }
+		server_log->Log(log_debug, "Connecting to database to check for settings in database...");
+		if (!db.Connect(
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
+			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
+		{
+			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			return false;
+		}
 
-	//	if (!server.db->CheckSettings(2))
-	//	{
-	//		//send shutdown to main.cpp critical failure.
-	//		server_log->Log(log_error, "Missing settings in tblloginserversettings.");
-	//		return false;
-	//	}
-	//	//db.ini was already set up. Settings are fine in database.
-	//}
-	//else if (login && dbini)
-	//{
-	//	server_log->Log(log_debug, "db.ini and login.ini found. We are able to continue.");
+		if (!db.CheckSettings(2))
+		{
+			//send shutdown to main.cpp critical failure.
+			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+			return false;
+		}
+		//db.ini was already set up. Settings are fine in database.
+	}
+	else if (login && dbini)
+	{
+		server_log->Log(log_debug, "db.ini and login.ini found. We are able to continue.");
 
-	//	if (server.db) { delete server.db; }
-	//	server.db = (Database*)new Database(
-	//		server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
-	//		server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
-	//		);
+		//if (server.db) { delete server.db; }
+		server_log->Log(log_debug, "Connecting to database to check and repair settings...");
+		if (!db.Connect(
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
+			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
+		{
+			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			return false;
+		}
 
-	//	//check if settings exist in database.
-	//	if (!server.db->CheckSettings(2))
-	//	{
-	//		server_log->Log(log_debug, "Settings entries not found in database.");
-	//		if (server.db->CheckSettings(1))
-	//		{
-	//			server_log->Log(log_debug, "Settings entries not found in database but table was.");
-	//			//server.db->ResetDBSettings();
-	//		}
-	//		if (!server.db->CreateServerSettings())
-	//		{
-	//			server_log->Log(log_debug, "Settings entries not found in database creating base settings from ini files.");
-	//			//send shutdown to main.cpp critical failure.
-	//			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
-	//			return false;
-	//		}
-	//	}
-	//	//db.ini was already set up. Settings are fine in database.
-	//	server_log->Log(log_debug, "login.ini and db.ini found.");
-	//}
-	////no ini found, can't start the server this way.
-	////write the default ini and prompt user to edit it.
-	//else
-	//{
-	//	server.config->WriteDBini();
-	//	//send shutdown to main.cpp critical failure.
-	//	return false;
-	//}
-
+		//check if settings exist in database.
+		if (!db.CheckSettings(2))
+		{
+			server_log->Log(log_debug, "Settings entries not found in database.");
+			if (db.CheckSettings(1))
+			{
+				server_log->Log(log_debug, "Settings entries not found in database but table was.");
+				//server.db->ResetDBSettings();
+			}
+			if (!db.CreateServerSettings())
+			{
+				server_log->Log(log_debug, "Settings entries not found in database creating base settings from ini files.");
+				//send shutdown to main.cpp critical failure.
+				server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+				return false;
+			}
+		}
+		//db.ini was already set up. Settings are fine in database.
+		server_log->Log(log_debug, "login.ini and db.ini found.");
+	}
+	//no ini found, can't start the server this way.
+	//write the default ini and prompt user to edit it.
+	else
+	{
+		server.config->WriteDBini();
+		//send shutdown to main.cpp critical failure.
+		return false;
+	}
 	//ini processing succeeded, continue on.
 
 	//Create our DB from options.
@@ -153,26 +162,19 @@ bool Config::ConfigSetup()
 	if (config)
 	{
 		//if (server.db) { delete server.db; }
-		server_log->Log(log_debug, "Connecting to database...");
-		if (!server.db->Connect(
+		server_log->Log(log_debug, "Connecting to database for game server...");
+		if (!db.Connect(
 			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
 			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
 			server.config->LoadOption("LoginServerDatabase", "password", "db.ini").c_str(),
 			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
-			stoi(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
+			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
 		{
+			//send shutdown to main.cpp critical failure.
 			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
 			return false;
 		}
-		server_log->Log(log_debug, "Database connected.");
-
-		//server.db = (Database*)new Database(
-		//	server.config->LoadOption("LoginServerDatabase", "user", "db.ini"),
-		//	server.config->LoadOption("LoginServerDatabase", "password", "db.ini"),
-		//	server.config->LoadOption("LoginServerDatabase", "host", "db.ini"),
-		//	server.config->LoadOption("LoginServerDatabase", "port", "db.ini"),
-		//	server.config->LoadOption("LoginServerDatabase", "db", "db.ini")
-		//	);
+		server_log->Log(log_debug, "Database connected for game server.");
 	}
 	else
 	{
@@ -180,17 +182,8 @@ bool Config::ConfigSetup()
 		server_log->Log(log_error, "db.ini not processed, unknown error allowed us to get this far.");
 		return false;
 	}
-
-	//Make sure our database got created okay, otherwise cleanup and exit.
-	//if (!server.db)
-	//{
-	//	//send shutdown to main.cpp critical failure.
-	//	server_log->Log(log_error, "database access not set.");
-	//	return false;
-	//}
-	UpdateSettings();
-	//return true;
-	return false;
+	//UpdateSettings();
+	return true;
 }
 
 void Config::WriteDBini()
@@ -250,8 +243,8 @@ void Config::UpdateSettings()
 	//formatting for adding loginserver settings.
 	//server.db->InsertMissingSettings("type", "value", "category", "description", "defaults");
 
-	//server.db->InsertMissingSettings("pop_count", "0", "options", "0 to only display UP or DOWN or 1 to show population count in server select.", "0");
-	//server.db->InsertMissingSettings("ticker", "Welcome", "options", "Sets the welcome message in server select.", "Welcome");
+	db.InsertMissingSettings("pop_count", "0", "options", "0 to only display UP or DOWN or 1 to show population count in server select.", "0");
+	db.InsertMissingSettings("ticker", "Welcome", "options", "Sets the welcome message in server select.", "Welcome");
 }
 
 /**
@@ -260,7 +253,7 @@ void Config::UpdateSettings()
 */
 void Config::Parse(const char *file_name)
 {
-	server_log->Log(log_debug, "Parsing file: %s.", file_name);
+	//server_log->Log(log_debug, "Parsing file: %s.", file_name);
 	if (file_name == nullptr)
 	{
 		server_log->Log(log_error, "Config::Parse(), file_name passed was null.");

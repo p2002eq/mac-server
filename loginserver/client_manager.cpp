@@ -24,19 +24,20 @@
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
+extern Database db;
 
 ClientManager::ClientManager()
 {
 	server_log->Log(log_debug, "ClientManager Entered.");
-	server_log->Log(log_debug, "ClientManager Got: %s from the database for port.", server.db->LoadServerSettings("Old", "port").c_str());
-	server_log->Log(log_debug, "ClientManager Got: %s from the database for opcode location.", server.db->LoadServerSettings("Old", "opcodes").c_str());
-	int old_port = stoi(server.db->LoadServerSettings("Old", "port").c_str());
+	server_log->Log(log_debug, "ClientManager Got: %s from the database for port.", db.LoadServerSettings("Old", "port", "ClientManager", false).c_str());
+	server_log->Log(log_debug, "ClientManager Got: %s from the database for opcode location.", db.LoadServerSettings("Old", "opcodes", "ClientManager", false).c_str());
+	int old_port = atoul(db.LoadServerSettings("Old", "port", "ClientManager..port", true).c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
-	if (!old_ops->LoadOpcodes(server.db->LoadServerSettings("Old", "opcodes").c_str()))
+	if (!old_ops->LoadOpcodes(db.LoadServerSettings("Old", "opcodes", "ClientManager..opcodes", true).c_str()))
 	{
 		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.",
-			server.db->LoadServerSettings("Old", "opcodes").c_str());
+			db.LoadServerSettings("Old", "opcodes", "ClientManager", false).c_str());
 		run_server = false;
 	}
 	if(old_stream->Open())

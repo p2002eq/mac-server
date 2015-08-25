@@ -33,9 +33,6 @@
 #include <vector>
 #include <map>
 
-//atoi is not uint32 or uint32 safe!!!!
-#define atoul(str) strtoul(str, nullptr, 10)
-
 class MySQLRequestResult;
 
 struct VarCache_Struct {
@@ -45,7 +42,7 @@ struct VarCache_Struct {
 
 class PTimerList;
 
-#pragma pack()
+#pragma pack(1)
 
 class Database : public DBcore {
 
@@ -60,7 +57,7 @@ public:
 	/**
 	* Loads values for server settings from db.
 	*/
-	std::string LoadServerSettings(std::string category, std::string type);
+	std::string LoadServerSettings(std::string category, std::string type, std::string sender, bool report);
 #pragma endregion
 #pragma region Create Server Setup
 	/**

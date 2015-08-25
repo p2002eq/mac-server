@@ -24,6 +24,9 @@
 #include "server_manager.h"
 #include "client_manager.h"
 
+//atoi is not int32 or uint32 safe!!!!
+#define atoul(str) strtoul(str, nullptr, 10)
+
 /**
 * Login server struct, contains every variable for the server that needs to exist
 * outside the scope of main().
@@ -36,13 +39,12 @@ public:
 	* but it's the most trivial way to do this.
 	*/
 #ifdef WIN32
-	LoginServer() : config(nullptr), db(nullptr), SM(nullptr) { }
+	LoginServer() : config(nullptr), SM(nullptr) { }
 #else
 	LoginServer() : config(nullptr), db(nullptr) { }
 #endif
 
 	Config *config;
-	Database *db;
 	ServerManager *SM;
 	ClientManager *CM;
 };

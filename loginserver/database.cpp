@@ -67,9 +67,8 @@ Database::Database() {
 }
 
 /*
-Establish a connection to a mysql database with the supplied parameters
+* Establish a connection to a mysql database with the supplied parameters
 */
-
 Database::Database(const char* host, const char* user, const char* passwd, const char* database, uint32 port)
 {
 	DBInitVars();
@@ -100,9 +99,8 @@ void Database::DBInitVars() {
 }
 
 /*
-Close the connection to the database
+* Close the connection to the database
 */
-
 Database::~Database()
 {
 	unsigned int x;
@@ -115,10 +113,10 @@ Database::~Database()
 }
 
 #pragma region Load Server Setup
-std::string Database::LoadServerSettings(std::string category, std::string type)
+std::string Database::LoadServerSettings(std::string category, std::string type, std::string sender, bool report)
 {
 	std::string query;
-	bool disectmysql = true; // for debugging what gets returned.
+	bool disectmysql = false; // for debugging what gets returned.
 
 	query = StringFormat(
 		"SELECT * FROM tblloginserversettings "
@@ -130,8 +128,6 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 		category.c_str()
 		);
 
-	if (disectmysql) { server_log->Log(log_debug, "Mysql LoadServerSettings query is: %s", query.c_str()); }
-
 	auto results = QueryDatabase(query);
 
 	if (!results.Success() || results.RowCount() != 1)
@@ -140,9 +136,16 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 		return "";
 	}
 	auto row = results.begin();
-	std::string value = row[0];
-	if (disectmysql) { server_log->Log(log_debug, "Mysql LoadServerSettings got: %s", value.c_str()); }
-	return value;
+	std::string value = row[1];
+	if (disectmysql && report)
+	{
+		server_log->Log(log_debug, "****************************************************");
+		server_log->Log(log_debug, "** Mysql query [[ %s ]]", query.c_str());
+		server_log->Log(log_debug, "** for LoadServerSettings got:");
+		server_log->Log(log_debug, "** [[ '%s' ]] for [[ '%s' ]]", value.c_str(), sender.c_str());
+		server_log->Log(log_debug, "****************************************************");
+	}
+	return value.c_str();
 }
 #pragma endregion
 
@@ -375,7 +378,7 @@ bool Database::CheckMissingSettings(std::string type)
 
 	server_log->Log(log_debug, "Entered CheckMissingSettings using type: %s.", type.c_str());
 
-	query = StringFormat("SELECT * FROM tblloginserversettings WHERE type = '%s';", type);
+	query = StringFormat("SELECT * FROM tblloginserversettings WHERE type = '%s';", type.c_str());
 
 	auto results = QueryDatabase(query);
 
@@ -424,18 +427,12 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 {
 	char escaped_long_name[201];
 	char escaped_short_name[101];
-	unsigned long lengthlong;
-	unsigned long lengthshort;
-	lengthlong = DoEscapeString(escaped_long_name, long_name.substr(0, 100).c_str(), long_name.substr(0, 100).length());
-	lengthshort = DoEscapeString(escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
-	//length = mysql_real_escape_string(db, escaped_long_name, long_name.substr(0, 100).c_str(), long_name.substr(0, 100).length());
-	escaped_long_name[lengthlong + 1] = 0;
-	//length = mysql_real_escape_string(db, escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
-	escaped_short_name[lengthshort + 1] = 0;
+	DoEscapeString(escaped_long_name, long_name.substr(0, 100).c_str(), (int)strlen(long_name.substr(0, 100).c_str()));
+	DoEscapeString(escaped_short_name, short_name.substr(0, 100).c_str(), (int)strlen(short_name.substr(0, 100).c_str()));
 
 	std::string query;
 
-	query = StringFormat("SELECT max(ServerID) FROM %i", LoadServerSettings("schema", "world_registration_table"));
+	query = StringFormat("SELECT max(ServerID) FROM %s", LoadServerSettings("schema", "world_registration_table", "CreateWorldRegistration..Select", true).c_str());
 
 	auto results = QueryDatabase(query);
 
@@ -446,42 +443,40 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 	}
 
 	auto row = results.begin();
-	if (row != nullptr)
+	if (row[0] == NULL)
 	{
-		id = atoi(row[0]) + 1;
-
-		query = StringFormat("INSERT INTO %s SET "
-			"ServerID = '%s', "
-			"ServerLongName = '%s', "
-			"ServerShortName = '%s', "
-			"ServerListTypeID = 3, "
-			"ServerAdminID = 0, "
-			"ServerTrusted = 0, "
-			"ServerTagDescription = ''", 
-			LoadServerSettings("schema", "world_registration_table"),
-			std::to_string(id),
-			escaped_long_name,
-			escaped_short_name
-			);
-
-		if (!results.Success())
-		{
-			server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
-			return false;
-		}
-		return true;
+		id = 0;
 	}
-	server_log->Log(log_database, "World registration did not exist in the database for %s %s", long_name.c_str(), short_name.c_str());
-	return false;
+	id++;
+
+	query = StringFormat("INSERT INTO %s SET "
+		"ServerID = '%s', "
+		"ServerLongName = '%s', "
+		"ServerShortName = '%s', "
+		"ServerListTypeID = 3, "
+		"ServerAdminID = 0, "
+		"ServerTrusted = 0, "
+		"ServerTagDescription = ''", 
+		LoadServerSettings("schema", "world_registration_table", "CreateWorldRegistration..Insert", true).c_str(),
+		std::to_string(id).c_str(),
+		escaped_long_name,
+		escaped_short_name
+		);
+
+	auto results2 = QueryDatabase(query);
+
+	if (!results2.Success())
+	{
+		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		return false;
+	}
+	return true;
 }
 
 void Database::UpdateWorldRegistration(unsigned int id, std::string long_name, std::string ip_address)
 {
 	char escaped_long_name[101];
-	unsigned long length;
-	length = DoEscapeString(escaped_long_name, long_name.substr(0, 100).c_str(), long_name.substr(0, 100).length());
-	//length = mysql_real_escape_string(db, escaped_long_name, long_name.substr(0, 100).c_str(), long_name.substr(0, 100).length());
-	escaped_long_name[length + 1] = 0;
+	DoEscapeString(escaped_long_name, long_name.substr(0, 100).c_str(), (int)strlen(long_name.substr(0, 100).c_str()));
 
 	std::string query;
 
@@ -492,10 +487,10 @@ void Database::UpdateWorldRegistration(unsigned int id, std::string long_name, s
 		"ServerLongName = '%s' "
 		"WHERE "
 		"ServerID = '%s'",
-		LoadServerSettings("schema", "world_registration_table"),
-		ip_address,
+		LoadServerSettings("schema", "world_registration_table", "UpdateWorldRegistration", true).c_str(),
+		ip_address.c_str(),
 		escaped_long_name,
-		std::to_string(id)
+		std::to_string(id).c_str()
 		);
 	auto results = QueryDatabase(query);
 
@@ -509,9 +504,7 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 	unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password)
 {
 	char escaped_short_name[101];
-	unsigned long length;
-	length = DoEscapeString(escaped_short_name, short_name.substr(0, 100).c_str(), short_name.substr(0, 100).length());
-	escaped_short_name[length + 1] = 0;
+	DoEscapeString(escaped_short_name, short_name.substr(0, 100).c_str(), (int)strlen(short_name.substr(0, 100).c_str()));
 
 	std::string query;
 
@@ -521,8 +514,8 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 		"WSR.ServerListTypeID = SLT.ServerListTypeID "
 		"WHERE "
 		"WSR.ServerShortName = '%s'",
-		LoadServerSettings("schema", "world_registration_table"),
-		LoadServerSettings("schema", "world_server_type_table"),
+		LoadServerSettings("schema", "world_registration_table", "GetWorldRegistration..", true).c_str(),
+		LoadServerSettings("schema", "world_server_type_table", "GetWorldRegistration..", true).c_str(),
 		escaped_short_name
 		);
 	auto results = QueryDatabase(query);
@@ -549,8 +542,8 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 			query = StringFormat("SELECT AccountName, AccountPassword "
 				"FROM %s WHERE "
 				"ServerAdminID = %s",
-				LoadServerSettings("schema", "world_admin_registration_table"),
-				std::to_string(db_account_id)
+				LoadServerSettings("schema", "world_admin_registration_table", "GetWorldRegistration..", true).c_str(),
+				std::to_string(db_account_id).c_str()
 				);
 			auto results = QueryDatabase(query);
 
@@ -581,14 +574,14 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 void Database::CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
 	bool activate = 0;
-	if (LoadServerSettings("options", "auto_account_activate") == "TRUE")
+	if (LoadServerSettings("options", "auto_account_activate", "CreateLSAccount..auto activate", true) == "TRUE")
 	{
 		activate = 1;
 	}
 	std::string query;
 
 	char tmpUN[1024];
-	DoEscapeString(tmpUN, name.c_str(), name.length());
+	DoEscapeString(tmpUN, name.c_str(), (int)name.length());
 
 	query = StringFormat("INSERT INTO %s "
 		"SET LoginServerID = %s, "
@@ -600,14 +593,14 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 		"client_unlock = '%s', "
 		"created_by = '%s', "
 		"creationIP = '%s'",
-		LoadServerSettings("schema", "account_table"),
-		std::to_string(id),
+		LoadServerSettings("schema", "account_table", "CreateLSAccount..Insert", true).c_str(),
+		std::to_string(id).c_str(),
 		tmpUN,
-		password,
-		LastIPAddress,
-		std::to_string(activate),
-		std::to_string(created_by),
-		creationIP
+		password.c_str(),
+		LastIPAddress.c_str(),
+		std::to_string(activate).c_str(),
+		std::to_string(created_by).c_str(),
+		creationIP.c_str()
 		);
 
 	auto results = QueryDatabase(query);
@@ -626,9 +619,9 @@ void Database::UpdateLSAccount(unsigned int id, std::string ip_address)
 		"LastLoginDate = now() "
 		"WHERE "
 		"LoginServerID = %s",
-		LoadServerSettings("schema", "account_table"),
-		ip_address,
-		std::to_string(id)
+		LoadServerSettings("schema", "account_table", "UpdateLSAccount..", true).c_str(),
+		ip_address.c_str(),
+		std::to_string(id).c_str()
 		);
 
 	auto results = QueryDatabase(query);
@@ -645,8 +638,8 @@ bool Database::GetAccountLockStatus(std::string name)
 
 	query = StringFormat("SELECT client_unlock FROM %s WHERE "
 						"AccountName = '%s'",
-						LoadServerSettings("schema", "account_table"),
-						name
+						LoadServerSettings("schema", "account_table", "GetAccountLockStatus..", true).c_str(),
+						name.c_str()
 						);
 
 	auto results = QueryDatabase(query);
@@ -678,7 +671,7 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 	std::string query;
 
 	char tmpUN[1024];
-	DoEscapeString(tmpUN, account_name.c_str(), account_name.length());
+	DoEscapeString(tmpUN, account_name.c_str(), (int)account_name.length());
 
 	query = StringFormat("INSERT INTO %s SET "
 		"account_id = %s, "
@@ -686,12 +679,12 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 		"IP = '%s', "
 		"accessed = '%s', "
 		"reason = '%s'",
-		LoadServerSettings("schema", "access_log_table"),
-		std::to_string(account_id),
+		LoadServerSettings("schema", "access_log_table", "UpdateAccessLog..", true).c_str(),
+		std::to_string(account_id).c_str(),
 		tmpUN,
-		IP,
-		std::to_string(accessed),
-		reason
+		IP.c_str(),
+		std::to_string(accessed).c_str(),
+		reason.c_str()
 		);
 
 	auto results = QueryDatabase(query);
@@ -707,12 +700,12 @@ bool Database::GetLoginDataFromAccountName(std::string name, std::string &passwo
 	std::string query;
 
 	char tmpUN[1024];
-	DoEscapeString(tmpUN, name.c_str(), name.length()); (tmpUN, name.c_str(), name.length());
+	DoEscapeString(tmpUN, name.c_str(), (int)name.length()); (tmpUN, name.c_str(), (int)name.length());
 
 	query = StringFormat("SELECT LoginServerID, AccountPassword "
 		"FROM %s WHERE "
 		"AccountName = '%s'",
-		LoadServerSettings("schema", "account_table"),
+		LoadServerSettings("schema", "account_table", "GetLoginDataFromAccountName..", true).c_str(),
 		tmpUN
 		);
 

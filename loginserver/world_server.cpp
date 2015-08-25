@@ -24,6 +24,7 @@
 
 extern ErrorLog *server_log;
 extern LoginServer server;
+extern Database db;
 
 WorldServer::WorldServer(EmuTCPConnection *c)
 {
@@ -64,12 +65,12 @@ bool WorldServer::Process()
 	ServerPacket *app = nullptr;
 	while(app = connection->PopPacket())
 	{
-		if (server.db->LoadServerSettings("options", "world_trace") == "TRUE")
+		if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
 		{
 			server_log->Log(log_network_trace, "Application packet received from server: 0x%.4X, (size %u)", app->opcode, app->size);
 		}
 
-		if (server.db->LoadServerSettings("options", "dump_packets_in") == "TRUE")
+		if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::Process..dump_packets", false) == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -85,7 +86,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (server.db->LoadServerSettings("options", "world_trace") == "TRUE")
+				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
 				{
 					server_log->Log(log_network_trace, "New Login Info Received.");
 				}
@@ -102,7 +103,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (server.db->LoadServerSettings("options", "world_trace") == "TRUE")
+				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
 				{
 					server_log->Log(log_network_trace, "World Server Status Received.");
 				}
@@ -135,7 +136,7 @@ bool WorldServer::Process()
 				//I don't use world trace for this and here is why:
 				//Because this is a part of the client login procedure it makes tracking client errors
 				//While keeping world server spam with multiple servers connected almost impossible.
-				if (server.db->LoadServerSettings("options", "trace") == "TRUE")
+				if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false) == "TRUE")
 				{
 					server_log->Log(log_network_trace, "User-To-World Response received.");
 				}
@@ -145,33 +146,40 @@ bool WorldServer::Process()
 				Client *c = server.CM->GetClient(utwr->lsaccountid);
 				if(c && c->GetClientVersion() == cv_old)
 				{
-						if(utwr->response > 0)
-						{
-							SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
-						}
+					server_log->Log(log_client, "User2World GetConnection: %u.", c->GetConnection()->GetRemoteIP());
+					server_log->Log(log_client, "User2World GetClient: %u.", server.CM->GetClient(utwr->lsaccountid));
+					server_log->Log(log_client, "User2World GetAccountName: %u.", c->GetAccountName().c_str()); //returns number and not text??
+					server_log->Log(log_client, "User2World GetAccountID: %u.", c->GetAccountID());
+					server_log->Log(log_client, "User2World GetMacClientVersion: %u.", c->GetMacClientVersion());
+					server_log->Log(log_client, "User2World GetKey: %u.", c->GetKey()); //Stops here
 
-						switch(utwr->response)
-						{
-							case 1:
-								break;
-							case 0:
-								c->FatalError("That server is locked.");
-								break;
-							case -1:
-								c->FatalError("You have been suspended from the worldserver.");
-								break;
-							case -2:
-								c->FatalError("You have been banned from the worldserver.");
-								break;
-							case -3:
-								c->FatalError("That server is full.");
-								break;
-						}
-						server_log->Log(log_client, "Found client with user id of %u and account name of %s.", utwr->lsaccountid, c->GetAccountName().c_str());
-						EQApplicationPacket *outapp = new EQApplicationPacket(OP_PlayEverquestRequest, 17);
-						strncpy((char*) &outapp->pBuffer[1], c->GetKey().c_str(), c->GetKey().size());
+					if(utwr->response > 0)
+					{
+						SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
+					}
 
-						c->SendPlayResponse(outapp);
+					switch(utwr->response)
+					{
+						case 1:
+							break;
+						case 0:
+							c->FatalError("That server is locked.");
+							break;
+						case -1:
+							c->FatalError("You have been suspended from the worldserver.");
+							break;
+						case -2:
+							c->FatalError("You have been banned from the worldserver.");
+							break;
+						case -3:
+							c->FatalError("That server is full.");
+							break;
+					}
+					server_log->Log(log_client, "Found client with user id of %u and account name of %s.", utwr->lsaccountid, c->GetAccountName().c_str());
+					EQApplicationPacket *outapp = new EQApplicationPacket(OP_PlayEverquestRequest, 17);
+					strncpy((char*) &outapp->pBuffer[1], c->GetKey().c_str(), c->GetKey().size());
+
+					c->SendPlayResponse(outapp);
 				}
 				else if(c)
 				{
@@ -208,14 +216,14 @@ bool WorldServer::Process()
 						break;
 					}
 
-					if (server.db->LoadServerSettings("options", "trace") == "TRUE")
+					if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false) == "TRUE")
 					{
 						server_log->Log(log_network_trace, "Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
 							per->Allowed, per->Sequence, per->ServerNumber, per->Message);
 						server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
 					}
 
-					if (server.db->LoadServerSettings("options", "dump_packets_out") == "TRUE")
+					if (db.LoadServerSettings("options", "dump_packets_out", "WorldServer::Process..dump_packets", false) == "TRUE")
 					{
 						DumpPacket(outapp);
 					}
@@ -248,7 +256,7 @@ bool WorldServer::Process()
 					name.assign(lsau->useraccount);
 					password.assign(lsau->userpassword);
 					email.assign(lsau->useremail);
-					server.db->CreateLSAccount(lsau->useraccountid, name, password, email, NULL, "", "");
+					db.CreateLSAccount(lsau->useraccountid, name, password, email, NULL, "", "");
 				}
 				break;
 			}
@@ -374,7 +382,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 	server_type = i->servertype;
 	logged_in = true;
 
-	if (server.db->LoadServerSettings("options", "reject_duplicate_servers") == "TRUE")
+	if (db.LoadServerSettings("options", "reject_duplicate_servers", "WorldServer::Handle_NewLSInfo..reject_dups", true) == "TRUE")
 	{
 		if(server.SM->ServerExists(long_name, short_name, this))
 		{
@@ -391,7 +399,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 	}
 
-	if (server.db->LoadServerSettings("options", "unregistered_allowed") == "FALSE")
+	if (db.LoadServerSettings("options", "unregistered_allowed", "WorldServer::Handle_NewLSInfo..unreg_allowed", true) == "FALSE")
 	{
 		if(account_name.size() > 0 && account_password.size() > 0)
 		{
@@ -402,7 +410,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 			string s_list_desc;
 			string s_acct_name;
 			string s_acct_pass;
-			if(server.db->GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
+			if(db.GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
 			{
 				if(s_acct_name.size() == 0 || s_acct_pass.size() == 0)
 				{
@@ -460,31 +468,13 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		string s_acct_name;
 		string s_acct_pass;
 
-		// something here is causing a "debug assertion" if world registration table is empty, and only when empty.
-		// this shows that the previous values are null when they should not be.
-#ifdef _WINDOWS
-		//if (s_id == NULL)
-		//	MessageBox(0, "s_id returns null", "Debug", MB_OK);
-#endif
-
-		//server_log->Log(log_world, "long_name: ", long_name);
-		//server_log->Log(log_world, "short_name: ", short_name);
-		//server_log->Log(log_world, "s_id: ", std::to_string(s_id));
-		//server_log->Log(log_world, "s_desc: ", s_desc);
-		//server_log->Log(log_world, "s_list_type: ", std::to_string(s_list_type));
-		//server_log->Log(log_world, "s_trusted: ", std::to_string(s_trusted));
-		//server_log->Log(log_world, "s_list_desc: ", s_list_desc);
-		//server_log->Log(log_world, "s_acct_name: ", s_acct_name);
-		//server_log->Log(log_world, "s_acct_pass: ", s_acct_pass);
-
-		if(server.db->GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
+		if(db.GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
 		{
 			if(account_name.size() > 0 && account_password.size() > 0)
 			{
 				if(s_acct_name.compare(account_name) == 0 && s_acct_pass.compare(account_password) == 0)
 				{
-					server_log->Log(log_world, "Server %s(%s) successfully logged in.",
-						long_name.c_str(), short_name.c_str());
+					server_log->Log(log_world, "Server %s(%s) successfully logged in.", long_name.c_str(), short_name.c_str());
 					authorized = true;
 					SetRuntimeID(s_id);
 					server_list_id = s_list_type;
@@ -524,10 +514,10 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 		else
 		{
-			s_id = 0; // part of trying to determine the assertion fix.
+			s_id = 0;
 			server_log->Log(log_world, "Server %s(%s) attempted to log in but database couldn't find an entry but unregistered servers are allowed.",
 				long_name.c_str(), short_name.c_str());
-			if(server.db->CreateWorldRegistration(long_name, short_name, s_id))
+			if(db.CreateWorldRegistration(long_name, short_name, s_id))
 			{
 				authorized = true;
 				SetRuntimeID(s_id);
@@ -538,7 +528,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 
 	in_addr in;
 	in.s_addr = connection->GetrIP();
-	server.db->UpdateWorldRegistration(GetRuntimeID(), long_name, string(inet_ntoa(in)));
+	db.UpdateWorldRegistration(GetRuntimeID(), long_name, string(inet_ntoa(in)));
 
 	if(authorized)
 	{
@@ -576,7 +566,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 	{
 		slsca->local = 1;
 	}
-	else if (client_address.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
+	else if (client_address.find(db.LoadServerSettings("options", "local_network", "WorldServer::SendClientAuth..local_network", true).c_str()) != string::npos)
 	{
 		slsca->local = 1;
 	}
@@ -587,7 +577,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 
 	connection->SendPacket(outapp);
 
-	if (server.db->LoadServerSettings("options", "dump_packets_in") == "TRUE")
+	if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::SendClientAuth..dump_packets", false) == "TRUE")
 	{
 		DumpPacket(outapp);
 	}

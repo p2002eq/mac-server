@@ -26,14 +26,15 @@
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
+extern Database db;
 
 ServerManager::ServerManager()
 {
 	char error_buffer[TCPConnection_ErrorBufferSize];
 
 	server_log->Log(log_debug, "ServerManager Entered.");
-	server_log->Log(log_debug, "ServerManager Got: %s from the database for listen_port.", server.db->LoadServerSettings("options", "listen_port").c_str());
-	int listen_port = stoi(server.db->LoadServerSettings("options", "listen_port").c_str());
+	server_log->Log(log_debug, "ServerManager Got: %s from the database for listen_port.", db.LoadServerSettings("options", "listen_port", "ServerManager", false).c_str());
+	int listen_port = atoul(db.LoadServerSettings("options", "listen_port", "ServerManager", true).c_str());
 	tcps = new EmuTCPServer(listen_port, true);
 	if(tcps->Open(listen_port, error_buffer))
 	{
@@ -158,7 +159,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
-		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
+		else if (client_ip.find(db.LoadServerSettings("options", "local_network", "ServerManager::CreateOldServerListPacket..client_ip", true).c_str()) != string::npos)
 		{
 			packet_size += servername.size() + 1 + (*iter)->GetLocalIP().size() + 1 + sizeof(ServerListServerFlags_Struct);
 		}
@@ -177,7 +178,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	sl->numservers = server_count;
 
 	uint8 showcount = 0x0;
-	if (server.db->LoadServerSettings("options", "pop_count") == "1")
+	if (db.LoadServerSettings("options", "pop_count", "ServerManager::CreateOldServerListPacket..showcount", true) == "1")
 	{
 		showcount = 0xFF;
 	}
@@ -209,7 +210,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);
 		}
-		else if (client_ip.find(server.db->LoadServerSettings("options", "local_network").c_str()) != string::npos)
+		else if (client_ip.find(db.LoadServerSettings("options", "local_network", "ServerManager::CreateOldServerListPacket..client_ip", true).c_str()) != string::npos)
 		{
 			memcpy(data_ptr, (*iter)->GetLocalIP().c_str(), (*iter)->GetLocalIP().size());
 			data_ptr += ((*iter)->GetLocalIP().size() + 1);
@@ -263,7 +264,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 			(*iter)->GetConnection()->SendPacket(outapp);
 			found = true;
 
-			if (server.db->LoadServerSettings("options", "dump_packets_in") == "TRUE")
+			if (db.LoadServerSettings("options", "dump_packets_in", "SendOldUserToWorldRequest..dump_packets", true) == "TRUE")
 			{
 				DumpPacket(outapp);
 			}
@@ -272,7 +273,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 		++iter;
 	}
 
-	if (!found && server.db->LoadServerSettings("options", "trace") == "TRUE")
+	if (!found && db.LoadServerSettings("options", "trace", "SendOldUserToWorldRequest..server_id trace", true) == "TRUE")
 	{
 		server_log->Log(log_client_error, "Client requested a user to world but supplied an invalid id of %s.", server_id);
 	}
