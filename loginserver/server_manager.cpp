@@ -178,7 +178,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	sl->numservers = server_count;
 
 	uint8 showcount = 0x0;
-	if (db.LoadServerSettings("options", "pop_count", "ServerManager::CreateOldServerListPacket..showcount", true) == "1")
+	if (db.LoadServerSettings("options", "pop_count", "ServerManager::CreateOldServerListPacket..showcount", true).c_str() == "1")
 	{
 		showcount = 0xFF;
 	}
@@ -264,7 +264,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 			(*iter)->GetConnection()->SendPacket(outapp);
 			found = true;
 
-			if (db.LoadServerSettings("options", "dump_packets_in", "SendOldUserToWorldRequest..dump_packets", true) == "TRUE")
+			if (db.LoadServerSettings("options", "dump_packets_in", "SendOldUserToWorldRequest..dump_packets", true).c_str() == "TRUE")
 			{
 				DumpPacket(outapp);
 			}
@@ -273,7 +273,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 		++iter;
 	}
 
-	if (!found && db.LoadServerSettings("options", "trace", "SendOldUserToWorldRequest..server_id trace", true) == "TRUE")
+	if (!found && db.LoadServerSettings("options", "trace", "SendOldUserToWorldRequest..server_id trace", true).c_str() == "TRUE")
 	{
 		server_log->Log(log_client_error, "Client requested a user to world but supplied an invalid id of %s.", server_id);
 	}

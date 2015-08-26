@@ -65,12 +65,12 @@ bool WorldServer::Process()
 	ServerPacket *app = nullptr;
 	while(app = connection->PopPacket())
 	{
-		if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
+		if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false).c_str() == "TRUE")
 		{
 			server_log->Log(log_network_trace, "Application packet received from server: 0x%.4X, (size %u)", app->opcode, app->size);
 		}
 
-		if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::Process..dump_packets", false) == "TRUE")
+		if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::Process..dump_packets", false).c_str() == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -86,7 +86,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
+				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network_trace, "New Login Info Received.");
 				}
@@ -103,7 +103,7 @@ bool WorldServer::Process()
 					break;
 				}
 
-				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false) == "TRUE")
+				if (db.LoadServerSettings("options", "world_trace", "WorldServer::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network_trace, "World Server Status Received.");
 				}
@@ -136,7 +136,7 @@ bool WorldServer::Process()
 				//I don't use world trace for this and here is why:
 				//Because this is a part of the client login procedure it makes tracking client errors
 				//While keeping world server spam with multiple servers connected almost impossible.
-				if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false) == "TRUE")
+				if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network_trace, "User-To-World Response received.");
 				}
@@ -151,6 +151,14 @@ bool WorldServer::Process()
 					server_log->Log(log_client, "User2World GetAccountName: %u.", c->GetAccountName().c_str()); //returns number and not text??
 					server_log->Log(log_client, "User2World GetAccountID: %u.", c->GetAccountID());
 					server_log->Log(log_client, "User2World GetMacClientVersion: %u.", c->GetMacClientVersion());
+					if (c->GetKey().size() != NULL)
+					{
+						server_log->Log(log_client, "User2World GetKey has something....");
+					}
+					else
+					{
+						server_log->Log(log_client, "User2World GetKey has nothing....");
+					}
 					server_log->Log(log_client, "User2World GetKey: %u.", c->GetKey()); //Stops here
 
 					if(utwr->response > 0)
@@ -216,14 +224,14 @@ bool WorldServer::Process()
 						break;
 					}
 
-					if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false) == "TRUE")
+					if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false).c_str() == "TRUE")
 					{
 						server_log->Log(log_network_trace, "Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
 							per->Allowed, per->Sequence, per->ServerNumber, per->Message);
 						server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
 					}
 
-					if (db.LoadServerSettings("options", "dump_packets_out", "WorldServer::Process..dump_packets", false) == "TRUE")
+					if (db.LoadServerSettings("options", "dump_packets_out", "WorldServer::Process..dump_packets", false).c_str() == "TRUE")
 					{
 						DumpPacket(outapp);
 					}
@@ -382,7 +390,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 	server_type = i->servertype;
 	logged_in = true;
 
-	if (db.LoadServerSettings("options", "reject_duplicate_servers", "WorldServer::Handle_NewLSInfo..reject_dups", true) == "TRUE")
+	if (db.LoadServerSettings("options", "reject_duplicate_servers", "WorldServer::Handle_NewLSInfo..reject_dups", true).c_str() == "TRUE")
 	{
 		if(server.SM->ServerExists(long_name, short_name, this))
 		{
@@ -399,7 +407,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 	}
 
-	if (db.LoadServerSettings("options", "unregistered_allowed", "WorldServer::Handle_NewLSInfo..unreg_allowed", true) == "FALSE")
+	if (db.LoadServerSettings("options", "unregistered_allowed", "WorldServer::Handle_NewLSInfo..unreg_allowed", true).c_str() == "FALSE")
 	{
 		if(account_name.size() > 0 && account_password.size() > 0)
 		{
@@ -577,7 +585,7 @@ void WorldServer::SendClientAuth(unsigned int ip, string account, string key, un
 
 	connection->SendPacket(outapp);
 
-	if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::SendClientAuth..dump_packets", false) == "TRUE")
+	if (db.LoadServerSettings("options", "dump_packets_in", "WorldServer::SendClientAuth..dump_packets", false).c_str() == "TRUE")
 	{
 		DumpPacket(outapp);
 	}

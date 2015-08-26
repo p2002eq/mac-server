@@ -208,7 +208,8 @@ bool Database::CreateServerSettings()
 	}
 
 	auto row = results.begin();
-	if (row == nullptr)
+	//if (row == nullptr)
+	if (row[0] == nullptr)
 	{
 		server_log->Log(log_debug, "Server Settings table does not exist, creating.");
 
@@ -527,7 +528,8 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 	}
 
 	auto row = results.begin();
-	if (row != nullptr)
+	//if (row != nullptr)
+	if (row[0] != nullptr)
 	{
 		id = atoi(row[0]);
 		desc = row[1];
@@ -554,7 +556,8 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 			}
 
 			auto row = results.begin();
-			if (row != nullptr)
+			//if (row != nullptr)
+			if (row[0] != nullptr)
 			{
 				account = row[0];
 				password = row[1];
@@ -651,7 +654,8 @@ bool Database::GetAccountLockStatus(std::string name)
 	}
 
 	auto row = results.begin();
-	while (row != nullptr)
+	//while (row != nullptr)
+	while (row[0] != nullptr)
 	{
 		int unlock = atoi(row[0]);
 		if (unlock == 1)
@@ -718,7 +722,8 @@ bool Database::GetLoginDataFromAccountName(std::string name, std::string &passwo
 	}
 
 	auto row = results.begin();
-	while (row != nullptr)
+	//while (row != nullptr)
+	while (row[0] != nullptr)
 	{
 		id = atoi(row[0]);
 		password = row[1];

@@ -47,12 +47,12 @@ bool Client::Process()
 	EQApplicationPacket *app = connection->PopPacket();
 	while(app)
 	{
-		if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+		if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 		{
 			server_log->Log(log_network, "Application packet received from client (size %u)", app->Size());
 		}
 
-		if (db.LoadServerSettings("options", "dump_packets_in", "Client::Process..dump_packets", false) == "TRUE")
+		if (db.LoadServerSettings("options", "dump_packets_in", "Client::Process..dump_packets", false).c_str() == "TRUE")
 		{
 			DumpPacket(app);
 		}
@@ -61,7 +61,7 @@ bool Client::Process()
 		{
 		case OP_SessionReady:
 			{
-			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "Session ready received from client.");
 				}
@@ -70,7 +70,7 @@ bool Client::Process()
 			}
 		case OP_LoginOSX:
 			{
-			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "Login received from OSX client.");
 				}
@@ -84,7 +84,7 @@ bool Client::Process()
 					server_log->Log(log_network_error, "Login received but it is too small, discarding.");
 					break;
 				}
-				if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+				if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "Login received from PC client.");
 				}
@@ -93,7 +93,7 @@ bool Client::Process()
 			}
 		case OP_LoginComplete:
 			{
-			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "Login complete received from client.");
 				}
@@ -102,7 +102,7 @@ bool Client::Process()
 				}
 		case OP_LoginUnknown1: //Seems to be related to world status in older clients; we use our own logic for that though.
 			{
-			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "OP_LoginUnknown1 received from client.");
 				}
@@ -112,7 +112,7 @@ bool Client::Process()
 				}
 		case OP_ServerListRequest:
 			{
-			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false) == "TRUE")
+			if (db.LoadServerSettings("options", "trace", "Client::Process..trace", false).c_str() == "TRUE")
 				{
 					server_log->Log(log_network, "Server list request received from client.");
 				}
@@ -242,7 +242,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		created = 1;
 	}
 
-	string salt = db.LoadServerSettings("options", "salt", "Client::Handle_Login..salt", true);
+	string salt = db.LoadServerSettings("options", "salt", "Client::Handle_Login..salt", true).c_str();
 	string userandpass = password + salt;
 	status = cs_logged_in;
 	unsigned int d_account_id = 0;
@@ -259,7 +259,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 
 		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
 
-		if (db.LoadServerSettings("options", "auto_account_create", "Client::Handle_Login..auto_account_create", true) == "TRUE")
+		if (db.LoadServerSettings("options", "auto_account_create", "Client::Handle_Login..auto_account_create", true).c_str() == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
 			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
@@ -310,7 +310,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 
 			if (client == "OSX")
 			{
-				string buf = db.LoadServerSettings("options", "network_ip", "Client::Handle_Login..network_ip", true);
+				string buf = db.LoadServerSettings("options", "network_ip", "Client::Handle_Login..network_ip", true).c_str();
 				EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, buf.length() + 1);
 				strncpy((char*)outapp2->pBuffer, buf.c_str(), buf.length() + 1);
 				connection->QueuePacket(outapp2);
@@ -365,7 +365,7 @@ void Client::SendServerListPacket()
 	EQApplicationPacket *outapp = server.SM->CreateOldServerListPacket(this);
 
 
-	if (db.LoadServerSettings("options", "dump_packets_out", "Client::SendServerListPacket", false) == "TRUE")
+	if (db.LoadServerSettings("options", "dump_packets_out", "Client::SendServerListPacket", false).c_str() == "TRUE")
 	{
 		DumpPacket(outapp);
 	}
@@ -400,7 +400,7 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 
 void Client::SendPlayResponse(EQApplicationPacket *outapp)
 {
-	if (db.LoadServerSettings("options", "trace", "Client::SendPlayResponse", true) == "TRUE")
+	if (db.LoadServerSettings("options", "trace", "Client::SendPlayResponse", true).c_str() == "TRUE")
 	{
 		server_log->Log(log_network_trace, "Sending play response for %s.", GetAccountName().c_str());
 		server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
@@ -432,19 +432,19 @@ void Client::GenerateKey()
 void Client::Logs(std::string platform, unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason)
 {
 	// valid reason codes are: notexist, created, badpass, success
-	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false) == "TRUE" && db.LoadServerSettings("options", "auto_account_create", "Client::Logs", false) == "FALSE" && reason == "notexist")
+	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false).c_str() == "TRUE" && db.LoadServerSettings("options", "auto_account_create", "Client::Logs", false).c_str() == "FALSE" && reason == "notexist")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Account not exist, " + platform);
 	}
-	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false) == "TRUE" && db.LoadServerSettings("options", "auto_account_create", "Client::Logs", false) == "TRUE" && reason == "created")
+	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false).c_str() == "TRUE" && db.LoadServerSettings("options", "auto_account_create", "Client::Logs", false).c_str() == "TRUE" && reason == "created")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Account created, " + platform);
 	}
-	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false) == "TRUE" && reason == "badpass")
+	if (db.LoadServerSettings("options", "failed_login_log", "Client::Logs", false).c_str() == "TRUE" && reason == "badpass")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Bad password, " + platform);
 	}
-	if (db.LoadServerSettings("options", "good_loginIP_log", "Client::Logs", false) == "TRUE" && reason == "success")
+	if (db.LoadServerSettings("options", "good_loginIP_log", "Client::Logs", false).c_str() == "TRUE" && reason == "success")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Logged in Success, " + platform);
 	}
