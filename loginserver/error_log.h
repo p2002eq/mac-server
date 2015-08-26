@@ -61,6 +61,31 @@ public:
 	~ErrorLog();
 
 	/**
+	* Shortcut for Trace, cleaner in the code.
+	*/
+	void ErrorLog::Trace(const char *message, ...);
+
+	/**
+	* Shortcut for Trace and Packet Logging, cleaner in the code.
+	*/
+	void ErrorLog::Trace(const char *message, bool packet, const char *packetlog, size_t size, ...);
+
+	/**
+	* Shortcut for World Trace, cleaner in the code.
+	*/
+	void ErrorLog::WorldTrace(const char *message, ...);
+
+	/**
+	* Shortcut for Dump_Packets_In, cleaner in the code.
+	*/
+	bool ErrorLog::DumpIn();
+
+	/**
+	* Shortcut for Dump_Packets_Out, cleaner in the code.
+	*/
+	bool ErrorLog::DumpOut();
+
+	/**
 	* Writes to the log system a variable message.
 	*/
 	void Log(eqLogType type, const char *message, ...);

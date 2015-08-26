@@ -16,48 +16,48 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#include "../common/global_define.h"
-#include "../common/rulesys.h"
+//#include "../common/global_define.h"
+//#include "../common/rulesys.h"
 #include "../common/eq_packet_structs.h"
 #include "../common/extprofile.h"
 #include "../common/string_util.h"
-#include "../common/random.h"
+//#include "../common/random.h"
 #include "database.h"
-#include "error_log.h"
+//#include "error_log.h"
 #include "login_server.h"
-
-#include <ctype.h>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <mysqld_error.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// Disgrace: for windows compile
-#ifdef _WINDOWS
-#include <windows.h>
-#define snprintf	_snprintf
-#define strncasecmp	_strnicmp
-#define strcasecmp	_stricmp
-#else
-#include "../common/unix.h"
-#include <netinet/in.h>
-#include <sys/time.h>
-#endif
-
-
-#ifdef _WINDOWS
-#if _MSC_VER > 1700 // greater than 2012 (2013+)
-#	define _ISNAN_(a) std::isnan(a)
-#else
-#	include <float.h>
-#	define _ISNAN_(a) _isnan(a)
-#endif
-#else
-#	define _ISNAN_(a) std::isnan(a)
-#endif
+//
+//#include <ctype.h>
+//#include <iomanip>
+//#include <iostream>
+//#include <map>
+//#include <mysqld_error.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//
+// //Disgrace: for windows compile
+//#ifdef _WINDOWS
+//#include <windows.h>
+//#define snprintf	_snprintf
+//#define strncasecmp	_strnicmp
+//#define strcasecmp	_stricmp
+//#else
+//#include "../common/unix.h"
+//#include <netinet/in.h>
+//#include <sys/time.h>
+//#endif
+//
+//
+//#ifdef _WINDOWS
+//#if _MSC_VER > 1700 // greater than 2012 (2013+)
+//#	define _ISNAN_(a) std::isnan(a)
+//#else
+//#	include <float.h>
+//#	define _ISNAN_(a) _isnan(a)
+//#endif
+//#else
+//#	define _ISNAN_(a) std::isnan(a)
+//#endif
 
 extern ErrorLog *server_log;
 extern LoginServer server;
@@ -113,10 +113,9 @@ Database::~Database()
 }
 
 #pragma region Load Server Setup
-std::string Database::LoadServerSettings(std::string category, std::string type, std::string sender, bool report)
+std::string Database::LoadServerSettings(std::string category, std::string type)
 {
 	std::string query;
-	bool disectmysql = false; // for debugging what gets returned.
 
 	query = StringFormat(
 		"SELECT * FROM tblloginserversettings "
@@ -137,14 +136,6 @@ std::string Database::LoadServerSettings(std::string category, std::string type,
 	}
 	auto row = results.begin();
 	std::string value = row[1];
-	if (disectmysql && report)
-	{
-		server_log->Log(log_debug, "****************************************************");
-		server_log->Log(log_debug, "** Mysql query [[ %s ]]", query.c_str());
-		server_log->Log(log_debug, "** for LoadServerSettings got:");
-		server_log->Log(log_debug, "** [[ '%s' ]] for [[ '%s' ]]", value.c_str(), sender.c_str());
-		server_log->Log(log_debug, "****************************************************");
-	}
 	return value.c_str();
 }
 #pragma endregion
@@ -433,7 +424,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 
 	std::string query;
 
-	query = StringFormat("SELECT max(ServerID) FROM %s", LoadServerSettings("schema", "world_registration_table", "CreateWorldRegistration..Select", true).c_str());
+	query = StringFormat("SELECT max(ServerID) FROM %s", LoadServerSettings("schema", "world_registration_table").c_str());
 
 	auto results = QueryDatabase(query);
 
@@ -458,7 +449,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 		"ServerAdminID = 0, "
 		"ServerTrusted = 0, "
 		"ServerTagDescription = ''", 
-		LoadServerSettings("schema", "world_registration_table", "CreateWorldRegistration..Insert", true).c_str(),
+		LoadServerSettings("schema", "world_registration_table").c_str(),
 		std::to_string(id).c_str(),
 		escaped_long_name,
 		escaped_short_name
@@ -488,7 +479,7 @@ void Database::UpdateWorldRegistration(unsigned int id, std::string long_name, s
 		"ServerLongName = '%s' "
 		"WHERE "
 		"ServerID = '%s'",
-		LoadServerSettings("schema", "world_registration_table", "UpdateWorldRegistration", true).c_str(),
+		LoadServerSettings("schema", "world_registration_table").c_str(),
 		ip_address.c_str(),
 		escaped_long_name,
 		std::to_string(id).c_str()
@@ -515,8 +506,8 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 		"WSR.ServerListTypeID = SLT.ServerListTypeID "
 		"WHERE "
 		"WSR.ServerShortName = '%s'",
-		LoadServerSettings("schema", "world_registration_table", "GetWorldRegistration..", true).c_str(),
-		LoadServerSettings("schema", "world_server_type_table", "GetWorldRegistration..", true).c_str(),
+		LoadServerSettings("schema", "world_registration_table").c_str(),
+		LoadServerSettings("schema", "world_server_type_table").c_str(),
 		escaped_short_name
 		);
 	auto results = QueryDatabase(query);
@@ -544,7 +535,7 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 			query = StringFormat("SELECT AccountName, AccountPassword "
 				"FROM %s WHERE "
 				"ServerAdminID = %s",
-				LoadServerSettings("schema", "world_admin_registration_table", "GetWorldRegistration..", true).c_str(),
+				LoadServerSettings("schema", "world_admin_registration_table").c_str(),
 				std::to_string(db_account_id).c_str()
 				);
 			auto results = QueryDatabase(query);
@@ -577,7 +568,7 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 void Database::CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
 	bool activate = 0;
-	if (LoadServerSettings("options", "auto_account_activate", "CreateLSAccount..auto activate", true) == "TRUE")
+	if (LoadServerSettings("options", "auto_account_activate") == "TRUE")
 	{
 		activate = 1;
 	}
@@ -596,7 +587,7 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 		"client_unlock = '%s', "
 		"created_by = '%s', "
 		"creationIP = '%s'",
-		LoadServerSettings("schema", "account_table", "CreateLSAccount..Insert", true).c_str(),
+		LoadServerSettings("schema", "account_table").c_str(),
 		std::to_string(id).c_str(),
 		tmpUN,
 		password.c_str(),
@@ -622,7 +613,7 @@ void Database::UpdateLSAccount(unsigned int id, std::string ip_address)
 		"LastLoginDate = now() "
 		"WHERE "
 		"LoginServerID = %s",
-		LoadServerSettings("schema", "account_table", "UpdateLSAccount..", true).c_str(),
+		LoadServerSettings("schema", "account_table").c_str(),
 		ip_address.c_str(),
 		std::to_string(id).c_str()
 		);
@@ -641,7 +632,7 @@ bool Database::GetAccountLockStatus(std::string name)
 
 	query = StringFormat("SELECT client_unlock FROM %s WHERE "
 						"AccountName = '%s'",
-						LoadServerSettings("schema", "account_table", "GetAccountLockStatus..", true).c_str(),
+						LoadServerSettings("schema", "account_table").c_str(),
 						name.c_str()
 						);
 
@@ -683,7 +674,7 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 		"IP = '%s', "
 		"accessed = '%s', "
 		"reason = '%s'",
-		LoadServerSettings("schema", "access_log_table", "UpdateAccessLog..", true).c_str(),
+		LoadServerSettings("schema", "access_log_table").c_str(),
 		std::to_string(account_id).c_str(),
 		tmpUN,
 		IP.c_str(),
@@ -709,7 +700,7 @@ bool Database::GetLoginDataFromAccountName(std::string name, std::string &passwo
 	query = StringFormat("SELECT LoginServerID, AccountPassword "
 		"FROM %s WHERE "
 		"AccountName = '%s'",
-		LoadServerSettings("schema", "account_table", "GetLoginDataFromAccountName..", true).c_str(),
+		LoadServerSettings("schema", "account_table").c_str(),
 		tmpUN
 		);
 

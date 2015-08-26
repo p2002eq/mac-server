@@ -18,6 +18,11 @@
 #include <string.h>
 #include "error_log.h"
 
+#include "database.h"
+#include <algorithm>
+
+extern Database db;
+
 const char *eqLogTypes[_log_largest_type] =
 {
 	"Debug",
@@ -47,6 +52,59 @@ ErrorLog::~ErrorLog()
 	}
 	log_mutex->unlock();
 	delete log_mutex;
+}
+
+void ErrorLog::Trace(const char *message, ...)
+{
+	std::string trace = db.LoadServerSettings("options", "trace").c_str();
+	std::transform(trace.begin(), trace.end(), trace.begin(), ::toupper);
+	if (trace == "TRUE")
+	{
+		Log(log_network_trace, message);
+	}
+}
+
+void ErrorLog::Trace(const char *message, bool packet, const char *packetlog, size_t size, ...)
+{
+	std::string trace = db.LoadServerSettings("options", "trace").c_str();
+	std::transform(trace.begin(), trace.end(), trace.begin(), ::toupper);
+	if (trace == "TRUE")
+	{
+		Log(log_network_trace, message);
+		LogPacket(log_network_trace, packetlog, size);
+	}
+}
+
+void ErrorLog::WorldTrace(const char *message, ...)
+{
+	std::string worldtrace = db.LoadServerSettings("options", "world_trace").c_str();
+	std::transform(worldtrace.begin(), worldtrace.end(), worldtrace.begin(), ::toupper);
+	if (worldtrace == "TRUE")
+	{
+		Log(log_network_trace, message);
+	}
+}
+
+bool ErrorLog::DumpIn()
+{
+	std::string dumpin = db.LoadServerSettings("options", "dump_packets_in").c_str();
+	std::transform(dumpin.begin(), dumpin.end(), dumpin.begin(), ::toupper);
+	if (dumpin == "TRUE")
+	{
+		return true;
+	}
+	return false;
+}
+
+bool ErrorLog::DumpOut()
+{
+	std::string dumpout = db.LoadServerSettings("options", "dump_packets_in").c_str();
+	std::transform(dumpout.begin(), dumpout.end(), dumpout.begin(), ::toupper);
+	if (dumpout == "TRUE")
+	{
+		return true;
+	}
+	return false;
 }
 
 void ErrorLog::Log(eqLogType type, const char *message, ...)

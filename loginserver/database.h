@@ -21,17 +21,17 @@
 #define AUTHENTICATION_TIMEOUT	60
 #define INVALID_ID				0xFFFFFFFF
 
-#include "../common/global_define.h"
+//#include "../common/global_define.h"
 #include "../common/eqemu_logsys.h"
-#include "../common/types.h"
+//#include "../common/types.h"
 #include "../common/dbcore.h"
-#include "../common/linked_list.h"
-#include "../common/eq_packet_structs.h"
-
-#include <cmath>
-#include <string>
-#include <vector>
-#include <map>
+//#include "../common/linked_list.h"
+//#include "../common/eq_packet_structs.h"
+//
+//#include <cmath>
+//#include <string>
+//#include <vector>
+//#include <map>
 
 class MySQLRequestResult;
 
@@ -57,7 +57,7 @@ public:
 	/**
 	* Loads values for server settings from db.
 	*/
-	std::string LoadServerSettings(std::string category, std::string type, std::string sender, bool report);
+	std::string LoadServerSettings(std::string category, std::string type);
 #pragma endregion
 #pragma region Create Server Setup
 	/**

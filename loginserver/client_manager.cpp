@@ -29,15 +29,15 @@ extern Database db;
 ClientManager::ClientManager()
 {
 	server_log->Log(log_debug, "ClientManager Entered.");
-	server_log->Log(log_debug, "ClientManager Got: %s from the database for port.", db.LoadServerSettings("Old", "port", "ClientManager", false).c_str());
-	server_log->Log(log_debug, "ClientManager Got: %s from the database for opcode location.", db.LoadServerSettings("Old", "opcodes", "ClientManager", false).c_str());
-	int old_port = atoul(db.LoadServerSettings("Old", "port", "ClientManager..port", true).c_str());
+	server_log->Log(log_database, "ClientManager Got: %s from the database for port.", db.LoadServerSettings("Old", "port").c_str());
+	server_log->Log(log_database, "ClientManager Got: %s from the database for opcode location.", db.LoadServerSettings("Old", "opcodes").c_str());
+
+	int old_port = atoul(db.LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
-	if (!old_ops->LoadOpcodes(db.LoadServerSettings("Old", "opcodes", "ClientManager..opcodes", true).c_str()))
+	if (!old_ops->LoadOpcodes(db.LoadServerSettings("Old", "opcodes").c_str()))
 	{
-		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.",
-			db.LoadServerSettings("Old", "opcodes", "ClientManager", false).c_str());
+		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.", db.LoadServerSettings("Old", "opcodes").c_str());
 		run_server = false;
 	}
 	if(old_stream->Open())
@@ -50,13 +50,12 @@ ClientManager::ClientManager()
 		run_server = false;
 	}
 
-	int swg_port = atoul(db.LoadServerSettings("SWG", "port", "ClientManager..port", true).c_str());
+	int swg_port = atoul(db.LoadServerSettings("SWG", "port").c_str());
 	swg_stream = new EQStreamFactory(SWGStream, swg_port);
 	swg_ops = new RegularOpcodeManager;
-	if (!swg_ops->LoadOpcodes(db.LoadServerSettings("SWG", "opcodes", "ClientManager..opcodes", true).c_str()))
+	if (!swg_ops->LoadOpcodes(db.LoadServerSettings("SWG", "opcodes").c_str()))
 	{
-		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for SWG file %s.",
-			db.LoadServerSettings("SWG", "opcodes", "ClientManager", false).c_str());
+		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for SWG file %s.", db.LoadServerSettings("SWG", "opcodes").c_str());
 		run_server = false;
 	}
 	if (swg_stream->Open())
