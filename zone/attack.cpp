@@ -2007,7 +2007,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 	if(killer && HasPrimaryAggro())
 	{
-		if(!entity_list.TranfserPrimaryAggro(killer))
+		if(!entity_list.TransferPrimaryAggro(killer))
 			Log.Out(Logs::Detail, Logs::Aggro, "%s failed to transfer primary aggro.", GetName());
 	}
 

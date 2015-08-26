@@ -615,6 +615,8 @@ int Mob::_GetWalkSpeed() const {
 		}
 	}
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return speed_mod;
 }
 
@@ -707,6 +709,8 @@ int Mob::_GetRunSpeed() const {
 		}
 	}
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return (speed_mod);
 }
 
@@ -743,6 +747,8 @@ int Mob::_GetFearSpeed() const {
 			return int_walkspeed;
 		speed_mod += (base_run * movemod / 100);
 		speed_mod = (speed_mod >> 2) << 2;
+		if (speed_mod < 4)
+			return 0;
 		return (speed_mod);
 	} else {
 		float hp_ratio = GetHPRatio();
@@ -773,6 +779,8 @@ int Mob::_GetFearSpeed() const {
 			if (movemod > 40)
 				speed_mod += 3;
 			speed_mod = (speed_mod >> 2) << 2;
+			if (speed_mod < 4)
+				return 0;
 			return speed_mod;
 		}
 		else if (movemod < 0) {
@@ -784,6 +792,8 @@ int Mob::_GetFearSpeed() const {
 	if (speed_mod < 12)
 		return (8); // 0.2f is slow walking - this should be the slowest walker for fleeing, if not snared enough to stop
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return speed_mod;
 }
 
@@ -1627,7 +1637,7 @@ void Mob::SetCurrentSpeed(float speed) {
 	{ 
 		current_speed = speed; 
 		tar_ndx = 20;
-		if (speed == 0) {
+		if (speed < 0.1f) {
 			SetRunAnimSpeed(0);
 			SetMoving(false);
 			SendPosition();
@@ -2333,6 +2343,7 @@ void Mob::WipeHateList()
 	if(IsEngaged())
 	{
 		hate_list.Wipe();
+		SetTarget(nullptr);
 		AI_Event_NoLongerEngaged();
 	}
 	else

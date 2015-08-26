@@ -109,6 +109,7 @@ private:
 	EQStreamInterface* const eqs;
 
 	uint16	expansion;
+	uint8	charcount;
 };
 
 bool CheckCharCreateInfo(CharCreate_Struct *cc);

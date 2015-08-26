@@ -349,6 +349,7 @@ int command_init(void){
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
 		command_add("reloadstatic", "- Reload Static Zone Data.", 180, command_reloadstatic) ||
 		command_add("reloadtitles", "- Reload player titles from the database.", 180, command_reloadtitles) ||
+		command_add("reloadtraps", "- Repops all traps in the current zone.", 80, command_reloadtraps) ||
 		command_add("reloadworld", "[0|1] - Clear quest cache and reload all rules (0 - no repop, 1 - repop).", 250, command_reloadworld) ||
 		command_add("reloadzonepoints", "- Reload zone points from database.", 180, command_reloadzps) ||
 		command_add("reloadzps", nullptr, 180, command_reloadzps) ||
@@ -419,6 +420,7 @@ int command_init(void){
 		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional.", 250, command_timezone) ||
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title.", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix.", 255, command_titlesuffix) ||
+		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune", "Calculate ideal statical values related to combat.", 250, command_tune) ||
 		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots.", 255, command_undyeme) ||
@@ -11137,4 +11139,15 @@ void command_reloadmerchants(Client *c, const Seperator *sep)
 	zone->GetMerchantDataForZoneLoad();
 	zone->LoadTempMerchantData();
 	c->Message(CC_Default, "Merchant list reloaded for %s.", zone->GetShortName());
+}
+
+void command_trapinfo(Client *c, const Seperator *sep)
+{
+	entity_list.GetTrapInfo(c);
+}
+
+void command_reloadtraps(Client *c, const Seperator *sep)
+{
+	entity_list.UpdateAllTraps(true, true);
+	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
 }
