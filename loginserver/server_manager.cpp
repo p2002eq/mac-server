@@ -249,7 +249,7 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	return outapp;
 }
 
-void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned int client_account_id)
+void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned int client_account_id, uint32 ip)
 {
 	list<WorldServer*>::iterator iter = world_servers.begin();
 	bool found = false;
@@ -261,6 +261,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 			UsertoWorldRequest_Struct *utwr = (UsertoWorldRequest_Struct*)outapp->pBuffer;
 			utwr->worldid = (*iter)->GetServerListID();
 			utwr->lsaccountid = client_account_id;
+			utwr->ip = ip;
 			(*iter)->GetConnection()->SendPacket(outapp);
 			found = true;
 

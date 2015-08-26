@@ -2735,9 +2735,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 	//resurrection effects wont count for overwrite/block stacking
 	switch(spellid1)
 	{
-	case 756:
-	case 757:
-	case 5249:
+	case 756:		// 'Resurrection Effects'
+	case 757:		// 'Resurrection Effect'
+	case 5249:		// 'Resurrection Sickness' (not in TAKP spell file)
 		return (0);
 	}
 
@@ -2836,7 +2836,7 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 					Log.Out(Logs::Detail, Logs::Spells, "%s (%d) overwrites existing spell if effect %d on slot %d is below %d. Old spell has value %d on that slot/effect. %s.",
 						sp2.name, spellid2, overwrite_effect, overwrite_slot, overwrite_below_value, sp1_value, (sp1_value < overwrite_below_value)?"Overwriting":"Not overwriting");
 
-					if(sp1_value < overwrite_below_value)
+					if(sp1_value <= overwrite_below_value)
 					{
 						Log.Out(Logs::Detail, Logs::Spells, "Overwrite spell because sp1_value < overwrite_below_value");
 						return 1;			// overwrite spell if its value is less
@@ -4868,6 +4868,11 @@ void Mob::Stun(int duration, Mob* attacker)
 	{
 		stunned = true;
 		stunned_timer.Start(duration);
+		if (IsAIControlled())
+		{
+			SetRunAnimSpeed(0);
+			SendPosition();
+		}
 	}
 
 	//if(attacker)
@@ -4909,14 +4914,12 @@ void Client::UnStun() {
 
 void NPC::Stun(int duration, Mob* attacker) {
 	Mob::Stun(duration, attacker);
-	SetRunAnimSpeed(0);
-	//SendPosition();
 }
 
 void NPC::UnStun() {
 	Mob::UnStun();
-	SetRunAnimSpeed(static_cast<int8>(GetRunspeed()));
-	SendPosition();
+	tar_ndx = 20;
+	move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 1;
 }
 
 void Mob::Mesmerize()

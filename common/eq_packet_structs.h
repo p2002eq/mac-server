@@ -1723,14 +1723,14 @@ struct Door_Struct
 
 struct OldDoor_Struct
 {
-/*0000*/ char    name[16];            // Filename of Door // Was 10char long before... added the 6 in the next unknown to it: Daeken M. BlackBlade
+/*0000*/ char    name[16];            // Filename of Door
 /*0016*/ float   yPos;               // y loc
 /*0020*/ float   xPos;               // x loc
 /*0024*/ float   zPos;               // z loc
 /*0028*/ float	 heading;
-/*0032*/ uint16  incline;
+/*0032*/ uint16	 incline;
 /*0034*/ uint16	 size;
-/*0036*/ uint8	 unknown[2];
+/*0036*/ uint16	 unknown;
 /*0038*/ uint8	 doorid;             // door's id #
 /*0039*/ uint8	 opentype;
 /*0040*/ uint8	 doorIsOpen;

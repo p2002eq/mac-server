@@ -276,6 +276,7 @@ Client::Client(EQStreamInterface* ieqs)
 	update_count = 0;
 	clicky_override = false;
 	active_disc = 0;
+	trapid = 0;
 }
 
 Client::~Client() {

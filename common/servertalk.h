@@ -632,6 +632,7 @@ struct ServerSyncWorldList_Struct {
 struct UsertoWorldRequest_Struct {
 	uint32	lsaccountid;
 	uint32	worldid;
+	uint32  ip;
 	uint32	FromID;
 	uint32	ToID;
 };

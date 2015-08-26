@@ -160,34 +160,39 @@ bool WorldServer::Process()
 						server_log->Log(log_client, "User2World GetKey has nothing....");
 					}
 					server_log->Log(log_client, "User2World GetKey: %u.", c->GetKey()); //Stops here
+						if(utwr->response > 0)
+						{
+							SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
+						}
 
-					if(utwr->response > 0)
-					{
-						SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
-					}
+						switch(utwr->response)
+						{
+							case 1:
+								break;
+							case 0:
+								c->FatalError("\nError 1020: Your chosen World Server is DOWN.\n\nPlease select another.");
+								break;
+							case -1:
+								c->FatalError("You have been suspended from the worldserver.");
+								break;
+							case -2:
+								c->FatalError("You have been banned from the worldserver.");
+								break;
+							case -3:
+								c->FatalError("That server is full.");
+								break;
+							case -4:
+								c->FatalError("Error 1018: You currently have an active character on that EverQuest Server, please allow a minute for synchronization and try again.");
+								break;
+							case -5:
+								c->FatalError("Error IP Limit Exceeded: \n\nYou have exceeded the maximum number of allowed IP addresses for this account.");
+								break;
+						}
+						server_log->Log(log_client, "Found client with user id of %u and account name of %s.", utwr->lsaccountid, c->GetAccountName().c_str());
+						EQApplicationPacket *outapp = new EQApplicationPacket(OP_PlayEverquestRequest, 17);
+						strncpy((char*) &outapp->pBuffer[1], c->GetKey().c_str(), c->GetKey().size());
 
-					switch(utwr->response)
-					{
-						case 1:
-							break;
-						case 0:
-							c->FatalError("That server is locked.");
-							break;
-						case -1:
-							c->FatalError("You have been suspended from the worldserver.");
-							break;
-						case -2:
-							c->FatalError("You have been banned from the worldserver.");
-							break;
-						case -3:
-							c->FatalError("That server is full.");
-							break;
-					}
-					server_log->Log(log_client, "Found client with user id of %u and account name of %s.", utwr->lsaccountid, c->GetAccountName().c_str());
-					EQApplicationPacket *outapp = new EQApplicationPacket(OP_PlayEverquestRequest, 17);
-					strncpy((char*) &outapp->pBuffer[1], c->GetKey().c_str(), c->GetKey().size());
-
-					c->SendPlayResponse(outapp);
+						c->SendPlayResponse(outapp);
 				}
 				else if(c)
 				{
@@ -222,6 +227,13 @@ bool WorldServer::Process()
 					case -3:
 						per->Message = 303;
 						break;
+					case -4:
+						c->FatalError("Error 1018: You currently have an active character on that EverQuest Server, please allow a minute for synchronization and try again.");
+						break;
+					case -5:
+						c->FatalError("\nIP Limit Exceeded: \n\nYou have exceeded the maximum number of allowed IP addresses for this account.");
+						break;
+
 					}
 
 					if (db.LoadServerSettings("options", "trace", "WorldServer::Process..trace", false).c_str() == "TRUE")

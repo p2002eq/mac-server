@@ -100,6 +100,7 @@ void MapOpcodes()
 	ConnectingOpcodes[OP_WearChange] = &Client::Handle_Connect_OP_WearChange;
 	ConnectingOpcodes[OP_ZoneEntry] = &Client::Handle_Connect_OP_ZoneEntry;
 	ConnectingOpcodes[OP_LFGCommand] = &Client::Handle_OP_LFGCommand;
+	ConnectingOpcodes[OP_TargetMouse] = &Client::Handle_Connect_OP_TargetMouse;
 
 	//temporary hack
 	ConnectingOpcodes[OP_GetGuildsList] = &Client::Handle_OP_GetGuildsList;
@@ -1457,6 +1458,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	SetAttackTimer();
 	conn_state = ZoneInfoSent;
 
+	return;
+}
+
+void Client::Handle_Connect_OP_TargetMouse(const EQApplicationPacket *app)
+{
+	// This can happen if you tab while zoning. Just handle the opcode and return.
 	return;
 }
 
@@ -3179,8 +3186,8 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 		{
 			Message(MT_Skills, "You disarm a trap.");
 			trap->disarmed = true;
-			trap->chkarea_timer.Disable();
-			trap->respawn_timer.Start((trap->respawn_time + zone->random.Int(0, trap->respawn_var)) * 1000);
+			Log.Out(Logs::General, Logs::Traps, "Trap %d is disarmed.", trap->trap_id);
+			trap->UpdateTrap();
 		}
 		else
 		{
