@@ -276,6 +276,7 @@ Client::Client(EQStreamInterface* ieqs)
 	update_count = 0;
 	clicky_override = false;
 	active_disc = 0;
+	active_disc_spell = 0;
 	trapid = 0;
 }
 
@@ -4001,10 +4002,8 @@ void Client::SendStats(Client* client)
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen()+RestRegenEndurance, CalcEnduranceRegenCap());
 	client->Message(0, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
 	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);
-	client->Message(0, " STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
-	client->Message(0, " hSTR: %i  hSTA: %i  hDEX: %i  hAGI: %i  hINT: %i  hWIS: %i  hCHA: %i", GetHeroicSTR(), GetHeroicSTA(), GetHeroicDEX(), GetHeroicAGI(), GetHeroicINT(), GetHeroicWIS(), GetHeroicCHA());
-	client->Message(0, " MR: %i  PR: %i  FR: %i  CR: %i  DR: %i Corruption: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR(), GetCorrup());
-	client->Message(0, " hMR: %i  hPR: %i  hFR: %i  hCR: %i  hDR: %i hCorruption: %i", GetHeroicMR(), GetHeroicPR(), GetHeroicFR(), GetHeroicCR(), GetHeroicDR(), GetHeroicCorrup());
+	client->Message(0, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
+	client->Message(0, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 	client->Message(0, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
 	client->Message(0, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
 	client->Message(0, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
@@ -4024,7 +4023,7 @@ void Client::SendStats(Client* client)
 		client->Message(0, " GroupID: %i Count: %i GroupLeader: %s GroupLeaderCached: %s", g->GetID(), g->GroupCount(), g->GetLeaderName(), g->GetOldLeaderName());
 	}
 	client->Message(0, " Hidden: %i ImpHide: %i Sneaking: %i Invisible: %i InvisVsUndead: %i InvisVsAnimals: %i", hidden, improved_hidden, sneaking, invisible, invisible_undead, invisible_animals);
-	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i Disc: %i", feigned, invulnerable, see_invis, has_zomm, active_disc);
+	client->Message(0, " Feigned: %i Invulnerable: %i SeeInvis: %i HasZomm: %i Disc: %i/%i", feigned, invulnerable, see_invis, has_zomm, GetActiveDisc(), GetActiveDiscSpell());
 
 	Extra_Info:
 
@@ -4039,6 +4038,18 @@ void Client::SendStats(Client* client)
 		client->Message(0, "  CurrentXP: %i XP Needed: %i ExpLoss: %i CurrentAA: %i", GetEXP(), xpneeded, exploss, GetAAXP());
 		client->Message(0, "  Last Update: %d Current Time: %d Difference: %d Zone Count: %d", pLastUpdate, Timer::GetCurrentTime(), Timer::GetCurrentTime() - pLastUpdate, GetZoneChangeCount());
 	}
+}
+
+void Client::SendQuickStats(Client* client)
+{
+	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
+	client->Message(0, " Level: %i Class: %i Race: %i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
+	client->Message(0, " HP: %i/%i  HP Regen: %i/%i End.: %i/%i  End. Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap(),GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen()+RestRegenEndurance, CalcEnduranceRegenCap());
+	if(CalcMaxMana() > 0)
+		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
+	client->Message(0, " AC: %i ATK: %i Haste: %i / %i", CalcAC(), GetTotalATK(), GetHaste(), RuleI(Character, HasteCap));
+	client->Message(0, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
+	client->Message(0, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 }
 
 const char* Client::GetRacePlural(Client* client) {
@@ -5212,4 +5223,22 @@ void Client::SendToBoat(bool messageonly)
 			}
 		}
 	}
+}
+
+bool Client::HasInstantDisc(uint16 skill_type)
+{
+	if(GetClass() == MONK)
+	{
+		if((skill_type == SkillFlyingKick && GetActiveDisc() == disc_thunderkick) || 
+			(skill_type == SkillEagleStrike && GetActiveDisc() == disc_ashenhand) || 
+			(skill_type == SkillDragonPunch && GetActiveDisc() == disc_silentfist))
+			return true;
+	}
+	else if(GetClass() == SHADOWKNIGHT)
+	{
+		if(GetActiveDisc() == disc_unholyaura && (skill_type == SPELL_HARM_TOUCH || skill_type == SPELL_HARM_TOUCH2))
+			return true;
+	}
+
+	return false;
 }

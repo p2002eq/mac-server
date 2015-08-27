@@ -1039,7 +1039,6 @@ protected:
 	StatBonuses itembonuses;
 	StatBonuses spellbonuses;
 	StatBonuses aabonuses;
-	StatBonuses discbonuses;
 	uint16 petid;
 	uint16 ownerid;
 	PetType typeofpet;

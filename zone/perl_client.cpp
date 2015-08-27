@@ -3398,12 +3398,11 @@ XS(XS_Client_UseDiscipline)
 {
 	dXSARGS;
 	if (items != 3)
-		Perl_croak(aTHX_ "Usage: Client::UseDiscipline(THIS, spell_id, target)");
+		Perl_croak(aTHX_ "Usage: Client::UseDiscipline(THIS, spell_id)");
 	{
 		Client *		THIS;
 		bool		RETVAL;
 		uint32		spell_id = (uint32)SvUV(ST(1));
-		Client*		target = INT2PTR(Client *,SvIV((SV*)SvRV(ST(2))));
 
 		if (sv_derived_from(ST(0), "Client")) {
 			IV tmp = SvIV((SV*)SvRV(ST(0)));
@@ -3414,7 +3413,7 @@ XS(XS_Client_UseDiscipline)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		RETVAL = THIS->UseDiscipline(spell_id, target);
+		RETVAL = THIS->UseDiscipline(spell_id);
 		ST(0) = boolSV(RETVAL);
 		sv_2mortal(ST(0));
 	}

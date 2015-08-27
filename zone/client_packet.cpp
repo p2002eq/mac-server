@@ -582,6 +582,10 @@ void Client::CompleteConnect()
 		}
 	}
 
+	// Disciplines don't survive zoning.
+	if(GetActiveDisc() != 0)
+		FadeDisc();
+
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
@@ -2170,8 +2174,16 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
 		}
 
-		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
+		// if we've matched LoH or HT, cast now
+		if (spell_to_cast > 0)	
+		{
 			CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
+
+			if(HasInstantDisc(spell_to_cast))
+			{
+				FadeDisc();
+			}
+		}
 	}
 	else	// MEMORIZED SPELL (first confirm that it's a valid memmed spell slot, then validate that the spell is currently memorized)
 	{
@@ -3225,12 +3237,7 @@ void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
 	if (cds->disc_id > 0)
 	{
 		Log.Out(Logs::General, Logs::Discs, "Attempting to cast Disc %d.", cds->disc_id);
-
-		Client* target = this;
-		if (GetTarget() && GetTarget()->IsClient())
-			target = entity_list.GetClientByID(GetTarget()->GetID());
-
-		UseDiscipline(cds->disc_id, target);
+		UseDiscipline(cds->disc_id);
 	}
 	else
 	{

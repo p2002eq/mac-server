@@ -575,6 +575,11 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 
 	DoSpecialAttackDamage(other, skill_type, ndamage, min_dmg, ht, reuse);
 
+	if(IsClient() && CastToClient()->HasInstantDisc(skill_type))
+	{
+		CastToClient()->FadeDisc();
+	}
+
 	return(reuse);
 }
 

@@ -2279,7 +2279,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			break;
 		}
 	}
-	if (!IsBardSong(spell_id))
+	if (!IsBardSong(spell_id) && !IsDisc(spell_id))
 		DoAnim(static_cast<Animation>(spells[spell_id].CastingAnim), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 
 	// if this was a spell slot or an ability use up the mana for it
@@ -3187,6 +3187,13 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 		}
 	}
 
+	bool isdisc = IsDisc(spell_id);
+	if(isdisc && IsClient())
+	{
+		emptyslot = CastToClient()->GetMaxBuffSlots() + 1;
+		BuffFadeBySlot(emptyslot, false);
+	}
+		
 	// now add buff at emptyslot
 	assert(buffs[emptyslot].spellid == SPELL_UNKNOWN);	// sanity check
 
@@ -3209,6 +3216,7 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 	buffs[emptyslot].ExtraDIChance = 0;
 	buffs[emptyslot].RootBreakChance = 0;
 	buffs[emptyslot].instrumentmod = 10;
+	buffs[emptyslot].isdisc = isdisc;
 
 	if (level_override > 0) {
 		buffs[emptyslot].UpdateClient = true;
@@ -3441,12 +3449,15 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
-	if(spelltar != this && spelltar->IsClient())	// send to target
-		spelltar->CastToClient()->QueuePacket(action_packet);
-	if(IsClient())	// send to caster
-		CastToClient()->QueuePacket(action_packet);
-	// send to people in the area, ignoring caster and target
-	entity_list.QueueCloseClients(spelltar, action_packet, true, 200, this, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
+	if(!IsDisc(spell_id))
+	{
+		if(spelltar != this && spelltar->IsClient())	// send to target
+			spelltar->CastToClient()->QueuePacket(action_packet);
+		if(IsClient())	// send to caster
+			CastToClient()->QueuePacket(action_packet);
+		// send to people in the area, ignoring caster and target
+		entity_list.QueueCloseClients(spelltar, action_packet, true, 200, this, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
+	}
 
 	/* Send the EVENT_CAST_ON event */
 	if(spelltar->IsNPC())
@@ -3893,7 +3904,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		spelltar->CastToClient()->SetShadowStepExemption(true);
 	}
 
-	if(!IsEffectInSpell(spell_id, SE_BindAffinity))
+	if(!IsEffectInSpell(spell_id, SE_BindAffinity) && !IsDisc(spell_id))
 	{
 		if(spelltar != this && spelltar->IsClient())	// send to target
 			spelltar->CastToClient()->QueuePacket(action_packet);
@@ -3904,27 +3915,32 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	//live dosent send this to anybody but the caster
 	//entity_list.QueueCloseClients(spelltar, action_packet, true, 200, this, true, spelltar->IsClient() ? FILTER_PCSPELLS : FILTER_NPCSPELLS);
 
-	// This is the message for the spell.
-	message_packet = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
-	CombatDamage_Struct *cd = (CombatDamage_Struct *)message_packet->pBuffer;
-	cd->target = action->target;
-	cd->source = action->source;
-	cd->type = action->type;
-	cd->spellid = action->spell;
-	cd->sequence = action->sequence;
-	cd->damage = 0;
-	Log.Out(Logs::Detail, Logs::Spells, "target: %i, source: %i, type: %i, spellid: %i, sequence: %i, damage: %i", cd->target, cd->source, cd->type, cd->spellid, cd->sequence, cd->damage);
-	if(!IsEffectInSpell(spell_id, SE_BindAffinity))
+	if(!IsDisc(spell_id))
 	{
-		// We send this packet in Mob::CommonDamage for damage spells
-		bool ignoresender = false;
-		if(IsDamageSpell(spell_id))
+		// This is the message for the spell.
+		message_packet = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
+		CombatDamage_Struct *cd = (CombatDamage_Struct *)message_packet->pBuffer;
+		cd->target = action->target;
+		cd->source = action->source;
+		cd->type = action->type;
+		cd->spellid = action->spell;
+		cd->sequence = action->sequence;
+		cd->damage = 0;
+		Log.Out(Logs::Detail, Logs::Spells, "target: %i, source: %i, type: %i, spellid: %i, sequence: %i, damage: %i", cd->target, cd->source, cd->type, cd->spellid, cd->sequence, cd->damage);
+		if(!IsEffectInSpell(spell_id, SE_BindAffinity))
+		{
+			// We send this packet in Mob::CommonDamage for damage spells
+			bool ignoresender = false;
+			if(IsDamageSpell(spell_id))
 			ignoresender = true;
 
-		entity_list.QueueCloseClients(spelltar, message_packet, ignoresender, 200, 0, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
+			entity_list.QueueCloseClients(spelltar, message_packet, ignoresender, 200, 0, true, spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells);
+		}
+
+		safe_delete(message_packet);
 	}
+
 	safe_delete(action_packet);
-	safe_delete(message_packet);
 	Log.Out(Logs::Detail, Logs::Spells, "Cast of %d by %s on %s complete successfully.", spell_id, GetName(), spelltar->GetName());
 
 	return true;
@@ -4747,7 +4763,7 @@ int16 Mob::CalcResistChanceBonus()
 	int resistchance = spellbonuses.ResistSpellChance + itembonuses.ResistSpellChance;
 
 	if(IsClient())
-		resistchance += aabonuses.ResistSpellChance + discbonuses.ResistSpellChance;
+		resistchance += aabonuses.ResistSpellChance;
 
 	return resistchance;
 }
@@ -4757,7 +4773,7 @@ int16 Mob::CalcFearResistChance()
 	int resistchance = spellbonuses.ResistFearChance + itembonuses.ResistFearChance;
 	if(this->IsClient()) {
 		resistchance += aabonuses.ResistFearChance;
-		if(aabonuses.Fearless == true || discbonuses.Fearless == true)
+		if(aabonuses.Fearless == true)
 			resistchance = 100;
 	}
 	if(spellbonuses.Fearless == true || itembonuses.Fearless == true)

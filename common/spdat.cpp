@@ -1242,3 +1242,12 @@ bool IsRainSpell(uint16 spell_id)
 
 	return false;
 }
+
+bool IsDisc(uint16 spell_id)
+{
+	if(spells[spell_id].IsDisciplineBuff)
+		return true;
+	else
+		return false;
+}
+

@@ -492,11 +492,8 @@ bool Client::Process() {
 		if(disc_ability_timer.Check())
 		{
 			disc_ability_timer.Disable();
+			FadeDisc();
 
-			SetActiveDisc(0);
-			CalcBonuses();
-
-			Log.Out(Logs::General, Logs::Discs, "Ending currently enabled disc.");
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
 			d->disc_id = 0;

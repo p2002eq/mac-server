@@ -3482,7 +3482,9 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		}
 
 		//check stun chances if bashing
-		if (damage > 0 && ((skill_used == SkillBash || skill_used == SkillKick) && attacker)) {
+		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
+			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
+		{
 			// NPCs can stun with their bash/kick as soon as they receive it.
 			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
 			// Clients have a chance to stun if the mob is 56+

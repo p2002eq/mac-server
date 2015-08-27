@@ -2799,3 +2799,18 @@ bool NPC::IsBoat()
 {
 	return (GetBaseRace() == SHIP || GetBaseRace() == LAUNCH || GetBaseRace() == CONTROLLED_BOAT);
 }
+
+
+void NPC::ShowQuickStats(Client* c)
+{
+	//This is just #npcstats, but accessible using #showstats 1
+	c->Message(CC_Default, "NPC Stats:");
+	c->Message(CC_Default, "Name: %s   NpcID: %u", GetName(), GetNPCTypeID());
+	c->Message(CC_Default, "Race: %i  Level: %i  Class: %i  Material: %i", GetRace(), GetLevel(), GetClass(), GetTexture());
+	c->Message(CC_Default, "Current HP: %i  Max HP: %i", GetHP(), GetMaxHP());
+	c->Message(CC_Default, "Gender: %i  Size: %f  Bodytype: %d", GetGender(), GetSize(), GetBodyType());
+	c->Message(CC_Default, "Runspeed: %f  Walkspeed: %f", GetRunspeed(), GetWalkspeed());
+	c->Message(CC_Default, "Spawn Group: %i  Grid: %i", GetSp2(), GetGrid());
+	c->Message(CC_Default, "EmoteID: %i Attack Speed: %i", GetEmoteID(), GetAttackTimer());
+	QueryLoot(c);
+}
