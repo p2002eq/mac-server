@@ -1721,11 +1721,11 @@ void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 	if (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false)) {
 		walksp = 0.0f;
-	} else {
-		if(walksp < 0.1f)
-			return;	//this is idle movement at walk speed, and we are unable to walk right now.
 	}
 	SetCurrentSpeed(walksp);
+	
+	if(walksp < 0.1f)
+		return;	//this is idle movement at walk speed, and we are unable to walk right now.
 
 	if (roambox_distance > 0) {
 		float roam_z = GetZ();
