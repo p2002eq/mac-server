@@ -1484,6 +1484,12 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		return;
 	}
 
+	if(Admin() < 95 && RuleB(Character, DisableAAs))
+	{
+		Message(CC_Yellow, "Alternate Abilities are currently disabled. You will continue to use traditional experience.");
+		return;
+	}
+
 	if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
 	{
 		if (m_epp.perAA == 0)

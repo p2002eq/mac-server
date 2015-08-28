@@ -450,7 +450,7 @@ public:
 	virtual int GetCurrentSongSlots() const;
 	virtual int GetMaxBuffSlots() const { return 25; }
 	virtual int GetMaxSongSlots() const { return 12; }
-	virtual int GetMaxTotalSlots() const { return 37; }
+	virtual int GetMaxTotalSlots() const { return 38; }
 	virtual void InitializeBuffSlots();
 	virtual void UninitializeBuffSlots();
 
