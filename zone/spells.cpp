@@ -3398,6 +3398,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		return false;
 
 	uint16 caster_level = GetCasterLevel(spell_id);
+	int32 jolthate = 0;
 
 	Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s with effective caster level %d", spell_id, spelltar->GetName(), caster_level);
 
@@ -3744,7 +3745,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 				if(spelltar->IsAIControlled())
 				{
-					int32 aggro = CheckAggroAmount(spell_id, spelltar);
+					int32 aggro = CheckAggroAmount(spell_id, spelltar, jolthate);
 					if(aggro > 0) 
 					{
 						if(!IsHarmonySpell(spell_id))
@@ -3792,11 +3793,11 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	else if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id) &&
 		     CancelMagicShouldAggro(spell_id, spelltar)) {
-		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, isproc);
+		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, jolthate, isproc);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
-		if(aggro_amount > 0)
+		if(aggro_amount > 0 || jolthate < 0)
 		{
-			spelltar->AddToHateList(this, aggro_amount);	
+			spelltar->AddToHateList(this, aggro_amount, 0, true, false, false, jolthate);	
 		}
 		else
 		{
@@ -4139,12 +4140,14 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	if(IsBeneficialSpell(spell_id) && (caster->GetNPCTypeID())) //then skip the rest, stop NPCs aggroing each other with buff spells. 2013-03-05
 		return false;
 
+	int32 jolthate = 0;
+
 	if(IsMezSpell(spell_id))
 	{
 		if(GetSpecialAbility(UNMEZABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Mez spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_MEZ);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4171,7 +4174,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to Slow spells.");
 		caster->Message_StringID(MT_Shout, IMMUNE_ATKSPEED);
-		int32 aggro = caster->CheckAggroAmount(spell_id, this);
+		int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 		if(aggro > 0) {
 			AddToHateList(caster, aggro);
 		} else {
@@ -4187,7 +4190,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNFEARABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Fear spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4203,7 +4206,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		else if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
-			int32 aggro = caster->CheckAggroAmount(spell_id, this);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4227,7 +4230,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Charm spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_CHARM);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4267,7 +4270,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNSNAREABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Snare spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_MOVEMENT);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {

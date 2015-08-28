@@ -6227,7 +6227,8 @@ XS(XS_Mob_CheckAggroAmount)
 				Perl_croak(aTHX_ "spell_target is nullptr, avoiding crash.");
 		}
 
-		RETVAL = THIS->CheckAggroAmount(spellid, spell_target);
+		int32 jolthate = 0;
+		RETVAL = THIS->CheckAggroAmount(spellid, spell_target, jolthate);
 		XSprePUSH; PUSHu((UV)RETVAL);
 	}
 	XSRETURN(1);
