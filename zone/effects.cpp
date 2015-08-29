@@ -496,7 +496,7 @@ int32 Client::GetActSpellCasttime(uint16 spell_id, int32 casttime)
 	return casttime;
 }
 
-bool Client::UseDiscipline(uint8 disc_id, Client* target) 
+bool Client::UseDiscipline(uint8 disc_id) 
 {
 	// Dont let client waste a reuse timer if they can't use the disc
 	if (IsStunned() || IsFeared() || IsMezzed() || IsAmnesiad() || IsPet())
@@ -514,6 +514,13 @@ bool Client::UseDiscipline(uint8 disc_id, Client* target)
 		return(false);
 	}
 
+	bool active = disc_ability_timer.Enabled();
+	if(active)
+	{
+		Message(CC_User_Disciplines, "You must wait before using this discipline."); //find correct message
+		return(false);
+	}
+
 	//can we use the disc? the client checks this for us, but we should also confirm server side.
 	uint8 level_to_use = DisciplineUseLevel(disc_id);
 	if(level_to_use > GetLevel() || level_to_use == 0) {
@@ -521,8 +528,17 @@ bool Client::UseDiscipline(uint8 disc_id, Client* target)
 		return(false);
 	}
 
+	// Disciplines with no ability timer (ashenhand, silentfist, thunderkick, and unholyaura) will remain on the player until they either 
+	// use the skill the disc affects successfully, camp/zone, or attempt to use another disc. If we're here, clear that disc so they can 
+	// cast a new one.
+	if(GetActiveDisc() != 0)
+	{
+		Log.Out(Logs::General, Logs::Discs, "Clearing disc %d so that disc %d can be cast.", GetActiveDisc(), disc_id);
+		FadeDisc();
+	}
+
 	//cast the disc
-	if(CastDiscipline(disc_id, target, level_to_use))
+	if(CastDiscipline(disc_id, level_to_use))
 		return(true);
 	else
 		return(false);
@@ -714,12 +730,8 @@ uint8 Client::DisciplineUseLevel(uint8 disc_id)
 	}
 }
 
-bool Client::CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use)
+bool Client::CastDiscipline(uint8 disc_id, uint8 level_to_use)
 {
-
-	if(!target)
-		return false;
-
 	uint8 current_level = GetLevel();
 	if(current_level > 60)
 		current_level = 60;
@@ -728,160 +740,218 @@ bool Client::CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use)
 		return false;
 
 	// reuse_timer is in seconds, ability_timer is in milliseconds.
-	uint32 reuse_timer, ability_timer;
-	uint32 string = 0;
+	uint32 reuse_timer = 0, ability_timer = 0, string = 0;
+	int16 spellid = 0;
 
 	switch(disc_id)
 	{
 		case disc_aggressive:
 			reuse_timer = 1620 - (current_level - level_to_use) * 60;
 			ability_timer = 180000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4498;
+			string = DISCIPLINE_AGRESSIVE;
 
 			break;
 		case disc_precision:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 180000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4501;
+			string = DISCIPLINE_PRECISION;
 
 			break;
 		case disc_defensive:
 			reuse_timer = 900 - (current_level - level_to_use) * 60;
 			ability_timer = 180000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4499;
+			string = DISCIPLINE_DEFENSIVE;
 
 			break;
 		case disc_evasive:
 			reuse_timer = 900 - (current_level - level_to_use) * 60;
 			ability_timer = 180000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4503;
+			string = DISCIPLINE_EVASIVE;
 
 			break;
 		case disc_ashenhand:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4508;
+			string = DISCIPLINE_ASHENHAND;
 
 			break;
 		case disc_furious:
 			reuse_timer = 3600 - (current_level - level_to_use) * 60;
 			ability_timer = 9000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == WARRIOR)
+				spellid = 4674;
+			else if(GetBaseClass() == MONK)
+				spellid = 4509;
+			else if(GetBaseClass() == ROGUE)
+				spellid = 4673;
+			string = DISCIPLINE_FURIOUS;
 
 			break;
 		case disc_stonestance:
 			reuse_timer = 720 - (current_level - level_to_use) * 60;
 			ability_timer = 12000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == MONK)
+				spellid = 4510;
+			else if(GetBaseClass() == BEASTLORD)
+				spellid = 4671;
+			string = DISCIPLINE_STONESTANCE;
 
 			break;
 		case disc_thunderkick:
 			reuse_timer = 420 - (current_level - level_to_use) * 60;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4511;
+			string = DISCIPLINE_THUNDERKICK;
 
 			break;
 		case disc_fortitude:
 			reuse_timer = 3600 - (current_level - level_to_use) * 60;
 			ability_timer = 8000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == WARRIOR)
+				spellid = 4670;
+			else if(GetBaseClass() == MONK)
+				spellid = 4502;
+			string = DISCIPLINE_FORTITUDE;
 
 			break;
 		case disc_fellstrike:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 12000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == WARRIOR)
+				spellid = 4675;
+			else if(GetBaseClass() == MONK)
+				spellid = 4512;
+			else if(GetBaseClass() == ROGUE)
+				spellid = 4676;
+			else if(GetBaseClass() == BEASTLORD)
+				spellid = 4678;
+			string = DISCIPLINE_FELLSTRIKE;
 
 			break;
 		case disc_hundredfist:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 15000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == MONK)
+				spellid = 4513;
+			else if(GetBaseClass() == ROGUE)
+				spellid = 4677;
+			string = DISCIPLINE_HUNDREDFIST;
 
 			break;
 		case disc_charge:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 14000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			if(GetBaseClass() == WARRIOR)
+				spellid = 4672;
+			else if(GetBaseClass() == ROGUE)
+				spellid = 4505;
+			string = DISCIPLINE_CHARGE;
 
 			break;
 		case disc_mightystrike:
 			reuse_timer = 3600 - (current_level - level_to_use) * 60;
 			ability_timer = 10000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4514;
+			string = DISCIPLINE_MIGHTYSTRIKE;
 
 			break;
 		case disc_nimble:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 12000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4515;
+			string = DISCIPLINE_NIMBLE;
 
 			break;
 		case disc_silentfist:
 			reuse_timer = 540 - (current_level - level_to_use) * 60;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4507;
+			if(GetRace() == IKSAR)
+				string = DISCIPLINE_SILENTFIST_IKSAR;
+			else
+				string = DISCIPLINE_SILENTFIST;
 
 			break;
 		case disc_kinesthetics:
 			reuse_timer = 1800 - (current_level - level_to_use) * 60;
 			ability_timer = 18000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4517;
+			string = DISCIPLINE_KINESTHETICS;
 
 			break;
 		case disc_holyforge:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 120000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4500;
+			string = DISCIPLINE_HOLYFORGE;
 
 			break;
 		case disc_sanctification:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 10000;
+			spellid = 4518;
 			string = DISCIPLINE_SANCTIFICATION;
 
 			break;
 		case disc_trueshot:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 120000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4506;
+			string = DISCIPLINE_TRUESHOT;
 
 			break;
 		case disc_weaponshield:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 15000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4519;
+			if(GetGender() == 0)
+				string = DISCIPLINE_WPNSLD_MALE;
+			else if(GetGender() == 1)
+				string = DISCIPLINE_WPNSLD_FEMALE;
+			else
+				string = DISCIPLINE_WPNSLD_MONSTER;
 
 			break;
 		case disc_unholyaura:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4520;
+			string = DISCIPLINE_UNHOLYAURA;
 
 			break;
 		case disc_leechcurse:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 15000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4504;
+			string = DISCIPLINE_LEECHCURSE;
 
 			break;
 		case disc_deftdance:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 10000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4516;
+			string = DISCIPLINE_DEFTDANCE;
 
 			break;
 		case disc_puretone:
 			reuse_timer = 4320 - (current_level - level_to_use) * 60;
 			ability_timer = 120000;
-			Message(CC_Yellow, "This disc is not yet implemented.");
+			spellid = 4586;
+			string = DISCIPLINE_PURETONE;
 
 			break;
 		case disc_resistant:
 			reuse_timer = 3600 - (current_level - level_to_use) * 60;
 			ability_timer = 60000;
+			spellid = 4585;
 			string = DISCIPLINE_RESISTANT;
 
 			break;
 		case disc_fearless:
 			reuse_timer = 3600 - (current_level - level_to_use) * 60;
 			ability_timer = 11000;
+			spellid = 4587;
 			string = DISCIPLINE_FEARLESS;
 
 			break;
@@ -890,16 +960,27 @@ bool Client::CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use)
 			return false;
 	}
 
-	if(string > 0)
+	if(string > 0 && IsDisc(spellid))
 	{
-		Message_StringID(CC_User_Disciplines, string, target->GetName());
-		target->p_timers.Start(pTimerDisciplineReuseStart, reuse_timer);
-		target->disc_ability_timer.SetTimer(ability_timer);
-		target->SetActiveDisc(disc_id);
-		target->CalcBonuses();
+		entity_list.MessageClose_StringID(this, false, 50, CC_User_Disciplines, string, GetName());
+		p_timers.Start(pTimerDisciplineReuseStart, reuse_timer);
+		if(ability_timer > 0)
+		{
+			disc_ability_timer.SetTimer(ability_timer);
+		}
+		else
+		{
+			Log.Out(Logs::General, Logs::Discs, "Disc %d is an instant effect", disc_id);
+		}
+
+		SetActiveDisc(disc_id, spellid);
+		SpellFinished(spellid, this);
 	}
 	else
+	{
+		Log.Out(Logs::General, Logs::Discs, "Disc: %d Invalid stringid or spellid specified.", disc_id);
 		return false;
+	}
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 	ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;

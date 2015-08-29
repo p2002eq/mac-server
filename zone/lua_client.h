@@ -170,7 +170,7 @@ public:
 	void ForageItem(bool guarantee);
 	float CalcPriceMod(Lua_Mob other, bool reverse);
 	void ResetTrade();
-	bool UseDiscipline(int spell_id, Client* client);
+	bool UseDiscipline(int spell_id);
 	int GetCharacterFactionLevel(int faction_id);
 	void SetZoneFlag(int zone_id);
 	void SetZoneFlag(int zone_id, uint8 key);

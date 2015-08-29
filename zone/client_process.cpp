@@ -175,7 +175,14 @@ bool Client::Process() {
 			AI_Process();
 
 		if (bindwound_timer.Check() && bindwound_target != 0) {
-			BindWound(bindwound_target, false);
+			if(BindWound(bindwound_target, false))
+			{
+				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Bind wound failed, skillup check skipped.");
+			}
 		}
 
 		if(KarmaUpdateTimer)
@@ -492,11 +499,8 @@ bool Client::Process() {
 		if(disc_ability_timer.Check())
 		{
 			disc_ability_timer.Disable();
+			FadeDisc();
 
-			SetActiveDisc(0);
-			CalcBonuses();
-
-			Log.Out(Logs::General, Logs::Discs, "Ending currently enabled disc.");
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
 			d->disc_id = 0;

@@ -392,7 +392,7 @@ int command_init(void){
 		command_add("showpetspell", "[spellid/searchstring] - search pet summoning spells.", 50, command_showpetspell) ||
 		command_add("showskills", "- Show the values of your or your player target's skills.", 50, command_showskills) ||
 		command_add("showspellslist", "Shows spell list of targeted NPC.", 95, command_showspellslist) ||
-		command_add("showstats", "- Show details about you or your target.", 50, command_showstats) ||
+		command_add("showstats", "[quick stats]- Show details about you or your target. Quick stats shows only key stats.", 50, command_showstats) ||
 		command_add("shutdown", "- Shut this zone process down.", 250, command_shutdown) ||
 		command_add("si", nullptr, 160, command_summonitem) ||
 		command_add("size", "[size] - Change size of you or your target.", 100, command_size) ||
@@ -1812,16 +1812,7 @@ void command_npcstats(Client *c, const Seperator *sep){
 	else if (!c->GetTarget()->IsNPC())
 		c->Message(CC_Default, "ERROR: Target is not a NPC!");
 	else {
-		c->Message(CC_Default, "NPC Stats:");
-		c->Message(CC_Default, "Name: %s   NpcID: %u", c->GetTarget()->GetName(), c->GetTarget()->GetNPCTypeID());
-		c->Message(CC_Default, "Race: %i  Level: %i  Class: %i  Material: %i", c->GetTarget()->GetRace(), c->GetTarget()->GetLevel(), c->GetTarget()->GetClass(), c->GetTarget()->GetTexture());
-		c->Message(CC_Default, "Current HP: %i  Max HP: %i", c->GetTarget()->GetHP(), c->GetTarget()->GetMaxHP());
-		//c->Message(CC_Default, "Weapon Item Number: %s",c->GetTarget()->GetWeapNo());
-		c->Message(CC_Default, "Gender: %i  Size: %f  Bodytype: %d", c->GetTarget()->GetGender(), c->GetTarget()->GetSize(), c->GetTarget()->GetBodyType());
-		c->Message(CC_Default, "Runspeed: %f  Walkspeed: %f", c->GetTarget()->GetRunspeed(), c->GetTarget()->GetWalkspeed());
-		c->Message(CC_Default, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
-		c->Message(CC_Default, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackTimer());
-		c->GetTarget()->CastToNPC()->QueryLoot(c);
+		c->GetTarget()->CastToNPC()->ShowQuickStats(c);
 	}
 }
 
@@ -4131,11 +4122,31 @@ void command_save(Client *c, const Seperator *sep){
 		c->Message(CC_Default, "Error: target not a Client/PlayerCorpse");
 }
 
-void command_showstats(Client *c, const Seperator *sep){
-	if (c->GetTarget() != 0)
+void command_showstats(Client *c, const Seperator *sep)
+{
+	if (sep->IsNumber(1) && atoi(sep->arg[1]) == 1) 
+	{
+		if (c->GetTarget() != 0 && c->GetTarget()->IsClient())
+		{
+			c->GetTarget()->CastToClient()->SendQuickStats(c);
+		}
+		else if(c->GetTarget() != 0 && c->GetTarget()->IsNPC())
+		{
+			c->GetTarget()->CastToNPC()->ShowQuickStats(c);
+		}
+		else
+		{
+			c->SendQuickStats(c);
+		}
+	}
+	else if (c->GetTarget() != 0)
+	{
 		c->GetTarget()->ShowStats(c);
+	}
 	else
+	{
 		c->ShowStats(c);
+	}
 }
 
 void command_mystats(Client *c, const Seperator *sep){

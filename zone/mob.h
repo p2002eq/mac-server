@@ -470,7 +470,7 @@ public:
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, int32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
-		bool bFrenzy = false, bool iBuffTic = false);
+		bool bFrenzy = false, bool iBuffTic = false, int32 jolthate = 0);
 	bool RemoveFromHateList(Mob* mob);
 	void SetHate(Mob* other, int32 hate = 0, int32 damage = 0) { hate_list.Set(other,hate,damage);}
 	void HalveAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate > 1 ? in_hate / 2 : 1)); }
@@ -851,7 +851,7 @@ public:
 	bool Charmed() const { return charmed; }
 	static uint32 GetLevelHP(uint8 tlevel);
 	uint32 GetZoneID() const; //for perl
-	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc = false);
+	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool isproc = false);
 	virtual int32 CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible = 0);
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
@@ -1039,7 +1039,6 @@ protected:
 	StatBonuses itembonuses;
 	StatBonuses spellbonuses;
 	StatBonuses aabonuses;
-	StatBonuses discbonuses;
 	uint16 petid;
 	uint16 ownerid;
 	PetType typeofpet;

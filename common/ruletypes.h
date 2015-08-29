@@ -100,6 +100,7 @@ RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
 RULE_BOOL(Character, ForageNeedFoodorDrink, false)
 RULE_BOOL(Character, ForageCommonFoodorDrink, false)
+RULE_BOOL (Character, DisableAAs, true) // Disables server side AA support, since the client allows some AA activity through even with a pre-Luclin expansion set.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )

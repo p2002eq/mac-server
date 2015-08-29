@@ -2274,6 +2274,7 @@ void ZoneDatabase::LoadBuffs(Client *client) {
         buffs[slot_id].ExtraDIChance = ExtraDIChance;
         buffs[slot_id].RootBreakChance = 0;
         buffs[slot_id].UpdateClient = false;
+		buffs[slot_id].isdisc = IsDisc(spell_id);
 
     }
 

@@ -191,6 +191,7 @@ struct Buffs_Struct {
 	bool	persistant_buff;
 	bool	client; //True if the caster is a client
 	bool	UpdateClient;
+	bool	isdisc;
 };
 
 struct StatBonuses {

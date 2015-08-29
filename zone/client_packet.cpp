@@ -582,6 +582,10 @@ void Client::CompleteConnect()
 		}
 	}
 
+	// Disciplines don't survive zoning.
+	if(GetActiveDisc() != 0)
+		FadeDisc();
+
 	/* Sends appearances for all mobs not doing anim_stand aka sitting, looting, playing dead */
 	entity_list.SendZoneAppearance(this);
 
@@ -1480,6 +1484,12 @@ void Client::Handle_OP_AAAction(const EQApplicationPacket *app)
 		return;
 	}
 
+	if(Admin() < 95 && RuleB(Character, DisableAAs))
+	{
+		Message(CC_Yellow, "Alternate Abilities are currently disabled. You will continue to use traditional experience.");
+		return;
+	}
+
 	if (strncmp((char *)app->pBuffer, "on ", 3) == 0)
 	{
 		if (m_epp.perAA == 0)
@@ -1757,6 +1767,9 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Begging, sizeof(BeggingResponse_Struct));
 	BeggingResponse_Struct *brs = (BeggingResponse_Struct*)outapp->pBuffer;
 
+	brs->target = GetTarget()->GetID();
+	brs->begger = GetID();
+	brs->skill = GetSkill(SkillBegging);
 	brs->Result = 0; // Default, Fail.
 	if (GetTarget() == this)
 	{
@@ -1778,6 +1791,11 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 
 	if (RandomChance < ChanceToAttack)
 	{
+		uint8 stringchance = zone->random.Int(0, 1);
+		int stringid = BEG_FAIL1;
+		if(stringchance == 1)
+			stringid = BEG_FAIL2;
+		Message_StringID(CC_Default, stringid);
 		GetTarget()->Attack(this);
 		QueuePacket(outapp);
 		safe_delete(outapp);
@@ -1790,6 +1808,7 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 
 	if (RandomChance < ChanceToBeg)
 	{
+		Message_StringID(CC_Default, BEG_SUCCESS, GetName());
 		brs->Amount = zone->random.Int(1, 10);
 		// This needs some work to determine how much money they can beg, based on skill level etc.
 		if (CurrentSkill < 50)
@@ -1799,8 +1818,24 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 		}
 		else
 		{
-			brs->Result = 3;	// Silver
-			AddMoneyToPP(brs->Amount * 10, false);
+			if(zone->random.Roll(2))
+			{
+				if(brs->Amount == 10)
+				{
+					brs->Result = 1;	// Plat
+					AddMoneyToPP(1000, false);
+				}
+				else
+				{
+					brs->Result = 2;	// Gold
+					AddMoneyToPP(brs->Amount * 100, false);
+				}
+			}
+			else
+			{
+				brs->Result = 3;	// Silver
+				AddMoneyToPP(brs->Amount * 10, false);
+			}
 		}
 
 	}
@@ -2170,8 +2205,16 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
 		}
 
-		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
+		// if we've matched LoH or HT, cast now
+		if (spell_to_cast > 0)	
+		{
 			CastSpell(spell_to_cast, castspell->target_id, castspell->slot);
+
+			if(HasInstantDisc(spell_to_cast))
+			{
+				FadeDisc();
+			}
+		}
 	}
 	else	// MEMORIZED SPELL (first confirm that it's a valid memmed spell slot, then validate that the spell is currently memorized)
 	{
@@ -3115,7 +3158,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 	}
 
 	//We want to let RangedAttack and ThrowingAttack handle the delete, to prevent client hacks.
-	if (inst && inst->GetItem()->ItemType != ItemTypeArrow && inst->GetItem()->ItemType != ItemTypeSmallThrowing && inst->GetItem()->ItemType != ItemTypeLargeThrowing && inst->GetItem()->ItemType != ItemTypeFletchedArrows)
+	if (inst && inst->GetItem()->ItemType != ItemTypeArrow && inst->GetItem()->ItemType != ItemTypeLargeThrowing && inst->GetItem()->ItemType != ItemTypeFletchedArrows)
 		DeleteItemInInventory(alc->from_slot, 1);
 
 	return;
@@ -3225,12 +3268,7 @@ void Client::Handle_OP_Discipline(const EQApplicationPacket *app)
 	if (cds->disc_id > 0)
 	{
 		Log.Out(Logs::General, Logs::Discs, "Attempting to cast Disc %d.", cds->disc_id);
-
-		Client* target = this;
-		if (GetTarget() && GetTarget()->IsClient())
-			target = entity_list.GetClientByID(GetTarget()->GetID());
-
-		UseDiscipline(cds->disc_id, target);
+		UseDiscipline(cds->disc_id);
 	}
 	else
 	{

@@ -2318,7 +2318,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic, int32 jolthate) {
 
 	assert(other != nullptr);
 
@@ -2415,7 +2415,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		&& other &&  (buffs[spellbonuses.ImprovedTaunt[2]].casterid != other->GetID()))
 		hate = (hate*spellbonuses.ImprovedTaunt[1])/100;
 
-	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic);
+	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic, jolthate);
 
 	// then add pet owner if there's one
 	if (owner) { // Other is a pet, add him and it
@@ -3482,7 +3482,9 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		}
 
 		//check stun chances if bashing
-		if (damage > 0 && ((skill_used == SkillBash || skill_used == SkillKick) && attacker)) {
+		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
+			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
+		{
 			// NPCs can stun with their bash/kick as soon as they receive it.
 			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
 			// Clients have a chance to stun if the mob is 56+
