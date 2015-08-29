@@ -2090,7 +2090,9 @@ void Client::LogMerchant(Client* player, Mob* merchant, uint32 quantity, uint32 
 
 bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 	EQApplicationPacket* outapp = 0;
-	if(!fail) {
+	bool returned = false;
+	if(!fail) 
+	{
 		outapp = new EQApplicationPacket(OP_Bind_Wound, sizeof(BindWound_Struct));
 		BindWound_Struct* bind_out = (BindWound_Struct*) outapp->pBuffer;
 		// Start bind
@@ -2102,7 +2104,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 				QueuePacket(outapp);
 				bind_out->type = 0;	//this is the wrong message, dont know the right one.
 				QueuePacket(outapp);
-				return(true);
+				returned = false;
 			}
 			DeleteItemInInventory(bslot, 1, true);	//do we need client update?
 
@@ -2122,6 +2124,7 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 				bind_out->type = 0;
 				bindwound_timer.Disable();
 				bindwound_target = 0;
+				returned = false;
 			}
 			else {
 				// send bindmob "stand still"
@@ -2132,28 +2135,31 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					bindmob->CastToClient()->QueuePacket(outapp);
 					bind_out->type = 0;
 					bind_out->to = 0;
+					returned = false; //Not really a failure, but we shouldn't get a skillup check here.
 				}
 				else if (bindmob->IsAIControlled() && bindmob != this ){
 					bindmob->CastToClient()->Message_StringID(CC_User_Skills, STAY_STILL); // Tell IPC to stand still?
 				}
-				else {
-					Message_StringID(CC_User_Skills, STAY_STILL); // Binding self
-				}
 			}
-		} else {
+		} 
+		else 
+		{
 		// finish bind
 			// disable complete timer
 			bindwound_timer.Disable();
 			bindwound_target = 0;
-			if(!bindmob){
-					// send "bindmob gone" to client
-					bind_out->type = 5; // not in zone
-					QueuePacket(outapp);
-					bind_out->type = 0;
+			if(!bindmob)
+			{
+				// send "bindmob gone" to client
+				bind_out->type = 5; // not in zone
+				QueuePacket(outapp);
+				bind_out->type = 0;
+				returned = false;
 			}
-
-			else {
-				if (!GetFeigned() && (DistanceSquared(bindmob->GetPosition(), m_Position)  <= 400)) {
+			else 
+			{
+				if (!GetFeigned() && (DistanceSquared(bindmob->GetPosition(), m_Position)  <= 400)) 
+				{
 					// send bindmob bind done
 					if(!bindmob->IsAIControlled() && bindmob != this ) {
 
@@ -2161,15 +2167,12 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					else if(bindmob->IsAIControlled() && bindmob != this ) {
 					// Tell IPC to resume??
 					}
-					else {
-					// Binding self
-					}
-					// Send client bind done
 
-					bind_out->type = 1; // Done
+					// Send client bind done
+					bind_out->type = 1;
 					QueuePacket(outapp);
 					bind_out->type = 0;
-					CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+					returned = true;
 
 					int maxHPBonus = spellbonuses.MaxBindWound + itembonuses.MaxBindWound + aabonuses.MaxBindWound;
 
@@ -2184,7 +2187,8 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 					int max_hp = bindmob->GetMaxHP()*max_percent/100;
 
 					// send bindmob new hp's
-					if (bindmob->GetHP() < bindmob->GetMaxHP() && bindmob->GetHP() <= (max_hp)-1){
+					if (bindmob->GetHP() < bindmob->GetMaxHP() && bindmob->GetHP() <= (max_hp)-1)
+					{
 						// 0.120 per skill point, 0.60 per skill level, minimum 3 max 30
 						int bindhps = 3;
 
@@ -2212,16 +2216,20 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 						bindmob->SetHP(chp);
 						bindmob->SendHPUpdate();
 					}
-					else {
+					else 
+					{
 						//I dont have the real, live
 						if(bindmob->IsClient() && bindmob != this)
 							bindmob->CastToClient()->Message(CC_Yellow, "You cannot have your wounds bound above %d%% hitpoints.", max_percent);
 						else
 							Message(CC_Yellow, "You cannot bind wounds above %d%% hitpoints.", max_percent);
+
+						returned = false;
 					}
 					Stand();
 				}
-				else {
+				else 
+				{
 					// Send client bind failed
 					if(bindmob != this)
 						bind_out->type = 6; // They moved
@@ -2230,11 +2238,13 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 
 					QueuePacket(outapp);
 					bind_out->type = 0;
+					returned = false;
 				}
 			}
 		}
 	}
-	else if (bindwound_timer.Enabled()) {
+	else if (bindwound_timer.Enabled()) 
+	{
 		// You moved
 		outapp = new EQApplicationPacket(OP_Bind_Wound, sizeof(BindWound_Struct));
 		BindWound_Struct* bind_out = (BindWound_Struct*) outapp->pBuffer;
@@ -2244,9 +2254,10 @@ bool Client::BindWound(Mob* bindmob, bool start, bool fail){
 		QueuePacket(outapp);
 		bind_out->type = 3;
 		QueuePacket(outapp);
+		return false;
 	}
 	safe_delete(outapp);
-	return true;
+	return returned;
 }
 
 void Client::SetMaterial(int16 in_slot, uint32 item_id) {

@@ -2756,9 +2756,10 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 	{
 		if(!IsDetrimentalSpell(spellid1) && !IsDetrimentalSpell(spellid2))
 		{
-			if(IsBardSong(spellid2) && IsSpeedBuff(spellid1) && IsSpeedBuff(spellid2))
+			//One speed buff is a song, the other is a spell. They do not stack or overwrite each other.
+			if(IsSpeedBuff(spellid1) && IsSpeedBuff(spellid2))
 			{
-				Log.Out(Logs::Detail, Logs::Spells, "%s is a bard movement speed song, it cannot overwrite %s which is a movement speed spell.", sp2.name, sp1.name);
+				Log.Out(Logs::Detail, Logs::Spells, "%s is a movement speed buff, it cannot overwrite %s which is another movement speed buff of a different type (spell vs song).", sp2.name, sp1.name);
 				return -1;
 			}
 			else

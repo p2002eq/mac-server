@@ -261,6 +261,9 @@
 #define WONT_SELL_DEEDS4			1169 	//Get out of here now!
 #define WONT_SELL_DEEDS5			1170 	//I am tolerant by nature..but infidels like you push me past my limit..get out!
 #define WONT_SELL_DEEDS6			1171 	//I cannot abide you or your actions against all that is right..BE GONE!
+#define BEG_FAIL1					1192	//You have the audacity to beg from me??!
+#define BEG_FAIL2					1194	//I Despise beggars, they are not fit to live.
+#define BEG_SUCCESS					1195	//Here %3 take this and LEAVE ME ALONE!
 #define AA_POINT					1197	//point
 #define AA_POINTS					1215	//points
 #define SPELL_FIZZLE_OTHER			1218	//%1's spell fizzles!

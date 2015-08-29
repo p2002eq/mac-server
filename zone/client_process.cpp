@@ -175,7 +175,14 @@ bool Client::Process() {
 			AI_Process();
 
 		if (bindwound_timer.Check() && bindwound_target != 0) {
-			BindWound(bindwound_target, false);
+			if(BindWound(bindwound_target, false))
+			{
+				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Bind wound failed, skillup check skipped.");
+			}
 		}
 
 		if(KarmaUpdateTimer)

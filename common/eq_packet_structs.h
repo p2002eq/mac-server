@@ -2501,11 +2501,15 @@ struct GMSearchCorpse_Struct
 
 struct BeggingResponse_Struct
 {
-/*00*/	uint32	Unknown00;
-/*04*/	uint32	Unknown04;
-/*08*/	uint32	Unknown08;
-/*12*/	uint32	Result;	// 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
-/*16*/	uint32	Amount;
+/*00*/	uint16	target;
+/*02*/	uint16	begger;
+/*04*/	uint8	skill;
+/*05*/	uint8	unknown1;
+/*06*/	int8	Result;	// -1 = Request, 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
+/*07*/	uint8	unknown2;
+/*08*/	uint32	Amount;
+/*12*/	uint32	unknown3;
+/*16*/	uint8	unknown4[2];
 };
 
 struct CorpseDrag_Struct

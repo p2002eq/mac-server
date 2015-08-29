@@ -1198,38 +1198,18 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
+		//Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	const Item_Struct* item = RangeWeapon->GetItem();
 	if(item->ItemType != ItemTypeLargeThrowing && item->ItemType != ItemTypeSmallThrowing) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
+		//Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	Log.Out(Logs::Detail, Logs::Combat, "Throwing %s (%d) at %s", item->Name, item->ID, GetTarget()->GetName());
-
-	if(RangeWeapon->GetCharges() == 1) {
-		//first check ammo
-		const ItemInst* AmmoItem = m_inv[MainAmmo];
-		if(AmmoItem != nullptr && AmmoItem->GetID() == RangeWeapon->GetID()) {
-			//more in the ammo slot, use it
-			RangeWeapon = AmmoItem;
-			ammo_slot = MainAmmo;
-			Log.Out(Logs::Detail, Logs::Combat, "Using ammo from ammo slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
-		} else {
-			//look through our inventory for more
-			int32 aslot = m_inv.HasItem(item->ID, 1, invWherePersonal);
-			if (aslot != INVALID_INDEX) {
-				//the item wont change, but the instance does, not that it matters
-				ammo_slot = aslot;
-				RangeWeapon = m_inv[aslot];
-				Log.Out(Logs::Detail, Logs::Combat, "Using ammo from inventory slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
-			}
-		}
-	}
 
 	int range = item->Range +50/*Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0*/;
 	Log.Out(Logs::Detail, Logs::Combat, "Calculated bow range to be %.1f", range);
@@ -1261,7 +1241,9 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	DoThrowingAttackDmg(GetTarget(), RangeWeapon, item);
 
 	//consume ammo
+	if(item->ItemType != ItemTypeSmallThrowing) //Let Handle_OP_DeleteCharge handle small throwing items, since the client's rules regarding them are complicated.
 		DeleteItemInInventory(ammo_slot, 1, false);
+
 	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
 	CommonBreakInvisible();
 }
