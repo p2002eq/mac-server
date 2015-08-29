@@ -21,37 +21,17 @@
 #define AUTHENTICATION_TIMEOUT	60
 #define INVALID_ID				0xFFFFFFFF
 
-//#include "../common/global_define.h"
-#include "../common/eqemu_logsys.h"
-//#include "../common/types.h"
 #include "../common/dbcore.h"
-//#include "../common/linked_list.h"
-//#include "../common/eq_packet_structs.h"
-//
-//#include <cmath>
-//#include <string>
-//#include <vector>
-//#include <map>
 
-class MySQLRequestResult;
-
-struct VarCache_Struct {
-	char varname[26];
-	char value[0];
-};
-
-class PTimerList;
-
-#pragma pack(1)
-
-class Database : public DBcore {
+class Database : public DBcore
+{
 
 public:
 	Database();
 	Database(const char* host, const char* user, const char* passwd, const char* database, uint32 port);
 	bool Connect(const char* host, const char* user, const char* passwd, const char* database, uint32 port);
 	~Database();
-	bool	ThrowDBError(std::string ErrorMessage, std::string query_title, std::string query);
+	bool ThrowDBError(std::string ErrorMessage, std::string query_title, std::string query);
 
 #pragma region Load Server Setup
 	/**
@@ -77,13 +57,13 @@ public:
 	*/
 	virtual bool SetServerSettings(std::string type, std::string category, std::string defaults);
 	/**
-	* Check if non-legacy settings were written to db.
+	* Check for settings that didn't exist in legacy login.ini setups.
 	*/
-	bool Database::CheckMissingSettings(std::string type);
+	bool CheckExtraSettings(std::string type);
 	/**
 	* Add settings that didn't exist in legacy login.ini setups.
 	*/
-	void Database::InsertMissingSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults);
+	void InsertExtraSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults);
 #pragma endregion
 #pragma region World Server Account Info
 	/**
@@ -135,10 +115,5 @@ public:
 #pragma endregion
 
 private:
-	void DBInitVars();
-	Mutex				Mvarcache;
-	uint32				varcache_max;
-	VarCache_Struct**	varcache_array;
-	uint32				varcache_lastupdate;
 };
 #endif

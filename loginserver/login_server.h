@@ -28,8 +28,7 @@
 #define atoul(str) strtoul(str, nullptr, 10)
 
 /**
-* Login server struct, contains every variable for the server that needs to exist
-* outside the scope of main().
+* Login server struct, contains every variable for the server that needs to exist outside the scope of main().
 */
 struct LoginServer
 {

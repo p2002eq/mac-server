@@ -33,7 +33,7 @@ ServerManager::ServerManager()
 	char error_buffer[TCPConnection_ErrorBufferSize];
 
 	server_log->Log(log_debug, "ServerManager Entered.");
-	server_log->Log(log_database, "ServerManager Got: %s from the database for listen_port.", db.LoadServerSettings("options", "listen_port").c_str());
+	server_log->Trace("ServerManager Got: %s from the database for listen_port.", db.LoadServerSettings("options", "listen_port").c_str());
 
 	int listen_port = atoul(db.LoadServerSettings("options", "listen_port").c_str());
 	tcps = new EmuTCPServer(listen_port, true);
@@ -179,10 +179,13 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	sl->numservers = server_count;
 
 	uint8 showcount = 0x0;
-	if (db.LoadServerSettings("options", "pop_count").c_str() == "1")
-	{
-		showcount = 0xFF;
-	}
+	//if (db.CheckExtraSettings("pop_count"))
+	//{
+	//	if (db.LoadServerSettings("options", "pop_count").c_str() == "1")
+	//	{
+	//		showcount = 0xFF;
+	//	}
+	//}
 	sl->showusercount = showcount;
 
 	unsigned char *data_ptr = outapp->pBuffer;

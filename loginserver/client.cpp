@@ -112,6 +112,18 @@ bool Client::Process()
 				Handle_Banner((const char*)app->pBuffer, app->Size());
 				break;
 			}
+		//case OP_LoginSWG:
+		//	{
+		//		//if (app)->Size() < 20)
+		//		//{
+		//		//	server_log->Log(log_network_error, "Login received but it is too small, discarding.");
+		//		//	break;
+		//		//}
+		//		server_log->Trace("Login received from SWG client.");
+		//		char dump[64];
+		//		app->build_header_dump(dump);
+		//		break;
+		//	}
 		default:
 			{
 				char dump[64];
@@ -359,8 +371,13 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 	outapp->pBuffer;
 	memset(buf, 0, sizeof(buf));
 
-	strcpy(buf, db.LoadServerSettings("options", "ticker").c_str());
-	outapp->size += strlen(db.LoadServerSettings("options", "ticker").c_str());
+	std::string ticker = "Welcome to EQMacEmu";
+	//if (db.CheckExtraSettings("ticker"))
+	//{
+	//	ticker = db.LoadServerSettings("options", "ticker").c_str();
+	//}
+	strcpy(buf, ticker.c_str());
+	outapp->size += strlen(ticker.c_str());
 
 	if (strlen(buf) == 0)
 	{

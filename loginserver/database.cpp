@@ -16,54 +16,16 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-//#include "../common/global_define.h"
-//#include "../common/rulesys.h"
 #include "../common/eq_packet_structs.h"
 #include "../common/extprofile.h"
 #include "../common/string_util.h"
-//#include "../common/random.h"
 #include "database.h"
-//#include "error_log.h"
 #include "login_server.h"
-//
-//#include <ctype.h>
-//#include <iomanip>
-//#include <iostream>
-//#include <map>
-//#include <mysqld_error.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
-//
-// //Disgrace: for windows compile
-//#ifdef _WINDOWS
-//#include <windows.h>
-//#define snprintf	_snprintf
-//#define strncasecmp	_strnicmp
-//#define strcasecmp	_stricmp
-//#else
-//#include "../common/unix.h"
-//#include <netinet/in.h>
-//#include <sys/time.h>
-//#endif
-//
-//
-//#ifdef _WINDOWS
-//#if _MSC_VER > 1700 // greater than 2012 (2013+)
-//#	define _ISNAN_(a) std::isnan(a)
-//#else
-//#	include <float.h>
-//#	define _ISNAN_(a) _isnan(a)
-//#endif
-//#else
-//#	define _ISNAN_(a) std::isnan(a)
-//#endif
 
 extern ErrorLog *server_log;
-extern LoginServer server;
 
-Database::Database() {
-	DBInitVars();
+Database::Database()
+{
 }
 
 /*
@@ -71,7 +33,6 @@ Database::Database() {
 */
 Database::Database(const char* host, const char* user, const char* passwd, const char* database, uint32 port)
 {
-	DBInitVars();
 	Connect(host, user, passwd, database, port);
 }
 
@@ -92,30 +53,18 @@ bool Database::Connect(const char* host, const char* user, const char* passwd, c
 	}
 }
 
-void Database::DBInitVars() {
-	varcache_array = 0;
-	varcache_max = 0;
-	varcache_lastupdate = 0;
-}
-
 /*
 * Close the connection to the database
 */
 Database::~Database()
 {
-	unsigned int x;
-	if (varcache_array) {
-		for (x = 0; x<varcache_max; x++) {
-			safe_delete_array(varcache_array[x]);
-		}
-		safe_delete_array(varcache_array);
-	}
 }
 
 #pragma region Load Server Setup
 std::string Database::LoadServerSettings(std::string category, std::string type)
 {
 	std::string query;
+	std::string value = "";
 
 	query = StringFormat(
 		"SELECT * FROM tblloginserversettings "
@@ -129,13 +78,15 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 
 	auto results = QueryDatabase(query);
 
-	if (!results.Success() || results.RowCount() != 1)
+	if (!results.Success())
 	{
 		server_log->Log(log_debug, "LoadServerSettings Mysql query return no results: %s", query.c_str());
-		return "";
 	}
 	auto row = results.begin();
-	std::string value = row[1];
+	if (row[1] != nullptr)
+	{
+		value = row[1];
+	}
 	return value.c_str();
 }
 #pragma endregion
@@ -363,53 +314,51 @@ bool Database::SetServerSettings(std::string type, std::string category, std::st
 	}
 	return true;
 }
-//// This is not working right, returns false regardless, if changed on line 611 it returns true even if they don't exist.
-bool Database::CheckMissingSettings(std::string type)
+/* This is not working right, returns true regardless....
+ * This is used by the following function as well as line 375 in client.cpp and line 182 in server_manager.cpp
+ * Uncomment those areas to troubleshoot. I left them commented so it would build and run for anyone looking into this.
+ */
+bool Database::CheckExtraSettings(std::string type)
 {
 	std::string query;
 
 	server_log->Log(log_debug, "Entered CheckMissingSettings using type: %s.", type.c_str());
 
-	query = StringFormat("SELECT * FROM tblloginserversettings WHERE type = '%s';", type.c_str());
+	query = StringFormat("SELECT * FROM `tblloginserversettings` WHERE `type` = '%s';", type.c_str());
 
-	auto results = QueryDatabase(query);
+	server_log->Log(log_debug, "CheckMissingSettings query: %s", query.c_str());
 
-	if (!results.Success())
+	auto check_results = QueryDatabase(query);
+
+	if (!check_results.Success())
 	{
-		server_log->Log(log_error, "CheckMissingSettings Mysql check_query returned - not existing type: %s", query.c_str());
-		return true;
-	}
-	else
-	{
-		server_log->Log(log_debug, "tblloginserversettings '%s' entries exist sending continue.", type.c_str());
+		server_log->Log(log_error, "CheckMissingSettings query failed: %s", query.c_str());
 		return false;
 	}
+	server_log->Log(log_debug, "CheckMissingSettings type: %s exists.", type.c_str());
+	return true;
 }
-
-void Database::InsertMissingSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults)
+void Database::InsertExtraSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults)
 {
-	std::string query;
+	CheckExtraSettings(type);
+	//std::string query;
+	//if (!CheckExtraSettings(type))
+	//{
+		//query = StringFormat("INSERT INTO `tblloginserversettings` (`type`, `value`, category, description, defaults)"
+		//						"VALUES('%s', '%s', '%s', '%s', '%s');", 
+		//							type.c_str(),
+		//							value.c_str(),
+		//							category.c_str(),
+		//							description.c_str(),
+		//							defaults.c_str());
 
-	if (!CheckMissingSettings(type))
-	{
-		string query = StringFormat(
-			"INSERT INTO `tblloginserversettings` (`type`, `value`, category, description, defaults)"
-			"VALUES('%s', '%s', '%s', '%s', '%s');", 
-			type.c_str(),
-			value.c_str(),
-			category.c_str(),
-			description.c_str(),
-			defaults.c_str());
+		//auto results = QueryDatabase(query);
 
-		auto results = QueryDatabase(query);
-
-		if (!results.Success())
-		{
-			server_log->Log(log_error, "InsertMissingSettings query failed: %s", query.c_str());
-			return;
-		}
-		return;
-	}
+		//if (!results.Success())
+		//{
+		//	server_log->Log(log_error, "InsertMissingSettings query failed: %s", query.c_str());
+		//}
+	//}
 	return;
 }
 #pragma endregion

@@ -135,20 +135,6 @@ bool WorldServer::Process()
 				Client *c = server.CM->GetClient(utwr->lsaccountid);
 				if(c && c->GetClientVersion() == cv_old)
 				{
-					server_log->Log(log_client, "User2World GetConnection: %u.", c->GetConnection()->GetRemoteIP());
-					server_log->Log(log_client, "User2World GetClient: %u.", server.CM->GetClient(utwr->lsaccountid));
-					server_log->Log(log_client, "User2World GetAccountName: %u.", c->GetAccountName().c_str());
-					server_log->Log(log_client, "User2World GetAccountID: %u.", c->GetAccountID());
-					server_log->Log(log_client, "User2World GetMacClientVersion: %u.", c->GetMacClientVersion());
-					if (c->GetKey().size() != NULL) //Stops here
-					{
-						server_log->Log(log_client, "User2World GetKey has something....");
-					}
-					else
-					{
-						server_log->Log(log_client, "User2World GetKey has nothing....");
-					}
-					server_log->Log(log_client, "User2World GetKey: %i.", c->GetKey());
 					if(utwr->response > 0)
 					{
 						SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID(), c->GetMacClientVersion());
@@ -193,13 +179,13 @@ bool WorldServer::Process()
 					server_log->Log(log_client, "Found sequence and play of %u %u", c->GetPlaySequence(), c->GetPlayServerID());
 					server_log->LogPacket(log_network_trace, (const char*)outapp->pBuffer, outapp->size);
 
-					if(utwr->response > 0)
+					if (utwr->response > 0)
 					{
 						per->Allowed = 1;
 						SendClientAuth(c->GetConnection()->GetRemoteIP(), c->GetAccountName(), c->GetKey(), c->GetAccountID());
 					}
 
-					switch(utwr->response)
+					switch (utwr->response)
 					{
 					case 1:
 						per->Message = 101;
@@ -225,8 +211,8 @@ bool WorldServer::Process()
 					}
 
 					server_log->Trace("Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
-							per->Allowed, per->Sequence, per->ServerNumber, per->Message);
-					server_log->Trace( (const char*)outapp->pBuffer, outapp->size);
+						per->Allowed, per->Sequence, per->ServerNumber, per->Message);
+					server_log->Trace((const char*)outapp->pBuffer, outapp->size);
 
 					if (server_log->DumpOut())
 					{

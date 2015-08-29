@@ -19,7 +19,6 @@
 #define EQEMU_CONFIG_H
 
 #include "../common/global_define.h"
-//#include "login_server.h"
 #include "error_log.h"
 
 #include <list>

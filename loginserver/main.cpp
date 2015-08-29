@@ -19,7 +19,6 @@
 #include "../common/types.h"
 #include "../common/opcodemgr.h"
 #include "../common/eq_stream_factory.h"
-#include "../common/timer.h"
 #include "../common/platform.h"
 #include "../common/crash.h"
 #include "../common/eqemu_logsys.h"
