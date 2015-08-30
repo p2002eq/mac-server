@@ -4356,6 +4356,11 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			Log.Out(Logs::Detail, Logs::Spells, "Resisted spell in fear resistance, had %d chance to resist", fear_resist_bonuses);
 			return 0;
 		}
+		// this spell (nag and vox's aoe) has a chance to hit players with any resist value on Live
+		if (spell_id == SPELL_DRAGON_ROAR && zone->random.Roll(25))
+		{
+			return 100;
+		}
 	}
 
 	if (!CharmTick){
