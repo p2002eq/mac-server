@@ -2947,25 +2947,53 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item){
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*) outapp->pBuffer;
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item)
+{
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(Item_PickPocket_Struct));
+		Item_PickPocket_Struct* pick_out = (Item_PickPocket_Struct*) outapp->pBuffer;
 		pick_out->coin = amt;
 		pick_out->from = GetID();
 		pick_out->to = from->GetID();
 		pick_out->myskill = GetSkill(SkillPickPockets);
+		pick_out->reply = 0;
+		if(item)
+			strncpy(pick_out->itemname, item->Name, 32);
+		else
+			pick_out->itemname[0] = '\0';
 
 		if((type >= PickPocketPlatinum) && (type <= PickPocketCopper) && (amt == 0))
 			type = PickPocketFailed;
 
 		pick_out->type = type;
-		if(item)
-			strcpy(pick_out->itemname, item->Name);
-		else
-			pick_out->itemname[0] = '\0';
-		//if we do not send this packet the client will lock up and require the player to relog.
+
 		QueuePacket(outapp);
 		safe_delete(outapp);
+}
+
+bool Client::SendPickPocketItem(ItemInst* inst)
+{
+	bool stacked = TryStacking(inst);
+	int32 freeslotid = 0;
+
+	if (!stacked)
+	{
+		freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size);
+
+		//make sure we are not completely full...
+		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
+			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) 
+			{
+				Message(CC_Red, "You do not have room for any more items.");
+				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
+				return false;
+			}
+		}
+
+		PutItemInInventory(freeslotid, *inst);
+		SendItemPacket(freeslotid, inst, ItemPacketTrade);
+	}
+
+	return true;
 }
 
 bool Client::IsDiscovered(uint32 itemid) {

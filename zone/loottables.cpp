@@ -647,3 +647,19 @@ void NPC::RemoveItem(ServerLootItem_Struct* item_data)
 		return;
 	}
 }
+
+bool NPC::IsEquipped(int16 itemid)
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	for (; cur != end; ++cur) {
+		ServerLootItem_Struct* sitem = *cur;
+		if (sitem && sitem->item_id == itemid && sitem->equip_slot <= MainAmmo) 
+		{
+			return true;
+		}
+	}
+
+	return false;
+}

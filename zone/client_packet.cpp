@@ -2690,7 +2690,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
-			if(zone->random.Roll(50))
+			if(zone->random.Roll(73))
 			{
 				CheckIncreaseSkill(SkillSwimming, nullptr, -20);
 			}
@@ -5896,54 +5896,64 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		database.SetMQDetectionFlag(this->AccountName(), this->GetName(), "OP_PickPocket was sent again too quickly.", zone->GetShortName());
 		return;
 	}
+
 	PickPocket_Struct* pick_in = (PickPocket_Struct*)app->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
+	sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
 
 	Mob* victim = entity_list.GetMob(pick_in->to);
 	if (!victim)
+	{
+		pick_out->coin = 0;
+		pick_out->from = 0;
+		pick_out->to = GetID();
+		pick_out->myskill = GetSkill(SkillPickPockets);
+		pick_out->type = 0;
+		QueuePacket(outapp);
+		safe_delete(outapp);
 		return;
+	}
 
 	p_timers.Start(pTimerBeggingPickPocket, 8);
-	if (victim == this){
-		Message(0, "You catch yourself red-handed.");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
-		QueuePacket(outapp);
-		safe_delete(outapp);
-	}
-	else if (victim->GetOwnerID()){
-		Message(0, "You cannot steal from pets!");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
-		QueuePacket(outapp);
-		safe_delete(outapp);
-	}
-	else if (victim->IsNPC()){
+
+	if (victim->IsNPC())
+	{
 		victim->CastToNPC()->PickPocket(this);
+		safe_delete(outapp);
+		return;
 	}
-	else{
-		Message(0, "Stealing from clients not yet supported.");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
+
+	pick_out->coin = 0;
+	pick_out->from = victim->GetID();
+	pick_out->to = GetID();
+	pick_out->myskill = GetSkill(SkillPickPockets);
+	pick_out->type = 0;
+
+	if (victim == this){
+		Message_StringID(CC_User_Skills, STEAL_FROM_SELF);
 		QueuePacket(outapp);
 		safe_delete(outapp);
+		return;
+	}
+	else if(victim->IsClient() || (victim->GetOwner() && victim->GetOwner()->IsClient()))
+	{
+		Message_StringID(CC_User_Skills, STEAL_PLAYERS);
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
+	}
+	else if(victim->IsCorpse())
+	{
+		Message_StringID(CC_User_Skills, STEAL_CORPSES);
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
+	}
+	else
+	{
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
 	}
 }
 

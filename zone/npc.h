@@ -397,6 +397,7 @@ public:
 	void DeleteQuestLoot(int16 itemid1, int16 itemid2 = 0, int16 itemid3 = 0, int16 itemid4 = 0);
 	bool IsBoat();
 	void ShowQuickStats(Client* client);
+	bool IsEquipped(int16 itemid);
 
 protected:
 

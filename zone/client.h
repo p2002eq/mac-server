@@ -343,6 +343,7 @@ public:
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
 	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
+	bool SendPickPocketItem(ItemInst* inst);
 
 	inline const char* GetLastName() const { return lastname; }
 
