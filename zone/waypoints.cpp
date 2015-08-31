@@ -1191,7 +1191,7 @@ void ZoneDatabase::AssignGrid(Client *client, int grid, int spawn2id) {
 		return;
 	}
 
-	client->Message(0, "Grid assign: spawn2 id = %d updated", spawn2id);
+	client->Message(CC_Default, "Grid assign: spawn2 id = %d updated", spawn2id);
 }
 
 

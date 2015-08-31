@@ -443,7 +443,7 @@ void NPC::ClearItemList() {
 
 void NPC::QueryLoot(Client* to) {
 	int x = 0;
-	to->Message(0, "Coin: %ip %ig %is %ic", platinum, gold, silver, copper);
+	to->Message(CC_Default, "Coin: %ip %ig %is %ic", platinum, gold, silver, copper);
 
 	ItemList::iterator cur, end;
 	cur = itemlist.begin();
@@ -460,7 +460,7 @@ void NPC::QueryLoot(Client* to) {
 			Log.Out(Logs::General, Logs::Error, "Database error, invalid item");
 		x++;
 	}
-	to->Message(0, "%i items on %s.", x, GetName());
+	to->Message(CC_Default, "%i items on %s.", x, GetName());
 }
 
 void NPC::AddCash(uint16 in_copper, uint16 in_silver, uint16 in_gold, uint16 in_platinum) {
@@ -891,17 +891,17 @@ NPC* NPC::SpawnNPC(const char* spawncommand, const glm::vec4& position, Client* 
 
 		if (client) {
 			// Notify client of spawn data
-			client->Message(0, "New spawn:");
-			client->Message(0, "Name: %s", npc->name);
-			client->Message(0, "Race: %u", npc->race);
-			client->Message(0, "Level: %u", npc->level);
-			client->Message(0, "Material: %u", npc->texture);
-			client->Message(0, "Current/Max HP: %i", npc->max_hp);
-			client->Message(0, "Gender: %u", npc->gender);
-			client->Message(0, "Class: %u", npc->class_);
-			client->Message(0, "Weapon Item Number: %u/%u", npc->d_melee_texture1, npc->d_melee_texture2);
-			client->Message(0, "MerchantID: %u", npc->MerchantType);
-			client->Message(0, "Bodytype: %u", npc->bodytype);
+			client->Message(CC_Default, "New spawn:");
+			client->Message(CC_Default, "Name: %s", npc->name);
+			client->Message(CC_Default, "Race: %u", npc->race);
+			client->Message(CC_Default, "Level: %u", npc->level);
+			client->Message(CC_Default, "Material: %u", npc->texture);
+			client->Message(CC_Default, "Current/Max HP: %i", npc->max_hp);
+			client->Message(CC_Default, "Gender: %u", npc->gender);
+			client->Message(CC_Default, "Class: %u", npc->class_);
+			client->Message(CC_Default, "Weapon Item Number: %u/%u", npc->d_melee_texture1, npc->d_melee_texture2);
+			client->Message(CC_Default, "MerchantID: %u", npc->MerchantType);
+			client->Message(CC_Default, "Bodytype: %u", npc->bodytype);
 		}
 
 		return npc;
@@ -1168,7 +1168,7 @@ uint32 ZoneDatabase::AddNPCTypes(const char* zone, uint32 zone_version, Client *
     npc_type_id = results.LastInsertedID();
 
 	if(client)
-        client->Message(0, "%s npc_type ID %i created successfully!", numberlessName, npc_type_id);
+        client->Message(CC_Default, "%s npc_type ID %i created successfully!", numberlessName, npc_type_id);
 
 	return 1;
 }

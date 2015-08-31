@@ -202,7 +202,7 @@ void Client::ActivateAA(aaID activate){
 		break;
 	case aaTargetPet:
 		if (GetPet() == nullptr) {
-			Message(0, "A pet is required for this skill.");
+			Message(CC_Default, "A pet is required for this skill.");
 			return;
 		}
 		target_id = GetPetID();
@@ -395,14 +395,14 @@ void Client::HandleAAAction(aaID activate) {
 			}
 			//do we really need to cast a spell?
 
-			Message(0, "You call your pet to your side.");
+			Message(CC_Default, "You call your pet to your side.");
 			GetPet()->WipeHateList();
 			GetPet()->GMMove(GetX(), GetY(), GetZ());
 			if (activate_val > 1)
 				entity_list.ClearFeignAggro(GetPet());
 		}
 		else {
-			Message(0, "You have no pet to call.");
+			Message(CC_Default, "You have no pet to call.");
 		}
 		break;
 
@@ -470,7 +470,7 @@ void Client::HandleAAAction(aaID activate) {
 		break;
 	case aaTargetPet:
 		if (GetPet() == nullptr) {
-			Message(0, "A pet is required for this skill.");
+			Message(CC_Default, "A pet is required for this skill.");
 			return;
 		}
 		target_id = GetPetID();
@@ -532,7 +532,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	if (npc_type == nullptr) {
 		//log write
 		Log.Out(Logs::General, Logs::Error, "Unknown npc type for swarm pet spell id: %d", spell_id);
-		Message(0, "Unable to find pet!");
+		Message(CC_Default, "Unable to find pet!");
 		return;
 	}
 
@@ -635,7 +635,7 @@ void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_overrid
 	if (npc_type == nullptr) {
 		//log write
 		Log.Out(Logs::General, Logs::Error, "Unknown npc type for swarm pet type id: %d", typesid);
-		Message(0, "Unable to find pet!");
+		Message(CC_Default, "Unable to find pet!");
 		return;
 	}
 
@@ -1322,11 +1322,11 @@ void Client::InspectBuffs(Client* Inspector, int Rank)
 		if (buffs[i].spellid != SPELL_UNKNOWN)
 		{
 			if (Rank == 1)
-				Inspector->Message(0, "%s", spells[buffs[i].spellid].name);
+				Inspector->Message(CC_Default, "%s", spells[buffs[i].spellid].name);
 			else
 			{
 				if (spells[buffs[i].spellid].buffdurationformula == DF_Permanent)
-					Inspector->Message(0, "%s (Permanent)", spells[buffs[i].spellid].name);
+					Inspector->Message(CC_Default, "%s (Permanent)", spells[buffs[i].spellid].name);
 				else {
 					char *TempString = nullptr;
 					MakeAnyLenString(&TempString, "%.1f", static_cast<float>(buffs[i].ticsremaining) / 10.0f);

@@ -246,7 +246,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_
 		uint32 slottest = 22; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
-			Message(0, "This item is not equipable at slot %u - moving to cursor.", to_slot);
+			Message(CC_Default, "This item is not equipable at slot %u - moving to cursor.", to_slot);
 			Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to equip an item unusable in slot %u - moved to cursor.\n(Item: %u)\n",
 				GetName(), account_name, to_slot, item->ID);
 
