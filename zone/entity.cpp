@@ -4365,3 +4365,22 @@ bool EntityList::TransferPrimaryAggro(Mob *other)
 	}
 	return false;
 }
+
+void EntityList::SendMerchantEnd(Mob* merchant)
+{
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		Client *c = it->second;
+
+		if (!c)
+			continue;
+
+		if(c->GetMerchantSession() == merchant->GetID())
+		{
+			c->SendMerchantEnd();
+		}
+		++it;
+	}
+
+	return;
+}

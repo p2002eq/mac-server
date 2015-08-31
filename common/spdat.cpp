@@ -1251,3 +1251,20 @@ bool IsDisc(uint16 spell_id)
 		return false;
 }
 
+bool IsShrinkSpell(uint16 spell_id)
+{
+	int j;
+
+	if (!IsValidSpell(spell_id))
+		return false;
+
+	for (j = 0; j < EFFECT_COUNT; j++)
+	{
+		if (spells[spell_id].effectid[j] == SE_ModelSize && spells[spell_id].base[j] < 100)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}

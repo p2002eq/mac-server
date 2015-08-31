@@ -6999,14 +6999,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ShopEnd(const EQApplicationPacket *app)
 {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopEndConfirm, 2);
-	outapp->pBuffer[0] = 0x0a;
-	outapp->pBuffer[1] = 0x66;
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	Save();
-
-	return;
+	SendMerchantEnd();
 }
 
 void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app) 
@@ -7520,6 +7513,8 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 
 	if (action == 1)
 		BulkSendMerchantInventory(merchantid, tmp->GetNPCTypeID());
+
+	MerchantSession = tmp->GetID();
 
 	return;
 }
@@ -8345,9 +8340,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				else
 					Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_Trader: Null Client Pointer");
 
-				EQApplicationPacket empty(OP_ShopEndConfirm);
-				QueuePacket(&empty);
-				Save();
+				SendMerchantEnd();
 			}
 		}
 		else {

@@ -5281,3 +5281,14 @@ bool Client::HasInstantDisc(uint16 skill_type)
 
 	return false;
 }
+
+void Client::SendMerchantEnd()
+{
+	MerchantSession = 0;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopEndConfirm, 2);
+	outapp->pBuffer[0] = 0x0a;
+	outapp->pBuffer[1] = 0x66;
+	QueuePacket(outapp);
+	safe_delete(outapp);
+	Save();
+}

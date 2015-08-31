@@ -910,5 +910,6 @@ bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
 bool IsRainSpell(uint16 spell_id);
 bool IsDisc(uint16 spell_id);
+bool IsShrinkSpell(uint16 spell_id);
 
 #endif

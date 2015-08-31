@@ -1314,18 +1314,20 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 			0x12);
 		safe_delete_array(link2);
 
-		//Don't send messages when looting your own corpse.
-		if (GetCharID() != client->CharacterID())
+		if (!IsPlayerCorpse()) 
+		{
 			client->Message_StringID(MT_LootMessages, LOOTED_MESSAGE, link);
 
-		if (!IsPlayerCorpse()) {
 			Group *g = client->GetGroup();
-			if (g != nullptr) {
+			if (g != nullptr) 
+			{
 				g->GroupMessage_StringID(client, MT_LootMessages, OTHER_LOOTED_MESSAGE, client->GetName(), link);
 			}
-			else {
+			else
+			{
 				Raid *r = client->GetRaid();
-				if (r != nullptr) {
+				if (r != nullptr) 
+				{
 					r->RaidMessage_StringID(client, MT_LootMessages, OTHER_LOOTED_MESSAGE, client->GetName(), link);
 				}
 			}

@@ -963,6 +963,10 @@ public:
 	void DelAssistCap() { --npc_assist_cap; }
 	void ResetAssistCap() { npc_assist_cap = 0; }
 
+	bool IsZomm() { return iszomm; }
+	void SetMerchantSession(uint16 value) { MerchantSession = value; }
+	uint16 GetMerchantSession() { return MerchantSession; }
+
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
 	void AggroPet(Mob* attacker);
@@ -1307,6 +1311,7 @@ protected:
 	bool PrimaryAggro;
 	bool AssistAggro;
 	uint8 npc_assist_cap;
+	uint16 MerchantSession;
 
 private:
 	void _StopSong(); //this is not what you think it is

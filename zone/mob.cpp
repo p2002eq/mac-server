@@ -421,6 +421,7 @@ Mob::Mob(const char* in_name,
 	adjustedz = 0;
 	PrimaryAggro = false;
 	AssistAggro = false;
+	MerchantSession = 0;
 }
 
 Mob::~Mob()

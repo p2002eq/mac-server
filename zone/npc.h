@@ -236,7 +236,7 @@ public:
 	uint32	MerchantType;
 	bool	merchant_open;
 	inline void	MerchantOpenShop() { merchant_open = true; }
-	inline void	MerchantCloseShop() { merchant_open = false; }
+	inline void	MerchantCloseShop() { entity_list.SendMerchantEnd(this); merchant_open = false; }
 	inline bool	IsMerchantOpen() { return merchant_open; }
 	void	Depop(bool StartSpawnTimer = false);
 	void	Stun(int duration, Mob* attacker);
