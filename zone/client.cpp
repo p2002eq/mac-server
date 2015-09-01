@@ -1388,16 +1388,6 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		ns->spawn.equipment[MaterialWrist]= item->Material;
 		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
 	}
-
-	/*
-	// non-live behavior
-	if ((inst = m_inv[SLOT_BRACER02]) && inst->IsType(ItemClassCommon)) {
-		item = inst->GetItem();
-		ns->spawn.equipment[MaterialWrist]= item->Material;
-		ns->spawn.colors[MaterialWrist].color	= GetEquipmentColor(MaterialWrist);
-	}
-	*/
-
 	if ((inst = m_inv[MainChest]) && inst->IsType(ItemClassCommon)) {
 		item = inst->GetItem();
 		ns->spawn.equipment[MaterialChest]	= item->Material;
@@ -5291,4 +5281,40 @@ void Client::SendMerchantEnd()
 	QueuePacket(outapp);
 	safe_delete(outapp);
 	Save();
+}
+
+void Client::Consent(uint8 permission, char name[64], uint32 offline_charid)
+{
+	uint32 charid = CharacterID();
+	if(offline_charid > 0)
+		charid = offline_charid;
+
+	if(permission == 1)
+	{
+		//Add Consent
+		if(offline_charid == 0)
+			consent_list.push_back(name);
+		database.SaveCharacterConsent(charid, name);
+	}
+	else
+	{
+		//Remove Consent
+		if(offline_charid == 0)
+			consent_list.remove(name);
+		database.DeleteCharacterConsent(charid, name);
+	}
+}
+
+bool Client::LoadCharacterConsent()
+{
+	consent_list.clear();
+	std::string query = StringFormat("SELECT consented_name FROM `character_consent` WHERE `id` = %u GROUP by consented_name", CharacterID());
+	auto results = database.QueryDatabase(query);
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{
+		char name[64];
+		strncpy(name, row[0], 64);
+		consent_list.push_back(name);
+	}
+	return true;
 }

@@ -2659,6 +2659,11 @@ struct ZoneFlags_Struct {
 	uint8  key;
 };
 
+struct ConsentDenied_Struct {
+	char oname[64];
+	uint32 ccharid;
+};
+
 typedef std::list<ServerLootItem_Struct*> ItemList;
 
 // Restore structure packing to default

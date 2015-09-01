@@ -1336,6 +1336,12 @@ bool ZoneDatabase::SaveCharacterSpell(uint32 character_id, uint32 spell_id, uint
 	return true;
 }
 
+bool ZoneDatabase::SaveCharacterConsent(uint32 character_id, char name[64]){
+	std::string query = StringFormat("REPLACE INTO `character_consent` (id, consented_name) VALUES (%u, '%s')", character_id, name);
+	QueryDatabase(query);
+	return true;
+}
+
 bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
 	std::string query = StringFormat("DELETE FROM `character_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
 	QueryDatabase(query);
@@ -1356,6 +1362,12 @@ bool ZoneDatabase::DeleteCharacterDye(uint32 character_id){
 
 bool ZoneDatabase::DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
 	std::string query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
+	QueryDatabase(query);
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterConsent(uint32 character_id, char name[64]){
+	std::string query = StringFormat("DELETE FROM `character_consent` WHERE `consented_name` = '%s' AND `id` = %u", name, character_id);
 	QueryDatabase(query);
 	return true;
 }

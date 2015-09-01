@@ -1436,7 +1436,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 				is_corpse_changed = true;
 			}
 			else {
-				client->Message(CC_Default, "Corpse is too far away.");
+				client->Message_StringID(CC_Default, CORPSE_TOO_FAR);
 				return false;
 			}
 		}
@@ -1451,14 +1451,14 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 						is_corpse_changed = true;
 					}
 					else {
-						client->Message(CC_Default, "Corpse is too far away.");
+						client->Message_StringID(CC_Default, CORPSE_TOO_FAR);
 						return false;
 					}
 					consented = true;
 				}
 			}
 			if(!consented) {
-				client->Message(CC_Default, "You do not have permission to move this corpse.");
+				client->Message_StringID(CC_Default, CONSENT_NONE);
 				return false;
 			}
 		}

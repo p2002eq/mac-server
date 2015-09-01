@@ -397,6 +397,8 @@ void Client::CompleteConnect()
 	EnteringMessages(this);
 	ZoneFlags.Clear();
 	LoadZoneFlags(&ZoneFlags);
+	consent_list.clear();
+	LoadCharacterConsent();
 
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
@@ -2773,22 +2775,43 @@ void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Consent(const EQApplicationPacket *app)
 {
-	if(app->size<64){
+	if(app->size<64)
+	{
 		Consent_Struct* c = (Consent_Struct*)app->pBuffer;
-		if(strcmp(c->name, GetName()) != 0) {
-			ServerPacket* pack = new ServerPacket(ServerOP_Consent, sizeof(ServerOP_Consent_Struct));
-			ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
-			strcpy(scs->grantname, c->name);
-			strcpy(scs->ownername, GetName());
-			scs->message_string_id = 0;
-			scs->permission = 1;
-			scs->zone_id = zone->GetZoneID();
-			scs->instance_id = zone->GetInstanceID();
-			//consent_list.push_back(scs->grantname);
-			worldserver.SendPacket(pack);
-			safe_delete(pack);
+
+		std::string cname = c->name;
+		std::transform(cname.begin(), cname.end(), cname.begin(), ::tolower);
+		std::string oname = GetName();
+		std::transform(oname.begin(), oname.end(), oname.begin(), ::tolower);
+
+		if(cname != oname)
+		{
+			//Offline consent
+			if(database.GetAccountIDByChar(c->name) == AccountID())
+			{
+				uint32 charid = database.GetCharacterID(c->name);
+				char ownername[64];
+				strcpy(ownername, GetName());
+				Consent(1, ownername, charid);
+				Message_StringID(CC_Default, CONSENT_GIVEN, c->name);
+			}
+			else
+			{
+				ServerPacket* pack = new ServerPacket(ServerOP_Consent, sizeof(ServerOP_Consent_Struct));
+				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
+				strcpy(scs->grantname, c->name);
+				strcpy(scs->ownername, GetName());
+				scs->message_string_id = 0;
+				scs->permission = 1;
+				scs->zone_id = zone->GetZoneID();
+				scs->instance_id = zone->GetInstanceID();
+				//consent_list.push_back(scs->grantname);
+				worldserver.SendPacket(pack);
+				safe_delete(pack);
+			}
 		}
-		else {
+		else 
+		{
 			Message_StringID(CC_Default, CONSENT_YOURSELF);
 		}
 	}

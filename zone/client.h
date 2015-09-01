@@ -785,6 +785,8 @@ public:
 	void EnteringMessages(Client* client);
 	void SendRules(Client* client);
 	std::list<std::string> consent_list;
+	void Consent(uint8 permission, char name[64], uint32 offline_charid = 0);
+	bool LoadCharacterConsent();
 
 	//Anti-Cheat Stuff
 	uint32 m_TimeSinceLastPositionCheck;

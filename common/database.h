@@ -404,6 +404,8 @@ public:
 	uint8	GetAgreementFlag(uint32 acctid);
 	void	SetAgreementFlag(uint32 acctid);
 	uint16	GetExpansion(uint32 acctid);
+	void	ClearAllConsented();
+	void	ClearAllExpiredConsented(LinkedList<ConsentDenied_Struct*>* purged);
 
 	/*
 	* Groups

@@ -519,6 +519,26 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "quantity column created.");
 	}
+
+	std::string check_queryd = StringFormat("SHOW TABLES LIKE 'character_consent'");
+	auto resultsd = QueryDatabase(check_queryd);
+	if (resultsd.RowCount() == 0){
+		std::string create_queryd = StringFormat(
+			"CREATE TABLE `character_consent` (						"
+			"`id` int(11) unsigned NOT NULL auto_increment,			"
+			"`consented_name` varchar(64) NOT NULL default '',		"
+			"PRIMARY KEY  (`id`,`consented_name`),					"
+			"KEY `id` (`id`)										"
+			") ENGINE=InnoDB DEFAULT CHARSET=latin1;				"
+			);
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_consent...");
+		auto create_resultsd = QueryDatabase(create_queryd);
+		if (!create_resultsd.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating character_consent table.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "character_consent table created.");
+	}
 	return true;
 }
 

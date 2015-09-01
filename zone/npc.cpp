@@ -1310,7 +1310,7 @@ void NPC::PickPocket(Client* thief)
 
 	//Determine wheter to steal money or an item.
 	bool no_coin = ((money[0] + money[1] + money[2] + money[3]) == 0);
-	bool steal_item = (steal_skill > zone->random.Int(1,210) || no_coin);
+	bool steal_item = (steal_skill > zone->random.Int(1,250) || no_coin);
 	if (steal_item)
 	{
 		int x = 0;
@@ -1378,10 +1378,16 @@ void NPC::PickPocket(Client* thief)
 		if(maxamt < 1)
 			maxamt = 1;
 	
-		uint32 amt = zone->random.Int(1, maxamt);
-		uint8 random_coin = zone->random.Int(0,3);
-		uint8 steal_type = 0;
+		uint8 mincoin = 0;
+		if(steal_skill < 125)
+			mincoin = 1;
+		if(steal_skill < 60)
+			mincoin = 2;
 
+		uint32 amt = zone->random.Int(1, maxamt);
+		uint8 random_coin = zone->random.Int(mincoin,3);
+
+		uint8 steal_type = 3;
 		if(money[random_coin] > 0 && amt > 0)
 		{
 			steal_type = random_coin;
