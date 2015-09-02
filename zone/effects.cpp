@@ -1069,7 +1069,6 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			if (!caster->IsAttackAllowed(curmob, true))
 			{
 				Log.Out(Logs::Detail, Logs::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
-				caster->Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
 				continue;
 			}
 			if (!center->CheckLosFN(curmob))
