@@ -1642,8 +1642,8 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
 
 	const std::string query = "SELECT loottable.id, loottable.mincash, loottable.maxcash, loottable.avgcoin, "
                             "loottable_entries.lootdrop_id, loottable_entries.multiplier, loottable_entries.droplimit, "
-                            "loottable_entries.mindrop, loottable_entries.probability FROM loottable LEFT JOIN loottable_entries "
-                            "ON loottable.id = loottable_entries.loottable_id ORDER BY id";
+                            "loottable_entries.mindrop, loottable_entries.probability, loottable_entries.multiplier_min FROM "
+							"loottable LEFT JOIN loottable_entries ON loottable.id = loottable_entries.loottable_id ORDER BY id";
     auto results = QueryDatabase(query);
     if (!results.Success()) {
         return;
@@ -1677,6 +1677,7 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
         lt->Entries[current_entry].droplimit = static_cast<uint8>(atoi(row[6]));
         lt->Entries[current_entry].mindrop = static_cast<uint8>(atoi(row[7]));
         lt->Entries[current_entry].probability = static_cast<float>(atof(row[8]));
+		lt->Entries[current_entry].multiplier_min = static_cast<float>(atoi(row[9]));
 
         ++(lt->NumEntries);
         ++current_entry;
