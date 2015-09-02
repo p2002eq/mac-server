@@ -1677,7 +1677,7 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
         lt->Entries[current_entry].droplimit = static_cast<uint8>(atoi(row[6]));
         lt->Entries[current_entry].mindrop = static_cast<uint8>(atoi(row[7]));
         lt->Entries[current_entry].probability = static_cast<float>(atof(row[8]));
-		lt->Entries[current_entry].multiplier_min = static_cast<float>(atoi(row[9]));
+		lt->Entries[current_entry].multiplier_min = static_cast<uint8>(atoi(row[9]));
 
         ++(lt->NumEntries);
         ++current_entry;
