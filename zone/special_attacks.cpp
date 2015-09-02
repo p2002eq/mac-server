@@ -840,7 +840,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		}
 	}
 
-	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
+	float range = RangeItem->Range + AmmoItem->Range + 7.5f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	Log.Out(Logs::Detail, Logs::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
@@ -873,7 +873,8 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	int ChanceAvoidConsume = aabonuses.ConsumeProjectile + itembonuses.ConsumeProjectile + spellbonuses.ConsumeProjectile;
 
 	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && zone->random.Int(0,99) > ChanceAvoidConsume)){ 
-		DeleteItemInInventory(ammo_slot, 1, false);
+		//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs.
+		//DeleteItemInInventory(ammo_slot, 1, false);
 		Log.Out(Logs::Detail, Logs::Combat, "Consumed one arrow from slot %d", ammo_slot);
 	} else {
 		Log.Out(Logs::Detail, Logs::Combat, "Endless Quiver prevented ammo consumption.");
@@ -1235,14 +1236,12 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 		return;
 	}
 	//send item animation, also does the throw animation
-	//SendItemAnimation(GetTarget(), item, SkillThrowing);
 	ProjectileAnimation(GetTarget(), item->ID,true,-1,-1,-1,-1,SkillThrowing);
 
 	DoThrowingAttackDmg(GetTarget(), RangeWeapon, item);
 
-	//consume ammo
-	if(item->ItemType != ItemTypeSmallThrowing) //Let Handle_OP_DeleteCharge handle small throwing items, since the client's rules regarding them are complicated.
-		DeleteItemInInventory(ammo_slot, 1, false);
+	//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs. 
+	//DeleteItemInInventory(ammo_slot, 1, false);
 
 	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
 	CommonBreakInvisible();
