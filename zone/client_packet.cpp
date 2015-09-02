@@ -3180,8 +3180,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 			m_pp.intoxication = 200;
 	}
 
-	//We want to let RangedAttack and ThrowingAttack handle the delete, to prevent client hacks.
-	if (inst && inst->GetItem()->ItemType != ItemTypeArrow && inst->GetItem()->ItemType != ItemTypeLargeThrowing && inst->GetItem()->ItemType != ItemTypeFletchedArrows)
+	if (inst)
 		DeleteItemInInventory(alc->from_slot, 1);
 
 	return;
