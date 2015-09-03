@@ -120,7 +120,8 @@
 #define MEND_FAIL					352		//You have failed to mend your wounds.
 #define LOOT_LORE_ERROR				371		//You cannot loot this Lore Item. You already have one.
 #define PICK_LORE					379		//You cannot pick up a lore item you already possess.
-#define CONSENT_DENIED				390		//You do not have consent to summon that corpse.
+#define	CORPSE_TOO_FAR				389		//The corpse is too far away to summon.
+#define CONSENT_NONE				390		//You do not have consent to summon that corpse.
 #define DISCIPLINE_RDY				393		//You are ready to use a new discipline now.
 #define CONSENT_INVALID_NAME		397		//Not a valid consent name.
 #define CONSENT_NPC					398		//You cannot consent NPC\'s.
@@ -262,6 +263,7 @@
 #define WONT_SELL_DEEDS5			1170 	//I am tolerant by nature..but infidels like you push me past my limit..get out!
 #define WONT_SELL_DEEDS6			1171 	//I cannot abide you or your actions against all that is right..BE GONE!
 #define BEG_FAIL1					1192	//You have the audacity to beg from me??!
+#define PP_FAIL						1193	//Stop Thief! <%3>
 #define BEG_FAIL2					1194	//I Despise beggars, they are not fit to live.
 #define BEG_SUCCESS					1195	//Here %3 take this and LEAVE ME ALONE!
 #define AA_POINT					1197	//point
@@ -289,6 +291,8 @@
 #define REZZ_ALREADY_PENDING		1379	//You were unable to restore the corpse to life, but you may have success with a later attempt.
 #define IN_USE						1406	//Someone else is using that. Try again later.
 #define DUEL_FLED					1408	//%1 has defeated %2 in a duel to the death! %3 has fled like a cowardly dog!
+#define CONSENT_GIVEN				1427	//You have given %1 permission to drag your corpse.
+#define CONSENT_DENIED				1428	//You have denied %1 permission to drag your corpse.
 #define MEMBER_OF_YOUR_GUILD		1429
 #define OFFICER_OF_YOUR_GUILD		1430
 #define LEADER_OF_YOUR_GUILD		1431
@@ -302,6 +306,7 @@
 #define PLAYER_CHARMED				1461	//You lose control of yourself!
 #define TRADER_BUSY					1468	//That Trader is currently with a customer. Please wait until their transaction is finished.
 #define SENSE_CORPSE_DIRECTION		1563	//You sense a corpse in this direction.
+#define CONSENT_BEEN_DENIED			2103	//You have been denied permission to drag %1's corpse.
 #define QUEUED_TELL					2458	//[queued]
 #define QUEUE_TELL_FULL				2459	//[zoing and queue is full]
 #define SUSPEND_MINION_UNSUSPEND	3267	//%1 tells you, 'I live again...'
@@ -376,6 +381,10 @@
 #define	CAMP_ABANDON				12290	//You abandon your preparations to camp.
 #define TALKING_TO_SELF				12323	//Talking to yourself again?
 #define NOT_IN_CONTROL				12368	//You do not have control of yourself right now.
+#define STEAL_FROM_SELF				12409	//You can't seem to steal from yourself for some reason...
+#define STEAL_CORPSES				12406	//You must target a player to steal from first.  You may not steal from corpses.
+#define STEAL_PLAYERS				12410	//You may not steal from a person who does not follow the ways of chaos....
+#define STEAL_OUTSIDE_LEVEL			12413	//You can only steal from others in your level range.
 #define TOO_DISTRACTED				12440   //You are too distracted to cast a spell now!
 #define ALREADY_CASTING				12442	//You are already casting a spell!
 #define SHIMMERS_BRIEFLY			12444	//Your %1 shimmers briefly.

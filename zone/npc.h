@@ -236,7 +236,7 @@ public:
 	uint32	MerchantType;
 	bool	merchant_open;
 	inline void	MerchantOpenShop() { merchant_open = true; }
-	inline void	MerchantCloseShop() { merchant_open = false; }
+	inline void	MerchantCloseShop() { entity_list.SendMerchantEnd(this); merchant_open = false; }
 	inline bool	IsMerchantOpen() { return merchant_open; }
 	void	Depop(bool StartSpawnTimer = false);
 	void	Stun(int duration, Mob* attacker);
@@ -397,6 +397,7 @@ public:
 	void DeleteQuestLoot(int16 itemid1, int16 itemid2 = 0, int16 itemid3 = 0, int16 itemid4 = 0);
 	bool IsBoat();
 	void ShowQuickStats(Client* client);
+	bool IsEquipped(int16 itemid);
 
 protected:
 

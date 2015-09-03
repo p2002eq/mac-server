@@ -952,10 +952,6 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 		snprintf(temp2, 100, "%u", trade->pp);
 		parse->AddVar(temp1, temp2); 
 
-		if(tradingWith->GetAppearance() != eaDead) {
-			tradingWith->FaceTarget(this);
-		}
-
 		ItemInst *insts[4] = { 0 };
 		for(int i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_NPC_END; ++i) {
 			insts[i - EmuConstants::TRADE_BEGIN] = m_inv.PopItem(i);
@@ -1090,9 +1086,7 @@ void Client::Trader_EndTrader() {
 		if(Customer && gis) 
 		{
 			Customer->Message(CC_Red, "The Trader is no longer open for business");
-			EQApplicationPacket empty(OP_ShopEndConfirm);
-			Customer->QueuePacket(&empty);
-			Customer->Save();
+			Customer->SendMerchantEnd();
 		}
 	}
 

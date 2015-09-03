@@ -397,6 +397,8 @@ void Client::CompleteConnect()
 	EnteringMessages(this);
 	ZoneFlags.Clear();
 	LoadZoneFlags(&ZoneFlags);
+	consent_list.clear();
+	LoadCharacterConsent();
 
 	/* Sets GM Flag if needed & Sends Petition Queue */
 	UpdateAdmin(false);
@@ -1600,7 +1602,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	if (!IsPoison)
 	{
 		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
-		Message(0, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
+		Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
 	}
 	else if (GetClass() == ROGUE)
 	{
@@ -2141,7 +2143,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 						else
 						{
 							database.SetMQDetectionFlag(account_name, name, "OP_CastSpell with item, did not meet req level.", zone->GetShortName());
-							Message(0, "Error: level not high enough.", castspell->inventoryslot);
+							Message(CC_Default, "Error: level not high enough.", castspell->inventoryslot);
 							InterruptSpell(castspell->spell_id);
 						}
 					}
@@ -2161,18 +2163,18 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				}
 				else
 				{
-					Message(0, "Error: unknown item->Click.Type (0x%02x)", item->Click.Type);
+					Message(CC_Default, "Error: unknown item->Click.Type (0x%02x)", item->Click.Type);
 				}
 			}
 			else
 			{
-				Message(0, "Error: item not found in inventory slot #%i", castspell->inventoryslot);
+				Message(CC_Default, "Error: item not found in inventory slot #%i", castspell->inventoryslot);
 				InterruptSpell(castspell->spell_id);
 			}
 		}
 		else
 		{
-			Message(0, "Error: castspell->inventoryslot >= %i (0x%04x)", MainCursor, castspell->inventoryslot);
+			Message(CC_Default, "Error: castspell->inventoryslot >= %i (0x%04x)", MainCursor, castspell->inventoryslot);
 			InterruptSpell(castspell->spell_id);
 		}
 	}
@@ -2266,7 +2268,7 @@ void Client::Handle_OP_ClickDoor(const EQApplicationPacket *app)
 	Doors* currentdoor = entity_list.FindDoor(cd->doorid);
 	if (!currentdoor)
 	{
-		Message(0, "Unable to find door, please notify a GM (DoorID: %i).", cd->doorid);
+		Message(CC_Default, "Unable to find door, please notify a GM (DoorID: %i).", cd->doorid);
 		return;
 	}
 
@@ -2690,7 +2692,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
-			if(zone->random.Roll(50))
+			if(zone->random.Roll(73))
 			{
 				CheckIncreaseSkill(SkillSwimming, nullptr, -20);
 			}
@@ -2773,22 +2775,43 @@ void Client::Handle_OP_AutoAttack2(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Consent(const EQApplicationPacket *app)
 {
-	if(app->size<64){
+	if(app->size<64)
+	{
 		Consent_Struct* c = (Consent_Struct*)app->pBuffer;
-		if(strcmp(c->name, GetName()) != 0) {
-			ServerPacket* pack = new ServerPacket(ServerOP_Consent, sizeof(ServerOP_Consent_Struct));
-			ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
-			strcpy(scs->grantname, c->name);
-			strcpy(scs->ownername, GetName());
-			scs->message_string_id = 0;
-			scs->permission = 1;
-			scs->zone_id = zone->GetZoneID();
-			scs->instance_id = zone->GetInstanceID();
-			//consent_list.push_back(scs->grantname);
-			worldserver.SendPacket(pack);
-			safe_delete(pack);
+
+		std::string cname = c->name;
+		std::transform(cname.begin(), cname.end(), cname.begin(), ::tolower);
+		std::string oname = GetName();
+		std::transform(oname.begin(), oname.end(), oname.begin(), ::tolower);
+
+		if(cname != oname)
+		{
+			//Offline consent
+			if(database.GetAccountIDByChar(c->name) == AccountID())
+			{
+				uint32 charid = database.GetCharacterID(c->name);
+				char ownername[64];
+				strcpy(ownername, GetName());
+				Consent(1, ownername, charid);
+				Message_StringID(CC_Default, CONSENT_GIVEN, c->name);
+			}
+			else
+			{
+				ServerPacket* pack = new ServerPacket(ServerOP_Consent, sizeof(ServerOP_Consent_Struct));
+				ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)pack->pBuffer;
+				strcpy(scs->grantname, c->name);
+				strcpy(scs->ownername, GetName());
+				scs->message_string_id = 0;
+				scs->permission = 1;
+				scs->zone_id = zone->GetZoneID();
+				scs->instance_id = zone->GetInstanceID();
+				//consent_list.push_back(scs->grantname);
+				worldserver.SendPacket(pack);
+				safe_delete(pack);
+			}
 		}
-		else {
+		else 
+		{
 			Message_StringID(CC_Default, CONSENT_YOURSELF);
 		}
 	}
@@ -2887,14 +2910,14 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			min = (ttime / 60000) % 60; // Total seconds
 			hour = (ttime / 3600000) % 24; // Total hours
 			if (hour)
-				Message(0, "This corpse's resurrection time will expire in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
+				Message(CC_Default, "This corpse's resurrection time will expire in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
 			else
-				Message(0, "This corpse's resurrection time will expire in %i minute(s) and %i seconds.", min, sec);
+				Message(CC_Default, "This corpse's resurrection time will expire in %i minute(s) and %i seconds.", min, sec);
 
 			hour = 0;
 		}
 		else
-			Message(0, "This corpse is too old to be resurrected.");
+			Message(CC_Default, "This corpse is too old to be resurrected.");
 
 		if ((ttime = tcorpse->GetDecayTime()) != 0) {
 			sec = (ttime / 1000) % 60; // Total seconds
@@ -2902,11 +2925,11 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 			hour = (ttime / 3600000) % 24; // Total hours
 			day = ttime / 86400000; // Total Days
 			if (day)
-				Message(0, "This corpse will decay in %i day(s) %i hour(s) %i minute(s) and %i seconds.", day, hour, min, sec);
+				Message(CC_Default, "This corpse will decay in %i day(s) %i hour(s) %i minute(s) and %i seconds.", day, hour, min, sec);
 			else if (hour)
-				Message(0, "This corpse will decay in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
+				Message(CC_Default, "This corpse will decay in %i hour(s) %i minute(s) and %i seconds.", hour, min, sec);
 			else
-				Message(0, "This corpse will decay in %i minute(s) and %i seconds.", min, sec);
+				Message(CC_Default, "This corpse will decay in %i minute(s) and %i seconds.", min, sec);
 
 			hour = 0;
 		}
@@ -3157,8 +3180,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 			m_pp.intoxication = 200;
 	}
 
-	//We want to let RangedAttack and ThrowingAttack handle the delete, to prevent client hacks.
-	if (inst && inst->GetItem()->ItemType != ItemTypeArrow && inst->GetItem()->ItemType != ItemTypeLargeThrowing && inst->GetItem()->ItemType != ItemTypeFletchedArrows)
+	if (inst)
 		DeleteItemInInventory(alc->from_slot, 1);
 
 	return;
@@ -3682,10 +3704,10 @@ void Client::Handle_OP_GMEmoteZone(const EQApplicationPacket *app)
 	GMEmoteZone_Struct* gmez = (GMEmoteZone_Struct*)app->pBuffer;
 	char* newmessage = 0;
 	if (strstr(gmez->text, "^") == 0)
-		entity_list.Message(0, 15, gmez->text);
+		entity_list.Message(CC_Default, 15, gmez->text);
 	else{
 		for (newmessage = strtok((char*)gmez->text, "^"); newmessage != nullptr; newmessage = strtok(nullptr, "^"))
-			entity_list.Message(0, 15, newmessage);
+			entity_list.Message(CC_Default, 15, newmessage);
 	}
 	return;
 }
@@ -3752,7 +3774,7 @@ void Client::Handle_OP_GMGoto(const EQApplicationPacket *app)
 		this->MovePC(zone->GetZoneID(), zone->GetInstanceID(), gt->GetX(), gt->GetY(), gt->GetZ(), gt->GetHeading());
 	}
 	else if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected.");
+		Message(CC_Default, "Error: World server disconnected.");
 	else {
 		ServerPacket* pack = new ServerPacket(ServerOP_GMGoto, sizeof(ServerGMGoto_Struct));
 		memset(pack->pBuffer, 0, pack->size);
@@ -3798,7 +3820,7 @@ void Client::Handle_OP_GMKick(const EQApplicationPacket *app)
 	Client* client = entity_list.GetClientByName(gmk->name);
 	if (client == 0) {
 		if (!worldserver.Connected())
-			Message(0, "Error: World server disconnected");
+			Message(CC_Default, "Error: World server disconnected");
 		else {
 			ServerPacket* pack = new ServerPacket(ServerOP_KickPlayer, sizeof(ServerKickPlayer_Struct));
 			ServerKickPlayer_Struct* skp = (ServerKickPlayer_Struct*)pack->pBuffer;
@@ -3840,7 +3862,7 @@ void Client::Handle_OP_GMKill(const EQApplicationPacket *app)
 	}
 	else {
 		if (!worldserver.Connected())
-			Message(0, "Error: World server disconnected");
+			Message(CC_Default, "Error: World server disconnected");
 		else {
 			ServerPacket* pack = new ServerPacket(ServerOP_KillPlayer, sizeof(ServerKillPlayer_Struct));
 			ServerKillPlayer_Struct* skp = (ServerKillPlayer_Struct*)pack->pBuffer;
@@ -4011,7 +4033,7 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 void Client::Handle_OP_GMServers(const EQApplicationPacket *app)
 {
 	if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 		ServerPacket* pack = new ServerPacket(ServerOP_ZoneStatus, strlen(this->GetName()) + 2);
 		memset(pack->pBuffer, (uint8)admin, 1);
@@ -4046,16 +4068,16 @@ void Client::Handle_OP_GMToggle(const EQApplicationPacket *app)
 	GMToggle_Struct *ts = (GMToggle_Struct *)app->pBuffer;
 	if (ts->toggle == 0) {
 		this->Message_StringID(CC_Default, TOGGLE_OFF);
-		//Message(0, "Turning tells OFF");
+		//Message(CC_Default, "Turning tells OFF");
 		tellsoff = true;
 	}
 	else if (ts->toggle == 1) {
-		//Message(0, "Turning tells ON");
+		//Message(CC_Default, "Turning tells ON");
 		this->Message_StringID(CC_Default, TOGGLE_ON);
 		tellsoff = false;
 	}
 	else {
-		Message(0, "Unkown value in /toggle packet");
+		Message(CC_Default, "Unkown value in /toggle packet");
 	}
 	UpdateWho();
 	return;
@@ -4557,13 +4579,13 @@ void Client::Handle_OP_GuildDelete(const EQApplicationPacket *app)
 	Log.Out(Logs::Detail, Logs::Guilds, "Received OP_GuildDelete");
 
 	if (!IsInAGuild() || !guild_mgr.IsGuildLeader(GuildID(), CharacterID()))
-		Message(0, "You are not a guild leader or not in a guild.");
+		Message(CC_Default, "You are not a guild leader or not in a guild.");
 	else {
 		Log.Out(Logs::Detail, Logs::Guilds, "Deleting guild %s (%d)", guild_mgr.GetGuildName(GuildID()), GuildID());
 		if (!guild_mgr.DeleteGuild(GuildID()))
-			Message(0, "Guild delete failed.");
+			Message(CC_Default, "Guild delete failed.");
 		else {
-			Message(0, "Guild successfully deleted.");
+			Message(CC_Default, "Guild successfully deleted.");
 		}
 	}
 }
@@ -4580,11 +4602,11 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 	GuildCommand_Struct* gc = (GuildCommand_Struct*)app->pBuffer;
 
 	if (!IsInAGuild())
-		Message(0, "Error: You are not in a guild!");
+		Message(CC_Default, "Error: You are not in a guild!");
 	else if (gc->officer > GUILD_MAX_RANK)
 		Message(CC_Red, "Invalid rank.");
 	else if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 
 		//ok, the invite is also used for changing rank as well.
@@ -4714,9 +4736,9 @@ void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 
 	//uint32 tmpeq = gj->guildeqid;
 	if (IsInAGuild() && gj->response == GuildRank())
-		Message(0, "Error: You're already in a guild!");
+		Message(CC_Default, "Error: You're already in a guild!");
 	else if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 		Log.Out(Logs::Detail, Logs::Guilds, "Guild Invite Accept: guild %d, response %d, inviter %s, person %s",
 			gj->guildeqid, gj->response, gj->inviter, gj->newmember);
@@ -4773,11 +4795,11 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 	app->pBuffer[app->size - 1] = 0;
 	GuildMakeLeader* gml = (GuildMakeLeader*)app->pBuffer;
 	if (!IsInAGuild())
-		Message(0, "Error: You arent in a guild!");
+		Message(CC_Default, "Error: You arent in a guild!");
 	else if (GuildRank() != GUILD_LEADER)
-		Message(0, "Error: You arent the guild leader!");
+		Message(CC_Default, "Error: You arent the guild leader!");
 	else if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 
 		//NOTE: we could do cross-zone lookups here...
@@ -4792,14 +4814,14 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 				newleader->GetName(), newleader->CharacterID());
 
 			if (guild_mgr.SetGuildLeader(GuildID(), newleader->CharacterID())){
-				Message(0, "Successfully Transfered Leadership to %s.", target);
+				Message(CC_Default, "Successfully Transfered Leadership to %s.", target);
 				newleader->Message(CC_Yellow, "%s has transfered the guild leadership into your hands.", GetName());
 			}
 			else
-				Message(0, "Could not change leadership at this time.");
+				Message(CC_Default, "Could not change leadership at this time.");
 		}
 		else
-			Message(0, "Failed to change leader, could not find target.");
+			Message(CC_Default, "Failed to change leader, could not find target.");
 	}
 	return;
 }
@@ -4820,13 +4842,13 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 	}
 	GuildCommand_Struct* gc = (GuildCommand_Struct*)app->pBuffer;
 	if (!IsInAGuild())
-		Message(0, "Error: You arent in a guild!");
+		Message(CC_Default, "Error: You arent in a guild!");
 	// we can always remove ourself, otherwise, our rank needs remove permissions
 	else if (strcasecmp(gc->othername, GetName()) != 0 &&
 		!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_REMOVE))
-		Message(0, "You dont have permission to remove guild members.");
+		Message(CC_Default, "You dont have permission to remove guild members.");
 	else if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 		uint32 char_id;
 		Client* client = entity_list.GetClientByName(gc->othername);
@@ -4834,13 +4856,13 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 
 		if (client) {
 			if (!client->IsInGuild(GuildID())) {
-				Message(0, "You aren't in the same guild, what do you think you are doing?");
+				Message(CC_Default, "You aren't in the same guild, what do you think you are doing?");
 				return;
 			}
 			char_id = client->CharacterID();
 
 			if (client->GuildRank() >= remover->GuildRank() && strcmp(client->GetName(), remover->GetName()) != 0){
-				Message(0, "You can't remove a player from the guild with an equal or higher rank to you!");
+				Message(CC_Default, "You can't remove a player from the guild with an equal or higher rank to you!");
 				return;
 			}
 
@@ -4852,19 +4874,19 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 			CharGuildInfo gci;
 			CharGuildInfo gci_;
 			if (!guild_mgr.GetCharInfo(gc->myname, gci_)) {
-				Message(0, "Unable to find '%s'", gc->myname);
+				Message(CC_Default, "Unable to find '%s'", gc->myname);
 				return;
 			}
 			if (!guild_mgr.GetCharInfo(gc->othername, gci)) {
-				Message(0, "Unable to find '%s'", gc->othername);
+				Message(CC_Default, "Unable to find '%s'", gc->othername);
 				return;
 			}
 			if (gci.guild_id != GuildID()) {
-				Message(0, "You aren't in the same guild, what do you think you are doing?");
+				Message(CC_Default, "You aren't in the same guild, what do you think you are doing?");
 				return;
 			}
 			if (gci.rank >= gci_.rank) {
-				Message(0, "You can't remove a player from the guild with an equal or higher rank to you!");
+				Message(CC_Default, "You can't remove a player from the guild with an equal or higher rank to you!");
 				return;
 			}
 
@@ -4880,7 +4902,7 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 			GuildRemove_Struct* gm = (GuildRemove_Struct*)outapp->pBuffer;
 			gm->guildeqid = guid;
 			strcpy(gm->Removee, gc->othername);
-			Message(0, "%s successfully removed from your guild.", gc->othername);
+			Message(CC_Default, "%s successfully removed from your guild.", gc->othername);
 			entity_list.QueueClientsGuild(this, outapp, false, GuildID());
 			safe_delete(outapp);
 		}
@@ -5763,17 +5785,17 @@ void Client::Handle_OP_Petition(const EQApplicationPacket *app)
 	if (app->size <= 1)
 		return;
 	if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	/*else if(petition_list.FindPetitionByAccountName(this->AccountName()))
 	{
-	Message(0,"You already have a petition in queue, you cannot petition again until this one has been responded to or you have deleted the petition.");
+	Message(CC_Default,"You already have a petition in queue, you cannot petition again until this one has been responded to or you have deleted the petition.");
 	return;
 	}*/
 	else
 	{
 		if (petition_list.FindPetitionByAccountName(AccountName()))
 		{
-			Message(0, "You already have a petition in the queue, you must wait for it to be answered or use /deletepetition to delete it.");
+			Message(CC_Default, "You already have a petition in the queue, you must wait for it to be answered or use /deletepetition to delete it.");
 			return;
 		}
 		Petition* pet = new Petition(CharacterID());
@@ -5824,7 +5846,7 @@ void Client::Handle_OP_PetitionCheckout(const EQApplicationPacket *app)
 		return;
 	}
 	if (!worldserver.Connected())
-		Message(0, "Error: World server disconnected");
+		Message(CC_Default, "Error: World server disconnected");
 	else {
 		uint32 getpetnum = *((uint32*)app->pBuffer);
 		Petition* getpet = petition_list.GetPetitionByID(getpetnum);
@@ -5896,54 +5918,64 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		database.SetMQDetectionFlag(this->AccountName(), this->GetName(), "OP_PickPocket was sent again too quickly.", zone->GetShortName());
 		return;
 	}
+
 	PickPocket_Struct* pick_in = (PickPocket_Struct*)app->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
+	sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
 
 	Mob* victim = entity_list.GetMob(pick_in->to);
 	if (!victim)
+	{
+		pick_out->coin = 0;
+		pick_out->from = 0;
+		pick_out->to = GetID();
+		pick_out->myskill = GetSkill(SkillPickPockets);
+		pick_out->type = 0;
+		QueuePacket(outapp);
+		safe_delete(outapp);
 		return;
+	}
 
 	p_timers.Start(pTimerBeggingPickPocket, 8);
-	if (victim == this){
-		Message(0, "You catch yourself red-handed.");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
-		QueuePacket(outapp);
-		safe_delete(outapp);
-	}
-	else if (victim->GetOwnerID()){
-		Message(0, "You cannot steal from pets!");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
-		QueuePacket(outapp);
-		safe_delete(outapp);
-	}
-	else if (victim->IsNPC()){
+
+	if (victim->IsNPC())
+	{
 		victim->CastToNPC()->PickPocket(this);
+		safe_delete(outapp);
+		return;
 	}
-	else{
-		Message(0, "Stealing from clients not yet supported.");
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-		sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
-		pick_out->coin = 0;
-		pick_out->from = victim->GetID();
-		pick_out->to = GetID();
-		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->type = 0;
-		//if we do not send this packet the client will lock up and require the player to relog.
+
+	pick_out->coin = 0;
+	pick_out->from = victim->GetID();
+	pick_out->to = GetID();
+	pick_out->myskill = GetSkill(SkillPickPockets);
+	pick_out->type = 0;
+
+	if (victim == this){
+		Message_StringID(CC_User_Skills, STEAL_FROM_SELF);
 		QueuePacket(outapp);
 		safe_delete(outapp);
+		return;
+	}
+	else if(victim->IsClient() || (victim->GetOwner() && victim->GetOwner()->IsClient()))
+	{
+		Message_StringID(CC_User_Skills, STEAL_PLAYERS);
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
+	}
+	else if(victim->IsCorpse())
+	{
+		Message_StringID(CC_User_Skills, STEAL_CORPSES);
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
+	}
+	else
+	{
+		QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
 	}
 }
 
@@ -6833,7 +6865,7 @@ void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
 		guild_mgr.GetGuildName(GuildID()), GuildID(), GetName(), gmotd->motd);
 
 	if (!guild_mgr.SetGuildMOTD(GuildID(), gmotd->motd, GetName())) {
-		Message(0, "Motd update failed.");
+		Message(CC_Default, "Motd update failed.");
 	}
 
 	return;
@@ -6967,14 +6999,14 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 		}
 		else
 		{
-			Message(0, "You must have a shield equipped to shield a target!");
+			Message(CC_Default, "You must have a shield equipped to shield a target!");
 			shield_target = 0;
 			return;
 		}
 	}
 	else
 	{
-		Message(0, "You must have a shield equipped to shield a target!");
+		Message(CC_Default, "You must have a shield equipped to shield a target!");
 		shield_target = 0;
 		return;
 	}
@@ -6989,14 +7021,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ShopEnd(const EQApplicationPacket *app)
 {
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopEndConfirm, 2);
-	outapp->pBuffer[0] = 0x0a;
-	outapp->pBuffer[1] = 0x66;
-	QueuePacket(outapp);
-	safe_delete(outapp);
-	Save();
-
-	return;
+	SendMerchantEnd();
 }
 
 void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app) 
@@ -7473,7 +7498,7 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 	}
 	if (GetFeigned() || IsInvisible())
 	{
-		Message(0, "You cannot use a merchant right now.");
+		Message(CC_Default, "You cannot use a merchant right now.");
 		action = 0;
 	}
 	int primaryfaction = tmp->CastToNPC()->GetPrimaryFaction();
@@ -7510,6 +7535,8 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 
 	if (action == 1)
 		BulkSendMerchantInventory(merchantid, tmp->GetNPCTypeID());
+
+	MerchantSession = tmp->GetID();
 
 	return;
 }
@@ -8335,9 +8362,7 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 				else
 					Log.Out(Logs::Detail, Logs::Bazaar, "Client::Handle_OP_Trader: Null Client Pointer");
 
-				EQApplicationPacket empty(OP_ShopEndConfirm);
-				QueuePacket(&empty);
-				Save();
+				SendMerchantEnd();
 			}
 		}
 		else {

@@ -86,22 +86,30 @@ void ZoneDatabase::AddLootTableToNPC(NPC* npc, uint32 loottable_id, ItemList* it
 
 	// Do items
 	for (uint32 i = 0; i<lts->NumEntries; i++) {
+		uint8 multiplier_count = 0;
 		for (uint32 k = 1; k <= lts->Entries[i].multiplier; k++) {
 			uint8 droplimit = lts->Entries[i].droplimit;
 			uint8 mindrop = lts->Entries[i].mindrop;
+			uint8 multiplier_min = lts->Entries[i].multiplier_min;
 
 			//LootTable Entry probability
 			float ltchance = 0.0f;
 			ltchance = lts->Entries[i].probability;
 
 			float drop_chance = 0.0f;
-			if (ltchance > 0.0 && ltchance < 100.0) {
+			if (ltchance > 0.0 && ltchance < 100.0 && multiplier_count >= multiplier_min) {
 				drop_chance = (float)zone->random.Real(0.0, 100.0);
+			}
+			else if (multiplier_count < multiplier_min)
+			{
+				drop_chance = 100.0f;
 			}
 
 			if (ltchance != 0.0 && (ltchance == 100.0 || drop_chance <= ltchance)) {
 				AddLootDropToNPC(npc, lts->Entries[i].lootdrop_id, itemlist, droplimit, mindrop);
 			}
+
+			++multiplier_count;
 		}
 	}
 }
@@ -646,4 +654,20 @@ void NPC::RemoveItem(ServerLootItem_Struct* item_data)
 		safe_delete(sitem);
 		return;
 	}
+}
+
+bool NPC::IsEquipped(int16 itemid)
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	for (; cur != end; ++cur) {
+		ServerLootItem_Struct* sitem = *cur;
+		if (sitem && sitem->item_id == itemid && sitem->equip_slot <= MainAmmo) 
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

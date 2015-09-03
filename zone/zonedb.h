@@ -206,12 +206,14 @@ public:
 	bool	SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value);
 	bool	SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value);
 	bool	SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
+	bool	SaveCharacterConsent(uint32 character_id, char name[64]);
 
 	/* Character Data Deletes   */
 	bool	DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterAAs(uint32 character_id);
 	bool	DeleteCharacterDye(uint32 character_id);
+	bool	DeleteCharacterConsent(uint32 character_id, char name[64]);
 
 	/* Character Inventory  */
 	bool	NoRentExpired(const char* name);

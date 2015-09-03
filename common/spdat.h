@@ -31,6 +31,7 @@
 #define SPELL_HARM_TOUCH2 2821
 #define SPELL_IMP_HARM_TOUCH 2774
 #define SPELL_NPC_HARM_TOUCH 929
+#define SPELL_DRAGON_ROAR 981
 #define SPELL_CAZIC_TOUCH 982
 
 
@@ -910,5 +911,6 @@ bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
 bool IsRainSpell(uint16 spell_id);
 bool IsDisc(uint16 spell_id);
+bool IsShrinkSpell(uint16 spell_id);
 
 #endif

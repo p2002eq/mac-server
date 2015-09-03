@@ -1872,7 +1872,7 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		default:
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "I dont know Target Type: %d   Spell: (%d) %s", spells[spell_id].targettype, spell_id, spells[spell_id].name);
-			Message(0, "I dont know Target Type: %d   Spell: (%d) %s", spells[spell_id].targettype, spell_id, spells[spell_id].name);
+			Message(CC_Default, "I dont know Target Type: %d   Spell: (%d) %s", spells[spell_id].targettype, spell_id, spells[spell_id].name);
 			CastAction = CastActUnknown;
 			break;
 		}
@@ -1945,7 +1945,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			IsEffectInSpell(spell_id, SE_Teleport)
 		)
 		{
-			Message(0, "The Gods brought you here, only they can send you away.");
+			Message(CC_Default, "The Gods brought you here, only they can send you away.");
 			return false;
 		}
 	}
@@ -4355,6 +4355,11 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Resisted spell in fear resistance, had %d chance to resist", fear_resist_bonuses);
 			return 0;
+		}
+		// this spell (nag and vox's aoe) has a chance to hit players with any resist value on Live
+		if (spell_id == SPELL_DRAGON_ROAR && zone->random.Roll(25))
+		{
+			return 100;
 		}
 	}
 

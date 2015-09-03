@@ -369,6 +369,9 @@ void NPC::CalculateNewWaypoint()
 	// Check to see if we need to update the waypoint.
 	if (cur_wp != old_wp)
 		UpdateWaypoint(cur_wp);
+
+	if(IsNPC() && GetClass() == MERCHANT)
+		entity_list.SendMerchantEnd(this);
 }
 
 bool wp_distance_pred(const wp_distance& left, const wp_distance& right)
@@ -800,7 +803,18 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool checkZ) {
 
 	float newspeed = SetRunAnimation(speed);
-	return MakeNewPositionAndSendUpdate(x, y, z, newspeed, checkZ);
+
+	bool moved = false;
+	if (MakeNewPositionAndSendUpdate(x, y, z, newspeed, checkZ))
+	{
+		if(IsNPC() && GetClass() == MERCHANT)
+			entity_list.SendMerchantEnd(this);
+
+		moved = true;
+	}
+
+	return moved;
+
 }
 
 float Mob::SetRunAnimation(float speed)
@@ -1177,7 +1191,7 @@ void ZoneDatabase::AssignGrid(Client *client, int grid, int spawn2id) {
 		return;
 	}
 
-	client->Message(0, "Grid assign: spawn2 id = %d updated", spawn2id);
+	client->Message(CC_Default, "Grid assign: spawn2 id = %d updated", spawn2id);
 }
 
 

@@ -366,6 +366,9 @@ int main(int argc, char** argv) {
 	Log.Out(Logs::General, Logs::World_Server, "Clearing active accounts...");
 	database.ClearAllActive();
 
+	Log.Out(Logs::General, Logs::World_Server, "Clearing consented characters...");
+	database.ClearAllConsented();
+
 	Log.Out(Logs::General, Logs::World_Server, "Loading char create info...");
 	database.LoadCharacterCreateAllocations();
 	database.LoadCharacterCreateCombos();
@@ -392,6 +395,8 @@ int main(int argc, char** argv) {
 	zoneserver_list.shutdowntimer->Disable();
 	zoneserver_list.reminder = new Timer(20000);
 	zoneserver_list.reminder->Disable();
+	Timer ConsentedTimer(600000);
+	ConsentedTimer.Start(600000);
 	Timer InterserverTimer(INTERSERVER_TIMER); // does MySQL pings and auto-reconnect
 	InterserverTimer.Trigger();
 	uint8 ReconnectCounter = 100;
@@ -399,6 +404,7 @@ int main(int argc, char** argv) {
 	EQOldStream* eqos;
 	EmuTCPConnection* tcpc;
 	EQStreamInterface *eqsi;
+	LinkedList<ConsentDenied_Struct*> purged_consent;
 
 	while(RunLoops) {
 		Timer::SetCurrentTime();
@@ -475,6 +481,45 @@ int main(int argc, char** argv) {
 				Log.Out(Logs::General, Logs::World_Server, "Failed to save eqtime.");
 			else
 				Log.Out(Logs::General, Logs::World_Server, "EQTime successfully saved.");
+		}
+
+		if(ConsentedTimer.Check())
+		{			
+			database.ClearAllExpiredConsented(&purged_consent);
+
+			//Creates a packet telling each player their consent has expired, and if they're online also updates their consent_list.
+			LinkedListIterator<ConsentDenied_Struct*> iterator(purged_consent);
+			iterator.Reset();
+			while(iterator.MoreElements())
+			{
+				ConsentDenied_Struct* cd = iterator.GetData();
+				ClientListEntry* cle = client_list.FindCLEByCharacterID(cd->ccharid);
+				if(cle)
+				{
+					char name[64];
+					strncpy(name, cle->name(), 64);
+					ServerPacket *scs_pack = new ServerPacket(ServerOP_Consent_Response, sizeof(ServerOP_Consent_Struct));
+					ServerOP_Consent_Struct* scs = (ServerOP_Consent_Struct*)scs_pack->pBuffer;
+					strcpy(scs->grantname, name);
+					strcpy(scs->ownername, cd->oname);
+					scs->permission = 0;
+					scs->instance_id = 0;
+					scs->message_string_id = 2103; //You have been denied permission to drag %1's corpse.
+
+					ZoneServer* zs = zoneserver_list.FindByZoneID(cle->zone());
+					if(zs)
+					{
+						scs->zone_id = zs->GetZoneID();
+						zs->SendPacket(scs_pack);
+					}
+
+					safe_delete(scs_pack);
+				}
+			
+				iterator.Advance();
+			}
+
+			purged_consent.Clear();
 		}
 
 		//check for timeouts in other threads

@@ -853,11 +853,11 @@ uint8 Client::GetZoneFlagKey(uint32 zone_id) {
 
 void Client::SendZoneFlagInfo(Client *to) {
 	if(ZoneFlags.Count() == 0) {
-		to->Message(0, "%s has no zone flags.", GetName());
+		to->Message(CC_Default, "%s has no zone flags.", GetName());
 		return;
 	}
 
-	to->Message(0, "Flags for %s:", GetName());
+	to->Message(CC_Default, "Flags for %s:", GetName());
 	char empty[1] = { '\0' };
 	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
 	iterator.Reset();

@@ -615,7 +615,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 
 	if (bIsBehind || bCanFrontalBS){ // Player is behind other OR can do Frontal Backstab
 		if (bCanFrontalBS)
-			CastToClient()->Message(0,"Your fierce attack is executed with such grace, your target did not see it coming!");
+			CastToClient()->Message(CC_Default,"Your fierce attack is executed with such grace, your target did not see it coming!");
 
 		RogueBackstab(other,false,ReuseTime);
 		if (level > 54) {
@@ -759,7 +759,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	if(!CanDoubleAttack && ((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
-		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		//Message(CC_Default, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 	const ItemInst* RangeWeapon = m_inv[MainRange];
@@ -770,12 +770,12 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
+		Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
 		return;
 	}
 	if (!Ammo || !Ammo->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(MainAmmo), MainAmmo);
-		Message(0, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
+		Message(CC_Default, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
 		return;
 	}
 
@@ -784,12 +784,12 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 
 	if(RangeItem->ItemType != ItemTypeBow) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ranged item is not a bow. type %d.", RangeItem->ItemType);
-		Message(0, "Error: Rangeweapon: Item %d is not a bow.", RangeWeapon->GetID());
+		Message(CC_Default, "Error: Rangeweapon: Item %d is not a bow.", RangeWeapon->GetID());
 		return;
 	}
 	if(AmmoItem->ItemType != ItemTypeArrow) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ammo item is not an arrow. type %d.", AmmoItem->ItemType);
-		Message(0, "Error: Ammo: type %d != %d, you have the wrong type of ammo!", AmmoItem->ItemType, ItemTypeArrow);
+		Message(CC_Default, "Error: Ammo: type %d != %d, you have the wrong type of ammo!", AmmoItem->ItemType, ItemTypeArrow);
 		return;
 	}
 
@@ -840,13 +840,13 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		}
 	}
 
-	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
+	float range = RangeItem->Range + AmmoItem->Range + 7.5f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	Log.Out(Logs::Detail, Logs::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
-		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
+		Message_StringID(CC_Red,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
 	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
@@ -873,7 +873,8 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	int ChanceAvoidConsume = aabonuses.ConsumeProjectile + itembonuses.ConsumeProjectile + spellbonuses.ConsumeProjectile;
 
 	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && zone->random.Int(0,99) > ChanceAvoidConsume)){ 
-		DeleteItemInInventory(ammo_slot, 1, false);
+		//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs.
+		//DeleteItemInInventory(ammo_slot, 1, false);
 		Log.Out(Logs::Detail, Logs::Combat, "Consumed one arrow from slot %d", ammo_slot);
 	} else {
 		Log.Out(Logs::Detail, Logs::Combat, "Endless Quiver prevented ammo consumption.");
@@ -1189,7 +1190,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	if((!CanDoubleAttack && (attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
-		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		//Message(CC_Default, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 
@@ -1198,14 +1199,14 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
-		//Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
+		//Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	const Item_Struct* item = RangeWeapon->GetItem();
 	if(item->ItemType != ItemTypeLargeThrowing && item->ItemType != ItemTypeSmallThrowing) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
-		//Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
+		//Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
@@ -1217,7 +1218,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
-		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
+		Message_StringID(CC_Red,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
 	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
@@ -1235,14 +1236,12 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 		return;
 	}
 	//send item animation, also does the throw animation
-	//SendItemAnimation(GetTarget(), item, SkillThrowing);
 	ProjectileAnimation(GetTarget(), item->ID,true,-1,-1,-1,-1,SkillThrowing);
 
 	DoThrowingAttackDmg(GetTarget(), RangeWeapon, item);
 
-	//consume ammo
-	if(item->ItemType != ItemTypeSmallThrowing) //Let Handle_OP_DeleteCharge handle small throwing items, since the client's rules regarding them are complicated.
-		DeleteItemInInventory(ammo_slot, 1, false);
+	//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs. 
+	//DeleteItemInInventory(ammo_slot, 1, false);
 
 	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
 	CommonBreakInvisible();

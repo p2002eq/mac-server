@@ -343,6 +343,7 @@ public:
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
 	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
+	bool SendPickPocketItem(ItemInst* inst);
 
 	inline const char* GetLastName() const { return lastname; }
 
@@ -784,6 +785,8 @@ public:
 	void EnteringMessages(Client* client);
 	void SendRules(Client* client);
 	std::list<std::string> consent_list;
+	void Consent(uint8 permission, char name[64], uint32 offline_charid = 0);
+	bool LoadCharacterConsent();
 
 	//Anti-Cheat Stuff
 	uint32 m_TimeSinceLastPositionCheck;
@@ -960,6 +963,8 @@ public:
 	void SendToBoat(bool messageonly = false);
 
 	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
+
+	void SendMerchantEnd();
 
 protected:
 	friend class Mob;

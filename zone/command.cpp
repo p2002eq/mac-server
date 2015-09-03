@@ -1773,10 +1773,10 @@ void command_emote(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "zone") == 0){
 			char* newmessage = 0;
 			if (strstr(sep->arg[3], "^") == 0)
-				entity_list.Message(0, atoi(sep->arg[2]), sep->argplus[3]);
+				entity_list.Message(CC_Default, atoi(sep->arg[2]), sep->argplus[3]);
 			else{
 				for (newmessage = strtok((char*)sep->arg[3], "^"); newmessage != nullptr; newmessage = strtok(nullptr, "^"))
-					entity_list.Message(0, atoi(sep->arg[2]), newmessage);
+					entity_list.Message(CC_Default, atoi(sep->arg[2]), newmessage);
 			}
 		}
 		else if (!worldserver.Connected())
@@ -3192,7 +3192,7 @@ void command_kick(Client *c, const Seperator *sep){
 		Client* client = entity_list.GetClientByName(sep->arg[1]);
 		if (client != 0) {
 			if (client->Admin() <= c->Admin()) {
-				client->Message(0, "You have been kicked by %s", c->GetName());
+				client->Message(CC_Default, "You have been kicked by %s", c->GetName());
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMKick, 0);
 				client->QueuePacket(outapp);
 				client->Kick();
@@ -4454,9 +4454,9 @@ void command_zonespawn(Client *c, const Seperator *sep){
 
 	/* this was kept from client.cpp verbatim (it was commented out) */
 	//	if (target && target->IsNPC()) {
-	//		Message(0, "Inside main if.");
+	//		Message(CC_Default, "Inside main if.");
 	//		if (strcasecmp(sep->arg[1], "add")==0) {
-	//			Message(0, "Inside add if.");
+	//			Message(CC_Default, "Inside add if.");
 	//			database.DBSpawn(1, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC());
 	//		}
 	//		else if (strcasecmp(sep->arg[1], "update")==0) {
@@ -4468,21 +4468,21 @@ void command_zonespawn(Client *c, const Seperator *sep){
 	//			}
 	//			else {
 	//				if (database.DBSpawn(3, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC())) {
-	//					Message(0, "#zonespawn: %s removed successfully!", target->GetName());
+	//					Message(CC_Default, "#zonespawn: %s removed successfully!", target->GetName());
 	//					target->CastToNPC()->Death(target, target->GetHP());
 	//				}
 	//			}
 	//		}
 	//		else
-	//			Message(0, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
+	//			Message(CC_Default, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
 	//		if (target->CastToNPC()->GetNPCTypeID() > 0) {
-	//			Message(0, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
+	//			Message(CC_Default, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
 	//		}
 	//	}
 	//	else if(!target || !target->IsNPC())
-	//		Message(0, "Error: #zonespawn: You must have a NPC targeted!");
+	//		Message(CC_Default, "Error: #zonespawn: You must have a NPC targeted!");
 	//	else
-	//		Message(0, "Usage: #zonespawn [add|edit|remove|remove all]");
+	//		Message(CC_Default, "Usage: #zonespawn [add|edit|remove|remove all]");
 }
 
 void command_npcspawn(Client *c, const Seperator *sep){
@@ -5555,7 +5555,7 @@ void command_scribespells(Client *c, const Seperator *sep){
 		return;
 	}
 
-	t->Message(0, "Scribing spells to spellbook.");
+	t->Message(CC_Default, "Scribing spells to spellbook.");
 	if (t != c)
 		c->Message(CC_Default, "Scribing spells for %s.", t->GetName());
 	Log.Out(Logs::General, Logs::Normal, "Scribe spells request for %s from %s, levels: %u -> %u", t->GetName(), c->GetName(), min_level, max_level);
@@ -5584,12 +5584,12 @@ void command_scribespells(Client *c, const Seperator *sep){
 	}
 
 	if (count > 0) {
-		t->Message(0, "Successfully scribed %u spells.", count);
+		t->Message(CC_Default, "Successfully scribed %u spells.", count);
 		if (t != c)
 			c->Message(CC_Default, "Successfully scribed %u spells for %s.", count, t->GetName());
 	}
 	else {
-		t->Message(0, "No spells scribed.");
+		t->Message(CC_Default, "No spells scribed.");
 		if (t != c)
 			c->Message(CC_Default, "No spells scribed for %s.", t->GetName());
 	}
@@ -5611,7 +5611,7 @@ void command_scribespell(Client *c, const Seperator *sep){
 	spell_id = atoi(sep->arg[1]);
 
 	if (IsValidSpell(spell_id)) {
-		t->Message(0, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
+		t->Message(CC_Default, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
 
 		if (t != c)
 			c->Message(CC_Default, "Scribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5658,7 +5658,7 @@ void command_unmemspell(Client *c, const Seperator *sep){
 		if (mem_slot >= 0) {
 			t->UnmemSpell(mem_slot);
 
-			t->Message(0, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unmemming spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5704,7 +5704,7 @@ void command_unscribespell(Client *c, const Seperator *sep){
 		if (book_slot >= 0) {
 			t->UnscribeSpell(book_slot);
 
-			t->Message(0, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unscribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -11050,7 +11050,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		hotfix_name = "hotfix_";
 	}
 
-	c->Message(0, "Creating and applying hotfix");
+	c->Message(CC_Default, "Creating and applying hotfix");
 	std::thread t1([c, hotfix_name]() {
 #ifdef WIN32
 		if (hotfix_name.length() > 0) {
@@ -11075,7 +11075,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		}
 		worldserver.SendPacket(&pack);
 
-		c->Message(0, "Hotfix applied");
+		c->Message(CC_Default, "Hotfix applied");
 	});
 
 	t1.detach();
@@ -11088,12 +11088,12 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 
 	std::string hotfix_name;
 	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
-		c->Message(0, "Cannot attempt to load this shared memory segment as it is already loaded.");
+		c->Message(CC_Default, "Cannot attempt to load this shared memory segment as it is already loaded.");
 		return;
 	}
 
 	hotfix_name = sep->arg[1];
-	c->Message(0, "Loading shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Loading shared memory segment %s", hotfix_name.c_str());
 	std::thread t1([c,hotfix_name]() {
 #ifdef WIN32
 		if(hotfix_name.length() > 0) {
@@ -11109,7 +11109,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 			system(StringFormat("./shared_memory").c_str());
 		}
 #endif
-		c->Message(0, "Shared memory segment finished loading.");
+		c->Message(CC_Default, "Shared memory segment finished loading.");
 	});
 
 	t1.detach();
@@ -11120,7 +11120,7 @@ void command_apply_shared_memory(Client *c, const Seperator *sep) {
 	database.GetVariable("hotfix_name", hotfix, 256);
 	std::string hotfix_name = sep->arg[1];
 	
-	c->Message(0, "Applying shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Applying shared memory segment %s", hotfix_name.c_str());
 	database.SetVariable("hotfix_name", hotfix_name.c_str());
 
 	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);

@@ -3636,31 +3636,31 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//this was done to simplify the code here (since we can only effectively skip one mob on queue)
 		eqFilterType filter;
 		Mob *skip = attacker;
-		if(attacker && attacker->GetOwnerID()) {
-			//attacker is a pet, let pet owners see their pet's damage
+		if(attacker && attacker->GetOwnerID()) 
+		{
+			//attacker is a pet
 			Mob* owner = attacker->GetOwner();
-			if (owner && owner->IsClient()) {
-				if (((spell_id != SPELL_UNKNOWN) || (FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me
-					char val1[20]={0};
-					owner->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-				} else {
-					if(damage > 0) {
-						if(spell_id != SPELL_UNKNOWN)
-							filter = FilterNone;
-						else
-							filter = FilterOthersHit;
-					} else if(damage == -5)
-						filter = FilterNone;	//cant filter invulnerable
+			if (owner && owner->IsClient()) 
+			{
+				if(damage > 0) 
+				{
+					if(spell_id != SPELL_UNKNOWN)
+						filter = FilterNone;
 					else
-						filter = FilterOthersMiss;
+						filter = FilterOthersHit;
+				} 
+				else if(damage == -5)
+					filter = FilterNone;	//cant filter invulnerable
+				else
+					filter = FilterOthersMiss;
 
-					if(!FromDamageShield)
-						owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
-				}
+				if(!FromDamageShield)
+					owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
 			}
 			skip = owner;
-		} else {
+		} 
+		else 
+		{
 			//attacker is not a pet, send to the attacker
 
 			//if the attacker is a client, try them with the correct filter

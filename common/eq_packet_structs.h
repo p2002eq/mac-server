@@ -1955,13 +1955,27 @@ enum {
 
 
 struct sPickPocket_Struct {
-	// Size 28 = coin/fail
-	uint32 to;
-	uint32 from;
-	uint32 myskill;
-	uint32 type;
-	uint32 coin;
-	char itemname[64];
+// Size 18
+    uint16 to;
+    uint16 from;
+    uint8 myskill;
+    uint8 unknown0;
+    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint8 unknown1; // 0 for response, unknown for input
+    uint32 coin;
+    uint8 lastsix[6];
+};
+
+struct Item_PickPocket_Struct 
+{
+    uint16 to;
+    uint16 from;
+    uint8 myskill;
+    uint8 unknown0;
+    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint8 reply; // 0 for response, unknown for input
+    uint32 coin;
+	char itemname[32];
 };
 
 struct LogServer_Struct
@@ -2643,6 +2657,11 @@ struct MBEraseRequest_Struct {
 struct ZoneFlags_Struct {
 	uint32 zoneid;
 	uint8  key;
+};
+
+struct ConsentDenied_Struct {
+	char oname[64];
+	uint32 ccharid;
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;
