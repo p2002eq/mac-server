@@ -21,6 +21,30 @@
 #include "database.h"
 #include <algorithm>
 
+#ifdef _WINDOWS
+#include <iostream>
+#include <limits>
+#include <windows.h>
+#endif
+
+
+#define BLACK			0
+#define BLUE			1
+#define GREEN			2
+#define CYAN			3
+#define RED				4
+#define MAGENTA			5
+#define BROWN			6
+#define LIGHTGRAY		7
+#define DARKGRAY		8
+#define LIGHTBLUE		9
+#define LIGHTGREEN		10
+#define LIGHTCYAN		11
+#define LIGHTRED		12
+#define LIGHTMAGENTA	13
+#define YELLOW			14
+#define WHITE			15
+
 extern Database db;
 
 const char *eqLogTypes[_log_largest_type] =
@@ -28,12 +52,16 @@ const char *eqLogTypes[_log_largest_type] =
 	"Debug",
 	"Error",
 	"Database",
+	"Database Trace",
+	"Database Error",
 	"Network",
 	"Network Trace",
 	"Network Error",
 	"World",
+	"World Trace",
 	"World Error",
 	"Client",
+	"Client Trace",
 	"Client Error"
 };
 
@@ -126,8 +154,50 @@ void ErrorLog::Log(eqLogType type, const char *message, ...)
 	m_time = localtime(&m_clock);
 
 	log_mutex->lock();
-	printf("[%s] [%02d.%02d.%02d - %02d:%02d:%02d] %s\n",
-		eqLogTypes[type],
+
+#ifdef _WINDOWS
+	//system("color 0F");
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	WORD color = WHITE;
+
+	if (type == log_debug)			{ color = LIGHTGRAY; }
+	if (type == log_error)			{ color = RED; }
+	if (type == log_database)		{ color = LIGHTGREEN; }
+	if (type == log_database_trace)	{ color = GREEN; }
+	if (type == log_database_error)	{ color = LIGHTRED; }
+	if (type == log_network)		{ color = BLUE; }
+	if (type == log_network_trace)	{ color = LIGHTBLUE; }
+	if (type == log_network_error)	{ color = LIGHTRED; }
+	if (type == log_world)			{ color = BLUE; }
+	if (type == log_world_trace)	{ color = LIGHTBLUE; }
+	if (type == log_world_error)	{ color = LIGHTRED; }
+	if (type == log_client)			{ color = BLUE; }
+	if (type == log_client_trace)	{ color = LIGHTBLUE; }
+	if (type == log_client_error)	{ color = LIGHTRED; }
+
+	std::string eqLogConsoleFormat = std::string(eqLogTypes[type]);
+	std::string addspace = " ";
+
+	while (eqLogConsoleFormat.length() < 14)
+	{
+		eqLogConsoleFormat += addspace;
+	}
+
+	SetConsoleTextAttribute(hStdOut, color);
+	printf("[ %s ][ %02d.%02d.%02d - %02d:%02d:%02d ] %s\n",
+		eqLogConsoleFormat.c_str(),
+		m_time->tm_mon + 1,
+		m_time->tm_mday,
+		m_time->tm_year % 100,
+		m_time->tm_hour,
+		m_time->tm_min,
+		m_time->tm_sec,
+		buffer);
+	SetConsoleTextAttribute(hStdOut, color);
+#else
+
+	printf("[ %s ][ %02d.%02d.%02d - %02d:%02d:%02d ] %s\n",
+		eqLogConsoleFormat.c_str(),
 		m_time->tm_mon+1,
 		m_time->tm_mday,
 		m_time->tm_year%100,
@@ -135,10 +205,11 @@ void ErrorLog::Log(eqLogType type, const char *message, ...)
 		m_time->tm_min,
 		m_time->tm_sec,
 		buffer);
+#endif
 
 	if(error_log)
 	{
-		fprintf(error_log, "[%s] [%02d.%02d.%02d - %02d:%02d:%02d] %s\n",
+		fprintf(error_log, "[ %s ] [ %02d.%02d.%02d - %02d:%02d:%02d ] %s\n",
 			eqLogTypes[type],
 			m_time->tm_mon+1,
 			m_time->tm_mday,

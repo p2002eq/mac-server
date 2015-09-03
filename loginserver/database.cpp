@@ -38,26 +38,19 @@ Database::Database(const char* host, const char* user, const char* passwd, const
 
 bool Database::Connect(const char* host, const char* user, const char* passwd, const char* database, uint32 port)
 {
-	server_log->Log(log_debug, "Connect got: host=%s user=%s database=%s port=%u", host, user, database, port);
+	server_log->Log(log_database_trace, "Connect got: host=%s user=%s database=%s port=%u", host, user, database, port);
 	uint32 errnum = 0;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	if (!Open(host, user, passwd, database, port, &errnum, errbuf))
 	{
-		server_log->Log(log_debug, "Failed to connect to database: Error: %s", errbuf);
+		server_log->Log(log_error, "Failed to connect to database: Error: %s", errbuf);
 		return false;
 	}
 	else
 	{
-		server_log->Log(log_debug, "Using database '%s' at %s:%u", database, host, port);
+		server_log->Log(log_database_trace, "Using database '%s' at %s:%u", database, host, port);
 		return true;
 	}
-}
-
-/*
-* Close the connection to the database
-*/
-Database::~Database()
-{
 }
 
 #pragma region Load Server Setup
@@ -80,7 +73,7 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 
 	if (!results.Success())
 	{
-		server_log->Log(log_debug, "LoadServerSettings Mysql query return no results: %s", query.c_str());
+		server_log->Log(log_database_error, "LoadServerSettings Mysql query return no results: %s", query.c_str());
 	}
 	auto row = results.begin();
 	if (row[1] != nullptr)
@@ -95,7 +88,7 @@ std::string Database::LoadServerSettings(std::string category, std::string type)
 bool Database::CheckSettings(int type)
 {
 	std::string query;
-	server_log->Log(log_debug, "Checking for database structure with type %s", std::to_string(type).c_str());
+	server_log->Log(log_database_trace, "Checking for database structure with type %s", std::to_string(type).c_str());
 	if (type == 1)
 	{
 		query = StringFormat("SHOW TABLES LIKE 'tblloginserversettings'");
@@ -104,10 +97,10 @@ bool Database::CheckSettings(int type)
 
 		if (!results.Success())
 		{
-			server_log->Log(log_error, "CheckSettings Mysql query return no results: %s", query.c_str());
+			server_log->Log(log_database_error, "CheckSettings Mysql query return no results: %s", query.c_str());
 			return false;
 		}
-		server_log->Log(log_debug, "tblloginserversettings exists sending continue.");
+		server_log->Log(log_database_trace, "tblloginserversettings exists sending continue.");
 		return true;
 	}
 	if (type == 2)
@@ -118,15 +111,15 @@ bool Database::CheckSettings(int type)
 
 		if (!results.Success())
 		{
-			server_log->Log(log_error, "CheckSettings Mysql query return no results: %s", query.c_str());
+			server_log->Log(log_database_error, "CheckSettings Mysql query return no results: %s", query.c_str());
 			return false;
 		}
-		server_log->Log(log_debug, "tblloginserversettings entries exist sending continue.");
+		server_log->Log(log_database_trace, "tblloginserversettings entries exist sending continue.");
 		return true;
 	}
 	else
 	{
-		server_log->Log(log_debug, "tblloginserversettings does not exist.");
+		server_log->Log(log_database_error, "tblloginserversettings does not exist.");
 		return false;
 	}
 }
@@ -134,7 +127,8 @@ bool Database::CheckSettings(int type)
 bool Database::CreateServerSettings()
 {
 	std::string query;
-	server_log->Log(log_debug, "Entering Server Settings database setup.");
+	std::string query2;
+	server_log->Log(log_database_trace, "Entering Server Settings database setup.");
 
 	query = StringFormat("SHOW TABLES LIKE 'tblloginserversettings'");
 
@@ -142,18 +136,15 @@ bool Database::CreateServerSettings()
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "CreateServerSettings Mysql query returned, table does not exist: %s", query.c_str());
-	}
-	else
-	{
-		return true;
+		server_log->Log(log_database_error, "CreateServerSettings Mysql query failed to search for table: %s", query.c_str());
+		return false;
 	}
 
-	auto row = results.begin();
-	//if (row == nullptr)
-	if (row[0] == nullptr)
+	server_log->Log(log_database, "CreateServerSettings: table does not exist, creating: %s", query.c_str());
+
+	if (results.RowCount() <= 0)
 	{
-		server_log->Log(log_debug, "Server Settings table does not exist, creating.");
+		server_log->Log(log_database, "Server Settings table does not exist, creating.");
 
 		query = StringFormat(
 				"CREATE TABLE `tblloginserversettings` ("
@@ -168,11 +159,11 @@ bool Database::CreateServerSettings()
 
 		if (!results.Success())
 		{
-			server_log->Log(log_error, "CreateServerSettings Mysql query failed to create table: %s", query.c_str());
+			server_log->Log(log_database_error, "CreateServerSettings Mysql query failed to create table: %s", query.c_str());
 			return false;
 		}
 
-		query = StringFormat(
+		query2 = StringFormat(
 			"INSERT INTO `tblloginserversettings` (type, value, category, description, defaults)"
 			"VALUES"
 			"('access_log_table', '', 'schema', 'location for access logs, failed logins and goodIP.', 'tblaccountaccesslog'),"
@@ -201,12 +192,13 @@ bool Database::CreateServerSettings()
 			"('world_server_type_table', '', 'schema', 'location of server type descriptions.', 'tblServerListType'),"
 			"('world_trace', '', 'options', 'debugging', 'FALSE');");
 
-		if (!results.Success())
+		auto results2 = QueryDatabase(query2);
+
+		if (!results2.Success())
 		{
-			server_log->Log(log_error, "CreateServerSettings Mysql query failed: %s", query.c_str());
+			server_log->Log(log_database_error, "CreateServerSettings Mysql query failed: %s", query2.c_str());
 			return false;
-		}
-			
+		}			
 			
 		// type, category, default
 		bool failed = false;
@@ -240,11 +232,11 @@ bool Database::CreateServerSettings()
 		{
 			return false;
 		}
-		server_log->Log(log_database, "Server Settings table created, continuing.");
+		server_log->Log(log_database_trace, "Server Settings table created, continuing.");
 	}
 	else
 	{
-		server_log->Log(log_database, "Server Settings tables exists, continuing.");
+		server_log->Log(log_database_trace, "CreateServerSettings found existing settings, continuing on.");
 	}
 	if (GetServerSettings())
 	{
@@ -255,6 +247,7 @@ bool Database::CreateServerSettings()
 
 bool Database::GetServerSettings()
 {
+	server_log->Log(log_database, "Entered GetServerSettings.");
 	std::string query;
 	query = StringFormat("SELECT * FROM tblloginserversettings");
 
@@ -262,14 +255,14 @@ bool Database::GetServerSettings()
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "GetServerSettings Mysql check_query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "GetServerSettings Mysql check_query failed: %s", query.c_str());
 		return false;
 	}
 
 	bool result = true;
 	auto row = results.begin();
 
-	while (row != results.end())
+	for (auto row = results.begin(); row != results.end(); ++row)
 	{
 		std::string type = row[0];
 		std::string value = row[1];
@@ -309,56 +302,61 @@ bool Database::SetServerSettings(std::string type, std::string category, std::st
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "SetServerSettings Mysql check_query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "SetServerSettings Mysql check_query failed: %s", query.c_str());
 		return false;
 	}
 	return true;
 }
-/* This is not working right, returns true regardless....
- * This is used by the following function as well as line 375 in client.cpp and line 182 in server_manager.cpp
- * Uncomment those areas to troubleshoot. I left them commented so it would build and run for anyone looking into this.
- */
+
 bool Database::CheckExtraSettings(std::string type)
 {
 	std::string query;
 
-	server_log->Log(log_debug, "Entered CheckMissingSettings using type: %s.", type.c_str());
+	server_log->Log(log_database_trace, "Entered CheckMissingSettings using type: %s.", type.c_str());
 
 	query = StringFormat("SELECT * FROM `tblloginserversettings` WHERE `type` = '%s';", type.c_str());
-
-	server_log->Log(log_debug, "CheckMissingSettings query: %s", query.c_str());
 
 	auto check_results = QueryDatabase(query);
 
 	if (!check_results.Success())
 	{
-		server_log->Log(log_error, "CheckMissingSettings query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "CheckMissingSettings query failed: %s", query.c_str());
 		return false;
 	}
-	server_log->Log(log_debug, "CheckMissingSettings type: %s exists.", type.c_str());
-	return true;
+
+	auto row = check_results.begin();
+	if (check_results.RowCount() > 0)
+	{
+		server_log->Log(log_database_trace, "CheckMissingSettings type: %s exists.", row[0]);
+		return true;
+	}
+	else
+	{
+		server_log->Log(log_database_trace, "CheckMissingSettings type: %s does not exist.", type.c_str());
+		return false;
+	}
 }
+
 void Database::InsertExtraSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults)
 {
-	CheckExtraSettings(type);
-	//std::string query;
-	//if (!CheckExtraSettings(type))
-	//{
-		//query = StringFormat("INSERT INTO `tblloginserversettings` (`type`, `value`, category, description, defaults)"
-		//						"VALUES('%s', '%s', '%s', '%s', '%s');", 
-		//							type.c_str(),
-		//							value.c_str(),
-		//							category.c_str(),
-		//							description.c_str(),
-		//							defaults.c_str());
+	std::string query;
+	if (!CheckExtraSettings(type))
+	{
+		query = StringFormat("INSERT INTO `tblloginserversettings` (`type`, `value`, category, description, defaults)"
+								"VALUES('%s', '%s', '%s', '%s', '%s');", 
+									type.c_str(),
+									value.c_str(),
+									category.c_str(),
+									description.c_str(),
+									defaults.c_str());
 
-		//auto results = QueryDatabase(query);
+		auto results = QueryDatabase(query);
 
-		//if (!results.Success())
-		//{
-		//	server_log->Log(log_error, "InsertMissingSettings query failed: %s", query.c_str());
-		//}
-	//}
+		if (!results.Success())
+		{
+			server_log->Log(log_database_error, "InsertMissingSettings query failed: %s", query.c_str());
+		}
+	}
 	return;
 }
 #pragma endregion
@@ -379,7 +377,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
@@ -408,7 +406,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 
 	if (!results2.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 	return true;
@@ -437,7 +435,7 @@ void Database::UpdateWorldRegistration(unsigned int id, std::string long_name, s
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -459,17 +457,18 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 		LoadServerSettings("schema", "world_server_type_table").c_str(),
 		escaped_short_name
 		);
+
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
 	auto row = results.begin();
-	//if (row != nullptr)
-	if (row[0] != nullptr)
+
+	if (results.RowCount() > 0)
 	{
 		id = atoi(row[0]);
 		desc = row[1];
@@ -491,24 +490,23 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 
 			if (!results.Success())
 			{
-				server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+				server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 				return false;
 			}
 
 			auto row = results.begin();
-			//if (row != nullptr)
-			if (row[0] != nullptr)
+			if (results.RowCount() > 0)
 			{
 				account = row[0];
 				password = row[1];
 				return true;
 			}
-			server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
+			server_log->Log(log_database_trace, "Mysql query returned no result: %s", query.c_str());
 			return false;
 		}
 		return true;
 	}
-	server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
+	server_log->Log(log_database_error, "Mysql query returned no result: %s", query.c_str());
 	return false;
 }
 #pragma endregion
@@ -549,7 +547,7 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 	auto results = QueryDatabase(query);
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -571,7 +569,7 @@ void Database::UpdateLSAccount(unsigned int id, std::string ip_address)
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -589,12 +587,11 @@ bool Database::GetAccountLockStatus(std::string name)
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
 
 	auto row = results.begin();
-	//while (row != nullptr)
 	while (row[0] != nullptr)
 	{
 		int unlock = atoi(row[0]);
@@ -635,7 +632,7 @@ void Database::UpdateAccessLog(unsigned int account_id, std::string account_name
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 	}
 }
 
@@ -657,19 +654,22 @@ bool Database::GetLoginDataFromAccountName(std::string name, std::string &passwo
 
 	if (!results.Success())
 	{
-		server_log->Log(log_error, "Mysql query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
 		return false;
 	}
-
-	auto row = results.begin();
-	//while (row != nullptr)
-	while (row[0] != nullptr)
+	if (results.RowCount() > 0)
 	{
-		id = atoi(row[0]);
-		password = row[1];
-		return true;
+		auto row = results.begin();
+		if (row[0] != nullptr)
+		{
+			id = atoi(row[0]);
+			password = row[1];
+			return true;
+		}
+		server_log->Log(log_database_error, "Unknown error, no result for: %s", query.c_str());
+		return false;
 	}
-	server_log->Log(log_database, "Mysql query returned no result: %s", query.c_str());
+	server_log->Log(log_database_error, "Mysql query returned no result for: %s", query.c_str());
 	return false;
 }
 #pragma endregion

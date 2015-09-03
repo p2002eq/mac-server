@@ -373,7 +373,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 	server_type = i->servertype;
 	logged_in = true;
 
-	if (db.LoadServerSettings("options", "reject_duplicate_servers").c_str() == "TRUE")
+	if (db.LoadServerSettings("options", "reject_duplicate_servers") == "TRUE")
 	{
 		if(server.SM->ServerExists(long_name, short_name, this))
 		{
@@ -390,7 +390,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		}
 	}
 
-	if (db.LoadServerSettings("options", "unregistered_allowed").c_str() == "FALSE")
+	if (db.LoadServerSettings("options", "unregistered_allowed") == "FALSE")
 	{
 		if(account_name.size() > 0 && account_password.size() > 0)
 		{

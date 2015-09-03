@@ -33,12 +33,16 @@ enum eqLogType
 	log_debug,
 	log_error,
 	log_database,
+	log_database_trace,
+	log_database_error,
 	log_network,
 	log_network_trace,
 	log_network_error,
 	log_world,
+	log_world_trace,
 	log_world_error,
 	log_client,
+	log_client_trace,
 	log_client_error,
 	_log_largest_type
 };

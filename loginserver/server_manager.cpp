@@ -179,13 +179,13 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 	sl->numservers = server_count;
 
 	uint8 showcount = 0x0;
-	//if (db.CheckExtraSettings("pop_count"))
-	//{
-	//	if (db.LoadServerSettings("options", "pop_count").c_str() == "1")
-	//	{
-	//		showcount = 0xFF;
-	//	}
-	//}
+	if (db.CheckExtraSettings("pop_count"))
+	{
+		if (db.LoadServerSettings("options", "pop_count") == "1")
+		{
+			showcount = 0xFF;
+		}
+	}
 	sl->showusercount = showcount;
 
 	unsigned char *data_ptr = outapp->pBuffer;

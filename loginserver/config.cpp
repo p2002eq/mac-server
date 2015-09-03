@@ -54,40 +54,41 @@ bool Config::ConfigSetup()
 	bool login = std::ifstream("login.ini").good();
 	bool dbini = std::ifstream("db.ini").good();
 
-	//create db.ini and if all goes well copy login.ini to db table and continue starting the server.
-	if (login && !dbini)
+#pragma region condition: login.ini exists db.ini does not, create db.ini, copy login.ini then continue.
+	if (login && !dbini) //tested 9/3/2015 good. File conditions and database conditions in Windows.
 	{
 		server_log->Log(log_debug, "login.ini found but db.ini missing.");
 
-		//if (server.db) { delete server.db; }
-		server_log->Log(log_debug, "Connecting to database to create db.ini and settings...");
+		server_log->Log(log_database, "Connecting to database to create db.ini and settings...");
 		if (!db.Connect(
-			server.config->LoadOption("LoginServerDatabase", "host", "login.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "user", "login.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "password", "login.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "db", "login.ini").c_str(),
-			atoul(server.config->LoadOption("LoginServerDatabase", "port", "login.ini").c_str())))
+			server.config->LoadOption("database", "host", "login.ini").c_str(),
+			server.config->LoadOption("database", "user", "login.ini").c_str(),
+			server.config->LoadOption("database", "password", "login.ini").c_str(),
+			server.config->LoadOption("database", "db", "login.ini").c_str(),
+			atoul(server.config->LoadOption("database", "port", "login.ini").c_str())))
 		{
-			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			server_log->Log(log_error, "Unable to connect to the database, cannot continue without a database connection");
 			return false;
 		}
 
 		//write db.ini based on login.ini entries
 		server.config->WriteDBini();
 		//check if table exists and set the field values based on the login.ini
-		if (db.CreateServerSettings())
+		if (!db.CreateServerSettings())
 		{
 			//send shutdown to main.cpp critical failure.
+			server_log->Log(log_error, "Create settings in tblloginserversettings failed.");
 			return false;
 		}
+		//db.ini now set up. Settings are fine in database, continue on to config.
 	}
-	else if (!login && dbini)
+#pragma endregion
+#pragma region condition: login.ini does not exist but db.ini does. If table exists-continue. If not write defaults, prompt user with warning and halt.
+	else if (!login && dbini) //tested 9/3/2015 good. File conditions and database conditions in Windows.
 	{
 		server_log->Log(log_debug, "db.ini found but login.ini missing. We are able to continue.");
 
-		//check if settings exist in database.
-		//if (server.db) { delete server.db; }
-		server_log->Log(log_debug, "Connecting to database to check for settings in database...");
+		server_log->Log(log_database, "Connecting to database to check or repair settings...");
 		if (!db.Connect(
 			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
 			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
@@ -95,74 +96,83 @@ bool Config::ConfigSetup()
 			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
 			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
 		{
-			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
-			return false;
-		}
-
-		if (!db.CheckSettings(2))
-		{
-			//send shutdown to main.cpp critical failure.
-			server_log->Log(log_error, "Missing settings in tblloginserversettings.");
-			return false;
-		}
-		//db.ini was already set up. Settings are fine in database.
-	}
-	else if (login && dbini)
-	{
-		server_log->Log(log_debug, "db.ini and login.ini found. We are able to continue.");
-
-		//if (server.db) { delete server.db; }
-		server_log->Log(log_debug, "Connecting to database to check and repair settings...");
-		if (!db.Connect(
-			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "password", "db.ini").c_str(),
-			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
-			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
-		{
-			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			server_log->Log(log_error, "Unable to connect to the database, cannot continue without a database connection");
 			return false;
 		}
 
 		//check if settings exist in database.
 		if (!db.CheckSettings(2))
 		{
-			server_log->Log(log_debug, "Settings entries not found in database.");
-			if (db.CheckSettings(1))
-			{
-				server_log->Log(log_debug, "Settings entries not found in database but table was.");
-				//server.db->ResetDBSettings();
-			}
 			if (!db.CreateServerSettings())
 			{
-				server_log->Log(log_debug, "Settings entries not found in database creating base settings from ini files.");
 				//send shutdown to main.cpp critical failure.
 				server_log->Log(log_error, "Missing settings in tblloginserversettings.");
 				return false;
 			}
+			server_log->Log(log_error, "WARNING: Defaults loaded, you may need to edit tblloginserversettings.");
+			//defaults written to db, prompt user to edit and send shutdown to main.cpp.
+			return false;
 		}
-		//db.ini was already set up. Settings are fine in database.
-		server_log->Log(log_debug, "login.ini and db.ini found.");
+		//db.ini was already set up. Settings are fine in database, continue on to config.
 	}
-	//no ini found, can't start the server this way.
-	//write the default ini and prompt user to edit it.
-	else
+#pragma endregion
+#pragma region condition: both login.ini and db.ini exist. If table exists-continue. If not write login.ini contents to database and continue.
+	else if (login && dbini) //tested 9/3/2015 good. File conditions and database conditions in Windows.
+	{
+		server_log->Log(log_debug, "db.ini and login.ini found. We are able to continue.");
+
+		server_log->Log(log_database, "Connecting to database to check or repair settings...");
+		if (!db.Connect(
+			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "password", "db.ini").c_str(),
+			server.config->LoadOption("LoginServerDatabase", "db", "db.ini").c_str(),
+			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
+		{
+			server_log->Log(log_error, "Unable to connect to the database, cannot continue without a database connection");
+			return false;
+		}
+
+		//check if settings exist in database.
+		if (!db.CheckSettings(2))
+		{
+			if (db.CheckSettings(1))
+			{
+				server_log->Log(log_database, "Settings entries not found in database but table was.");
+				//db.ResetDBSettings();
+			}
+			server_log->Log(log_database, "Settings entries not found in database creating base settings from ini files.");
+			if (!db.CreateServerSettings())
+			{
+				server_log->Log(log_error, "Missing settings in tblloginserversettings.");
+				//send shutdown to main.cpp critical failure.
+				return false;
+			}
+		}
+		//db.ini was already set up. Settings are fine in database, continue on to config.
+		server_log->Log(log_debug, "login.ini and db.ini found. Database is set up.");
+	}
+#pragma endregion
+#pragma region condition: no ini found. Write default db.ini and prompt user to edit and shut down.
+	else //tested 9/3/2015 good. File conditions and database conditions in Windows.
 	{
 		server.config->WriteDBini();
 		//send shutdown to main.cpp critical failure.
+		server_log->Log(log_error, "Missing settings in the ini files, please edit and try again.");
 		return false;
 	}
+#pragma endregion
+
 	//ini processing succeeded, continue on.
 
 	//Create our DB from options.
-	server_log->Log(log_debug, "MySQL Database Init.");
+	server_log->Log(log_database, "MySQL Database Init.");
 
 	bool config = std::ifstream("db.ini").good();
 
 	if (config)
 	{
-		//if (server.db) { delete server.db; }
-		server_log->Log(log_debug, "Connecting to database for game server...");
+		server_log->Log(log_database, "Connecting to database for game server...");
 		if (!db.Connect(
 			server.config->LoadOption("LoginServerDatabase", "host", "db.ini").c_str(),
 			server.config->LoadOption("LoginServerDatabase", "user", "db.ini").c_str(),
@@ -171,10 +181,10 @@ bool Config::ConfigSetup()
 			atoul(server.config->LoadOption("LoginServerDatabase", "port", "db.ini").c_str())))
 		{
 			//send shutdown to main.cpp critical failure.
-			server_log->Log(log_debug, "Unable to connect to the database, cannot continue without a database connection");
+			server_log->Log(log_error, "Unable to connect to the database, cannot continue without a database connection");
 			return false;
 		}
-		server_log->Log(log_debug, "Database connected for game server.");
+		server_log->Log(log_database, "Database connected for game server.");
 	}
 	else
 	{
@@ -188,13 +198,16 @@ bool Config::ConfigSetup()
 
 void Config::WriteDBini()
 {
-	bool login = std::ifstream("login.ini").good();
+	bool loginexist = std::ifstream("login.ini").good();
 	bool dbexist = std::ifstream("db.ini").good();
-	if (dbexist && !login)
+
+	// db.ini was previously setup, we return to continue.
+	if (dbexist && !loginexist)
 	{
 		return;
 	}
-	else if (!dbexist && login)
+	// No db.ini exists, create with settings from login.ini and continue.
+	else if (!dbexist && loginexist)
 	{
 		std::ofstream dbini("db.ini");
 		dbini << "[LoginServerDatabase]\n";
@@ -214,9 +227,13 @@ void Config::WriteDBini()
 		dbini.close();
 		return;
 	}
-	else if (!dbexist && !login)
+	/** 
+	* Place holder for reading from database for values.
+	* Only writes this if all file checks fail.
+	* User must edit db.ini that is created if this fires.
+	*/
+	else if (!dbexist && !loginexist)
 	{
-		// place holder for reading from database for values
 		std::ofstream dbini("db.ini");
 		dbini << "[LoginServerDatabase]\n";
 		dbini << "host = \n";
@@ -238,13 +255,16 @@ void Config::WriteDBini()
 	return;
 }
 
+/**
+* For settings not included in legacy login.ini
+*/
 void Config::UpdateSettings()
 {
 	//formatting for adding loginserver settings.
-	//server.db->InsertMissingSettings("type", "value", "category", "description", "defaults");
+	//db.InsertMissingSettings("type", "value", "category", "description", "defaults");
 
 	db.InsertExtraSettings("pop_count", "0", "options", "0 to only display UP or DOWN or 1 to show population count in server select.", "0");
-	db.InsertExtraSettings("ticker", "Welcome", "options", "Sets the welcome message in server select.", "Welcome");
+	db.InsertExtraSettings("ticker", "Welcome to EQMacEmu", "options", "Sets the welcome message in server select.", "Welcome to EQMacEmu");
 	//db.InsertExtraSettings("port", "44453", "SWG", "Experimental, nothing to do with EQ.", "44453");
 	//db.InsertExtraSettings("opcodes", "login_opcodes_swg.conf", "SWG", "Experimental, nothing to do with EQ.", "login_opcodes_swg.conf");
 }

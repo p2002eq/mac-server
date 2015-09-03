@@ -243,13 +243,14 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	char sha1hash[41];
 	unsigned int enable;
 
+
 	if (db.GetLoginDataFromAccountName(username, d_pass_hash, d_account_id) == false)
 	{
 		server_log->Log(log_client_error, "Error logging in, user %s does not exist in the database.", username.c_str());
 
 		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
 
-		if (db.LoadServerSettings("options", "auto_account_create").c_str() == "TRUE")
+		if (db.LoadServerSettings("options", "auto_account_create") == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
 			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
@@ -372,10 +373,10 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 	memset(buf, 0, sizeof(buf));
 
 	std::string ticker = "Welcome to EQMacEmu";
-	//if (db.CheckExtraSettings("ticker"))
-	//{
-	//	ticker = db.LoadServerSettings("options", "ticker").c_str();
-	//}
+	if (db.CheckExtraSettings("ticker"))
+	{
+		ticker = db.LoadServerSettings("options", "ticker");
+	}
 	strcpy(buf, ticker.c_str());
 	outapp->size += strlen(ticker.c_str());
 
@@ -425,19 +426,19 @@ void Client::GenerateKey()
 void Client::Logs(std::string platform, unsigned int account_id, std::string account_name, std::string IP, unsigned int accessed, std::string reason)
 {
 	// valid reason codes are: notexist, created, badpass, success
-	if (db.LoadServerSettings("options", "failed_login_log").c_str() == "TRUE" && db.LoadServerSettings("options", "auto_account_create").c_str() == "FALSE" && reason == "notexist")
+	if (db.LoadServerSettings("options", "failed_login_log") == "TRUE" && db.LoadServerSettings("options", "auto_account_create") == "FALSE" && reason == "notexist")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Account not exist, " + platform);
 	}
-	if (db.LoadServerSettings("options", "failed_login_log").c_str() == "TRUE" && db.LoadServerSettings("options", "auto_account_create").c_str() == "TRUE" && reason == "created")
+	if (db.LoadServerSettings("options", "failed_login_log") == "TRUE" && db.LoadServerSettings("options", "auto_account_create") == "TRUE" && reason == "created")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Account created, " + platform);
 	}
-	if (db.LoadServerSettings("options", "failed_login_log").c_str() == "TRUE" && reason == "badpass")
+	if (db.LoadServerSettings("options", "failed_login_log") == "TRUE" && reason == "badpass")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Bad password, " + platform);
 	}
-	if (db.LoadServerSettings("options", "good_loginIP_log").c_str() == "TRUE" && reason == "success")
+	if (db.LoadServerSettings("options", "good_loginIP_log") == "TRUE" && reason == "success")
 	{
 		db.UpdateAccessLog(account_id, account_name, IP, accessed, "Logged in Success, " + platform);
 	}
