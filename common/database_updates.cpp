@@ -539,6 +539,32 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "character_consent table created.");
 	}
+
+	std::string check_querye = StringFormat("SHOW COLUMNS FROM `account` LIKE 'gminvul'");
+	auto resultse = QueryDatabase(check_querye);
+	if (resultse.RowCount() == 0){
+		std::string create_querye = StringFormat("ALTER table `account` add column `gminvul` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add gmvinvul column to account...");
+		auto create_resultse = QueryDatabase(create_querye);
+		if (!create_resultse.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating gminvul column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "gminvul column created.");
+	}
+
+	std::string check_queryf = StringFormat("SHOW COLUMNS FROM `account` LIKE 'flymode'");
+	auto resultsf = QueryDatabase(check_queryf);
+	if (resultsf.RowCount() == 0){
+		std::string create_queryf = StringFormat("ALTER table `account` add column `flymode` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add gmvinvul column to account...");
+		auto create_resultsf = QueryDatabase(create_queryf);
+		if (!create_resultsf.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating flymode column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "flymode column created.");
+	}
 	return true;
 }
 

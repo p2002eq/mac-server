@@ -227,6 +227,7 @@ int command_init(void){
 		command_add("gm", "- Turn player target's or your GM flag on or off.", 95, command_gm) ||
 		command_add("gmhideme", nullptr, 81, command_hideme) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target.", 150, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target.", 20, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid.", 250, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 90, command_guild) ||
@@ -1748,6 +1749,8 @@ void command_invul(Client *c, const Seperator *sep)
 			t = c;
 		}
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(CC_Default, "%s is %s invulnerable from attack.", t->GetName(), state ? "now" : "no longer");
 	}
 	else
@@ -2429,12 +2432,22 @@ void command_flymode(Client *c, const Seperator *sep){
 			t = c;
 		}
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
+		uint32 account = c->AccountID();
 		if (sep->arg[1][0] == '1')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		}
 		else if (sep->arg[1][0] == '2')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		}
 		else
+		{
 			c->Message(CC_Default, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -11161,4 +11174,22 @@ void command_reloadtraps(Client *c, const Seperator *sep)
 {
 	entity_list.UpdateAllTraps(true, true);
 	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
 }
