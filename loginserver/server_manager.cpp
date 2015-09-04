@@ -33,7 +33,7 @@ ServerManager::ServerManager()
 	char error_buffer[TCPConnection_ErrorBufferSize];
 
 	server_log->Log(log_debug, "ServerManager Entered.");
-	server_log->Trace("ServerManager Got: %s from the database for listen_port.", db.LoadServerSettings("options", "listen_port").c_str());
+	server_log->Trace("ServerManager Got: %s  for trace on and listen_port value is valid.", db.LoadServerSettings("options", "listen_port").c_str());
 
 	int listen_port = atoul(db.LoadServerSettings("options", "listen_port").c_str());
 	tcps = new EmuTCPServer(listen_port, true);

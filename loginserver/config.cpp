@@ -193,6 +193,7 @@ bool Config::ConfigSetup()
 		return false;
 	}
 	UpdateSettings();
+	db.DBUpdate();
 	return true;
 }
 

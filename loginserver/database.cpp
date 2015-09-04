@@ -312,7 +312,7 @@ bool Database::CheckExtraSettings(std::string type)
 {
 	std::string query;
 
-	server_log->Log(log_database_trace, "Entered CheckMissingSettings using type: %s.", type.c_str());
+	server_log->Log(log_database_trace, "Entered CheckExtraSettings using type: %s.", type.c_str());
 
 	query = StringFormat("SELECT * FROM `tblloginserversettings` WHERE `type` = '%s';", type.c_str());
 
@@ -320,19 +320,19 @@ bool Database::CheckExtraSettings(std::string type)
 
 	if (!check_results.Success())
 	{
-		server_log->Log(log_database_error, "CheckMissingSettings query failed: %s", query.c_str());
+		server_log->Log(log_database_error, "CheckExtraSettings query failed: %s", query.c_str());
 		return false;
 	}
 
 	auto row = check_results.begin();
 	if (check_results.RowCount() > 0)
 	{
-		server_log->Log(log_database_trace, "CheckMissingSettings type: %s exists.", row[0]);
+		server_log->Log(log_database_trace, "CheckExtraSettings type: %s exists.", row[0]);
 		return true;
 	}
 	else
 	{
-		server_log->Log(log_database_trace, "CheckMissingSettings type: %s does not exist.", type.c_str());
+		server_log->Log(log_database_trace, "CheckExtraSettings type: %s does not exist.", type.c_str());
 		return false;
 	}
 }
@@ -358,6 +358,31 @@ void Database::InsertExtraSettings(std::string type, std::string value, std::str
 		}
 	}
 	return;
+}
+
+bool Database::DBUpdate()
+{
+	server_log->Log(log_database, "Database bootstrap check entered, adjusting database to current requirements...");
+	DBSetup_SetEmailDefault(); //Legacy compatibility for mariahdb
+	return true;
+}
+
+bool Database::DBSetup_SetEmailDefault()
+{
+	std::string check_query = StringFormat("SHOW COLUMNS FROM `tblloginserveraccounts` LIKE 'AccountEmail'");
+	auto results = QueryDatabase(check_query);
+	if (results.RowCount() != 0)
+	{
+		std::string create_query = StringFormat("ALTER TABLE `tblloginserveraccounts` CHANGE `AccountEmail` `AccountEmail` varchar(100) not null default '0'");
+		auto create_results = QueryDatabase(create_query);
+		if (!create_results.Success())
+		{
+			server_log->Log(log_database_error, "Error adjusting AccountEmail column.");
+			return false;
+		}
+	}
+	server_log->Log(log_database, "Adjusted AccountEmail column.");
+	return true;
 }
 #pragma endregion
 

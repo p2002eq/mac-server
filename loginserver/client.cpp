@@ -232,7 +232,15 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		created = 1;
 	}
 
-	string salt = db.LoadServerSettings("options", "salt").c_str();
+	string salt = "0";
+	if (db.CheckExtraSettings("salt"))
+	{
+		if (db.LoadServerSettings("options", "salt").c_str() != NULL && !db.LoadServerSettings("options", "salt").empty() &&
+			db.LoadServerSettings("options", "salt") != " " && db.LoadServerSettings("options", "salt") != "")
+		{
+			salt = db.LoadServerSettings("options", "salt").c_str();
+		}
+	}
 	string userandpass = password + salt;
 	status = cs_logged_in;
 	unsigned int d_account_id = 0;

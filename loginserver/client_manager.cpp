@@ -29,8 +29,8 @@ extern Database db;
 ClientManager::ClientManager()
 {
 	server_log->Log(log_debug, "ClientManager Entered.");
-	server_log->Trace("ClientManager Got: %s from the database for port.", db.LoadServerSettings("Old", "port").c_str());
-	server_log->Trace("ClientManager Got: %s from the database for opcode location.", db.LoadServerSettings("Old", "opcodes").c_str());
+	server_log->Trace("ClientManager Got: %s for trace on and port value is valid.", db.LoadServerSettings("Old", "port").c_str());
+	server_log->Trace("ClientManager Got: %s  for trace on and opcode value is valid.", db.LoadServerSettings("Old", "opcodes").c_str());
 
 	int old_port = atoul(db.LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);

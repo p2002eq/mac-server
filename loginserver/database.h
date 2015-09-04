@@ -63,6 +63,10 @@ public:
 	* Add settings that didn't exist in legacy login.ini setups.
 	*/
 	void InsertExtraSettings(std::string type, std::string value, std::string category, std::string description, std::string defaults);
+	/**
+	* Change settings that need alterations.
+	*/
+	bool Database::DBUpdate();
 #pragma endregion
 #pragma region World Server Account Info
 	/**
@@ -114,5 +118,6 @@ public:
 #pragma endregion
 
 private:
+	bool DBSetup_SetEmailDefault();
 };
 #endif
