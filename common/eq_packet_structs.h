@@ -2542,6 +2542,7 @@ struct ServerLootItem_Struct {
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
 	uint8	quest;
+	uint8	pet;
 };
 
 struct Checksum_Struct {

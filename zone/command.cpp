@@ -10997,8 +10997,16 @@ void command_logs(Client *c, const Seperator *sep){
 			}
 		}
 	}
+	if (strcasecmp(sep->arg[1], "quiet") == 0){
+		for (int i = 0; i < Logs::LogCategory::MaxCategoryID; i++)
+		{
+			Log.log_settings[i].log_to_gmsay = 0;
+			logs_set = 0;
+		}
+	}
 	else {
 		c->Message(CC_Default, "#logs usage:");
+		c->Message(CC_Default, "--- #logs quiet - Turns off all gmsay logs in the current zone until the next time the zone resets.");
 		c->Message(CC_Default, "--- #logs reload_all - Reload all settings in world and all zone processes with what is defined in the database");
 		c->Message(CC_Default, "--- #logs list_settings - Shows current log settings and categories loaded into the current process' memory");
 		c->Message(CC_Default, "--- #logs set [console|file|gmsay] <category_id> <debug_level (1-3)> - Sets log settings during the lifetime of the zone");
