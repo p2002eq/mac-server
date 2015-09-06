@@ -195,6 +195,7 @@ public:
 	bool	QuestLootCount(uint16 itemid1, uint16 itemid2, uint16 itemid3, uint16 itemid4);
 	void	CleanQuestLootItems();
 	uint8	CountQuestItem(uint16 itemid);
+	uint8	CountQuestItems();
 	void	RemoveItem(ServerLootItem_Struct* item_data);
 	virtual void UpdateEquipmentLight();
 

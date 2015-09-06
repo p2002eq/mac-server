@@ -268,6 +268,10 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 	if(!itemlist && !wearchange)
 		return;
 
+	
+	if(CountQuestItems() >= 8)
+		return;
+
 	ServerLootItem_Struct* item = new ServerLootItem_Struct;
 
 	if(quest)
@@ -668,6 +672,23 @@ uint8 NPC::CountQuestItem(uint16 itemid)
 	return count;
 }
 
+uint8 NPC::CountQuestItems()
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	uint8 count = 0;
+	for(; cur != end; ++cur) 
+	{
+		ServerLootItem_Struct* sitem = *cur;
+		if(sitem && sitem->quest == 1)
+		{
+			++count;
+		}
+	}
+
+	return count;
+}
 
 bool NPC::RemoveQuestLootItems(int16 itemid) 
 {

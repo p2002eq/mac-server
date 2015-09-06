@@ -172,7 +172,16 @@ void NPC::PauseWandering(int pausetime)
 		}
 		SetMoving(false);
 		SendPosition();
-	} else {
+	}
+	else if(roambox_distance > 0)
+	{
+		roambox_movingto_x = roambox_max_x + 1; // force update
+		pLastFightingDelayMoving = Timer::GetCurrentTime() + pausetime*1000;
+		SetMoving(false);
+		SendPosition();	// makes mobs stop clientside
+	}
+	else 
+	{
 		Log.Out(Logs::General, Logs::Error, "NPC not on grid - can't pause wandering: %lu", (unsigned long)GetNPCTypeID());
 	}
 	return;
