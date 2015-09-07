@@ -1494,6 +1494,16 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	SetHorseId(0);
 	dead = true;
 
+	if(GetClass() == SHADOWKNIGHT && !p_timers.Expired(&database, pTimerHarmTouch))
+	{
+		p_timers.Clear(&database, pTimerHarmTouch);
+
+	}
+	else if(GetClass() == PALADIN  && !p_timers.Expired(&database, pTimerLayHands))
+	{
+		p_timers.Clear(&database, pTimerLayHands);
+	}
+
 	if (killerMob != nullptr)
 	{
 		if (killerMob->IsNPC()) {

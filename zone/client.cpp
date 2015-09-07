@@ -5319,3 +5319,22 @@ bool Client::LoadCharacterConsent()
 	}
 	return true;
 }
+
+float Client::GetPortHeading(uint16 newx, uint16 newy)
+{
+	if(zone->GetZoneID() == paineel)
+	{
+		// To Bank
+		if(GetX() > 519 && GetX() < 530 && newx > 540 && newx < 560)
+		{
+			return 64.0f;
+		}
+		// To SK guild
+		else if(GetY() > 952 && GetY() < 965 && newy >= 900 && newy <= 920)
+		{
+			return 120.0f;
+		}
+	}
+
+	return 0.0f;
+}

@@ -2314,8 +2314,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 			if(reduction)
 				recast -= reduction;
 
+			uint16 timer_id = spell_id;
+			if(spell_id == SPELL_HARM_TOUCH2)
+				timer_id = SPELL_HARM_TOUCH;
+
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: Setting long reuse timer to %d s (orig %d)", spell_id, recast, spells[spell_id].recast_time);
-			CastToClient()->GetPTimers().Start(pTimerSpellStart + spell_id, recast);
+			CastToClient()->GetPTimers().Start(pTimerSpellStart + timer_id, recast);
 		}
 	}
 

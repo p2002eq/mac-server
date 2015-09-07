@@ -643,6 +643,21 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
+
+	std::string check_query7 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='PTimers'");
+	auto results7 = QueryDatabase(check_query7);
+	if (results7.RowCount() == 0)
+	{
+		std::string check_query7a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('52', 'PTimers', '0', '0', '0')");
+		auto results7a = QueryDatabase(check_query7a);
+		if (!results7a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `PTimers`.");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool Database::DBSetup_IP_Multiplier()

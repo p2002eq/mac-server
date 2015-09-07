@@ -1333,8 +1333,14 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Ability slot refresh send SK/PAL */
 	if (m_pp.class_ == SHADOWKNIGHT || m_pp.class_ == PALADIN) {
 		uint32 abilitynum = 0;
-		if (m_pp.class_ == SHADOWKNIGHT){ abilitynum = pTimerHarmTouch; }
-		else{ abilitynum = pTimerLayHands; }
+		if (m_pp.class_ == SHADOWKNIGHT)
+		{ 
+			abilitynum = pTimerHarmTouch; 
+		}
+		else
+		{ 
+			abilitynum = pTimerLayHands;
+		}
 
 		uint32 remaining = p_timers.GetRemainingTime(abilitynum);
 		if (remaining > 0 && remaining < 15300)
@@ -2201,18 +2207,21 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	else if (castspell->slot == ABILITY_SPELL_SLOT) {	// ABILITY cast (LoH and Harm Touch)
 		uint16 spell_to_cast = 0;
 
-		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN) {
+		//Reuse timers are handled by SpellFinished()
+		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN)
+		{
 			if (!p_timers.Expired(&database, pTimerLayHands)) {
 				Message(CC_Red, "Ability recovery time not yet met.");
 				InterruptSpell(castspell->spell_id);
 				return;
 			}
 			spell_to_cast = SPELL_LAY_ON_HANDS;
-			p_timers.Start(pTimerLayHands, LayOnHandsReuseTime);
 		}
 		else if ((castspell->spell_id == SPELL_HARM_TOUCH
-			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
-			if (!p_timers.Expired(&database, pTimerHarmTouch)) {
+			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) 
+		{
+			if (!p_timers.Expired(&database, pTimerHarmTouch)) 
+			{
 				Message(CC_Red, "Ability recovery time not yet met.");
 				InterruptSpell(castspell->spell_id);
 				return;
@@ -2223,8 +2232,6 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				spell_to_cast = SPELL_HARM_TOUCH;
 			else
 				spell_to_cast = SPELL_HARM_TOUCH2;
-
-			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
 		}
 
 		// if we've matched LoH or HT, cast now
@@ -2653,7 +2660,21 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		((ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x) && ppu->anim_type == 0) || (ppu->anim_type != animation) || (ppu->anim_type > 0 && ++update_count > 3);
 	// Update internal state
 	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	uint8 sendtoself = 0;
 	m_Position.w = ppu->heading;
+
+	//Adjust the heading for the Paineel portal near the SK guild
+	if(zone->GetZoneID() == paineel && 
+		((GetX() > 519 && GetX() < 530) || (GetY() > 952 && GetY() < 965)))
+	{
+		float tmph = GetPortHeading(ppu->x_pos, ppu->y_pos);
+		if(tmph > 0)
+		{
+			m_Position.w = tmph;
+			sendtoself = 1;
+		}
+
+	}
 
 	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
 		if(zone->random.Real(0, 100) < 70)//should be good
@@ -2704,7 +2725,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
 	if (send_update) {
 		update_count = 0;
-		SendPosUpdate();
+		SendPosUpdate(sendtoself);
 		pLastUpdate = Timer::GetCurrentTime();
 	}
 	if(zone->watermap)

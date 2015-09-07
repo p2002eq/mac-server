@@ -91,6 +91,7 @@ namespace Logs{
 		Discs,
 		Boats,
 		Traps,
+		PTimers,
 		MaxCategoryID	/* Don't Remove this*/
 	};
 
@@ -148,6 +149,7 @@ namespace Logs{
 		"Discs",
 		"Boats",
 		"Traps",
+		"PTimers",
 	};
 }
 
