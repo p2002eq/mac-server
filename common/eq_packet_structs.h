@@ -954,10 +954,8 @@ struct Death_Struct
 	  /*0005*/ int16	y_pos;                  // New X position of spawn
 	  /*0007*/ int16	x_pos;                  // New Y position of spawn
 	  /*0009*/ int16	z_pos;                  // New Z position of spawn
-	  /*0011*/ uint32	delta_y : 10,             // Y Velocity
-						spacer1 : 1,              // ***Placeholder
-						delta_z : 10,             // Z Velocity
-						spacer2 : 1,              // ***Placeholder
+	  /*0011*/ uint32	delta_y : 11,             // Y Velocity
+						delta_z : 11,             // Z Velocity
 						delta_x : 10;             // Z Velocity
 	  /*015*/
   };

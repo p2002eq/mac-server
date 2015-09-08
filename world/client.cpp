@@ -216,9 +216,6 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	if (((cle = client_list.CheckAuth(name, password)) || (cle = client_list.CheckAuth(id, password))))
 #endif
 	{
-		if(GetSessionLimit())
-			return false;
-
 		cle->SetOnline();
 		
 		if(eqs->ClientVersion() == EQClientMac)
@@ -455,6 +452,11 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	//if (RuleI(World, MaxClientsPerIP) >= 0) {
 	//	client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
 	//}
+	if(GetSessionLimit())
+		return false;
+
+	if (RuleI(World, MaxClientsPerIP) >= 0 && !client_list.CheckIPLimit(GetAccountID(), GetIP(), GetAdmin(), cle))
+		return false;
 
 	EnterWorld_Struct *ew=(EnterWorld_Struct *)app->pBuffer;
 	strn0cpy(char_name, ew->name, 64);

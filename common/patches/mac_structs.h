@@ -291,10 +291,8 @@ struct Spawn_Struct
 	/*0007*/	int16	y_pos;				// Y Position
 	/*0009*/	int16	x_pos;				// X Position
 	/*0011*/	int16	z_pos;				// Z Position
-	/*0013*/	int32	deltaY:10,			// Velocity Y
-						spacer1:1,			// Placeholder
-						deltaZ:10,			// Velocity Z
-						spacer2:1,			// ***Placeholder
+	/*0013*/	int32	deltaY:11,			// Velocity Y
+						deltaZ:11,			// Velocity Z
 						deltaX:10;			// Velocity X
 	/*0017*/	uint8	void1;
 	/*0018*/	uint16	petOwnerId;		// Id of pet owner (0 if not a pet)

@@ -1438,8 +1438,6 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
 	spu->delta_heading = 0;
-	spu->spacer1	=0;
-	spu->spacer2	=0;
 
 	spu->anim_type	= 0;
 
@@ -1469,12 +1467,10 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	spu->z_pos = static_cast<int16>(10.0f * m_Position.z);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
-	spu->delta_x	= static_cast<int32>(m_Delta.x/128);
-	spu->delta_y	= static_cast<int32>(m_Delta.y/128);
-	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
+	spu->delta_x	= static_cast<int32>(m_Delta.x) & 0x3FF;
+	spu->delta_y	= static_cast<int32>(m_Delta.y) & 0x7FF;
+	spu->delta_z	= 0;
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
-	spu->spacer1	=0;
-	spu->spacer2	=0;
 
 	if(this->IsClient() || this->iszomm)
 	{
@@ -1498,8 +1494,6 @@ void Mob::SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpda
 	outgoing->delta_y	= incoming->delta_y;
 	outgoing->delta_z	= incoming->delta_z;
 	outgoing->delta_heading = incoming->delta_heading;
-	outgoing->spacer1	= incoming->spacer1;
-	outgoing->spacer2	= incoming->spacer2;
 	outgoing->anim_type = incoming->anim_type;
 }
 

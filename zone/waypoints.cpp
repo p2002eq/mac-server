@@ -707,15 +707,12 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			float new_x = m_Position.x + m_TargetV.x;
 			float new_y = m_Position.y + m_TargetV.y;
 			float new_z = m_Position.z + m_TargetV.z;
-			if(IsNPC()) {
-				entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
-			}
 
 			m_Position.x = new_x;
 			m_Position.y = new_y;
 			m_Position.z = new_z;
 			m_Position.w = CalculateHeadingToTarget(x, y);
-			tar_ndx=22-numsteps;
+			tar_ndx=20-numsteps;
 			Log.Out(Logs::Detail, Logs::AI, "Next position2 (%.3f, %.3f, %.3f) (%d steps)", m_Position.x, m_Position.y, m_Position.z, numsteps);
 		}
 		else
@@ -793,7 +790,8 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	SetMoving(true);
 	moved=true;
 
-	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
+
+	m_Delta = glm::vec4(floorf((m_Position.x - nx)*6.6666666f), floorf((m_Position.y - ny)*6.6666666f), floorf((m_Position.z - nz)*6.6666666f), 0.0f);
 
 	if (IsClient()) {
 		SendPositionNearby(1);
