@@ -369,7 +369,7 @@ void NPC::CalculateNewWaypoint()
 	}
 	}
 
-	tar_ndx = 52;
+	tar_ndx = 20;
 
 	// Preserve waypoint setting for quest controlled NPCs
 	if (cur_wp < 0)
