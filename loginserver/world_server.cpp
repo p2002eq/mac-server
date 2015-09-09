@@ -213,10 +213,10 @@ bool WorldServer::Process()
 						per->Message = 303;
 						break;
 					case -4:
-						c->FatalError("Error 1018: You currently have an active character on that EverQuest Server, please allow a minute for synchronization and try again.");
+						per->Message = 111;
 						break;
 					case -5:
-						c->FatalError("\nIP Limit Exceeded: \n\nYou have exceeded the maximum number of allowed IP addresses for this account.");
+						per->Message = 198;
 						break;
 
 					}
