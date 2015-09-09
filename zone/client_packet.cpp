@@ -2228,7 +2228,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			}
 
 			// determine which version of HT we are casting based on level
-			if (GetLevel() < 40)
+			if (GetLevel() <= 40)
 				spell_to_cast = SPELL_HARM_TOUCH;
 			else
 				spell_to_cast = SPELL_HARM_TOUCH2;
@@ -2492,7 +2492,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	dist += tmp*tmp;
 	dist = sqrt(dist);
 	// Haynar was looking at delta's, which look like velocities.  This converts the incoming formats.  Might be useful later.
-	//Message(13,"Animation %d dx %d dy %d",ppu->anim_type, static_cast<int16>(64*ppu->delta_x), static_cast<int16>(64*ppu->delta_y));
+	//Message(CC_Red,"Animation %d dx %d dy %d",ppu->anim_type, static_cast<int16>(64*ppu->delta_x), static_cast<int16>(64*ppu->delta_y));
 
 	//the purpose of this first block may not be readily apparent
 	//basically it's so people don't do a moderate warp every 2.5 seconds
@@ -3505,13 +3505,13 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 
 	if (admin >= minStatusToAvoidFalling && GetGM())
 	{
-		Message(13, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		Message(CC_Red, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
 		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
 		return;
 	}
 	else if (GetInvul()) 
 	{
-		Message(13, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		Message(CC_Red, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
 		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
 		return;
 	}
