@@ -352,7 +352,6 @@ public:
 	bool	CheckGMIPs(const char* loginIP, uint32 account_id);
 	bool	AddGMIP(char* ip_address, char* name);
 	void	LoginIP(uint32 AccountID, const char* LoginIP);
-	bool	CheckAccountActive(uint32 AccountID);
 	void	ClearAllActive();
 	void	ClearAccountActive(uint32 AccountID);
 	void	SetAccountActive(uint32 AccountID);
@@ -405,6 +404,8 @@ public:
 	uint8	GetAgreementFlag(uint32 acctid);
 	void	SetAgreementFlag(uint32 acctid);
 	uint16	GetExpansion(uint32 acctid);
+	void	ClearAllConsented();
+	void	ClearAllExpiredConsented(LinkedList<ConsentDenied_Struct*>* purged);
 
 	/*
 	* Groups

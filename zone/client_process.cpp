@@ -175,7 +175,14 @@ bool Client::Process() {
 			AI_Process();
 
 		if (bindwound_timer.Check() && bindwound_target != 0) {
-			BindWound(bindwound_target, false);
+			if(BindWound(bindwound_target, false))
+			{
+				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Bind wound failed, skillup check skipped.");
+			}
 		}
 
 		if(KarmaUpdateTimer)
@@ -492,11 +499,8 @@ bool Client::Process() {
 		if(disc_ability_timer.Check())
 		{
 			disc_ability_timer.Disable();
+			FadeDisc();
 
-			SetActiveDisc(0);
-			CalcBonuses();
-
-			Log.Out(Logs::General, Logs::Discs, "Ending currently enabled disc.");
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
 			d->disc_id = 0;
@@ -629,7 +633,7 @@ bool Client::Process() {
 	if (forget_timer.Check()) {
 		forget_timer.Disable();
 		entity_list.ClearZoneFeignAggro(this);
-		//Message(0,"Your enemies have forgotten you!");
+		//Message(CC_Default,"Your enemies have forgotten you!");
 	}
 
 	return ret;
@@ -1057,8 +1061,6 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName(), handyitem->Name);
 		else
 			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName());
-
-		merch->CastToNPC()->FaceTarget(this->CastToMob());
 	}
 
 		int8 count = 0;
@@ -1814,7 +1816,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 				}
 			}
 
-			Message(0, "Local: Summoning %s to %f, %f, %f", gms->charname, gms->x, gms->y, gms->z);
+			Message(CC_Default, "Local: Summoning %s to %f, %f, %f", gms->charname, gms->x, gms->y, gms->z);
 			if (st->IsClient() && (st->CastToClient()->GetAnon() != 1 || this->Admin() >= st->CastToClient()->Admin()))
 				st->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), (float)gms->x, (float)gms->y, (float)gms->z, this->GetHeading(), true);
 			else
@@ -1825,7 +1827,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 			uint8 tmp = gms->charname[strlen(gms->charname)-1];
 			if (!worldserver.Connected())
 			{
-				Message(0, "Error: World server disconnected");
+				Message(CC_Default, "Error: World server disconnected");
 			}
 			else if (tmp < '0' || tmp > '9') // dont send to world if it's not a player's name
 			{

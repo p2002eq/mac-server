@@ -155,7 +155,7 @@ bool WorldServer::Process()
 							case 1:
 								break;
 							case 0:
-								c->FatalError("That server is locked.");
+								c->FatalError("\nError 1020: Your chosen World Server is DOWN.\n\nPlease select another.");
 								break;
 							case -1:
 								c->FatalError("You have been suspended from the worldserver.");
@@ -165,6 +165,12 @@ bool WorldServer::Process()
 								break;
 							case -3:
 								c->FatalError("That server is full.");
+								break;
+							case -4:
+								c->FatalError("Error 1018: You currently have an active character on that EverQuest Server, please allow a minute for synchronization and try again.");
+								break;
+							case -5:
+								c->FatalError("Error IP Limit Exceeded: \n\nYou have exceeded the maximum number of allowed IP addresses for this account.");
 								break;
 						}
 						server_log->Log(log_client, "Found client with user id of %u and account name of %s.", utwr->lsaccountid, c->GetAccountName().c_str());
@@ -206,6 +212,13 @@ bool WorldServer::Process()
 					case -3:
 						per->Message = 303;
 						break;
+					case -4:
+						per->Message = 111;
+						break;
+					case -5:
+						per->Message = 198;
+						break;
+
 					}
 
 					if(server.options.IsTraceOn())

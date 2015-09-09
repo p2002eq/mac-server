@@ -2547,36 +2547,10 @@ void Database::ClearAllActive() {
 	return;
 }
 
-bool Database::CheckAccountActive(uint32 account_id) {
-	std::string query = StringFormat("SELECT `active` FROM `account` WHERE `id` = %i", account_id);
-
-	auto results = QueryDatabase(query); 
-	if (!results.Success()) {
-		return false;
-	}
-
-	if (results.RowCount() != 1)
-		return false;
-	
-	auto row = results.begin(); 
-	uint8 active = atoi(row[0]); 
-
-	if(active == 0)
-	{
-		//std::string query = StringFormat("UPDATE `account` SET active = 1 WHERE id = %i", account_id);
-		//QueryDatabase(query);
-		return false;
-	}
-	else
-	{
-		return true;
-	}
-}
-
 void Database::ClearAccountActive(uint32 account_id) {
 	std::string query = StringFormat("UPDATE `account` set active = 0 WHERE id = %i", account_id);
 	auto results = QueryDatabase(query);
-	Log.Out(Logs::Detail, Logs::World_Server,"Setting account %d inactive", account_id);
+
 	return;
 }
 
@@ -2633,4 +2607,57 @@ bool Database::AdjustSpawnTimes()
 		Log.Out(Logs::General, Logs::World_Server, "Boot time respawn timer adjusted for id: %d duration is: %d (base: %d var: %d)", atoi(row[0]), rspawn, atoi(row[1]), atoi(row[2]));
 	}
 	return true;
+}
+
+void Database::ClearAllConsented() {
+	std::string query = "DELETE FROM character_consent";
+	auto results = QueryDatabase(query);
+
+	return;
+}
+
+void Database::ClearAllExpiredConsented(LinkedList<ConsentDenied_Struct*>* purged) 
+{
+	purged->Clear();
+	std::string query = StringFormat("SELECT consented_name,id FROM character_consent");
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+        return;
+
+	if(results.RowCount() == 0)
+		return;
+
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{
+		std::string name = row[0];
+		std::string timestamp_query = StringFormat("SELECT (UNIX_TIMESTAMP(NOW()) - last_login) FROM `character_data` WHERE name = '%s'", name.c_str());
+		auto timestamp_results = QueryDatabase(timestamp_query);
+
+		if (!timestamp_results.Success())
+			continue;
+
+		if (timestamp_results.RowCount() != 1)
+			continue;
+
+		auto timestamp_row = timestamp_results.begin();
+		uint32 seconds = atoi(timestamp_row[0]);
+		if(seconds >= 1200)
+		{
+			std::string name = row[0];
+			uint32 charid = atoi(row[1]);
+			ConsentDenied_Struct* cd = new ConsentDenied_Struct;
+			cd->ccharid = charid;
+			strn0cpy(cd->oname, name.c_str(), 64);
+			purged->Insert(cd);
+
+			std::string delete_query = StringFormat("DELETE FROM character_consent WHERE consented_name = '%s' AND id = %d", name.c_str(), charid, seconds);
+			auto delete_results = QueryDatabase(delete_query);
+
+			if (delete_results.Success())
+			{
+				Log.Out(Logs::General, Logs::Status, "%s (last seen %d sec ago) cleared consent for character %i", name.c_str(), seconds, charid);
+			}
+
+		}
+	}
 }

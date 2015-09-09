@@ -404,7 +404,7 @@ void Client::Handle_Play(const char* data)
 	}
 	if(data)
 	{
-		server.SM->SendOldUserToWorldRequest(data, account_id);
+		server.SM->SendOldUserToWorldRequest(data, account_id, connection->GetRemoteIP());
 	}
 }
 

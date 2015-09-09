@@ -100,6 +100,7 @@ RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
 RULE_BOOL(Character, ForageNeedFoodorDrink, false)
 RULE_BOOL(Character, ForageCommonFoodorDrink, false)
+RULE_BOOL (Character, DisableAAs, true) // Disables server side AA support, since the client allows some AA activity through even with a pre-Luclin expansion set.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -434,7 +435,7 @@ RULE_BOOL ( NPC, EnableNPCQuestJournal, false)
 RULE_INT ( NPC, LastFightingDelayMovingMin, 10000)
 RULE_INT ( NPC, LastFightingDelayMovingMax, 20000)
 RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
-RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
+RULE_BOOL ( NPC, ReturnNonQuestItems, true)	// Returns items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
 RULE_REAL ( NPC, SpeedMultiplier, 50.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..

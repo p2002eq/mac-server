@@ -1743,22 +1743,22 @@ void PathManager::CheckNodeErrors(Client *c)
 	}
 	bool badnodes = false;
 	if (Head.PathNodeCount > 0 && PathNodes[Head.PathNodeCount-1].id != (Head.PathNodeCount-1)) {
-		c->Message(15, "The path (Head.NodeCount - 1) %d, does not match the highest node number %d.", Head.PathNodeCount - 1, PathNodes[Head.PathNodeCount-1].id);
+		c->Message(CC_Yellow, "The path (Head.NodeCount - 1) %d, does not match the highest node number %d.", Head.PathNodeCount - 1, PathNodes[Head.PathNodeCount-1].id);
 	}
 	for (uint32 j = 0; j < Head.PathNodeCount; j++) {
 		bool badid = false;
 		bool badv = false;
 		if (PathNodes[j].id != j) {
-			c->Message(15, "Suspect Node: Pathnode[%d].id (%d) != %d",j,PathNodes[j].id, j);
+			c->Message(CC_Yellow, "Suspect Node: Pathnode[%d].id (%d) != %d",j,PathNodes[j].id, j);
 			badnodes = true;
 		}
 		if (PathNodes[j].v.x > 10000 || PathNodes[j].v.x < -10000 || PathNodes[j].v.y > 10000 || PathNodes[j].v.y < -10000 || PathNodes[j].v.z > 5000 || PathNodes[j].v.z < -2000) {
-			c->Message(15, "Suspect Node Coordinates: nodeid (%d) (x=%.2f) (y=%.2f) (z=%.2f)", PathNodes[j].id, PathNodes[j].v.x, PathNodes[j].v.y, PathNodes[j].v.z);
+			c->Message(CC_Yellow, "Suspect Node Coordinates: nodeid (%d) (x=%.2f) (y=%.2f) (z=%.2f)", PathNodes[j].id, PathNodes[j].v.x, PathNodes[j].v.y, PathNodes[j].v.z);
 			badnodes = true;
 		}
 	}
 	if (badnodes)
-		c->Message(13, "You must run \"#path resort nodes\" before using the path or the zone may crash.");
+		c->Message(CC_Red, "You must run \"#path resort nodes\" before using the path or the zone may crash.");
 
 	return;
 }

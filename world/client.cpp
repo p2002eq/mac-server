@@ -1,4 +1,5 @@
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/eq_packet.h"
 #include "../common/eq_stream_intf.h"
 #include "../common/misc.h"
@@ -165,7 +166,8 @@ void Client::SendCharInfo() {
 	auto outapp = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
 	CharacterSelect_Struct* cs = (CharacterSelect_Struct*)outapp->pBuffer;
 
-	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
+	charcount = 0;
+	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit, charcount);
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -214,9 +216,6 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	if (((cle = client_list.CheckAuth(name, password)) || (cle = client_list.CheckAuth(id, password))))
 #endif
 	{
-		if(GetSessionLimit())
-			return false;
-
 		cle->SetOnline();
 		
 		if(eqs->ClientVersion() == EQClientMac)
@@ -450,9 +449,14 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		return true;
 	}
 
-	if (RuleI(World, MaxClientsPerIP) >= 0) {
-		client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
-	}
+	//if (RuleI(World, MaxClientsPerIP) >= 0) {
+	//	client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
+	//}
+	if(GetSessionLimit())
+		return false;
+
+	if (RuleI(World, MaxClientsPerIP) >= 0 && !client_list.CheckIPLimit(GetAccountID(), GetIP(), GetAdmin(), cle))
+		return false;
 
 	EnterWorld_Struct *ew=(EnterWorld_Struct *)app->pBuffer;
 	strn0cpy(char_name, ew->name, 64);
@@ -726,9 +730,6 @@ bool Client::Process() {
 
 void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
-		return;
-
-	if(GetSessionLimit())
 		return;
 
 	ZoneServer* zs = nullptr;
@@ -1026,6 +1027,13 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 {
 	if (!RuleB(Character, CanCreate))
 		return false;
+
+	if(charcount >= 8)
+	{
+		Log.Out(Logs::General, Logs::World_Server, "%s already has %d characters. OPCharCreate returning false.", name, charcount);
+		return false;
+	}
+
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
@@ -1160,6 +1168,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		return false;
 	}
 	Log.Out(Logs::Detail, Logs::World_Server,"Character creation successful: %s", pp.name);
+	++charcount;
 	return true;
 }
 
@@ -1358,8 +1367,8 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 			pp->languages[LANG_COMMON_TONGUE] = 100;
 			pp->languages[LANG_DARK_ELVISH] = 100;
 			pp->languages[LANG_DARK_SPEECH] = 100;
-			pp->languages[LANG_ELDER_ELVISH] = 100;
-			pp->languages[LANG_ELVISH] = 25;
+			pp->languages[LANG_ELDER_ELVISH] = 54;
+			pp->languages[LANG_ELVISH] = 54;
 			break;
 		}
 	case DWARF:
@@ -1404,8 +1413,8 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 	case HIGH_ELF:
 		{
 			pp->languages[LANG_COMMON_TONGUE] = 100;
-			pp->languages[LANG_DARK_ELVISH] = 25;
-			pp->languages[LANG_ELDER_ELVISH] = 25;
+			pp->languages[LANG_DARK_ELVISH] = 51;
+			pp->languages[LANG_ELDER_ELVISH] = 51;
 			pp->languages[LANG_ELVISH] = 100;
 			break;
 		}
@@ -1445,7 +1454,7 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 		{
 			pp->languages[LANG_COMMON_TONGUE] = 100;
 			pp->languages[LANG_COMBINE_TONGUE] = 100;
-			pp->languages[LANG_ERUDIAN] = 25;
+			pp->languages[LANG_ERUDIAN] = 32;
 			pp->languages[LANG_VAH_SHIR] = 100;
 			break;
 		}
@@ -1468,7 +1477,7 @@ bool Client::GetSessionLimit()
 {
 	if (RuleI(World, AccountSessionLimit) >= 0 && cle->Admin() < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1)) 
 	{
-		if(database.CheckAccountActive(cle->AccountID()))
+		if(client_list.CheckAccountActive(cle->AccountID()))
 		{
 			Log.Out(Logs::Detail, Logs::World_Server,"Account %d attempted to login with an active player in the world.", cle->AccountID());
 			return true;

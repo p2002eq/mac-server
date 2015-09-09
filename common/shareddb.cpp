@@ -73,6 +73,28 @@ bool SharedDatabase::SetGMSpeed(uint32 account_id, uint8 gmspeed)
 	return true;
 }
 
+bool SharedDatabase::SetGMInvul(uint32 account_id, bool gminvul)
+{
+	std::string query = StringFormat("UPDATE account SET gminvul = %i WHERE id = %i", gminvul, account_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
+bool SharedDatabase::SetGMFlymode(uint32 account_id, uint8 flymode)
+{
+	std::string query = StringFormat("UPDATE account SET flymode = %i WHERE id = %i", flymode, account_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
 uint32 SharedDatabase::GetTotalTimeEntitledOnAccount(uint32 AccountID) {
 	uint32 EntitledTime = 0;
 	std::string query = StringFormat("SELECT `time_played` FROM `character_data` WHERE `account_id` = %u", AccountID);
@@ -1642,8 +1664,8 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
 
 	const std::string query = "SELECT loottable.id, loottable.mincash, loottable.maxcash, loottable.avgcoin, "
                             "loottable_entries.lootdrop_id, loottable_entries.multiplier, loottable_entries.droplimit, "
-                            "loottable_entries.mindrop, loottable_entries.probability FROM loottable LEFT JOIN loottable_entries "
-                            "ON loottable.id = loottable_entries.loottable_id ORDER BY id";
+                            "loottable_entries.mindrop, loottable_entries.probability, loottable_entries.multiplier_min FROM "
+							"loottable LEFT JOIN loottable_entries ON loottable.id = loottable_entries.loottable_id ORDER BY id";
     auto results = QueryDatabase(query);
     if (!results.Success()) {
         return;
@@ -1676,7 +1698,8 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
         lt->Entries[current_entry].multiplier = static_cast<uint8>(atoi(row[5]));
         lt->Entries[current_entry].droplimit = static_cast<uint8>(atoi(row[6]));
         lt->Entries[current_entry].mindrop = static_cast<uint8>(atoi(row[7]));
-        lt->Entries[current_entry].probability = static_cast<float>(atof(row[8]));
+		lt->Entries[current_entry].probability = static_cast<float>(atof(row[8]));
+		lt->Entries[current_entry].multiplier_min = static_cast<uint8>(atoi(row[9]));
 
         ++(lt->NumEntries);
         ++current_entry;

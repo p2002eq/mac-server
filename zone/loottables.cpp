@@ -90,6 +90,7 @@ void ZoneDatabase::AddLootTableToNPC(NPC* npc,uint32 loottable_id, ItemList* ite
 		for (uint32 k = 1; k <= lts->Entries[i].multiplier; k++) {
 			uint8 droplimit = lts->Entries[i].droplimit;
 			uint8 mindrop = lts->Entries[i].mindrop;
+			uint8 multiplier_min = lts->Entries[i].multiplier_min;
 
 			//LootTable Entry probability
 			float ltchance = 0.0f;
@@ -100,9 +101,11 @@ void ZoneDatabase::AddLootTableToNPC(NPC* npc,uint32 loottable_id, ItemList* ite
 				drop_chance = zone->random.Real(0.0, 100.0);
 			}
 
+
 			if (ltchance != 0.0 && (ltchance == 100.0 || drop_chance < ltchance)) {
 				AddLootDropToNPC(npc,lts->Entries[i].lootdrop_id, itemlist, droplimit, mindrop);
 			}
+
 		}
 	}
 }
@@ -188,12 +191,16 @@ void ZoneDatabase::AddLootDropToNPC(NPC* npc,uint32 lootdrop_id, ItemList* iteml
 }
 
 //if itemlist is null, just send wear changes
-void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange, bool quest) {
+void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange, bool quest, bool pet) {
 	if(item2 == nullptr)
 		return;
 
 	//make sure we are doing something...
 	if(!itemlist && !wearchange)
+		return;
+
+	
+	if(CountQuestItems() >= 8)
 		return;
 
 	ServerLootItem_Struct* item = new ServerLootItem_Struct;
@@ -216,6 +223,14 @@ void NPC::AddLootDrop(const Item_Struct *item2, ItemList* itemlist, int16 charge
 	item->max_level = maxlevel;
 	item->quest = quest;
 	item->equip_slot = MainGeneral1; //Set default slot to general inventory. NPCs can have multiple items in the same slot.
+	item->pet = pet;
+
+	if(pet && quest)
+	{
+		Log.Out(Logs::Detail, Logs::Trading, "Error: Item %s is being added to %s as both a pet and a quest.", item2->Name, GetName());
+		item->pet = 0;
+	}
+
 	if (equipit) {
 		uint8 eslot = 0xFF;
 		char newid[20];
@@ -539,6 +554,73 @@ bool NPC::HasQuestLootItem()
 	return false;
 }
 
+void NPC::CleanQuestLootItems() 
+{
+	//Removes nodrop or multiple quest loot items from a NPC before sending the corpse items to the client.
+
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	uint8 count = 0;
+	for(; cur != end; ++cur) {
+		ServerLootItem_Struct* sitem = *cur;
+		if(sitem && (sitem->quest == 1 || sitem->pet == 1))
+		{
+			uint8 count = CountQuestItem(sitem->item_id);
+			if(count > 1 && sitem->pet != 1)
+			{
+				RemoveItem(sitem->item_id);
+				return;
+			}
+			else
+			{
+				const Item_Struct* item = database.GetItem(sitem->item_id);
+				if(item && item->NoDrop == 0)
+				{
+					RemoveItem(sitem->item_id);
+					return;
+				}
+			}
+		}
+	}
+}
+
+uint8 NPC::CountQuestItem(uint16 itemid)
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	uint8 count = 0;
+	for(; cur != end; ++cur) 
+	{
+		ServerLootItem_Struct* sitem = *cur;
+		if(sitem && sitem->item_id == itemid)
+		{
+			++count;
+		}
+	}
+
+	return count;
+}
+
+uint8 NPC::CountQuestItems()
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	uint8 count = 0;
+	for(; cur != end; ++cur) 
+	{
+		ServerLootItem_Struct* sitem = *cur;
+		if(sitem && sitem->quest == 1)
+		{
+			++count;
+		}
+	}
+
+	return count;
+}
+
 bool NPC::RemoveQuestLootItems(int16 itemid) 
 {
 	ItemList::iterator cur, end;
@@ -582,4 +664,20 @@ void NPC::RemoveItem(ServerLootItem_Struct* item_data)
 		safe_delete(sitem);
 		return;
 	}
+}
+
+bool NPC::IsEquipped(int16 itemid)
+{
+	ItemList::iterator cur, end;
+	cur = itemlist.begin();
+	end = itemlist.end();
+	for (; cur != end; ++cur) {
+		ServerLootItem_Struct* sitem = *cur;
+		if (sitem && sitem->item_id == itemid && sitem->equip_slot <= MainAmmo) 
+		{
+			return true;
+		}
+	}
+
+	return false;
 }

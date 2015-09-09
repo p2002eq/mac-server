@@ -9,12 +9,12 @@
 
 class Client;
 class Corpse;
-class Merc;
 class NPC;
 class Petition;
 class Spawn2;
 class SpawnGroupList;
 class ItemInst;
+class Trap;
 struct CharacterEventLog_Struct;
 struct Door;
 struct ExtendedProfile_Struct;
@@ -206,12 +206,14 @@ public:
 	bool	SaveCharacterSkill(uint32 character_id, uint32 skill_id, uint32 value);
 	bool	SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value);
 	bool	SaveCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
+	bool	SaveCharacterConsent(uint32 character_id, char name[64]);
 
 	/* Character Data Deletes   */
 	bool	DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id);
 	bool	DeleteCharacterAAs(uint32 character_id);
 	bool	DeleteCharacterDye(uint32 character_id);
+	bool	DeleteCharacterConsent(uint32 character_id, char name[64]);
 
 	/* Character Inventory  */
 	bool	NoRentExpired(const char* name);
@@ -255,7 +257,7 @@ public:
 
 	/* Faction   */
 	bool		GetNPCFactionList(uint32 npcfaction_id, int32* faction_id, int32* value, uint8* temp, int32* primary_faction = 0);
-	bool		GetFactionData(FactionMods* fd, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id); //needed for factions Dec, 16 2001
+	bool		GetFactionData(FactionMods* fd, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id, uint8 texture_mod, uint8 gender_mod); //needed for factions Dec, 16 2001
 	bool		GetFactionName(int32 faction_id, char* name, uint32 buflen); // needed for factions Dec, 16 2001
 	bool		GetFactionIdsForNPC(uint32 nfl_id, std::list<struct NPCFaction*> *faction_list, int32* primary_faction = 0); // improve faction handling
 	bool		SetCharacterFactionLevel(uint32 char_id, int32 faction_id, int32 value, uint8 temp, faction_map &val_list); // needed for factions Dec, 16 2001
@@ -371,7 +373,7 @@ public:
 
 	/* Traps   */
 	bool	LoadTraps(const char* zonename, int16 version);
-	char*	GetTrapMessage(uint32 trap_id);
+	bool	SetTrapData(Trap* trap, bool repopnow = false);
 
 	/* Time   */
 	uint32	GetZoneTZ(uint32 zoneid, uint32 version);

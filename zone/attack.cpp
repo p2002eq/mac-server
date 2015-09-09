@@ -1494,6 +1494,16 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	SetHorseId(0);
 	dead = true;
 
+	if(GetClass() == SHADOWKNIGHT && !p_timers.Expired(&database, pTimerHarmTouch))
+	{
+		p_timers.Clear(&database, pTimerHarmTouch);
+
+	}
+	else if(GetClass() == PALADIN  && !p_timers.Expired(&database, pTimerLayHands))
+	{
+		p_timers.Clear(&database, pTimerLayHands);
+	}
+
 	if (killerMob != nullptr)
 	{
 		if (killerMob->IsNPC()) {
@@ -2004,7 +2014,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 	if(killer && HasPrimaryAggro())
 	{
-		if(!entity_list.TranfserPrimaryAggro(killer))
+		if(!entity_list.TransferPrimaryAggro(killer))
 			Log.Out(Logs::Detail, Logs::Aggro, "%s failed to transfer primary aggro.", GetName());
 	}
 
@@ -2197,6 +2207,8 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		}
 	}
 
+	DeleteInvalidQuestLoot();
+
 	if (give_exp_client && !HasOwner() && class_ != MERCHANT && !GetSwarmInfo()
 		&& MerchantType == 0 && killer && (killer->IsClient() || (killer->HasOwner() && killer->GetUltimateOwner()->IsClient()) ||
 		(killer->IsNPC() && killer->CastToNPC()->GetSwarmInfo() && killer->CastToNPC()->GetSwarmInfo()->GetOwner() && killer->CastToNPC()->GetSwarmInfo()->GetOwner()->IsClient())))
@@ -2315,7 +2327,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic, int32 jolthate) {
 
 	assert(other != nullptr);
 
@@ -2412,7 +2424,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		&& other &&  (buffs[spellbonuses.ImprovedTaunt[2]].casterid != other->GetID()))
 		hate = (hate*spellbonuses.ImprovedTaunt[1])/100;
 
-	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic);
+	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic, jolthate);
 
 	// then add pet owner if there's one
 	if (owner) { // Other is a pet, add him and it
@@ -3479,7 +3491,9 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		}
 
 		//check stun chances if bashing
-		if (damage > 0 && ((skill_used == SkillBash || skill_used == SkillKick) && attacker)) {
+		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
+			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
+		{
 			// NPCs can stun with their bash/kick as soon as they receive it.
 			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
 			// Clients have a chance to stun if the mob is 56+
@@ -3631,31 +3645,31 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//this was done to simplify the code here (since we can only effectively skip one mob on queue)
 		eqFilterType filter;
 		Mob *skip = attacker;
-		if(attacker && attacker->GetOwnerID()) {
-			//attacker is a pet, let pet owners see their pet's damage
+		if(attacker && attacker->GetOwnerID()) 
+		{
+			//attacker is a pet
 			Mob* owner = attacker->GetOwner();
-			if (owner && owner->IsClient()) {
-				if (((spell_id != SPELL_UNKNOWN) || (FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me
-					char val1[20]={0};
-					owner->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-				} else {
-					if(damage > 0) {
-						if(spell_id != SPELL_UNKNOWN)
-							filter = FilterNone;
-						else
-							filter = FilterOthersHit;
-					} else if(damage == -5)
-						filter = FilterNone;	//cant filter invulnerable
+			if (owner && owner->IsClient()) 
+			{
+				if(damage > 0) 
+				{
+					if(spell_id != SPELL_UNKNOWN)
+						filter = FilterNone;
 					else
-						filter = FilterOthersMiss;
+						filter = FilterOthersHit;
+				} 
+				else if(damage == -5)
+					filter = FilterNone;	//cant filter invulnerable
+				else
+					filter = FilterOthersMiss;
 
-					if(!FromDamageShield)
-						owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
-				}
+				if(!FromDamageShield)
+					owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
 			}
 			skip = owner;
-		} else {
+		} 
+		else 
+		{
 			//attacker is not a pet, send to the attacker
 
 			//if the attacker is a client, try them with the correct filter

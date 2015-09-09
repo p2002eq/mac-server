@@ -421,6 +421,7 @@ Mob::Mob(const char* in_name,
 	adjustedz = 0;
 	PrimaryAggro = false;
 	AssistAggro = false;
+	MerchantSession = 0;
 }
 
 Mob::~Mob()
@@ -615,6 +616,8 @@ int Mob::_GetWalkSpeed() const {
 		}
 	}
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return speed_mod;
 }
 
@@ -707,6 +710,8 @@ int Mob::_GetRunSpeed() const {
 		}
 	}
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return (speed_mod);
 }
 
@@ -743,6 +748,8 @@ int Mob::_GetFearSpeed() const {
 			return int_walkspeed;
 		speed_mod += (base_run * movemod / 100);
 		speed_mod = (speed_mod >> 2) << 2;
+		if (speed_mod < 4)
+			return 0;
 		return (speed_mod);
 	} else {
 		float hp_ratio = GetHPRatio();
@@ -773,6 +780,8 @@ int Mob::_GetFearSpeed() const {
 			if (movemod > 40)
 				speed_mod += 3;
 			speed_mod = (speed_mod >> 2) << 2;
+			if (speed_mod < 4)
+				return 0;
 			return speed_mod;
 		}
 		else if (movemod < 0) {
@@ -784,6 +793,8 @@ int Mob::_GetFearSpeed() const {
 	if (speed_mod < 12)
 		return (8); // 0.2f is slow walking - this should be the slowest walker for fleeing, if not snared enough to stop
 	speed_mod = (speed_mod >> 2) << 2;
+	if (speed_mod < 4)
+		return 0;
 	return speed_mod;
 }
 
@@ -1427,8 +1438,6 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
 	spu->delta_y	= 0;
 	spu->delta_z	= 0;
 	spu->delta_heading = 0;
-	spu->spacer1	=0;
-	spu->spacer2	=0;
 
 	spu->anim_type	= 0;
 
@@ -1458,12 +1467,10 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	spu->z_pos = static_cast<int16>(10.0f * m_Position.z);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
-	spu->delta_x	= static_cast<int32>(m_Delta.x/128);
-	spu->delta_y	= static_cast<int32>(m_Delta.y/128);
-	spu->delta_z	= 0;//static_cast<int32>(m_Delta.z); TODO: Figure out magic number for deltaz for now send 0.
+	spu->delta_x	= static_cast<int32>(m_Delta.x) & 0x3FF;
+	spu->delta_y	= static_cast<int32>(m_Delta.y) & 0x7FF;
+	spu->delta_z	= 0;
 	spu->delta_heading = static_cast<int8>(m_Delta.w);
-	spu->spacer1	=0;
-	spu->spacer2	=0;
 
 	if(this->IsClient() || this->iszomm)
 	{
@@ -1487,8 +1494,6 @@ void Mob::SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpda
 	outgoing->delta_y	= incoming->delta_y;
 	outgoing->delta_z	= incoming->delta_z;
 	outgoing->delta_heading = incoming->delta_heading;
-	outgoing->spacer1	= incoming->spacer1;
-	outgoing->spacer2	= incoming->spacer2;
 	outgoing->anim_type = incoming->anim_type;
 }
 
@@ -1499,45 +1504,45 @@ void Mob::ShowStats(Client* client)
 	}
 	else if (IsCorpse()) {
 		if (IsPlayerCorpse()) {
-			client->Message(0, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i Rez Time: %d Owner Online: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy(), CastToCorpse()->GetRemainingRezTime(), CastToCorpse()->GetOwnerOnline());
+			client->Message(CC_Default, "  CharID: %i  PlayerCorpse: %i Empty: %i Rezed: %i Exp: %i GMExp: %i KilledBy: %i Rez Time: %d Owner Online: %i", CastToCorpse()->GetCharID(), CastToCorpse()->GetCorpseDBID(), CastToCorpse()->IsEmpty(), CastToCorpse()->IsRezzed(), CastToCorpse()->GetRezExp(), CastToCorpse()->GetGMRezExp(), CastToCorpse()->GetKilledBy(), CastToCorpse()->GetRemainingRezTime(), CastToCorpse()->GetOwnerOnline());
 		}
 		else {
-			client->Message(0, "  NPCCorpse", GetID());
+			client->Message(CC_Default, "  NPCCorpse", GetID());
 		}
 	}
 	else {
-		client->Message(0, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  BaseSize: %1.1f Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetBaseSize(), GetHaste());
-		client->Message(0, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
-		client->Message(0, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
-		client->Message(0, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
-		client->Message(0, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
-		client->Message(0, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
-		client->Message(0, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
-		client->Message(0, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
-		client->Message(0, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
-		client->Message(0, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
+		client->Message(CC_Default, "  Level: %i  AC: %i  Class: %i  Size: %1.1f  BaseSize: %1.1f Haste: %i", GetLevel(), GetAC(), GetClass(), GetSize(), GetBaseSize(), GetHaste());
+		client->Message(CC_Default, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
+		client->Message(CC_Default, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
+		client->Message(CC_Default, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
+		client->Message(CC_Default, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
+		client->Message(CC_Default, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
+		client->Message(CC_Default, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
+		client->Message(CC_Default, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
+		client->Message(CC_Default, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
+		client->Message(CC_Default, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
 		if (client->Admin() >= 100)
-			client->Message(0, "  EntityID: %i IsPet: %i PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), IsPet(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
+			client->Message(CC_Default, "  EntityID: %i IsPet: %i PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), IsPet(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
 			uint32 spawngroupid = 0;
 			if(n->respawn2 != 0)
 				spawngroupid = n->respawn2->SpawnGroupID();
-			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i FactionID: %i PreCharmFactionID: %i PrimaryFaction: %i", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetNPCFactionID(), n->GetPreCharmNPCFactionID(), GetPrimaryFaction());
-			client->Message(0, "  HP Regen: %i Mana Regen: %i Magic Atk: %i Immune to Melee: %i", n->GetHPRegen(), n->GetManaRegen(), GetSpecialAbility(SPECATK_MAGICAL), GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL));
-			client->Message(0, "  Attack Speed: %i Accuracy: %i LootTable: %u SpellsID: %u MerchantID: %i", n->GetAttackTimer(), n->GetAccuracyRating(), n->GetLoottableID(), n->GetNPCSpellsID(), n->MerchantType);
-			client->Message(0, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
-			client->Message(0, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
-			client->Message(0, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
-			client->Message(0, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
-			client->Message(0, "  Aggro: Pri/Asst %d %d AssistCap: %d IgnoreDistance: %0.2f",  HasPrimaryAggro(), HasAssistAggro(), NPCAssistCap(), n->GetIgnoreDistance());
+			client->Message(CC_Default, "  NPCID: %u  SpawnGroupID: %u Grid: %i FactionID: %i PreCharmFactionID: %i PrimaryFaction: %i", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetNPCFactionID(), n->GetPreCharmNPCFactionID(), GetPrimaryFaction());
+			client->Message(CC_Default, "  HP Regen: %i Mana Regen: %i Magic Atk: %i Immune to Melee: %i", n->GetHPRegen(), n->GetManaRegen(), GetSpecialAbility(SPECATK_MAGICAL), GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL));
+			client->Message(CC_Default, "  Attack Speed: %i Accuracy: %i LootTable: %u SpellsID: %u MerchantID: %i", n->GetAttackTimer(), n->GetAccuracyRating(), n->GetLoottableID(), n->GetNPCSpellsID(), n->MerchantType);
+			client->Message(CC_Default, "  EmoteID: %i Trackable: %i SeeInvis: %i SeeInvUndead: %i SeeHide: %i SeeImpHide: %i", n->GetEmoteID(), n->IsTrackable(), n->SeeInvisible(), n->SeeInvisibleUndead(), n->SeeHide(), n->SeeImprovedHide());
+			client->Message(CC_Default, "  CanEquipSec: %i DualWield: %i KickDmg: %i BashDmg: %i HasShield: %i", n->CanEquipSecondary(), n->CanDualWield(), n->GetKickDamage(), n->GetBashDamage(), n->HasShieldEquiped());
+			client->Message(CC_Default, "  PriSkill: %i SecSkill: %i PriMelee: %i SecMelee: %i Double Atk Chance: %i Dual Wield Chance: %i", n->GetPrimSkill(), n->GetSecSkill(), n->GetPrimaryMeleeTexture(), n->GetSecondaryMeleeTexture(), n->DoubleAttackChance(), n->DualWieldChance());
+			client->Message(CC_Default, "  Runspeed: %f Walkspeed: %f RunSpeedAnim: %i CurrentSpeed: %f", GetRunspeed(), GetWalkspeed(), GetRunAnimSpeed(), GetCurrentSpeed());
+			client->Message(CC_Default, "  Aggro: Pri/Asst %d %d AssistCap: %d IgnoreDistance: %0.2f",  HasPrimaryAggro(), HasAssistAggro(), NPCAssistCap(), n->GetIgnoreDistance());
 			if(flee_mode)
-				client->Message(0, "  Fleespeed: %f", n->GetFearSpeed());
+				client->Message(CC_Default, "  Fleespeed: %f", n->GetFearSpeed());
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
-			client->Message(0, "  AggroRange: %1.0f  AssistRange: %1.0f", GetAggroRange(), GetAssistRange());
+			client->Message(CC_Default, "  AggroRange: %1.0f  AssistRange: %1.0f", GetAggroRange(), GetAssistRange());
 		}
 	}
 }
@@ -1559,33 +1564,33 @@ void Mob::DoAnim(Animation animnum, int type, bool ackreq, eqFilterType filter) 
 void Mob::ShowBuffs(Client* client) {
 	if(SPDAT_RECORDS <= 0)
 		return;
-	client->Message(0, "Buffs on: %s", this->GetName());
+	client->Message(CC_Default, "Buffs on: %s", this->GetName());
 	uint32 i;
 	uint32 buff_count = GetMaxTotalSlots();
 	for (i=0; i < buff_count; i++) {
 		if (buffs[i].spellid != SPELL_UNKNOWN) {
 			if (spells[buffs[i].spellid].buffdurationformula == DF_Permanent)
-				client->Message(0, "  %i: %s: Permanent", i, spells[buffs[i].spellid].name);
+				client->Message(CC_Default, "  %i: %s: Permanent", i, spells[buffs[i].spellid].name);
 			else
-				client->Message(0, "  %i: %s: %i tics left", i, spells[buffs[i].spellid].name, buffs[i].ticsremaining);
+				client->Message(CC_Default, "  %i: %s: %i tics left", i, spells[buffs[i].spellid].name, buffs[i].ticsremaining);
 
 		}
 	}
 	if (IsClient()){
-		client->Message(0, "itembonuses:");
-		client->Message(0, "Atk:%i Ac:%i HP(%i):%i Mana:%i", itembonuses.ATK, itembonuses.AC, itembonuses.HPRegen, itembonuses.HP, itembonuses.Mana);
-		client->Message(0, "Str:%i Sta:%i Dex:%i Agi:%i Int:%i Wis:%i Cha:%i",
+		client->Message(CC_Default, "itembonuses:");
+		client->Message(CC_Default, "Atk:%i Ac:%i HP(%i):%i Mana:%i", itembonuses.ATK, itembonuses.AC, itembonuses.HPRegen, itembonuses.HP, itembonuses.Mana);
+		client->Message(CC_Default, "Str:%i Sta:%i Dex:%i Agi:%i Int:%i Wis:%i Cha:%i",
 			itembonuses.STR,itembonuses.STA,itembonuses.DEX,itembonuses.AGI,itembonuses.INT,itembonuses.WIS,itembonuses.CHA);
-		client->Message(0, "SvMagic:%i SvFire:%i SvCold:%i SvPoison:%i SvDisease:%i",
+		client->Message(CC_Default, "SvMagic:%i SvFire:%i SvCold:%i SvPoison:%i SvDisease:%i",
 				itembonuses.MR,itembonuses.FR,itembonuses.CR,itembonuses.PR,itembonuses.DR);
-		client->Message(0, "DmgShield:%i Haste:%i", itembonuses.DamageShield, itembonuses.haste );
-		client->Message(0, "spellbonuses:");
-		client->Message(0, "Atk:%i Ac:%i HP(%i):%i Mana:%i", spellbonuses.ATK, spellbonuses.AC, spellbonuses.HPRegen, spellbonuses.HP, spellbonuses.Mana);
-		client->Message(0, "Str:%i Sta:%i Dex:%i Agi:%i Int:%i Wis:%i Cha:%i",
+		client->Message(CC_Default, "DmgShield:%i Haste:%i", itembonuses.DamageShield, itembonuses.haste );
+		client->Message(CC_Default, "spellbonuses:");
+		client->Message(CC_Default, "Atk:%i Ac:%i HP(%i):%i Mana:%i", spellbonuses.ATK, spellbonuses.AC, spellbonuses.HPRegen, spellbonuses.HP, spellbonuses.Mana);
+		client->Message(CC_Default, "Str:%i Sta:%i Dex:%i Agi:%i Int:%i Wis:%i Cha:%i",
 			spellbonuses.STR,spellbonuses.STA,spellbonuses.DEX,spellbonuses.AGI,spellbonuses.INT,spellbonuses.WIS,spellbonuses.CHA);
-		client->Message(0, "SvMagic:%i SvFire:%i SvCold:%i SvPoison:%i SvDisease:%i",
+		client->Message(CC_Default, "SvMagic:%i SvFire:%i SvCold:%i SvPoison:%i SvDisease:%i",
 				spellbonuses.MR,spellbonuses.FR,spellbonuses.CR,spellbonuses.PR,spellbonuses.DR);
-		client->Message(0, "DmgShield:%i Haste:%i", spellbonuses.DamageShield, spellbonuses.haste );
+		client->Message(CC_Default, "DmgShield:%i Haste:%i", spellbonuses.DamageShield, spellbonuses.haste );
 	}
 }
 
@@ -1593,12 +1598,12 @@ void Mob::ShowBuffList(Client* client) {
 	if(SPDAT_RECORDS <= 0)
 		return;
 
-	client->Message(0, "Buffs on: %s", this->GetCleanName());
+	client->Message(CC_Default, "Buffs on: %s", this->GetCleanName());
 	uint32 i;
 	uint32 buff_count = GetMaxTotalSlots();
 	for (i=0; i < buff_count; i++) {
 		if (buffs[i].spellid != SPELL_UNKNOWN) {
-			client->Message(0, "  %i: %s", i, spells[buffs[i].spellid].name);
+			client->Message(CC_Default, "  %i: %s", i, spells[buffs[i].spellid].name);
 		}
 	}
 }
@@ -1627,7 +1632,7 @@ void Mob::SetCurrentSpeed(float speed) {
 	{ 
 		current_speed = speed; 
 		tar_ndx = 20;
-		if (speed == 0) {
+		if (speed < 0.1f) {
 			SetRunAnimSpeed(0);
 			SetMoving(false);
 			SendPosition();
@@ -2333,6 +2338,7 @@ void Mob::WipeHateList()
 	if(IsEngaged())
 	{
 		hate_list.Wipe();
+		SetTarget(nullptr);
 		AI_Event_NoLongerEngaged();
 	}
 	else
@@ -2723,7 +2729,7 @@ void Mob::ExecWeaponProc(const ItemInst *inst, uint16 spell_id, Mob *on) {
 
 	if(!IsValidSpell(spell_id)) { // Check for a valid spell otherwise it will crash through the function
 		if(IsClient()){
-			Message(0, "Invalid spell proc %u", spell_id);
+			Message(CC_Default, "Invalid spell proc %u", spell_id);
 			Log.Out(Logs::Detail, Logs::Spells, "Player %s, Weapon Procced invalid spell %u", this->GetName(), spell_id);
 		}
 		return;

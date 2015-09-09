@@ -1406,7 +1406,7 @@ int32	Client::CalcMR()
 			MR = 20;
 	}
 
-	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR + discbonuses.MR;
+	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR;
 
 	if(GetClass() == WARRIOR)
 		MR += GetLevel() / 2;
@@ -1474,15 +1474,24 @@ int32	Client::CalcFR()
 	}
 
 	int c = GetClass();
-	if(c == RANGER) {
+	if(c == RANGER) 
+	{
 		FR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			FR += l - 49;
+	} 
+	else if(c == MONK) 
+	{
+		FR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			FR += l - 49;
 	}
 
-	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR + discbonuses.FR;
+	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR;
 
 	if(FR < 1)
 		FR = 1;
@@ -1496,16 +1505,12 @@ int32	Client::CalcFR()
 int32	Client::CalcDR()
 {
 	//racial bases
-	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			DR = 15;
 			break;
 		case BARBARIAN:
 			DR = 15;
-			bonus = 4;
-			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
-			DR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			DR = 10;
@@ -1551,22 +1556,39 @@ int32	Client::CalcDR()
 	}
 
 	int c = GetClass();
-	if(c == PALADIN) {
+	if(c == PALADIN) 
+	{
 		DR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			DR += l - 49;
 
-	} else if(c == SHADOWKNIGHT) {
+	} 
+	else if(c == SHADOWKNIGHT) 
+	{
 		DR += 4;
 
 		int l = GetLevel();
 		if(l > 49)
 			DR += l - 49;
+	} 
+	else if(c == BEASTLORD) 
+	{
+		DR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			DR += l - 49;
+	} 
+	else if(c == MONK) 
+	{
+		int l = GetLevel();
+		if(l > 50)
+			DR += l - 50;
 	}
 
-	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR + discbonuses.DR;
+	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR;
 
 	if(DR < 1)
 		DR = 1;
@@ -1631,22 +1653,31 @@ int32	Client::CalcPR()
 	}
 
 	int c = GetClass();
-	if(c == ROGUE) {
+	if(c == ROGUE) 
+	{
 		PR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			PR += l - 49;
 
-	} else if(c == SHADOWKNIGHT) {
+	} 
+	else if(c == SHADOWKNIGHT) 
+	{
 		PR += 4;
 
 		int l = GetLevel();
 		if(l > 49)
 			PR += l - 49;
 	}
+	else if(c == MONK) 
+	{
+		int l = GetLevel();
+		if(l > 50)
+			PR += l - 50;
+	}
 
-	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR + discbonuses.PR;
+	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR;
 
 	if(PR < 1)
 		PR = 1;
@@ -1660,16 +1691,12 @@ int32	Client::CalcPR()
 int32	Client::CalcCR()
 {
 	//racial bases
-	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			CR = 25;
 			break;
 		case BARBARIAN:
 			CR = 35;
-			bonus = 4;
-			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
-			CR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			CR = 25;
@@ -1715,7 +1742,16 @@ int32	Client::CalcCR()
 	}
 
 	int c = GetClass();
-	if(c == RANGER) {
+	if(c == RANGER) 
+	{
+		CR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			CR += l - 49;
+	} 
+	else if(c == BEASTLORD) 
+	{
 		CR += 4;
 
 		int l = GetLevel();
@@ -1723,7 +1759,7 @@ int32	Client::CalcCR()
 			CR += l - 49;
 	}
 
-	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR + discbonuses.CR;
+	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR;
 
 	if(CR < 1)
 		CR = 1;

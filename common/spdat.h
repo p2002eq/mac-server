@@ -729,7 +729,7 @@ struct SPDat_Spell_Struct
 /* 165 */	//Flag found on all LDON trap / chest related spells.
 /* 166 */	int EndurCost;
 /* 167 */	int8 EndurTimerIndex;
-/* 168 */	bool IsDisciplineBuff; //Will goto the combat window when cast
+/* 168 */	bool IsDisciplineBuff; //Is a Discipline spell
 /* 169 - 172*/ //These are zero for ALL spells
 /* 173 */	int HateAdded;
 /* 174 */	int EndurUpkeep;
@@ -909,5 +909,7 @@ bool IsShortDurationBuff(uint16 spell_id);
 bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
 bool IsRainSpell(uint16 spell_id);
+bool IsDisc(uint16 spell_id);
+bool IsShrinkSpell(uint16 spell_id);
 
 #endif

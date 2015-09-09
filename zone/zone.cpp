@@ -1343,7 +1343,8 @@ void Zone::StartShutdownTimer(uint32 set_time) {
 bool Zone::Depop(bool StartSpawnTimer) {
 std::map<uint32,NPCType *>::iterator itr;
 	entity_list.Depop(StartSpawnTimer);
-
+	entity_list.ClearTrapPointers();
+	entity_list.UpdateAllTraps(false);
 #ifdef DEPOP_INVALIDATES_NPC_TYPES_CACHE
 	// Refresh npctable, getting current info from database.
 	while(!npctable.empty()) {
@@ -1390,12 +1391,16 @@ void Zone::Repop(uint32 delay) {
 		iterator.RemoveCurrent();
 	}
 
+	entity_list.ClearTrapPointers();
+
 	quest_manager.ClearAllTimers();
 
 	if (!database.PopulateZoneSpawnList(zoneid, spawn2_list, GetInstanceVersion(), delay))
 		Log.Out(Logs::General, Logs::None, "Error in Zone::Repop: database.PopulateZoneSpawnList failed");
 
 	initgrids_timer.Start();
+
+	entity_list.UpdateAllTraps(true, true);
 
 	//MODDING HOOK FOR REPOP
 	mod_repop();
@@ -1581,14 +1586,14 @@ void Zone::SpawnStatus(Mob* client) {
 	while(iterator.MoreElements())
 	{
 		if (iterator.GetData()->timer.GetRemainingTime() == 0xFFFFFFFF)
-			client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
+			client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
 		else
-			client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
+			client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
 
 		x++;
 		iterator.Advance();
 	}
-	client->Message(0, "%i spawns listed.", x);
+	client->Message(CC_Default, "%i spawns listed.", x);
 }
 
 void Zone::ShowEnabledSpawnStatus(Mob* client)
@@ -1603,7 +1608,7 @@ void Zone::ShowEnabledSpawnStatus(Mob* client)
 	{
 		if (iterator.GetData()->timer.GetRemainingTime() != 0xFFFFFFFF)
 		{
-			client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
+			client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
 			iEnabledCount++;
 		}
 
@@ -1611,7 +1616,7 @@ void Zone::ShowEnabledSpawnStatus(Mob* client)
 		iterator.Advance();
 	}
 
-	client->Message(0, "%i of %i spawns listed.", iEnabledCount, x);
+	client->Message(CC_Default, "%i of %i spawns listed.", iEnabledCount, x);
 }
 
 void Zone::ShowDisabledSpawnStatus(Mob* client)
@@ -1626,7 +1631,7 @@ void Zone::ShowDisabledSpawnStatus(Mob* client)
 	{
 		if (iterator.GetData()->timer.GetRemainingTime() == 0xFFFFFFFF)
 		{
-			client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
+			client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
 			iDisabledCount++;
 		}
 
@@ -1634,7 +1639,7 @@ void Zone::ShowDisabledSpawnStatus(Mob* client)
 		iterator.Advance();
 	}
 
-	client->Message(0, "%i of %i spawns listed.", iDisabledCount, x);
+	client->Message(CC_Default, "%i of %i spawns listed.", iDisabledCount, x);
 }
 
 void Zone::ShowSpawnStatusByID(Mob* client, uint32 spawnid)
@@ -1650,9 +1655,9 @@ void Zone::ShowSpawnStatusByID(Mob* client, uint32 spawnid)
 		if (iterator.GetData()->GetID() == spawnid)
 		{
 			if (iterator.GetData()->timer.GetRemainingTime() == 0xFFFFFFFF)
-				client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
+				client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: disabled", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ());
 			else
-				client->Message(0, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
+				client->Message(CC_Default, "  %d: %1.1f, %1.1f, %1.1f: %1.2f", iterator.GetData()->GetID(), iterator.GetData()->GetX(), iterator.GetData()->GetY(), iterator.GetData()->GetZ(), (float)iterator.GetData()->timer.GetRemainingTime() / 1000);
 
 			iSpawnIDCount++;
 
@@ -1664,9 +1669,9 @@ void Zone::ShowSpawnStatusByID(Mob* client, uint32 spawnid)
 	}
 
 	if(iSpawnIDCount > 0)
-		client->Message(0, "%i of %i spawns listed.", iSpawnIDCount, x);
+		client->Message(CC_Default, "%i of %i spawns listed.", iSpawnIDCount, x);
 	else
-		client->Message(0, "No matching spawn id was found in this zone.");
+		client->Message(CC_Default, "No matching spawn id was found in this zone.");
 }
 
 

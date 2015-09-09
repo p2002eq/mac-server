@@ -193,6 +193,9 @@ public:
 	bool	HasQuestLootItem(); 
 	bool	RemoveQuestLootItems(int16 itemid);
 	bool	QuestLootCount(uint16 itemid1, uint16 itemid2, uint16 itemid3, uint16 itemid4);
+	void	CleanQuestLootItems();
+	uint8	CountQuestItem(uint16 itemid);
+	uint8	CountQuestItems();
 	void	RemoveItem(ServerLootItem_Struct* item_data);
 	virtual void UpdateEquipmentLight();
 
@@ -236,7 +239,7 @@ public:
 	uint32	MerchantType;
 	bool	merchant_open;
 	inline void	MerchantOpenShop() { merchant_open = true; }
-	inline void	MerchantCloseShop() { merchant_open = false; }
+	inline void	MerchantCloseShop() { entity_list.SendMerchantEnd(this); merchant_open = false; }
 	inline bool	IsMerchantOpen() { return merchant_open; }
 	void	Depop(bool StartSpawnTimer = false);
 	void	Stun(int duration, Mob* attacker);
@@ -276,7 +279,7 @@ public:
 	bool	IsTaunting() { return taunting; }
 	void	PickPocket(Client* thief);
 	void	StartSwarmTimer(uint32 duration) { swarm_timer.Start(duration); }
-	void	AddLootDrop(const Item_Struct*dbitem, ItemList* itemlistconst, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange = false, bool quest = false);
+	void	AddLootDrop(const Item_Struct*dbitem, ItemList* itemlistconst, int16 charges, uint8 minlevel, uint8 maxlevel, bool equipit, bool wearchange = false, bool quest = false, bool pet = false);
 	virtual void DoClassAttacks(Mob *target);
 	void	CheckSignal();
 	inline bool IsTargetableWithHotkey() const { return no_target_hotkey; }
@@ -392,9 +395,13 @@ public:
 	uint16 GetPrimaryMeleeTexture() { return d_melee_texture1; }
 	uint16 GetSecondaryMeleeTexture() { return d_melee_texture2; }
 
-	bool AddQuestLoot(int16 itemid);
+	bool AddQuestLoot(int16 itemid, int8 charges = 1);
+	bool AddPetLoot(int16 itemid, int8 charges = 1);
 	void DeleteQuestLoot(int16 itemid1, int16 itemid2 = 0, int16 itemid3 = 0, int16 itemid4 = 0);
+	void DeleteInvalidQuestLoot();
 	bool IsBoat();
+	void ShowQuickStats(Client* client);
+	bool IsEquipped(int16 itemid);
 
 protected:
 

@@ -519,6 +519,52 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "quantity column created.");
 	}
+
+	std::string check_queryd = StringFormat("SHOW TABLES LIKE 'character_consent'");
+	auto resultsd = QueryDatabase(check_queryd);
+	if (resultsd.RowCount() == 0){
+		std::string create_queryd = StringFormat(
+			"CREATE TABLE `character_consent` (						"
+			"`id` int(11) unsigned NOT NULL auto_increment,			"
+			"`consented_name` varchar(64) NOT NULL default '',		"
+			"PRIMARY KEY  (`id`,`consented_name`),					"
+			"KEY `id` (`id`)										"
+			") ENGINE=InnoDB DEFAULT CHARSET=latin1;				"
+			);
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to create table character_consent...");
+		auto create_resultsd = QueryDatabase(create_queryd);
+		if (!create_resultsd.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating character_consent table.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "character_consent table created.");
+	}
+
+	std::string check_querye = StringFormat("SHOW COLUMNS FROM `account` LIKE 'gminvul'");
+	auto resultse = QueryDatabase(check_querye);
+	if (resultse.RowCount() == 0){
+		std::string create_querye = StringFormat("ALTER table `account` add column `gminvul` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add gmvinvul column to account...");
+		auto create_resultse = QueryDatabase(create_querye);
+		if (!create_resultse.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating gminvul column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "gminvul column created.");
+	}
+
+	std::string check_queryf = StringFormat("SHOW COLUMNS FROM `account` LIKE 'flymode'");
+	auto resultsf = QueryDatabase(check_queryf);
+	if (resultsf.RowCount() == 0){
+		std::string create_queryf = StringFormat("ALTER table `account` add column `flymode` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add gmvinvul column to account...");
+		auto create_resultsf = QueryDatabase(create_queryf);
+		if (!create_resultsf.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating flymode column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "flymode column created.");
+	}
 	return true;
 }
 
@@ -585,6 +631,33 @@ bool Database::DBSetup_Logs()
 			return false;
 		}
 	}
+	std::string check_query6 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Traps'");
+	auto results6 = QueryDatabase(check_query6);
+	if (results6.RowCount() == 0)
+	{
+		std::string check_query6a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('51', 'Traps', '0', '0', '0')");
+		auto results6a = QueryDatabase(check_query6a);
+		if (!results6a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `traps`.");
+			return false;
+		}
+	}
+
+	std::string check_query7 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='PTimers'");
+	auto results7 = QueryDatabase(check_query7);
+	if (results7.RowCount() == 0)
+	{
+		std::string check_query7a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('52', 'PTimers', '0', '0', '0')");
+		auto results7a = QueryDatabase(check_query7a);
+		if (!results7a.Success())
+		{
+			Log.Out(Logs::Detail, Logs::Error, "Error creating logsys category `PTimers`.");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool Database::DBSetup_IP_Multiplier()

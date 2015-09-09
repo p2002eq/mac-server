@@ -954,10 +954,8 @@ struct Death_Struct
 	  /*0005*/ int16	y_pos;                  // New X position of spawn
 	  /*0007*/ int16	x_pos;                  // New Y position of spawn
 	  /*0009*/ int16	z_pos;                  // New Z position of spawn
-	  /*0011*/ uint32	delta_y : 10,             // Y Velocity
-						spacer1 : 1,              // ***Placeholder
-						delta_z : 10,             // Z Velocity
-						spacer2 : 1,              // ***Placeholder
+	  /*0011*/ uint32	delta_y : 11,             // Y Velocity
+						delta_z : 11,             // Z Velocity
 						delta_x : 10;             // Z Velocity
 	  /*015*/
   };
@@ -1723,14 +1721,14 @@ struct Door_Struct
 
 struct OldDoor_Struct
 {
-/*0000*/ char    name[16];            // Filename of Door // Was 10char long before... added the 6 in the next unknown to it: Daeken M. BlackBlade
+/*0000*/ char    name[16];            // Filename of Door
 /*0016*/ float   yPos;               // y loc
 /*0020*/ float   xPos;               // x loc
 /*0024*/ float   zPos;               // z loc
 /*0028*/ float	 heading;
-/*0032*/ uint16  incline;
+/*0032*/ uint16	 incline;
 /*0034*/ uint16	 size;
-/*0036*/ uint8	 unknown[2];
+/*0036*/ uint16	 unknown;
 /*0038*/ uint8	 doorid;             // door's id #
 /*0039*/ uint8	 opentype;
 /*0040*/ uint8	 doorIsOpen;
@@ -1955,13 +1953,27 @@ enum {
 
 
 struct sPickPocket_Struct {
-	// Size 28 = coin/fail
-	uint32 to;
-	uint32 from;
-	uint32 myskill;
-	uint32 type;
-	uint32 coin;
-	char itemname[64];
+// Size 18
+    uint16 to;
+    uint16 from;
+    uint8 myskill;
+    uint8 unknown0;
+    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint8 unknown1; // 0 for response, unknown for input
+    uint32 coin;
+    uint8 lastsix[6];
+};
+
+struct Item_PickPocket_Struct 
+{
+    uint16 to;
+    uint16 from;
+    uint8 myskill;
+    uint8 unknown0;
+    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint8 reply; // 0 for response, unknown for input
+    uint32 coin;
+	char itemname[32];
 };
 
 struct LogServer_Struct
@@ -2501,11 +2513,15 @@ struct GMSearchCorpse_Struct
 
 struct BeggingResponse_Struct
 {
-/*00*/	uint32	Unknown00;
-/*04*/	uint32	Unknown04;
-/*08*/	uint32	Unknown08;
-/*12*/	uint32	Result;	// 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
-/*16*/	uint32	Amount;
+/*00*/	uint16	target;
+/*02*/	uint16	begger;
+/*04*/	uint8	skill;
+/*05*/	uint8	unknown1;
+/*06*/	int8	Result;	// -1 = Request, 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
+/*07*/	uint8	unknown2;
+/*08*/	uint32	Amount;
+/*12*/	uint32	unknown3;
+/*16*/	uint8	unknown4[2];
 };
 
 struct CorpseDrag_Struct
@@ -2524,6 +2540,7 @@ struct ServerLootItem_Struct {
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
 	uint8	quest;
+	uint8	pet;
 };
 
 struct Checksum_Struct {
@@ -2639,6 +2656,11 @@ struct MBEraseRequest_Struct {
 struct ZoneFlags_Struct {
 	uint32 zoneid;
 	uint8  key;
+};
+
+struct ConsentDenied_Struct {
+	char oname[64];
+	uint32 ccharid;
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;
