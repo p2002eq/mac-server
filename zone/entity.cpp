@@ -2546,19 +2546,19 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 	char sName[36];
 
 	auto it = npc_list.begin();
-	client->Message(0, "NPCs in the zone:");
+	client->Message(CC_Default, "NPCs in the zone:");
 	if (searchtype == 0) {
 		while (it != npc_list.end()) {
 			NPC *n = it->second;
 
-			client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
+			client->Message(CC_Default, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 			x++;
 			z++;
 			++it;
 		}
 	} 
 	else if (searchtype == 1) {
-		client->Message(0, "Searching by name method. (%s)",arg1);
+		client->Message(CC_Default, "Searching by name method. (%s)",arg1);
 		char* tmp = new char[strlen(arg1) + 1];
 		strcpy(tmp, arg1);
 		strupr(tmp);
@@ -2568,7 +2568,7 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			strupr(sName);
 			if (strstr(sName, tmp)) {
 				NPC *n = it->second;
-				client->Message(0, "  %5d: %s (%.0f, %.0f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
+				client->Message(CC_Default, "  %5d: %s (%.0f, %.0f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
 			}
 			++it;
@@ -2576,11 +2576,11 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 		safe_delete_array(tmp);
 	} 
 	else if (searchtype == 2) {
-		client->Message(0, "Searching by number method. (%s %s)",arg1,arg2);
+		client->Message(CC_Default, "Searching by number method. (%s %s)",arg1,arg2);
 		while (it != npc_list.end()) {
 			z++;
 			if ((it->second->GetID() >= atoi(arg1)) && (it->second->GetID() <= atoi(arg2)) && (atoi(arg1) <= atoi(arg2))) {
-				client->Message(0, "  %5d: %s", it->second->GetID(), it->second->GetName());
+				client->Message(CC_Default, "  %5d: %s", it->second->GetID(), it->second->GetName());
 				x++;
 			}
 			++it;
@@ -2592,13 +2592,13 @@ void EntityList::ListNPCs(Client* client, const char *arg1, const char *arg2, ui
 			NPC *n = it->second;
 			if(n->HasPrimaryAggro())
 			{
-				client->Message(0, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
+				client->Message(CC_Default, "  %5d: %s (%.0f, %0.f, %.0f)", n->GetID(), n->GetName(), n->GetX(), n->GetY(), n->GetZ());
 				x++;
 			}
 			++it;
 		}
 	}
-	client->Message(0, "%d npcs listed. There is a total of %d npcs in this zone.", x, z);
+	client->Message(CC_Default, "%d npcs listed. There is a total of %d npcs in this zone.", x, z);
 }
 
 void EntityList::ListNPCCorpses(Client *client)
@@ -2606,15 +2606,15 @@ void EntityList::ListNPCCorpses(Client *client)
 	uint32 x = 0;
 
 	auto it = corpse_list.begin();
-	client->Message(0, "NPC Corpses in the zone:");
+	client->Message(CC_Default, "NPC Corpses in the zone:");
 	while (it != corpse_list.end()) {
 		if (it->second->IsNPCCorpse()) {
-			client->Message(0, "  %5d: %s", it->first, it->second->GetName());
+			client->Message(CC_Default, "  %5d: %s", it->first, it->second->GetName());
 			x++;
 		}
 		++it;
 	}
-	client->Message(0, "%d npc corpses listed.", x);
+	client->Message(CC_Default, "%d npc corpses listed.", x);
 }
 
 void EntityList::ListPlayerCorpses(Client *client)
@@ -2622,15 +2622,15 @@ void EntityList::ListPlayerCorpses(Client *client)
 	uint32 x = 0;
 
 	auto it = corpse_list.begin();
-	client->Message(0, "Player Corpses in the zone:");
+	client->Message(CC_Default, "Player Corpses in the zone:");
 	while (it != corpse_list.end()) {
 		if (it->second->IsPlayerCorpse()) {
-			client->Message(0, "  %5d: %s", it->first, it->second->GetName());
+			client->Message(CC_Default, "  %5d: %s", it->first, it->second->GetName());
 			x++;
 		}
 		++it;
 	}
-	client->Message(0, "%d player corpses listed.", x);
+	client->Message(CC_Default, "%d player corpses listed.", x);
 }
 
 void EntityList::FindPathsToAllNPCs()
@@ -4364,4 +4364,23 @@ bool EntityList::TransferPrimaryAggro(Mob *other)
 		++it;
 	}
 	return false;
+}
+
+void EntityList::SendMerchantEnd(Mob* merchant)
+{
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		Client *c = it->second;
+
+		if (!c)
+			continue;
+
+		if(c->GetMerchantSession() == merchant->GetID())
+		{
+			c->SendMerchantEnd();
+		}
+		++it;
+	}
+
+	return;
 }

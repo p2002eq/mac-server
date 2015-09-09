@@ -1091,7 +1091,7 @@ void QuestManager::itemlink(int item_id) {
 		if (inst == nullptr)
 			return;
 		if (initiator->MakeItemLink(link, inst))
-			initiator->Message(0, "%s tells you, %c%s%s%c", owner->GetCleanName(),
+			initiator->Message(CC_Default, "%s tells you, %c%s%s%c", owner->GetCleanName(),
 					0x12, link, inst->GetItem()->Name, 0x12);
 		safe_delete_array(link);
 		safe_delete(inst);
@@ -1790,7 +1790,7 @@ void QuestManager::clearspawntimers() {
 }
 
 void QuestManager::ze(int type, const char *str) {
-	entity_list.Message(0, type, str);
+	entity_list.Message(CC_Default, type, str);
 }
 
 void QuestManager::we(int type, const char *str) {

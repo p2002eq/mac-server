@@ -343,6 +343,7 @@ public:
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
 	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
+	bool SendPickPocketItem(ItemInst* inst);
 
 	inline const char* GetLastName() const { return lastname; }
 
@@ -603,6 +604,7 @@ public:
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
 	void	SendStats(Client* client);
+	void	SendQuickStats(Client* client);
 
 	uint16 MaxSkill(SkillUseTypes skillid, uint16 class_, uint16 level) const;
 	inline uint16 MaxSkill(SkillUseTypes skillid) const { return MaxSkill(skillid, GetClass(), GetLevel()); }
@@ -772,9 +774,9 @@ public:
 	void ResetTrade();
 	void DropInst(const ItemInst* inst);
 	void CreateGroundObject(const ItemInst* item, float x, float y, float z, float heading, uint32 decay_time = 300000);
-	bool UseDiscipline(uint8 disc_id, Client* target);
+	bool UseDiscipline(uint8 disc_id);
 	uint8 DisciplineUseLevel(uint8 disc_id);
-	bool CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use);
+	bool CastDiscipline(uint8 disc_id, uint8 level_to_use);
 
 	bool CheckTitle(int titleset);
 	void EnableTitle(int titleset);
@@ -783,6 +785,8 @@ public:
 	void EnteringMessages(Client* client);
 	void SendRules(Client* client);
 	std::list<std::string> consent_list;
+	void Consent(uint8 permission, char name[64], uint32 offline_charid = 0);
+	bool LoadCharacterConsent();
 
 	//Anti-Cheat Stuff
 	uint32 m_TimeSinceLastPositionCheck;
@@ -799,6 +803,7 @@ public:
 	const bool IsSenseExempted() const { return m_SenseExemption; }
 	const bool IsAssistExempted() const { return m_AssistExemption; }
 	const bool GetGMSpeed() const { return (gmspeed > 0); }
+	const bool GetGMInvul() const { return gminvul; }
 	void CheatDetected(CheatTypes CheatType, float x, float y, float z);
 	const bool IsMQExemptedArea(uint32 zoneID, float x, float y, float z) const;
 	bool CanUseReport;
@@ -941,20 +946,26 @@ public:
 
 	bool has_zomm;
 	bool client_position_update;
-	int update_count;
 	bool ignore_zone_count; 
 
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
 
 	bool ClickyOverride() { return clicky_override; }
-	void SetActiveDisc(uint8 value) { active_disc = value; }
+	void SetActiveDisc(uint8 value, int16 spellid) { active_disc = value; active_disc_spell = spellid; }
+	void FadeDisc() { BuffFadeBySpellID(active_disc_spell); active_disc = 0; active_disc_spell = 0; Log.Out(Logs::General, Logs::Discs, "Fading currently enabled disc."); }
+	uint8 GetActiveDisc() { return active_disc; }
+	uint16 GetActiveDiscSpell() { return active_disc_spell; }
+	bool HasInstantDisc(uint16 skill_type = 0);
 
 	void SendClientVersion();
 	void FixClientXP();
 	void SendToBoat(bool messageonly = false);
 
 	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
+
+	void SendMerchantEnd();
+	float GetPortHeading(uint16 newx, uint16 newy);
 
 protected:
 	friend class Mob;
@@ -966,7 +977,6 @@ protected:
 	void ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon);
 	void MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message = true);
 	bool client_data_loaded;
-	void CalcDiscBonuses(StatBonuses* newbon);
 
 	int16 GetFocusEffect(focusType type, uint16 spell_id);
 	int16 GetSympatheticFocusEffect(focusType type, uint16 spell_id);
@@ -1058,6 +1068,7 @@ private:
 	bool				auto_fire;
 	bool				runmode;
 	uint8				gmspeed;
+	bool				gminvul;
 	bool				medding;
 	uint16				horseId;
 	bool				revoked;
@@ -1236,6 +1247,7 @@ private:
 
 	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
 	uint8 active_disc;
+	uint16 active_disc_spell;
 };
 
 #endif

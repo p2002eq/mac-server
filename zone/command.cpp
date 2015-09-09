@@ -227,6 +227,7 @@ int command_init(void){
 		command_add("gm", "- Turn player target's or your GM flag on or off.", 95, command_gm) ||
 		command_add("gmhideme", nullptr, 81, command_hideme) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target.", 150, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target.", 20, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid.", 250, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 90, command_guild) ||
@@ -392,7 +393,7 @@ int command_init(void){
 		command_add("showpetspell", "[spellid/searchstring] - search pet summoning spells.", 50, command_showpetspell) ||
 		command_add("showskills", "- Show the values of your or your player target's skills.", 50, command_showskills) ||
 		command_add("showspellslist", "Shows spell list of targeted NPC.", 95, command_showspellslist) ||
-		command_add("showstats", "- Show details about you or your target.", 50, command_showstats) ||
+		command_add("showstats", "[quick stats]- Show details about you or your target. Quick stats shows only key stats.", 50, command_showstats) ||
 		command_add("shutdown", "- Shut this zone process down.", 250, command_shutdown) ||
 		command_add("si", nullptr, 160, command_summonitem) ||
 		command_add("size", "[size] - Change size of you or your target.", 100, command_size) ||
@@ -1748,6 +1749,8 @@ void command_invul(Client *c, const Seperator *sep)
 			t = c;
 		}
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(CC_Default, "%s is %s invulnerable from attack.", t->GetName(), state ? "now" : "no longer");
 	}
 	else
@@ -1773,10 +1776,10 @@ void command_emote(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "zone") == 0){
 			char* newmessage = 0;
 			if (strstr(sep->arg[3], "^") == 0)
-				entity_list.Message(0, atoi(sep->arg[2]), sep->argplus[3]);
+				entity_list.Message(CC_Default, atoi(sep->arg[2]), sep->argplus[3]);
 			else{
 				for (newmessage = strtok((char*)sep->arg[3], "^"); newmessage != nullptr; newmessage = strtok(nullptr, "^"))
-					entity_list.Message(0, atoi(sep->arg[2]), newmessage);
+					entity_list.Message(CC_Default, atoi(sep->arg[2]), newmessage);
 			}
 		}
 		else if (!worldserver.Connected())
@@ -1812,16 +1815,7 @@ void command_npcstats(Client *c, const Seperator *sep){
 	else if (!c->GetTarget()->IsNPC())
 		c->Message(CC_Default, "ERROR: Target is not a NPC!");
 	else {
-		c->Message(CC_Default, "NPC Stats:");
-		c->Message(CC_Default, "Name: %s   NpcID: %u", c->GetTarget()->GetName(), c->GetTarget()->GetNPCTypeID());
-		c->Message(CC_Default, "Race: %i  Level: %i  Class: %i  Material: %i", c->GetTarget()->GetRace(), c->GetTarget()->GetLevel(), c->GetTarget()->GetClass(), c->GetTarget()->GetTexture());
-		c->Message(CC_Default, "Current HP: %i  Max HP: %i", c->GetTarget()->GetHP(), c->GetTarget()->GetMaxHP());
-		//c->Message(CC_Default, "Weapon Item Number: %s",c->GetTarget()->GetWeapNo());
-		c->Message(CC_Default, "Gender: %i  Size: %f  Bodytype: %d", c->GetTarget()->GetGender(), c->GetTarget()->GetSize(), c->GetTarget()->GetBodyType());
-		c->Message(CC_Default, "Runspeed: %f  Walkspeed: %f", c->GetTarget()->GetRunspeed(), c->GetTarget()->GetWalkspeed());
-		c->Message(CC_Default, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
-		c->Message(CC_Default, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackTimer());
-		c->GetTarget()->CastToNPC()->QueryLoot(c);
+		c->GetTarget()->CastToNPC()->ShowQuickStats(c);
 	}
 }
 
@@ -2438,12 +2432,22 @@ void command_flymode(Client *c, const Seperator *sep){
 			t = c;
 		}
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
+		uint32 account = c->AccountID();
 		if (sep->arg[1][0] == '1')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		}
 		else if (sep->arg[1][0] == '2')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		}
 		else
+		{
 			c->Message(CC_Default, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -3201,7 +3205,7 @@ void command_kick(Client *c, const Seperator *sep){
 		Client* client = entity_list.GetClientByName(sep->arg[1]);
 		if (client != 0) {
 			if (client->Admin() <= c->Admin()) {
-				client->Message(0, "You have been kicked by %s", c->GetName());
+				client->Message(CC_Default, "You have been kicked by %s", c->GetName());
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMKick, 0);
 				client->QueuePacket(outapp);
 				client->Kick();
@@ -4131,11 +4135,31 @@ void command_save(Client *c, const Seperator *sep){
 		c->Message(CC_Default, "Error: target not a Client/PlayerCorpse");
 }
 
-void command_showstats(Client *c, const Seperator *sep){
-	if (c->GetTarget() != 0)
+void command_showstats(Client *c, const Seperator *sep)
+{
+	if (sep->IsNumber(1) && atoi(sep->arg[1]) == 1) 
+	{
+		if (c->GetTarget() != 0 && c->GetTarget()->IsClient())
+		{
+			c->GetTarget()->CastToClient()->SendQuickStats(c);
+		}
+		else if(c->GetTarget() != 0 && c->GetTarget()->IsNPC())
+		{
+			c->GetTarget()->CastToNPC()->ShowQuickStats(c);
+		}
+		else
+		{
+			c->SendQuickStats(c);
+		}
+	}
+	else if (c->GetTarget() != 0)
+	{
 		c->GetTarget()->ShowStats(c);
+	}
 	else
+	{
 		c->ShowStats(c);
+	}
 }
 
 void command_mystats(Client *c, const Seperator *sep){
@@ -4443,9 +4467,9 @@ void command_zonespawn(Client *c, const Seperator *sep){
 
 	/* this was kept from client.cpp verbatim (it was commented out) */
 	//	if (target && target->IsNPC()) {
-	//		Message(0, "Inside main if.");
+	//		Message(CC_Default, "Inside main if.");
 	//		if (strcasecmp(sep->arg[1], "add")==0) {
-	//			Message(0, "Inside add if.");
+	//			Message(CC_Default, "Inside add if.");
 	//			database.DBSpawn(1, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC());
 	//		}
 	//		else if (strcasecmp(sep->arg[1], "update")==0) {
@@ -4457,21 +4481,21 @@ void command_zonespawn(Client *c, const Seperator *sep){
 	//			}
 	//			else {
 	//				if (database.DBSpawn(3, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC())) {
-	//					Message(0, "#zonespawn: %s removed successfully!", target->GetName());
+	//					Message(CC_Default, "#zonespawn: %s removed successfully!", target->GetName());
 	//					target->CastToNPC()->Death(target, target->GetHP());
 	//				}
 	//			}
 	//		}
 	//		else
-	//			Message(0, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
+	//			Message(CC_Default, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
 	//		if (target->CastToNPC()->GetNPCTypeID() > 0) {
-	//			Message(0, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
+	//			Message(CC_Default, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
 	//		}
 	//	}
 	//	else if(!target || !target->IsNPC())
-	//		Message(0, "Error: #zonespawn: You must have a NPC targeted!");
+	//		Message(CC_Default, "Error: #zonespawn: You must have a NPC targeted!");
 	//	else
-	//		Message(0, "Usage: #zonespawn [add|edit|remove|remove all]");
+	//		Message(CC_Default, "Usage: #zonespawn [add|edit|remove|remove all]");
 }
 
 void command_npcspawn(Client *c, const Seperator *sep){
@@ -5544,7 +5568,7 @@ void command_scribespells(Client *c, const Seperator *sep){
 		return;
 	}
 
-	t->Message(0, "Scribing spells to spellbook.");
+	t->Message(CC_Default, "Scribing spells to spellbook.");
 	if (t != c)
 		c->Message(CC_Default, "Scribing spells for %s.", t->GetName());
 	Log.Out(Logs::General, Logs::Normal, "Scribe spells request for %s from %s, levels: %u -> %u", t->GetName(), c->GetName(), min_level, max_level);
@@ -5573,12 +5597,12 @@ void command_scribespells(Client *c, const Seperator *sep){
 	}
 
 	if (count > 0) {
-		t->Message(0, "Successfully scribed %u spells.", count);
+		t->Message(CC_Default, "Successfully scribed %u spells.", count);
 		if (t != c)
 			c->Message(CC_Default, "Successfully scribed %u spells for %s.", count, t->GetName());
 	}
 	else {
-		t->Message(0, "No spells scribed.");
+		t->Message(CC_Default, "No spells scribed.");
 		if (t != c)
 			c->Message(CC_Default, "No spells scribed for %s.", t->GetName());
 	}
@@ -5600,7 +5624,7 @@ void command_scribespell(Client *c, const Seperator *sep){
 	spell_id = atoi(sep->arg[1]);
 
 	if (IsValidSpell(spell_id)) {
-		t->Message(0, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
+		t->Message(CC_Default, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
 
 		if (t != c)
 			c->Message(CC_Default, "Scribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5647,7 +5671,7 @@ void command_unmemspell(Client *c, const Seperator *sep){
 		if (mem_slot >= 0) {
 			t->UnmemSpell(mem_slot);
 
-			t->Message(0, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unmemming spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5693,7 +5717,7 @@ void command_unscribespell(Client *c, const Seperator *sep){
 		if (book_slot >= 0) {
 			t->UnscribeSpell(book_slot);
 
-			t->Message(0, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unscribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -6209,7 +6233,7 @@ void command_revoke(Client *c, const Seperator *sep)
 		return;
 	}
 
-	c->Message(13, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
+	c->Message(CC_Red, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
 
 	ServerPacket * outapp = new ServerPacket(ServerOP_Revoke, sizeof(RevokeStruct));
 	RevokeStruct* revoke = (RevokeStruct*)outapp->pBuffer;
@@ -6475,35 +6499,35 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "armtexture") == 0) {
-		c->Message(15, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET armtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "bracertexture") == 0) {
-		c->Message(15, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET bracertexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "handtexture") == 0) {
-		c->Message(15, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET handtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "legtexture") == 0) {
-		c->Message(15, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET legtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "feettexture") == 0) {
-		c->Message(15, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET feettexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
@@ -10924,7 +10948,7 @@ void command_logs(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "reload_all") == 0){
 			ServerPacket *pack = new ServerPacket(ServerOP_ReloadLogs, 0);
 			worldserver.SendPacket(pack);
-			c->Message(13, "Successfully sent the packet to world to reload log settings from the database for all zones");
+			c->Message(CC_Red, "Successfully sent the packet to world to reload log settings from the database for all zones");
 			safe_delete(pack);
 		}
 		/* #logs list_settings */
@@ -10959,8 +10983,8 @@ void command_logs(Client *c, const Seperator *sep){
 				c->Message(CC_Default, "--- #logs set gmsay 20 1 - Would output Quest errors to gmsay");
 			}
 			if (logs_set == 1){
-				c->Message(15, "Your Log Settings have been applied");
-				c->Message(15, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
+				c->Message(CC_Yellow, "Your Log Settings have been applied");
+				c->Message(CC_Yellow, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
 			}
 			/* We use a general 'is_category_enabled' now, let's update when we update any output settings 
 				This is used in hot places of code to check if its enabled in any way before triggering logs
@@ -10972,9 +10996,20 @@ void command_logs(Client *c, const Seperator *sep){
 				Log.log_settings[atoi(sep->arg[3])].is_category_enabled = 0;
 			}
 		}
+		if (strcasecmp(sep->arg[1], "quiet") == 0)
+		{
+			for (int i = 0; i < Logs::LogCategory::MaxCategoryID; i++)
+			{
+				Log.log_settings[i].log_to_gmsay = 0;
+				logs_set = 0;
+			}
+			c->Message(CC_Yellow, "Shhh. Be vewy vewy quiet, I'm hunting wabbits.");
+		}
 	}
-	else {
+	else 
+	{
 		c->Message(CC_Default, "#logs usage:");
+		c->Message(CC_Default, "--- #logs quiet - Turns off all gmsay logs in the current zone until the next time the zone resets.");
 		c->Message(CC_Default, "--- #logs reload_all - Reload all settings in world and all zone processes with what is defined in the database");
 		c->Message(CC_Default, "--- #logs list_settings - Shows current log settings and categories loaded into the current process' memory");
 		c->Message(CC_Default, "--- #logs set [console|file|gmsay] <category_id> <debug_level (1-3)> - Sets log settings during the lifetime of the zone");
@@ -11039,7 +11074,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		hotfix_name = "hotfix_";
 	}
 
-	c->Message(0, "Creating and applying hotfix");
+	c->Message(CC_Default, "Creating and applying hotfix");
 	std::thread t1([c, hotfix_name]() {
 #ifdef WIN32
 		if (hotfix_name.length() > 0) {
@@ -11064,7 +11099,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		}
 		worldserver.SendPacket(&pack);
 
-		c->Message(0, "Hotfix applied");
+		c->Message(CC_Default, "Hotfix applied");
 	});
 
 	t1.detach();
@@ -11077,12 +11112,12 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 
 	std::string hotfix_name;
 	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
-		c->Message(0, "Cannot attempt to load this shared memory segment as it is already loaded.");
+		c->Message(CC_Default, "Cannot attempt to load this shared memory segment as it is already loaded.");
 		return;
 	}
 
 	hotfix_name = sep->arg[1];
-	c->Message(0, "Loading shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Loading shared memory segment %s", hotfix_name.c_str());
 	std::thread t1([c,hotfix_name]() {
 #ifdef WIN32
 		if(hotfix_name.length() > 0) {
@@ -11098,7 +11133,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 			system(StringFormat("./shared_memory").c_str());
 		}
 #endif
-		c->Message(0, "Shared memory segment finished loading.");
+		c->Message(CC_Default, "Shared memory segment finished loading.");
 	});
 
 	t1.detach();
@@ -11109,7 +11144,7 @@ void command_apply_shared_memory(Client *c, const Seperator *sep) {
 	database.GetVariable("hotfix_name", hotfix, 256);
 	std::string hotfix_name = sep->arg[1];
 	
-	c->Message(0, "Applying shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Applying shared memory segment %s", hotfix_name.c_str());
 	database.SetVariable("hotfix_name", hotfix_name.c_str());
 
 	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
@@ -11150,4 +11185,22 @@ void command_reloadtraps(Client *c, const Seperator *sep)
 {
 	entity_list.UpdateAllTraps(true, true);
 	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
 }

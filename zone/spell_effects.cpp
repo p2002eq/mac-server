@@ -124,10 +124,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	}
 
 #ifdef SPELL_EFFECT_SPAM
-		Message(0, "You are affected by spell '%s' (id %d)", spell.name, spell_id);
+		Message(CC_Default, "You are affected by spell '%s' (id %d)", spell.name, spell_id);
 		if(buffslot >= 0)
 		{
-			Message(0, "Buff slot:  %d  Duration:  %d tics", buffslot, buffs[buffslot].ticsremaining);
+			Message(CC_Default, "Buff slot:  %d  Duration:  %d tics", buffslot, buffs[buffslot].ticsremaining);
 		}
 #endif
 
@@ -348,7 +348,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				int buff_count = GetMaxTotalSlots();
 				for(i = 0; i < buff_count; i++) {
 					if(buffs[i].spellid == spell_id && i != buffslot) {
-						Message(0, "You must wait before you can be affected by this spell again.");
+						Message(CC_Default, "You must wait before you can be affected by this spell again.");
 						inuse = true;
 						break;
 					}
@@ -382,7 +382,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						if (effect_value < 0)
 							TryTriggerOnValueAmount(false, true);
 #ifdef SPELL_EFFECT_SPAM
-						caster->Message(0, "You have gained %+i mana!", effect_value);
+						caster->Message(CC_Default, "You have gained %+i mana!", effect_value);
 #endif
 					}
 				}
@@ -2827,12 +2827,12 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Unknown Effect ID %d", effect);
 #else
-				Message(0, "Unknown spell effect %d in spell %s (id %d)", effect, spell.name, spell_id);
+				Message(CC_Default, "Unknown spell effect %d in spell %s (id %d)", effect, spell.name, spell_id);
 #endif
 			}
 		}
 #ifdef SPELL_EFFECT_SPAM
-		Message(0, ". . . Effect #%i: %s", i + 1, (effect_desc && effect_desc[0]) ? effect_desc : "Unknown");
+		Message(CC_Default, ". . . Effect #%i: %s", i + 1, (effect_desc && effect_desc[0]) ? effect_desc : "Unknown");
 #endif
 	}
 
@@ -3018,6 +3018,7 @@ snare has both of them negative, yet their range should work the same:
 
 		case 119:	// confirmed 2/6/04
 			result = ubase + (caster_level / 8); break;
+		//case 120:
 		case 121:	// corrected 2/6/04
 			result = ubase + (caster_level / 3); break;
 		case 122:
@@ -3082,71 +3083,26 @@ snare has both of them negative, yet their range should work the same:
 				result += updownsign * 20 * (caster_level - 50);
 			break;
 
-		case 132:	// check sign
+		case 150: //resistant discipline (custom formula)
 			result = ubase;
-			if (caster_level > 50)
-				result += updownsign * 25 * (caster_level - 50);
-			break;
-
-		case 137:	// used in berserker AA desperation
-			result = ubase - static_cast<int>((ubase * (GetHPRatio() / 100.0f)));
-			break;
-
-		case 138: { // unused on live?
-			int maxhps = GetMaxHP() / 2;
-			if (GetHP() <= maxhps)
-				result = -(ubase * GetHP() / maxhps);
-			else
-				result = -ubase;
-			break;
-		}
-
-		case 139:	// check sign
-			result = ubase + (caster_level > 30 ? (caster_level - 30) / 2 : 0);
-			break;
-
-		case 140:	// check sign
-			result = ubase + (caster_level > 30 ? caster_level - 30 : 0);
-			break;
-
-		case 141:	// check sign
-			result = ubase + (caster_level > 30 ? (3 * caster_level - 90) / 2 : 0);
-			break;
-
-		case 142:	// check sign
-			result = ubase + (caster_level > 30 ? 2 * caster_level - 60 : 0);
-			break;
-
-		case 143:	// check sign
-			result = ubase + (3 * caster_level / 4);
+			if (caster_level >= 30)
+				result += (caster_level - 30) * 0.35; 
 			break;
 
 		//these are used in stacking effects... formula unknown
 		case 201:
+		case 202:
 		case 203:
+		case 204:
+		case 205:
 			result = max;
 			break;
 		default:
 		{
 			if (formula < 100)
 				result = ubase + (caster_level * formula);
-			else if((formula > 1000) && (formula < 1999))
-			{
-				// These work like splurt, accept instead of being hard coded to 12, it is formula - 1000.
-				// Formula 1999 seems to have a slightly different effect, so is not included here
-				int ticdif = spells[spell_id].buffduration - (ticsremaining - 1);
-				if(ticdif < 0)
-					ticdif = 0;
-
-				result = updownsign * (ubase - ((formula - 1000) * ticdif));
-			}
-			else if((formula >= 2000) && (formula <= 2650))
-			{
-				// Source: http://crucible.samanna.net/viewtopic.php?f=38&t=6259
-				result = ubase * (caster_level * (formula - 2000) + 1);
-			}
 			else
-				Log.Out(Logs::General, Logs::None, "Unknown spell effect value forumula %d", formula);
+				Log.Out(Logs::General, Logs::Error, "Unknown spell effect value formula %d", formula);
 		}
 	}
 
@@ -3586,7 +3542,10 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 	if (IsClient() && !CastToClient()->IsDead())
 		CastToClient()->MakeBuffFadePacket(buffs[slot].spellid, slot);
 
-	Log.Out(Logs::Detail, Logs::Spells, "Fading buff %d from slot %d", buffs[slot].spellid, slot);
+	if(buffs[slot].isdisc)
+		Log.Out(Logs::Detail, Logs::Discs, "Fading disc spell %d from slot %d", buffs[slot].spellid, slot);
+	else
+		Log.Out(Logs::Detail, Logs::Spells, "Fading buff %d from slot %d", buffs[slot].spellid, slot);
 
 	if(spells[buffs[slot].spellid].viral_targets > 0) {
 		bool last_virus = true;
@@ -3970,7 +3929,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 
 	// Generate worn off messages.
 	Mob *p = entity_list.GetMob(buffs[slot].casterid);
-	if(p && message)
+	if(p && message && !buffs[slot].isdisc)
 	{
 		char spellname[32];
 		if(IsCharmSpell(buffs[slot].spellid))

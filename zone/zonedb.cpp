@@ -1336,6 +1336,12 @@ bool ZoneDatabase::SaveCharacterSpell(uint32 character_id, uint32 spell_id, uint
 	return true;
 }
 
+bool ZoneDatabase::SaveCharacterConsent(uint32 character_id, char name[64]){
+	std::string query = StringFormat("REPLACE INTO `character_consent` (id, consented_name) VALUES (%u, '%s')", character_id, name);
+	QueryDatabase(query);
+	return true;
+}
+
 bool ZoneDatabase::DeleteCharacterSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
 	std::string query = StringFormat("DELETE FROM `character_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
 	QueryDatabase(query);
@@ -1356,6 +1362,12 @@ bool ZoneDatabase::DeleteCharacterDye(uint32 character_id){
 
 bool ZoneDatabase::DeleteCharacterMemorizedSpell(uint32 character_id, uint32 spell_id, uint32 slot_id){
 	std::string query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `slot_id` = %u AND `id` = %u", slot_id, character_id);
+	QueryDatabase(query);
+	return true;
+}
+
+bool ZoneDatabase::DeleteCharacterConsent(uint32 character_id, char name[64]){
+	std::string query = StringFormat("DELETE FROM `character_consent` WHERE `consented_name` = '%s' AND `id` = %u", name, character_id);
 	QueryDatabase(query);
 	return true;
 }
@@ -2086,10 +2098,10 @@ void ZoneDatabase::ListAllInstances(Client* client, uint32 charid)
 
     char name[64];
     database.GetCharName(charid, name);
-    client->Message(0, "%s is part of the following instances:", name);
+    client->Message(CC_Default, "%s is part of the following instances:", name);
 
     for (auto row = results.begin(); row != results.end(); ++row) {
-        client->Message(0, "%s - id: %lu, version: %lu", database.GetZoneName(atoi(row[1])),
+        client->Message(CC_Default, "%s - id: %lu, version: %lu", database.GetZoneName(atoi(row[1])),
 				(unsigned long)atoi(row[0]), (unsigned long)atoi(row[2]));
     }
 }
@@ -2274,6 +2286,7 @@ void ZoneDatabase::LoadBuffs(Client *client) {
         buffs[slot_id].ExtraDIChance = ExtraDIChance;
         buffs[slot_id].RootBreakChance = 0;
         buffs[slot_id].UpdateClient = false;
+		buffs[slot_id].isdisc = IsDisc(spell_id);
 
     }
 
@@ -2481,7 +2494,7 @@ void ZoneDatabase::LoadPetInfo(Client *client) {
 
 }
 
-bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id) {
+bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id, uint8 texture_mod, uint8 gender_mod) {
 	if (faction_id <= 0 || faction_id > (int32) max_faction)
 		return false;
 
@@ -2491,45 +2504,68 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 
 	fm->base = faction_array[faction_id]->base;
 
-	if(class_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
+	if(class_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) 
+	{
 		char str[32];
 		sprintf(str, "c%u", class_mod);
+		fm->class_mod = 0;
 
 		std::map<std::string, int16>::const_iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
+		if(iter != faction_array[faction_id]->mods.end()) 
+		{
 			fm->class_mod = iter->second;
-		} else {
-			fm->class_mod = 0;
 		}
-	} else {
+	} 
+	else
+	{
 		fm->class_mod = 0;
 	}
 
-	if(race_mod > 0) {
+	if(race_mod > 0) 
+	{
 		char str[32];
 		sprintf(str, "r%u", race_mod);
 
-		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
-			fm->race_mod = iter->second;
-		} else {
-			fm->race_mod = 0;
+		if(race_mod == WOLF)
+		{
+			sprintf(str, "r%um%u", race_mod, gender_mod);
 		}
-	} else {
+		else if(race_mod == ELEMENTAL)
+		{
+			sprintf(str, "r%um%u", race_mod, texture_mod);
+		}
 		fm->race_mod = 0;
+
+		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
+		if(iter != faction_array[faction_id]->mods.end())
+		{
+			fm->race_mod = iter->second;
+		}
+		else if(race_mod == ELEMENTAL || race_mod == WOLF)
+		{
+			sprintf(str, "r%u", race_mod);
+			std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
+			if(iter != faction_array[faction_id]->mods.end())
+			{
+				fm->race_mod = iter->second;
+			}
+		}
 	}
 
-	if(deity_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
+	if(deity_mod > 0 && (GetRaceBitmask(race_mod) & allraces_1 || race_mod == ELEMENTAL)) 
+	{
 		char str[32];
 		sprintf(str, "d%u", deity_mod);
+		fm->deity_mod = 0;
 
 		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
+		if(iter != faction_array[faction_id]->mods.end()) 
+		{
 			fm->deity_mod = iter->second;
-		} else {
-			fm->deity_mod = 0;
 		}
-	} else {
+	} 
+	else
+	{
 		fm->deity_mod = 0;
 	}
 
@@ -2644,7 +2680,10 @@ bool ZoneDatabase::LoadFactionData()
             continue;
 
 		for (auto modRow = modResults.begin(); modRow != modResults.end(); ++modRow)
+		{
             faction_array[index]->mods[modRow[1]] = atoi(modRow[0]);
+		}
+
     }
 
 	return true;

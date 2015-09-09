@@ -720,9 +720,9 @@ void Lua_Client::ResetTrade() {
 	self->ResetTrade();
 }
 
-bool Lua_Client::UseDiscipline(int spell_id, Client* client) {
+bool Lua_Client::UseDiscipline(int spell_id) {
 	Lua_Safe_Call_Bool();
-	return self->UseDiscipline(spell_id, client);
+	return self->UseDiscipline(spell_id);
 }
 
 int Lua_Client::GetCharacterFactionLevel(int faction_id) {
@@ -1245,7 +1245,7 @@ luabind::scope lua_register_client() {
 		.def("ForageItem", (void(Lua_Client::*)(bool))&Lua_Client::ForageItem)
 		.def("CalcPriceMod", (float(Lua_Client::*)(Lua_Mob,bool))&Lua_Client::CalcPriceMod)
 		.def("ResetTrade", (void(Lua_Client::*)(void))&Lua_Client::ResetTrade)
-		.def("UseDiscipline", (bool(Lua_Client::*)(int,Client*))&Lua_Client::UseDiscipline)
+		.def("UseDiscipline", (bool(Lua_Client::*)(int))&Lua_Client::UseDiscipline)
 		.def("GetCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetCharacterFactionLevel)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int))&Lua_Client::SetZoneFlag)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int,uint8))&Lua_Client::SetZoneFlag)
