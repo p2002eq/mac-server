@@ -216,6 +216,9 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	if (((cle = client_list.CheckAuth(name, password)) || (cle = client_list.CheckAuth(id, password))))
 #endif
 	{
+		if(GetSessionLimit())
+			return false;
+
 		cle->SetOnline();
 		
 		if(eqs->ClientVersion() == EQClientMac)
