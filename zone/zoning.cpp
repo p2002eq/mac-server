@@ -770,7 +770,7 @@ void Client::SetZoneFlag(uint32 zone_id, uint8 key) {
 	zfs->key = key;
 	ZoneFlags.Insert(zfs);
 
-	std::string query = StringFormat("INSERT INTO zone_flags (charID,zoneID,key_) VALUES(%d,%d,%d)", CharacterID(), zone_id, key);
+	std::string query = StringFormat("INSERT INTO character_zone_flags (id,zoneID,key_) VALUES(%d,%d,%d)", CharacterID(), zone_id, key);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to set zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -792,7 +792,7 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 		iterator.Advance();
 	}
 
-	std::string query = StringFormat("DELETE FROM zone_flags WHERE charID=%d AND zoneID=%d", CharacterID(), zone_id);
+	std::string query = StringFormat("DELETE FROM character_zone_flags WHERE id=%d AND zoneID=%d", CharacterID(), zone_id);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to clear zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -802,7 +802,7 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 void Client::LoadZoneFlags(LinkedList<ZoneFlags_Struct*>* ZoneFlags) 
 {
 	ZoneFlags->Clear();
-	std::string query = StringFormat("SELECT zoneID, key_ from zone_flags WHERE charID=%d order by zoneID", CharacterID());
+	std::string query = StringFormat("SELECT zoneID, key_ from character_zone_flags WHERE id=%d order by zoneID", CharacterID());
 	auto results = database.QueryDatabase(query);
     if (!results.Success()) {
         Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to load zone flags for %s: %s", GetName(), results.ErrorMessage().c_str());

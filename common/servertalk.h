@@ -110,8 +110,6 @@
 #define ServerOP_WhoAll				0x0210
 #define ServerOP_FriendsWho			0x0211
 #define ServerOP_LFGMatches			0x0212
-#define ServerOP_LFPUpdate			0x0213
-#define ServerOP_LFPMatches			0x0214
 #define ServerOP_ClientVersionSummary 0x0215
 #define ServerOP_Soulmark			0x0216
 #define ServerOP_AddSoulmark		0x0217

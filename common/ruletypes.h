@@ -74,7 +74,6 @@ RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills l
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
 RULE_INT ( Character, SkillUpModifier, 60) //skill ups are at 100%
 RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
-RULE_BOOL ( Character, SharedBankPlat, false) //off by default to prevent duping for now
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
 RULE_INT ( Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.

@@ -223,7 +223,6 @@ public:
 	void dumpWornItems();
 	void dumpInventory();
 	void dumpBankItems();
-	void dumpSharedBankItems();
 
 	void SetCustomItemData(uint32 character_id, int16 slot_id, std::string identifier, std::string value);
 	void SetCustomItemData(uint32 character_id, int16 slot_id, std::string identifier, int value);
