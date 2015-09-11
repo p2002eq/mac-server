@@ -803,6 +803,7 @@ public:
 	const bool IsSenseExempted() const { return m_SenseExemption; }
 	const bool IsAssistExempted() const { return m_AssistExemption; }
 	const bool GetGMSpeed() const { return (gmspeed > 0); }
+	const bool GetGMInvul() const { return gminvul; }
 	void CheatDetected(CheatTypes CheatType, float x, float y, float z);
 	const bool IsMQExemptedArea(uint32 zoneID, float x, float y, float z) const;
 	bool CanUseReport;
@@ -945,7 +946,6 @@ public:
 
 	bool has_zomm;
 	bool client_position_update;
-	int update_count;
 	bool ignore_zone_count; 
 
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
@@ -965,6 +965,7 @@ public:
 	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
 
 	void SendMerchantEnd();
+	float GetPortHeading(uint16 newx, uint16 newy);
 
 protected:
 	friend class Mob;
@@ -1067,6 +1068,7 @@ private:
 	bool				auto_fire;
 	bool				runmode;
 	uint8				gmspeed;
+	bool				gminvul;
 	bool				medding;
 	uint16				horseId;
 	bool				revoked;

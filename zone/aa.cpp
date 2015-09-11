@@ -1031,7 +1031,7 @@ void Client::BuyAA(AA_Action* action)
 
 		/* Initial purchase of an AA ability */
 		if (cur_level < 1){
-			Message(15, "You have gained the ability \"%s\" at a cost of %d ability %s.", aa2->name, real_cost, (real_cost>1) ? "points" : "point");
+			Message(CC_Yellow, "You have gained the ability \"%s\" at a cost of %d ability %s.", aa2->name, real_cost, (real_cost>1) ? "points" : "point");
 
 			/* QS: Player_Log_AA_Purchases */
 			if (RuleB(QueryServ, PlayerLogAAPurchases)){
@@ -1041,7 +1041,7 @@ void Client::BuyAA(AA_Action* action)
 		}
 		/* Ranked purchase of an AA ability */
 		else{
-			Message(15, "You have improved %s %d at a cost of %d ability %s.", aa2->name, cur_level + 1, real_cost, (real_cost > 1) ? "points" : "point");
+			Message(CC_Yellow, "You have improved %s %d at a cost of %d ability %s.", aa2->name, cur_level + 1, real_cost, (real_cost > 1) ? "points" : "point");
 
 			/* QS: Player_Log_AA_Purchases */
 			if (RuleB(QueryServ, PlayerLogAAPurchases)){

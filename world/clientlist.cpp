@@ -256,7 +256,7 @@ void ClientList::DisconnectByIP(uint32 iIP) {
 	}
 }
 
-bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin) {
+bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin, ClientListEntry* cle) {
 
 	ClientListEntry* countCLEIPs = 0;
 	LinkedListIterator<ClientListEntry*> iterator(clientlist);
@@ -278,10 +278,8 @@ bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin) {
 			(RuleI(World, ExemptMaxClientsStatus) < 0))) {
 
 			// Increment the occurrences of this IP address
-			if (countCLEIPs->Online() > CLE_Status_Offline)
+			if (countCLEIPs->Online() >= CLE_Status_Zoning && (cle == nullptr || cle != countCLEIPs))
 				IPInstances++;
-
-			
 		}
 		iterator.Advance();
 	}
@@ -313,14 +311,14 @@ bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin) {
 	return true;
 }
 
-bool ClientList::CheckAccountActive(uint32 iAccID) {
+bool ClientList::CheckAccountActive(uint32 iAccID, ClientListEntry *cle) {
 
 	ClientListEntry* countCLEIPs = 0;
 	LinkedListIterator<ClientListEntry*> iterator(clientlist);
 	iterator.Reset();
 
 	while(iterator.MoreElements()) {
-		if (iterator.GetData()->AccountID() == iAccID && iterator.GetData()->Online() > CLE_Status_Offline) {
+		if (iterator.GetData()->AccountID() == iAccID && iterator.GetData()->Online() >= CLE_Status_Zoning && (cle == nullptr || cle != iterator.GetData())) {
 			return true;
 		}
 		iterator.Advance();

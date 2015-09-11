@@ -1104,11 +1104,13 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
 			if (!IsPlayerCorpse() || item_data->equip_slot <= EmuConstants::GENERAL_END || item_data->equip_slot == MainPowerSource || Loot_Request_Type >= 3 ||
 				(item_data->equip_slot >= EmuConstants::CURSOR_QUEUE_BEGIN && item_data->equip_slot <= EmuConstants::CURSOR_QUEUE_END)) {
-				if (i < corpselootlimit) {
+				if (i < corpselootlimit) 
+				{
 					if(!RuleB(NPC, IgnoreQuestLoot) || (RuleB(NPC, IgnoreQuestLoot) && item_data->quest == 0))
 					{
 						item = database.GetItem(item_data->item_id);
-						if(client && item) {
+						if(client && item && (item_data->quest == 0 || (item_data->quest == 1 && item->NoDrop != 0))) 
+						{
 							ItemInst* inst = database.CreateItem(item, item_data->charges);
 							if(inst) {
 								// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor

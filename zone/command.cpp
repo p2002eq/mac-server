@@ -227,6 +227,7 @@ int command_init(void){
 		command_add("gm", "- Turn player target's or your GM flag on or off.", 95, command_gm) ||
 		command_add("gmhideme", nullptr, 81, command_hideme) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target.", 150, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target.", 20, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid.", 250, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 90, command_guild) ||
@@ -1748,6 +1749,8 @@ void command_invul(Client *c, const Seperator *sep)
 			t = c;
 		}
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(CC_Default, "%s is %s invulnerable from attack.", t->GetName(), state ? "now" : "no longer");
 	}
 	else
@@ -2429,12 +2432,22 @@ void command_flymode(Client *c, const Seperator *sep){
 			t = c;
 		}
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
+		uint32 account = c->AccountID();
 		if (sep->arg[1][0] == '1')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		}
 		else if (sep->arg[1][0] == '2')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		}
 		else
+		{
 			c->Message(CC_Default, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -6220,7 +6233,7 @@ void command_revoke(Client *c, const Seperator *sep)
 		return;
 	}
 
-	c->Message(13, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
+	c->Message(CC_Red, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
 
 	ServerPacket * outapp = new ServerPacket(ServerOP_Revoke, sizeof(RevokeStruct));
 	RevokeStruct* revoke = (RevokeStruct*)outapp->pBuffer;
@@ -6486,35 +6499,35 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "armtexture") == 0) {
-		c->Message(15, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET armtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "bracertexture") == 0) {
-		c->Message(15, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET bracertexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "handtexture") == 0) {
-		c->Message(15, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET handtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "legtexture") == 0) {
-		c->Message(15, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET legtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "feettexture") == 0) {
-		c->Message(15, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET feettexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
@@ -10935,7 +10948,7 @@ void command_logs(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "reload_all") == 0){
 			ServerPacket *pack = new ServerPacket(ServerOP_ReloadLogs, 0);
 			worldserver.SendPacket(pack);
-			c->Message(13, "Successfully sent the packet to world to reload log settings from the database for all zones");
+			c->Message(CC_Red, "Successfully sent the packet to world to reload log settings from the database for all zones");
 			safe_delete(pack);
 		}
 		/* #logs list_settings */
@@ -10970,8 +10983,8 @@ void command_logs(Client *c, const Seperator *sep){
 				c->Message(CC_Default, "--- #logs set gmsay 20 1 - Would output Quest errors to gmsay");
 			}
 			if (logs_set == 1){
-				c->Message(15, "Your Log Settings have been applied");
-				c->Message(15, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
+				c->Message(CC_Yellow, "Your Log Settings have been applied");
+				c->Message(CC_Yellow, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
 			}
 			/* We use a general 'is_category_enabled' now, let's update when we update any output settings 
 				This is used in hot places of code to check if its enabled in any way before triggering logs
@@ -10983,9 +10996,20 @@ void command_logs(Client *c, const Seperator *sep){
 				Log.log_settings[atoi(sep->arg[3])].is_category_enabled = 0;
 			}
 		}
+		if (strcasecmp(sep->arg[1], "quiet") == 0)
+		{
+			for (int i = 0; i < Logs::LogCategory::MaxCategoryID; i++)
+			{
+				Log.log_settings[i].log_to_gmsay = 0;
+				logs_set = 0;
+			}
+			c->Message(CC_Yellow, "Shhh. Be vewy vewy quiet, I'm hunting wabbits.");
+		}
 	}
-	else {
+	else 
+	{
 		c->Message(CC_Default, "#logs usage:");
+		c->Message(CC_Default, "--- #logs quiet - Turns off all gmsay logs in the current zone until the next time the zone resets.");
 		c->Message(CC_Default, "--- #logs reload_all - Reload all settings in world and all zone processes with what is defined in the database");
 		c->Message(CC_Default, "--- #logs list_settings - Shows current log settings and categories loaded into the current process' memory");
 		c->Message(CC_Default, "--- #logs set [console|file|gmsay] <category_id> <debug_level (1-3)> - Sets log settings during the lifetime of the zone");
@@ -11161,4 +11185,22 @@ void command_reloadtraps(Client *c, const Seperator *sep)
 {
 	entity_list.UpdateAllTraps(true, true);
 	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
 }

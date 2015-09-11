@@ -142,6 +142,7 @@ namespace player_lootitem {
 		uint8	min_level;		  // 
 		uint8	max_level;		  // 
 		uint8	quest;
+		uint8	pet;
 	};
 }
 

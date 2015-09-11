@@ -409,7 +409,23 @@ void Client::CompleteConnect()
 			m_pp.spell_book[spellInt] = 0xFFFFFFFF;
 	}
 
-	if (GetHideMe()) Message(CC_Red, "[GM] You are currently hidden to all clients");
+	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0))
+	{
+		std::string state = "currently ";
+
+		if (GetHideMe()) state += "hidden to all clients, ";
+		if (GetGMSpeed()) state += "running at GM speed, ";
+		if (GetGMInvul()) state += "invulnerable to all damage, ";
+		if (flymode == 1) state += "flying, ";
+		else if (flymode == 2) state += "levitating, ";
+
+		if (state.size () > 0) 
+		{
+			//Remove last two characters from the string
+			state.resize (state.size () - 2);
+			Message(CC_Red, "[GM] You are %s.", state.c_str());
+		}
+	}
 
 	uint32 raidid = database.GetRaidID(GetName());
 	Raid *raid = nullptr;
@@ -1009,7 +1025,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterFactionValues(cid, factionvalues);
 
 	/* Load Character Account Data: Temp until I move */
-	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation` FROM `account` WHERE `id` = %u", this->AccountID());
+	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation`, `gminvul`, `flymode` FROM `account` WHERE `id` = %u", this->AccountID());
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		admin = atoi(row[0]);
@@ -1019,6 +1035,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		revoked = atoi(row[4]);
 		gmhideme = atoi(row[5]);
 		account_creation = atoul(row[6]);
+		gminvul = atoi(row[7]);
+		flymode = atoi(row[8]);
 	}
 
 	/* Load Character Data */
@@ -1054,6 +1072,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	/* If GM, not trackable */
 	if (gmhideme) { trackable = false; }
+	if (gminvul) { invulnerable = true; }
+	if (flymode > 0) { SendAppearancePacket(AT_Levitate, flymode); } 
 	/* Set Con State for Reporting */
 	conn_state = PlayerProfileLoaded;
 
@@ -1313,8 +1333,14 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Ability slot refresh send SK/PAL */
 	if (m_pp.class_ == SHADOWKNIGHT || m_pp.class_ == PALADIN) {
 		uint32 abilitynum = 0;
-		if (m_pp.class_ == SHADOWKNIGHT){ abilitynum = pTimerHarmTouch; }
-		else{ abilitynum = pTimerLayHands; }
+		if (m_pp.class_ == SHADOWKNIGHT)
+		{ 
+			abilitynum = pTimerHarmTouch; 
+		}
+		else
+		{ 
+			abilitynum = pTimerLayHands;
+		}
 
 		uint32 remaining = p_timers.GetRemainingTime(abilitynum);
 		if (remaining > 0 && remaining < 15300)
@@ -2181,30 +2207,31 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	else if (castspell->slot == ABILITY_SPELL_SLOT) {	// ABILITY cast (LoH and Harm Touch)
 		uint16 spell_to_cast = 0;
 
-		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN) {
+		//Reuse timers are handled by SpellFinished()
+		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN)
+		{
 			if (!p_timers.Expired(&database, pTimerLayHands)) {
 				Message(CC_Red, "Ability recovery time not yet met.");
 				InterruptSpell(castspell->spell_id);
 				return;
 			}
 			spell_to_cast = SPELL_LAY_ON_HANDS;
-			p_timers.Start(pTimerLayHands, LayOnHandsReuseTime);
 		}
 		else if ((castspell->spell_id == SPELL_HARM_TOUCH
-			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
-			if (!p_timers.Expired(&database, pTimerHarmTouch)) {
+			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) 
+		{
+			if (!p_timers.Expired(&database, pTimerHarmTouch)) 
+			{
 				Message(CC_Red, "Ability recovery time not yet met.");
 				InterruptSpell(castspell->spell_id);
 				return;
 			}
 
 			// determine which version of HT we are casting based on level
-			if (GetLevel() < 40)
+			if (GetLevel() <= 40)
 				spell_to_cast = SPELL_HARM_TOUCH;
 			else
 				spell_to_cast = SPELL_HARM_TOUCH2;
-
-			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
 		}
 
 		// if we've matched LoH or HT, cast now
@@ -2464,8 +2491,6 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	tmp = m_Position.y - ppu->y_pos;
 	dist += tmp*tmp;
 	dist = sqrt(dist);
-	// Haynar was looking at delta's, which look like velocities.  This converts the incoming formats.  Might be useful later.
-	//Message(13,"Animation %d dx %d dy %d",ppu->anim_type, static_cast<int16>(64*ppu->delta_x), static_cast<int16>(64*ppu->delta_y));
 
 	//the purpose of this first block may not be readily apparent
 	//basically it's so people don't do a moderate warp every 2.5 seconds
@@ -2630,10 +2655,27 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	bool send_update = (m_Position.w != ppu->heading && ppu->delta_heading == 0) || (ppu->delta_heading != m_Delta.w) || 
-		((ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x) && ppu->anim_type == 0) || (ppu->anim_type != animation) || (ppu->anim_type > 0 && ++update_count > 3);
+		(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x || ppu->anim_type != animation);
 	// Update internal state
-	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	m_Delta = glm::vec4(static_cast<int16>((ppu->delta_x & 0x200) ? (0x3FF & ppu->delta_x) & 0xFC00 : (0x3FF & ppu->delta_x)),
+						static_cast<int16>((ppu->delta_y & 0x400) ? (0x7FF & ppu->delta_y) & 0xF800 : (0x7FF & ppu->delta_y)),
+						static_cast<int16>((ppu->delta_z & 0x400) ? (0x7FF & ppu->delta_z) & 0xF800 : (0x7FF & ppu->delta_z)), 
+						ppu->delta_heading);
+	uint8 sendtoself = 0;
 	m_Position.w = ppu->heading;
+
+	//Adjust the heading for the Paineel portal near the SK guild
+	if(zone->GetZoneID() == paineel && 
+		((GetX() > 519 && GetX() < 530) || (GetY() > 952 && GetY() < 965)))
+	{
+		float tmph = GetPortHeading(ppu->x_pos, ppu->y_pos);
+		if(tmph > 0)
+		{
+			m_Position.w = tmph;
+			sendtoself = 1;
+		}
+
+	}
 
 	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
 		if(zone->random.Real(0, 100) < 70)//should be good
@@ -2683,10 +2725,10 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	animation = ppu->anim_type;
 	// No need to check for loc change, our client only sends this packet if it has actually moved in some way.
 	if (send_update) {
-		update_count = 0;
-		SendPosUpdate();
+		SendPosUpdate(sendtoself);
 		pLastUpdate = Timer::GetCurrentTime();
 	}
+	
 	if(zone->watermap)
 	{
 		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
@@ -3464,13 +3506,13 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 
 	if (admin >= minStatusToAvoidFalling && GetGM())
 	{
-		Message(13, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		Message(CC_Red, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
 		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
 		return;
 	}
 	else if (GetInvul()) 
 	{
-		Message(13, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
+		Message(CC_Red, "Your invuln status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
 		SetHP(GetHP() - 1);//needed or else the client wont acknowledge
 		return;
 	}

@@ -2494,7 +2494,7 @@ void ZoneDatabase::LoadPetInfo(Client *client) {
 
 }
 
-bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id) {
+bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id, uint8 texture_mod, uint8 gender_mod) {
 	if (faction_id <= 0 || faction_id > (int32) max_faction)
 		return false;
 
@@ -2504,45 +2504,68 @@ bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race
 
 	fm->base = faction_array[faction_id]->base;
 
-	if(class_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
+	if(class_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) 
+	{
 		char str[32];
 		sprintf(str, "c%u", class_mod);
+		fm->class_mod = 0;
 
 		std::map<std::string, int16>::const_iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
+		if(iter != faction_array[faction_id]->mods.end()) 
+		{
 			fm->class_mod = iter->second;
-		} else {
-			fm->class_mod = 0;
 		}
-	} else {
+	} 
+	else
+	{
 		fm->class_mod = 0;
 	}
 
-	if(race_mod > 0) {
+	if(race_mod > 0) 
+	{
 		char str[32];
 		sprintf(str, "r%u", race_mod);
 
-		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
-			fm->race_mod = iter->second;
-		} else {
-			fm->race_mod = 0;
+		if(race_mod == WOLF)
+		{
+			sprintf(str, "r%um%u", race_mod, gender_mod);
 		}
-	} else {
+		else if(race_mod == ELEMENTAL)
+		{
+			sprintf(str, "r%um%u", race_mod, texture_mod);
+		}
 		fm->race_mod = 0;
+
+		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
+		if(iter != faction_array[faction_id]->mods.end())
+		{
+			fm->race_mod = iter->second;
+		}
+		else if(race_mod == ELEMENTAL || race_mod == WOLF)
+		{
+			sprintf(str, "r%u", race_mod);
+			std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
+			if(iter != faction_array[faction_id]->mods.end())
+			{
+				fm->race_mod = iter->second;
+			}
+		}
 	}
 
-	if(deity_mod > 0 && GetRaceBitmask(race_mod) & allraces_1) {
+	if(deity_mod > 0 && (GetRaceBitmask(race_mod) & allraces_1 || race_mod == ELEMENTAL)) 
+	{
 		char str[32];
 		sprintf(str, "d%u", deity_mod);
+		fm->deity_mod = 0;
 
 		std::map<std::string, int16>::iterator iter = faction_array[faction_id]->mods.find(str);
-		if(iter != faction_array[faction_id]->mods.end()) {
+		if(iter != faction_array[faction_id]->mods.end()) 
+		{
 			fm->deity_mod = iter->second;
-		} else {
-			fm->deity_mod = 0;
 		}
-	} else {
+	} 
+	else
+	{
 		fm->deity_mod = 0;
 	}
 
@@ -2657,7 +2680,10 @@ bool ZoneDatabase::LoadFactionData()
             continue;
 
 		for (auto modRow = modResults.begin(); modRow != modResults.end(); ++modRow)
+		{
             faction_array[index]->mods[modRow[1]] = atoi(modRow[0]);
+		}
+
     }
 
 	return true;

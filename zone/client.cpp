@@ -180,6 +180,7 @@ Client::Client(EQStreamInterface* ieqs)
 	AFK = false;
 	LFG = false;
 	gmspeed = 0;
+	gminvul = false;
 	playeraction = 0;
 	SetTarget(0);
 	auto_attack = false;
@@ -273,7 +274,6 @@ Client::Client(EQStreamInterface* ieqs)
 	has_zomm = false;
 	client_position_update = false;
 	ignore_zone_count = false;
-	update_count = 0;
 	clicky_override = false;
 	active_disc = 0;
 	active_disc_spell = 0;
@@ -4024,7 +4024,7 @@ void Client::SendStats(Client* client)
 	client->Message(CC_Default, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(CC_Default, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(CC_Default, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
-	client->Message(CC_Default, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), IsLD(), GetClientVersionBit());
+	client->Message(CC_Default, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i GMInvul: %d LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), GetGMInvul(), IsLD(), GetClientVersionBit());
 	if(CalcMaxMana() > 0)
 		client->Message(CC_Default, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(CC_Default, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
@@ -4238,7 +4238,7 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_ra
 	if(pFaction > 0)
 	{
 		//Get the faction data from the database
-		if(database.GetFactionData(&fmods, p_class, p_race, p_deity, pFaction))
+		if(database.GetFactionData(&fmods, p_class, p_race, p_deity, pFaction, GetTexture(), GetGender()))
 		{
 			//Get the players current faction with pFaction
 			tmpFactionValue = GetCharacterFactionLevel(pFaction);
@@ -4291,7 +4291,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		// It needs to be used to adj max and min personal
 		// The range is still the same, 1200-3000(4200), but adjusted for base
 		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(),
-			faction_id[i]);
+			faction_id[i], GetTexture(), GetGender());
 
 		if (quest)
 		{
@@ -4341,7 +4341,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 		// It needs to be used to adj max and min personal
 		// The range is still the same, 1200-3000(4200), but adjusted for base
 		database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(), 
-			faction_id);
+			faction_id, GetTexture(), GetGender());
 
 		// Adjust the amount you can go up or down so the resulting range
 		// is PERSONAL_MAX - PERSONAL_MIN
@@ -4444,7 +4444,7 @@ return;
 int32 Client::GetModCharacterFactionLevel(int32 faction_id) {
 	int32 Modded = GetCharacterFactionLevel(faction_id);
 	FactionMods fm;
-	if (database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(), faction_id))
+	if (database.GetFactionData(&fm, GetClass(), GetRace(), GetDeity(), faction_id, GetTexture(), GetGender()))
 		Modded += fm.base + fm.class_mod + fm.race_mod + fm.deity_mod;
 
 	return Modded;
@@ -4459,7 +4459,7 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 
 	// If a faction is involved, get the data.
 	if (primaryfaction > 0) {
-		if (database.GetFactionData(&fmod, GetClass(), GetRace(), GetDeity(), primaryfaction)) {
+		if (database.GetFactionData(&fmod, GetClass(), GetRace(), GetDeity(), primaryfaction, GetTexture(), GetGender())) {
 			tmpFactionValue = GetCharacterFactionLevel(primaryfaction);
 			lowestvalue = std::min(tmpFactionValue, std::min(fmod.class_mod, fmod.race_mod));
 		}
@@ -5317,4 +5317,23 @@ bool Client::LoadCharacterConsent()
 		consent_list.push_back(name);
 	}
 	return true;
+}
+
+float Client::GetPortHeading(uint16 newx, uint16 newy)
+{
+	if(zone->GetZoneID() == paineel)
+	{
+		// To Bank
+		if(GetX() > 519 && GetX() < 530 && newx > 540 && newx < 560)
+		{
+			return 64.0f;
+		}
+		// To SK guild
+		else if(GetY() > 952 && GetY() < 965 && newy >= 900 && newy <= 920)
+		{
+			return 120.0f;
+		}
+	}
+
+	return 0.0f;
 }

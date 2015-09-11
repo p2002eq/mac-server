@@ -454,7 +454,7 @@ void NPC::QueryLoot(Client* to) {
 		{
 			static char itemid[7];
 			sprintf(itemid, "%06d", item->ID);
-			to->Message(CC_Default, "slot: %i min/maxlvl: %i/%i quest: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
+			to->Message(CC_Default, "slot: %i min/maxlvl: %i/%i quest: %i pet: %i %i: %c%c%s%s%c", (*cur)->equip_slot, (*cur)->min_level, (*cur)->max_level, (*cur)->quest, (*cur)->pet, (int)item->ID, 0x12, 0x30, itemid, item->Name, 0x12);
 		}
 		else
 			Log.Out(Logs::General, Logs::Error, "Database error, invalid item");
@@ -1286,7 +1286,7 @@ void NPC::PickPocket(Client* thief)
 	if(zone->random.Int(1,200) > steal_skill && zone->random.Roll(9)) 
 	{
 		AddToHateList(thief, 50);
-		if(bodytype == BT_Humanoid)
+		if(CanTalk())
 			Say_StringID(PP_FAIL, thief->GetName());
 		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 		return;
@@ -2158,9 +2158,9 @@ void NPC::DoNPCEmote(uint8 event_, uint16 emoteid)
 
 bool NPC::CanTalk()
 {
-	//Races that should be able to talk. (Races up to Titanium)
+	//Races that should be able to talk.
 
-	uint16 TalkRace[473] =
+	uint16 TalkRace[329] =
 	{1,2,3,4,5,6,7,8,9,10,11,12,0,0,15,16,0,18,19,20,0,0,23,0,25,0,0,0,0,0,0,
 	32,0,0,0,0,0,0,39,40,0,0,0,44,0,0,0,0,49,0,51,0,53,54,55,56,57,58,0,0,0,
 	62,0,64,65,66,67,0,0,70,71,0,0,0,0,0,77,78,79,0,81,82,0,0,0,86,0,0,0,90,
@@ -2172,12 +2172,7 @@ bool NPC::CanTalk()
 	0,0,235,236,0,238,239,240,241,242,243,244,0,246,247,0,0,0,251,0,0,254,255,
 	256,257,0,0,0,0,0,0,0,0,266,267,0,0,270,271,0,0,0,0,0,277,278,0,0,0,0,283,
 	284,0,286,0,288,289,290,0,0,0,0,295,296,297,298,299,300,0,0,0,304,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,320,0,322,323,324,325,0,0,0,0,330,331,332,333,334,335,
-	336,337,338,339,340,341,342,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,359,360,361,362,
-	0,364,365,366,0,368,369,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,385,386,0,0,0,0,0,392,
-	393,394,395,396,397,398,0,400,402,0,0,0,0,406,0,408,0,0,411,0,413,0,0,0,417,
-	0,0,420,0,0,0,0,425,0,0,0,0,0,0,0,433,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,458,0,0,0,0,0,0,0,0,467,0,0,470,0,0,473};
+	0,0,0,0,0,0,0,0,0,0,0,320,0,322,323,324,325,0,0,0,0};
 
 	int talk_check = TalkRace[GetRace() - 1];
 
@@ -2771,12 +2766,25 @@ float NPC::ApplyPushVector(bool noglance)
 	return pushedDist;
 }
 
-bool NPC::AddQuestLoot(int16 itemid)
+bool NPC::AddQuestLoot(int16 itemid, int8 charges)
 {
 	const Item_Struct* item = database.GetItem(itemid);
 	if(item)
 	{
-		AddLootDrop(item, &itemlist, 1, 1, 127, false, false, true);
+		AddLootDrop(item, &itemlist, charges, 1, 127, false, false, true);
+	}
+	else
+		return false;
+
+	return true;
+}
+
+bool NPC::AddPetLoot(int16 itemid, int8 charges)
+{
+	const Item_Struct* item = database.GetItem(itemid);
+	if(item)
+	{
+		AddLootDrop(item, &itemlist, charges, 1, 127, true, true, false, true);
 	}
 	else
 		return false;
@@ -2813,6 +2821,15 @@ void NPC::DeleteQuestLoot(int16 itemid1, int16 itemid2, int16 itemid3, int16 ite
 				RemoveQuestLootItems(itemid4);
 			}
 		}
+	}
+}
+
+void NPC::DeleteInvalidQuestLoot()
+{
+	int16 items = itemlist.size();
+	for (int i = 0; i < items; ++i)
+	{
+		CleanQuestLootItems();
 	}
 }
 
