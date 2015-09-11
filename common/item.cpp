@@ -986,7 +986,6 @@ void Inventory::dumpEntireInventory() {
 	dumpWornItems();
 	dumpInventory();
 	dumpBankItems();
-	dumpSharedBankItems();
 
 	std::cout << std::endl;
 }
@@ -1005,12 +1004,6 @@ void Inventory::dumpBankItems() {
 
 	std::cout << "Bank items:" << std::endl;
 	dumpItemCollection(m_bank);
-}
-
-void Inventory::dumpSharedBankItems() {
-
-	std::cout << "Shared Bank items:" << std::endl;
-	dumpItemCollection(m_shbank);
 }
 
 int Inventory::GetSlotByItemInstCollection(const std::map<int16, ItemInst*> &collection, ItemInst *inst) {
