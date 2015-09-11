@@ -165,13 +165,13 @@ void ErrorLog::Log(eqLogType type, const char *message, ...)
 	if (type == log_database)		{ color = LIGHTGREEN; }
 	if (type == log_database_trace)	{ color = GREEN; }
 	if (type == log_database_error)	{ color = LIGHTRED; }
-	if (type == log_network)		{ color = BLUE; }
+	if (type == log_network)		{ color = YELLOW; }
 	if (type == log_network_trace)	{ color = LIGHTBLUE; }
 	if (type == log_network_error)	{ color = LIGHTRED; }
-	if (type == log_world)			{ color = BLUE; }
+	if (type == log_world)			{ color = YELLOW; }
 	if (type == log_world_trace)	{ color = LIGHTBLUE; }
 	if (type == log_world_error)	{ color = LIGHTRED; }
-	if (type == log_client)			{ color = BLUE; }
+	if (type == log_client)			{ color = YELLOW; }
 	if (type == log_client_trace)	{ color = LIGHTBLUE; }
 	if (type == log_client_error)	{ color = LIGHTRED; }
 

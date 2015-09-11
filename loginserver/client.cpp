@@ -262,8 +262,19 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
 			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
-			FatalError("Account did not exist so it was created. Hit connect again to login.");
-
+			if (db.LoadServerSettings("options", "auto_account_activate") == "TRUE")
+			{
+				FatalError("Account did not exist so it was created.\nHit connect again to login.");
+			}
+			else
+			{
+				FatalError("Account did not exist so it was created.\nBut, Account is not activated.\nServer is not allowing open logins at this time.\nContact server management.");
+			}
+			return;
+		}
+		else if (db.LoadServerSettings("options", "auto_account_create") == "FALSE")
+		{
+			FatalError("Account does not exist and auto creation is not enabled.");
 			return;
 		}
 		result = false;
@@ -290,7 +301,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		{
 			if (db.GetAccountLockStatus(username) == false)
 			{
-				FatalError("Account is not activated. Server is not allowing open logins at this time.");
+				FatalError("Account is not activated.\nServer is not allowing open logins at this time.\nContact server management.");
 				return;
 			}
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
