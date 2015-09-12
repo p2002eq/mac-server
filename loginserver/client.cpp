@@ -232,7 +232,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		created = 1;
 	}
 
-	string salt = "0";
+	string salt = NULL;
 	if (db.CheckExtraSettings("salt"))
 	{
 		if (db.LoadServerSettings("options", "salt").c_str() != NULL && !db.LoadServerSettings("options", "salt").empty() &&

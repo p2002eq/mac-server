@@ -149,10 +149,10 @@ bool Database::CreateServerSettings()
 		query = StringFormat(
 				"CREATE TABLE `tblloginserversettings` ("
 				"`type` varchar(50) NOT NULL,"
-				"`value` varchar(50) NOT NULL,"
+				"`value` varchar(50),"
 				"`category` varchar(20) NOT NULL,"
 				"`description` varchar(99) NOT NULL,"
-				"`defaults` varchar(50) NOT NULL"
+				"`defaults` varchar(50)"
 				") ENGINE=InnoDB DEFAULT CHARSET=latin1");
 
 		auto results = QueryDatabase(query);
