@@ -120,7 +120,7 @@ void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount) {
 
 	int lastIndex = results.LastInsertedID();
 
-    for(int i = 0; i < detailCount; i++) {
+    for(uint32 i = 0; i < detailCount; i++) {
         query = StringFormat("INSERT INTO `qs_player_trade_record_entries` SET `event_id` = '%i', "
                             "`from_id` = '%i', `from_slot` = '%i', `to_id` = '%i', `to_slot` = '%i', "
                             "`item_id` = '%i', `charges` = '%i'",
@@ -161,7 +161,7 @@ void Database::LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 detailCount)
 
 	int lastIndex = results.LastInsertedID();
 
-    for(int i = 0; i < detailCount; i++) {
+    for(uint32 i = 0; i < detailCount; i++) {
         query = StringFormat("INSERT INTO `qs_player_handin_record_entries` SET `event_id` = '%i', "
                             "`action_type` = '%s', `char_slot` = '%i', `item_id` = '%i', "
                             "`charges` = '%i'",
@@ -192,7 +192,7 @@ void Database::LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 members){
 
 	int lastIndex = results.LastInsertedID();
 
-	for (int i = 0; i < members; i++) {
+	for (uint32 i = 0; i < members; i++) {
         query = StringFormat("INSERT INTO `qs_player_npc_kill_record_entries` "
                             "SET `event_id` = '%i', `char_id` = '%i'",
                             lastIndex, QS->Chars[i].char_id);
@@ -222,7 +222,7 @@ void Database::LogPlayerDelete(QSPlayerLogDelete_Struct* QS, uint32 items) {
 
     int lastIndex = results.LastInsertedID();
 
-    for(int i = 0; i < items; i++) {
+    for(uint32 i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_player_delete_record_entries` SET `event_id` = '%i', "
                             "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
                             lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges);
@@ -255,7 +255,7 @@ void Database::LogPlayerMove(QSPlayerLogMove_Struct* QS, uint32 items) {
 
     int lastIndex = results.LastInsertedID();
 
-    for(int i = 0; i < items; i++) {
+    for(uint32 i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_player_move_record_entries` SET `event_id` = '%i', "
                             "`from_slot` = '%i', `to_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
                             lastIndex, QS->items[i].from_slot, QS->items[i].to_slot, QS->items[i].item_id,
@@ -294,7 +294,7 @@ void Database::LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint3
 
     int lastIndex = results.LastInsertedID();
 
-    for(int i = 0; i < items; i++) {
+    for(uint32 i = 0; i < items; i++) {
         query = StringFormat("INSERT INTO `qs_merchant_transaction_record_entries` SET `event_id` = '%i', "
                             "`char_slot` = '%i', `item_id` = '%i', `charges` = '%i'",
                             lastIndex, QS->items[i].char_slot, QS->items[i].item_id, QS->items[i].charges);

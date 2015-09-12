@@ -184,7 +184,7 @@ bool Database::CreateServerSettings()
 			"('pop_count', '', 'options', '0 to only display UP or DOWN or 1 to show population count in server select.', '0'),"
 			"('reject_duplicate_servers', '', 'options', 'set this to TRUE to force unique server name connections.', 'TRUE'),"
 			"('salt', '', 'options', 'for account security make this a numeric random number.', '12345678'),"
-			"('ticker', '', 'options', 'Sets the welcome message in server select.', 'Welcome'),"
+			"('ticker', '', 'options', 'Sets the welcome message in server select.', 'Welcome to EQMacEmu'),"
 			"('trace', '', 'options', 'debugging', 'FALSE'),"
 			"('unregistered_allowed', '', 'options', 'set this to TRUE to allow any server to connect.', 'TRUE'),"
 			"('world_admin_registration_table', '', 'schema', 'location of administrator account info for this login server.', 'tblServerAdminRegistration'),"
@@ -220,7 +220,7 @@ bool Database::CreateServerSettings()
 		failed |= !SetServerSettings("pop_count", "options", "0");
 		failed |= !SetServerSettings("reject_duplicate_servers", "options", "TRUE");
 		failed |= !SetServerSettings("salt", "options", "12345678");
-		failed |= !SetServerSettings("ticker", "options", "Welcome");
+		failed |= !SetServerSettings("ticker", "options", "Welcome to EQMacEmu");
 		failed |= !SetServerSettings("trace", "options", "FALSE");
 		failed |= !SetServerSettings("unregistered_allowed", "options", "TRUE");
 		failed |= !SetServerSettings("world_admin_registration_table", "schema", "tblServerAdminRegistration");
