@@ -102,7 +102,7 @@ void ZoneDatabase::AddLootTableToNPC(NPC* npc, uint32 loottable_id, ItemList* it
 			}
 			else if (multiplier_count < multiplier_min)
 			{
-				drop_chance = 100.0f;
+				drop_chance = 0.0f;
 			}
 
 			if (ltchance != 0.0 && (ltchance == 100.0 || drop_chance <= ltchance)) {
