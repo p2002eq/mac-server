@@ -67,12 +67,12 @@ public:
 	/**
 	* Shortcut for Trace, cleaner in the code.
 	*/
-	void ErrorLog::Trace(const char *message, ...);
+	void ErrorLog::Trace(std::string message, ...);
 
 	/**
 	* Shortcut for Trace and Packet Logging, cleaner in the code.
 	*/
-	void ErrorLog::Trace(const char *message, bool packet, const char *packetlog, size_t size, ...);
+	void ErrorLog::TracePacket(const char *packetlog, size_t size, ...);
 
 	/**
 	* Shortcut for World Trace, cleaner in the code.

@@ -212,7 +212,7 @@ bool WorldServer::Process()
 
 					server_log->Trace("Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
 						per->Allowed, per->Sequence, per->ServerNumber, per->Message);
-					server_log->Trace((const char*)outapp->pBuffer, outapp->size);
+					server_log->TracePacket((const char*)outapp->pBuffer, outapp->size);
 
 					if (server_log->DumpOut())
 					{

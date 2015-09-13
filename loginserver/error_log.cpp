@@ -82,23 +82,22 @@ ErrorLog::~ErrorLog()
 	delete log_mutex;
 }
 
-void ErrorLog::Trace(const char *message, ...)
+void ErrorLog::Trace(std::string message, ...)
 {
 	std::string trace = db.LoadServerSettings("options", "trace").c_str();
 	std::transform(trace.begin(), trace.end(), trace.begin(), ::toupper);
 	if (trace == "TRUE")
 	{
-		Log(log_network_trace, message);
+		Log(log_network_trace, message.c_str());
 	}
 }
 
-void ErrorLog::Trace(const char *message, bool packet, const char *packetlog, size_t size, ...)
+void ErrorLog::TracePacket(const char *packetlog, size_t size, ...)
 {
 	std::string trace = db.LoadServerSettings("options", "trace").c_str();
 	std::transform(trace.begin(), trace.end(), trace.begin(), ::toupper);
 	if (trace == "TRUE")
 	{
-		Log(log_network_trace, message);
 		LogPacket(log_network_trace, packetlog, size);
 	}
 }

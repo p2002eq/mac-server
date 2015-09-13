@@ -23,7 +23,8 @@
 #include "../common/misc_functions.h"
 #include "EQCrypto.h"
 #include "../common/sha1.h"
-#include <Ws2tcpip.h>
+
+#pragma warning(disable : 4267 4244 4996 4101 4700)
 
 extern EQCrypto eq_crypto;
 extern ErrorLog *server_log;
@@ -168,7 +169,7 @@ void Client::Handle_SessionReady(const char* data, unsigned int size)
 		//Special logic for old streams.
 		char buf[20];
 		strcpy(buf, "12-4-2002 1800");
-		EQApplicationPacket *outapp = new EQApplicationPacket(OP_SessionReady, (uint32)strlen(buf) + 1);
+		EQApplicationPacket *outapp = new EQApplicationPacket(OP_SessionReady, strlen(buf) + 1);
 		strcpy((char*) outapp->pBuffer, buf);
 		connection->QueuePacket(outapp);
 		delete outapp;
@@ -180,13 +181,10 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	in_addr in;
 	in.s_addr = connection->GetRemoteIP();
 
-	char address[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(in.s_addr), address, INET_ADDRSTRLEN);
-
 	if (version != cv_old)
 	{
 		//Not old client, gtfo haxxor!
-		string error = "Unauthorized client from " + (string)address + " , exiting them.";
+		string error = "Unauthorized client from " + string(inet_ntoa(in)) + " , exiting them.";
 		server_log->Log(log_network_error, error.c_str());
 		return;
 	}
@@ -254,12 +252,12 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	{
 		server_log->Log(log_client_error, "Error logging in, user %s does not exist in the database.", username.c_str());
 
-		Logs(platform, d_account_id, username.c_str(), (string)address, unsigned int(time(nullptr)), "notexist");
+		Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "notexist");
 
 		if (db.LoadServerSettings("options", "auto_account_create") == "TRUE")
 		{
-			Logs(platform, d_account_id, username.c_str(), (string)address, unsigned int(time(nullptr)), "created");
-			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, (string)address, (string)address);
+			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
+			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
 			if (db.LoadServerSettings("options", "auto_account_activate") == "TRUE")
 			{
 				FatalError("Account did not exist so it was created.\nHit connect again to login.");
@@ -279,7 +277,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 	}
 	else
 	{
-		sha1::calc(userandpass.c_str(), (int)userandpass.length(), sha1pass);
+		sha1::calc(userandpass.c_str(), userandpass.length(), sha1pass);
 		sha1::toHexString(sha1pass, sha1hash);
 		if (d_pass_hash.compare((char*)sha1hash) == 0)
 		{
@@ -287,7 +285,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		}
 		else
 		{
-			Logs(platform, d_account_id, username.c_str(), (string)address, unsigned int(time(nullptr)), "badpass");
+			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "badpass");
 			server_log->Log(log_client_error, "%s", sha1hash);
 			result = false;
 		}
@@ -302,8 +300,8 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 				FatalError("Account is not activated.\nServer is not allowing open logins at this time.\nContact server management.");
 				return;
 			}
-			Logs(platform, d_account_id, username.c_str(), (string)address, unsigned int(time(nullptr)), "success");
-			db.UpdateLSAccount(d_account_id, (string)address);
+			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "success");
+			db.UpdateLSAccount(d_account_id, string(inet_ntoa(in)));
 			GenerateKey();
 			account_id = d_account_id;
 			account_name = username.c_str();
@@ -319,7 +317,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 			if (client == "OSX")
 			{
 				string buf = db.LoadServerSettings("options", "network_ip").c_str();
-				EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, (uint32)buf.length() + 1);
+				EQApplicationPacket *outapp2 = new EQApplicationPacket(OP_ServerName, buf.length() + 1);
 				strncpy((char*)outapp2->pBuffer, buf.c_str(), buf.length() + 1);
 				connection->QueuePacket(outapp2);
 				delete outapp2;
@@ -338,7 +336,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 }
 
 void Client::FatalError(const char* message) {
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ClientError, (uint32)strlen(message) + 1);
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ClientError, strlen(message) + 1);
 	if (strlen(message) > 1) {
 		strcpy((char*)outapp->pBuffer, message);
 	}
@@ -395,7 +393,7 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 		ticker = db.LoadServerSettings("options", "ticker");
 	}
 	strcpy(buf, ticker.c_str());
-	outapp->size += (int)strlen(ticker.c_str());
+	outapp->size += strlen(ticker.c_str());
 
 	if (strlen(buf) == 0)
 	{
@@ -413,8 +411,8 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 
 void Client::SendPlayResponse(EQApplicationPacket *outapp)
 {
-	server_log->Trace("Sending play response for %s.", GetAccountName().c_str());
-	server_log->Trace((const char*)outapp->pBuffer, outapp->size);
+	server_log->Trace("Sending play response for %s.", GetAccountName()); //not sure why this reports setting in table and not actual message.
+	server_log->TracePacket((const char*)outapp->pBuffer, outapp->size);
 
 	connection->QueuePacket(outapp);
 	status = cs_logged_in;
