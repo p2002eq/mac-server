@@ -29,8 +29,8 @@ extern Database db;
 ClientManager::ClientManager()
 {
 	server_log->Log(log_debug, "ClientManager Entered.");
-	server_log->Trace("ClientManager Got: %s for trace on and port value is valid.", db.LoadServerSettings("Old", "port").c_str());
-	server_log->Trace("ClientManager Got: %s  for trace on and opcode value is valid.", db.LoadServerSettings("Old", "opcodes").c_str());
+	server_log->Trace("ClientManager Got port value from db.");
+	server_log->Trace("ClientManager Got opcode value from db.");
 
 	int old_port = atoul(db.LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
@@ -49,8 +49,6 @@ ClientManager::ClientManager()
 		server_log->Log(log_error, "ClientManager fatal error: couldn't open Old stream.");
 		run_server = false;
 	}
-
-	//server_log->Trace("ClientManager Got: %s from the database for opcode location.", db.LoadServerSettings("SWG", "opcodes").c_str());
 
 	//int swg_port = atoul(db.LoadServerSettings("SWG", "port").c_str());
 	//swg_stream = new EQStreamFactory(SWGStream, swg_port);

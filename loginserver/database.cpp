@@ -537,7 +537,7 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 #pragma endregion
 
 #pragma region Player Account Info
-void Database::CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
+void Database::CreateLSAccount(std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP)
 {
 	bool activate = 0;
 	if (LoadServerSettings("options", "auto_account_activate") == "TRUE")
@@ -550,8 +550,7 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 	DoEscapeString(tmpUN, name.c_str(), (int)name.length());
 
 	query = StringFormat("INSERT INTO %s "
-		"SET LoginServerID = %s, "
-		"AccountName = '%s', "
+		"SET AccountName = '%s', "
 		"AccountPassword = sha('%s'), "
 		"AccountCreateDate = now(), "
 		"LastLoginDate = now(), "
@@ -560,7 +559,6 @@ void Database::CreateLSAccount(unsigned int id, std::string name, std::string pa
 		"created_by = '%s', "
 		"creationIP = '%s'",
 		LoadServerSettings("schema", "account_table").c_str(),
-		std::to_string(id).c_str(),
 		tmpUN,
 		password.c_str(),
 		LastIPAddress.c_str(),

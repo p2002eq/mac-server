@@ -82,13 +82,13 @@ ErrorLog::~ErrorLog()
 	delete log_mutex;
 }
 
-void ErrorLog::Trace(std::string message, ...)
+void ErrorLog::Trace(const char *message, ...)
 {
 	std::string trace = db.LoadServerSettings("options", "trace").c_str();
 	std::transform(trace.begin(), trace.end(), trace.begin(), ::toupper);
 	if (trace == "TRUE")
 	{
-		Log(log_network_trace, message.c_str());
+		Log(log_network_trace, message);
 	}
 }
 
@@ -196,7 +196,7 @@ void ErrorLog::Log(eqLogType type, const char *message, ...)
 #else
 
 	printf("[ %s ][ %02d.%02d.%02d - %02d:%02d:%02d ] %s\n",
-		eqLogConsoleFormat.c_str(),
+		eqLogTypes[type],
 		m_time->tm_mon+1,
 		m_time->tm_mday,
 		m_time->tm_year%100,

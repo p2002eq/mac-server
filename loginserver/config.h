@@ -34,7 +34,7 @@ public:
 	/**
 	* Runs all configuration routines and sets loginserver settings.
 	*/
-	bool Config::ConfigSetup();
+	bool ConfigSetup();
 
 
 	/**

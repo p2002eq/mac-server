@@ -47,7 +47,7 @@ bool Client::Process()
 	EQApplicationPacket *app = connection->PopPacket();
 	while(app)
 	{
-		server_log->Trace("Application packet received from client (size %u)", app->Size());
+		server_log->Trace("Application packet received from client.");
 		if (server_log->DumpIn())
 		{
 			DumpPacket(app);
@@ -257,7 +257,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		if (db.LoadServerSettings("options", "auto_account_create") == "TRUE")
 		{
 			Logs(platform, d_account_id, username.c_str(), string(inet_ntoa(in)), time(nullptr), "created");
-			db.CreateLSAccount(NULL, username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
+			db.CreateLSAccount(username.c_str(), userandpass.c_str(), "", created, string(inet_ntoa(in)), string(inet_ntoa(in)));
 			if (db.LoadServerSettings("options", "auto_account_activate") == "TRUE")
 			{
 				FatalError("Account did not exist so it was created.\nHit connect again to login.");
@@ -411,7 +411,7 @@ void Client::Handle_Banner(const char* data, unsigned int size)
 
 void Client::SendPlayResponse(EQApplicationPacket *outapp)
 {
-	server_log->Trace("Sending play response for %s.", GetAccountName()); //not sure why this reports setting in table and not actual message.
+	server_log->Trace("Sending play response to client.");
 	server_log->TracePacket((const char*)outapp->pBuffer, outapp->size);
 
 	connection->QueuePacket(outapp);

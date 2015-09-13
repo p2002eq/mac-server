@@ -67,27 +67,27 @@ public:
 	/**
 	* Shortcut for Trace, cleaner in the code.
 	*/
-	void ErrorLog::Trace(std::string message, ...);
+	void Trace(const char *message, ...);
 
 	/**
 	* Shortcut for Trace and Packet Logging, cleaner in the code.
 	*/
-	void ErrorLog::TracePacket(const char *packetlog, size_t size, ...);
+	void TracePacket(const char *packetlog, size_t size, ...);
 
 	/**
 	* Shortcut for World Trace, cleaner in the code.
 	*/
-	void ErrorLog::WorldTrace(const char *message, ...);
+	void WorldTrace(const char *message, ...);
 
 	/**
 	* Shortcut for Dump_Packets_In, cleaner in the code.
 	*/
-	bool ErrorLog::DumpIn();
+	bool DumpIn();
 
 	/**
 	* Shortcut for Dump_Packets_Out, cleaner in the code.
 	*/
-	bool ErrorLog::DumpOut();
+	bool DumpOut();
 
 	/**
 	* Writes to the log system a variable message.

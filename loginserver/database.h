@@ -42,7 +42,7 @@ public:
 	/**
 	* Checks if table or entries exist in the database for settings.
 	*/
-	bool Database::CheckSettings(int type);
+	bool CheckSettings(int type);
 	/**
 	* Creates Server Settings table.
 	*/
@@ -66,7 +66,7 @@ public:
 	/**
 	* Change settings that need alterations.
 	*/
-	bool Database::DBUpdate();
+	bool DBUpdate();
 #pragma endregion
 #pragma region World Server Account Info
 	/**
@@ -91,7 +91,7 @@ public:
 	/**
 	* Updates or creates the login server account with info from world server
 	*/
-	virtual void CreateLSAccount(unsigned int id, std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
+	virtual void CreateLSAccount(std::string name, std::string password, std::string email, unsigned int created_by, std::string LastIPAddress, std::string creationIP);
 	
 	/**
 	* Updates the ip address of the client with account id = id

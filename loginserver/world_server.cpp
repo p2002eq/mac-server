@@ -210,8 +210,7 @@ bool WorldServer::Process()
 						break;
 					}
 
-					server_log->Trace("Sending play response with following data, allowed %u, sequence %u, server number %u, message %u",
-						per->Allowed, per->Sequence, per->ServerNumber, per->Message);
+					server_log->Trace("Sending play response to client.");
 					server_log->TracePacket((const char*)outapp->pBuffer, outapp->size);
 
 					if (server_log->DumpOut())
@@ -247,7 +246,7 @@ bool WorldServer::Process()
 					name.assign(lsau->useraccount);
 					password.assign(lsau->userpassword);
 					email.assign(lsau->useremail);
-					db.CreateLSAccount(lsau->useraccountid, name, password, email, NULL, "", "");
+					db.CreateLSAccount(name, password, email, 0, "", "");
 				}
 				break;
 			}

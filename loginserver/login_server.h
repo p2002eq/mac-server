@@ -40,7 +40,7 @@ public:
 #ifdef WIN32
 	LoginServer() : config(nullptr), SM(nullptr) { }
 #else
-	LoginServer() : config(nullptr), db(nullptr) { }
+	LoginServer() : config(nullptr) { }
 #endif
 
 	Config *config;
