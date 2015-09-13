@@ -4420,7 +4420,7 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 		*current_value = this_faction_min;
 		repair = true;
 	}
-	else if ((npc_value != 0) &&
+	else if ((m_pp.gm != 1) && (npc_value != 0) &&
 		((npc_value > 0 && *current_value != this_faction_max) ||
 		((npc_value < 0 && *current_value != this_faction_min))))
 		change = true;
@@ -4439,7 +4439,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 	else
 	{
 		Log.Out(Logs::General, Logs::Faction, "ERROR: change(%d) and repair(%d) are both false! current_value %d this_faction_max %d this_faction_min %d npc_value %d", change, repair, *current_value, this_faction_max, this_faction_min, npc_value);
-		Message(CC_Red, "ERROR: Please report these values: %d, %d, %d, %d, %d, %d", change, repair, *current_value, this_faction_min, this_faction_max, npc_value);
 	}
 
 return;
@@ -4955,23 +4954,32 @@ bool Client::IsTargetInMyGroup(Client* target)
 	return false;
 }
 
-bool Client::Disarm(Client* client)
+uint8 Client::Disarm(Client* client, float chance)
 {
 	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
 	if(weapon)
 	{
-		uint8 charges = weapon->GetCharges();
-		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
-		if(freeslotid != INVALID_INDEX)
+		float roll = zone->random.Real(0, 150);
+		if (roll < chance) 
 		{
-			client->DeleteItemInInventory(MainPrimary,0,true);
-			client->SummonItem(weapon->GetID(),charges,false,freeslotid);
-			client->WearChange(MaterialPrimary,0,0);
+			uint8 charges = weapon->GetCharges();
+			uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+			if(freeslotid != INVALID_INDEX)
+			{
+				client->DeleteItemInInventory(MainPrimary,0,true);
+				client->SummonItem(weapon->GetID(),charges,false,freeslotid);
+				client->WearChange(MaterialPrimary,0,0);
 
-			return true;
+				return 2;
+			}
+		}
+		else
+		{
+			return 1;
 		}
 	}
-	return false;
+
+	return 0;
 }
 
 

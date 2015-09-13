@@ -5332,46 +5332,57 @@ uint8 Mob::DualWieldChance()
 	}
 }
 
-bool Mob::Disarm()
+uint8 Mob::Disarm(float chance)
 {
 	if(this->IsNPC())
 	{
 		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
 		if(weapon)
 		{
-			uint16 weaponid = weapon->item_id;
-			const ItemInst* inst = database.CreateItem(weaponid);
-
-			if (inst->GetItem()->Magic)
+			float roll = zone->random.Real(0, 150);
+			if (roll < chance) 
 			{
+				uint16 weaponid = weapon->item_id;
+				const ItemInst* inst = database.CreateItem(weaponid);
+
+				if (inst->GetItem()->Magic)
+				{
+					safe_delete(inst);
+					return 0;				// magic weapons cannot be disarmed
+				}
+
+				const Item_Struct* item = inst->GetItem();
+				int8 charges = item->MaxCharges;
+				CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+
+				if (inst->GetItem()->NoDrop == 0)
+				{
+					CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				}
+				else
+				{
+					entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				}
+
+				CastToNPC()->SetPrimSkill(SkillHandtoHand);
+				if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
+					can_dual_wield = false;
+
+				WearChange(MaterialPrimary, 0, 0);
+
 				safe_delete(inst);
-				return false;				// magic weapons cannot be disarmed
-			}
 
-			const Item_Struct* item = inst->GetItem();
-			int8 charges = item->MaxCharges;
-			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-
-			if (inst->GetItem()->NoDrop == 0)
-			{
-				CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				// NPC has a weapon and was disarmed.
+				return 2;
 			}
 			else
 			{
-				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				// NPC has a weapon, but the roll failed.
+				return 1;
 			}
-
-			CastToNPC()->SetPrimSkill(SkillHandtoHand);
-			if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
-				can_dual_wield = false;
-
-			WearChange(MaterialPrimary, 0, 0);
-
-			safe_delete(inst);
-			return true;
 		}
 	}
-	return false;
+	return 0;
 }
 
 float Mob::CalcZOffset()

@@ -262,7 +262,7 @@ public:
 	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool message = true);
 	void BuffFadeDetrimentalByCaster(Mob *caster);
 	void BuffFadeBySitModifier();
-	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration);
+	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration, bool update);
 	int AddBuff(Mob *caster, const uint16 spell_id, int duration = 0, int32 level_override = -1);
 	int CanBuffStack(uint16 spellid, uint8 caster_level, bool iFailIfOverwrite = false);
 	int CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caster_level_override = -1);
@@ -946,7 +946,7 @@ public:
 	void	SetCanDualWield(bool value) { can_dual_wield = value; }
 	uint8	DoubleAttackChance();
 	uint8	DualWieldChance();
-	bool	Disarm();
+	uint8	Disarm(float chance);
 
 	//Command #Tune functions
 	int32 Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg =0,	int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
