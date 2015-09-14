@@ -86,6 +86,10 @@ public:
 	*/
 	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
 		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
+	/**
+	* Returns true if server is "preferred"
+	*/
+	bool GetWorldPreferredStatus(int id);
 #pragma endregion
 #pragma region Player Account Info
 	/**

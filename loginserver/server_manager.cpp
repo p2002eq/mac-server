@@ -226,21 +226,12 @@ EQApplicationPacket* ServerManager::CreateOldServerListPacket(Client* c)
 		}
 		
 		ServerListServerFlags_Struct* slsf = (ServerListServerFlags_Struct*)data_ptr;
+
 		// bit 0x1 is set name green - higher bits set language
 		slsf->greenname = 0;
-		switch((*iter)->GetServerListID())
+		if (db.GetWorldPreferredStatus((*iter)->GetRuntimeID()))
 		{
-		case 1:
-		case 2:
-			{
-				slsf->greenname = 1;
-				break;
-			}
-		default:
-			{
-				slsf->greenname = 0;
-				break;
-			}
+			slsf->greenname = 1;
 		}
 
 		slsf->flags = 0x1;

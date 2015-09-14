@@ -417,7 +417,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 		"ServerID = '%s', "
 		"ServerLongName = '%s', "
 		"ServerShortName = '%s', "
-		"ServerListTypeID = 3, "
+		"ServerListTypeID = 1, "
 		"ServerAdminID = 0, "
 		"ServerTrusted = 0, "
 		"ServerTagDescription = ''", 
@@ -532,6 +532,37 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 		return true;
 	}
 	server_log->Log(log_database_error, "Mysql query returned no result: %s", query.c_str());
+	return false;
+}
+bool Database::GetWorldPreferredStatus(int id)
+{
+	std::string query;
+
+	query = StringFormat("SELECT "
+		"tblWorldServerRegistration.ServerListTypeID "
+		"FROM "
+		"tblWorldServerRegistration "
+		"WHERE "
+		"tblWorldServerRegistration.ServerID = %i", id);
+
+	auto results = QueryDatabase(query);
+
+	if (!results.Success())
+	{
+		server_log->Log(log_database_error, "Mysql query failed: %s", query.c_str());
+		return false;
+	}
+
+	auto row = results.begin();
+
+	if (results.RowCount() > 0)
+	{
+		int list_id = atoi(row[0]);
+		if (list_id > 0)
+		{
+			return true;
+		}
+	}
 	return false;
 }
 #pragma endregion
