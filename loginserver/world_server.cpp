@@ -33,7 +33,7 @@ WorldServer::WorldServer(EmuTCPConnection *c)
 	players_online = 0;
 	status = 0;
 	runtime_id = 0;
-	server_list_id = 0;
+	server_list_type = 0;
 	server_type = 0;
 	authorized = false;
 	trusted = false;
@@ -54,7 +54,7 @@ void WorldServer::Reset()
 	players_online = 0;
 	status = 0;
 	runtime_id;
-	server_list_id = 0;
+	server_list_type = 0;
 	server_type = 0;
 	authorized = false;
 	logged_in = false;
@@ -400,7 +400,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 			string s_list_desc;
 			string s_acct_name;
 			string s_acct_pass;
-			if(db.GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
+			if(db.GetWorldRegistration(s_id, s_desc, s_trusted, s_list_type, s_acct_name, s_acct_pass, long_name, short_name))
 			{
 				if(s_acct_name.size() == 0 || s_acct_pass.size() == 0)
 				{
@@ -408,7 +408,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 						long_name.c_str(), short_name.c_str());
 					authorized = true;
 					SetRuntimeID(s_id);
-					server_list_id = s_list_type;
+					server_list_type = s_list_type;
 					desc = s_desc;
 				}
 				else if(s_acct_name.compare(account_name) == 0 && s_acct_pass.compare(account_password) == 0)
@@ -417,7 +417,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 						long_name.c_str(), short_name.c_str());
 					authorized = true;
 					SetRuntimeID(s_id);
-					server_list_id = s_list_type;
+					server_list_type = s_list_type;
 					desc = s_desc;
 					if(s_trusted)
 					{
@@ -458,7 +458,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 		string s_acct_name;
 		string s_acct_pass;
 
-		if(db.GetWorldRegistration(long_name, short_name, s_id, s_desc, s_list_type, s_trusted, s_list_desc, s_acct_name, s_acct_pass))
+		if (db.GetWorldRegistration(s_id, s_desc, s_trusted, s_list_type, s_acct_name, s_acct_pass, long_name, short_name))
 		{
 			if(account_name.size() > 0 && account_password.size() > 0)
 			{
@@ -467,7 +467,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 					server_log->Log(log_world, "Server %s(%s) successfully logged in.", long_name.c_str(), short_name.c_str());
 					authorized = true;
 					SetRuntimeID(s_id);
-					server_list_id = s_list_type;
+					server_list_type = s_list_type;
 					desc = s_desc;
 					if(s_trusted)
 					{
@@ -498,7 +498,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 						long_name.c_str(), short_name.c_str());
 					authorized = true;
 					SetRuntimeID(s_id);
-					server_list_id = 3;
+					server_list_type = 0;
 				}
 			}
 		}
@@ -511,7 +511,7 @@ void WorldServer::Handle_NewLSInfo(ServerNewLSInfo_Struct* i)
 			{
 				authorized = true;
 				SetRuntimeID(s_id);
-				server_list_id = 3;
+				server_list_type = 0;
 			}
 		}
 	}

@@ -417,7 +417,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 		"ServerID = '%s', "
 		"ServerLongName = '%s', "
 		"ServerShortName = '%s', "
-		"ServerListTypeID = 1, "
+		"ServerListTypeID = 0, "
 		"ServerAdminID = 0, "
 		"ServerTrusted = 0, "
 		"ServerTagDescription = ''", 
@@ -464,8 +464,8 @@ void Database::UpdateWorldRegistration(unsigned int id, std::string long_name, s
 	}
 }
 
-bool Database::GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
-	unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password)
+bool Database::GetWorldRegistration(unsigned int &id, std::string &desc, unsigned int &trusted, unsigned int &list_id, 
+									std::string &account, std::string &password, std::string long_name, std::string short_name)	
 {
 	char escaped_short_name[101];
 	DoEscapeString(escaped_short_name, short_name.substr(0, 100).c_str(), (int)strlen(short_name.substr(0, 100).c_str()));
@@ -473,13 +473,9 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 	std::string query;
 
 	query = StringFormat("SELECT "
-		"WSR.ServerID, WSR.ServerTagDescription, WSR.ServerTrusted, SLT.ServerListTypeID, SLT.ServerListTypeDescription, WSR.ServerAdminID "
-		"FROM %s AS WSR JOIN %s AS SLT ON "
-		"WSR.ServerListTypeID = SLT.ServerListTypeID "
-		"WHERE "
-		"WSR.ServerShortName = '%s'",
+		"ServerID, ServerTagDescription, ServerTrusted, ServerListTypeID, ServerAdminID "
+		"FROM %s WHERE ServerShortName = '%s'",
 		LoadServerSettings("schema", "world_registration_table").c_str(),
-		LoadServerSettings("schema", "world_server_type_table").c_str(),
 		escaped_short_name
 		);
 
@@ -499,15 +495,13 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 		desc = row[1];
 		trusted = atoi(row[2]);
 		list_id = atoi(row[3]);
-		list_desc = row[4];
 		int db_account_id = atoi(row[5]);
 
 		if (db_account_id > 0)
 		{
 			std::string query;
 			query = StringFormat("SELECT AccountName, AccountPassword "
-				"FROM %s WHERE "
-				"ServerAdminID = %s",
+				"FROM %s WHERE ServerAdminID = %s",
 				LoadServerSettings("schema", "world_admin_registration_table").c_str(),
 				std::to_string(db_account_id).c_str()
 				);
@@ -534,6 +528,7 @@ bool Database::GetWorldRegistration(std::string long_name, std::string short_nam
 	server_log->Log(log_database_error, "Mysql query returned no result: %s", query.c_str());
 	return false;
 }
+
 bool Database::GetWorldPreferredStatus(int id)
 {
 	std::string query;
@@ -557,8 +552,8 @@ bool Database::GetWorldPreferredStatus(int id)
 
 	if (results.RowCount() > 0)
 	{
-		int list_id = atoi(row[0]);
-		if (list_id > 0)
+		int type_id = atoi(row[0]);
+		if (type_id > 0)
 		{
 			return true;
 		}

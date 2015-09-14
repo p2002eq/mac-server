@@ -254,7 +254,10 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 		{
 			ServerPacket *outapp = new ServerPacket(ServerOP_UsertoWorldReq, sizeof(UsertoWorldRequest_Struct));
 			UsertoWorldRequest_Struct *utwr = (UsertoWorldRequest_Struct*)outapp->pBuffer;
-			utwr->worldid = (*iter)->GetServerListID();
+
+			//utwr->worldid = (*iter)->GetServerListID(); //This pulls preffered status instead of actual ID? That does not seem right.
+			utwr->worldid = (*iter)->GetRuntimeID();
+
 			utwr->lsaccountid = client_account_id;
 			utwr->ip = ip;
 			(*iter)->GetConnection()->SendPacket(outapp);

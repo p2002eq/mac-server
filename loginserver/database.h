@@ -84,8 +84,8 @@ public:
 	* Needed for world login procedure.
 	* Returns true if the record was found, false otherwise.
 	*/
-	virtual bool GetWorldRegistration(std::string long_name, std::string short_name, unsigned int &id, std::string &desc, unsigned int &list_id,
-		unsigned int &trusted, std::string &list_desc, std::string &account, std::string &password);
+	virtual bool GetWorldRegistration(unsigned int &id, std::string &desc, unsigned int &trusted, unsigned int &list_id, 
+									std::string &account, std::string &password, std::string long_name, std::string short_name);
 	/**
 	* Returns true if server is "preferred"
 	*/
