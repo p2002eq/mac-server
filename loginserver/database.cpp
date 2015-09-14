@@ -407,14 +407,17 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 	}
 
 	auto row = results.begin();
-	if (row[0] == NULL)
+	if (row[0] != nullptr)
+	{
+		id = atoi(row[0]) + 1;
+	}
+	else
 	{
 		id = 0;
 	}
-	id++;
 
 	query = StringFormat("INSERT INTO %s SET "
-		"ServerID = '%s', "
+		"ServerID = '%i', "
 		"ServerLongName = '%s', "
 		"ServerShortName = '%s', "
 		"ServerListTypeID = 0, "
@@ -422,7 +425,7 @@ bool Database::CreateWorldRegistration(std::string long_name, std::string short_
 		"ServerTrusted = 0, "
 		"ServerTagDescription = ''", 
 		LoadServerSettings("schema", "world_registration_table").c_str(),
-		std::to_string(id).c_str(),
+		id,
 		escaped_long_name,
 		escaped_short_name
 		);

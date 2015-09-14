@@ -271,7 +271,7 @@ void ServerManager::SendOldUserToWorldRequest(const char* server_id, unsigned in
 		}
 		++iter;
 	}
-	server_log->Trace("Client requested a user to world but supplied an invalid id of %s.", server_id);
+	server_log->Trace("Client requested a user to world but supplied an invalid id.");
 }
 
 bool ServerManager::ServerExists(string l_name, string s_name, WorldServer *ignore)
