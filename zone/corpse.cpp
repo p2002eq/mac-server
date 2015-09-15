@@ -394,7 +394,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 		database.TransactionBegin();
 		if (removed_list.size() != 0) {
 			std::stringstream ss("");
-			ss << "DELETE FROM inventory WHERE charid=" << client->CharacterID();
+			ss << "DELETE FROM character_inventory WHERE id=" << client->CharacterID();
 			ss << " AND (";
 			std::list<uint32>::const_iterator iter = removed_list.begin();
 			bool first = true;

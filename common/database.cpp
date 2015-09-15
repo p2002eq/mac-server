@@ -386,15 +386,13 @@ bool Database::DeleteCharacter(char *name) {
 
 	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);			   
 	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);					  
-	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `inventory` WHERE `charid` = '%d'", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); QueryDatabase(query);				  
+	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);					  		  			  
+	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  		  
 	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); QueryDatabase(query);				  
-	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  		  
-	query = StringFormat("DELETE FROM `faction_values` WHERE `char_id` = '%d'", charid); QueryDatabase(query);		  
-	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); QueryDatabase(query);	  
+	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); QueryDatabase(query);	 
+	query = StringFormat("DELETE FROM `character_inventory` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_faction_values` WHERE `id` = '%d'", charid); QueryDatabase(query);		   
 	query = StringFormat("DELETE FROM `character_data` WHERE `id` = '%d'", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `character_skills` WHERE `id` = %u", charid); QueryDatabase(query);				  
 	query = StringFormat("DELETE FROM `character_languages` WHERE `id` = %u", charid); QueryDatabase(query);			  
@@ -406,10 +404,33 @@ bool Database::DeleteCharacter(char *name) {
 	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);		  	  
 	query = StringFormat("DELETE FROM `character_material` WHERE `id` = %u", charid); QueryDatabase(query);			  
 	query = StringFormat("DELETE FROM `character_inspect_messages` WHERE `id` = %u", charid); QueryDatabase(query);	  
-	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid);
-	QueryDatabase(query);
+	query = StringFormat("DELETE FROM `character_zone_flags` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_keyring` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_buffs` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_consent` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_soulmarks` WHERE `id` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_timers` WHERE `id` = '%d'", charid); QueryDatabase(query);		
+	query = StringFormat("DELETE FROM `guild_members` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
+	DeleteCharacterCorpses(charid);
 	
 	return true;
+}
+
+void Database::DeleteCharacterCorpses(uint32 charid) 
+{
+
+	std::string query = StringFormat("SELECT `id` from `character_corpses` WHERE `charid` = '%s'", charid);
+	auto results = QueryDatabase(query);
+	for (auto row = results.begin(); row != results.end(); ++row) 
+	{ 
+		uint32 corpseid = atoi(row[0]); 
+		std::string delete_query = StringFormat("DELETE FROM `character_corpse_items` WHERE `corpse_id` = '%d'", corpseid); QueryDatabase(delete_query);	
+		delete_query = StringFormat("DELETE FROM `character_corpse_items_backup` WHERE `corpse_id` = '%d'", corpseid); QueryDatabase(delete_query);	
+	}
+
+	query = StringFormat("DELETE FROM `character_corpses` WHERE `charid` = '%d'", charid); QueryDatabase(query);	
+	query = StringFormat("DELETE FROM `character_corpses_backup` WHERE `charid` = '%d'", charid); QueryDatabase(query);	
+
 }
 
 bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp){
@@ -438,10 +459,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"eye_color_2,"
 		"hair_style,"
 		"beard,"
-		"ability_time_seconds,"
-		"ability_number,"
-		"ability_time_minutes,"
-		"ability_time_hours,"
 		"title,"
 		"suffix,"
 		"exp,"
@@ -462,10 +479,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"heading,"
 		"autosplit_enabled,"
 		"zone_change_count,"
-		"toxicity,"
 		"hunger_level,"
 		"thirst_level,"
-		"ability_up,"
 		"zone_id,"
 		"zone_instance,"
 		"endurance,"
@@ -500,10 +515,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // eye_color_2			
 		"%u,"  // hair_style			
 		"%u,"  // beard					
-		"%u,"  // ability_time_seconds	
-		"%u,"  // ability_number		
-		"%u,"  // ability_time_minutes	
-		"%u,"  // ability_time_hours	
 		"'%s',"  // title				
 		"'%s',"  // suffix				
 		"%u,"  // exp					
@@ -523,11 +534,9 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%f,"  // z						
 		"%f,"  // heading				
 		"%u,"  // autosplit_enabled		
-		"%u,"  // zone_change_count		
-		"%i,"  // toxicity				
+		"%u,"  // zone_change_count					
 		"%i,"  // hunger_level			
-		"%i,"  // thirst_level			
-		"%u,"  // ability_up			
+		"%i,"  // thirst_level					
 		"%u,"  // zone_id				
 		"%u,"  // zone_instance			
 		"%u,"  // endurance				
@@ -562,10 +571,6 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->eyecolor2,					  // " eye_color_2,               "
 		pp->hairstyle,					  // " hair_style,                "
 		pp->beard,						  // " beard,                     "
-		pp->ability_time_seconds,		  // " ability_time_seconds,      "
-		pp->ability_number,				  // " ability_number,            "
-		pp->ability_time_minutes,		  // " ability_time_minutes,      "
-		pp->ability_time_hours,			  // " ability_time_hours,        "
 		EscapeString(pp->title).c_str(),  // " title,                     "
 		EscapeString(pp->suffix).c_str(), // " suffix,                    "
 		pp->exp,						  // " exp,                       "
@@ -586,10 +591,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		pp->heading,					  // " heading,                   "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
-		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
-		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->endurance,					  // " endurance,                 "
@@ -676,7 +679,7 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, Inven
 	{
 		const ItemInst* newinv = inv->GetItem(i);
 		if (newinv) {
-			invquery = StringFormat("INSERT INTO `inventory` (charid, slotid, itemid, charges, color) VALUES (%u, %i, %u, %i, %u)",
+			invquery = StringFormat("INSERT INTO `character_inventory` (id, slotid, itemid, charges, color) VALUES (%u, %i, %u, %i, %u)",
 				charid, i, newinv->GetItem()->ID, newinv->GetCharges(), newinv->GetColor()); 
 			
 			auto results = QueryDatabase(invquery); 

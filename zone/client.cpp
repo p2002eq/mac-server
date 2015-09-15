@@ -4436,6 +4436,10 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 
 		database.SetCharacterFactionLevel(char_id, faction_id, *current_value, temp, factionvalues);
 	}
+	else
+	{
+		Log.Out(Logs::General, Logs::Faction, "ERROR: change(%d) and repair(%d) are both false! current_value %d this_faction_max %d this_faction_min %d npc_value %d", change, repair, *current_value, this_faction_max, this_faction_min, npc_value);
+	}
 
 return;
 }
@@ -4577,7 +4581,7 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, total, new_value);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s (%d)! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, faction_id, total, new_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
@@ -4950,23 +4954,32 @@ bool Client::IsTargetInMyGroup(Client* target)
 	return false;
 }
 
-bool Client::Disarm(Client* client)
+uint8 Client::Disarm(Client* client, float chance)
 {
 	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
 	if(weapon)
 	{
-		uint8 charges = weapon->GetCharges();
-		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
-		if(freeslotid != INVALID_INDEX)
+		float roll = zone->random.Real(0, 150);
+		if (roll < chance) 
 		{
-			client->DeleteItemInInventory(MainPrimary,0,true);
-			client->SummonItem(weapon->GetID(),charges,false,freeslotid);
-			client->WearChange(MaterialPrimary,0,0);
+			uint8 charges = weapon->GetCharges();
+			uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+			if(freeslotid != INVALID_INDEX)
+			{
+				client->DeleteItemInInventory(MainPrimary,0,true);
+				client->SummonItem(weapon->GetID(),charges,false,freeslotid);
+				client->WearChange(MaterialPrimary,0,0);
 
-			return true;
+				return 2;
+			}
+		}
+		else
+		{
+			return 1;
 		}
 	}
-	return false;
+
+	return 0;
 }
 
 
@@ -5078,7 +5091,7 @@ void Client::FixClientXP()
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM character_keyring "
-									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+									"WHERE id = '%i' ORDER BY item_id", character_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;
@@ -5098,7 +5111,7 @@ void Client::KeyRingAdd(uint32 item_id)
 	if (found)
 		return;
 
-	std::string query = StringFormat("INSERT INTO character_keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
+	std::string query = StringFormat("INSERT INTO character_keyring(id, item_id) VALUES(%i, %i)", character_id, item_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;

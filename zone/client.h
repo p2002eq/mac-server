@@ -937,7 +937,7 @@ public:
 
 	bool IsLFG() { return LFG; }
 
-	bool Disarm(Client* client);
+	uint8 Disarm(Client* client, float chance);
 	void SendSoulMarks(SoulMarkList_Struct* SMS);
 
 	//Command #Tune functions

@@ -3606,7 +3606,7 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	if(totalfeign >= 143)
 		totalfeign = 142.5f;
 
-	if (zone->random.Real(0, 150) > totalfeign) {
+	if (auto_attack || zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
 		entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetName());
 	}
@@ -8766,28 +8766,31 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 	if(totaldisarm <= 0)
 		totaldisarm = 0.1f;
 
-	int8 success = 0;
-	float roll = zone->random.Real(0, 150);
-	if (roll < totaldisarm) {
-		success = 1;
-		if(target->IsClient())
-		{
-			if(!Disarm(target->CastToClient()))
-			{
-				Message(CC_Red, "Unable to disarm target.");
-			}
-		}
-		else if(target->IsNPC())
-		{
-			if (!target->Disarm())
-				success = 0;
+	bool success = 0;
+	int8 disarm_result = 0;
+	
+	if(target->IsClient())
+	{
+		disarm_result = Disarm(target->CastToClient(), totaldisarm);
+		if (disarm_result < 2)
+			success = false;
+		else
+			success = true;
+	}
+	else if(target->IsNPC())
+	{
+		disarm_result = target->Disarm(totaldisarm);
+		if (disarm_result < 2)
+			success = false;
+		else
+			success = true;
 
-			if(!GetGM())
-				AddToHateList(target, 1);
-		}
+		if(!GetGM())
+			target->AddToHateList(this, 1);
 	}
 
-	Log.Out(Logs::Detail, Logs::Skills, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
+	if(disarm_result > 0)
+		CheckIncreaseSkill(SkillDisarm, target, 5);
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
 	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;
@@ -8798,8 +8801,6 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
-
-	CheckIncreaseSkill(SkillDisarm, target, 5);
 
 	return;
 }
