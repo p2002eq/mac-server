@@ -266,8 +266,6 @@ void Config::UpdateSettings()
 
 	db.InsertExtraSettings("pop_count", "0", "options", "0 to only display UP or DOWN or 1 to show population count in server select.", "0");
 	db.InsertExtraSettings("ticker", "Welcome to EQMacEmu", "options", "Sets the welcome message in server select.", "Welcome to EQMacEmu");
-	//db.InsertExtraSettings("port", "44453", "SWG", "Experimental, nothing to do with EQ.", "44453");
-	//db.InsertExtraSettings("opcodes", "login_opcodes_swg.conf", "SWG", "Experimental, nothing to do with EQ.", "login_opcodes_swg.conf");
 }
 
 /**

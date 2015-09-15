@@ -9,8 +9,7 @@ typedef enum {
 	ChatOrMailStream,
 	ChatStream,
 	MailStream,
-	OldStream,
-	SWGStream
+	OldStream
 } EQStreamType;
 
 

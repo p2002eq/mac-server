@@ -112,18 +112,6 @@ bool Client::Process()
 				Handle_Banner((const char*)app->pBuffer, app->Size());
 				break;
 			}
-		//case OP_LoginSWG:
-		//	{
-		//		//if (app)->Size() < 20)
-		//		//{
-		//		//	server_log->Log(log_network_error, "Login received but it is too small, discarding.");
-		//		//	break;
-		//		//}
-		//		server_log->Trace("Login received from SWG client.");
-		//		char dump[64];
-		//		app->build_header_dump(dump);
-		//		break;
-		//	}
 		default:
 			{
 				char dump[64];

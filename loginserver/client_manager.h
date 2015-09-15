@@ -77,8 +77,6 @@ private:
 	EQStreamFactory *sod_stream;*/
 	OpcodeManager *old_ops;
 	EQStreamFactory *old_stream;
-	OpcodeManager *swg_ops;
-	EQStreamFactory *swg_stream;
 };
 
 #endif

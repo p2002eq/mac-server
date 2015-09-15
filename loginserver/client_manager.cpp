@@ -49,24 +49,6 @@ ClientManager::ClientManager()
 		server_log->Log(log_error, "ClientManager fatal error: couldn't open Old stream.");
 		run_server = false;
 	}
-
-	//int swg_port = atoul(db.LoadServerSettings("SWG", "port").c_str());
-	//swg_stream = new EQStreamFactory(SWGStream, swg_port);
-	//swg_ops = new RegularOpcodeManager;
-	//if (!swg_ops->LoadOpcodes(db.LoadServerSettings("SWG", "opcodes").c_str()))
-	//{
-	//	server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for SWG file %s.", db.LoadServerSettings("SWG", "opcodes").c_str());
-	//	run_server = false;
-	//}
-	//if (swg_stream->Open())
-	//{
-	//	server_log->Log(log_network, "ClientManager listening on SWG stream with port: %s.", std::to_string(swg_port).c_str());
-	//}
-	//else
-	//{
-	//	server_log->Log(log_error, "ClientManager fatal error: couldn't open SWG stream.");
-	//	run_server = false;
-	//}
 }
 
 ClientManager::~ClientManager()
@@ -79,15 +61,6 @@ ClientManager::~ClientManager()
 	if(old_ops)
 	{
 		delete old_ops;
-	}
-	if (swg_stream)
-	{
-		swg_stream->Close();
-		delete swg_stream;
-	}
-	if (swg_ops)
-	{
-		delete swg_ops;
 	}
 }
 
@@ -106,21 +79,7 @@ void ClientManager::Process()
 		clients.push_back(c);
 		oldcur = old_stream->PopOld();
 	}
-
-	////ProcessDisconnect();
-	//EQOldStream *swgcur = swg_stream->PopOld();
-	//while (swgcur)
-	//{
-	//	struct in_addr in;
-	//	in.s_addr = swgcur->GetRemoteIP();
-	//	server_log->Log(log_network, "New client connection from %s:%d", inet_ntoa(in), ntohs(swgcur->GetRemotePort()));
-
-	//	swgcur->SetOpcodeManager(&swg_ops);
-	//	Client *c = new Client(swgcur, cv_old);
-	//	clients.push_back(c);
-	//	swgcur = swg_stream->PopOld();
-	//}
-
+	
 	list<Client*>::iterator iter = clients.begin();
 	while (iter != clients.end())
 	{
