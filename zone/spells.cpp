@@ -3484,7 +3484,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	bool GM;
 	if(spelltar->IsClient())
 	{
-		GM = spelltar->CastToClient()->GetGM();
+		GM = spelltar->CastToClient()->GetGMInvul();
 	}
 	else
 	{
@@ -3505,6 +3505,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		if (!spellHit)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
+			if(GM)
+				Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetName());
 			safe_delete(action_packet);
 			return false;
 		}
