@@ -3748,11 +3748,14 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 				if (IsAIControlled())
 				{
 					// clear the hate list of the mobs
-					entity_list.ReplaceWithTarget(this, tempmob);
-					WipeHateList();
 					entity_list.InterruptTargeted(this);
+					entity_list.RemoveFromTargets(this);
+					WipeHateList();
 					if(tempmob)
+					{
+						entity_list.ReplaceWithTarget(this, tempmob);
 						AddToHateList(tempmob, 1, 0);
+					}
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
 				}
 				if(tempmob && tempmob->IsClient())

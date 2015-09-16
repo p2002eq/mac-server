@@ -1489,6 +1489,12 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 		#2: figure out things that affect the player dying and mark them dead
 	*/
 
+	if(GetPet() && GetPet()->IsCharmed())
+	{
+		Log.Out(Logs::General, Logs::Spells, "%s has died. Fading charm on pet.", GetName());
+		GetPet()->BuffFadeByEffect(SE_Charm);
+	}
+
 	InterruptSpell();
 	SetPet(0);
 	SetHorseId(0);

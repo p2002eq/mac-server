@@ -653,6 +653,19 @@ bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack, int16 spellid)
 		return false;
 	}
 
+	if(IsNPC() && target->IsNPC())
+	{
+		int32 npc_faction = CastToNPC()->GetPrimaryFaction();
+		int32 target_faction = target->CastToNPC()->GetPrimaryFaction();
+		if(npc_faction == target_faction && npc_faction != 0)
+		{
+			Log.Out(Logs::General, Logs::Combat, "IsAttackAllowed failed: %s is on the same faction as %s", GetName(), target->GetName());
+			RemoveFromHateList(target);
+			return false;
+		}
+
+	}
+
 	// can't damage own pet (applies to everthing)
 	Mob *target_owner = target->GetOwner();
 	Mob *our_owner = GetOwner();

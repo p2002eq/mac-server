@@ -3503,7 +3503,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
 			if(GM)
-				Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetName());
+				spelltar->Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetName());
 			safe_delete(action_packet);
 			return false;
 		}
