@@ -1308,7 +1308,7 @@ void NPC::PickPocket(Client* thief)
 	if (steal_skill < 60)
 		money[1] = 0;
 
-	//Determine wheter to steal money or an item.
+	//Determine whether to steal money or an item.
 	bool no_coin = ((money[0] + money[1] + money[2] + money[3]) == 0);
 	bool steal_item = (steal_skill > zone->random.Int(1,250) || no_coin);
 	if (steal_item)
@@ -1323,9 +1323,7 @@ void NPC::PickPocket(Client* thief)
 			if (item)
 			{
 				inst = database.CreateItem(item, citem->charges);
-				bool is_arrow = (item->ItemType == ItemTypeArrow) ? true : false;
-				int slot_id = thief->GetInv().FindFreeSlot(false, true, inst->GetItem()->Size, is_arrow);
-				if (!IsEquipped(item->ID) && !item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer) && slot_id != INVALID_INDEX)
+				if (!IsEquipped(item->ID) && !item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer))
 				{
 					steal_items[x] = item->ID;
 					if (inst->IsStackable())
@@ -1336,6 +1334,7 @@ void NPC::PickPocket(Client* thief)
 				}
 			}
 		}
+
 		if (x > 0)
 		{
 			int random = zone->random.Int(0, x-1);
@@ -1347,9 +1346,16 @@ void NPC::PickPocket(Client* thief)
 				{
 					if (steal_skill > zone->random.Int(1,210))
 					{
-						thief->SendPickPocketResponse(this, 0, PickPocketItem, item);
-						thief->SendPickPocketItem(inst);
-						RemoveItem(item->ID);
+						int16 slotid = 0;
+						if(!thief->GetPickPocketSlot(inst, slotid))
+						{
+							thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+						}
+						else
+						{
+							thief->SendPickPocketResponse(this, 0, PickPocketItem, slotid, inst);
+							RemoveItem(item->ID);
+						}
 						safe_delete(inst);
 						return;
 					}

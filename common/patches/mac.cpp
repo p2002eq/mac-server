@@ -946,9 +946,6 @@ namespace Mac {
 			myitem->slotid = int_struct->slot_id;
 			memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
 		
-			if(outapp->size != sizeof(structs::TradeItemsPacket_Struct))
-				Log.Out(Logs::Detail, Logs::Zone_Server, "Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
-
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
 		}
@@ -1060,6 +1057,58 @@ namespace Mac {
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
 		safe_delete_array(pi);
+	}
+
+	ENCODE(OP_PickPocket) 
+	{
+
+		if((*p)->size == sizeof(PickPocket_Struct))
+		{
+			ENCODE_LENGTH_EXACT(PickPocket_Struct);
+			SETUP_DIRECT_ENCODE(PickPocket_Struct, structs::PickPocket_Struct);
+			OUT(to);
+			OUT(from);
+			OUT(myskill);
+			OUT(type);
+			OUT(coin);
+			FINISH_ENCODE();
+		}
+		else 
+		{
+			//consume the packet
+			EQApplicationPacket *in = *p;
+			*p = nullptr;
+
+			//store away the emu struct
+			unsigned char *__emu_buffer = in->pBuffer;
+			ItemPacket_Struct *old_item_pkt=(ItemPacket_Struct *)__emu_buffer;
+			InternalSerializedItem_Struct *int_struct=(InternalSerializedItem_Struct *)(old_item_pkt->SerializedItem);
+
+			const ItemInst * item = (const ItemInst *)int_struct->inst;
+	
+			if(item)
+			{
+				structs::Item_Struct* mac_item = MacItem((ItemInst*)int_struct->inst,int_struct->slot_id);
+
+				if(mac_item == 0)
+				{
+					delete in;
+					return;
+				}
+
+				EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket,sizeof(structs::PickPocketItemPacket_Struct));
+				structs::PickPocketItemPacket_Struct* myitem = (structs::PickPocketItemPacket_Struct*) outapp->pBuffer;
+				myitem->from = old_item_pkt->fromid;
+				myitem->to = old_item_pkt->toid;
+				myitem->myskill = old_item_pkt->skill;
+				myitem->coin = 0;
+				myitem->type = 5;
+				memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
+
+				dest->FastQueuePacket(&outapp);
+				delete[] __emu_buffer;
+			}
+		}
 	}
 
 	DECODE(OP_DeleteCharge) {  DECODE_FORWARD(OP_MoveItem); }

@@ -103,6 +103,7 @@ E(OP_FaceChange);
 D(OP_FaceChange);
 D(OP_Assist);
 E(OP_Assist);
+E(OP_PickPocket);
 
 //Below are invalid opcodes ONLY
 E(OP_Unknown);

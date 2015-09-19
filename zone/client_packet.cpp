@@ -5961,12 +5961,14 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		return;
 	}
 
+	p_timers.Start(pTimerBeggingPickPocket, 8);
+
 	PickPocket_Struct* pick_in = (PickPocket_Struct*)app->pBuffer;
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-	sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(PickPocket_Struct));
+	PickPocket_Struct* pick_out = (PickPocket_Struct*)outapp->pBuffer;
 
 	Mob* victim = entity_list.GetMob(pick_in->to);
-	if (!victim)
+	if (!victim || m_inv.GetItem(MainCursor) != nullptr)
 	{
 		pick_out->coin = 0;
 		pick_out->from = 0;
@@ -5977,8 +5979,6 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		safe_delete(outapp);
 		return;
 	}
-
-	p_timers.Start(pTimerBeggingPickPocket, 8);
 
 	if (victim->IsNPC())
 	{

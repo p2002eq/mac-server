@@ -2937,53 +2937,49 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item)
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst)
 {
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(Item_PickPocket_Struct));
-		Item_PickPocket_Struct* pick_out = (Item_PickPocket_Struct*) outapp->pBuffer;
+	if(type == PickPocketItem && inst)
+	{
+		SendItemPacket(slotid, inst, ItemPacketStolenItem, GetID(), from->GetID(), GetSkill(SkillPickPockets));
+		return;
+	}
+	else
+	{
+
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(PickPocket_Struct));
+		PickPocket_Struct* pick_out = (PickPocket_Struct*) outapp->pBuffer;
 		pick_out->coin = amt;
 		pick_out->from = GetID();
 		pick_out->to = from->GetID();
 		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->reply = 0;
-		if(item)
-			strncpy(pick_out->itemname, item->Name, 32);
-		else
-			pick_out->itemname[0] = '\0';
 
-		if((type >= PickPocketPlatinum) && (type <= PickPocketCopper) && (amt == 0))
+		if(amt == 0)
 			type = PickPocketFailed;
 
 		pick_out->type = type;
 
 		QueuePacket(outapp);
 		safe_delete(outapp);
+	}
 }
 
-bool Client::SendPickPocketItem(ItemInst* inst)
+bool Client::GetPickPocketSlot(ItemInst* inst, int16& freeslotid)
 {
-	bool stacked = TryStacking(inst);
-	int32 freeslotid = 0;
+	bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
+	freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size, is_arrow);
 
-	if (!stacked)
+	//make sure we are not completely full...
+	if ((freeslotid == MainCursor && m_inv.GetItem(MainCursor) != nullptr) || freeslotid == INVALID_INDEX)
 	{
-		freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size);
-
-		//make sure we are not completely full...
-		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
-			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) 
-			{
-				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
-				return false;
-			}
-		}
-
-		PutItemInInventory(freeslotid, *inst);
-		SendItemPacket(freeslotid, inst, ItemPacketTrade);
+		freeslotid == INVALID_INDEX;
+		return false;
 	}
-
-	return true;
+	else
+	{
+		PutItemInInventory(freeslotid, *inst);
+		return true;
+	}
 }
 
 bool Client::IsDiscovered(uint32 itemid) {
