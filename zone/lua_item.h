@@ -161,7 +161,6 @@ public:
 	int GetBook();
 	uint32 GetBookType();
 	const char *GetFilename();
-	int GetSVCorruption();
 	uint32 GetPurity();
 	uint32 GetBackstabDmg();
 	uint32 GetDSMitigation();
