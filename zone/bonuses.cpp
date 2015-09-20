@@ -203,7 +203,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->CR += (item->CR);
 		newbon->PR += (item->PR);
 		newbon->DR += (item->DR);
-		newbon->Corrup += (item->SVCorruption);
 
 		newbon->STRCapMod += item->AStr;
 		newbon->STACapMod += item->ASta;
@@ -217,7 +216,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->FRCapMod += item->CR;
 		newbon->PRCapMod += item->PR;
 		newbon->DRCapMod += item->DR;
-		newbon->CorrupCapMod += item->SVCorruption;
 
 	}
 	else
@@ -242,7 +240,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->CR += CalcRecommendedLevelBonus( lvl, reclvl, (item->CR) );
 		newbon->PR += CalcRecommendedLevelBonus( lvl, reclvl, (item->PR) );
 		newbon->DR += CalcRecommendedLevelBonus( lvl, reclvl, (item->DR) );
-		newbon->Corrup += CalcRecommendedLevelBonus( lvl, reclvl, (item->SVCorruption) );
 
 		newbon->STRCapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->AStr );
 		newbon->STACapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->ASta );
@@ -256,7 +253,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->FRCapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->CR );
 		newbon->PRCapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->PR );
 		newbon->DRCapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->DR );
-		newbon->CorrupCapMod += CalcRecommendedLevelBonus( lvl, reclvl, item->SVCorruption );
 
 	}
 
@@ -2935,7 +2931,6 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				newbon->CR += (cur->CR);
 				newbon->PR += (cur->PR);
 				newbon->DR += (cur->DR);
-				newbon->Corrup += (cur->SVCorruption);
 
 				//more complex stats
 				if(cur->Regen > 0) {

@@ -691,11 +691,6 @@ const char *Lua_Item::GetFilename() {
 	return self->Filename;
 }
 
-int Lua_Item::GetSVCorruption() {
-	Lua_Safe_Call_Int();
-	return self->SVCorruption;
-}
-
 uint32 Lua_Item::GetPurity() {
 	Lua_Safe_Call_Int();
 	return self->Purity;
@@ -868,7 +863,6 @@ luabind::scope lua_register_item() {
 		.def("Book", &Lua_Item::GetBook)
 		.def("BookType", &Lua_Item::GetBookType)
 		.def("Filename", &Lua_Item::GetFilename)
-		.def("SVCorruption", &Lua_Item::GetSVCorruption)
 		.def("Purity", &Lua_Item::GetPurity)
 		.def("BackstabDmg", &Lua_Item::GetBackstabDmg)
 		.def("DSMitigation", &Lua_Item::GetDSMitigation)
