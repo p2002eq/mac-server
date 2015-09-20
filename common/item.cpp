@@ -1852,22 +1852,8 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->Purity = (uint32)((float)m_item->Purity*Mult);
 	m_scaledItem->BackstabDmg = (uint32)((float)m_item->BackstabDmg*Mult);
 	m_scaledItem->DSMitigation = (uint32)((float)m_item->DSMitigation*Mult);
-	m_scaledItem->HeroicStr = (int32)((float)m_item->HeroicStr*Mult);
-	m_scaledItem->HeroicInt = (int32)((float)m_item->HeroicInt*Mult);
-	m_scaledItem->HeroicWis = (int32)((float)m_item->HeroicWis*Mult);
-	m_scaledItem->HeroicAgi = (int32)((float)m_item->HeroicAgi*Mult);
-	m_scaledItem->HeroicDex = (int32)((float)m_item->HeroicDex*Mult);
-	m_scaledItem->HeroicSta = (int32)((float)m_item->HeroicSta*Mult);
-	m_scaledItem->HeroicCha = (int32)((float)m_item->HeroicCha*Mult);
-	m_scaledItem->HeroicMR = (int32)((float)m_item->HeroicMR*Mult);
-	m_scaledItem->HeroicFR = (int32)((float)m_item->HeroicFR*Mult);
-	m_scaledItem->HeroicCR = (int32)((float)m_item->HeroicCR*Mult);
-	m_scaledItem->HeroicDR = (int32)((float)m_item->HeroicDR*Mult);
-	m_scaledItem->HeroicPR = (int32)((float)m_item->HeroicPR*Mult);
-	m_scaledItem->HeroicSVCorrup = (int32)((float)m_item->HeroicSVCorrup*Mult);
 	m_scaledItem->HealAmt = (int32)((float)m_item->HealAmt*Mult);
 	m_scaledItem->SpellDmg = (int32)((float)m_item->SpellDmg*Mult);
-	m_scaledItem->Clairvoyance = (uint32)((float)m_item->Clairvoyance*Mult);
 
 	m_scaledItem->CharmFileID = 0;	// this stops the client from trying to scale the item itself.
 }

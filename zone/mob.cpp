@@ -3646,42 +3646,12 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->BackstabDmg);
 	if (id == "dsmitigation")
 		stat = int32(item->DSMitigation);
-	if (id == "heroicstr")
-		stat = int32(item->HeroicStr);
-	if (id == "heroicint")
-		stat = int32(item->HeroicInt);
-	if (id == "heroicwis")
-		stat = int32(item->HeroicWis);
-	if (id == "heroicagi")
-		stat = int32(item->HeroicAgi);
-	if (id == "heroicdex")
-		stat = int32(item->HeroicDex);
-	if (id == "heroicsta")
-		stat = int32(item->HeroicSta);
-	if (id == "heroiccha")
-		stat = int32(item->HeroicCha);
-	if (id == "heroicmr")
-		stat = int32(item->HeroicMR);
-	if (id == "heroicfr")
-		stat = int32(item->HeroicFR);
-	if (id == "heroiccr")
-		stat = int32(item->HeroicCR);
-	if (id == "heroicdr")
-		stat = int32(item->HeroicDR);
-	if (id == "heroicpr")
-		stat = int32(item->HeroicPR);
-	if (id == "heroicsvcorrup")
-		stat = int32(item->HeroicSVCorrup);
 	if (id == "healamt")
 		stat = int32(item->HealAmt);
 	if (id == "spelldmg")
 		stat = int32(item->SpellDmg);
 	if (id == "scriptfileid")
 		stat = int32(item->ScriptFileID);
-	if (id == "expendablearrow")
-		stat = int32(item->ExpendableArrow);
-	if (id == "clairvoyance")
-		stat = int32(item->Clairvoyance);
 	// Begin Effects
 	if (id == "clickeffect")
 		stat = int32(item->Click.Effect);

@@ -350,9 +350,6 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	// Are they kos?
 	// Are we stupid or are they green
 	// and they don't have their gm flag on
-	int heroicCHA_mod = mob->itembonuses.HeroicCHA/25; // 800 Heroic CHA cap
-	if(heroicCHA_mod > THREATENLY_ARRGO_CHANCE)
-		heroicCHA_mod = THREATENLY_ARRGO_CHANCE;
 
 	if (RuleB(Aggro, UseLevelAggro))
 	{
@@ -375,7 +372,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 				||
 				(
 					fv == FACTION_THREATENLY
-					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE)
 				)
 			)
 		)
@@ -407,7 +404,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 				||
 				(
 					fv == FACTION_THREATENLY
-					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE)
 				)
 			)
 		)

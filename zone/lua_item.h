@@ -165,29 +165,9 @@ public:
 	uint32 GetPurity();
 	uint32 GetBackstabDmg();
 	uint32 GetDSMitigation();
-	int GetHeroicStr();
-	int GetHeroicInt();
-	int GetHeroicWis();
-	int GetHeroicAgi();
-	int GetHeroicDex();
-	int GetHeroicSta();
-	int GetHeroicCha();
-	int GetHeroicMR();
-	int GetHeroicFR();
-	int GetHeroicCR();
-	int GetHeroicDR();
-	int GetHeroicPR();
-	int GetHeroicSVCorrup();
 	int GetHealAmt();
 	int GetSpellDmg();
 	uint32 GetScriptFileID();
-	int GetExpendableArrow();
-	uint32 GetClairvoyance();
-	const char *GetClickName();
-	const char *GetProcName();
-	const char *GetWornName();
-	const char *GetFocusName();
-	const char *GetScrollName();
 };
 
 #endif

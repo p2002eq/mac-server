@@ -427,14 +427,14 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		int tmp_armor = armor;
 		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
 				GetClass() == NECROMANCER || GetClass() == ENCHANTER){
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 2.0) + armor;
+			mitigation_rating = (GetSkill(SkillDefense) / 2.0) + armor;
 			if (Msg >= 2)
-				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
+				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i ]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense));
 		}
 		else{
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + armor;
+			mitigation_rating = (GetSkill(SkillDefense) / 3.0) + armor;
 			if (Msg >= 2)
-				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
+				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense));
 
 		}
 		mitigation_rating *= 0.847;

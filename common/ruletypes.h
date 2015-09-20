@@ -67,7 +67,6 @@ RULE_INT ( Character, ItemStrikethroughCap, 35)
 RULE_INT ( Character, ItemATKCap, 250)
 RULE_INT ( Character, ItemHealAmtCap, 250)
 RULE_INT ( Character, ItemSpellDmgCap, 250)
-RULE_INT ( Character, ItemClairvoyanceCap, 250)
 RULE_INT ( Character, ItemDSMitigationCap, 50)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc

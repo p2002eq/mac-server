@@ -4030,7 +4030,7 @@ void Client::SendStats(Client* client)
 	client->Message(CC_Default, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
 	client->Message(CC_Default, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
-	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
+	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetDSMit());
 	client->Message(CC_Default, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
 	if(GetClass() == WARRIOR)
 		client->Message(CC_Default, "HasShield: %i KickDmg: %i BashDmg: %i", HasShieldEquiped(), GetKickDamage(), GetBashDamage());
@@ -4388,20 +4388,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 {
 	bool repair = false;
 	bool change = false;
-
-	if (this->itembonuses.HeroicCHA)
-	{
-		int faction_mod = itembonuses.HeroicCHA / 5;
-		// If our result isn't truncated, then just do that
-		if (npc_value * faction_mod / 100 != 0)
-			npc_value += npc_value * faction_mod / 100;
-		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
-		else
-		{
-			if (zone->random.Int(0, 100) < faction_mod)
-				npc_value *= 2;
-		}
-	}
 
 	// Set flag when to update db
 	// Repair needed, as db changes could modify a base value for a faction
