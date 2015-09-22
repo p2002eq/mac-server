@@ -155,10 +155,6 @@ namespace Convert {
 		/*0299*/	uint8							eyecolor2;			// Player right eye color
 		/*0300*/	uint8							hairstyle;			// Player hair style
 		/*0301*/	uint8							beard;				// Beard type
-		/*0302*/	uint8							ability_time_seconds;	//The following four spots are unknown right now.....
-		/*0303*/	uint8							ability_number;		//ability used
-		/*0304*/	uint8							ability_time_minutes;
-		/*0305*/	uint8							ability_time_hours;	//place holder
 		/*0312*/	uint32							item_material[_MaterialCount];	// Item texture/material of worn/held items
 		/*0392*/	Convert::Color_Struct			item_tint[_MaterialCount];
 		/*0428*/	Convert::AA_Array				aa_array[MAX_PP_AA_ARRAY];
@@ -200,15 +196,12 @@ namespace Convert {
 		/*4764*/	int32							copper_cursor;		// Copper on cursor
 		/*4768*/	int32							platinum_shared;	// Platinum shared between characters	
 		/*4796*/	uint32							skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
-		/*5396*/	uint32							ability_down;		// Guessing
 		/*5408*/	uint32							autosplit;			//not used right now
 		/*5418*/	uint32							boatid;				// We use this ID internally for boats.
 		/*5420*/	uint32							zone_change_count;	// Number of times user has zoned in their career (guessing)
 		/*5452*/	uint32							expansions;			// expansion setting, bit field of expansions avaliable
-		/*5456*/	int32							toxicity;			//from drinking potions, seems to increase by 3 each time you drink
 		/*5476*/	int32							hunger_level;
 		/*5480*/	int32							thirst_level;
-		/*5484*/	uint32							ability_up;
 		/*5504*/	uint16							zone_id;			// Current zone of the player
 		/*5506*/	uint16							zoneInstance;		// Instance ID
 		/*5508*/	Convert::SpellBuff_Struct		buffs[BUFF_COUNT];	// Buffs currently on the player
@@ -334,6 +327,7 @@ public:
 	bool	DeleteCharacter(char* name);
 	bool	MarkCharacterDeleted(char* name);
 	bool	UnDeleteCharacter(const char* name);
+	void	DeleteCharacterCorpses(uint32 charid);
 
 	/* General Information Queries */
 

@@ -24,21 +24,25 @@
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern bool run_server;
+extern Database db;
 
 ClientManager::ClientManager()
 {
-	int old_port = atoi(server.config->GetVariable("Old", "port").c_str());
+	server_log->Log(log_debug, "ClientManager Entered.");
+	server_log->Trace("ClientManager Got port value from db.");
+	server_log->Trace("ClientManager Got opcode value from db.");
+
+	int old_port = atoul(db.LoadServerSettings("Old", "port").c_str());
 	old_stream = new EQStreamFactory(OldStream, old_port);
 	old_ops = new RegularOpcodeManager;
-	if(!old_ops->LoadOpcodes(server.config->GetVariable("Old", "opcodes").c_str()))
+	if (!old_ops->LoadOpcodes(db.LoadServerSettings("Old", "opcodes").c_str()))
 	{
-		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.",
-			server.config->GetVariable("Old", "opcodes").c_str());
+		server_log->Log(log_error, "ClientManager fatal error: couldn't load opcodes for Old file %s.", db.LoadServerSettings("Old", "opcodes").c_str());
 		run_server = false;
 	}
 	if(old_stream->Open())
 	{
-		server_log->Log(log_network, "ClientManager listening on Old stream.");
+		server_log->Log(log_network, "ClientManager listening on Old stream with port: %s.", std::to_string(old_port).c_str());
 	}
 	else
 	{
@@ -75,10 +79,11 @@ void ClientManager::Process()
 		clients.push_back(c);
 		oldcur = old_stream->PopOld();
 	}
+	
 	list<Client*>::iterator iter = clients.begin();
-	while(iter != clients.end())
+	while (iter != clients.end())
 	{
-		if((*iter)->Process() == false)
+		if ((*iter)->Process() == false)
 		{
 			server_log->Log(log_client, "Client had a fatal error and had to be removed from the login.");
 			delete (*iter);

@@ -217,35 +217,13 @@ struct Item_Struct {
 	uint32	BookType;
 	char	Filename[33];	// Filename for book data
 	// Begin SoF Fields
-	int32 SVCorruption;
 	uint32 Purity;
 	uint8 EvolvingLevel;
 	uint32 BackstabDmg;
 	uint32 DSMitigation;
-	int32 HeroicStr;
-	int32 HeroicInt;
-	int32 HeroicWis;
-	int32 HeroicAgi;
-	int32 HeroicDex;
-	int32 HeroicSta;
-	int32 HeroicCha;
-	int32 HeroicMR;
-	int32 HeroicFR;
-	int32 HeroicCR;
-	int32 HeroicDR;
-	int32 HeroicPR;
-	int32 HeroicSVCorrup;
 	int32 HealAmt;
 	int32 SpellDmg;
-	uint32 LDoNSellBackRate;
 	uint32 ScriptFileID;
-	uint16 ExpendableArrow;
-	uint32 Clairvoyance;
-	char	ClickName[65];
-	char	ProcName[65];
-	char	WornName[65];
-	char	FocusName[65];
-	char	ScrollName[65];
 	int8	GMFlag;
 	int8	Soulbound;
 

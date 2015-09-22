@@ -9,7 +9,7 @@ namespace MAC {
 			// this needs work to match actual client equivilents
 			MapPossessions = 0,
 			MapBank,
-			MapSharedBank,
+			MapUnused,
 			MapTrade,
 			MapWorld,
 			MapLimbo,
@@ -24,7 +24,7 @@ namespace MAC {
 			MapRealEstate,
 			MapViewMODPC,
 			MapViewMODBank,
-			MapViewMODSharedBank,
+			MapViewMODUnused,
 			MapViewMODLimbo,
 			MapAltStorage,
 			MapArchived,
@@ -81,7 +81,6 @@ namespace MAC {
 	namespace consts {
 		static const uint16	MAP_POSSESSIONS_SIZE = slots::_MainCount;
 		static const uint16 MAP_BANK_SIZE = 8;
-		static const uint16 MAP_SHARED_BANK_SIZE = 2;
 		static const uint16 MAP_TRADE_SIZE = 8;
 		static const uint16 MAP_WORLD_SIZE = 10;
 		static const uint16 MAP_LIMBO_SIZE = 36;
@@ -93,7 +92,6 @@ namespace MAC {
 		static const uint16 MAP_REAL_ESTATE_SIZE = 0;
 		static const uint16 MAP_VIEW_MOD_PC_SIZE = MAP_POSSESSIONS_SIZE;
 		static const uint16 MAP_VIEW_MOD_BANK_SIZE = MAP_BANK_SIZE;
-		static const uint16 MAP_VIEW_MOD_SHARED_BANK_SIZE = MAP_SHARED_BANK_SIZE;
 		static const uint16 MAP_VIEW_MOD_LIMBO_SIZE = MAP_LIMBO_SIZE;
 		static const uint16 MAP_ALT_STORAGE_SIZE = 0;
 		static const uint16 MAP_ARCHIVED_SIZE = 0;

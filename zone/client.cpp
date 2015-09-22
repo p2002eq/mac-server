@@ -2937,53 +2937,49 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item)
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst)
 {
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(Item_PickPocket_Struct));
-		Item_PickPocket_Struct* pick_out = (Item_PickPocket_Struct*) outapp->pBuffer;
+	if(type == PickPocketItem && inst)
+	{
+		SendItemPacket(slotid, inst, ItemPacketStolenItem, GetID(), from->GetID(), GetSkill(SkillPickPockets));
+		return;
+	}
+	else
+	{
+
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(PickPocket_Struct));
+		PickPocket_Struct* pick_out = (PickPocket_Struct*) outapp->pBuffer;
 		pick_out->coin = amt;
 		pick_out->from = GetID();
 		pick_out->to = from->GetID();
 		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->reply = 0;
-		if(item)
-			strncpy(pick_out->itemname, item->Name, 32);
-		else
-			pick_out->itemname[0] = '\0';
 
-		if((type >= PickPocketPlatinum) && (type <= PickPocketCopper) && (amt == 0))
+		if(amt == 0)
 			type = PickPocketFailed;
 
 		pick_out->type = type;
 
 		QueuePacket(outapp);
 		safe_delete(outapp);
+	}
 }
 
-bool Client::SendPickPocketItem(ItemInst* inst)
+bool Client::GetPickPocketSlot(ItemInst* inst, int16& freeslotid)
 {
-	bool stacked = TryStacking(inst);
-	int32 freeslotid = 0;
+	bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
+	freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size, is_arrow);
 
-	if (!stacked)
+	//make sure we are not completely full...
+	if ((freeslotid == MainCursor && m_inv.GetItem(MainCursor) != nullptr) || freeslotid == INVALID_INDEX)
 	{
-		freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size);
-
-		//make sure we are not completely full...
-		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
-			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) 
-			{
-				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
-				return false;
-			}
-		}
-
-		PutItemInInventory(freeslotid, *inst);
-		SendItemPacket(freeslotid, inst, ItemPacketTrade);
+		freeslotid == INVALID_INDEX;
+		return false;
 	}
-
-	return true;
+	else
+	{
+		PutItemInInventory(freeslotid, *inst);
+		return true;
+	}
 }
 
 bool Client::IsDiscovered(uint32 itemid) {
@@ -4034,7 +4030,7 @@ void Client::SendStats(Client* client)
 	client->Message(CC_Default, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
 	client->Message(CC_Default, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
-	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
+	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetDSMit());
 	client->Message(CC_Default, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
 	if(GetClass() == WARRIOR)
 		client->Message(CC_Default, "HasShield: %i KickDmg: %i BashDmg: %i", HasShieldEquiped(), GetKickDamage(), GetBashDamage());
@@ -4393,20 +4389,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 	bool repair = false;
 	bool change = false;
 
-	if (this->itembonuses.HeroicCHA)
-	{
-		int faction_mod = itembonuses.HeroicCHA / 5;
-		// If our result isn't truncated, then just do that
-		if (npc_value * faction_mod / 100 != 0)
-			npc_value += npc_value * faction_mod / 100;
-		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
-		else
-		{
-			if (zone->random.Int(0, 100) < faction_mod)
-				npc_value *= 2;
-		}
-	}
-
 	// Set flag when to update db
 	// Repair needed, as db changes could modify a base value for a faction
 	// and we need to auto correct when that happens.
@@ -4435,6 +4417,10 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 			*current_value = this_faction_min;
 
 		database.SetCharacterFactionLevel(char_id, faction_id, *current_value, temp, factionvalues);
+	}
+	else
+	{
+		Log.Out(Logs::General, Logs::Faction, "ERROR: change(%d) and repair(%d) are both false! current_value %d this_faction_max %d this_faction_min %d npc_value %d", change, repair, *current_value, this_faction_max, this_faction_min, npc_value);
 	}
 
 return;
@@ -4577,7 +4563,7 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, total, new_value);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s (%d)! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, faction_id, total, new_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
@@ -4950,23 +4936,32 @@ bool Client::IsTargetInMyGroup(Client* target)
 	return false;
 }
 
-bool Client::Disarm(Client* client)
+uint8 Client::Disarm(Client* client, float chance)
 {
 	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
 	if(weapon)
 	{
-		uint8 charges = weapon->GetCharges();
-		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
-		if(freeslotid != INVALID_INDEX)
+		float roll = zone->random.Real(0, 150);
+		if (roll < chance) 
 		{
-			client->DeleteItemInInventory(MainPrimary,0,true);
-			client->SummonItem(weapon->GetID(),charges,false,freeslotid);
-			client->WearChange(MaterialPrimary,0,0);
+			uint8 charges = weapon->GetCharges();
+			uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+			if(freeslotid != INVALID_INDEX)
+			{
+				client->DeleteItemInInventory(MainPrimary,0,true);
+				client->SummonItem(weapon->GetID(),charges,false,freeslotid);
+				client->WearChange(MaterialPrimary,0,0);
 
-			return true;
+				return 2;
+			}
+		}
+		else
+		{
+			return 1;
 		}
 	}
-	return false;
+
+	return 0;
 }
 
 
@@ -5078,7 +5073,7 @@ void Client::FixClientXP()
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM character_keyring "
-									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+									"WHERE id = '%i' ORDER BY item_id", character_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;
@@ -5098,7 +5093,7 @@ void Client::KeyRingAdd(uint32 item_id)
 	if (found)
 		return;
 
-	std::string query = StringFormat("INSERT INTO character_keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
+	std::string query = StringFormat("INSERT INTO character_keyring(id, item_id) VALUES(%i, %i)", character_id, item_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;

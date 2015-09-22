@@ -987,7 +987,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 				{
 					ApplyMeleeDamageBonus(SkillArchery, TotalDmg);
 					TotalDmg += other->GetFcDamageAmtIncoming(this, 0, true, SkillArchery);
-					TotalDmg += (itembonuses.HeroicDEX / 10) + (TotalDmg * other->GetSkillDmgTaken(SkillArchery) / 100) + GetSkillDmgAmt(SkillArchery);
+					TotalDmg += (TotalDmg * other->GetSkillDmgTaken(SkillArchery) / 100) + GetSkillDmgAmt(SkillArchery);
 
 					TotalDmg = mod_archery_damage(TotalDmg, dobonus, RangeWeapon);
 
@@ -1985,13 +1985,13 @@ float Mob::GetSpecialProcChances(uint16 hand)
 	if (RuleB(Combat, AdjustSpecialProcPerMinute)) {
 		ProcChance = (static_cast<float>(weapon_speed) *
 				RuleR(Combat, AvgSpecialProcsPerMinute) / 60000.0f); 
-		ProcBonus +=  static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25);
+		ProcBonus +=  static_cast<float>(mydex/35);
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 	} else {
 		/*PRE 2014 CHANGE Dev Quote - "Elidroth SOE:Proc chance is a function of your base hardcapped Dexterity / 35 + Heroic Dexterity / 25.
 		Kayen: Most reports suggest a ~ 6% chance to Headshot which consistent with above.*/
 
-		ProcChance = (static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25))/100.0f;
+		ProcChance = static_cast<float>(mydex/35)/100.0f;
 	}
 
 	return ProcChance;
@@ -2048,12 +2048,12 @@ float Mob::GetAssassinateProcChances(uint16 ReuseTime)
 	if (RuleB(Combat, AdjustSpecialProcPerMinute)) {
 		ProcChance = (static_cast<float>(ReuseTime*1000) *
 				RuleR(Combat, AvgSpecialProcsPerMinute) / 60000.0f);
-		ProcBonus += (10 + (static_cast<float>(mydex/10) + static_cast<float>(itembonuses.HeroicDEX /10)))/100.0f;
+		ProcBonus += (10 + static_cast<float>(mydex/10))/100.0f;
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 
 	} else {
 		/* Kayen: Unable to find data on old proc rate of assassinate, no idea if our formula is real or made up. */
-		ProcChance = (10 + (static_cast<float>(mydex/10) + static_cast<float>(itembonuses.HeroicDEX /10)))/100.0f;
+		ProcChance = (10 + static_cast<float>(mydex/10))/100.0f;
 
 	}
 

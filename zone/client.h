@@ -342,8 +342,8 @@ public:
 
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
-	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
-	bool SendPickPocketItem(ItemInst* inst);
+	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr);
+	bool GetPickPocketSlot(ItemInst* inst, int16& slotid);
 
 	inline const char* GetLastName() const { return lastname; }
 
@@ -402,19 +402,6 @@ public:
 	inline uint8 GetBaseWIS() const { return m_pp.WIS; }
 	inline uint8 GetBaseCorrup() const { return 15; } // Same for all
 
-	inline virtual int32 GetHeroicSTR() const { return itembonuses.HeroicSTR; }
-	inline virtual int32 GetHeroicSTA() const { return itembonuses.HeroicSTA; }
-	inline virtual int32 GetHeroicDEX() const { return itembonuses.HeroicDEX; }
-	inline virtual int32 GetHeroicAGI() const { return itembonuses.HeroicAGI; }
-	inline virtual int32 GetHeroicINT() const { return itembonuses.HeroicINT; }
-	inline virtual int32 GetHeroicWIS() const { return itembonuses.HeroicWIS; }
-	inline virtual int32 GetHeroicCHA() const { return itembonuses.HeroicCHA; }
-	inline virtual int32 GetHeroicMR() const { return itembonuses.HeroicMR; }
-	inline virtual int32 GetHeroicFR() const { return itembonuses.HeroicFR; }
-	inline virtual int32 GetHeroicDR() const { return itembonuses.HeroicDR; }
-	inline virtual int32 GetHeroicPR() const { return itembonuses.HeroicPR; }
-	inline virtual int32 GetHeroicCR() const { return itembonuses.HeroicCR; }
-	inline virtual int32 GetHeroicCorrup() const { return itembonuses.HeroicCorrup; }
 	// Mod2
 	inline virtual int32 GetShielding() const { return itembonuses.MeleeMitigation; }
 	inline virtual int32 GetSpellShield() const { return itembonuses.SpellShield; }
@@ -428,7 +415,6 @@ public:
 	// Mod3
 	inline virtual int32 GetHealAmt() const { return itembonuses.HealAmt; }
 	inline virtual int32 GetSpellDmg() const { return itembonuses.SpellDmg; }
-	inline virtual int32 GetClair() const { return itembonuses.Clairvoyance; }
 	inline virtual int32 GetDSMit() const { return itembonuses.DSMitigation; }
 
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }
@@ -720,7 +706,7 @@ public:
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
 	void	SendLootItemInPacket(const ItemInst* inst, int16 slot_id);
-	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0);
+	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0, int16 toid = 0, int16 skill = 0);
 	bool	IsValidSlot(uint32 slot);
 	bool	IsBankSlot(uint32 slot);
 
@@ -937,7 +923,7 @@ public:
 
 	bool IsLFG() { return LFG; }
 
-	bool Disarm(Client* client);
+	uint8 Disarm(Client* client, float chance);
 	void SendSoulMarks(SoulMarkList_Struct* SMS);
 
 	//Command #Tune functions

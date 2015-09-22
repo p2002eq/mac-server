@@ -6029,12 +6029,12 @@ void command_setaapts(Client *c, const Seperator *sep){
 	if (c->GetTarget() && c->GetTarget()->IsClient())
 		t = c->GetTarget()->CastToClient();
 
-	if (sep->arg[1][0] == '\0' || sep->arg[2][0] == '\0')
-		c->Message(CC_Default, "Usage: #setaapts <AA|group|raid> <new AA points value>");
-	else if (atoi(sep->arg[2]) <= 0 || atoi(sep->arg[2]) > 200)
-		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 200.");
+	if (sep->arg[1][0] == '\0')
+		c->Message(CC_Default, "Usage: #setaapts <new AA points value>");
+	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 188)
+		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 188.");
 	else {
-		t->SetEXP(t->GetEXP(), t->GetMaxAAXP()*atoi(sep->arg[2]), false);
+		t->SetEXP(t->GetEXP(), t->GetEXPForLevel(t->GetLevel(), true)*atoi(sep->arg[1]), false);
 		t->SendAAStats();
 		t->SendAATable();
 	}

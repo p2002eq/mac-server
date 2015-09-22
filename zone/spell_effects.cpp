@@ -1553,7 +1553,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				if(IsClient()) {
 
-					if (zone->random.Int(0, 99) > spells[spell_id].base[i]) {
+					if (CastToClient()->auto_attack || zone->random.Int(0, 99) > spells[spell_id].base[i]) {
 						CastToClient()->SetFeigned(false);
 						entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetName());
 						}
@@ -3440,7 +3440,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 						if(zone->random.Real(0.0, 100.0) < break_chance)
 						{
-							BuffModifyDurationBySpellID(spell_id, 10);
+							BuffModifyDurationBySpellID(spell_id, 10, false);
 						}
 					}
 				}
@@ -3450,7 +3450,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 			{
 				if(ticsremaining <= 3 && ticsremaining > 1)
 				{
-					Message_StringID(MT_Spells, INVIS_BEGIN_BREAK);
+					Message_StringID(MT_SpellFailure, INVIS_BEGIN_BREAK);
 				}
 				break;
 			}
@@ -3748,11 +3748,14 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 				if (IsAIControlled())
 				{
 					// clear the hate list of the mobs
-					entity_list.ReplaceWithTarget(this, tempmob);
-					WipeHateList();
 					entity_list.InterruptTargeted(this);
+					entity_list.RemoveFromTargets(this);
+					WipeHateList();
 					if(tempmob)
+					{
+						entity_list.ReplaceWithTarget(this, tempmob);
 						AddToHateList(tempmob, 1, 0);
+					}
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
 				}
 				if(tempmob && tempmob->IsClient())

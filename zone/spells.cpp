@@ -3484,7 +3484,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	bool GM;
 	if(spelltar->IsClient())
 	{
-		GM = spelltar->CastToClient()->GetGM();
+		GM = spelltar->CastToClient()->GetGMInvul();
 	}
 	else
 	{
@@ -3505,6 +3505,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		if (!spellHit)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Casting spell %d on %s aborted: they are invulnerable.", spell_id, spelltar->GetName());
+			if(GM)
+				spelltar->Message_StringID(MT_SpellFailure, YOU_ARE_PROTECTED, GetName());
 			safe_delete(action_packet);
 			return false;
 		}
@@ -3739,6 +3741,15 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			{
 				Log.Out(Logs::Detail, Logs::Spells, "Spell %d was completely resisted by %s", spell_id, spelltar->GetName());
 
+				spelltar->AggroPet(this);
+				spelltar->CommonBreakInvisible();
+				if(spelltar->IsClient())
+				{
+					if(spelltar->CastToClient()->GetFeigned())
+					{
+						spelltar->CastToClient()->SetFeigned(false);
+					}
+				}
 				if (spells[spell_id].resisttype == RESIST_PHYSICAL){
 					Message_StringID(MT_SpellFailure, PHYSICAL_RESIST_FAIL,spells[spell_id].name);
 					spelltar->Message_StringID(MT_SpellFailure, YOU_RESIST, spells[spell_id].name);
@@ -5426,7 +5437,7 @@ void Mob::SendBuffsToClient(Client *c)
 		return;
 }
 
-void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration)
+void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration, bool update)
 {
 	int buff_count = GetMaxTotalSlots();
 	for(int i = 0; i < buff_count; ++i)
@@ -5434,7 +5445,7 @@ void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration)
 		if (buffs[i].spellid == spell_id)
 		{
 			buffs[i].ticsremaining = newDuration;
-			if(IsClient())
+			if(IsClient() && update)
 			{
 				CastToClient()->SendBuffDurationPacket(buffs[i].spellid, buffs[i].ticsremaining, buffs[i].casterlevel, i);
 			}

@@ -350,9 +350,6 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	// Are they kos?
 	// Are we stupid or are they green
 	// and they don't have their gm flag on
-	int heroicCHA_mod = mob->itembonuses.HeroicCHA/25; // 800 Heroic CHA cap
-	if(heroicCHA_mod > THREATENLY_ARRGO_CHANCE)
-		heroicCHA_mod = THREATENLY_ARRGO_CHANCE;
 
 	if (RuleB(Aggro, UseLevelAggro))
 	{
@@ -375,7 +372,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 				||
 				(
 					fv == FACTION_THREATENLY
-					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE)
 				)
 			)
 		)
@@ -407,7 +404,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 				||
 				(
 					fv == FACTION_THREATENLY
-					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE)
 				)
 			)
 		)
@@ -651,6 +648,19 @@ bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack, int16 spellid)
 	// Pets cant attack mezed mobs
 	if(IsPet() && GetOwner()->IsClient() && target->IsMezzed()) {
 		return false;
+	}
+
+	if(IsNPC() && target->IsNPC())
+	{
+		int32 npc_faction = CastToNPC()->GetPrimaryFaction();
+		int32 target_faction = target->CastToNPC()->GetPrimaryFaction();
+		if(npc_faction == target_faction && npc_faction != 0)
+		{
+			Log.Out(Logs::General, Logs::Combat, "IsAttackAllowed failed: %s is on the same faction as %s", GetName(), target->GetName());
+			RemoveFromHateList(target);
+			return false;
+		}
+
 	}
 
 	// can't damage own pet (applies to everthing)

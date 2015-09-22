@@ -1480,7 +1480,7 @@ void Mob::AI_Process() {
 			}
 
 			// See if we can summon the mob to us
-			if (!HateSummon())
+			if (!HateSummon() && target)
 			{
 				//could not summon them, check ranged...
 				if(GetSpecialAbility(SPECATK_RANGED_ATK))

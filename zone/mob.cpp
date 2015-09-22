@@ -3638,50 +3638,18 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Book);
 	if (id == "booktype")
 		stat = int32(item->BookType);
-	if (id == "svcorruption")
-		stat = int32(item->SVCorruption);
 	if (id == "purity")
 		stat = int32(item->Purity);
 	if (id == "backstabdmg")
 		stat = int32(item->BackstabDmg);
 	if (id == "dsmitigation")
 		stat = int32(item->DSMitigation);
-	if (id == "heroicstr")
-		stat = int32(item->HeroicStr);
-	if (id == "heroicint")
-		stat = int32(item->HeroicInt);
-	if (id == "heroicwis")
-		stat = int32(item->HeroicWis);
-	if (id == "heroicagi")
-		stat = int32(item->HeroicAgi);
-	if (id == "heroicdex")
-		stat = int32(item->HeroicDex);
-	if (id == "heroicsta")
-		stat = int32(item->HeroicSta);
-	if (id == "heroiccha")
-		stat = int32(item->HeroicCha);
-	if (id == "heroicmr")
-		stat = int32(item->HeroicMR);
-	if (id == "heroicfr")
-		stat = int32(item->HeroicFR);
-	if (id == "heroiccr")
-		stat = int32(item->HeroicCR);
-	if (id == "heroicdr")
-		stat = int32(item->HeroicDR);
-	if (id == "heroicpr")
-		stat = int32(item->HeroicPR);
-	if (id == "heroicsvcorrup")
-		stat = int32(item->HeroicSVCorrup);
 	if (id == "healamt")
 		stat = int32(item->HealAmt);
 	if (id == "spelldmg")
 		stat = int32(item->SpellDmg);
 	if (id == "scriptfileid")
 		stat = int32(item->ScriptFileID);
-	if (id == "expendablearrow")
-		stat = int32(item->ExpendableArrow);
-	if (id == "clairvoyance")
-		stat = int32(item->Clairvoyance);
 	// Begin Effects
 	if (id == "clickeffect")
 		stat = int32(item->Click.Effect);
@@ -5332,46 +5300,57 @@ uint8 Mob::DualWieldChance()
 	}
 }
 
-bool Mob::Disarm()
+uint8 Mob::Disarm(float chance)
 {
 	if(this->IsNPC())
 	{
 		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
 		if(weapon)
 		{
-			uint16 weaponid = weapon->item_id;
-			const ItemInst* inst = database.CreateItem(weaponid);
-
-			if (inst->GetItem()->Magic)
+			float roll = zone->random.Real(0, 150);
+			if (roll < chance) 
 			{
+				uint16 weaponid = weapon->item_id;
+				const ItemInst* inst = database.CreateItem(weaponid);
+
+				if (inst->GetItem()->Magic)
+				{
+					safe_delete(inst);
+					return 0;				// magic weapons cannot be disarmed
+				}
+
+				const Item_Struct* item = inst->GetItem();
+				int8 charges = item->MaxCharges;
+				CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+
+				if (inst->GetItem()->NoDrop == 0)
+				{
+					CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				}
+				else
+				{
+					entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				}
+
+				CastToNPC()->SetPrimSkill(SkillHandtoHand);
+				if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
+					can_dual_wield = false;
+
+				WearChange(MaterialPrimary, 0, 0);
+
 				safe_delete(inst);
-				return false;				// magic weapons cannot be disarmed
-			}
 
-			const Item_Struct* item = inst->GetItem();
-			int8 charges = item->MaxCharges;
-			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-
-			if (inst->GetItem()->NoDrop == 0)
-			{
-				CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				// NPC has a weapon and was disarmed.
+				return 2;
 			}
 			else
 			{
-				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				// NPC has a weapon, but the roll failed.
+				return 1;
 			}
-
-			CastToNPC()->SetPrimSkill(SkillHandtoHand);
-			if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
-				can_dual_wield = false;
-
-			WearChange(MaterialPrimary, 0, 0);
-
-			safe_delete(inst);
-			return true;
 		}
 	}
-	return false;
+	return 0;
 }
 
 float Mob::CalcZOffset()

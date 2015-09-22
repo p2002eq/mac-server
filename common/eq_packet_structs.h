@@ -644,10 +644,6 @@ struct PlayerProfile_Struct
 /*0299*/	uint8				eyecolor2;			// Player right eye color
 /*0300*/	uint8				hairstyle;			// Player hair style
 /*0301*/	uint8				beard;				// Beard type
-/*0302*/	uint8				ability_time_seconds;	//The following four spots are unknown right now.....
-/*0303*/	uint8				ability_number;		//ability used
-/*0304*/	uint8				ability_time_minutes;
-/*0305*/	uint8				ability_time_hours;	//place holder
 /*0312*/	uint32				item_material[_MaterialCount];	// Item texture/material of worn/held items
 /*0392*/	Color_Struct		item_tint[_MaterialCount];
 /*0428*/	AA_Array			aa_array[MAX_PP_AA_ARRAY];
@@ -689,15 +685,12 @@ struct PlayerProfile_Struct
 /*4764*/	int32				copper_cursor;		// Copper on cursor
 /*4768*/	int32				platinum_shared;	// Platinum shared between characters
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
-/*5396*/	uint32				ability_down;		// Guessing
 /*5408*/	uint32				autosplit;			//not used right now
 /*5418*/	uint32				boatid;
 /*5420*/	uint32				zone_change_count;	// Number of times user has zoned in their career (guessing)
 /*5452*/	uint32				expansions;			// expansion setting, bit field of expansions avaliable
-/*5456*/	int32				toxicity;			//from drinking potions, seems to increase by 3 each time you drink
 /*5476*/	int32				hunger_level;
 /*5480*/	int32				thirst_level;
-/*5484*/	uint32				ability_up;
 /*5504*/	uint16				zone_id;			// Current zone of the player
 /*5506*/	uint16				zoneInstance;		// Instance ID
 /*5508*/	SpellBuff_Struct	buffs[BUFF_COUNT];	// Buffs currently on the player
@@ -1050,7 +1043,7 @@ enum ItemPacketType
 	ItemPacketTrade				= 0x67,
 	ItemPacketCharInventory		= 0x69,
 	ItemPacketSummonItem		= 0x6A,
-	ItemPacketTributeItem		= 0x6C,
+	ItemPacketStolenItem		= 0x6C,
 	ItemPacketMerchant			= 0x64,
 	ItemPacketWorldContainer	= 0x6B,
 	ItemPacketCharmUpdate		= 0x6E
@@ -1059,6 +1052,8 @@ struct ItemPacket_Struct
 {
 /*00*/	ItemPacketType	PacketType;
 /*04*/	uint16			fromid;
+		uint16			toid;
+		uint16			skill;
 /*06*/	char			SerializedItem[1];
 /*xx*/
 };
@@ -1925,23 +1920,6 @@ struct	ItemViewRequest_Struct
 	/*066*/
 };
 
-/*
- * Client to server packet
- */
-struct PickPocket_Struct {
-// Size 18
-	uint32 to;
-	uint32 from;
-	uint16 myskill;
-	uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
-	uint8 unknown1; // 0 for response, unknown for input
-	uint32 coin;
-	uint8 lastsix[2];
-};
-/*
- * Server to client packet
- */
-
 enum {
 	PickPocketFailed = 0,
 	PickPocketPlatinum = 1,
@@ -1951,29 +1929,15 @@ enum {
 	PickPocketItem = 5
 };
 
-
-struct sPickPocket_Struct {
+struct PickPocket_Struct 
+{
 // Size 18
     uint16 to;
     uint16 from;
-    uint8 myskill;
-    uint8 unknown0;
-    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
-    uint8 unknown1; // 0 for response, unknown for input
+    uint16 myskill;
+    uint16 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
     uint32 coin;
-    uint8 lastsix[6];
-};
-
-struct Item_PickPocket_Struct 
-{
-    uint16 to;
-    uint16 from;
-    uint8 myskill;
-    uint8 unknown0;
-    uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
-    uint8 reply; // 0 for response, unknown for input
-    uint32 coin;
-	char itemname[32];
+    uint8 data[6];
 };
 
 struct LogServer_Struct

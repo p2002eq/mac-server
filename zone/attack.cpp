@@ -382,7 +382,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 			bonus = 2.0 + skill/60.0 + (GetDEX()/200);
 			bonus *= riposte_chance;
 			bonus = mod_riposte_chance(bonus, attacker);
-			RollTable[0] = bonus + (itembonuses.HeroicDEX / 25); // 25 heroic = 1%, applies to ripo, parry, block
+			RollTable[0] = bonus; // 25 heroic = 1%, applies to ripo, parry, block
 		}
 	}
 
@@ -490,7 +490,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 			bonus *= dodge_chance;
 			//DCBOOMKAR
 			bonus = mod_dodge_chance(bonus, attacker);
-			RollTable[3] = RollTable[2] + bonus - (itembonuses.HeroicDEX / 25) + (itembonuses.HeroicAGI / 25);
+			RollTable[3] = RollTable[2] + bonus;
 		}
 	}
 	else{
@@ -648,7 +648,7 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 		// cloth get /2 for defense contribution, others get /3.
 		adj_mod -= 1;
 		
-		mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / adj_mod) + armor;
+		mitigation_rating = (GetSkill(SkillDefense) / adj_mod) + armor;
 		
 		mitigation_rating *= 0.847;
 
@@ -1489,6 +1489,12 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 		#2: figure out things that affect the player dying and mark them dead
 	*/
 
+	if(GetPet() && GetPet()->IsCharmed())
+	{
+		Log.Out(Logs::General, Logs::Spells, "%s has died. Fading charm on pet.", GetName());
+		GetPet()->BuffFadeByEffect(SE_Charm);
+	}
+
 	InterruptSpell();
 	SetPet(0);
 	SetHorseId(0);
@@ -1837,7 +1843,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
 			damage = (max_dmg+eleBane);
-			damage += (itembonuses.HeroicSTR / 10) + (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
+			damage += (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
 
 			if(opts) {
 				damage *= opts->damage_percent;
@@ -3362,6 +3368,8 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 	// Agro pet someone tried to damage me
 	AggroPet(attacker);
 
+	CommonBreakInvisible();
+
 	// This method is called with skill_used=ABJURE for Damage Shield damage.
 	bool FromDamageShield = (skill_used == SkillAbjuration);
 
@@ -4649,19 +4657,19 @@ void Mob::CommonBreakInvisible()
 {
 	//break invis when you attack
 	if(invisible) {
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility due to attack.");
 		BuffFadeByEffect(SE_Invisibility);
 		BuffFadeByEffect(SE_Invisibility2);
 		invisible = false;
 	}
 	if(invisible_undead) {
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. undead due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. undead due to attack.");
 		BuffFadeByEffect(SE_InvisVsUndead);
 		BuffFadeByEffect(SE_InvisVsUndead2);
 		invisible_undead = false;
 	}
 	if(invisible_animals){
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. animals due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. animals due to attack.");
 		BuffFadeByEffect(SE_InvisVsAnimals);
 		invisible_animals = false;
 	}

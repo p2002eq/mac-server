@@ -222,7 +222,7 @@ int32 Client::CalcHPRegen() {
 
 int32 Client::CalcHPRegenCap()
 {
-	int cap = RuleI(Character, ItemHealthRegenCap) + itembonuses.HeroicSTA/25;
+	int cap = RuleI(Character, ItemHealthRegenCap);
 
 	cap += aabonuses.ItemHPRegenCap + spellbonuses.ItemHPRegenCap + itembonuses.ItemHPRegenCap;
 
@@ -818,7 +818,7 @@ int32 Client::acmod() {
 int32 Client::CalcAC() {
 
 	// new formula
-	int avoidance = (acmod() + ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)*16)/9);
+	int avoidance = (acmod() + (GetSkill(SkillDefense)*16)/9);
 	if (avoidance < 0)
 		avoidance = 0;
 
@@ -826,12 +826,12 @@ int32 Client::CalcAC() {
 	if (m_pp.class_ == WIZARD || m_pp.class_ == MAGICIAN || m_pp.class_ == NECROMANCER || m_pp.class_ == ENCHANTER) {
 		//something is wrong with this, naked casters have the wrong natural AC
 //		mitigation = (spellbonuses.AC/3) + (GetSkill(DEFENSE)/2) + (itembonuses.AC+1);
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/4 + (itembonuses.AC+1);
+		mitigation = GetSkill(SkillDefense)/4 + (itembonuses.AC+1);
 		//this might be off by 4..
 		mitigation -= 4;
 	} else {
 //		mitigation = (spellbonuses.AC/4) + (GetSkill(DEFENSE)/3) + ((itembonuses.AC*4)/3);
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/3 + ((itembonuses.AC*4)/3);
+		mitigation = GetSkill(SkillDefense)/3 + ((itembonuses.AC*4)/3);
 		if(m_pp.class_ == MONK)
 			mitigation += GetLevel() * 13/10;	//the 13/10 might be wrong, but it is close...
 	}
@@ -849,16 +849,6 @@ int32 Client::CalcAC() {
 			displayed += iksarlevel * 12 / 10;
 	}
 
-	// Shield AC bonus for HeroicSTR
-	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
-		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
-			if(shield == ItemTypeShield)
-				displayed += itembonuses.HeroicSTR/2;
-		}
-	}
-
 	//spell AC bonuses are added directly to natural total
 	displayed += spellbonuses.AC;
 
@@ -870,23 +860,13 @@ int32 Client::GetACMit() {
 
 	int mitigation = 0;
 	if (m_pp.class_ == WIZARD || m_pp.class_ == MAGICIAN || m_pp.class_ == NECROMANCER || m_pp.class_ == ENCHANTER) {
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/4 + (itembonuses.AC+1);
+		mitigation = (GetSkill(SkillDefense))/4 + (itembonuses.AC+1);
 		mitigation -= 4;
 	}
 	else {
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/3 + ((itembonuses.AC*4)/3);
+		mitigation = (GetSkill(SkillDefense))/3 + ((itembonuses.AC*4)/3);
 		if(m_pp.class_ == MONK)
 			mitigation += GetLevel() * 13/10;	//the 13/10 might be wrong, but it is close...
-	}
-
-	// Shield AC bonus for HeroicSTR
-	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
-		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
-			if(shield == ItemTypeShield)
-				mitigation += itembonuses.HeroicSTR/2;
-		}
 	}
 
 	return(mitigation*1000/847);
@@ -894,7 +874,7 @@ int32 Client::GetACMit() {
 
 int32 Client::GetACAvoid() {
 
-	int32 avoidance = (acmod() + ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)*16)/9);
+	int32 avoidance = (acmod() + ((GetSkill(SkillDefense))*16)/9);
 	if (avoidance < 0)
 		avoidance = 0;
 
@@ -1052,10 +1032,7 @@ int32 Client::CalcManaRegenCap()
 	switch(GetCasterClass())
 	{
 		case 'I':
-			cap += (itembonuses.HeroicINT / 25);
-			break;
 		case 'W':
-			cap += (itembonuses.HeroicWIS / 25);
 			break;
 	}
 
@@ -1938,7 +1915,7 @@ int32 Client::CalcEnduranceRegen() {
 }
 
 int32 Client::CalcEnduranceRegenCap() {
-	int cap = (RuleI(Character, ItemEnduranceRegenCap) + itembonuses.HeroicSTR/25 + itembonuses.HeroicDEX/25 + itembonuses.HeroicAGI/25 + itembonuses.HeroicSTA/25);
+	int cap = (RuleI(Character, ItemEnduranceRegenCap));
 
 	return (cap * RuleI(Character, EnduranceRegenMultiplier) / 100);
 }
