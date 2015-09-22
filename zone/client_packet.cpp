@@ -3208,7 +3208,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 	const ItemInst *inst = GetInv().GetItem(alc->from_slot);
 	if (inst && inst->GetItem()->ItemType == ItemTypeAlcohol) {
 		entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), inst->GetItem()->Name);
-		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 25);
+		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 20);
 
 		int16 AlcoholTolerance = GetSkill(SkillAlcoholTolerance);
 		int16 IntoxicationIncrease;
@@ -7268,7 +7268,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		}
 	}
 
-	std::string packet;
 	if (!stacked && inst) {
 		if(PutItemInInventory(freeslotid, *inst))
 		{

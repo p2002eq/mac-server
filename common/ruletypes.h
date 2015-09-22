@@ -72,7 +72,8 @@ RULE_INT ( Character, ItemDSMitigationCap, 50)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
-RULE_INT ( Character, SkillUpModifier, 60) //skill ups are at 100%
+RULE_INT ( Character, SkillUpModifier, 70) //skill ups for skills with value under 100
+RULE_INT ( Character, MasterSkillUpModifier, 60) //skill ups for skills 100 and over
 RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
