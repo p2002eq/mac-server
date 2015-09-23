@@ -729,7 +729,7 @@ struct PlayerProfile_Struct
 ** OpCode: 6221
 */
 struct ClientTarget_Struct {
-/*000*/	uint32	new_target;			// Target ID
+/*000*/	uint16	new_target;			// Target ID
 };
 
 struct PetCommand_Struct {
