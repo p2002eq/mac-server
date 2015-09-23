@@ -3988,7 +3988,10 @@ void EntityList::UpdateDistances(Client* client) {
 					outapp = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
 					ppu = (SpawnPositionUpdates_Struct*)outapp->pBuffer;
 					ppu->num_updates = 1; // hack - only one spawn position per update
-					ent->MakeSpawnUpdate(&ppu->spawn_update);
+					if (ent->IsMoving())
+						ent->MakeSpawnUpdate(&ppu->spawn_update);
+					else
+						ent->MakeSpawnUpdateNoDelta(&ppu->spawn_update);
 					client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 					safe_delete(outapp);
 					// set us inside now
