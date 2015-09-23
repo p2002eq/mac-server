@@ -419,7 +419,7 @@ bool Database::DeleteCharacter(char *name) {
 void Database::DeleteCharacterCorpses(uint32 charid) 
 {
 
-	std::string query = StringFormat("SELECT `id` from `character_corpses` WHERE `charid` = '%s'", charid);
+	std::string query = StringFormat("SELECT `id` from `character_corpses` WHERE `charid` = '%d'", charid);
 	auto results = QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) 
 	{ 
