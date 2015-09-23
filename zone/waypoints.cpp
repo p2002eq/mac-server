@@ -794,12 +794,12 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	m_Delta = glm::vec4(floorf((m_Position.x - nx)*6.6666666f), floorf((m_Position.y - ny)*6.6666666f), floorf((m_Position.z - nz)*6.6666666f), 0.0f);
 
 	if (IsClient()) {
-		SendPositionNearby(1);
+		SendPosUpdate(1);
 		CastToClient()->ResetPositionTimer();
 	}
 	else
 	{
-		SendPositionNearby();
+		SendPosUpdate();
 		SetAppearance(eaStanding, false);
 	}		
 	SetChanged();
