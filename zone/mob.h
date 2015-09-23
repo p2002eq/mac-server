@@ -693,6 +693,7 @@ public:
 	bool IsFamiliar() const { return(typeofpet == petFamiliar); }
 	bool IsAnimation() const { return(typeofpet == petAnimation); }
 	bool IsCharmed() const { return(typeofpet == petCharmed); }
+	bool IsDireCharmed() { return dire_charmed; }
 	void SetOwnerID(uint16 NewOwnerID);
 	inline uint16 GetOwnerID() const { return ownerid; }
 	inline virtual bool HasOwner() { if(GetOwnerID()==0){return false;} return( entity_list.GetMob(GetOwnerID()) != 0); }
@@ -965,6 +966,10 @@ public:
 	bool IsZomm() { return iszomm; }
 	void SetMerchantSession(uint16 value) { MerchantSession = value; }
 	uint16 GetMerchantSession() { return MerchantSession; }
+	uint32 player_damage;
+	uint32 dire_pet_damage;
+	uint32 total_damage;
+	float  GetBaseEXP();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1048,6 +1053,7 @@ protected:
 	int16 petpower;
 	uint32 follow;
 	uint32 follow_dist;
+	bool dire_charmed;
 	bool no_target_hotkey;
 	bool can_equip_secondary;
 	bool can_dual_wield;

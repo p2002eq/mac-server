@@ -192,13 +192,13 @@ RULE_INT ( Zone, BoatDistance, 50) //In zones where boat name is not set in the 
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
-RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
-RULE_BOOL( AlKabor, AllowTickSplit, false)
-RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
-RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
-RULE_BOOL ( AlKabor, Count6thGroupMember, false)
-RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true)
+RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull (AK behavior is true)
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
 RULE_CATEGORY_END()
 
 

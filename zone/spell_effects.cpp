@@ -737,6 +737,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				if (!caster)	// can't be someone's pet unless we know who that someone is
 					break;
 
+				if(IsDireCharmSpell(spell_id))
+				{
+					dire_charmed = true;
+				}
+
 				caster->SetTarget(nullptr);
 
 				if(IsNPC())
@@ -3728,6 +3733,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 
 			case SE_Charm:
 			{
+				dire_charmed = false;
+
 				if(IsNPC())
 				{
 					InterruptSpell();

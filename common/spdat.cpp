@@ -325,6 +325,14 @@ bool IsCharmSpell(uint16 spell_id)
 	return IsEffectInSpell(spell_id, SE_Charm);
 }
 
+bool IsDireCharmSpell(uint16 spell_id)
+{
+	if(IsEffectInSpell(spell_id, SE_Charm) && spells[spell_id].buffdurationformula == 50)
+		return true;
+	else
+		return false;
+}
+
 bool IsBlindSpell(uint16 spell_id)
 {
 	return IsEffectInSpell(spell_id, SE_Blind);

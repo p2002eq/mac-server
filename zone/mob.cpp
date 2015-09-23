@@ -422,6 +422,10 @@ Mob::Mob(const char* in_name,
 	PrimaryAggro = false;
 	AssistAggro = false;
 	MerchantSession = 0;
+	dire_charmed = false;
+	player_damage = 0;
+	dire_pet_damage = 0;
+	total_damage = 0;
 }
 
 Mob::~Mob()
