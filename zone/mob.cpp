@@ -1331,55 +1331,9 @@ void Mob::SendPosition()
 	MakeSpawnUpdateNoDelta(&spu->spawn_update);
 	move_tic_count = 0;
 	tar_ndx = 20;
-	entity_list.QueueClients(this, app, true, false);
+	entity_list.QueueCloseClientsPrecalc(this, app, true, nullptr, false);
+	//entity_list.QueueCloseClients(this, app, true, 1000, nullptr, false);
 	safe_delete(app);
-}
-
-// this one is for mobs on the move, and clients.
-void Mob::SendPositionNearby(uint8 iSendToSelf) 
-{
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
-	spu->num_updates = 1; // hack - only one spawn position per update
-	MakeSpawnUpdate(&spu->spawn_update);
-
-	if (iSendToSelf == 2) {
-		if (this->IsClient()) {
-			this->CastToClient()->FastQueuePacket(&app,false);
-			return;
-		}
-	}
-	else
-	{
-		if(IsClient())
-		{
-			entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
-		}
-		else
-		{
-			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
-			if(move_tic_count == position_update)
-			{
-				EQApplicationPacket* app2 = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
-				spu2->num_updates = 1; // hack - only one spawn position per update
-				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 1000, nullptr, false);
-				if (HasOwner() || (IsNPC() && Route.size() > 0))
-					move_tic_count = 0;
-				else
-					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
-				safe_delete(app2);
-			}
-			else
-			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count++;
-			}
-		}
-	}
-	safe_delete(app);
-
 }
 
 // this one is for mobs on the move, and clients.
@@ -1403,19 +1357,19 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 		}
 		else
 		{
 			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
 			if(move_tic_count == position_update)
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 1000, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false, true);
 				move_tic_count = 0;
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 				move_tic_count++;
 			}
 		}
