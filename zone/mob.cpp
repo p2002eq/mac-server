@@ -284,7 +284,7 @@ Mob::Mob(const char* in_name,
 		}
 	}
 
-	m_Delta = glm::vec4();
+	m_Delta = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	animation = 0;
 
 	logging_enabled = false;
