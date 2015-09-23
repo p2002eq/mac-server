@@ -963,8 +963,8 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 				// Return items being handed into a non-quest NPC if the rule is true
 				else if (RuleB(NPC, ReturnNonQuestItems)) 
 				{
-					SummonItem(inst->GetID(), inst->GetCharges(), false, MainQuest);
 					DeleteItemInInventory(i);
+					SummonItem(inst->GetID(), inst->GetCharges(), false, MainQuest);
 					if(npc->CanTalk())
 						npc->Say_StringID(NO_NEED_FOR_ITEM, GetName());
 				}
