@@ -844,6 +844,8 @@ Zone::~Zone() {
 bool Zone::Init(bool iStaticZone) {
 	SetStaticZone(iStaticZone);
 
+	zone->update_range = 1000.0f;
+
 	Log.Out(Logs::General, Logs::Status, "Loading spawn conditions...");
 	if(!spawn_conditions.LoadSpawnConditions(short_name, instanceid)) {
 		Log.Out(Logs::General, Logs::Error, "Loading spawn conditions failed, continuing without them.");
@@ -944,6 +946,11 @@ bool Zone::Init(bool iStaticZone) {
 
 	//MODDING HOOK FOR ZONE INIT
 	mod_init();
+	
+	if (zone->newzone_data.maxclip > 100.0f)
+		zone->update_range = zone->newzone_data.maxclip + 100.0f;
+
+	zone->update_range *= zone->update_range;
 
 	return true;
 }

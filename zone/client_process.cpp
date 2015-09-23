@@ -79,6 +79,9 @@ bool Client::Process() {
 		if(hpupdate_timer.Check())
 			SendHPUpdate();
 
+		if(client_distance_timer.Enabled() && client_distance_timer.Check())
+			entity_list.UpdateDistances(this);
+
 		if(mana_timer.Check())
 			SendManaUpdatePacket();
 
@@ -429,7 +432,8 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 300, GetTarget(), false);
+				Mob *m = entity_list.GetMob(TrackingID);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, GetTarget(), m, false);
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;

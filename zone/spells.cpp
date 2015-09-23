@@ -5428,12 +5428,6 @@ void Client::SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, 
 	FastQueuePacket(&outapp);
 }
 
-void Mob::SendBuffsToClient(Client *c)
-{
-	if(!c)
-		return;
-}
-
 void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration, bool update)
 {
 	int buff_count = GetMaxTotalSlots();

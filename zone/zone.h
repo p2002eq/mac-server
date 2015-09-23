@@ -234,6 +234,7 @@ public:
 	LinkedList<Spawn2*> spawn2_list;
 	LinkedList<ZonePoint*> zone_point_list;
 	uint32	numzonepoints;
+	float	update_range;
 
 	LinkedList<NPC_Emote_Struct*> NPCEmoteList;
 

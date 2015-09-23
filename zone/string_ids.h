@@ -104,6 +104,7 @@
 #define DUP_LORE					290		//Duplicate lore items are not allowed.
 #define TGB_ON						293		//Target other group buff is *ON*.
 #define TGB_OFF						294		//Target other group buff is *OFF*.
+#define TARGET_NOT_FOUND2			303		//I don't see anyone by that name around here...
 #define TRADESKILL_NOCOMBINE		334		//You cannot combine these items in this container type!
 #define TRADESKILL_FAILED			336		//You lacked the skills to fashion the items together.
 #define TRADESKILL_TRIVIAL			338		//You can no longer advance your skill from making this item.

@@ -273,7 +273,6 @@ public:
 	virtual int GetMaxTotalSlots() const { return 0; }
 	virtual void InitializeBuffSlots() { buffs = nullptr; current_buff_count = 0; }
 	virtual void UninitializeBuffSlots() { }
-	void SendBuffsToClient(Client *c);
 	inline Buffs_Struct* GetBuffs() { return buffs; }
 	void DoGravityEffect();
 	void DamageShield(Mob* other, bool spell_ds = false);
@@ -458,7 +457,6 @@ public:
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
-	void SendPositionNearby(uint8 iSendToSelf = 0);
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
