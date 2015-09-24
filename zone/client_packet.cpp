@@ -3591,8 +3591,6 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerFeignDeath, reuse - 1);
 
-	//BreakInvis();
-
 	float feignbase = 120.0f;
 	uint16 skill = GetSkill(SkillFeignDeath);
 	float feignchance = 0.0f;
@@ -8485,7 +8483,7 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 	// Client requesting a trade session from an npc/client
 	// Trade session not started until OP_TradeRequestAck is sent
 
-	BreakInvis();
+	CommonBreakInvisible();
 
 	// Pass trade request on to recipient
 	TradeRequest_Struct* msg = (TradeRequest_Struct*)app->pBuffer;
