@@ -8038,9 +8038,12 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		{
 			if (new_tar != cur_tar && new_tar != this)
 			{
-				EQApplicationPacket hp_app;
-				cur_tar->CreateHPPacket(&hp_app);
-				QueuePacket(&hp_app);
+				if (cur_tar)
+				{
+					EQApplicationPacket hp_app;
+					cur_tar->CreateHPPacket(&hp_app);
+					QueuePacket(&hp_app);
+				}
 			}
 		}
 		else if (IsPortExempted())
