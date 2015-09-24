@@ -652,7 +652,7 @@ void Lua_Client::DropItem(int slot_id) {
 
 void Lua_Client::BreakInvis() {
 	Lua_Safe_Call_Void();
-	self->BreakInvis();
+	self->CommonBreakInvisible();
 }
 
 void Lua_Client::LeaveGroup() {
