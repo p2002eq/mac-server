@@ -7999,9 +7999,12 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 			}
 			else if (IsAssistExempted())
 			{
-				GetTarget()->IsTargeted(1);
-				SetAssistExemption(false);
-				return;
+				if (cur_tar)
+				{
+					EQApplicationPacket hp_app;
+					cur_tar->CreateHPPacket(&hp_app);
+					QueuePacket(&hp_app);
+				}
 			}
 			else if (GetTarget()->IsClient())
 			{
