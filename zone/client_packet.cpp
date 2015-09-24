@@ -8038,10 +8038,10 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		{
 			if (new_tar != cur_tar && new_tar != this)
 			{
-				if (cur_tar)
+				if (new_tar)
 				{
 					EQApplicationPacket hp_app;
-					cur_tar->CreateHPPacket(&hp_app);
+					new_tar->CreateHPPacket(&hp_app);
 					QueuePacket(&hp_app);
 				}
 			}
