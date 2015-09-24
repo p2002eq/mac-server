@@ -833,21 +833,6 @@ float Mob::SetRunAnimation(float speed)
 		newspeed = speed * 100.0f;
 		animation = static_cast<uint16>(speed * 10.0f);
 	}
-	/*if(IsNPC()) 
-	{
-		if(speed >= GetRunspeed())
-		{
-			SetCurrentlyRunning(true);
-			newspeed = speed * RuleR(NPC, SpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-		}
-		else
-		{
-			SetCurrentlyRunning(false);
-			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
-		}
-	}*/
 
 	return newspeed;
 }

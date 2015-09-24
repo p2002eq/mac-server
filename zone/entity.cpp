@@ -2489,7 +2489,9 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate,
 		if (mob && !mob->IsCorpse() && (it->second != client)
 			&& (mob->IsClient() || iSendEvenIfNotChanged || (mob->LastChange() >= cLastUpdate))
 			&& (!it->second->IsClient() || !it->second->CastToClient()->GMHideMe(client))) {
-			if (range == 0 || (it->second == alwayssend) || (it->second == alwayssend2) || iSendEvenIfNotChanged || (mob->IsClient() && (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range))) {
+			if ((mob->IsClient() && (DistanceSquared(mob->GetPosition(), client->GetPosition()) <= range))
+				|| ((it->second == alwayssend || it->second == alwayssend2) && (DistanceSquared(mob->GetPosition(), client->GetPosition()) > range))
+				|| iSendEvenIfNotChanged || range == 0) {
 				mob->MakeSpawnUpdate(&ppu->spawn_update);
 				ppu->num_updates = 1;
 				client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
