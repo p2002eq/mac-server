@@ -1726,7 +1726,8 @@ void Mob::AI_Process() {
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
-	if ((IsGuarding() && (m_Position == m_GuardPoint)) || (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
+		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
 		walksp = 0.0f;
 	}
 

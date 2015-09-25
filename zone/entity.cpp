@@ -288,14 +288,16 @@ void EntityList::AddClient(Client *client)
 	client->SetID(GetFreeID());
 	client_list.insert(std::pair<uint16, Client *>(client->GetID(), client));
 	mob_list.insert(std::pair<uint16, Mob *>(client->GetID(), client));
+	client->SetLastDistance(client->GetID(), 0.0f);
+	client->SetInside(client->GetID(), true);
 	// update distances to us for clients.
 	auto it = client_list.begin();
 	// go through the list and update distances
 	while(it != client_list.end()) {
-		if (it->second && it->second->GetID() > 0) {
+		if (it->second && it->second->GetID() > 0 && it->second != client) {
 			it->second->SetLastDistance(client->GetID(), DistanceSquaredNoZ(it->second->GetPosition(), client->GetPosition()));
 			it->second->SetLastPosition(client->GetID(), client->GetPosition());
-			it->second->SetInside(client->GetID(), true);
+			it->second->SetInside(client->GetID(), false);
 		}
 		++it;
 	}
@@ -705,7 +707,7 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 		if (it->second && it->second->GetID() > 0) {
 			it->second->SetLastDistance(npc->GetID(), DistanceSquaredNoZ(it->second->GetPosition(), npc->GetPosition()));
 			it->second->SetLastPosition(npc->GetID(), npc->GetPosition());
-			it->second->SetInside(npc->GetID(), true);
+			it->second->SetInside(npc->GetID(), false);
 		}
 		++it;
 	}
@@ -3895,6 +3897,8 @@ uint32 EntityList::CheckNPCsClose(Mob *center)
 void EntityList::UpdateNewClientDistances(Client *client) {
 	if (client == NULL)
 		return;
+	client->SetLastDistance(client->GetID(), 0.0f);
+	client->SetInside(client->GetID(), true);
 	// updated distances
 	float mydist = 0;
 	auto it = mob_list.begin();
@@ -3902,9 +3906,10 @@ void EntityList::UpdateNewClientDistances(Client *client) {
 	// set them initially outside, to force inside updates
 	while(it != mob_list.end()) {
 		Mob *ent = it->second->CastToMob();
-		if (ent && ent->GetID() > 0) {
+		if (ent && ent->GetID() > 0 && ent != client) {
 			// set my distance to them
 			client->SetLastDistance(ent->GetID(), DistanceSquaredNoZ(ent->GetPosition(), client->GetPosition()));
+			client->SetLastPosition(ent->GetID(), ent->GetPosition());
 			client->SetInside(ent->GetID(), false);
 		}
 		++it;
@@ -3924,7 +3929,7 @@ void EntityList::UpdateDistances(Client* client) {
 	// go through the npc_list and update distances to client
 	while (it != mob_list.end()) {
 		Mob* ent = it->second->CastToMob();
-		if (ent->GetID() > 0) {
+		if (ent->GetID() > 0 && ent != client) {
 			client->SetLastDistance(ent->GetID(), DistanceSquaredNoZ(ent->GetPosition(), client->GetPosition()));
 		}
 		++it;
@@ -3938,7 +3943,7 @@ void EntityList::UpdateDistances(Client* client) {
 				it = mob_list.begin();
 				while(it != mob_list.end()) {
 					Mob* ent = it->second->CastToMob();
-					if (ent->GetID() > 0 && !ent->IsCorpse()) {
+					if (ent->GetID() > 0 && !ent->IsCorpse() && ent != client) {
 						mydist = DistanceSquaredNoZ(ent->GetPosition(), myeye->GetPosition());
 						if (mydist < client->GetLastDistance(ent->GetID()))
 							client->SetLastDistance(ent->GetID(), mydist);
@@ -3952,7 +3957,7 @@ void EntityList::UpdateDistances(Client* client) {
 		it = mob_list.begin();
 		while(it != mob_list.end()) {
 			Mob* ent = it->second->CastToMob();
-			if (ent->GetID() > 0 && !ent->IsCorpse()) {
+			if (ent->GetID() > 0 && !ent->IsCorpse() && ent != client) {
 				mydist = DistanceSquaredNoZ(ent->GetPosition(), client->GetBindSightTarget()->GetPosition());
 				if (mydist < client->GetLastDistance(ent->GetID()))
 					client->SetLastDistance(ent->GetID(), mydist);
@@ -3963,7 +3968,7 @@ void EntityList::UpdateDistances(Client* client) {
 	it = mob_list.begin();
 	while(it != mob_list.end()) {
 		Mob* ent = it->second->CastToMob();
-		if (ent->GetID() > 0 && (!ent->IsClient() || !ent->CastToClient()->GMHideMe(client))) {
+		if (ent->GetID() > 0 && (!ent->IsClient() || !ent->CastToClient()->GMHideMe(client)) && ent != client) {
 			// current distance
 			mydist = client->GetLastDistance(ent->GetID());
 			if (!client->GetInside(ent->GetID())) {
