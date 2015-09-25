@@ -30,6 +30,7 @@ extern EQCrypto eq_crypto;
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern Database db;
+extern Saltme mysalt;
 
 Client::Client(EQStreamInterface *c, ClientVersion v)
 {
@@ -222,12 +223,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		created = 1;
 	}
 
-	string salt;
-	if (db.CheckExtraSettings("salt"))
-	{
-		salt = db.LoadServerSettings("options", "salt").c_str();
-	}
-	string userandpass = password + salt;
+	string userandpass = mysalt.Salt(password);
 	status = cs_logged_in;
 	unsigned int d_account_id = 0;
 	string d_pass_hash;

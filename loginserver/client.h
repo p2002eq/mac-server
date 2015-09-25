@@ -23,6 +23,8 @@
 #include "../common/eq_stream_type.h"
 #include "../common/eq_stream_factory.h"
 #include "../common/random.h"
+#include "salt.h"
+
 #include <string>
 
 using namespace std;
@@ -167,6 +169,7 @@ public:
 	unsigned int GetMacClientVersion() const { return macversion; }
 
 	EQEmu::Random random;
+	Saltme mysalt;
 private:
 	EQStreamInterface *connection;
 	ClientVersion version;
