@@ -217,7 +217,6 @@ struct Item_Struct {
 	uint32	BookType;
 	char	Filename[33];	// Filename for book data
 	// Begin SoF Fields
-	uint32 Purity;
 	uint8 EvolvingLevel;
 	uint32 BackstabDmg;
 	uint32 DSMitigation;

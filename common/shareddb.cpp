@@ -630,7 +630,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Bard.Level = (uint8)atoul(row[ItemField::bardlevel]);
 		item.Bard.Level2 = (uint8)atoul(row[ItemField::bardlevel2]);
 		item.QuestItemFlag = (atoi(row[ItemField::questitemflag]) == 0) ? false : true;
-		item.Purity = (uint32)atoul(row[ItemField::purity]);
 		item.BackstabDmg = (uint32)atoul(row[ItemField::damage]);
 		item.DSMitigation = (uint32)atoul(row[ItemField::dsmitigation]);
 		item.HealAmt = (int32)atoi(row[ItemField::healamt]);

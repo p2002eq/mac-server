@@ -1849,7 +1849,6 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->Haste = (uint32)((float)m_item->Haste*Mult);
 	m_scaledItem->DamageShield = (uint32)((float)m_item->DamageShield*Mult);
 
-	m_scaledItem->Purity = (uint32)((float)m_item->Purity*Mult);
 	m_scaledItem->BackstabDmg = (uint32)((float)m_item->BackstabDmg*Mult);
 	m_scaledItem->DSMitigation = (uint32)((float)m_item->DSMitigation*Mult);
 	m_scaledItem->HealAmt = (int32)((float)m_item->HealAmt*Mult);

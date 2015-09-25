@@ -3596,8 +3596,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Book);
 	if (id == "booktype")
 		stat = int32(item->BookType);
-	if (id == "purity")
-		stat = int32(item->Purity);
 	if (id == "backstabdmg")
 		stat = int32(item->BackstabDmg);
 	if (id == "dsmitigation")
