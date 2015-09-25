@@ -37,8 +37,6 @@ NOW=$(date +"%Y-%m-%d-%H:%M")
 ulimit -c unlimited
 
 ##### CALCULATE TIMER AND ZONE COUNTS #####
-zonecount=0
-zonecount_temp=0
 if  [ $boats = "TRUE" ]; then
 	zonecount_boats=$(mysql -u $dbuser --password=$dbpass -h $dbIP -D $gamedb -se "SELECT COUNT(enabled) FROM launcher_zones WHERE enabled = 1 AND launcher = 'boats';")
 	let zonecount_temp=$zonecount_temp+$zonecount_boats
@@ -61,12 +59,12 @@ fi
 
 if  [ $dynamic1 = "TRUE" ]; then
 	dynamiccount1=$(mysql -u $dbuser --password=$dbpass -h $dbIP -D $gamedb -se "SELECT launcher.dynamics FROM launcher WHERE launcher.name='dynzone1';")
-	let zonecount_temp=$zonecount+$dynamiccount1
+	let zonecount_temp=$zonecount_temp+$dynamiccount1
 fi
 
 if  [ $dynamic2 = "TRUE" ]; then
 	dynamiccount2=$(mysql -u $dbuser --password=$dbpass -h $dbIP -D $gamedb -se "SELECT launcher.dynamics FROM launcher WHERE launcher.name='dynzone2';")
-	let zonecount_temp=$zonecount+$dynamiccount2
+	let zonecount_temp=$zonecount_temp+$dynamiccount2
 fi
 
 if [ $zonecount_temp > 0 ]; then
