@@ -1626,7 +1626,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 			gender = in_gender;
 	}
 	if (in_texture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->texture = 0xFF;
 		else
 			this->texture = GetTexture();
@@ -1635,7 +1635,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->texture = in_texture;
 
 	if (in_helmtexture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->helmtexture = 0xFF;
 		else if (in_texture != 0xFF)
 			this->helmtexture = in_texture;
@@ -1701,34 +1701,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->luclinface = CastToClient()->GetBaseFace();
 		this->beard	= CastToClient()->GetBaseBeard();
 		this->aa_title = 0xFF;
-		switch(race){
-			case OGRE:
-				this->size = 9;
-				break;
-			case TROLL:
-				this->size = 8;
-				break;
-			case VAHSHIR:
-			case BARBARIAN:
-				this->size = 7;
-				break;
-			case HALF_ELF:
-			case WOOD_ELF:
-			case DARK_ELF:
-			case FROGLOK:
-				this->size = 5;
-				break;
-			case DWARF:
-				this->size = 4;
-				break;
-			case HALFLING:
-			case GNOME:
-				this->size = 3;
-				break;
-			default:
-				this->size = 6;
-				break;
-		}
+		this->size = GetBaseSize();
 	}
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Illusion, sizeof(Illusion_Struct));
@@ -1756,9 +1729,8 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
-	if ((in_race > 0 && in_race <= GNOME )
-		|| in_race == IKSAR || in_race == VAHSHIR || in_race == FROGLOK
-		|| in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
+	if (IsPlayableRace(in_race) ||
+		in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
 		if (in_gender >= 2) {
 			// Female default for PC Races
 			return 1;
@@ -5387,3 +5359,38 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 	}
 }
 
+bool Mob::IsPlayableRace(uint16 race)
+{
+	if(race > 0 && (race <= GNOME || race == IKSAR || race == VAHSHIR))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+float Mob::GetPlayerHeight(uint16 race)
+{
+	switch (race)
+	{
+		case OGRE:
+		case TROLL:
+			return 8;
+		case VAHSHIR: case BARBARIAN:
+			return 7;
+		case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
+			return 6;
+		case HALF_ELF:
+			return 5.5;
+		case WOOD_ELF: case DARK_ELF: case WOLF: case ELEMENTAL:
+			return 5;
+		case DWARF:
+			return 4;
+		case HALFLING:
+			return 3.5;
+		case GNOME:
+			return 3;
+		default:
+			return 6;
+	}
+}

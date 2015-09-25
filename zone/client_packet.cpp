@@ -489,7 +489,7 @@ void Client::CompleteConnect()
 				}
 				else if (spell.base[x1] == -2)
 				{
-					if (GetRace() == 128 || GetRace() == 130 || GetRace() <= 12)
+					if (IsPlayableRace(GetRace()))
 						SendIllusionPacket(GetRace(), GetGender(), spell.max[x1], spell.max[x1]);
 				}
 				else if (spell.max[x1] > 0)
@@ -500,32 +500,12 @@ void Client::CompleteConnect()
 				{
 					SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
 				}
-				switch (spell.base[x1]){
-				case OGRE:
-				case TROLL:
-					SendAppearancePacket(AT_Size, 8);
-					break;
-				case VAHSHIR:
-				case BARBARIAN:
-					SendAppearancePacket(AT_Size, 7);
-					break;
-				case HALF_ELF:
-				case WOOD_ELF:
-				case DARK_ELF:
-				case FROGLOK:
-					SendAppearancePacket(AT_Size, 5);
-					break;
-				case HALFLING:
-				case DWARF:
-					SendAppearancePacket(AT_Size, 4);
-					break;
-				case GNOME:
-					SendAppearancePacket(AT_Size, 3);
-					break;
-				default:
-					SendAppearancePacket(AT_Size, 6);
-					break;
-				}
+
+				float realsize = GetPlayerHeight(spell.base[x1]);
+				uint32 newsize = 6;
+				newsize = floor(realsize + 0.5);
+				SendAppearancePacket(AT_Size, newsize);
+		
 				break;
 			}
 			case SE_SummonHorse: {
@@ -1143,28 +1123,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.guildrank = GuildRank();
 	}
 
-	switch (race)
-	{
-	case OGRE:
-	case TROLL:
-		size = 8; base_size = 8; break;
-	case VAHSHIR: case BARBARIAN:
-		size = 7; base_size = 7; break;
-	case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
-		size = 6; base_size = 6; break;
-	case HALF_ELF:
-		size = 5.5; base_size = 5.5; break;
-	case WOOD_ELF: case DARK_ELF: case FROGLOK:
-		size = 5; base_size = 5; break;
-	case DWARF:
-		size = 4; base_size = 4; break;
-	case HALFLING:
-		size = 3.5; base_size = 3.5; break;
-	case GNOME:
-		size = 3; base_size = 3; break;
-	default:
-		size = 0; base_size = 0;
-	}
+	size = GetPlayerHeight(race);
+	base_size = size;
+
 	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }

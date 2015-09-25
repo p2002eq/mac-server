@@ -970,6 +970,8 @@ public:
 	uint32 dire_pet_damage;
 	uint32 total_damage;
 	float  GetBaseEXP();
+	static bool IsPlayableRace(uint16 race);
+	float GetPlayerHeight(uint16 race);
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);

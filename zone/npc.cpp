@@ -293,6 +293,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	raid_target = d->raid_target;
 	npc_assist_cap = 0;
 	ignore_distance = d->ignore_distance;
+	base_texture = d->texture;
+	base_size = d->size;
 }
 
 NPC::~NPC()
