@@ -130,6 +130,7 @@ struct NPCType
 	uint8	legtexture;
 	uint8	feettexture;
 	uint8	chesttexture;
+	float	ignore_distance;
 };
 
 namespace player_lootitem {
@@ -141,6 +142,7 @@ namespace player_lootitem {
 		uint8	min_level;		  // 
 		uint8	max_level;		  // 
 		uint8	quest;
+		uint8	pet;
 	};
 }
 
@@ -191,6 +193,7 @@ struct Door {
 	uint32	guild_id;
 	uint16	lock_pick;
 	uint32	keyitem;
+	uint8	nokeyring;
 	uint8	trigger_door;
 	uint8	trigger_type;
 	uint32	door_param;

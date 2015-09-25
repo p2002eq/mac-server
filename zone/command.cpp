@@ -150,7 +150,7 @@ int command_init(void){
 		command_add("advnpc", "analog for advnpcspawn [maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox].", 250, command_advnpcspawn) ||
 		command_add("advnpcspawn", "[maketype|makegroup|addgroupentry|addgroupspawn][removegroupspawn|movespawn|editgroupbox|cleargroupbox].", 250, command_advnpcspawn) ||
 		command_add("aggro", "(range) [-v] - Display aggro information for all mobs 'range' distance from your target. -v is verbose faction info.", 95, command_aggro) ||
-		command_add("aggrozone", "[aggro] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 250, command_aggrozone) ||
+		command_add("aggrozone", "[aggro] [0/1: Enforce ignore distance. If 0 or not set, all will come] - Aggro every mob in the zone with X aggro. Default is 0. Not recommend if you're not invulnerable.", 250, command_aggrozone) ||
 		command_add("ai", "[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target.", 250, command_ai) ||
 		command_add("altactivate", "[argument] - activates alternate advancement abilities, use altactivate help for more information.", 170, command_altactivate) ||
 		command_add("appearance", "[type] [value] - Send an appearance packet for you or your target.", 250, command_appearance) ||
@@ -227,6 +227,7 @@ int command_init(void){
 		command_add("gm", "- Turn player target's or your GM flag on or off.", 95, command_gm) ||
 		command_add("gmhideme", nullptr, 81, command_hideme) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target.", 150, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target.", 20, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid.", 250, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 90, command_guild) ||
@@ -259,7 +260,7 @@ int command_init(void){
 		command_add("iteminfo", "- Get information about the item on your cursor.", 50, command_iteminfo) ||
 		command_add("itemsearch", "[search criteria] - Search for an item.", 100, command_itemsearch) ||
 		command_add("itemtest", "- merth's test function.", 255, command_itemtest) ||
-
+		command_add("keyring", "Displays target's keyring items.", 90, command_keyring) ||
 		command_add("kick", "[charname] - Disconnect charname.", 90, command_kick) ||
 		command_add("kill", "- Kill your target.", 150, command_kill) ||
 
@@ -343,11 +344,13 @@ int command_init(void){
 		command_add("reloadallrules", "Executes a reload of all rules.", 180, command_reloadallrules) ||
 		command_add("reloademote", "Reloads NPC Emotes.", 180, command_reloademote) ||
 		command_add("reloadlevelmods", nullptr, 255, command_reloadlevelmods) ||
+		command_add("reloadmerchants", "Reloads NPC merchant list.", 255, command_reloadmerchants) ||
 		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadquest", " - Clear quest cache (any argument causes it to also stop all timers).", 160, command_reloadqst) ||
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 180, command_reloadworldrules) ||
 		command_add("reloadstatic", "- Reload Static Zone Data.", 180, command_reloadstatic) ||
 		command_add("reloadtitles", "- Reload player titles from the database.", 180, command_reloadtitles) ||
+		command_add("reloadtraps", "- Repops all traps in the current zone.", 80, command_reloadtraps) ||
 		command_add("reloadworld", "[0|1] - Clear quest cache and reload all rules (0 - no repop, 1 - repop).", 250, command_reloadworld) ||
 		command_add("reloadzonepoints", "- Reload zone points from database.", 180, command_reloadzps) ||
 		command_add("reloadzps", nullptr, 180, command_reloadzps) ||
@@ -390,7 +393,7 @@ int command_init(void){
 		command_add("showpetspell", "[spellid/searchstring] - search pet summoning spells.", 50, command_showpetspell) ||
 		command_add("showskills", "- Show the values of your or your player target's skills.", 50, command_showskills) ||
 		command_add("showspellslist", "Shows spell list of targeted NPC.", 95, command_showspellslist) ||
-		command_add("showstats", "- Show details about you or your target.", 50, command_showstats) ||
+		command_add("showstats", "[quick stats]- Show details about you or your target. Quick stats shows only key stats.", 50, command_showstats) ||
 		command_add("shutdown", "- Shut this zone process down.", 250, command_shutdown) ||
 		command_add("si", nullptr, 160, command_summonitem) ||
 		command_add("size", "[size] - Change size of you or your target.", 100, command_size) ||
@@ -418,6 +421,7 @@ int command_init(void){
 		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional.", 250, command_timezone) ||
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title.", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix.", 255, command_titlesuffix) ||
+		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune", "Calculate ideal statical values related to combat.", 250, command_tune) ||
 		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots.", 255, command_undyeme) ||
@@ -1745,6 +1749,8 @@ void command_invul(Client *c, const Seperator *sep)
 			t = c;
 		}
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(CC_Default, "%s is %s invulnerable from attack.", t->GetName(), state ? "now" : "no longer");
 	}
 	else
@@ -1770,10 +1776,10 @@ void command_emote(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "zone") == 0){
 			char* newmessage = 0;
 			if (strstr(sep->arg[3], "^") == 0)
-				entity_list.Message(0, atoi(sep->arg[2]), sep->argplus[3]);
+				entity_list.Message(CC_Default, atoi(sep->arg[2]), sep->argplus[3]);
 			else{
 				for (newmessage = strtok((char*)sep->arg[3], "^"); newmessage != nullptr; newmessage = strtok(nullptr, "^"))
-					entity_list.Message(0, atoi(sep->arg[2]), newmessage);
+					entity_list.Message(CC_Default, atoi(sep->arg[2]), newmessage);
 			}
 		}
 		else if (!worldserver.Connected())
@@ -1809,16 +1815,7 @@ void command_npcstats(Client *c, const Seperator *sep){
 	else if (!c->GetTarget()->IsNPC())
 		c->Message(CC_Default, "ERROR: Target is not a NPC!");
 	else {
-		c->Message(CC_Default, "NPC Stats:");
-		c->Message(CC_Default, "Name: %s   NpcID: %u", c->GetTarget()->GetName(), c->GetTarget()->GetNPCTypeID());
-		c->Message(CC_Default, "Race: %i  Level: %i  Class: %i  Material: %i", c->GetTarget()->GetRace(), c->GetTarget()->GetLevel(), c->GetTarget()->GetClass(), c->GetTarget()->GetTexture());
-		c->Message(CC_Default, "Current HP: %i  Max HP: %i", c->GetTarget()->GetHP(), c->GetTarget()->GetMaxHP());
-		//c->Message(CC_Default, "Weapon Item Number: %s",c->GetTarget()->GetWeapNo());
-		c->Message(CC_Default, "Gender: %i  Size: %f  Bodytype: %d", c->GetTarget()->GetGender(), c->GetTarget()->GetSize(), c->GetTarget()->GetBodyType());
-		c->Message(CC_Default, "Runspeed: %f  Walkspeed: %f", c->GetTarget()->GetRunspeed(), c->GetTarget()->GetWalkspeed());
-		c->Message(CC_Default, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
-		c->Message(CC_Default, "EmoteID: %i Attack Speed: %i", c->GetTarget()->CastToNPC()->GetEmoteID(), c->GetTarget()->CastToNPC()->GetAttackTimer());
-		c->GetTarget()->CastToNPC()->QueryLoot(c);
+		c->GetTarget()->CastToNPC()->ShowQuickStats(c);
 	}
 }
 
@@ -2435,12 +2432,22 @@ void command_flymode(Client *c, const Seperator *sep){
 			t = c;
 		}
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
+		uint32 account = c->AccountID();
 		if (sep->arg[1][0] == '1')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		}
 		else if (sep->arg[1][0] == '2')
+		{
 			c->Message(CC_Default, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		}
 		else
+		{
 			c->Message(CC_Default, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -3131,10 +3138,10 @@ void command_reloadworld(Client *c, const Seperator *sep){
 	RW->Option = 0; //Keep it, maybe we'll use it in the future.
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
-	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, and repopping zones worldwide."))
+	if (!worldserver.SendChannelMessage(c, 0, 6, 0, 0, "Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide."))
 		c->Message(CC_Default, "Error: World server disconnected");
 
-	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, and repopping zones worldwide.");
+	c->Message(CC_Yellow, "You broadcast, Reloading quest cache, reloading rules, merchants, emotes, and repopping zones worldwide.");
 }
 
 void command_reloadlevelmods(Client *c, const Seperator *sep){
@@ -3198,7 +3205,7 @@ void command_kick(Client *c, const Seperator *sep){
 		Client* client = entity_list.GetClientByName(sep->arg[1]);
 		if (client != 0) {
 			if (client->Admin() <= c->Admin()) {
-				client->Message(0, "You have been kicked by %s", c->GetName());
+				client->Message(CC_Default, "You have been kicked by %s", c->GetName());
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMKick, 0);
 				client->QueuePacket(outapp);
 				client->Kick();
@@ -4128,11 +4135,31 @@ void command_save(Client *c, const Seperator *sep){
 		c->Message(CC_Default, "Error: target not a Client/PlayerCorpse");
 }
 
-void command_showstats(Client *c, const Seperator *sep){
-	if (c->GetTarget() != 0)
+void command_showstats(Client *c, const Seperator *sep)
+{
+	if (sep->IsNumber(1) && atoi(sep->arg[1]) == 1) 
+	{
+		if (c->GetTarget() != 0 && c->GetTarget()->IsClient())
+		{
+			c->GetTarget()->CastToClient()->SendQuickStats(c);
+		}
+		else if(c->GetTarget() != 0 && c->GetTarget()->IsNPC())
+		{
+			c->GetTarget()->CastToNPC()->ShowQuickStats(c);
+		}
+		else
+		{
+			c->SendQuickStats(c);
+		}
+	}
+	else if (c->GetTarget() != 0)
+	{
 		c->GetTarget()->ShowStats(c);
+	}
 	else
+	{
 		c->ShowStats(c);
+	}
 }
 
 void command_mystats(Client *c, const Seperator *sep){
@@ -4240,9 +4267,9 @@ void command_spawnstatus(Client *c, const Seperator *sep){
 
 void command_nukebuffs(Client *c, const Seperator *sep){
 	if (c->GetTarget() == 0)
-		c->BuffFadeAll();
+		c->BuffFadeAll(false, true);
 	else
-		c->GetTarget()->BuffFadeAll();
+		c->GetTarget()->BuffFadeAll(false, true);
 }
 
 void command_zuwcoords(Client *c, const Seperator *sep){
@@ -4440,9 +4467,9 @@ void command_zonespawn(Client *c, const Seperator *sep){
 
 	/* this was kept from client.cpp verbatim (it was commented out) */
 	//	if (target && target->IsNPC()) {
-	//		Message(0, "Inside main if.");
+	//		Message(CC_Default, "Inside main if.");
 	//		if (strcasecmp(sep->arg[1], "add")==0) {
-	//			Message(0, "Inside add if.");
+	//			Message(CC_Default, "Inside add if.");
 	//			database.DBSpawn(1, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC());
 	//		}
 	//		else if (strcasecmp(sep->arg[1], "update")==0) {
@@ -4454,21 +4481,21 @@ void command_zonespawn(Client *c, const Seperator *sep){
 	//			}
 	//			else {
 	//				if (database.DBSpawn(3, StaticGetZoneName(this->GetPP().current_zone), target->CastToNPC())) {
-	//					Message(0, "#zonespawn: %s removed successfully!", target->GetName());
+	//					Message(CC_Default, "#zonespawn: %s removed successfully!", target->GetName());
 	//					target->CastToNPC()->Death(target, target->GetHP());
 	//				}
 	//			}
 	//		}
 	//		else
-	//			Message(0, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
+	//			Message(CC_Default, "Error: #dbspawn: Invalid command. (Note: EDIT and REMOVE are NOT in yet.)");
 	//		if (target->CastToNPC()->GetNPCTypeID() > 0) {
-	//			Message(0, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
+	//			Message(CC_Default, "Spawn is type %i", target->CastToNPC()->GetNPCTypeID());
 	//		}
 	//	}
 	//	else if(!target || !target->IsNPC())
-	//		Message(0, "Error: #zonespawn: You must have a NPC targeted!");
+	//		Message(CC_Default, "Error: #zonespawn: You must have a NPC targeted!");
 	//	else
-	//		Message(0, "Usage: #zonespawn [add|edit|remove|remove all]");
+	//		Message(CC_Default, "Usage: #zonespawn [add|edit|remove|remove all]");
 }
 
 void command_npcspawn(Client *c, const Seperator *sep){
@@ -5541,7 +5568,7 @@ void command_scribespells(Client *c, const Seperator *sep){
 		return;
 	}
 
-	t->Message(0, "Scribing spells to spellbook.");
+	t->Message(CC_Default, "Scribing spells to spellbook.");
 	if (t != c)
 		c->Message(CC_Default, "Scribing spells for %s.", t->GetName());
 	Log.Out(Logs::General, Logs::Normal, "Scribe spells request for %s from %s, levels: %u -> %u", t->GetName(), c->GetName(), min_level, max_level);
@@ -5570,12 +5597,12 @@ void command_scribespells(Client *c, const Seperator *sep){
 	}
 
 	if (count > 0) {
-		t->Message(0, "Successfully scribed %u spells.", count);
+		t->Message(CC_Default, "Successfully scribed %u spells.", count);
 		if (t != c)
 			c->Message(CC_Default, "Successfully scribed %u spells for %s.", count, t->GetName());
 	}
 	else {
-		t->Message(0, "No spells scribed.");
+		t->Message(CC_Default, "No spells scribed.");
 		if (t != c)
 			c->Message(CC_Default, "No spells scribed for %s.", t->GetName());
 	}
@@ -5597,7 +5624,7 @@ void command_scribespell(Client *c, const Seperator *sep){
 	spell_id = atoi(sep->arg[1]);
 
 	if (IsValidSpell(spell_id)) {
-		t->Message(0, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
+		t->Message(CC_Default, "Scribing spell: %s (%i) to spellbook.", spells[spell_id].name, spell_id);
 
 		if (t != c)
 			c->Message(CC_Default, "Scribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5644,7 +5671,7 @@ void command_unmemspell(Client *c, const Seperator *sep){
 		if (mem_slot >= 0) {
 			t->UnmemSpell(mem_slot);
 
-			t->Message(0, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unmemming spell: %s (%i) from gembar.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unmemming spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -5690,7 +5717,7 @@ void command_unscribespell(Client *c, const Seperator *sep){
 		if (book_slot >= 0) {
 			t->UnscribeSpell(book_slot);
 
-			t->Message(0, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
+			t->Message(CC_Default, "Unscribing spell: %s (%i) from spellbook.", spells[spell_id].name, spell_id);
 
 			if (t != c)
 				c->Message(CC_Default, "Unscribing spell: %s (%i) for %s.", spells[spell_id].name, spell_id, t->GetName());
@@ -6002,12 +6029,12 @@ void command_setaapts(Client *c, const Seperator *sep){
 	if (c->GetTarget() && c->GetTarget()->IsClient())
 		t = c->GetTarget()->CastToClient();
 
-	if (sep->arg[1][0] == '\0' || sep->arg[2][0] == '\0')
-		c->Message(CC_Default, "Usage: #setaapts <AA|group|raid> <new AA points value>");
-	else if (atoi(sep->arg[2]) <= 0 || atoi(sep->arg[2]) > 200)
-		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 200.");
+	if (sep->arg[1][0] == '\0')
+		c->Message(CC_Default, "Usage: #setaapts <new AA points value>");
+	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 188)
+		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 188.");
 	else {
-		t->SetEXP(t->GetEXP(), t->GetMaxAAXP()*atoi(sep->arg[2]), false);
+		t->SetEXP(t->GetEXP(), t->GetEXPForLevel(t->GetLevel(), true)*atoi(sep->arg[1]), false);
 		t->SendAAStats();
 		t->SendAATable();
 	}
@@ -6206,7 +6233,7 @@ void command_revoke(Client *c, const Seperator *sep)
 		return;
 	}
 
-	c->Message(13, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
+	c->Message(CC_Red, "#revoke: Couldn't find %s in this zone, passing request to worldserver.", sep->arg[1]);
 
 	ServerPacket * outapp = new ServerPacket(ServerOP_Revoke, sizeof(RevokeStruct));
 	RevokeStruct* revoke = (RevokeStruct*)outapp->pBuffer;
@@ -6472,35 +6499,35 @@ void command_npcedit(Client *c, const Seperator *sep){
 	}
 
 	if (strcasecmp(sep->arg[1], "armtexture") == 0) {
-		c->Message(15, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses armtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET armtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "bracertexture") == 0) {
-		c->Message(15, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses bracertexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET bracertexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "handtexture") == 0) {
-		c->Message(15, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses handtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET handtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "legtexture") == 0) {
-		c->Message(15, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses legtexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET legtexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
 	}
 
 	if (strcasecmp(sep->arg[1], "feettexture") == 0) {
-		c->Message(15, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
+		c->Message(CC_Yellow, "NPCID %u now uses feettexture %i.", npcTypeID, atoi(sep->argplus[2]));
 		std::string query = StringFormat("UPDATE npc_types SET feettexture = %i WHERE id = %i", atoi(sep->argplus[2]), npcTypeID);
 		database.QueryDatabase(query);
 		return;
@@ -7146,17 +7173,23 @@ void command_path(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help"))
 	{
-		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns a npc to represent every npc node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [around]: Spawns an npc to represent every path node.  The around option only shows within a range of 200.");
+		c->Message(CC_Default, "Syntax: #path shownodes [#]: Spawns an npc to represent every path node.  Adding a number will start at this node number."); 
 		c->Message(CC_Default, "#path info node_id: Gives information about node info (requires shownode target).");
+		c->Message(CC_Default, "#path optimize: Optimizes pathfile to v4.");
 		c->Message(CC_Default, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
 		c->Message(CC_Default, "#path connect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node and connects that node back (requires shownode target).");
 		c->Message(CC_Default, "#path sconnect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node (requires shownode target).");
 		c->Message(CC_Default, "#path qconnect [set]: short cut connect, connects the targeted node to the node you set with #path qconnect set (requires shownode target).");
+		c->Message(CC_Default, "#path setdoor neighbour_id [doorid]:  Sets the doorid for the neighbour of the targeted node.  A doorid of -1 resets doorid in neighbour.  No door id, searches for nearest door.");
+		c->Message(CC_Default, "#path teleport neighbour_id [0/1]:  Sets the teleport for the neighbour of the targeted node.");
 		c->Message(CC_Default, "#path disconnect [all]/disconnect_from_id: Disconnects the currently targeted node to disconnect from disconnect from id's node (requires shownode target), if passed all as the second argument it will disconnect this node from every other node.");
 		c->Message(CC_Default, "#path move: Moves your targeted node to your current position");
 		c->Message(CC_Default, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		c->Message(CC_Default, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
+		c->Message(CC_Default, "#path nearest [all]: When a mob is targeted, it checks for nearby path nodes.  Using all option checks nearby nodes to all NPCs.");
+		c->Message(CC_Default, "#path meshtest [simple/complex] [startnode]: Performs a connectivity test between nodes.  For simple, it starts at node 0 by default.  The [startnode] parameter will change this.  Using a negative start number, will do the search in reverse. Complex tests all possible route combinations.");
 		return;
 	}
 	if (!strcasecmp(sep->arg[1], "shownodes"))
@@ -7164,8 +7197,12 @@ void command_path(Client *c, const Seperator *sep)
 		if (zone->pathing) {
 			if (!strcasecmp(sep->arg[2], "around"))
 				zone->pathing->SpawnPathNodes(c->GetX(), c->GetY(), c->GetZ());
-			else
-				zone->pathing->SpawnPathNodes();
+			else {
+				if (sep->IsNumber(2))
+					zone->pathing->SpawnPathNodes(0.0f, 0.0f, 0.0f, atoi(sep->arg[2]));
+				else
+					zone->pathing->SpawnPathNodes();
+			}
 		}
 		return;
 	}
@@ -7178,19 +7215,32 @@ void command_path(Client *c, const Seperator *sep)
 		}
 		return;
 	}
+	if (!strcasecmp(sep->arg[1], "optimize"))
+	{
+		if (zone->pathing)
+		{
+			if (zone->pathing->GetVersion() == 4) {
+				c->Message(CC_Default, "Path file is already optimized to v4.");
+				return;
+			}
+			c->Message(CC_Default, "Path file is optimizing.  You may go LD.");
+			zone->pathing->Optimize();
+			c->Message(CC_Default, "Path file optimized to v4");
+		}
+		return;
+	}
 
 	if (!strcasecmp(sep->arg[1], "dump"))
 	{
 		if (zone->pathing)
 		{
-			if (sep->arg[2][0] == '\0')
+			if (sep->arg[2][0] == '\0') {
+				c->Message(CC_Default, "You must specify a filename.  Usage: #path dump <filename.path>");
 				return;
+			}
 			
-			zone->pathing->SortNodes();
-			zone->pathing->ResortConnections();
-			zone->pathing->PreCalcNodeDistances();
 			zone->pathing->DumpPath(sep->arg[2]);
-			c->Message(CC_Default, "Path file saved as %s", sep->arg[2]);
+			c->Message(CC_Default, "Path file v%d saved as %s", zone->pathing->GetVersion(), sep->arg[2]);
 		}
 		return;
 	}
@@ -7288,6 +7338,27 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
+	if (!strcasecmp(sep->arg[1], "setdoor"))
+	{
+		
+		if (zone->pathing)
+		{
+			if (sep->IsNumber(2) && sep->IsNumber(3)) {
+				zone->pathing->SetDoor(c, atoi(sep->arg[2]), atoi(sep->arg[3]));
+			} else if (sep->IsNumber(2)) {
+				Doors* door = entity_list.FindNearestDoor(c);
+				if (door)
+					zone->pathing->SetDoor(c, atoi(sep->arg[2]), door->GetDoorID());
+				else
+					c->Message(CC_Default, "Unable to find a door nearby.");
+			} else {
+				c->Message(CC_Default, "Usage: #path setdoor neighbour_id [doorid].  Without a doorid value, searches for nearest door. Using a [doorid] = -1 will unset door.");
+			}
+
+		}
+		return;
+	}
+
 	if (!strcasecmp(sep->arg[1], "qconnect"))
 	{
 		if (zone->pathing)
@@ -7350,13 +7421,13 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "nodes"))
 			{
 				zone->pathing->SortNodes();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Nodes resorted...");
 			}
 			else
 			{
 				zone->pathing->ResortConnections();
-				zone->pathing->PreCalcNodeDistances();
+				zone->pathing->ResizePathingVectors();
 				c->Message(CC_Default, "Connections resorted...");
 				c->Message(CC_Default, "Spawned Nodes will need respawned to display proper node id.");
 				zone->pathing->CheckNodeErrors(c);
@@ -7414,7 +7485,10 @@ void command_path(Client *c, const Seperator *sep)
 			if (!strcasecmp(sep->arg[2], "simple"))
 			{
 				c->Message(CC_Default, "You may go linkdead. Results will be in the log file.");
-				zone->pathing->SimpleMeshTest(c);
+				if (sep->IsNumber(3))
+					zone->pathing->SimpleMeshTest(c, atoi(sep->arg[3]));
+				else
+					zone->pathing->SimpleMeshTest(c);
 				return;
 			}
 			else if(!strcasecmp(sep->arg[2], "complex"))
@@ -7441,24 +7515,30 @@ void command_path(Client *c, const Seperator *sep)
 
 	if (!strcasecmp(sep->arg[1], "nearest"))
 	{
-		if (!c->GetTarget() || !c->GetTarget()->IsMob())
+		if (c->GetTarget() && !c->GetTarget()->IsMob())
 		{
-			c->Message(CC_Default, "You must target something.");
+			c->Message(CC_Default, "You must target a mob.");
 			return;
 		}
 
 		if (zone->pathing)
 		{
-			Mob *m = c->GetTarget();
+			if (c->GetTarget())
+			{
+				Mob *m = c->GetTarget();
 
-			glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
+				glm::vec3 Position(m->GetX(), m->GetY(), m->GetZ());
 
-			int Node = zone->pathing->FindNearestPathNode(Position);
+				int Node = zone->pathing->FindNearestPathNode(Position);
 
-			if (Node == -1)
-				c->Message(CC_Default, "Unable to locate a path node within range.");
-			else
-				c->Message(CC_Default, "Nearest path node is %i", Node);
+				if (Node == -1)
+					c->Message(CC_Default, "Unable to locate a path node within range.");
+				else
+					c->Message(CC_Default, "Nearest path node is %i", Node);
+			} else if (!strcasecmp(sep->arg[2], "all")) {
+				c->Message(CC_Default, "Checking all mobs can find a path node nearby.");
+				entity_list.CheckNearbyNodes(c);
+			}
 
 			return;
 		}
@@ -8453,7 +8533,10 @@ void command_aggrozone(Client *c, const Seperator *sep){
 		return;
 
 	int hate = atoi(sep->arg[1]); //should default to 0 if we don't enter anything
-	entity_list.AggroZone(m, hate);
+	bool use_ignore_dist = false;
+	if(sep->IsNumber(2))
+		use_ignore_dist = atoi(sep->arg[2]);
+	entity_list.AggroZone(m, hate, use_ignore_dist);
 	if (!c->GetTarget())
 		c->Message(CC_Default, "Train to you! Last chance to go invulnerable...");
 	else
@@ -10865,7 +10948,7 @@ void command_logs(Client *c, const Seperator *sep){
 		if (strcasecmp(sep->arg[1], "reload_all") == 0){
 			ServerPacket *pack = new ServerPacket(ServerOP_ReloadLogs, 0);
 			worldserver.SendPacket(pack);
-			c->Message(13, "Successfully sent the packet to world to reload log settings from the database for all zones");
+			c->Message(CC_Red, "Successfully sent the packet to world to reload log settings from the database for all zones");
 			safe_delete(pack);
 		}
 		/* #logs list_settings */
@@ -10900,8 +10983,8 @@ void command_logs(Client *c, const Seperator *sep){
 				c->Message(CC_Default, "--- #logs set gmsay 20 1 - Would output Quest errors to gmsay");
 			}
 			if (logs_set == 1){
-				c->Message(15, "Your Log Settings have been applied");
-				c->Message(15, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
+				c->Message(CC_Yellow, "Your Log Settings have been applied");
+				c->Message(CC_Yellow, "Output Method: %s :: Debug Level: %i - Category: %s", sep->arg[2], atoi(sep->arg[4]), Logs::LogCategoryName[atoi(sep->arg[3])]);
 			}
 			/* We use a general 'is_category_enabled' now, let's update when we update any output settings 
 				This is used in hot places of code to check if its enabled in any way before triggering logs
@@ -10913,9 +10996,20 @@ void command_logs(Client *c, const Seperator *sep){
 				Log.log_settings[atoi(sep->arg[3])].is_category_enabled = 0;
 			}
 		}
+		if (strcasecmp(sep->arg[1], "quiet") == 0)
+		{
+			for (int i = 0; i < Logs::LogCategory::MaxCategoryID; i++)
+			{
+				Log.log_settings[i].log_to_gmsay = 0;
+				logs_set = 0;
+			}
+			c->Message(CC_Yellow, "Shhh. Be vewy vewy quiet, I'm hunting wabbits.");
+		}
 	}
-	else {
+	else 
+	{
 		c->Message(CC_Default, "#logs usage:");
+		c->Message(CC_Default, "--- #logs quiet - Turns off all gmsay logs in the current zone until the next time the zone resets.");
 		c->Message(CC_Default, "--- #logs reload_all - Reload all settings in world and all zone processes with what is defined in the database");
 		c->Message(CC_Default, "--- #logs list_settings - Shows current log settings and categories loaded into the current process' memory");
 		c->Message(CC_Default, "--- #logs set [console|file|gmsay] <category_id> <debug_level (1-3)> - Sets log settings during the lifetime of the zone");
@@ -10980,7 +11074,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		hotfix_name = "hotfix_";
 	}
 
-	c->Message(0, "Creating and applying hotfix");
+	c->Message(CC_Default, "Creating and applying hotfix");
 	std::thread t1([c, hotfix_name]() {
 #ifdef WIN32
 		if (hotfix_name.length() > 0) {
@@ -11005,7 +11099,7 @@ void command_hotfix(Client *c, const Seperator *sep) {
 		}
 		worldserver.SendPacket(&pack);
 
-		c->Message(0, "Hotfix applied");
+		c->Message(CC_Default, "Hotfix applied");
 	});
 
 	t1.detach();
@@ -11018,12 +11112,12 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 
 	std::string hotfix_name;
 	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
-		c->Message(0, "Cannot attempt to load this shared memory segment as it is already loaded.");
+		c->Message(CC_Default, "Cannot attempt to load this shared memory segment as it is already loaded.");
 		return;
 	}
 
 	hotfix_name = sep->arg[1];
-	c->Message(0, "Loading shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Loading shared memory segment %s", hotfix_name.c_str());
 	std::thread t1([c,hotfix_name]() {
 #ifdef WIN32
 		if(hotfix_name.length() > 0) {
@@ -11039,7 +11133,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep) {
 			system(StringFormat("./shared_memory").c_str());
 		}
 #endif
-		c->Message(0, "Shared memory segment finished loading.");
+		c->Message(CC_Default, "Shared memory segment finished loading.");
 	});
 
 	t1.detach();
@@ -11050,7 +11144,7 @@ void command_apply_shared_memory(Client *c, const Seperator *sep) {
 	database.GetVariable("hotfix_name", hotfix, 256);
 	std::string hotfix_name = sep->arg[1];
 	
-	c->Message(0, "Applying shared memory segment %s", hotfix_name.c_str());
+	c->Message(CC_Default, "Applying shared memory segment %s", hotfix_name.c_str());
 	database.SetVariable("hotfix_name", hotfix_name.c_str());
 
 	ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
@@ -11058,4 +11152,55 @@ void command_apply_shared_memory(Client *c, const Seperator *sep) {
 		strcpy((char*)pack.pBuffer, hotfix_name.c_str());
 	}
 	worldserver.SendPacket(&pack);
+}
+
+void command_keyring(Client *c, const Seperator *sep)
+{
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	t->KeyRingList(c);
+	c->Message(CC_Default, "Zone Flag List:");
+	t->ZoneFlagList(c);
+}
+
+void command_reloadmerchants(Client *c, const Seperator *sep)
+{
+	zone->ClearMerchantLists();
+	zone->GetMerchantDataForZoneLoad();
+	zone->LoadTempMerchantData();
+	c->Message(CC_Default, "Merchant list reloaded for %s.", zone->GetShortName());
+}
+
+void command_trapinfo(Client *c, const Seperator *sep)
+{
+	entity_list.GetTrapInfo(c);
+}
+
+void command_reloadtraps(Client *c, const Seperator *sep)
+{
+	entity_list.UpdateAllTraps(true, true);
+	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
 }

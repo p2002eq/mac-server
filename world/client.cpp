@@ -1,4 +1,5 @@
 #include "../common/global_define.h"
+#include "../common/eqemu_logsys.h"
 #include "../common/eq_packet.h"
 #include "../common/eq_stream_intf.h"
 #include "../common/misc.h"
@@ -105,19 +106,23 @@ void Client::SendLogServer()
 {
 	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
 	LogServer_Struct *l=(LogServer_Struct *)outapp->pBuffer;
-	const char *wsn=WorldConfig::get()->ShortName.c_str();
-	memcpy(l->worldshortname,wsn,strlen(wsn));
-
-	if(RuleB(Mail, EnableMailSystem))
-		l->enablemail = 1;
-
-	l->enable_pvp = (RuleI(World, PVPSettings));
-
-	if(RuleB(World, IsGMPetitionWindowEnabled))
-		l->enable_petition_wnd = 1;
 
 	if(RuleI(World, FVNoDropFlag) == 1 || RuleI(World, FVNoDropFlag) == 2 && GetAdmin() > RuleI(Character, MinStatusForNoDropExemptions))
 		l->enable_FV = 1;
+
+	l->enable_pvp = (RuleI(World, PVPSettings));
+
+	l->auto_identify = 0;
+	l->NameGen = 1;
+	l->Gibberish = 1;
+	l->test_server = 0;
+	l->Locale = 0;
+	l->ProfanityFilter = 0;
+
+	const char *wsn=WorldConfig::get()->ShortName.c_str();
+	memcpy(l->worldshortname,wsn,strlen(wsn));
+	memcpy(l->loggingServerAddress, "127.0.0.1", 16);
+	l->loggingServerPort = 9878;
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -161,7 +166,8 @@ void Client::SendCharInfo() {
 	auto outapp = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
 	CharacterSelect_Struct* cs = (CharacterSelect_Struct*)outapp->pBuffer;
 
-	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit);
+	charcount = 0;
+	database.GetCharSelectInfo(GetAccountID(), cs, ClientVersionBit, charcount);
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -248,11 +254,10 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 
 		expansion = database.GetExpansion(cle->AccountID());
 
-		//if (!pZoning && ClientVersionBit != 0)
-			//SendGuildList();
-			SendLogServer();
-			SendApproveWorld();
-			SendEnterWorld(cle->name());
+		SendLogServer();
+		SendApproveWorld();
+		SendEnterWorld(cle->name());
+
 		if (!pZoning) {
 			SendExpansionInfo();
 			SendCharInfo();
@@ -447,9 +452,14 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		return true;
 	}
 
-	if (RuleI(World, MaxClientsPerIP) >= 0) {
-		client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
-	}
+	//if (RuleI(World, MaxClientsPerIP) >= 0) {
+	//	client_list.GetCLEIP(this->GetIP()); //Check current CLE Entry IPs against incoming connection
+	//}
+	if(GetSessionLimit())
+		return false;
+
+	if (RuleI(World, MaxClientsPerIP) >= 0 && !client_list.CheckIPLimit(GetAccountID(), GetIP(), GetAdmin(), cle))
+		return false;
 
 	EnterWorld_Struct *ew=(EnterWorld_Struct *)app->pBuffer;
 	strn0cpy(char_name, ew->name, 64);
@@ -723,9 +733,6 @@ bool Client::Process() {
 
 void Client::EnterWorld(bool TryBootup) {
 	if (zoneID == 0)
-		return;
-
-	if(GetSessionLimit())
 		return;
 
 	ZoneServer* zs = nullptr;
@@ -1023,6 +1030,13 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 {
 	if (!RuleB(Character, CanCreate))
 		return false;
+
+	if(charcount >= 8)
+	{
+		Log.Out(Logs::General, Logs::World_Server, "%s already has %d characters. OPCharCreate returning false.", name, charcount);
+		return false;
+	}
+
 	PlayerProfile_Struct pp;
 	ExtendedProfile_Struct ext;
 	Inventory inv;
@@ -1157,6 +1171,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		return false;
 	}
 	Log.Out(Logs::Detail, Logs::World_Server,"Character creation successful: %s", pp.name);
+	++charcount;
 	return true;
 }
 
@@ -1355,8 +1370,8 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 			pp->languages[LANG_COMMON_TONGUE] = 100;
 			pp->languages[LANG_DARK_ELVISH] = 100;
 			pp->languages[LANG_DARK_SPEECH] = 100;
-			pp->languages[LANG_ELDER_ELVISH] = 100;
-			pp->languages[LANG_ELVISH] = 25;
+			pp->languages[LANG_ELDER_ELVISH] = 54;
+			pp->languages[LANG_ELVISH] = 54;
 			break;
 		}
 	case DWARF:
@@ -1401,8 +1416,8 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 	case HIGH_ELF:
 		{
 			pp->languages[LANG_COMMON_TONGUE] = 100;
-			pp->languages[LANG_DARK_ELVISH] = 25;
-			pp->languages[LANG_ELDER_ELVISH] = 25;
+			pp->languages[LANG_DARK_ELVISH] = 51;
+			pp->languages[LANG_ELDER_ELVISH] = 51;
 			pp->languages[LANG_ELVISH] = 100;
 			break;
 		}
@@ -1442,7 +1457,7 @@ void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 		{
 			pp->languages[LANG_COMMON_TONGUE] = 100;
 			pp->languages[LANG_COMBINE_TONGUE] = 100;
-			pp->languages[LANG_ERUDIAN] = 25;
+			pp->languages[LANG_ERUDIAN] = 32;
 			pp->languages[LANG_VAH_SHIR] = 100;
 			break;
 		}
@@ -1465,7 +1480,7 @@ bool Client::GetSessionLimit()
 {
 	if (RuleI(World, AccountSessionLimit) >= 0 && cle->Admin() < (RuleI(World, ExemptAccountLimitStatus)) && (RuleI(World, ExemptAccountLimitStatus) != -1)) 
 	{
-		if(database.CheckAccountActive(cle->AccountID()))
+		if(client_list.CheckAccountActive(cle->AccountID()))
 		{
 			Log.Out(Logs::Detail, Logs::World_Server,"Account %d attempted to login with an active player in the world.", cle->AccountID());
 			return true;

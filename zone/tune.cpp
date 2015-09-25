@@ -80,15 +80,15 @@ void Mob::Tune_FindATKByPctMitigation(Mob* defender,Mob *attacker, float pct_mit
 
 	if (damage == 0 || minhit == 0)
 	{
-		Message(0, "#Tune - Processing... Abort! Damage not found! [MaxDMG %i MinDMG %i]", damage,minhit);
+		Message(CC_Default, "#Tune - Processing... Abort! Damage not found! [MaxDMG %i MinDMG %i]", damage,minhit);
 		return;
 	}
 
 	mean_dmg = defender->Tune_GetMeanDamage(this, attacker, damage, minhit, nullptr, 0, ac_override, 0, 0,atk);
 	tmp_pct_mitigated = 100.0f - static_cast<float>( mean_dmg * 100 /damage);
 
-	Message(0, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
-	Message(0, "#Tune - Processing... Find ATK for attacker Mitigation (%.0f) pct on defender [MaxDMG %i MinDMG %i Current Mitigation %.2f]", pct_mitigation, damage, minhit,tmp_pct_mitigated);
+	Message(CC_Default, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
+	Message(CC_Default, "#Tune - Processing... Find ATK for attacker Mitigation (%.0f) pct on defender [MaxDMG %i MinDMG %i Current Mitigation %.2f]", pct_mitigation, damage, minhit,tmp_pct_mitigated);
 
 	if (tmp_pct_mitigated < pct_mitigation)
 		interval = interval * -1;
@@ -99,7 +99,7 @@ void Mob::Tune_FindATKByPctMitigation(Mob* defender,Mob *attacker, float pct_mit
 		tmp_pct_mitigated = 100.0f - ( static_cast<float>(mean_dmg) * 100.0f /static_cast<float>(damage));
 
 		if (Msg >= 3)
-			Message(0, "#Tune - Processing... [%i] [ATK %i] Average Melee Hit  %i | Pct Mitigated %.2f ",j,atk, mean_dmg, tmp_pct_mitigated);
+			Message(CC_Default, "#Tune - Processing... [%i] [ATK %i] Average Melee Hit  %i | Pct Mitigated %.2f ",j,atk, mean_dmg, tmp_pct_mitigated);
 
 		if (interval > 0 && tmp_pct_mitigated <= pct_mitigation)
 			end = 1;
@@ -115,15 +115,15 @@ void Mob::Tune_FindATKByPctMitigation(Mob* defender,Mob *attacker, float pct_mit
 			defender->Tune_MeleeMitigation(this, attacker, damage, minhit, nullptr,Msg,ac_override, 0, 0, atk);
 			
 			if (end == 2)
-				Message(0, "#Tune - [WARNING] Mitigation can not be further decreased due to minium hit value (%i).",minhit);
+				Message(CC_Default, "#Tune - [WARNING] Mitigation can not be further decreased due to minium hit value (%i).",minhit);
 
 			if (attacker->IsNPC()){
-				Message(0, "#Tune - Recommended NPC ATK ADJUSTMENT ( %i ) on ' %s ' average mitigation of (%.0f) pct verse ' %s '. ",atk, attacker->GetCleanName(), pct_mitigation, defender->GetCleanName());
-				Message(0, "#SET: [NPC Attack STAT] = [%i]",atk + defender->CastToNPC()->ATK);
+				Message(CC_Default, "#Tune - Recommended NPC ATK ADJUSTMENT ( %i ) on ' %s ' average mitigation of (%.0f) pct verse ' %s '. ",atk, attacker->GetCleanName(), pct_mitigation, defender->GetCleanName());
+				Message(CC_Default, "#SET: [NPC Attack STAT] = [%i]",atk + defender->CastToNPC()->ATK);
 			}
 			if (attacker->IsClient()){
-				Message(0, "#Tune - Recommended CLIENT ATK ADJUSTMENT ( %i ) on ' %s ' average mitigation of (%.0f) pct verse ' %s '. ", atk, attacker->GetCleanName(), pct_mitigation, defender->GetCleanName());
-				Message(0, "#Modify (+/-): [Client Attack STAT/SE_ATK(2)] [%i]",atk);
+				Message(CC_Default, "#Tune - Recommended CLIENT ATK ADJUSTMENT ( %i ) on ' %s ' average mitigation of (%.0f) pct verse ' %s '. ", atk, attacker->GetCleanName(), pct_mitigation, defender->GetCleanName());
+				Message(CC_Default, "#Modify (+/-): [Client Attack STAT/SE_ATK(2)] [%i]",atk);
 			}
 
 			return;
@@ -132,8 +132,8 @@ void Mob::Tune_FindATKByPctMitigation(Mob* defender,Mob *attacker, float pct_mit
 		atk = atk + interval;
 	}
 
-	Message(0, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", pct_mitigation, interval, max_loop);
-	Message(0, "#Tune - Parse ended at ATK ADJUSTMENT ( %i ) average target mitigation of (%.0f) pct.",atk,tmp_pct_mitigated);
+	Message(CC_Default, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", pct_mitigation, interval, max_loop);
+	Message(CC_Default, "#Tune - Parse ended at ATK ADJUSTMENT ( %i ) average target mitigation of (%.0f) pct.",atk,tmp_pct_mitigated);
 }
 
 void Mob::Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mitigation, int interval, int max_loop, int atk_override, int Msg)
@@ -164,15 +164,15 @@ void Mob::Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mit
 
 	if (damage == 0 || minhit == 0)
 	{
-		Message(0, "#Tune - Processing... Abort! Damage not found! [MaxDMG %i MinDMG %i]", damage,minhit);
+		Message(CC_Default, "#Tune - Processing... Abort! Damage not found! [MaxDMG %i MinDMG %i]", damage,minhit);
 		return;
 	}
 
 	mean_dmg = defender->Tune_GetMeanDamage(this, attacker, damage, minhit, nullptr, 0, 0, atk_override);
 	tmp_pct_mitigated = 100.0f - static_cast<float>( mean_dmg * 100 /damage);
 
-	Message(0, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
-	Message(0, "#Tune - Processing... Find AC for defender Mitigation (%.0f) pct from attacker [MaxDMG %i MinDMG %i Current Mitigation %.2f]", pct_mitigation, damage, minhit,tmp_pct_mitigated);
+	Message(CC_Default, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
+	Message(CC_Default, "#Tune - Processing... Find AC for defender Mitigation (%.0f) pct from attacker [MaxDMG %i MinDMG %i Current Mitigation %.2f]", pct_mitigation, damage, minhit,tmp_pct_mitigated);
 
 
 	if (tmp_pct_mitigated > pct_mitigation)
@@ -184,7 +184,7 @@ void Mob::Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mit
 		tmp_pct_mitigated = 100.0f - ( static_cast<float>(mean_dmg) * 100.0f /static_cast<float>(damage));
 
 		if (Msg >= 3)
-			Message(0, "#Tune - Processing... [%i] [AC %i] Average Melee Hit  %i | Pct Mitigated %.2f ",j,add_ac, mean_dmg, tmp_pct_mitigated);
+			Message(CC_Default, "#Tune - Processing... [%i] [AC %i] Average Melee Hit  %i | Pct Mitigated %.2f ",j,add_ac, mean_dmg, tmp_pct_mitigated);
 
 		if (interval > 0 && tmp_pct_mitigated >= pct_mitigation)
 			end = 1;
@@ -200,15 +200,15 @@ void Mob::Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mit
 			defender->Tune_MeleeMitigation(this, attacker, damage, minhit, nullptr,Msg,0,atk_override, add_ac, 0);
 			
 			if (end == 2)
-				Message(0, "#Tune - [WARNING] Mitigation can not be further decreased due to minium hit value (%i).",minhit);
+				Message(CC_Default, "#Tune - [WARNING] Mitigation can not be further decreased due to minium hit value (%i).",minhit);
 
 			if (defender->IsNPC()){
 				Message(7, "#Tune - Recommended NPC AC ADJUSTMENT ( %i ) on ' %s ' for an average mitigation of (+ %.0f) pct from attacker ' %s '.",add_ac,defender->GetCleanName(), pct_mitigation, attacker->GetCleanName());
-				Message(0, "#SET: [NPC Attack STAT] = [%i]",add_ac + defender->CastToNPC()->GetRawAC());
+				Message(CC_Default, "#SET: [NPC Attack STAT] = [%i]",add_ac + defender->CastToNPC()->GetRawAC());
 			}
 			if (defender->IsClient()){
 				Message(7, "#Tune - Recommended CLIENT AC ADJUSTMENT ( %i ) on ' %s ' for an average mitigation of (+ %.0f) pct from attacker ' %s '.",add_ac,defender->GetCleanName(), pct_mitigation, attacker->GetCleanName());
-				Message(0, "#Modify (+/-): [Client AC STAT/SE_AC(1)] [%i]",add_ac);
+				Message(CC_Default, "#Modify (+/-): [Client AC STAT/SE_AC(1)] [%i]",add_ac);
 			}
 
 			return;
@@ -219,8 +219,8 @@ void Mob::Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mit
 		add_ac = add_ac + interval;
 	}
 
-	Message(0, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", pct_mitigation, interval, max_loop);
-	Message(0, "#Tune - Parse ended at AC ADJUSTMENT ( %i ) at average mitigation of (%.0f) / (%.0f) pct.",add_ac,tmp_pct_mitigated / pct_mitigation);
+	Message(CC_Default, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", pct_mitigation, interval, max_loop);
+	Message(CC_Default, "#Tune - Parse ended at AC ADJUSTMENT ( %i ) at average mitigation of (%.0f) / (%.0f) pct.",add_ac,tmp_pct_mitigated / pct_mitigation);
 }
 
 uint32 Mob::Tune_GetMeanDamage(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts, int Msg,
@@ -249,9 +249,9 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 
 	if (Msg){
 		
-		GM->Message(0, "######### Melee Mitigation Report: Start [Detail Level %i]#########", Msg);
-		GM->Message(0, "#ATTACKER: %s", attacker->GetCleanName());
-		GM->Message(0, "#DEFENDER: %s", defender->GetCleanName());
+		GM->Message(CC_Default, "######### Melee Mitigation Report: Start [Detail Level %i]#########", Msg);
+		GM->Message(CC_Default, "#ATTACKER: %s", attacker->GetCleanName());
+		GM->Message(CC_Default, "#DEFENDER: %s", defender->GetCleanName());
 	}
 
 	if (RuleB(Combat, UseIntervalAC)) {
@@ -267,16 +267,16 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		float weight = 0.0;
 
 		if (Msg >= 2){
-			GM->Message(0, " "); 
-			GM->Message(0, "### Calculate Mitigation Rating ###"); 
+			GM->Message(CC_Default, " "); 
+			GM->Message(CC_Default, "### Calculate Mitigation Rating ###"); 
 			if (aabonuses.CombatStability)
-				GM->Message(0, "# %i #### DEFENDER SE_CombatStability(259) AA Bonus", aabonuses.CombatStability);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_CombatStability(259) AA Bonus", aabonuses.CombatStability);
 			if (spellbonuses.CombatStability)
-				GM->Message(0, "# %i #### DEFENDER SE_CombatStability(259) Spell Bonus", spellbonuses.CombatStability);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_CombatStability(259) Spell Bonus", spellbonuses.CombatStability);
 			if (itembonuses.CombatStability)
-				GM->Message(0, "# %i #### DEFENDER SE_CombatStability(259) Worn Bonus", itembonuses.CombatStability);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_CombatStability(259) Worn Bonus", itembonuses.CombatStability);
 
-			GM->Message(0, "# %.2f #### DEFENDER Base Soft Cap", softcap);
+			GM->Message(CC_Default, "# %.2f #### DEFENDER Base Soft Cap", softcap);
 		}
 
 		float monkweight = RuleI(Combat, MonkACBonusWeight);
@@ -296,11 +296,11 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 				armor = ac_override;
 			
 			if (Msg >=2 ){
-				GM->Message(0, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) AA Bonus", aabonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC / adj_mod);
-				GM->Message(0, "# %i #### DEFENDER Shield AC", shield_ac);
-				GM->Message(0, "# %i #### DEFENDER Total Client Armor - NO shield", armor);
+				GM->Message(CC_Default, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_ArmorClass(1) AA Bonus", aabonuses.AC);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC / adj_mod);
+				GM->Message(CC_Default, "# %i #### DEFENDER Shield AC", shield_ac);
+				GM->Message(CC_Default, "# %i #### DEFENDER Total Client Armor - NO shield", armor);
 			}
 			
 		} else if (IsNPC()) {
@@ -310,9 +310,9 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 				armor = ac_override;
 
 			if (Msg >=2 ){
-				GM->Message(0, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC);
-				GM->Message(0, "# %i #### DEFENDER NPC AC Stat", CastToNPC()->GetRawAC());
+				GM->Message(CC_Default, "# %i #### DEFENDER AC Equiped/Worn Bonus", itembonuses.AC);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_ArmorClass(1) Spell Bonus", spellbonuses.AC);
+				GM->Message(CC_Default, "# %i #### DEFENDER NPC AC Stat", CastToNPC()->GetRawAC());
 			}
 
 			int PetACBonus = 0;
@@ -320,7 +320,7 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 			if (!IsPet()){
 				armor = (armor / RuleR(Combat, NPCACFactor));
 				if (Msg >=2 )
-					GM->Message(0, "# %i #### DEFENDER NPC Armor after RuleR(Combat, NPCACFactor) %.2f", armor, RuleR(Combat, NPCACFactor));
+					GM->Message(CC_Default, "# %i #### DEFENDER NPC Armor after RuleR(Combat, NPCACFactor) %.2f", armor, RuleR(Combat, NPCACFactor));
 			}
 
 			Mob *owner = nullptr;
@@ -334,18 +334,18 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 
 				if (Msg >=2 ){
 				if (owner->aabonuses.PetMeleeMitigation)
-					GM->Message(0, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) AA Bonus", owner->aabonuses.PetMeleeMitigation);
+					GM->Message(CC_Default, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) AA Bonus", owner->aabonuses.PetMeleeMitigation);
 				if (owner->spellbonuses.PetMeleeMitigation)
-					GM->Message(0, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) Spell Bonus",owner->spellbonuses.PetMeleeMitigation);
+					GM->Message(CC_Default, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) Spell Bonus",owner->spellbonuses.PetMeleeMitigation);
 				if (owner->itembonuses.PetMeleeMitigation)
-					GM->Message(0, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) Worn Bonus", owner->itembonuses.PetMeleeMitigation);
+					GM->Message(CC_Default, "# %i #### DEFENDER Pet Owner SE_PetMeleeMitigation(379) Worn Bonus", owner->itembonuses.PetMeleeMitigation);
 				}
 			}
 
 			armor += spellbonuses.AC + itembonuses.AC + PetACBonus + 1;
 
 			if (Msg >= 2)
-				GM->Message(0, "# %i #### DEFENDER NPC Total Base Armor",armor);
+				GM->Message(CC_Default, "# %i #### DEFENDER NPC Total Base Armor",armor);
 		}
 
 		if (opts) {
@@ -422,38 +422,38 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 			
 			armor = softcap + softcap_armor;
 			if (Msg >= 2)
-				GM->Message(0, "# %i #### DEFENDER Final Armor [Soft Cap %i Soft Cap Armor %i]",armor, softcap,softcap_armor);
+				GM->Message(CC_Default, "# %i #### DEFENDER Final Armor [Soft Cap %i Soft Cap Armor %i]",armor, softcap,softcap_armor);
 		}
 		int tmp_armor = armor;
 		if (GetClass() == WIZARD || GetClass() == MAGICIAN ||
 				GetClass() == NECROMANCER || GetClass() == ENCHANTER){
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 2.0) + armor;
+			mitigation_rating = (GetSkill(SkillDefense) / 2.0) + armor;
 			if (Msg >= 2)
-				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
+				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i ]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense));
 		}
 		else{
-			mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / 3.0) + armor;
+			mitigation_rating = (GetSkill(SkillDefense) / 3.0) + armor;
 			if (Msg >= 2)
-				GM->Message(0, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i Heroic Agi %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense), itembonuses.HeroicAGI);
+				GM->Message(CC_Default, "# + %.2f #### DEFENDER Armor Bonus [Defense Skill %i]",  mitigation_rating - tmp_armor, GetSkill(SkillDefense));
 
 		}
 		mitigation_rating *= 0.847;
 
 		if (Msg >= 1)
-			GM->Message(0, "# %.2f #### DEFENDER Final Mitigation Rating", mitigation_rating);
+			GM->Message(CC_Default, "# %.2f #### DEFENDER Final Mitigation Rating", mitigation_rating);
 
 		
 		if (Msg >= 2){
-			GM->Message(0, " ");
-			GM->Message(0, "### Mitigation Bonus Effects ###"); 
+			GM->Message(CC_Default, " ");
+			GM->Message(CC_Default, "### Mitigation Bonus Effects ###"); 
 			if (itembonuses.MeleeMitigation)
-				GM->Message(0, "# %i #### DEFENDER Item Mod2 Shielding", itembonuses.MeleeMitigation);
+				GM->Message(CC_Default, "# %i #### DEFENDER Item Mod2 Shielding", itembonuses.MeleeMitigation);
 			if (aabonuses.MeleeMitigationEffect)
-				GM->Message(0, "# %i #### DEFENDER SE_MeleeMitigation(168) AA Bonus", aabonuses.MeleeMitigationEffect);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_MeleeMitigation(168) AA Bonus", aabonuses.MeleeMitigationEffect);
 			if (spellbonuses.MeleeMitigationEffect)
-				GM->Message(0, "# %i #### DEFENDER SE_MeleeMitigation(168) Spell Bonus", spellbonuses.MeleeMitigationEffect);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_MeleeMitigation(168) Spell Bonus", spellbonuses.MeleeMitigationEffect);
 			if (itembonuses.MeleeMitigationEffect)
-				GM->Message(0, "# %i #### DEFENDER SE_MeleeMitigation(168) Worn Bonus", itembonuses.MeleeMitigationEffect);
+				GM->Message(CC_Default, "# %i #### DEFENDER SE_MeleeMitigation(168) Worn Bonus", itembonuses.MeleeMitigationEffect);
 		}
 
 		mitigation_rating = mod_mitigation_rating(mitigation_rating, attacker);
@@ -477,30 +477,30 @@ int32 Mob::Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minh
 		if (attack_rating < 1)
 			attack_rating = 1.0f;
 		if (Msg >= 2){
-			GM->Message(0, " "); 
-			GM->Message(0, "### Calculate Attack Rating ###"); 
+			GM->Message(CC_Default, " "); 
+			GM->Message(CC_Default, "### Calculate Attack Rating ###"); 
 			if (attacker->IsClient()){
-				GM->Message(0, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER SE_ATK(2) AA Bonus", attacker->aabonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER SE_ATK(2) spell Bonus", attacker->spellbonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
-				GM->Message(0, "# %.2f #### ATTACKER Strength Stat ATK Bonus [Stat Amt: %i]", ((attacker->GetSTR()-66) * 0.9),attacker->GetSTR());
-				GM->Message(0, "# %.2f #### ATTACKER Offensive Skill ATK Bonus [Stat Amt: %i]", (attacker->GetSkill(SkillOffense)*1.345) ,attacker->GetSkill(SkillOffense));
+				GM->Message(CC_Default, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER SE_ATK(2) AA Bonus", attacker->aabonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER SE_ATK(2) spell Bonus", attacker->spellbonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
+				GM->Message(CC_Default, "# %.2f #### ATTACKER Strength Stat ATK Bonus [Stat Amt: %i]", ((attacker->GetSTR()-66) * 0.9),attacker->GetSTR());
+				GM->Message(CC_Default, "# %.2f #### ATTACKER Offensive Skill ATK Bonus [Stat Amt: %i]", (attacker->GetSkill(SkillOffense)*1.345) ,attacker->GetSkill(SkillOffense));
 			}
 				
 			else{
-				GM->Message(0, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER SE_ATK(2) spell Bonus", attacker->spellbonuses.ATK);
-				GM->Message(0, "# %i #### ATTACKER NPC ATK Stat", attacker->CastToNPC()->ATK);
-				GM->Message(0, "# %.2f #### ATTACKER Strength Stat ATK Bonus [Stat Amt: %i]", ((attacker->GetSTR()-66) * 0.9),attacker->GetSTR());
-				GM->Message(0, "# %.2f #### ATTACKER Offensive Skill ATK Bonus [Stat Amt: %i]", (attacker->GetSkill(SkillOffense)*1.345) ,attacker->GetSkill(SkillOffense));
+				GM->Message(CC_Default, "# %i #### ATTACKER Worn/Equip ATK Bonus", attacker->itembonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER SE_ATK(2) spell Bonus", attacker->spellbonuses.ATK);
+				GM->Message(CC_Default, "# %i #### ATTACKER NPC ATK Stat", attacker->CastToNPC()->ATK);
+				GM->Message(CC_Default, "# %.2f #### ATTACKER Strength Stat ATK Bonus [Stat Amt: %i]", ((attacker->GetSTR()-66) * 0.9),attacker->GetSTR());
+				GM->Message(CC_Default, "# %.2f #### ATTACKER Offensive Skill ATK Bonus [Stat Amt: %i]", (attacker->GetSkill(SkillOffense)*1.345) ,attacker->GetSkill(SkillOffense));
 			}
 		}
 
 		if (Msg >= 1){
-			GM->Message(0, "# %.2f #### ATTACKER Final Attack Rating", attack_rating);
-			GM->Message(0, "######### Melee Mitigation Report: Complete #########", Msg);
+			GM->Message(CC_Default, "# %.2f #### ATTACKER Final Attack Rating", attack_rating);
+			GM->Message(CC_Default, "######### Melee Mitigation Report: Complete #########", Msg);
 		}
 
 
@@ -740,8 +740,8 @@ void Mob::Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_ch
 	tmp_hit_chance = Tune_CheckHitChance(defender,attacker, skillinuse, MainPrimary,0,0,0, avoid_override);
 
 	
-	Message(0, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
-	Message(0, "#Tune - Processing... Find Accuracy for hit chance on attacker of (%.0f) pct on defender [Current Hit Chance %.2f]", hit_chance, tmp_hit_chance);
+	Message(CC_Default, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
+	Message(CC_Default, "#Tune - Processing... Find Accuracy for hit chance on attacker of (%.0f) pct on defender [Current Hit Chance %.2f]", hit_chance, tmp_hit_chance);
 
 
 	if (tmp_hit_chance > hit_chance)
@@ -766,17 +766,17 @@ void Mob::Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_ch
 			
 			Tune_CheckHitChance(defender,attacker, skillinuse, MainPrimary,0,Msg,0,avoid_override);//Display Stat Report
 			
-			Message(0, " ");
+			Message(CC_Default, " ");
 
 			if (attacker->IsNPC()){
-				Message(0, "#Recommended NPC Accuracy Statistic adjustment of ( %i ) on ' %s ' for a hit chance of (+ %.0f) pct verse ' %s '. ",add_acc,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
-				Message(0, "#SET: [NPC Avoidance] = [%i]",add_acc + defender->CastToNPC()->GetAccuracyRating());
+				Message(CC_Default, "#Recommended NPC Accuracy Statistic adjustment of ( %i ) on ' %s ' for a hit chance of (+ %.0f) pct verse ' %s '. ",add_acc,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
+				Message(CC_Default, "#SET: [NPC Avoidance] = [%i]",add_acc + defender->CastToNPC()->GetAccuracyRating());
 			}
 			else if (attacker->IsClient()){
-				Message(0, "#Recommended Client Accuracy Bonus adjustment of ( %i ) on ' %s ' for a hit chance of (+ %.0f) pct verse ' %s '. ",add_acc,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
-				Message(0, "#Modify (+/-): [Item Mod2 Accuracy]     [%i]",add_acc);
-				Message(0, "#Modify (+/-): [SE_Accuracy(216)]       [%i]",add_acc);
-				Message(0, "#Modify (+/-): [SE_HitChance(184)]      [%i]",add_acc / 15);
+				Message(CC_Default, "#Recommended Client Accuracy Bonus adjustment of ( %i ) on ' %s ' for a hit chance of (+ %.0f) pct verse ' %s '. ",add_acc,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
+				Message(CC_Default, "#Modify (+/-): [Item Mod2 Accuracy]     [%i]",add_acc);
+				Message(CC_Default, "#Modify (+/-): [SE_Accuracy(216)]       [%i]",add_acc);
+				Message(CC_Default, "#Modify (+/-): [SE_HitChance(184)]      [%i]",add_acc / 15);
 			}
 
 			return;
@@ -819,8 +819,8 @@ void Mob::Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_
 
 	tmp_hit_chance = Tune_CheckHitChance(defender, attacker, skillinuse, MainPrimary,0,0,acc_override, 0);
 
-	Message(0, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
-	Message(0, "#Tune - Processing... Find Avoidance for hit chance on defender of (%.0f) pct from attacker. [Current Hit Chance %.2f]", hit_chance, tmp_hit_chance);
+	Message(CC_Default, "#Tune - Begin Parse [Interval %i Max Loop Iterations %i]", interval, max_loop);
+	Message(CC_Default, "#Tune - Processing... Find Avoidance for hit chance on defender of (%.0f) pct from attacker. [Current Hit Chance %.2f]", hit_chance, tmp_hit_chance);
 
 	if (tmp_hit_chance < hit_chance)
 		interval = interval * -1;
@@ -830,7 +830,7 @@ void Mob::Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_
 		tmp_hit_chance = Tune_CheckHitChance(defender, attacker, skillinuse, MainPrimary, 0,0, acc_override, 0,0,add_avoid);
 
 		if (Msg >= 3)
-			Message(0, "#Tune - Processing... [%i] [AVOIDANCE %i] Hit Chance %.2f ",j,add_avoid,tmp_hit_chance);
+			Message(CC_Default, "#Tune - Processing... [%i] [AVOIDANCE %i] Hit Chance %.2f ",j,add_avoid,tmp_hit_chance);
 
 		if (interval > 0 && tmp_hit_chance <= hit_chance){
 			end = true;
@@ -844,16 +844,16 @@ void Mob::Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_
 			
 			Tune_CheckHitChance(defender,attacker, skillinuse, MainPrimary,0,Msg,acc_override, 0);//Display Stat Report
 			
-			Message(0, " ");
+			Message(CC_Default, " ");
 
 			if (defender->IsNPC()){
-				Message(0, "#Recommended NPC Avoidance Statistic adjustment of ( %i ) on ' %s ' for a hit chance of ( %.0f) pct from ' %s '. ",add_avoid,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
-				Message(0, "#SET: [NPC Avoidance] = [%i]",add_avoid + defender->CastToNPC()->GetAvoidanceRating());
+				Message(CC_Default, "#Recommended NPC Avoidance Statistic adjustment of ( %i ) on ' %s ' for a hit chance of ( %.0f) pct from ' %s '. ",add_avoid,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
+				Message(CC_Default, "#SET: [NPC Avoidance] = [%i]",add_avoid + defender->CastToNPC()->GetAvoidanceRating());
 			}
 			else if (defender->IsClient()){
-				Message(0, "#Recommended Client Avoidance Bonus adjustment of ( %i ) on ' %s ' for a hit chance of ( %.0f) pct from ' %s '. ",add_avoid,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
-				Message(0, "#Modify (+/-): [Item Mod2 Avoidance] [%i]",add_avoid);
-				Message(0, "#Modify (+/-): [SE_AvoidMeleeChance(172)]  [%i]",add_avoid / 10);
+				Message(CC_Default, "#Recommended Client Avoidance Bonus adjustment of ( %i ) on ' %s ' for a hit chance of ( %.0f) pct from ' %s '. ",add_avoid,defender->GetCleanName(), hit_chance, attacker->GetCleanName());
+				Message(CC_Default, "#Modify (+/-): [Item Mod2 Avoidance] [%i]",add_avoid);
+				Message(CC_Default, "#Modify (+/-): [SE_AvoidMeleeChance(172)]  [%i]",add_avoid / 10);
 			}
 
 			return;
@@ -862,8 +862,8 @@ void Mob::Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_
 		add_avoid = add_avoid + interval;
 	}
 
-	Message(0, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", hit_chance, interval, max_loop);
-	Message(0, "#Tune - Parse ended at AVOIDANCE ADJUSTMENT ( %i ) at hit chance of (%.0f) / (%.0f) pct.",add_avoid,tmp_hit_chance / hit_chance);
+	Message(CC_Default, "#Tune - Error: Unable to find desired result for (%.0f) pct - Increase interval (%i) AND/OR max loop value (%i) and run again.", hit_chance, interval, max_loop);
+	Message(CC_Default, "#Tune - Parse ended at AVOIDANCE ADJUSTMENT ( %i ) at hit chance of (%.0f) / (%.0f) pct.",add_avoid,tmp_hit_chance / hit_chance);
 }
 
 
@@ -877,15 +877,15 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 
 	if (Msg){
 		
-		Message(0, "######### Hit Chance Report: Start [Detail Level %i]#########", Msg);
-		Message(0, "#ATTACKER: %s", attacker->GetCleanName());
-		Message(0, "#DEFENDER: %s", defender->GetCleanName());
+		Message(CC_Default, "######### Hit Chance Report: Start [Detail Level %i]#########", Msg);
+		Message(CC_Default, "#ATTACKER: %s", attacker->GetCleanName());
+		Message(CC_Default, "#DEFENDER: %s", defender->GetCleanName());
 		if (Msg >= 2){ 
-			Message(0, " "); 
-			Message(0, "### Calculate Base Hit Chance ###"); 
-			Message(0, "# + %.2f Total: %.2f #### RuleR(Combat, BaseHitChance)", RuleR(Combat, BaseHitChance), RuleR(Combat, BaseHitChance));
+			Message(CC_Default, " "); 
+			Message(CC_Default, "### Calculate Base Hit Chance ###"); 
+			Message(CC_Default, "# + %.2f Total: %.2f #### RuleR(Combat, BaseHitChance)", RuleR(Combat, BaseHitChance), RuleR(Combat, BaseHitChance));
 			if (attacker->IsNPC())
-				Message(0, "# + %.2f Total: %.2f #### RuleR(Combat, NPCBonusHitChance)", RuleR(Combat, NPCBonusHitChance), chancetohit);
+				Message(CC_Default, "# + %.2f Total: %.2f #### RuleR(Combat, NPCBonusHitChance)", RuleR(Combat, NPCBonusHitChance), chancetohit);
 		}
 	}
 
@@ -937,27 +937,27 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 	}
 
 	if (Msg >= 2)
-		Message(0, "# + %.2f Total: %.2f #### Level Modifers",  chancetohit - temp_chancetohit, chancetohit);
+		Message(CC_Default, "# + %.2f Total: %.2f #### Level Modifers",  chancetohit - temp_chancetohit, chancetohit);
 	
 	temp_chancetohit = chancetohit;
 
 	chancetohit -= ((float)defender->GetAGI() * RuleR(Combat, AgiHitFactor));
 
 	if (Msg >= 2)
-		Message(0, "# - %.2f Total: %.2f #### DEFENDER Agility",  ((float)defender->GetAGI() * RuleR(Combat, AgiHitFactor)), chancetohit);
+		Message(CC_Default, "# - %.2f Total: %.2f #### DEFENDER Agility",  ((float)defender->GetAGI() * RuleR(Combat, AgiHitFactor)), chancetohit);
 	
 	if(attacker->IsClient())
 	{
 		chancetohit -= (RuleR(Combat,WeaponSkillFalloff) * (attacker->CastToClient()->MaxSkill(skillinuse) - attacker->GetSkill(skillinuse)));
 		if (Msg >= 2)
-			Message(0, "# - %.2f Total: %.2f ##### ATTACKER Wpn Skill Mod: ",  (RuleR(Combat,WeaponSkillFalloff) * (attacker->CastToClient()->MaxSkill(skillinuse) - attacker->GetSkill(skillinuse))), chancetohit);
+			Message(CC_Default, "# - %.2f Total: %.2f ##### ATTACKER Wpn Skill Mod: ",  (RuleR(Combat,WeaponSkillFalloff) * (attacker->CastToClient()->MaxSkill(skillinuse) - attacker->GetSkill(skillinuse))), chancetohit);
 	}
 		
 	if(defender->IsClient())
 	{
 		chancetohit += (RuleR(Combat,WeaponSkillFalloff) * (defender->CastToClient()->MaxSkill(SkillDefense) - defender->GetSkill(SkillDefense)));
 		if (Msg >= 2)
-			Message(0, "# + %.2f Total: %.2f #### DEFENDER Defense Skill Mod",  (RuleR(Combat,WeaponSkillFalloff) * (defender->CastToClient()->MaxSkill(SkillDefense) - defender->GetSkill(SkillDefense))), chancetohit);
+			Message(CC_Default, "# + %.2f Total: %.2f #### DEFENDER Defense Skill Mod",  (RuleR(Combat,WeaponSkillFalloff) * (defender->CastToClient()->MaxSkill(SkillDefense) - defender->GetSkill(SkillDefense))), chancetohit);
 	}
 	
 
@@ -965,20 +965,20 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 	if(attacker->spellbonuses.MeleeSkillCheckSkill == skillinuse || attacker->spellbonuses.MeleeSkillCheckSkill == 255) {
 		chancetohit += attacker->spellbonuses.MeleeSkillCheck;
 		if (Msg >= 2)
-			Message(0, "# + %.2f Total: %.2f #### ATTACKER SE_MeleeSkillCheck(183) Spell Bonus", attacker->spellbonuses.MeleeSkillCheck , chancetohit);
+			Message(CC_Default, "# + %.2f Total: %.2f #### ATTACKER SE_MeleeSkillCheck(183) Spell Bonus", attacker->spellbonuses.MeleeSkillCheck , chancetohit);
 	}
 	if(attacker->itembonuses.MeleeSkillCheckSkill == skillinuse || attacker->itembonuses.MeleeSkillCheckSkill == 255) {
 		chancetohit += attacker->itembonuses.MeleeSkillCheck;
 		if (Msg >= 2)
-			Message(0, "# + %.2f Total: %.2f #### ATTACKER SE_MeleeSkillCheck(183) Worn Bonus", attacker->itembonuses.MeleeSkillCheck , chancetohit);
+			Message(CC_Default, "# + %.2f Total: %.2f #### ATTACKER SE_MeleeSkillCheck(183) Worn Bonus", attacker->itembonuses.MeleeSkillCheck , chancetohit);
 	}
 
 	if (Msg)
-		Message(0, "#FINAL Base Hit Chance: %.2f percent", chancetohit);
+		Message(CC_Default, "#FINAL Base Hit Chance: %.2f percent", chancetohit);
 
 	if (Msg >= 2){
-		Message(0, " ");
-		Message(0, "######### Calculate Avoidance Bonuses  #########");
+		Message(CC_Default, " ");
+		Message(CC_Default, "######### Calculate Avoidance Bonuses  #########");
 	}
 
 	//Avoidance Bonuses on defender decreases baseline hit chance by percent.
@@ -989,13 +989,13 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 
 	if (Msg >= 2){
 		if (defender->aabonuses.AvoidMeleeChanceEffect)
-			Message(0, "# %i #### DEFENDER SE_AvoidMeleeChance(172) AA Bonus", defender->aabonuses.AvoidMeleeChanceEffect);
+			Message(CC_Default, "# %i #### DEFENDER SE_AvoidMeleeChance(172) AA Bonus", defender->aabonuses.AvoidMeleeChanceEffect);
 		if (defender->spellbonuses.AvoidMeleeChanceEffect)
-			Message(0, "# %i #### DEFENDER SE_AvoidMeleeChance(172) Spell Bonus", defender->spellbonuses.AvoidMeleeChanceEffect);
+			Message(CC_Default, "# %i #### DEFENDER SE_AvoidMeleeChance(172) Spell Bonus", defender->spellbonuses.AvoidMeleeChanceEffect);
 		if (defender->itembonuses.AvoidMeleeChanceEffect)
-			Message(0, "# %i #### DEFENDER SE_AvoidMeleeChance(172) Worn Bonus", defender->itembonuses.AvoidMeleeChanceEffect);
+			Message(CC_Default, "# %i #### DEFENDER SE_AvoidMeleeChance(172) Worn Bonus", defender->itembonuses.AvoidMeleeChanceEffect);
 		if (defender->itembonuses.AvoidMeleeChance)
-			Message(0, "# %i #### DEFENDER Avoidance Item Mod2 Bonus[Amt: %i] ", defender->itembonuses.AvoidMeleeChance / 10.0f,defender->itembonuses.AvoidMeleeChance);
+			Message(CC_Default, "# %i #### DEFENDER Avoidance Item Mod2 Bonus[Amt: %i] ", defender->itembonuses.AvoidMeleeChance / 10.0f,defender->itembonuses.AvoidMeleeChance);
 	}
 
 
@@ -1010,18 +1010,18 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 	
 		if (Msg >= 2){
 			if (owner->aabonuses.PetAvoidance)
-				Message(0, "# %i #### DEFENDER SE_PetAvoidance(215) AA Bonus", owner->aabonuses.PetAvoidance);
+				Message(CC_Default, "# %i #### DEFENDER SE_PetAvoidance(215) AA Bonus", owner->aabonuses.PetAvoidance);
 			if (owner->aabonuses.PetAvoidance)
-				Message(0, "# %i #### DEFENDER SE_PetAvoidance(215) Spell Bonus", owner->itembonuses.PetAvoidance);
+				Message(CC_Default, "# %i #### DEFENDER SE_PetAvoidance(215) Spell Bonus", owner->itembonuses.PetAvoidance);
 			if (owner->aabonuses.PetAvoidance)
-				Message(0, "# %i #### DEFENDER SE_PetAvoidance(215) Worn Bonus", owner->spellbonuses.PetAvoidance);
+				Message(CC_Default, "# %i #### DEFENDER SE_PetAvoidance(215) Worn Bonus", owner->spellbonuses.PetAvoidance);
 		}
 	}
 
 	if(defender->IsNPC()){
 		avoidanceBonus += ((defender->CastToNPC()->GetAvoidanceRating() + add_avoid) / 10.0f); //Modifier from database
 		if (Msg >= 2)
-			Message(0, "# + %.2f #### DEFENDER NPC AVOIDANCE STAT [Stat Amt: %i] ", ((defender->CastToNPC()->GetAvoidanceRating() + add_avoid) / 10.0f),defender->CastToNPC()->GetAvoidanceRating());
+			Message(CC_Default, "# + %.2f #### DEFENDER NPC AVOIDANCE STAT [Stat Amt: %i] ", ((defender->CastToNPC()->GetAvoidanceRating() + add_avoid) / 10.0f),defender->CastToNPC()->GetAvoidanceRating());
 	}
 	else if(defender->IsClient()){
 		avoidanceBonus += (add_avoid / 10.0f); //Avoidance Item Mod
@@ -1031,15 +1031,15 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 	if (avoid_override){
 		avoidanceBonus = (avoid_override / 10.0f);
 		if (Msg >= 2)
-			Message(0, "%.2f #### DEFENDER 'AVOIDANCE OVERRIDE'", avoidanceBonus);
+			Message(CC_Default, "%.2f #### DEFENDER 'AVOIDANCE OVERRIDE'", avoidanceBonus);
 	}
 
 	if (Msg)
-		Message(0, "#FINAL Avoidance Bonus': %.2f percent ", avoidanceBonus);
+		Message(CC_Default, "#FINAL Avoidance Bonus': %.2f percent ", avoidanceBonus);
 
 	if (Msg >= 2){
-		Message(0, " ");
-		Message(0, "######### Calculate Accuracy Bonuses #########");
+		Message(CC_Default, " ");
+		Message(CC_Default, "######### Calculate Accuracy Bonuses #########");
 	}
 
 	//Hit Chance Bonuses on attacker increases baseline hit chance by percent.
@@ -1052,17 +1052,17 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 
 	if (Msg >= 2){
 		if (attacker->aabonuses.HitChanceEffect[HIGHEST_SKILL+1])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) AA Bonus [All Skills]", attacker->aabonuses.HitChanceEffect[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) AA Bonus [All Skills]", attacker->aabonuses.HitChanceEffect[HIGHEST_SKILL+1]);
 		if (attacker->spellbonuses.HitChanceEffect[HIGHEST_SKILL+1])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) Spell Bonus [All Skills]", attacker->spellbonuses.HitChanceEffect[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) Spell Bonus [All Skills]", attacker->spellbonuses.HitChanceEffect[HIGHEST_SKILL+1]);
 		if (attacker->itembonuses.HitChanceEffect[HIGHEST_SKILL+1])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) Worn Bonus [All Skills]", attacker->itembonuses.HitChanceEffect[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) Worn Bonus [All Skills]", attacker->itembonuses.HitChanceEffect[HIGHEST_SKILL+1]);
 		if (attacker->itembonuses.HitChanceEffect[skillinuse])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) AA Bonus [Skill]", attacker->aabonuses.HitChanceEffect[skillinuse]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) AA Bonus [Skill]", attacker->aabonuses.HitChanceEffect[skillinuse]);
 		if (attacker->spellbonuses.HitChanceEffect[skillinuse])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) Spell Bonus [Skill]", attacker->spellbonuses.HitChanceEffect[skillinuse]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) Spell Bonus [Skill]", attacker->spellbonuses.HitChanceEffect[skillinuse]);
 		if (attacker->itembonuses.HitChanceEffect[skillinuse])
-			Message(0, "# %i #### ATTACKER SE_HitChance(184) Worn Bonus [Skill]", attacker->itembonuses.HitChanceEffect[skillinuse]);
+			Message(CC_Default, "# %i #### ATTACKER SE_HitChance(184) Worn Bonus [Skill]", attacker->itembonuses.HitChanceEffect[skillinuse]);
 	}
 
 	//Accuracy = Spell Effect , HitChance = 'Accuracy' from Item Effect
@@ -1075,15 +1075,15 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 
 	if (Msg >= 2) {
 		if (attacker->aabonuses.Accuracy[HIGHEST_SKILL+1])
-			Message(0, "# %.2f #### ATTACKER SE_Accuracy(216) AA Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->aabonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->aabonuses.Accuracy[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %.2f #### ATTACKER SE_Accuracy(216) AA Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->aabonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->aabonuses.Accuracy[HIGHEST_SKILL+1]);
 		if (attacker->spellbonuses.Accuracy[HIGHEST_SKILL+1])
-			Message(0, "# %.2f #### ATTACKER SE_Accuracy(216) Spell Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->spellbonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->spellbonuses.Accuracy[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %.2f #### ATTACKER SE_Accuracy(216) Spell Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->spellbonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->spellbonuses.Accuracy[HIGHEST_SKILL+1]);
 		if (attacker->itembonuses.Accuracy[HIGHEST_SKILL+1])
-			Message(0, "# %.2f #### ATTACKER SE_Accuracy(216) Worn Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->itembonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->itembonuses.Accuracy[HIGHEST_SKILL+1]);
+			Message(CC_Default, "# %.2f #### ATTACKER SE_Accuracy(216) Worn Bonus [All Skills] [Stat Amt: %i]", static_cast<float>(attacker->itembonuses.Accuracy[HIGHEST_SKILL+1])/15.0f,attacker->itembonuses.Accuracy[HIGHEST_SKILL+1]);
 		if (attacker->aabonuses.Accuracy[skillinuse])
-			Message(0, "# %.2f #### ATTACKER SE_Accuracy(216) AA Bonus [Skill] [Stat Amt: %i]", static_cast<float>(attacker->aabonuses.Accuracy[skillinuse])/15.0f,attacker->aabonuses.Accuracy[skillinuse]);
+			Message(CC_Default, "# %.2f #### ATTACKER SE_Accuracy(216) AA Bonus [Skill] [Stat Amt: %i]", static_cast<float>(attacker->aabonuses.Accuracy[skillinuse])/15.0f,attacker->aabonuses.Accuracy[skillinuse]);
 		if (attacker->itembonuses.HitChance)
-			Message(0, "# %.2f #### ATTACKER Accuracy Item Mod2 Bonus [Stat Amt: %i]", static_cast<float>(attacker->itembonuses.HitChance)/15.0f,attacker->itembonuses.HitChance);
+			Message(CC_Default, "# %.2f #### ATTACKER Accuracy Item Mod2 Bonus [Stat Amt: %i]", static_cast<float>(attacker->itembonuses.HitChance)/15.0f,attacker->itembonuses.HitChance);
 	}
 
 	hitBonus += chance_mod; //Modifier applied from casted/disc skill attacks.
@@ -1092,12 +1092,12 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 		if (acc_override){
 			hitBonus = (acc_override / 10.0f);
 			if (Msg >= 2)
-				Message(0, "# %.2f #### ATTACKER 'ACCURACY OVERRIDE'", hitBonus);
+				Message(CC_Default, "# %.2f #### ATTACKER 'ACCURACY OVERRIDE'", hitBonus);
 		}
 		else {
 			hitBonus += ((attacker->CastToNPC()->GetAccuracyRating() + add_acc) / 10.0f); //Modifier from database
 			if (Msg >= 2){
-				Message(0, "# %.2f #### ATTACKER NPC ACCURACY STAT [Stat Amt: %i] ", ((attacker->CastToNPC()->GetAccuracyRating() + add_avoid) / 10.0f),attacker->CastToNPC()->GetAccuracyRating());
+				Message(CC_Default, "# %.2f #### ATTACKER NPC ACCURACY STAT [Stat Amt: %i] ", ((attacker->CastToNPC()->GetAccuracyRating() + add_avoid) / 10.0f),attacker->CastToNPC()->GetAccuracyRating());
 			}
 		}
 	}
@@ -1105,7 +1105,7 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 		if (acc_override){
 			hitBonus = (acc_override / 15.0f); 
 			if (Msg >= 2)
-				Message(0, "# %.2f #### ATTACKER 'ACCURACY OVERRIDE': %.2f ");
+				Message(CC_Default, "# %.2f #### ATTACKER 'ACCURACY OVERRIDE': %.2f ");
 		}
 		else
 			hitBonus += (add_acc / 15.0f); //Modifier from database
@@ -1114,20 +1114,20 @@ float Mob::Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skill
 	if(skillinuse == SkillArchery){
 		hitBonus -= hitBonus*RuleR(Combat, ArcheryHitPenalty);
 		if (Msg >= 2)
-			Message(0, "# %.2f pct #### RuleR(Combat, ArcheryHitPenalty) ", RuleR(Combat, ArcheryHitPenalty));
+			Message(CC_Default, "# %.2f pct #### RuleR(Combat, ArcheryHitPenalty) ", RuleR(Combat, ArcheryHitPenalty));
 	}
 
 	//Calculate final chance to hit
 	chancetohit += ((chancetohit * (hitBonus - avoidanceBonus)) / 100.0f);
 
 	if (Msg){
-		Message(0, "#FINAL Accuracy Bonus': %.2f percent", hitBonus);
+		Message(CC_Default, "#FINAL Accuracy Bonus': %.2f percent", hitBonus);
 
 		if (Msg >= 2)
-			Message(0, " ");
+			Message(CC_Default, " ");
 
-		Message(0, "#FINAL Hit Chance: %.2f percent [Max: %.2f Min: %.2f] ", chancetohit, RuleR(Combat,MaxChancetoHit), RuleR(Combat,MinChancetoHit) );
-		Message(0, "######### Hit Chance Report: Completed #########");
+		Message(CC_Default, "#FINAL Hit Chance: %.2f percent [Max: %.2f Min: %.2f] ", chancetohit, RuleR(Combat,MaxChancetoHit), RuleR(Combat,MinChancetoHit) );
+		Message(CC_Default, "######### Hit Chance Report: Completed #########");
 	}
 
 	chancetohit = mod_hit_chance(chancetohit, skillinuse, attacker);

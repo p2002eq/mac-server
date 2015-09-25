@@ -79,6 +79,9 @@ bool Client::Process() {
 		if(hpupdate_timer.Check())
 			SendHPUpdate();
 
+		if(client_distance_timer.Enabled() && client_distance_timer.Check())
+			entity_list.UpdateDistances(this);
+
 		if(mana_timer.Check())
 			SendManaUpdatePacket();
 
@@ -175,7 +178,14 @@ bool Client::Process() {
 			AI_Process();
 
 		if (bindwound_timer.Check() && bindwound_target != 0) {
-			BindWound(bindwound_target, false);
+			if(BindWound(bindwound_target, false))
+			{
+				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Bind wound failed, skillup check skipped.");
+			}
 		}
 
 		if(KarmaUpdateTimer)
@@ -422,7 +432,8 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 300, GetTarget(), false);
+				Mob *m = entity_list.GetMob(TrackingID);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, GetTarget(), m, false);
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;
@@ -492,11 +503,8 @@ bool Client::Process() {
 		if(disc_ability_timer.Check())
 		{
 			disc_ability_timer.Disable();
+			FadeDisc();
 
-			SetActiveDisc(0);
-			CalcBonuses();
-
-			Log.Out(Logs::General, Logs::Discs, "Ending currently enabled disc.");
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
 			d->disc_id = 0;
@@ -629,7 +637,7 @@ bool Client::Process() {
 	if (forget_timer.Check()) {
 		forget_timer.Disable();
 		entity_list.ClearZoneFeignAggro(this);
-		//Message(0,"Your enemies have forgotten you!");
+		//Message(CC_Default,"Your enemies have forgotten you!");
 	}
 
 	return ret;
@@ -816,20 +824,85 @@ void Client::SendCursorItems()
 		const ItemInst *inst = *iter;
 		SendItemPacket(MainCursor, inst, ItemPacketSummonItem);
 	}
+}
 
-	//Items in cursor container
-	//The client ignores these items. I couldn't find a packet from AK with bag cursor items being sent and
-	//have tried every packet type without luck. Perhaps our slotids are wrong? Workaround hack is in SwapItem.
-
-	/*int16 slot_id = 0;
-	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) {
+void Client::FillPPItems()
+{
+	int16 slot_id = 0;
+	int i = 0;
+	memset(m_pp.invItemProperties, 0, sizeof(OldItemProperties_Struct)*30);
+	for (slot_id = MainCursor; slot_id <= EmuConstants::GENERAL_END; slot_id++) 
+	{
 		const ItemInst* inst = m_inv[slot_id];
 		if (inst){
-			SendItemPacket(slot_id, inst, ItemPacketTrade);
-			Log.Out(Logs::Detail, Logs::Inventory, "Sending cursor bag with items.");
-			break;
+			m_pp.inventory[i] = inst->GetItem()->ID;
+			m_pp.invItemProperties[i].charges = inst->GetCharges();
 		}
-	}*/
+		else
+			m_pp.inventory[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bagItemProperties, 0, sizeof(OldItemProperties_Struct)*80);
+	for (slot_id = EmuConstants::GENERAL_BAGS_BEGIN; slot_id <= EmuConstants::GENERAL_BAGS_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.containerinv[i] = inst->GetItem()->ID;
+			m_pp.bagItemProperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.containerinv[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.cursorItemProperties, 0, sizeof(OldItemProperties_Struct)*10);
+	for (slot_id = EmuConstants::CURSOR_BAG_BEGIN; slot_id <= EmuConstants::CURSOR_BAG_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.cursorbaginventory[i] = inst->GetItem()->ID;
+			m_pp.cursorItemProperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.cursorbaginventory[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bankinvitemproperties, 0, sizeof(OldItemProperties_Struct)*8);
+	for (slot_id = EmuConstants::BANK_BEGIN; slot_id <= EmuConstants::BANK_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.bank_inv[i] = inst->GetItem()->ID;
+			m_pp.bankinvitemproperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.bank_inv[i] = 0xFFFF;
+
+		++i;
+	}
+
+	i = 0;
+	memset(m_pp.bankbagitemproperties, 0, sizeof(OldItemProperties_Struct)*80);
+	for (slot_id = EmuConstants::BANK_BAGS_BEGIN; slot_id <= EmuConstants::BANK_BAGS_END; slot_id++) 
+	{
+		const ItemInst* inst = m_inv[slot_id];
+		if (inst){
+			m_pp.bank_cont_inv[i] = inst->GetItem()->ID;
+			m_pp.bankbagitemproperties[i].charges = inst->GetCharges();
+		}
+		else
+			m_pp.bank_cont_inv[i] = 0xFFFF;
+
+		++i;
+	}
 }
 
 void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
@@ -868,6 +941,19 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		if (fac != 0 && GetModCharacterFactionLevel(fac) < ml.faction_required)
 			continue;
 
+		if(ml.quantity > 0)
+		{
+			if(ml.qty_left <= 0)
+			{
+				Log.Out(Logs::General, Logs::Trading, "Merchant is skipping item %d that has %d left.", ml.item, ml.qty_left);
+				continue;
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Trading, "Merchant is sending item %d that has %d left in slot %d.", ml.item, ml.qty_left, ml.slot);
+			}
+		}
+
 		handychance = zone->random.Int(0, merlist.size() + tmp_merlist.size() - 1);
 
 		item = database.GetItem(ml.item);
@@ -905,7 +991,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		// Account for merchant lists with gaps.
 		if (ml.slot >= i) {
 			if (ml.slot > i)
-				Log.Out(Logs::General, Logs::None, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
+				Log.Out(Logs::General, Logs::Trading, "(WARNING) Merchantlist contains gap at slot %d. Merchant: %d, NPC: %d", i, merchant_id, npcid);
 			i = ml.slot + 1;
 		}
 	}
@@ -979,8 +1065,6 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName(), handyitem->Name);
 		else
 			Message_StringID(CC_Default, GENERIC_STRINGID_SAY, merch->GetCleanName(), handy_id, this->GetName());
-
-		merch->CastToNPC()->FaceTarget(this->CastToMob());
 	}
 
 		int8 count = 0;
@@ -1440,23 +1524,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	{
 		if(*to_bucket + amount_to_add > *to_bucket)	// overflow check
 			*to_bucket += amount_to_add;
-
-		//shared bank plat
-		if (RuleB(Character, SharedBankPlat))
-		{
-			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared)
-			{
-				if (from_bucket == &m_pp.platinum_shared)
-					amount_to_add = 0 - amount_to_take;
-
-				database.SetSharedPlatinum(AccountID(),amount_to_add);
-			}
-		}
-		else{
-			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared){
-				this->Message(CC_Red, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM WILL BE DESTROYED IF YOU PUT IT HERE");
-			}
-		}
 	}
 
 	// if this is a trade move, inform the person being traded with
@@ -1736,7 +1803,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 				}
 			}
 
-			Message(0, "Local: Summoning %s to %f, %f, %f", gms->charname, gms->x, gms->y, gms->z);
+			Message(CC_Default, "Local: Summoning %s to %f, %f, %f", gms->charname, gms->x, gms->y, gms->z);
 			if (st->IsClient() && (st->CastToClient()->GetAnon() != 1 || this->Admin() >= st->CastToClient()->Admin()))
 				st->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), (float)gms->x, (float)gms->y, (float)gms->z, this->GetHeading(), true);
 			else
@@ -1747,7 +1814,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 			uint8 tmp = gms->charname[strlen(gms->charname)-1];
 			if (!worldserver.Connected())
 			{
-				Message(0, "Error: World server disconnected");
+				Message(CC_Default, "Error: World server disconnected");
 			}
 			else if (tmp < '0' || tmp > '9') // dont send to world if it's not a player's name
 			{

@@ -589,6 +589,14 @@ struct SuspendedMinion_Struct
 	/*610*/
 };
 
+struct OldItemProperties_Struct
+{
+
+	/*000*/	uint8	unknown01[2];
+	/*002*/	int8	charges;				// Comment: signed int because unlimited charges are -1
+	/*003*/	uint8	unknown02[7];
+	/*010*/
+};
 
 /*
 ** Player Profile
@@ -636,10 +644,6 @@ struct PlayerProfile_Struct
 /*0299*/	uint8				eyecolor2;			// Player right eye color
 /*0300*/	uint8				hairstyle;			// Player hair style
 /*0301*/	uint8				beard;				// Beard type
-/*0302*/	uint8				ability_time_seconds;	//The following four spots are unknown right now.....
-/*0303*/	uint8				ability_number;		//ability used
-/*0304*/	uint8				ability_time_minutes;
-/*0305*/	uint8				ability_time_hours;	//place holder
 /*0312*/	uint32				item_material[_MaterialCount];	// Item texture/material of worn/held items
 /*0392*/	Color_Struct		item_tint[_MaterialCount];
 /*0428*/	AA_Array			aa_array[MAX_PP_AA_ARRAY];
@@ -681,15 +685,12 @@ struct PlayerProfile_Struct
 /*4764*/	int32				copper_cursor;		// Copper on cursor
 /*4768*/	int32				platinum_shared;	// Platinum shared between characters
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
-/*5396*/	uint32				ability_down;		// Guessing
 /*5408*/	uint32				autosplit;			//not used right now
 /*5418*/	uint32				boatid;
 /*5420*/	uint32				zone_change_count;	// Number of times user has zoned in their career (guessing)
 /*5452*/	uint32				expansions;			// expansion setting, bit field of expansions avaliable
-/*5456*/	int32				toxicity;			//from drinking potions, seems to increase by 3 each time you drink
 /*5476*/	int32				hunger_level;
 /*5480*/	int32				thirst_level;
-/*5484*/	uint32				ability_up;
 /*5504*/	uint16				zone_id;			// Current zone of the player
 /*5506*/	uint16				zoneInstance;		// Instance ID
 /*5508*/	SpellBuff_Struct	buffs[BUFF_COUNT];	// Buffs currently on the player
@@ -703,11 +704,19 @@ struct PlayerProfile_Struct
 /*12800*/	uint32				expAA;
 /*12804*/	uint32				aapoints;			//avaliable, unspent
 /*12808*/	uint8				perAA;				//For Mac
-/*14124*/	uint32				ATR_PET_LOH_timer;
-			uint32				HarmTouchTimer;
 /*18630*/	SuspendedMinion_Struct	SuspendedMinion; // No longer in use
 /*19240*/	uint32				timeentitledonaccount;
 			uint8				fatigue;
+			int16				inventory[30];
+			struct  OldItemProperties_Struct	invItemProperties[30];
+			int16				containerinv[80];
+			struct  OldItemProperties_Struct	bagItemProperties[80];
+			int16				cursorbaginventory[10];
+			struct  OldItemProperties_Struct	cursorItemProperties[10];
+			int16				bank_inv[8];
+			struct  OldItemProperties_Struct	bankinvitemproperties[8];
+			int16				bank_cont_inv[80];
+			struct  OldItemProperties_Struct	bankbagitemproperties[80];
 /*19568*/
 };
 
@@ -720,7 +729,7 @@ struct PlayerProfile_Struct
 ** OpCode: 6221
 */
 struct ClientTarget_Struct {
-/*000*/	uint32	new_target;			// Target ID
+/*000*/	uint16	new_target;			// Target ID
 };
 
 struct PetCommand_Struct {
@@ -938,10 +947,8 @@ struct Death_Struct
 	  /*0005*/ int16	y_pos;                  // New X position of spawn
 	  /*0007*/ int16	x_pos;                  // New Y position of spawn
 	  /*0009*/ int16	z_pos;                  // New Z position of spawn
-	  /*0011*/ uint32	delta_y : 10,             // Y Velocity
-						spacer1 : 1,              // ***Placeholder
-						delta_z : 10,             // Z Velocity
-						spacer2 : 1,              // ***Placeholder
+	  /*0011*/ uint32	delta_y : 11,             // Y Velocity
+						delta_z : 11,             // Z Velocity
 						delta_x : 10;             // Z Velocity
 	  /*015*/
   };
@@ -1036,7 +1043,7 @@ enum ItemPacketType
 	ItemPacketTrade				= 0x67,
 	ItemPacketCharInventory		= 0x69,
 	ItemPacketSummonItem		= 0x6A,
-	ItemPacketTributeItem		= 0x6C,
+	ItemPacketStolenItem		= 0x6C,
 	ItemPacketMerchant			= 0x64,
 	ItemPacketWorldContainer	= 0x6B,
 	ItemPacketCharmUpdate		= 0x6E
@@ -1045,6 +1052,8 @@ struct ItemPacket_Struct
 {
 /*00*/	ItemPacketType	PacketType;
 /*04*/	uint16			fromid;
+		uint16			toid;
+		uint16			skill;
 /*06*/	char			SerializedItem[1];
 /*xx*/
 };
@@ -1707,14 +1716,14 @@ struct Door_Struct
 
 struct OldDoor_Struct
 {
-/*0000*/ char    name[16];            // Filename of Door // Was 10char long before... added the 6 in the next unknown to it: Daeken M. BlackBlade
+/*0000*/ char    name[16];            // Filename of Door
 /*0016*/ float   yPos;               // y loc
 /*0020*/ float   xPos;               // x loc
 /*0024*/ float   zPos;               // z loc
 /*0028*/ float	 heading;
-/*0032*/ uint16  incline;
+/*0032*/ uint16	 incline;
 /*0034*/ uint16	 size;
-/*0036*/ uint8	 unknown[2];
+/*0036*/ uint16	 unknown;
 /*0038*/ uint8	 doorid;             // door's id #
 /*0039*/ uint8	 opentype;
 /*0040*/ uint8	 doorIsOpen;
@@ -1911,23 +1920,6 @@ struct	ItemViewRequest_Struct
 	/*066*/
 };
 
-/*
- * Client to server packet
- */
-struct PickPocket_Struct {
-// Size 18
-	uint32 to;
-	uint32 from;
-	uint16 myskill;
-	uint8 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
-	uint8 unknown1; // 0 for response, unknown for input
-	uint32 coin;
-	uint8 lastsix[2];
-};
-/*
- * Server to client packet
- */
-
 enum {
 	PickPocketFailed = 0,
 	PickPocketPlatinum = 1,
@@ -1937,42 +1929,35 @@ enum {
 	PickPocketItem = 5
 };
 
-
-struct sPickPocket_Struct {
-	// Size 28 = coin/fail
-	uint32 to;
-	uint32 from;
-	uint32 myskill;
-	uint32 type;
-	uint32 coin;
-	char itemname[64];
+struct PickPocket_Struct 
+{
+// Size 18
+    uint16 to;
+    uint16 from;
+    uint16 myskill;
+    uint16 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint32 coin;
+    uint8 data[6];
 };
 
-struct LogServer_Struct {
-// Op_Code OP_LOGSERVER
-/*000*/	uint32	unknown000;
-/*004*/	uint8	enable_pvp;
-/*005*/	uint8	unknown005;
-/*006*/	uint8	unknown006;
-/*007*/	uint8	unknown007;
-/*008*/	uint8	enable_FV;
-/*009*/	uint8	unknown009;
-/*010*/	uint8	unknown010;
-/*011*/	uint8	unknown011;
-/*012*/	uint32	unknown012;	// htonl(1) on live
-/*016*/	uint32	unknown016;	// htonl(1) on live
-/*020*/	uint8	unknown020[12];
-/*032*/	char	worldshortname[32];
-/*064*/	uint8	unknown064[32];
-/*096*/	char	unknown096[16];	// 'pacman' on live
-/*112*/	char	unknown112[16];	// '64.37,148,36' on live
-/*126*/	uint8	unknown128[48];
-/*176*/	uint32	unknown176;	// htonl(0x00002695)
-/*180*/	char	unknown180[80];	// 'eqdataexceptions@mail.station.sony.com' on live
-/*260*/	uint8	enable_petition_wnd;
-/*261*/	uint8	enablevoicemacros;
-/*262*/	uint8	enablemail;
-/*264*/
+struct LogServer_Struct
+{
+	/*000*/	uint32	enable_FV; //Is FV ruleset?
+	/*004*/	uint32	enable_pvp; //Is a Zek-era server?
+	/*008*/	uint32	auto_identify; //Dunno, keep 0
+	/*012*/	uint32	NameGen;	// Name generator enabled?
+	/*016*/	uint32	Gibberish;
+	/*020*/	uint32	test_server;
+	/*024*/	uint32	Locale;
+	/*028*/	uint32	ProfanityFilter;
+	/*032*/	char	worldshortname[32]; //ServerName on disasm
+	/*064*/	uint8	loggingServerPassword[32]; //  loggingServerPassword
+	/*096*/	char	unknown096[16];	// 'pacman' on live
+	/*112*/	char	loggingServerAddress[16];	// '64.37,148,36' on live
+	/*126*/	uint8	unknown128[48];
+	/*176*/	uint32	loggingServerPort;
+	/*180*/	char	localizedEmailAddress[64];	// 'eqdataexceptions@mail.station.sony.com' on live
+	/*244*/
 };
 
 struct ApproveWorld_Struct {
@@ -2268,6 +2253,8 @@ struct MerchantList {
 	int8	level_required;
 	uint32	classes_required;
 	uint8	probability;
+	uint8	quantity;
+	uint8	qty_left; // Not stored in the DB
 };
 
 struct TempMerchantList {
@@ -2490,11 +2477,15 @@ struct GMSearchCorpse_Struct
 
 struct BeggingResponse_Struct
 {
-/*00*/	uint32	Unknown00;
-/*04*/	uint32	Unknown04;
-/*08*/	uint32	Unknown08;
-/*12*/	uint32	Result;	// 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
-/*16*/	uint32	Amount;
+/*00*/	uint16	target;
+/*02*/	uint16	begger;
+/*04*/	uint8	skill;
+/*05*/	uint8	unknown1;
+/*06*/	int8	Result;	// -1 = Request, 0 = Fail, 1 = Plat, 2 = Gold, 3 = Silver, 4 = Copper
+/*07*/	uint8	unknown2;
+/*08*/	uint32	Amount;
+/*12*/	uint32	unknown3;
+/*16*/	uint8	unknown4[2];
 };
 
 struct CorpseDrag_Struct
@@ -2513,6 +2504,7 @@ struct ServerLootItem_Struct {
 	uint8	min_level;		  // 
 	uint8	max_level;		  // 
 	uint8	quest;
+	uint8	pet;
 };
 
 struct Checksum_Struct {
@@ -2628,6 +2620,11 @@ struct MBEraseRequest_Struct {
 struct ZoneFlags_Struct {
 	uint32 zoneid;
 	uint8  key;
+};
+
+struct ConsentDenied_Struct {
+	char oname[64];
+	uint32 ccharid;
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;

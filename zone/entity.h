@@ -196,6 +196,7 @@ public:
 	void	ProcessProximitySay(const char *Message, Client *c, uint8 language = 0);
 	void	SendAATimer(uint32 charid,UseAA_Struct* uaa);
 	Doors *FindDoor(uint8 door_id);
+	Doors	*FindNearestDoor(Client* c);
 	Object *FindObject(uint32 object_id);
 	Object*	FindNearbyObject(float x, float y, float z, float radius);
 	bool	MakeDoorSpawnPacket(EQApplicationPacket* app, Client *client);
@@ -284,7 +285,7 @@ public:
 	void	InterruptTargeted(Mob* mob);
 	void	ReplaceWithTarget(Mob* pOldMob, Mob*pNewTarget);
 	void	QueueCloseClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
-	void	QueueCloseClientsSplit(Mob* sender, const EQApplicationPacket* app, const EQApplicationPacket* app2 = nullptr, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
+	void	QueueCloseClientsPrecalc(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, Mob* SkipThisMob = 0, bool ackreq = true, bool special = false);
 	void	QueueClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, bool ackreq = true);
 	void	QueueClientsStatus(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint8 minstatus = 0, uint8 maxstatus = 0);
 	void	QueueClientsGuild(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint32 guildeqid = 0);
@@ -309,7 +310,7 @@ public:
 	void	OpenDoorsNear(NPC* opener);
 	void	OpenDoorsNearCoords(NPC* opener, glm::vec4 position);
 	void	UpdateWho(bool iSendFullUpdate = false);
-	void	SendPositionUpdates(Client* client, uint32 cLastUpdate = 0, float range = 0, Entity* alwayssend = 0, bool iSendEvenIfNotChanged = false);
+	void	SendPositionUpdates(Client* client, uint32 cLastUpdate = 0, Entity* alwayssend = 0, Entity* alwayssend2 = 0, bool iSendEvenIfNotChanged = false);
 	char*	MakeNameUnique(char* name);
 	static char* RemoveNumbers(char* name);
 	void	SignalMobsByNPCID(uint32 npc_type, int signal_id);
@@ -335,7 +336,8 @@ public:
 	void	ClearAggro(Mob* targ);
 	void	ClearFeignAggro(Mob* targ);
 	void	ClearZoneFeignAggro(Client* targ);
-	void	AggroZone(Mob* who, int hate = 0);
+	void	CheckNearbyNodes(Client* c);
+	void	AggroZone(Mob* who, int hate = 0, bool use_ignore_dist = false);
 
 	bool	Fighting(Mob* targ);
 	void	RemoveFromHateLists(Mob* mob, bool settoone = false);
@@ -359,6 +361,8 @@ public:
 	bool	AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint16 iSpellTypes);
 	Mob*	GetTargetForMez(Mob* caster);
 	uint32	CheckNPCsClose(Mob *center);
+	void	UpdateNewClientDistances(Client *client);
+	void	UpdateDistances(Client *client);
 
 	Corpse* GetClosestCorpse(Mob* sender, const char *Name);
 	NPC* GetClosestBanker(Mob* sender, uint32 &distance);
@@ -395,8 +399,14 @@ public:
 	void SendLFG(Client* client, bool lfg);
 
 	void GetBoatInfo(Client* client);
+	void GetTrapInfo(Client* client);
+	bool IsTrapGroupSpawned(uint32 trap_id, uint8 group);
+	void UpdateAllTraps(bool respawn, bool repopnow = false);
+	void ClearTrapPointers();
 	uint8 GetClientCountByBoatID(uint32 boatid);
-	bool TranfserPrimaryAggro(Mob* other);
+	bool TransferPrimaryAggro(Mob* other);
+	void SendMerchantEnd(Mob* merchant);
+
 
 protected:
 	friend class Zone;

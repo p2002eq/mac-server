@@ -394,7 +394,7 @@ Corpse::Corpse(Client* client, int32 in_rezexp, uint8 in_killedby) : Mob (
 		database.TransactionBegin();
 		if (removed_list.size() != 0) {
 			std::stringstream ss("");
-			ss << "DELETE FROM inventory WHERE charid=" << client->CharacterID();
+			ss << "DELETE FROM character_inventory WHERE id=" << client->CharacterID();
 			ss << " AND (";
 			std::list<uint32>::const_iterator iter = removed_list.begin();
 			bool first = true;
@@ -1104,11 +1104,13 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
 			if (!IsPlayerCorpse() || item_data->equip_slot <= EmuConstants::GENERAL_END || item_data->equip_slot == MainPowerSource || Loot_Request_Type >= 3 ||
 				(item_data->equip_slot >= EmuConstants::CURSOR_QUEUE_BEGIN && item_data->equip_slot <= EmuConstants::CURSOR_QUEUE_END)) {
-				if (i < corpselootlimit) {
+				if (i < corpselootlimit) 
+				{
 					if(!RuleB(NPC, IgnoreQuestLoot) || (RuleB(NPC, IgnoreQuestLoot) && item_data->quest == 0))
 					{
 						item = database.GetItem(item_data->item_id);
-						if(client && item) {
+						if(client && item && (item_data->quest == 0 || (item_data->quest == 1 && item->NoDrop != 0))) 
+						{
 							ItemInst* inst = database.CreateItem(item, item_data->charges);
 							if(inst) {
 								// MainGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = MainGeneral1 + MainCursor
@@ -1128,8 +1130,8 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 		if(IsPlayerCorpse() && (char_id == client->CharacterID() || client->GetGM())) {
 			if(i > corpselootlimit) {
 				client->Message(CC_Yellow, "*** This corpse contains more items than can be displayed! ***");
-				client->Message(0, "Remove items and re-loot corpse to access remaining inventory.");
-				client->Message(0, "(%s contains %i additional %s.)", GetName(), (i - corpselootlimit), (i - corpselootlimit) == 1 ? "item" : "items");
+				client->Message(CC_Default, "Remove items and re-loot corpse to access remaining inventory.");
+				client->Message(CC_Default, "(%s contains %i additional %s.)", GetName(), (i - corpselootlimit), (i - corpselootlimit) == 1 ? "item" : "items");
 			}
 
 			if (IsPlayerCorpse() && i == 0 && itemlist.size() > 0) { // somehow, player corpse contains items, but client doesn't see them...
@@ -1143,7 +1145,7 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 					ServerLootItem_Struct* item_data = *cur;
 					item = database.GetItem(item_data->item_id);
 					Log.Out(Logs::General, Logs::Corpse, "Corpse Looting: %s was not sent to client loot window (corpse_dbid: %i, charname: %s(%s))", item->Name, GetCorpseDBID(), client->GetName(), client->GetGM() ? "GM" : "Owner");
-					client->Message(0, "Inaccessable Corpse Item: %s", item->Name);
+					client->Message(CC_Default, "Inaccessable Corpse Item: %s", item->Name);
 				}
 			}
 		}
@@ -1244,7 +1246,7 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 					bag_item = database.GetItem(bag_item_data[i]->item_id);
 					if (bag_item && client->CheckLoreConflict(bag_item))
 					{
-						client->Message(0, "You cannot loot this container. The %s inside is a Lore Item and you already have one.", bag_item->Name);
+						client->Message(CC_Default, "You cannot loot this container. The %s inside is a Lore Item and you already have one.", bag_item->Name);
 						SendEndLootErrorPacket(client);
 						being_looted_by = 0;
 						delete inst;
@@ -1314,15 +1316,20 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 			0x12);
 		safe_delete_array(link2);
 
-		client->Message_StringID(MT_LootMessages, LOOTED_MESSAGE, link);
-		if (!IsPlayerCorpse()) {
+		if (!IsPlayerCorpse()) 
+		{
+			client->Message_StringID(MT_LootMessages, LOOTED_MESSAGE, link);
+
 			Group *g = client->GetGroup();
-			if (g != nullptr) {
+			if (g != nullptr) 
+			{
 				g->GroupMessage_StringID(client, MT_LootMessages, OTHER_LOOTED_MESSAGE, client->GetName(), link);
 			}
-			else {
+			else
+			{
 				Raid *r = client->GetRaid();
-				if (r != nullptr) {
+				if (r != nullptr) 
+				{
 					r->RaidMessage_StringID(client, MT_LootMessages, OTHER_LOOTED_MESSAGE, client->GetName(), link);
 				}
 			}
@@ -1368,7 +1375,7 @@ void Corpse::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho) {
 
 void Corpse::QueryLoot(Client* to) {
 	int x = 0, y = 0; // x = visible items, y = total items
-	to->Message(0, "Coin: %ip, %ig, %is, %ic", platinum, gold, silver, copper);
+	to->Message(CC_Default, "Coin: %ip, %ig, %is, %ic", platinum, gold, silver, copper);
 
 	ItemList::iterator cur, end;
 	cur = itemlist.begin();
@@ -1402,19 +1409,19 @@ void Corpse::QueryLoot(Client* to) {
 			const Item_Struct* item = database.GetItem(sitem->item_id);
 
 			if (item)
-				to->Message(0, "LootSlot: %i Item: %s (%d), Count: %i", sitem->lootslot, item->Name, item->ID, sitem->charges);
+				to->Message(CC_Default, "LootSlot: %i Item: %s (%d), Count: %i", sitem->lootslot, item->Name, item->ID, sitem->charges);
 			else
-				to->Message(0, "Error: 0x%04x", sitem->item_id);
+				to->Message(CC_Default, "Error: 0x%04x", sitem->item_id);
 
 			y++;
 		}
 	}
 
 	if (IsPlayerCorpse()) {
-		to->Message(0, "%i visible %s (%i total) on %s (DBID: %i).", x, x==1?"item":"items", y, this->GetName(), this->GetCorpseDBID());
+		to->Message(CC_Default, "%i visible %s (%i total) on %s (DBID: %i).", x, x==1?"item":"items", y, this->GetName(), this->GetCorpseDBID());
 	}
 	else {
-		to->Message(0, "%i %s on %s.", y, y == 1 ? "item" : "items", this->GetName());
+		to->Message(CC_Default, "%i %s on %s.", y, y == 1 ? "item" : "items", this->GetName());
 	}
 }
 
@@ -1431,7 +1438,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 				is_corpse_changed = true;
 			}
 			else {
-				client->Message(0, "Corpse is too far away.");
+				client->Message_StringID(CC_Default, CORPSE_TOO_FAR);
 				return false;
 			}
 		}
@@ -1446,14 +1453,14 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 						is_corpse_changed = true;
 					}
 					else {
-						client->Message(0, "Corpse is too far away.");
+						client->Message_StringID(CC_Default, CORPSE_TOO_FAR);
 						return false;
 					}
 					consented = true;
 				}
 			}
 			if(!consented) {
-				client->Message(0, "You do not have permission to move this corpse.");
+				client->Message_StringID(CC_Default, CONSENT_NONE);
 				return false;
 			}
 		}

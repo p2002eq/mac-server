@@ -575,6 +575,11 @@ int Mob::MonkSpecialAttack(Mob* other, uint8 unchecked_type)
 
 	DoSpecialAttackDamage(other, skill_type, ndamage, min_dmg, ht, reuse);
 
+	if(IsClient() && CastToClient()->HasInstantDisc(skill_type))
+	{
+		CastToClient()->FadeDisc();
+	}
+
 	return(reuse);
 }
 
@@ -610,7 +615,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 
 	if (bIsBehind || bCanFrontalBS){ // Player is behind other OR can do Frontal Backstab
 		if (bCanFrontalBS)
-			CastToClient()->Message(0,"Your fierce attack is executed with such grace, your target did not see it coming!");
+			CastToClient()->Message(CC_Default,"Your fierce attack is executed with such grace, your target did not see it coming!");
 
 		RogueBackstab(other,false,ReuseTime);
 		if (level > 54) {
@@ -754,7 +759,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	if(!CanDoubleAttack && ((attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
-		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		//Message(CC_Default, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 	const ItemInst* RangeWeapon = m_inv[MainRange];
@@ -765,12 +770,12 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
+		Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have no bow!", GetItemIDAt(MainRange));
 		return;
 	}
 	if (!Ammo || !Ammo->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ammo item (%d) in slot %d", GetItemIDAt(MainAmmo), MainAmmo);
-		Message(0, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
+		Message(CC_Default, "Error: Ammo: GetItem(%i)==0, you have no ammo!", GetItemIDAt(MainAmmo));
 		return;
 	}
 
@@ -779,12 +784,12 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 
 	if(RangeItem->ItemType != ItemTypeBow) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ranged item is not a bow. type %d.", RangeItem->ItemType);
-		Message(0, "Error: Rangeweapon: Item %d is not a bow.", RangeWeapon->GetID());
+		Message(CC_Default, "Error: Rangeweapon: Item %d is not a bow.", RangeWeapon->GetID());
 		return;
 	}
 	if(AmmoItem->ItemType != ItemTypeArrow) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ammo item is not an arrow. type %d.", AmmoItem->ItemType);
-		Message(0, "Error: Ammo: type %d != %d, you have the wrong type of ammo!", AmmoItem->ItemType, ItemTypeArrow);
+		Message(CC_Default, "Error: Ammo: type %d != %d, you have the wrong type of ammo!", AmmoItem->ItemType, ItemTypeArrow);
 		return;
 	}
 
@@ -835,13 +840,13 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		}
 	}
 
-	float range = RangeItem->Range + AmmoItem->Range + 5.0f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
+	float range = RangeItem->Range + AmmoItem->Range + 7.5f; //Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0
 	Log.Out(Logs::Detail, Logs::Combat, "Calculated bow range to be %.1f", range);
 	range *= range;
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack out of range... client should catch this. (%f > %f).\n", dist, range);
-		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
+		Message_StringID(CC_Red,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
 	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
@@ -868,7 +873,8 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 	int ChanceAvoidConsume = aabonuses.ConsumeProjectile + itembonuses.ConsumeProjectile + spellbonuses.ConsumeProjectile;
 
 	if (!ChanceAvoidConsume || (ChanceAvoidConsume < 100 && zone->random.Int(0,99) > ChanceAvoidConsume)){ 
-		DeleteItemInInventory(ammo_slot, 1, false);
+		//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs.
+		//DeleteItemInInventory(ammo_slot, 1, false);
 		Log.Out(Logs::Detail, Logs::Combat, "Consumed one arrow from slot %d", ammo_slot);
 	} else {
 		Log.Out(Logs::Detail, Logs::Combat, "Endless Quiver prevented ammo consumption.");
@@ -981,7 +987,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 				{
 					ApplyMeleeDamageBonus(SkillArchery, TotalDmg);
 					TotalDmg += other->GetFcDamageAmtIncoming(this, 0, true, SkillArchery);
-					TotalDmg += (itembonuses.HeroicDEX / 10) + (TotalDmg * other->GetSkillDmgTaken(SkillArchery) / 100) + GetSkillDmgAmt(SkillArchery);
+					TotalDmg += (TotalDmg * other->GetSkillDmgTaken(SkillArchery) / 100) + GetSkillDmgAmt(SkillArchery);
 
 					TotalDmg = mod_archery_damage(TotalDmg, dobonus, RangeWeapon);
 
@@ -1184,7 +1190,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	if((!CanDoubleAttack && (attack_timer.Enabled() && !attack_timer.Check(false)) || (ranged_timer.Enabled() && !ranged_timer.Check()))) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack canceled. Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		// The server and client timers are not exact matches currently, so this would spam too often if enabled
-		//Message(0, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
+		//Message(CC_Default, "Error: Timer not up. Attack %d, ranged %d", attack_timer.GetRemainingTime(), ranged_timer.GetRemainingTime());
 		return;
 	}
 
@@ -1193,38 +1199,18 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 
 	if (!RangeWeapon || !RangeWeapon->IsType(ItemClassCommon)) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Missing or invalid ranged weapon (%d) in slot %d", GetItemIDAt(MainRange), MainRange);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
+		//Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have nothing to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	const Item_Struct* item = RangeWeapon->GetItem();
 	if(item->ItemType != ItemTypeLargeThrowing && item->ItemType != ItemTypeSmallThrowing) {
 		Log.Out(Logs::Detail, Logs::Combat, "Ranged attack canceled. Ranged item %d is not a throwing weapon. type %d.", item->ItemType);
-		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
+		//Message(CC_Default, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(MainRange));
 		return;
 	}
 
 	Log.Out(Logs::Detail, Logs::Combat, "Throwing %s (%d) at %s", item->Name, item->ID, GetTarget()->GetName());
-
-	if(RangeWeapon->GetCharges() == 1) {
-		//first check ammo
-		const ItemInst* AmmoItem = m_inv[MainAmmo];
-		if(AmmoItem != nullptr && AmmoItem->GetID() == RangeWeapon->GetID()) {
-			//more in the ammo slot, use it
-			RangeWeapon = AmmoItem;
-			ammo_slot = MainAmmo;
-			Log.Out(Logs::Detail, Logs::Combat, "Using ammo from ammo slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
-		} else {
-			//look through our inventory for more
-			int32 aslot = m_inv.HasItem(item->ID, 1, invWherePersonal);
-			if (aslot != INVALID_INDEX) {
-				//the item wont change, but the instance does, not that it matters
-				ammo_slot = aslot;
-				RangeWeapon = m_inv[aslot];
-				Log.Out(Logs::Detail, Logs::Combat, "Using ammo from inventory slot, stack at slot %d. %d in stack.", ammo_slot, RangeWeapon->GetCharges());
-			}
-		}
-	}
 
 	int range = item->Range +50/*Fudge it a little, client will let you hit something at 0 0 0 when you are at 205 0 0*/;
 	Log.Out(Logs::Detail, Logs::Combat, "Calculated bow range to be %.1f", range);
@@ -1232,7 +1218,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	float dist = DistanceSquaredNoZ(m_Position, GetTarget()->GetPosition());
 	if(dist > range) {
 		Log.Out(Logs::Detail, Logs::Combat, "Throwing attack out of range... client should catch this. (%f > %f).\n", dist, range);
-		Message_StringID(13,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
+		Message_StringID(CC_Red,TARGET_OUT_OF_RANGE);//Client enforces range and sends the message, this is a backup just incase.
 		return;
 	}
 	else if(dist < (RuleI(Combat, MinRangedAttackDist)*RuleI(Combat, MinRangedAttackDist))){
@@ -1250,13 +1236,13 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 		return;
 	}
 	//send item animation, also does the throw animation
-	//SendItemAnimation(GetTarget(), item, SkillThrowing);
 	ProjectileAnimation(GetTarget(), item->ID,true,-1,-1,-1,-1,SkillThrowing);
 
 	DoThrowingAttackDmg(GetTarget(), RangeWeapon, item);
 
-	//consume ammo
-		DeleteItemInInventory(ammo_slot, 1, false);
+	//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs. 
+	//DeleteItemInInventory(ammo_slot, 1, false);
+
 	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
 	CommonBreakInvisible();
 }
@@ -1999,13 +1985,13 @@ float Mob::GetSpecialProcChances(uint16 hand)
 	if (RuleB(Combat, AdjustSpecialProcPerMinute)) {
 		ProcChance = (static_cast<float>(weapon_speed) *
 				RuleR(Combat, AvgSpecialProcsPerMinute) / 60000.0f); 
-		ProcBonus +=  static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25);
+		ProcBonus +=  static_cast<float>(mydex/35);
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 	} else {
 		/*PRE 2014 CHANGE Dev Quote - "Elidroth SOE:Proc chance is a function of your base hardcapped Dexterity / 35 + Heroic Dexterity / 25.
 		Kayen: Most reports suggest a ~ 6% chance to Headshot which consistent with above.*/
 
-		ProcChance = (static_cast<float>(mydex/35) + static_cast<float>(itembonuses.HeroicDEX / 25))/100.0f;
+		ProcChance = static_cast<float>(mydex/35)/100.0f;
 	}
 
 	return ProcChance;
@@ -2062,12 +2048,12 @@ float Mob::GetAssassinateProcChances(uint16 ReuseTime)
 	if (RuleB(Combat, AdjustSpecialProcPerMinute)) {
 		ProcChance = (static_cast<float>(ReuseTime*1000) *
 				RuleR(Combat, AvgSpecialProcsPerMinute) / 60000.0f);
-		ProcBonus += (10 + (static_cast<float>(mydex/10) + static_cast<float>(itembonuses.HeroicDEX /10)))/100.0f;
+		ProcBonus += (10 + static_cast<float>(mydex/10))/100.0f;
 		ProcChance += ProcChance * ProcBonus / 100.0f;
 
 	} else {
 		/* Kayen: Unable to find data on old proc rate of assassinate, no idea if our formula is real or made up. */
-		ProcChance = (10 + (static_cast<float>(mydex/10) + static_cast<float>(itembonuses.HeroicDEX /10)))/100.0f;
+		ProcChance = (10 + static_cast<float>(mydex/10))/100.0f;
 
 	}
 

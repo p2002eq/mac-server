@@ -199,6 +199,11 @@ public:
 	void	Trader_EndTrader();
 	void	Trader_StartTrader();
 	uint8	WithCustomer(uint16 NewCustomer);
+	void	KeyRingLoad();
+	void	KeyRingAdd(uint32 item_id);
+	bool	KeyRingCheck(uint32 item_id);
+	void	KeyRingList(Client* notifier);
+	void	ZoneFlagList(Client* notifier);
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
@@ -337,9 +342,23 @@ public:
 
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
-	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
+	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr);
+	bool GetPickPocketSlot(ItemInst* inst, int16& slotid);
 
 	inline const char* GetLastName() const { return lastname; }
+
+	typedef struct {
+		glm::vec4 l_Position;
+		float last_distance;
+		bool  inside;
+	} DynamicPosition_Struct;
+	std::unordered_map<uint16, DynamicPosition_Struct> dynamic_positions;
+	inline void SetLastDistance(uint16 entity_id, float distance) { dynamic_positions[entity_id].last_distance = distance; }
+	inline float GetLastDistance(uint16 entity_id) { return dynamic_positions[entity_id].last_distance; }
+	inline bool GetInside(uint16 entity_id) { return dynamic_positions[entity_id].inside; }
+	inline void SetInside(uint16 entity_id, bool state) { dynamic_positions[entity_id].inside = state; }
+	inline glm::vec4 GetLastPosition(uint16 entity_id) { return dynamic_positions[entity_id].l_Position; }
+	inline void SetLastPosition(uint16 entity_id, glm::vec4 pos) { dynamic_positions[entity_id].l_Position = pos; }
 
 	inline float ProximityX() const { return m_Proximity.x; }
 	inline float ProximityY() const { return m_Proximity.y; }
@@ -396,19 +415,6 @@ public:
 	inline uint8 GetBaseWIS() const { return m_pp.WIS; }
 	inline uint8 GetBaseCorrup() const { return 15; } // Same for all
 
-	inline virtual int32 GetHeroicSTR() const { return itembonuses.HeroicSTR; }
-	inline virtual int32 GetHeroicSTA() const { return itembonuses.HeroicSTA; }
-	inline virtual int32 GetHeroicDEX() const { return itembonuses.HeroicDEX; }
-	inline virtual int32 GetHeroicAGI() const { return itembonuses.HeroicAGI; }
-	inline virtual int32 GetHeroicINT() const { return itembonuses.HeroicINT; }
-	inline virtual int32 GetHeroicWIS() const { return itembonuses.HeroicWIS; }
-	inline virtual int32 GetHeroicCHA() const { return itembonuses.HeroicCHA; }
-	inline virtual int32 GetHeroicMR() const { return itembonuses.HeroicMR; }
-	inline virtual int32 GetHeroicFR() const { return itembonuses.HeroicFR; }
-	inline virtual int32 GetHeroicDR() const { return itembonuses.HeroicDR; }
-	inline virtual int32 GetHeroicPR() const { return itembonuses.HeroicPR; }
-	inline virtual int32 GetHeroicCR() const { return itembonuses.HeroicCR; }
-	inline virtual int32 GetHeroicCorrup() const { return itembonuses.HeroicCorrup; }
 	// Mod2
 	inline virtual int32 GetShielding() const { return itembonuses.MeleeMitigation; }
 	inline virtual int32 GetSpellShield() const { return itembonuses.SpellShield; }
@@ -422,7 +428,6 @@ public:
 	// Mod3
 	inline virtual int32 GetHealAmt() const { return itembonuses.HealAmt; }
 	inline virtual int32 GetSpellDmg() const { return itembonuses.SpellDmg; }
-	inline virtual int32 GetClair() const { return itembonuses.Clairvoyance; }
 	inline virtual int32 GetDSMit() const { return itembonuses.DSMitigation; }
 
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }
@@ -518,17 +523,18 @@ public:
 	void GoToDeath();
 	inline const int32 GetInstanceID() const { return zone->GetInstanceID(); }
 
-	FACTION_VALUE	GetReverseFactionCon(Mob* iOther);
-	FACTION_VALUE	GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
-	int32	GetCharacterFactionLevel(int32 faction_id);
-	int32	GetModCharacterFactionLevel(int32 faction_id);
-	void	MerchantRejectMessage(Mob *merchant, int primaryfaction);
-	void	SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 totalvalue, uint8 temp);
+	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
+	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
+	int32 GetCharacterFactionLevel(int32 faction_id);
+	int32 GetModCharacterFactionLevel(int32 faction_id);
+	void MerchantRejectMessage(Mob *merchant, int primaryfaction);
+	void SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp,  int32 this_faction_min, int32 this_faction_max);
 
-	void	SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
-	void	SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
-	int32	GetRawItemAC();
-	uint16	GetCombinedAC_TEST();
+	void UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction_id, int32 *current_value, int32 temp, int32 this_faction_min, int32 this_faction_max);
+	void SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, uint8 char_race, uint8 char_deity, bool quest = false);
+	void SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp);
+	int32 GetRawItemAC();
+	uint16 GetCombinedAC_TEST();
 
 	inline uint32 LSAccountID() const { return lsaccountid; }
 	inline uint32 GetWID() const { return WID; }
@@ -592,11 +598,13 @@ public:
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
 	void	CheckSpecializeIncrease(uint16 spell_id);
 	void	CheckSongSkillIncrease(uint16 spell_id);
-	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi = 0);
+	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi = 0); //valid values for chancemodi are -20 to 20
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
+
 	void	SendStats(Client* client);
+	void	SendQuickStats(Client* client);
 
 	uint16 MaxSkill(SkillUseTypes skillid, uint16 class_, uint16 level) const;
 	inline uint16 MaxSkill(SkillUseTypes skillid) const { return MaxSkill(skillid, GetClass(), GetLevel()); }
@@ -712,7 +720,7 @@ public:
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
 	void	SendLootItemInPacket(const ItemInst* inst, int16 slot_id);
-	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0);
+	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0, int16 toid = 0, int16 skill = 0);
 	bool	IsValidSlot(uint32 slot);
 	bool	IsBankSlot(uint32 slot);
 
@@ -766,9 +774,9 @@ public:
 	void ResetTrade();
 	void DropInst(const ItemInst* inst);
 	void CreateGroundObject(const ItemInst* item, float x, float y, float z, float heading, uint32 decay_time = 300000);
-	bool UseDiscipline(uint8 disc_id, Client* target);
+	bool UseDiscipline(uint8 disc_id);
 	uint8 DisciplineUseLevel(uint8 disc_id);
-	bool CastDiscipline(uint8 disc_id, Client* target, uint8 level_to_use);
+	bool CastDiscipline(uint8 disc_id, uint8 level_to_use);
 
 	bool CheckTitle(int titleset);
 	void EnableTitle(int titleset);
@@ -777,6 +785,8 @@ public:
 	void EnteringMessages(Client* client);
 	void SendRules(Client* client);
 	std::list<std::string> consent_list;
+	void Consent(uint8 permission, char name[64], uint32 offline_charid = 0);
+	bool LoadCharacterConsent();
 
 	//Anti-Cheat Stuff
 	uint32 m_TimeSinceLastPositionCheck;
@@ -793,6 +803,7 @@ public:
 	const bool IsSenseExempted() const { return m_SenseExemption; }
 	const bool IsAssistExempted() const { return m_AssistExemption; }
 	const bool GetGMSpeed() const { return (gmspeed > 0); }
+	const bool GetGMInvul() const { return gminvul; }
 	void CheatDetected(CheatTypes CheatType, float x, float y, float z);
 	const bool IsMQExemptedArea(uint32 zoneID, float x, float y, float z) const;
 	bool CanUseReport;
@@ -926,7 +937,7 @@ public:
 
 	bool IsLFG() { return LFG; }
 
-	bool Disarm(Client* client);
+	uint8 Disarm(Client* client, float chance);
 	void SendSoulMarks(SoulMarkList_Struct* SMS);
 
 	//Command #Tune functions
@@ -936,12 +947,26 @@ public:
 	bool has_zomm;
 	bool client_position_update;
 	bool ignore_zone_count; 
+	uint16 last_target;
 
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
 
 	bool ClickyOverride() { return clicky_override; }
-	void SetActiveDisc(uint8 value) { active_disc = value; }
+	void SetActiveDisc(uint8 value, int16 spellid) { active_disc = value; active_disc_spell = spellid; }
+	void FadeDisc() { BuffFadeBySpellID(active_disc_spell); active_disc = 0; active_disc_spell = 0; Log.Out(Logs::General, Logs::Discs, "Fading currently enabled disc."); }
+	uint8 GetActiveDisc() { return active_disc; }
+	uint16 GetActiveDiscSpell() { return active_disc_spell; }
+	bool HasInstantDisc(uint16 skill_type = 0);
+
+	void SendClientVersion();
+	void FixClientXP();
+	void SendToBoat(bool messageonly = false);
+
+	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
+
+	void SendMerchantEnd();
+	float GetPortHeading(uint16 newx, uint16 newy);
 
 protected:
 	friend class Mob;
@@ -953,7 +978,6 @@ protected:
 	void ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon);
 	void MakeBuffFadePacket(uint16 spell_id, int slot_id, bool send_message = true);
 	bool client_data_loaded;
-	void CalcDiscBonuses(StatBonuses* newbon);
 
 	int16 GetFocusEffect(focusType type, uint16 spell_id);
 	int16 GetSympatheticFocusEffect(focusType type, uint16 spell_id);
@@ -1036,6 +1060,7 @@ private:
 	uint8				guildrank; // player's rank in the guild, 0-GUILD_MAX_RANK
 	uint16				duel_target;
 	bool				duelaccepted;
+	std::list<uint32>	keyring;
 	bool				tellsoff;	// GM /toggle
 	bool				gmhideme;
 	bool				AFK;
@@ -1044,6 +1069,7 @@ private:
 	bool				auto_fire;
 	bool				runmode;
 	uint8				gmspeed;
+	bool				gminvul;
 	bool				medding;
 	uint16				horseId;
 	bool				revoked;
@@ -1119,6 +1145,7 @@ private:
 	Timer	charm_cast_timer;
 	Timer	qglobal_purge_timer;
 	Timer	TrackingTimer;
+	Timer	client_distance_timer;
 
 	Timer anon_toggle_timer;
 	Timer afk_toggle_timer;
@@ -1132,6 +1159,7 @@ private:
 	void BulkSendInventoryItems();
 	void BulkSendItems();
 	void SendCursorItems();
+	void FillPPItems();
 
 	faction_map factionvalues;
 
@@ -1221,6 +1249,7 @@ private:
 
 	bool clicky_override; // On AK, clickies with 0 casttime did not enforce any restrictions (level, regeant consumption, etc) 
 	uint8 active_disc;
+	uint16 active_disc_spell;
 };
 
 #endif

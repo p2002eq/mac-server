@@ -382,7 +382,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 			bonus = 2.0 + skill/60.0 + (GetDEX()/200);
 			bonus *= riposte_chance;
 			bonus = mod_riposte_chance(bonus, attacker);
-			RollTable[0] = bonus + (itembonuses.HeroicDEX / 25); // 25 heroic = 1%, applies to ripo, parry, block
+			RollTable[0] = bonus; // 25 heroic = 1%, applies to ripo, parry, block
 		}
 	}
 
@@ -490,7 +490,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 			bonus *= dodge_chance;
 			//DCBOOMKAR
 			bonus = mod_dodge_chance(bonus, attacker);
-			RollTable[3] = RollTable[2] + bonus - (itembonuses.HeroicDEX / 25) + (itembonuses.HeroicAGI / 25);
+			RollTable[3] = RollTable[2] + bonus;
 		}
 	}
 	else{
@@ -648,7 +648,7 @@ void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttac
 		// cloth get /2 for defense contribution, others get /3.
 		adj_mod -= 1;
 		
-		mitigation_rating = ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10) / adj_mod) + armor;
+		mitigation_rating = (GetSkill(SkillDefense) / adj_mod) + armor;
 		
 		mitigation_rating *= 0.847;
 
@@ -1328,7 +1328,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
 			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
-				Message_StringID(MT_StrikeThrough, STRIKETHROUGH_STRING); // You strike through your opponents defenses!
+				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
@@ -1489,10 +1489,26 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 		#2: figure out things that affect the player dying and mark them dead
 	*/
 
+	if(GetPet() && GetPet()->IsCharmed())
+	{
+		Log.Out(Logs::General, Logs::Spells, "%s has died. Fading charm on pet.", GetName());
+		GetPet()->BuffFadeByEffect(SE_Charm);
+	}
+
 	InterruptSpell();
 	SetPet(0);
 	SetHorseId(0);
 	dead = true;
+
+	if(GetClass() == SHADOWKNIGHT && !p_timers.Expired(&database, pTimerHarmTouch))
+	{
+		p_timers.Clear(&database, pTimerHarmTouch);
+
+	}
+	else if(GetClass() == PALADIN  && !p_timers.Expired(&database, pTimerLayHands))
+	{
+		p_timers.Clear(&database, pTimerLayHands);
+	}
 
 	if (killerMob != nullptr)
 	{
@@ -1827,7 +1843,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		if(other->IsClient() && other->CastToClient()->IsSitting()) {
 			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
 			damage = (max_dmg+eleBane);
-			damage += (itembonuses.HeroicSTR / 10) + (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
+			damage += (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
 
 			if(opts) {
 				damage *= opts->damage_percent;
@@ -2007,7 +2023,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 	if(killer && HasPrimaryAggro())
 	{
-		if(!entity_list.TranfserPrimaryAggro(killer))
+		if(!entity_list.TransferPrimaryAggro(killer))
 			Log.Out(Logs::Detail, Logs::Aggro, "%s failed to transfer primary aggro.", GetName());
 	}
 
@@ -2015,7 +2031,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		return false;
 
 	HasAISpellEffects = false;
-	BuffFadeAll(true);
+	BuffFadeAll();
 	uint8 killed_level = GetLevel();
 
 	EQApplicationPacket* app= new EQApplicationPacket(OP_Death,sizeof(Death_Struct));
@@ -2082,7 +2098,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
 		Raid *kr = entity_list.GetRaidByClient(give_exp_client);
 
-		int32 finalxp = EXP_FORMULA;
+		int32 finalxp = static_cast<int32>(GetBaseEXP());
 		finalxp = give_exp_client->mod_client_xp(finalxp, this);
 
 		if(kr)
@@ -2199,6 +2215,8 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 			// End QueryServ Logging
 		}
 	}
+
+	DeleteInvalidQuestLoot();
 
 	if (give_exp_client && !HasOwner() && class_ != MERCHANT && !GetSwarmInfo()
 		&& MerchantType == 0 && killer && (killer->IsClient() || (killer->HasOwner() && killer->GetUltimateOwner()->IsClient()) ||
@@ -2318,7 +2336,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic, int32 jolthate) {
 
 	assert(other != nullptr);
 
@@ -2415,7 +2433,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		&& other &&  (buffs[spellbonuses.ImprovedTaunt[2]].casterid != other->GetID()))
 		hate = (hate*spellbonuses.ImprovedTaunt[1])/100;
 
-	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic);
+	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic, jolthate);
 
 	// then add pet owner if there's one
 	if (owner) { // Other is a pet, add him and it
@@ -3350,6 +3368,8 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 	// Agro pet someone tried to damage me
 	AggroPet(attacker);
 
+	CommonBreakInvisible();
+
 	// This method is called with skill_used=ABJURE for Damage Shield damage.
 	bool FromDamageShield = (skill_used == SkillAbjuration);
 
@@ -3415,6 +3435,17 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				//we used to do a message to the client, but its gone now.
 				// emote goes with every one ... even npcs
 				entity_list.MessageClose(this, true, 300, MT_Emote, "%s beams a smile at %s", attacker->GetCleanName(), this->GetCleanName() );
+			}
+
+			if(IsNPC())
+			{
+				total_damage += damage;
+
+				if(attacker->IsClient())
+					player_damage += damage;
+
+				if(attacker->IsDireCharmed())
+					dire_pet_damage += damage;
 			}
 		}	//end `if there is some damage being done and theres anattacker person involved`
 
@@ -3482,7 +3513,9 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		}
 
 		//check stun chances if bashing
-		if (damage > 0 && ((skill_used == SkillBash || skill_used == SkillKick) && attacker)) {
+		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
+			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
+		{
 			// NPCs can stun with their bash/kick as soon as they receive it.
 			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
 			// Clients have a chance to stun if the mob is 56+
@@ -3532,8 +3565,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				} else {
 					// Normal stun resist check.
 					if (stun_resist && zone->random.Roll(stun_resist)) {
-						if (IsClient())
-							Message_StringID(MT_Stun, SHAKE_OFF_STUN);
 						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
 					} else {
 						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);
@@ -3636,31 +3667,31 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		//this was done to simplify the code here (since we can only effectively skip one mob on queue)
 		eqFilterType filter;
 		Mob *skip = attacker;
-		if(attacker && attacker->GetOwnerID()) {
-			//attacker is a pet, let pet owners see their pet's damage
+		if(attacker && attacker->GetOwnerID()) 
+		{
+			//attacker is a pet
 			Mob* owner = attacker->GetOwner();
-			if (owner && owner->IsClient()) {
-				if (((spell_id != SPELL_UNKNOWN) || (FromDamageShield)) && damage>0) {
-					//special crap for spell damage, looks hackish to me
-					char val1[20]={0};
-					owner->Message_StringID(MT_NonMelee,OTHER_HIT_NONMELEE,GetCleanName(),ConvertArray(damage,val1));
-				} else {
-					if(damage > 0) {
-						if(spell_id != SPELL_UNKNOWN)
-							filter = FilterNone;
-						else
-							filter = FilterOthersHit;
-					} else if(damage == -5)
-						filter = FilterNone;	//cant filter invulnerable
+			if (owner && owner->IsClient()) 
+			{
+				if(damage > 0) 
+				{
+					if(spell_id != SPELL_UNKNOWN)
+						filter = FilterNone;
 					else
-						filter = FilterOthersMiss;
+						filter = FilterOthersHit;
+				} 
+				else if(damage == -5)
+					filter = FilterNone;	//cant filter invulnerable
+				else
+					filter = FilterOthersMiss;
 
-					if(!FromDamageShield)
-						owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
-				}
+				if(!FromDamageShield)
+					owner->CastToClient()->QueuePacket(outapp,true,CLIENT_CONNECTED,filter);
 			}
 			skip = owner;
-		} else {
+		} 
+		else 
+		{
 			//attacker is not a pet, send to the attacker
 
 			//if the attacker is a client, try them with the correct filter
@@ -4637,19 +4668,19 @@ void Mob::CommonBreakInvisible()
 {
 	//break invis when you attack
 	if(invisible) {
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility due to attack.");
 		BuffFadeByEffect(SE_Invisibility);
 		BuffFadeByEffect(SE_Invisibility2);
 		invisible = false;
 	}
 	if(invisible_undead) {
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. undead due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. undead due to attack.");
 		BuffFadeByEffect(SE_InvisVsUndead);
 		BuffFadeByEffect(SE_InvisVsUndead2);
 		invisible_undead = false;
 	}
 	if(invisible_animals){
-		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. animals due to melee attack.");
+		Log.Out(Logs::Detail, Logs::Combat, "Removing invisibility vs. animals due to attack.");
 		BuffFadeByEffect(SE_InvisVsAnimals);
 		invisible_animals = false;
 	}

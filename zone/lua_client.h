@@ -170,7 +170,7 @@ public:
 	void ForageItem(bool guarantee);
 	float CalcPriceMod(Lua_Mob other, bool reverse);
 	void ResetTrade();
-	bool UseDiscipline(int spell_id, Client* client);
+	bool UseDiscipline(int spell_id);
 	int GetCharacterFactionLevel(int faction_id);
 	void SetZoneFlag(int zone_id);
 	void SetZoneFlag(int zone_id, uint8 key);
@@ -189,6 +189,8 @@ public:
 	void RefundAA();
 	int GetModCharacterFactionLevel(int faction);
 	int GetStartZone();
+	void KeyRingAdd(uint32 item);
+	bool KeyRingCheck(uint32 item);
 	void QuestReadBook(const char *text, int type);
 	void LearnRecipe(uint32 recipe);
 	int GetEndurance();

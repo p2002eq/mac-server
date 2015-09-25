@@ -172,7 +172,16 @@ void NPC::PauseWandering(int pausetime)
 		}
 		SetMoving(false);
 		SendPosition();
-	} else {
+	}
+	else if(roambox_distance > 0)
+	{
+		roambox_movingto_x = roambox_max_x + 1; // force update
+		pLastFightingDelayMoving = Timer::GetCurrentTime() + pausetime*1000;
+		SetMoving(false);
+		SendPosition();	// makes mobs stop clientside
+	}
+	else 
+	{
 		Log.Out(Logs::General, Logs::Error, "NPC not on grid - can't pause wandering: %lu", (unsigned long)GetNPCTypeID());
 	}
 	return;
@@ -360,7 +369,7 @@ void NPC::CalculateNewWaypoint()
 	}
 	}
 
-	tar_ndx = 52;
+	tar_ndx = 20;
 
 	// Preserve waypoint setting for quest controlled NPCs
 	if (cur_wp < 0)
@@ -369,6 +378,9 @@ void NPC::CalculateNewWaypoint()
 	// Check to see if we need to update the waypoint.
 	if (cur_wp != old_wp)
 		UpdateWaypoint(cur_wp);
+
+	if(IsNPC() && GetClass() == MERCHANT)
+		entity_list.SendMerchantEnd(this);
 }
 
 bool wp_distance_pred(const wp_distance& left, const wp_distance& right)
@@ -695,15 +707,12 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 			float new_x = m_Position.x + m_TargetV.x;
 			float new_y = m_Position.y + m_TargetV.y;
 			float new_z = m_Position.z + m_TargetV.z;
-			if(IsNPC()) {
-				entity_list.ProcessMove(CastToNPC(), new_x, new_y, new_z);
-			}
 
 			m_Position.x = new_x;
 			m_Position.y = new_y;
 			m_Position.z = new_z;
 			m_Position.w = CalculateHeadingToTarget(x, y);
-			tar_ndx=22-numsteps;
+			tar_ndx=20-numsteps;
 			Log.Out(Logs::Detail, Logs::AI, "Next position2 (%.3f, %.3f, %.3f) (%d steps)", m_Position.x, m_Position.y, m_Position.z, numsteps);
 		}
 		else
@@ -781,15 +790,16 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	SetMoving(true);
 	moved=true;
 
-	m_Delta = glm::vec4(m_Position.x - nx, m_Position.y - ny, m_Position.z - nz, 0.0f);
+
+	m_Delta = glm::vec4(floorf((m_Position.x - nx)*6.6666666f), floorf((m_Position.y - ny)*6.6666666f), floorf((m_Position.z - nz)*6.6666666f), 0.0f);
 
 	if (IsClient()) {
-		SendPositionNearby(1);
+		SendPosUpdate(1);
 		CastToClient()->ResetPositionTimer();
 	}
 	else
 	{
-		SendPositionNearby();
+		SendPosUpdate();
 		SetAppearance(eaStanding, false);
 	}		
 	SetChanged();
@@ -800,7 +810,18 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 bool Mob::CalculateNewPosition2(float x, float y, float z, float speed, bool checkZ) {
 
 	float newspeed = SetRunAnimation(speed);
-	return MakeNewPositionAndSendUpdate(x, y, z, newspeed, checkZ);
+
+	bool moved = false;
+	if (MakeNewPositionAndSendUpdate(x, y, z, newspeed, checkZ))
+	{
+		if(IsNPC() && GetClass() == MERCHANT)
+			entity_list.SendMerchantEnd(this);
+
+		moved = true;
+	}
+
+	return moved;
+
 }
 
 float Mob::SetRunAnimation(float speed)
@@ -812,21 +833,6 @@ float Mob::SetRunAnimation(float speed)
 		newspeed = speed * 100.0f;
 		animation = static_cast<uint16>(speed * 10.0f);
 	}
-	/*if(IsNPC()) 
-	{
-		if(speed >= GetRunspeed())
-		{
-			SetCurrentlyRunning(true);
-			newspeed = speed * RuleR(NPC, SpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-		}
-		else
-		{
-			SetCurrentlyRunning(false);
-			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
-		}
-	}*/
 
 	return newspeed;
 }
@@ -1177,7 +1183,7 @@ void ZoneDatabase::AssignGrid(Client *client, int grid, int spawn2id) {
 		return;
 	}
 
-	client->Message(0, "Grid assign: spawn2 id = %d updated", spawn2id);
+	client->Message(CC_Default, "Grid assign: spawn2 id = %d updated", spawn2id);
 }
 
 

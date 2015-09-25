@@ -80,7 +80,6 @@ E(OP_GroupInvite2)
 D(OP_GroupInvite2)
 E(OP_TradeCoins)
 D(OP_ItemLinkResponse)
-E(OP_LogServer)
 E(OP_RequestClientZoneChange)
 D(OP_SetGuildMOTD)
 E(OP_GuildMOTD)
@@ -104,6 +103,7 @@ E(OP_FaceChange);
 D(OP_FaceChange);
 D(OP_Assist);
 E(OP_Assist);
+E(OP_PickPocket);
 
 //Below are invalid opcodes ONLY
 E(OP_Unknown);

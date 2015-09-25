@@ -325,6 +325,14 @@ bool IsCharmSpell(uint16 spell_id)
 	return IsEffectInSpell(spell_id, SE_Charm);
 }
 
+bool IsDireCharmSpell(uint16 spell_id)
+{
+	if(IsEffectInSpell(spell_id, SE_Charm) && spells[spell_id].buffdurationformula == 50)
+		return true;
+	else
+		return false;
+}
+
 bool IsBlindSpell(uint16 spell_id)
 {
 	return IsEffectInSpell(spell_id, SE_Blind);
@@ -1228,5 +1236,43 @@ bool IsSpeedBuff(uint16 spell_id)
 				return true;
 		}
 	}
+	return false;
+}
+
+bool IsRainSpell(uint16 spell_id)
+{
+	if(IsDetrimentalSpell(spell_id) && 
+		(spells[spell_id].targettype == ST_AETarget || spells[spell_id].targettype == ST_AECaster) &&
+		(spells[spell_id].spell_category == 12 || spells[spell_id].spell_category == 150 || spells[spell_id].spell_category == 151 || spells[spell_id].spell_category == 152))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool IsDisc(uint16 spell_id)
+{
+	if(spells[spell_id].IsDisciplineBuff)
+		return true;
+	else
+		return false;
+}
+
+bool IsShrinkSpell(uint16 spell_id)
+{
+	int j;
+
+	if (!IsValidSpell(spell_id))
+		return false;
+
+	for (j = 0; j < EFFECT_COUNT; j++)
+	{
+		if (spells[spell_id].effectid[j] == SE_ModelSize && spells[spell_id].base[j] < 100)
+		{
+			return true;
+		}
+	}
+
 	return false;
 }

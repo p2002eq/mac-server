@@ -67,14 +67,13 @@ RULE_INT ( Character, ItemStrikethroughCap, 35)
 RULE_INT ( Character, ItemATKCap, 250)
 RULE_INT ( Character, ItemHealAmtCap, 250)
 RULE_INT ( Character, ItemSpellDmgCap, 250)
-RULE_INT ( Character, ItemClairvoyanceCap, 250)
 RULE_INT ( Character, ItemDSMitigationCap, 50)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
-RULE_INT ( Character, SkillUpModifier, 60) //skill ups are at 100%
+RULE_INT ( Character, SkillUpModifier, 70) //skill ups for skills with value under 100
+RULE_INT ( Character, MasterSkillUpModifier, 60) //skill ups for skills 100 and over
 RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
-RULE_BOOL ( Character, SharedBankPlat, false) //off by default to prevent duping for now
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
 RULE_INT ( Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.
@@ -100,6 +99,7 @@ RULE_REAL (Character, BaseWalkSpeed, 0.46)
 RULE_REAL(Character, EnvironmentDamageMulipliter, 1)
 RULE_BOOL(Character, ForageNeedFoodorDrink, false)
 RULE_BOOL(Character, ForageCommonFoodorDrink, false)
+RULE_BOOL (Character, DisableAAs, true) // Disables server side AA support, since the client allows some AA activity through even with a pre-Luclin expansion set.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Guild )
@@ -151,7 +151,6 @@ RULE_BOOL ( World, GMAccountIPList, false) // Check ip list against GM Accounts,
 RULE_INT ( World, MinGMAntiHackStatus, 1 ) //Minimum GM status to check against AntiHack list
 RULE_INT ( World, SoFStartZoneID, -1 ) //Sets the Starting Zone for SoF Clients separate from Titanium Clients (-1 is disabled)
 RULE_INT ( World, PVPSettings, 0) // Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.
-RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
 RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
 RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_INT (World, TellQueueSize, 20) 
@@ -189,16 +188,17 @@ RULE_INT (Zone, SpawnEventMin, 5) // When strict is set in spawn_events, specifi
 RULE_REAL ( Zone, GroupEXPRange, 500 )
 RULE_BOOL ( Zone, IdleWhenEmpty, true) // After timer is expired, if zone is empty it will idle. Boat zones are excluded, as this will break boat functionality.
 RULE_INT ( Zone, IdleTimer, 600000) // 10 minutes
+RULE_INT ( Zone, BoatDistance, 50) //In zones where boat name is not set in the PP, this is how far away from the boat the client must be to move them to the boat's current location.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
-RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
-RULE_BOOL( AlKabor, AllowTickSplit, false)
-RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
-RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
-RULE_BOOL ( AlKabor, Count6thGroupMember, false)
-RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true)
+RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull (AK behavior is true)
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
 RULE_CATEGORY_END()
 
 
@@ -434,7 +434,7 @@ RULE_BOOL ( NPC, EnableNPCQuestJournal, false)
 RULE_INT ( NPC, LastFightingDelayMovingMin, 10000)
 RULE_INT ( NPC, LastFightingDelayMovingMax, 20000)
 RULE_BOOL ( NPC, SmartLastFightingDelayMoving, true)
-RULE_BOOL ( NPC, ReturnNonQuestNoDropItems, false)	// Returns NO DROP items on NPCs that don't have an EVENT_TRADE sub in their script
+RULE_BOOL ( NPC, ReturnNonQuestItems, true)	// Returns items on NPCs that don't have an EVENT_TRADE sub in their script
 RULE_INT ( NPC, StartEnrageValue, 9) // % HP that an NPC will begin to enrage
 RULE_BOOL ( NPC, LiveLikeEnrage, false) // If set to true then only player controlled pets will enrage
 RULE_REAL ( NPC, SpeedMultiplier, 50.0 ) //This is used to multiply an NPCs movement rate, yeilding map units..
@@ -490,7 +490,6 @@ RULE_BOOL ( Bazaar, EnableWarpToTrader, true)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY ( Mail )
-RULE_BOOL ( Mail, EnableMailSystem, true) // If false, client won't bring up the Mail window.
 RULE_INT ( Mail, ExpireTrash, 0) // Time in seconds. 0 will delete all messages in the trash when the mailserver starts
 RULE_INT ( Mail, ExpireRead, 31536000 ) // 1 Year. Set to -1 for never
 RULE_INT ( Mail, ExpireUnread, 31536000 ) // 1 Year. Set to -1 for never
@@ -532,7 +531,7 @@ RULE_BOOL( QueryServ, PlayerLogConnectDisconnect, false) // Logs Player Connect 
 RULE_BOOL( QueryServ, PlayerLogLevels, false) // Logs Player Leveling/Deleveling
 RULE_BOOL( QueryServ, PlayerLogAARate, false) // Logs Player AA Experience Rates 
 RULE_BOOL( QueryServ, PlayerLogQGlobalUpdate, false) // Logs Player QGlobal Updates
-RULE_BOOL( QueryServ, PlayerLogTaskUpdates, false) // Logs Player Task Updates
+RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring additions
 RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands

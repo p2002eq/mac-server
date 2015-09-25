@@ -161,8 +161,8 @@ namespace Mac {
 			strncpy(eq->name, emu->player.spawn.name, 64);
 			eq->deity = emu->player.spawn.deity;
 			eq->race = emu->player.spawn.race;
-			if (emu->player.spawn.race == 42 && emu->player.spawn.gender == 2)
-				eq->size = emu->player.spawn.size + 2.0f;
+			if ((emu->player.spawn.race == 42 || emu->player.spawn.race == 120) && emu->player.spawn.gender == 2)
+				eq->size = emu->player.spawn.size + 4.0f;
 			else
 				eq->size = emu->player.spawn.size;
 			eq->NPC = emu->player.spawn.NPC;
@@ -198,7 +198,7 @@ namespace Mac {
 				eq->GuildID = 0xFFFF;
 			eq->guildrank = emu->player.spawn.guildrank;
 			if(eq->guildrank == 0)
-				eq->guildrank = 0xFF;
+				eq->guildrank = 0xFFFF;
 			strncpy(eq->Surname, emu->player.spawn.lastName, 32);
 			eq->walkspeed = emu->player.spawn.walkspeed;
 			eq->runspeed = emu->player.spawn.runspeed;
@@ -307,6 +307,7 @@ namespace Mac {
 		OUT(anon);
 		OUT(gm);
 		OUT(guildrank);
+		eq->uniqueGuildID = emu->guild_id;
 		OUT(exp);
 		OUT_array(languages, 26);
 		OUT(x);
@@ -346,6 +347,31 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 		OUT(fatigue);
+		OUT_array(cursorbaginventory,pp_cursorbaginventory_size);
+		for(r = 0; r < pp_cursorbaginventory_size; r++)
+		{
+			OUT(cursorItemProperties[r].charges);
+		}
+		OUT_array(inventory,pp_inventory_size);
+		for(r = 0; r < pp_inventory_size; r++)
+		{
+			OUT(invItemProperties[r].charges);
+		}
+		OUT_array(containerinv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bagItemProperties[r].charges);
+		}
+		OUT_array(bank_inv,pp_bank_inv_size);
+		for(r = 0; r < pp_bank_inv_size; r++)
+		{
+			OUT(bankinvitemproperties[r].charges);
+		}
+		OUT_array(bank_cont_inv,pp_containerinv_size);
+		for(r = 0; r < pp_containerinv_size; r++)
+		{
+			OUT(bankbagitemproperties[r].charges);
+		}
 
 		//Log.Out(Logs::General, Logs::Netcode, "[STRUCTS] Player Profile Packet is %i bytes uncompressed", sizeof(structs::PlayerProfile_Struct));
 
@@ -920,9 +946,6 @@ namespace Mac {
 			myitem->slotid = int_struct->slot_id;
 			memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
 		
-			if(outapp->size != sizeof(structs::TradeItemsPacket_Struct))
-				Log.Out(Logs::Detail, Logs::Zone_Server, "Invalid size on OP_TradeItemPacket packet. Expected: %i, Got: %i", sizeof(structs::TradeItemsPacket_Struct), outapp->size);
-
 			dest->FastQueuePacket(&outapp);
 			delete[] __emu_buffer;
 		}
@@ -1034,6 +1057,58 @@ namespace Mac {
 		dest->FastQueuePacket(&outapp);
 		delete[] __emu_buffer;
 		safe_delete_array(pi);
+	}
+
+	ENCODE(OP_PickPocket) 
+	{
+
+		if((*p)->size == sizeof(PickPocket_Struct))
+		{
+			ENCODE_LENGTH_EXACT(PickPocket_Struct);
+			SETUP_DIRECT_ENCODE(PickPocket_Struct, structs::PickPocket_Struct);
+			OUT(to);
+			OUT(from);
+			OUT(myskill);
+			OUT(type);
+			OUT(coin);
+			FINISH_ENCODE();
+		}
+		else 
+		{
+			//consume the packet
+			EQApplicationPacket *in = *p;
+			*p = nullptr;
+
+			//store away the emu struct
+			unsigned char *__emu_buffer = in->pBuffer;
+			ItemPacket_Struct *old_item_pkt=(ItemPacket_Struct *)__emu_buffer;
+			InternalSerializedItem_Struct *int_struct=(InternalSerializedItem_Struct *)(old_item_pkt->SerializedItem);
+
+			const ItemInst * item = (const ItemInst *)int_struct->inst;
+	
+			if(item)
+			{
+				structs::Item_Struct* mac_item = MacItem((ItemInst*)int_struct->inst,int_struct->slot_id);
+
+				if(mac_item == 0)
+				{
+					delete in;
+					return;
+				}
+
+				EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket,sizeof(structs::PickPocketItemPacket_Struct));
+				structs::PickPocketItemPacket_Struct* myitem = (structs::PickPocketItemPacket_Struct*) outapp->pBuffer;
+				myitem->from = old_item_pkt->fromid;
+				myitem->to = old_item_pkt->toid;
+				myitem->myskill = old_item_pkt->skill;
+				myitem->coin = 0;
+				myitem->type = 5;
+				memcpy(&myitem->item,mac_item,sizeof(structs::Item_Struct));
+
+				dest->FastQueuePacket(&outapp);
+				delete[] __emu_buffer;
+			}
+		}
 	}
 
 	DECODE(OP_DeleteCharge) {  DECODE_FORWARD(OP_MoveItem); }
@@ -1485,20 +1560,6 @@ namespace Mac {
 		FINISH_DIRECT_DECODE();
 	}
 
-	ENCODE(OP_LogServer) 
-	{
-		ENCODE_LENGTH_EXACT(LogServer_Struct);
-		SETUP_DIRECT_ENCODE(LogServer_Struct, structs::LogServer_Struct);
-		strcpy(eq->worldshortname, "alkabor");
-		strcpy(eq->unknown096, "pacman");
-		OUT(enable_pvp);
-		OUT(enable_FV);
-		eq->NameGen = 1;
-		eq->Gibberish = 1;
-		eq->ProfanityFilter = 0;
-		FINISH_ENCODE();
-	}
-
 	ENCODE(OP_RequestClientZoneChange)
 	{
 		SETUP_DIRECT_ENCODE(RequestClientZoneChange_Struct, structs::RequestClientZoneChange_Struct);
@@ -1849,7 +1910,7 @@ namespace Mac {
 		memset(mac_pop_item,0,sizeof(structs::Item_Struct));
 
 		if(item->GMFlag == -1)
-			Log.Out(Logs::Moderate, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
+			Log.Out(Logs::Detail, Logs::EQMac, "Item %s is flagged for GMs.", item->Name);
 
 		// General items
   		if(type == 0)
@@ -2066,8 +2127,8 @@ namespace Mac {
 		eq->anon = emu->anon;
 		memcpy(eq->name, emu->name, 64);
 		eq->deity = emu->deity;
-		if (emu->race == 42 && emu->gender == 2)
-				eq->size = emu->size + 2.0f;
+		if ((emu->race == 42 || emu->race == 120) && emu->gender == 2)
+				eq->size = emu->size + 4.0f;
 		else
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;

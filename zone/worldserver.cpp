@@ -452,7 +452,7 @@ void WorldServer::Process() {
 			printf("Zoning %s to %s(%u) - %u\n", client != nullptr ? client->GetCleanName() : "Unknown", szp->zone, database.GetZoneID(szp->zone), szp->instance_id);
 			if (client != 0) {
 				if (strcasecmp(szp->adminname, szp->name) == 0)
-					client->Message(0, "Zoning to: %s", szp->zone);
+					client->Message(CC_Default, "Zoning to: %s", szp->zone);
 				//If #hideme is on, prevent being summoned by a lower GM.
 				else if (client->GetAnon() == 1 && client->Admin() > szp->adminrank)
 				{
@@ -1270,10 +1270,7 @@ void WorldServer::Process() {
 			ServerOP_Consent_Struct* s = (ServerOP_Consent_Struct*)pack->pBuffer;
 			Client* client = entity_list.GetClientByName(s->grantname);
 			if(client) {
-				if(s->permission == 1)
-					client->consent_list.push_back(s->ownername);
-				else
-					client->consent_list.remove(s->ownername);
+				client->Consent(s->permission, s->ownername);
 
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_ConsentResponse, sizeof(ConsentResponse_Struct));
 				ConsentResponse_Struct* crs = (ConsentResponse_Struct*)outapp->pBuffer;
@@ -1307,9 +1304,21 @@ void WorldServer::Process() {
 		}
 		case ServerOP_Consent_Response: {
 			ServerOP_Consent_Struct* s = (ServerOP_Consent_Struct*)pack->pBuffer;
-			Client* client = entity_list.GetClientByName(s->ownername);
-			if(client) {
-				client->Message_StringID(CC_Default, s->message_string_id);
+			Client* owner = entity_list.GetClientByName(s->ownername);
+			Client* grant = entity_list.GetClientByName(s->grantname);
+
+			if(owner && s->message_string_id == CONSENT_GIVEN)
+			{
+				owner->Message_StringID(CC_Default, s->message_string_id, s->grantname);
+			}
+			else if(grant && s->message_string_id == CONSENT_BEEN_DENIED)
+			{
+				grant->Consent(0, s->ownername);
+				grant->Message_StringID(CC_Default, s->message_string_id, s->ownername);
+			}
+			else if(owner)
+			{
+				owner->Message_StringID(CC_Default, s->message_string_id);
 			}
 			break;
 		}

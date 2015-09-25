@@ -720,9 +720,9 @@ void Lua_Client::ResetTrade() {
 	self->ResetTrade();
 }
 
-bool Lua_Client::UseDiscipline(int spell_id, Client* client) {
+bool Lua_Client::UseDiscipline(int spell_id) {
 	Lua_Safe_Call_Bool();
-	return self->UseDiscipline(spell_id, client);
+	return self->UseDiscipline(spell_id);
 }
 
 int Lua_Client::GetCharacterFactionLevel(int faction_id) {
@@ -813,6 +813,16 @@ int Lua_Client::GetModCharacterFactionLevel(int faction) {
 int Lua_Client::GetStartZone() {
 	Lua_Safe_Call_Int();
 	return self->GetStartZone();
+}
+
+void Lua_Client::KeyRingAdd(uint32 item) {
+	Lua_Safe_Call_Void();
+	self->KeyRingAdd(item);
+}
+
+bool Lua_Client::KeyRingCheck(uint32 item) {
+	Lua_Safe_Call_Bool();
+	return self->KeyRingCheck(item);
 }
 
 void Lua_Client::QuestReadBook(const char *text, int type) {
@@ -1235,7 +1245,7 @@ luabind::scope lua_register_client() {
 		.def("ForageItem", (void(Lua_Client::*)(bool))&Lua_Client::ForageItem)
 		.def("CalcPriceMod", (float(Lua_Client::*)(Lua_Mob,bool))&Lua_Client::CalcPriceMod)
 		.def("ResetTrade", (void(Lua_Client::*)(void))&Lua_Client::ResetTrade)
-		.def("UseDiscipline", (bool(Lua_Client::*)(int,Client*))&Lua_Client::UseDiscipline)
+		.def("UseDiscipline", (bool(Lua_Client::*)(int))&Lua_Client::UseDiscipline)
 		.def("GetCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetCharacterFactionLevel)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int))&Lua_Client::SetZoneFlag)
 		.def("SetZoneFlag", (void(Lua_Client::*)(int,uint8))&Lua_Client::SetZoneFlag)
@@ -1254,6 +1264,8 @@ luabind::scope lua_register_client() {
 		.def("RefundAA", (void(Lua_Client::*)(void))&Lua_Client::RefundAA)
 		.def("GetModCharacterFactionLevel", (int(Lua_Client::*)(int))&Lua_Client::GetModCharacterFactionLevel)
 		.def("GetStartZone", (int(Lua_Client::*)(void))&Lua_Client::GetStartZone)
+		.def("KeyRingAdd", (void(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
+		.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 		.def("QuestReadBook", (void(Lua_Client::*)(const char *,int))&Lua_Client::QuestReadBook)
 		.def("LearnRecipe", (void(Lua_Client::*)(uint32))&Lua_Client::LearnRecipe)
 		.def("GetEndurance", (int(Lua_Client::*)(void))&Lua_Client::GetEndurance)

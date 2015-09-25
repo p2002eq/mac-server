@@ -256,13 +256,13 @@ public:
 	virtual void DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caster_level, Mob* caster = 0, int instrumentmod = 10);
 	void BuffFadeBySpellID(uint16 spell_id);
 	void BuffFadeByEffect(int effectid, int skipslot = -1);
-	void BuffFadeAll(bool death = false, bool skiprez = false);
+	void BuffFadeAll(bool skiprez = false, bool message = false);
 	void BuffFadeNonPersistDeath();
 	void BuffFadeDetrimental();
-	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool death = false);
+	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true, bool message = true);
 	void BuffFadeDetrimentalByCaster(Mob *caster);
 	void BuffFadeBySitModifier();
-	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration);
+	void BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration, bool update);
 	int AddBuff(Mob *caster, const uint16 spell_id, int duration = 0, int32 level_override = -1);
 	int CanBuffStack(uint16 spellid, uint8 caster_level, bool iFailIfOverwrite = false);
 	int CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caster_level_override = -1);
@@ -273,7 +273,6 @@ public:
 	virtual int GetMaxTotalSlots() const { return 0; }
 	virtual void InitializeBuffSlots() { buffs = nullptr; current_buff_count = 0; }
 	virtual void UninitializeBuffSlots() { }
-	void SendBuffsToClient(Client *c);
 	inline Buffs_Struct* GetBuffs() { return buffs; }
 	void DoGravityEffect();
 	void DamageShield(Mob* other, bool spell_ds = false);
@@ -458,7 +457,6 @@ public:
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
-	void SendPositionNearby(uint8 iSendToSelf = 0);
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
@@ -470,7 +468,7 @@ public:
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, int32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
-		bool bFrenzy = false, bool iBuffTic = false);
+		bool bFrenzy = false, bool iBuffTic = false, int32 jolthate = 0);
 	bool RemoveFromHateList(Mob* mob);
 	void SetHate(Mob* other, int32 hate = 0, int32 damage = 0) { hate_list.Set(other,hate,damage);}
 	void HalveAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate > 1 ? in_hate / 2 : 1)); }
@@ -532,6 +530,7 @@ public:
 	void ShowBuffList(Client* client);
 	bool PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, float &z_dest,
 		bool lookForAftArc = true);
+	int32  GetSkillStat(SkillUseTypes skillid);	
 
 	//Procs
 	bool AddRangedProc(uint16 spell_id, uint16 iChance = 3, uint16 base_spell_id = SPELL_UNKNOWN);
@@ -694,6 +693,7 @@ public:
 	bool IsFamiliar() const { return(typeofpet == petFamiliar); }
 	bool IsAnimation() const { return(typeofpet == petAnimation); }
 	bool IsCharmed() const { return(typeofpet == petCharmed); }
+	bool IsDireCharmed() { return dire_charmed; }
 	void SetOwnerID(uint16 NewOwnerID);
 	inline uint16 GetOwnerID() const { return ownerid; }
 	inline virtual bool HasOwner() { if(GetOwnerID()==0){return false;} return( entity_list.GetMob(GetOwnerID()) != 0); }
@@ -851,7 +851,7 @@ public:
 	bool Charmed() const { return charmed; }
 	static uint32 GetLevelHP(uint8 tlevel);
 	uint32 GetZoneID() const; //for perl
-	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, bool isproc = false);
+	virtual int32 CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool isproc = false);
 	virtual int32 CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possible = 0);
 	virtual uint32 GetAA(uint32 aa_id) const { return(0); }
 
@@ -946,7 +946,7 @@ public:
 	void	SetCanDualWield(bool value) { can_dual_wield = value; }
 	uint8	DoubleAttackChance();
 	uint8	DualWieldChance();
-	bool	Disarm();
+	uint8	Disarm(float chance);
 
 	//Command #Tune functions
 	int32 Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg =0,	int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
@@ -962,6 +962,14 @@ public:
 	void AddAssistCap() { ++npc_assist_cap; }
 	void DelAssistCap() { --npc_assist_cap; }
 	void ResetAssistCap() { npc_assist_cap = 0; }
+
+	bool IsZomm() { return iszomm; }
+	void SetMerchantSession(uint16 value) { MerchantSession = value; }
+	uint16 GetMerchantSession() { return MerchantSession; }
+	uint32 player_damage;
+	uint32 dire_pet_damage;
+	uint32 total_damage;
+	float  GetBaseEXP();
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1039,13 +1047,13 @@ protected:
 	StatBonuses itembonuses;
 	StatBonuses spellbonuses;
 	StatBonuses aabonuses;
-	StatBonuses discbonuses;
 	uint16 petid;
 	uint16 ownerid;
 	PetType typeofpet;
 	int16 petpower;
 	uint32 follow;
 	uint32 follow_dist;
+	bool dire_charmed;
 	bool no_target_hotkey;
 	bool can_equip_secondary;
 	bool can_dual_wield;
@@ -1308,6 +1316,7 @@ protected:
 	bool PrimaryAggro;
 	bool AssistAggro;
 	uint8 npc_assist_cap;
+	uint16 MerchantSession;
 
 private:
 	void _StopSong(); //this is not what you think it is

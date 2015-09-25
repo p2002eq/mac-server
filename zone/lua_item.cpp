@@ -691,11 +691,6 @@ const char *Lua_Item::GetFilename() {
 	return self->Filename;
 }
 
-int Lua_Item::GetSVCorruption() {
-	Lua_Safe_Call_Int();
-	return self->SVCorruption;
-}
-
 uint32 Lua_Item::GetPurity() {
 	Lua_Safe_Call_Int();
 	return self->Purity;
@@ -711,71 +706,6 @@ uint32 Lua_Item::GetDSMitigation() {
 	return self->DSMitigation;
 }
 
-int Lua_Item::GetHeroicStr() {
-	Lua_Safe_Call_Int();
-	return self->HeroicStr;
-}
-
-int Lua_Item::GetHeroicInt() {
-	Lua_Safe_Call_Int();
-	return self->HeroicInt;
-}
-
-int Lua_Item::GetHeroicWis() {
-	Lua_Safe_Call_Int();
-	return self->HeroicWis;
-}
-
-int Lua_Item::GetHeroicAgi() {
-	Lua_Safe_Call_Int();
-	return self->HeroicAgi;
-}
-
-int Lua_Item::GetHeroicDex() {
-	Lua_Safe_Call_Int();
-	return self->HeroicDex;
-}
-
-int Lua_Item::GetHeroicSta() {
-	Lua_Safe_Call_Int();
-	return self->HeroicSta;
-}
-
-int Lua_Item::GetHeroicCha() {
-	Lua_Safe_Call_Int();
-	return self->HeroicCha;
-}
-
-int Lua_Item::GetHeroicMR() {
-	Lua_Safe_Call_Int();
-	return self->HeroicMR;
-}
-
-int Lua_Item::GetHeroicFR() {
-	Lua_Safe_Call_Int();
-	return self->HeroicFR;
-}
-
-int Lua_Item::GetHeroicCR() {
-	Lua_Safe_Call_Int();
-	return self->HeroicCR;
-}
-
-int Lua_Item::GetHeroicDR() {
-	Lua_Safe_Call_Int();
-	return self->HeroicDR;
-}
-
-int Lua_Item::GetHeroicPR() {
-	Lua_Safe_Call_Int();
-	return self->HeroicPR;
-}
-
-int Lua_Item::GetHeroicSVCorrup() {
-	Lua_Safe_Call_Int();
-	return self->HeroicSVCorrup;
-}
-
 int Lua_Item::GetHealAmt() {
 	Lua_Safe_Call_Int();
 	return self->HealAmt;
@@ -789,41 +719,6 @@ int Lua_Item::GetSpellDmg() {
 uint32 Lua_Item::GetScriptFileID() {
 	Lua_Safe_Call_Int();
 	return self->ScriptFileID;
-}
-
-int Lua_Item::GetExpendableArrow() {
-	Lua_Safe_Call_Int();
-	return self->ExpendableArrow;
-}
-
-uint32 Lua_Item::GetClairvoyance() {
-	Lua_Safe_Call_Int();
-	return self->Clairvoyance;
-}
-
-const char *Lua_Item::GetClickName() {
-	Lua_Safe_Call_String();
-	return self->ClickName;
-}
-
-const char *Lua_Item::GetProcName() {
-	Lua_Safe_Call_String();
-	return self->ProcName;
-}
-
-const char *Lua_Item::GetWornName() {
-	Lua_Safe_Call_String();
-	return self->WornName;
-}
-
-const char *Lua_Item::GetFocusName() {
-	Lua_Safe_Call_String();
-	return self->FocusName;
-}
-
-const char *Lua_Item::GetScrollName() {
-	Lua_Safe_Call_String();
-	return self->ScrollName;
 }
 
 luabind::scope lua_register_item() {
@@ -968,33 +863,12 @@ luabind::scope lua_register_item() {
 		.def("Book", &Lua_Item::GetBook)
 		.def("BookType", &Lua_Item::GetBookType)
 		.def("Filename", &Lua_Item::GetFilename)
-		.def("SVCorruption", &Lua_Item::GetSVCorruption)
 		.def("Purity", &Lua_Item::GetPurity)
 		.def("BackstabDmg", &Lua_Item::GetBackstabDmg)
 		.def("DSMitigation", &Lua_Item::GetDSMitigation)
-		.def("HeroicStr", &Lua_Item::GetHeroicStr)
-		.def("HeroicInt", &Lua_Item::GetHeroicInt)
-		.def("HeroicWis", &Lua_Item::GetHeroicWis)
-		.def("HeroicAgi", &Lua_Item::GetHeroicAgi)
-		.def("HeroicDex", &Lua_Item::GetHeroicDex)
-		.def("HeroicSta", &Lua_Item::GetHeroicSta)
-		.def("HeroicCha", &Lua_Item::GetHeroicCha)
-		.def("HeroicMR", &Lua_Item::GetHeroicMR)
-		.def("HeroicFR", &Lua_Item::GetHeroicFR)
-		.def("HeroicCR", &Lua_Item::GetHeroicCR)
-		.def("HeroicDR", &Lua_Item::GetHeroicDR)
-		.def("HeroicPR", &Lua_Item::GetHeroicPR)
-		.def("HeroicSVCorrup", &Lua_Item::GetHeroicSVCorrup)
 		.def("HealAmt", &Lua_Item::GetHealAmt)
 		.def("SpellDmg", &Lua_Item::GetSpellDmg)
-		.def("ScriptFileID", &Lua_Item::GetScriptFileID)
-		.def("ExpendableArrow", &Lua_Item::GetExpendableArrow)
-		.def("Clairvoyance", &Lua_Item::GetClairvoyance)
-		.def("ClickName", &Lua_Item::GetClickName)
-		.def("ProcName", &Lua_Item::GetProcName)
-		.def("WornName", &Lua_Item::GetWornName)
-		.def("FocusName", &Lua_Item::GetFocusName)
-		.def("ScrollName", &Lua_Item::GetScrollName);
+		.def("ScriptFileID", &Lua_Item::GetScriptFileID);
 }
 
 #endif

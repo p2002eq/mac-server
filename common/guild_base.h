@@ -43,8 +43,6 @@ public:
 	bool	DeleteGuild(uint32 guild_id);
 	bool	RenameGuild(uint32 guild_id, const char* name);
 	bool	SetGuildMOTD(uint32 guild_id, const char* motd, const char *setter);
-	bool	SetGuildURL(uint32 GuildID, const char* URL);
-	bool	SetGuildChannel(uint32 GuildID, const char* Channel);
 
 	//character edit actions
 	bool	SetGuildLeader(uint32 guild_id, uint32 leader_char_id);

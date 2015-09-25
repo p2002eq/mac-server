@@ -222,7 +222,7 @@ int32 Client::CalcHPRegen() {
 
 int32 Client::CalcHPRegenCap()
 {
-	int cap = RuleI(Character, ItemHealthRegenCap) + itembonuses.HeroicSTA/25;
+	int cap = RuleI(Character, ItemHealthRegenCap);
 
 	cap += aabonuses.ItemHPRegenCap + spellbonuses.ItemHPRegenCap + itembonuses.ItemHPRegenCap;
 
@@ -818,7 +818,7 @@ int32 Client::acmod() {
 int32 Client::CalcAC() {
 
 	// new formula
-	int avoidance = (acmod() + ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)*16)/9);
+	int avoidance = (acmod() + (GetSkill(SkillDefense)*16)/9);
 	if (avoidance < 0)
 		avoidance = 0;
 
@@ -826,12 +826,12 @@ int32 Client::CalcAC() {
 	if (m_pp.class_ == WIZARD || m_pp.class_ == MAGICIAN || m_pp.class_ == NECROMANCER || m_pp.class_ == ENCHANTER) {
 		//something is wrong with this, naked casters have the wrong natural AC
 //		mitigation = (spellbonuses.AC/3) + (GetSkill(DEFENSE)/2) + (itembonuses.AC+1);
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/4 + (itembonuses.AC+1);
+		mitigation = GetSkill(SkillDefense)/4 + (itembonuses.AC+1);
 		//this might be off by 4..
 		mitigation -= 4;
 	} else {
 //		mitigation = (spellbonuses.AC/4) + (GetSkill(DEFENSE)/3) + ((itembonuses.AC*4)/3);
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/3 + ((itembonuses.AC*4)/3);
+		mitigation = GetSkill(SkillDefense)/3 + ((itembonuses.AC*4)/3);
 		if(m_pp.class_ == MONK)
 			mitigation += GetLevel() * 13/10;	//the 13/10 might be wrong, but it is close...
 	}
@@ -849,16 +849,6 @@ int32 Client::CalcAC() {
 			displayed += iksarlevel * 12 / 10;
 	}
 
-	// Shield AC bonus for HeroicSTR
-	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
-		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
-			if(shield == ItemTypeShield)
-				displayed += itembonuses.HeroicSTR/2;
-		}
-	}
-
 	//spell AC bonuses are added directly to natural total
 	displayed += spellbonuses.AC;
 
@@ -870,23 +860,13 @@ int32 Client::GetACMit() {
 
 	int mitigation = 0;
 	if (m_pp.class_ == WIZARD || m_pp.class_ == MAGICIAN || m_pp.class_ == NECROMANCER || m_pp.class_ == ENCHANTER) {
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/4 + (itembonuses.AC+1);
+		mitigation = (GetSkill(SkillDefense))/4 + (itembonuses.AC+1);
 		mitigation -= 4;
 	}
 	else {
-		mitigation = (GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)/3 + ((itembonuses.AC*4)/3);
+		mitigation = (GetSkill(SkillDefense))/3 + ((itembonuses.AC*4)/3);
 		if(m_pp.class_ == MONK)
 			mitigation += GetLevel() * 13/10;	//the 13/10 might be wrong, but it is close...
-	}
-
-	// Shield AC bonus for HeroicSTR
-	if(itembonuses.HeroicSTR) {
-		bool equiped = CastToClient()->m_inv.GetItem(MainSecondary);
-		if(equiped) {
-			uint8 shield = CastToClient()->m_inv.GetItem(MainSecondary)->GetItem()->ItemType;
-			if(shield == ItemTypeShield)
-				mitigation += itembonuses.HeroicSTR/2;
-		}
 	}
 
 	return(mitigation*1000/847);
@@ -894,7 +874,7 @@ int32 Client::GetACMit() {
 
 int32 Client::GetACAvoid() {
 
-	int32 avoidance = (acmod() + ((GetSkill(SkillDefense) + itembonuses.HeroicAGI/10)*16)/9);
+	int32 avoidance = (acmod() + ((GetSkill(SkillDefense))*16)/9);
 	if (avoidance < 0)
 		avoidance = 0;
 
@@ -937,8 +917,9 @@ int32 Client::CalcMaxMana()
 	if (cur_mana > max_mana) {
 		cur_mana = max_mana;
 	}
-
-	Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	#if EQDEBUG >= 11
+		Log.Out(Logs::Detail, Logs::Spells, "Client::CalcMaxMana() called for %s - returning %d", GetName(), max_mana);
+	#endif
 	return max_mana;
 }
 
@@ -1051,10 +1032,7 @@ int32 Client::CalcManaRegenCap()
 	switch(GetCasterClass())
 	{
 		case 'I':
-			cap += (itembonuses.HeroicINT / 25);
-			break;
 		case 'W':
-			cap += (itembonuses.HeroicWIS / 25);
 			break;
 	}
 
@@ -1405,7 +1383,7 @@ int32	Client::CalcMR()
 			MR = 20;
 	}
 
-	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR + discbonuses.MR;
+	MR += itembonuses.MR + spellbonuses.MR + aabonuses.MR;
 
 	if(GetClass() == WARRIOR)
 		MR += GetLevel() / 2;
@@ -1473,15 +1451,24 @@ int32	Client::CalcFR()
 	}
 
 	int c = GetClass();
-	if(c == RANGER) {
+	if(c == RANGER) 
+	{
 		FR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			FR += l - 49;
+	} 
+	else if(c == MONK) 
+	{
+		FR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			FR += l - 49;
 	}
 
-	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR + discbonuses.FR;
+	FR += itembonuses.FR + spellbonuses.FR + aabonuses.FR;
 
 	if(FR < 1)
 		FR = 1;
@@ -1495,16 +1482,12 @@ int32	Client::CalcFR()
 int32	Client::CalcDR()
 {
 	//racial bases
-	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			DR = 15;
 			break;
 		case BARBARIAN:
 			DR = 15;
-			bonus = 4;
-			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
-			DR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			DR = 10;
@@ -1550,22 +1533,39 @@ int32	Client::CalcDR()
 	}
 
 	int c = GetClass();
-	if(c == PALADIN) {
+	if(c == PALADIN) 
+	{
 		DR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			DR += l - 49;
 
-	} else if(c == SHADOWKNIGHT) {
+	} 
+	else if(c == SHADOWKNIGHT) 
+	{
 		DR += 4;
 
 		int l = GetLevel();
 		if(l > 49)
 			DR += l - 49;
+	} 
+	else if(c == BEASTLORD) 
+	{
+		DR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			DR += l - 49;
+	} 
+	else if(c == MONK) 
+	{
+		int l = GetLevel();
+		if(l > 50)
+			DR += l - 50;
 	}
 
-	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR + discbonuses.DR;
+	DR += itembonuses.DR + spellbonuses.DR + aabonuses.DR;
 
 	if(DR < 1)
 		DR = 1;
@@ -1630,22 +1630,31 @@ int32	Client::CalcPR()
 	}
 
 	int c = GetClass();
-	if(c == ROGUE) {
+	if(c == ROGUE) 
+	{
 		PR += 8;
 
 		int l = GetLevel();
 		if(l > 49)
 			PR += l - 49;
 
-	} else if(c == SHADOWKNIGHT) {
+	} 
+	else if(c == SHADOWKNIGHT) 
+	{
 		PR += 4;
 
 		int l = GetLevel();
 		if(l > 49)
 			PR += l - 49;
 	}
+	else if(c == MONK) 
+	{
+		int l = GetLevel();
+		if(l > 50)
+			PR += l - 50;
+	}
 
-	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR + discbonuses.PR;
+	PR += itembonuses.PR + spellbonuses.PR + aabonuses.PR;
 
 	if(PR < 1)
 		PR = 1;
@@ -1659,16 +1668,12 @@ int32	Client::CalcPR()
 int32	Client::CalcCR()
 {
 	//racial bases
-	float bonus;
 	switch(GetBaseRace()) {
 		case HUMAN:
 			CR = 25;
 			break;
 		case BARBARIAN:
 			CR = 35;
-			bonus = 4;
-			bonus += GetLevel() * 0.25; //Barbarians get a bonus by level according to our client.
-			CR += static_cast<int8>(bonus);
 			break;
 		case ERUDITE:
 			CR = 25;
@@ -1714,7 +1719,16 @@ int32	Client::CalcCR()
 	}
 
 	int c = GetClass();
-	if(c == RANGER) {
+	if(c == RANGER) 
+	{
+		CR += 4;
+
+		int l = GetLevel();
+		if(l > 49)
+			CR += l - 49;
+	} 
+	else if(c == BEASTLORD) 
+	{
 		CR += 4;
 
 		int l = GetLevel();
@@ -1722,7 +1736,7 @@ int32	Client::CalcCR()
 			CR += l - 49;
 	}
 
-	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR + discbonuses.CR;
+	CR += itembonuses.CR + spellbonuses.CR + aabonuses.CR;
 
 	if(CR < 1)
 		CR = 1;
@@ -1901,7 +1915,7 @@ int32 Client::CalcEnduranceRegen() {
 }
 
 int32 Client::CalcEnduranceRegenCap() {
-	int cap = (RuleI(Character, ItemEnduranceRegenCap) + itembonuses.HeroicSTR/25 + itembonuses.HeroicDEX/25 + itembonuses.HeroicAGI/25 + itembonuses.HeroicSTA/25);
+	int cap = (RuleI(Character, ItemEnduranceRegenCap));
 
 	return (cap * RuleI(Character, EnduranceRegenMultiplier) / 100);
 }

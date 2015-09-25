@@ -246,7 +246,7 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_
 		uint32 slottest = 22; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
-			Message(0, "This item is not equipable at slot %u - moving to cursor.", to_slot);
+			Message(CC_Default, "This item is not equipable at slot %u - moving to cursor.", to_slot);
 			Log.Out(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to equip an item unusable in slot %u - moved to cursor.\n(Item: %u)\n",
 				GetName(), account_name, to_slot, item->ID);
 
@@ -1887,7 +1887,7 @@ uint32 Client::GetEquipmentColor(uint8 material_slot) const
 }
 
 // Send an item packet (including all subitems of the item)
-void Client::SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid)
+void Client::SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid, int16 toid, int16 skill)
 {
 	if (!inst)
 		return;
@@ -1904,6 +1904,8 @@ void Client::SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType 
 		opcode = OP_ItemLinkResponse;
 	else if(packet_type==ItemPacketTradeView)
 		opcode = OP_TradeItemPacket;
+	else if(packet_type==ItemPacketStolenItem)
+		opcode = OP_PickPocket;
 	else
 		opcode = OP_ItemPacket;
 	//opcode = (packet_type==ItemPacketViewLink) ? OP_ItemLinkResponse : OP_ItemPacket;
@@ -1912,6 +1914,8 @@ void Client::SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType 
 	memcpy(itempacket->SerializedItem, packet.c_str(), packet.length());
 	itempacket->PacketType = packet_type;
 	itempacket->fromid = fromid;
+	itempacket->toid = toid;
+	itempacket->skill = skill;
 
 #if EQDEBUG >= 9
 		DumpPacket(outapp);

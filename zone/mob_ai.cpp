@@ -1204,6 +1204,8 @@ void Mob::AI_Process() {
 		CastToNPC()->CheckSignal();
 	}
 
+	Mob *oldTarget = target;
+
 	if (engaged)
 	{
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1223,7 +1225,6 @@ void Mob::AI_Process() {
 					if (!ImprovedTaunt())
 						SetTarget(hate_list.GetTop());
 				}
-
 			}
 		}
 
@@ -1240,6 +1241,10 @@ void Mob::AI_Process() {
 		{
 			RemoveFromHateList(this);
 			return;
+		}
+		if (oldTarget != target)
+		{
+			FaceTarget(target);
 		}
 
 		if(DivineAura())
@@ -1475,18 +1480,14 @@ void Mob::AI_Process() {
 			}
 
 			// See if we can summon the mob to us
-			if (!HateSummon())
+			if (!HateSummon() && target)
 			{
 				//could not summon them, check ranged...
 				if(GetSpecialAbility(SPECATK_RANGED_ATK))
 					doranged = true;
 
 				// Now pursue
-				// TODO: Check here for another person on hate list with close hate value
-				if(AI_PursueCastCheck()){
-					//we did something, so do not process movement.
-				}
-				else if (AImovement_timer->Check())
+				if (!AI_PursueCastCheck() && AImovement_timer->Check())
 				{
 					if(!IsRooted()) {
 						Log.Out(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", target->GetName());
@@ -1718,8 +1719,14 @@ void Mob::AI_Process() {
 
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
+
+	if ((IsGuarding() && (m_Position == m_GuardPoint)) && roambox_distance == 0 || (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+		walksp = 0.0f;
+	}
+
 	SetCurrentSpeed(walksp);
-	if(walksp <= 0.0f)
+	
+	if(walksp < 0.1f)
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
 
 	if (roambox_distance > 0) {

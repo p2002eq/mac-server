@@ -561,7 +561,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		zone_mode = zm;
 
 		if(zm == ZoneSolicited || zm == ZoneToSafeCoords) {
-			Log.Out(Logs::General, Logs::EQMac, "Zoning packet about to be sent (ZS/ZTS). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+			Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet about to be sent (ZS/ZTS). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -580,7 +580,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		else if (zm == ZoneToBindPoint) {
 			//TODO: Find a better packet that works with EQMac on death. Sending OP_RequestClientZoneChange here usually does not zone the
 			//player correctly (it starts the zoning process, then disconnect.) OP_GMGoto seems to work 90% of the time. It's a hack, but it works...
-			Log.Out(Logs::General, Logs::EQMac, "Zoning packet about to be sent (ZTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+			Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet about to be sent (ZTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMGoto, sizeof(GMGoto_Struct));
 			GMGoto_Struct* gmg = (GMGoto_Struct*) outapp->pBuffer;
 	
@@ -599,7 +599,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			zone_mode = zm;
 
 			if(zoneID == GetZoneID()) {
-				Log.Out(Logs::General, Logs::EQMac, "Zoning packet NOT being sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet NOT being sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				//Not doing inter-zone for same zone gates. Client is supposed to handle these, based on PP info it is fed.
 				//properly handle proximities
 				entity_list.ProcessMove(this, glm::vec3(m_Position));
@@ -609,7 +609,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			else
 			{
 				zone_mode = zm;
-				Log.Out(Logs::General, Logs::EQMac, "Zoning packet about to be sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet about to be sent (GTB). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 				RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -627,7 +627,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		else if(zm == EvacToSafeCoords)
 		{
 			zone_mode = zm;
-			Log.Out(Logs::General, Logs::EQMac, "Zoning packet about to be sent (ETSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+			Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet about to be sent (ETSC). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 			EQApplicationPacket* outapp = new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
@@ -653,7 +653,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		}
 		else {
 			if(zoneID == GetZoneID()) {
-				Log.Out(Logs::General, Logs::EQMac, "Zoning packet about to be sent (GOTO). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
+				Log.Out(Logs::Detail, Logs::EQMac, "Zoning packet about to be sent (GOTO). We are headed to zone: %i, at %f, %f, %f", zoneID, x, y, z);
 				//properly handle proximities
 				entity_list.ProcessMove(this, glm::vec3(m_Position));
 				m_Proximity = glm::vec3(m_Position);
@@ -676,7 +676,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			FastQueuePacket(&outapp);
 		}
 
-		Log.Out(Logs::Detail, Logs::None, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
+		Log.Out(Logs::Detail, Logs::EQMac, "Player %s has requested a zoning to LOC x=%f, y=%f, z=%f, heading=%f in zoneid=%i and type=%i", GetName(), x, y, z, heading, zoneID, zm);
 		//Clear zonesummon variables if we're zoning to our own zone
 		//Client wont generate a zone change packet to the server in this case so
 		//They aren't needed and it keeps behavior on next zone attempt from being undefined.
@@ -770,7 +770,7 @@ void Client::SetZoneFlag(uint32 zone_id, uint8 key) {
 	zfs->key = key;
 	ZoneFlags.Insert(zfs);
 
-	std::string query = StringFormat("INSERT INTO zone_flags (charID,zoneID,key_) VALUES(%d,%d,%d)", CharacterID(), zone_id, key);
+	std::string query = StringFormat("INSERT INTO character_zone_flags (id,zoneID,key_) VALUES(%d,%d,%d)", CharacterID(), zone_id, key);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to set zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -792,7 +792,7 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 		iterator.Advance();
 	}
 
-	std::string query = StringFormat("DELETE FROM zone_flags WHERE charID=%d AND zoneID=%d", CharacterID(), zone_id);
+	std::string query = StringFormat("DELETE FROM character_zone_flags WHERE id=%d AND zoneID=%d", CharacterID(), zone_id);
 	auto results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to clear zone flag for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -802,7 +802,7 @@ void Client::ClearZoneFlag(uint32 zone_id) {
 void Client::LoadZoneFlags(LinkedList<ZoneFlags_Struct*>* ZoneFlags) 
 {
 	ZoneFlags->Clear();
-	std::string query = StringFormat("SELECT zoneID, key_ from zone_flags WHERE charID=%d order by zoneID", CharacterID());
+	std::string query = StringFormat("SELECT zoneID, key_ from character_zone_flags WHERE id=%d order by zoneID", CharacterID());
 	auto results = database.QueryDatabase(query);
     if (!results.Success()) {
         Log.Out(Logs::General, Logs::Error, "MySQL Error while trying to load zone flags for %s: %s", GetName(), results.ErrorMessage().c_str());
@@ -853,11 +853,11 @@ uint8 Client::GetZoneFlagKey(uint32 zone_id) {
 
 void Client::SendZoneFlagInfo(Client *to) {
 	if(ZoneFlags.Count() == 0) {
-		to->Message(0, "%s has no zone flags.", GetName());
+		to->Message(CC_Default, "%s has no zone flags.", GetName());
 		return;
 	}
 
-	to->Message(0, "Flags for %s:", GetName());
+	to->Message(CC_Default, "Flags for %s:", GetName());
 	char empty[1] = { '\0' };
 	LinkedListIterator<ZoneFlags_Struct*> iterator(ZoneFlags);
 	iterator.Reset();
