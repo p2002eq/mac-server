@@ -1302,8 +1302,8 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool 
 				if((spells[spell_id].spell_category == 90 || spells[spell_id].spell_category == 99) && nonModifiedAggro < 0)
 				{
 					jolthate = nonModifiedAggro;
-					nonModifiedAggro = 1;
-					Log.Out(Logs::General, Logs::Spells, "Jolt type spell setting initial aggro. jolthate is %d hate is %d", jolthate, nonModifiedAggro);
+					nonModifiedAggro = 0;
+					Log.Out(Logs::General, Logs::Spells, "Jolt type spell checking aggro. jolthate is %d hate is %d", jolthate, nonModifiedAggro);
 				}
 				break;
 			}

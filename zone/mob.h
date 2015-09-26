@@ -468,12 +468,13 @@ public:
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, int32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
-		bool bFrenzy = false, bool iBuffTic = false, int32 jolthate = 0);
+		bool bFrenzy = false, bool iBuffTic = false);
 	bool RemoveFromHateList(Mob* mob);
 	void SetHate(Mob* other, int32 hate = 0, int32 damage = 0) { hate_list.Set(other,hate,damage);}
+	void AddHate(Mob* other, int32 hate = 0, int32 damage = 0, bool bFrenzy = false, bool iAddIfNotExist = true) { hate_list.Add(other,hate,damage,bFrenzy,iAddIfNotExist);}
 	void HalveAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate > 1 ? in_hate / 2 : 1)); }
 	void DoubleAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate ? in_hate * 2 : 1)); }
-	uint32 GetHateAmount(Mob* tmob, bool is_dam = false) { return hate_list.GetEntHate(tmob,is_dam);}
+	uint32 GetHateAmount(Mob* tmob, bool is_dam = false, bool bonus = true) { return hate_list.GetEntHate(tmob,is_dam,bonus);}
 	uint32 GetDamageAmount(Mob* tmob) { return hate_list.GetEntHate(tmob, true);}
 	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}

@@ -29,7 +29,6 @@ struct tHateEntry
 {
 	Mob *ent;
 	int32 damage, hate;
-	int32 jolthate; //Jolt type spells make hate negative, but still allow aggro. This variable holds our actual hate value, while the hate variable is set to 1 until we get out of the hole.
 	bool bFrenzy;
 	Timer timer;
 };
@@ -41,7 +40,7 @@ public:
 	~HateList();
 
 	// adds a mob to the hatelist
-	void Add(Mob *ent, int32 in_hate=0, int32 in_dam=0, bool bFrenzy = false, bool iAddIfNotExist = true, int32 in_jolthate = 0);
+	void Add(Mob *ent, int32 in_hate=0, int32 in_dam=0, bool bFrenzy = false, bool iAddIfNotExist = true);
 	// sets existing hate
 	void Set(Mob *other, uint32 in_hate, uint32 in_dam);
 	// removes mobs from hatelist
