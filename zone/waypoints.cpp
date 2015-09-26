@@ -794,12 +794,12 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, float speed, b
 	m_Delta = glm::vec4(floorf((m_Position.x - nx)*6.6666666f), floorf((m_Position.y - ny)*6.6666666f), floorf((m_Position.z - nz)*6.6666666f), 0.0f);
 
 	if (IsClient()) {
-		SendPositionNearby(1);
+		SendPosUpdate(1);
 		CastToClient()->ResetPositionTimer();
 	}
 	else
 	{
-		SendPositionNearby();
+		SendPosUpdate();
 		SetAppearance(eaStanding, false);
 	}		
 	SetChanged();
@@ -833,21 +833,6 @@ float Mob::SetRunAnimation(float speed)
 		newspeed = speed * 100.0f;
 		animation = static_cast<uint16>(speed * 10.0f);
 	}
-	/*if(IsNPC()) 
-	{
-		if(speed >= GetRunspeed())
-		{
-			SetCurrentlyRunning(true);
-			newspeed = speed * RuleR(NPC, SpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, RunAnimRatio));
-		}
-		else
-		{
-			SetCurrentlyRunning(false);
-			newspeed = speed * RuleR(NPC, WalkSpeedMultiplier);
-			pRunAnimSpeed = (int8)(speed*RuleI(NPC, WalkAnimRatio));
-		}
-	}*/
 
 	return newspeed;
 }

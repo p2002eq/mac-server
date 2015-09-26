@@ -574,10 +574,6 @@ int main(int argc, char** argv) {
 
 void CatchSignal(int sig_num) {
 	Log.Out(Logs::General, Logs::World_Server,"Caught signal %d",sig_num);
-	TimeOfDay_Struct eqTime;
-	zoneserver_list.worldclock.getEQTimeOfDay(time(0), &eqTime);
-	if(!database.SaveTime(eqTime.minute,eqTime.hour,eqTime.day,eqTime.month,eqTime.year))
-		Log.Out(Logs::General, Logs::World_Server, "Failed to save eqtime.");
 	RunLoops = false;
 }
 

@@ -883,7 +883,7 @@ void Client::AI_Process()
 				moved=false;
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
 				SendPosition();
-				tar_ndx =0;
+				tar_ndx = 20;
 			}
 
 			if(GetTarget() && !IsStunned() && !IsMezzed() && !GetFeigned()) {
@@ -1171,7 +1171,7 @@ void Mob::AI_Process() {
 				if(AImovement_timer->Check()) {
 					float f_speed = GetFearSpeed();
 					SetCurrentSpeed(f_speed);
-					if (f_speed > 0.0f)
+					if (f_speed >= 0.1f)
 					{
 						// Check if we have reached the last fear point
 						if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
@@ -1191,6 +1191,13 @@ void Mob::AI_Process() {
 								tar_ndx = 20;
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, f_speed);
+						}
+					} else {
+						float fear_heading = CalculateHeadingToTarget(m_FearWalkTarget.x, m_FearWalkTarget.y);
+						if (m_Position.w != fear_heading)
+						{
+							SetHeading(fear_heading);
+							SendPosition();
 						}
 					}
 				}
@@ -1719,9 +1726,12 @@ void Mob::AI_Process() {
 
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
-	if (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false)) {
+
+	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
+		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
 		walksp = 0.0f;
 	}
+
 	SetCurrentSpeed(walksp);
 	
 	if(walksp < 0.1f)

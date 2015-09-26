@@ -422,6 +422,10 @@ Mob::Mob(const char* in_name,
 	PrimaryAggro = false;
 	AssistAggro = false;
 	MerchantSession = 0;
+	dire_charmed = false;
+	player_damage = 0;
+	dire_pet_damage = 0;
+	total_damage = 0;
 }
 
 Mob::~Mob()
@@ -1331,55 +1335,9 @@ void Mob::SendPosition()
 	MakeSpawnUpdateNoDelta(&spu->spawn_update);
 	move_tic_count = 0;
 	tar_ndx = 20;
-	entity_list.QueueClients(this, app, true, false);
+	entity_list.QueueCloseClientsPrecalc(this, app, true, nullptr, false);
+	//entity_list.QueueCloseClients(this, app, true, 1000, nullptr, false);
 	safe_delete(app);
-}
-
-// this one is for mobs on the move, and clients.
-void Mob::SendPositionNearby(uint8 iSendToSelf) 
-{
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
-	spu->num_updates = 1; // hack - only one spawn position per update
-	MakeSpawnUpdate(&spu->spawn_update);
-
-	if (iSendToSelf == 2) {
-		if (this->IsClient()) {
-			this->CastToClient()->FastQueuePacket(&app,false);
-			return;
-		}
-	}
-	else
-	{
-		if(IsClient())
-		{
-			entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
-		}
-		else
-		{
-			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
-			if(move_tic_count == position_update)
-			{
-				EQApplicationPacket* app2 = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
-				spu2->num_updates = 1; // hack - only one spawn position per update
-				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 1000, nullptr, false);
-				if (HasOwner() || (IsNPC() && Route.size() > 0))
-					move_tic_count = 0;
-				else
-					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
-				safe_delete(app2);
-			}
-			else
-			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count++;
-			}
-		}
-	}
-	safe_delete(app);
-
 }
 
 // this one is for mobs on the move, and clients.
@@ -1403,19 +1361,19 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 		}
 		else
 		{
 			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
 			if(move_tic_count == position_update)
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 1000, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false, true);
 				move_tic_count = 0;
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1668,7 +1626,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 			gender = in_gender;
 	}
 	if (in_texture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->texture = 0xFF;
 		else
 			this->texture = GetTexture();
@@ -1677,7 +1635,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->texture = in_texture;
 
 	if (in_helmtexture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->helmtexture = 0xFF;
 		else if (in_texture != 0xFF)
 			this->helmtexture = in_texture;
@@ -1743,34 +1701,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->luclinface = CastToClient()->GetBaseFace();
 		this->beard	= CastToClient()->GetBaseBeard();
 		this->aa_title = 0xFF;
-		switch(race){
-			case OGRE:
-				this->size = 9;
-				break;
-			case TROLL:
-				this->size = 8;
-				break;
-			case VAHSHIR:
-			case BARBARIAN:
-				this->size = 7;
-				break;
-			case HALF_ELF:
-			case WOOD_ELF:
-			case DARK_ELF:
-			case FROGLOK:
-				this->size = 5;
-				break;
-			case DWARF:
-				this->size = 4;
-				break;
-			case HALFLING:
-			case GNOME:
-				this->size = 3;
-				break;
-			default:
-				this->size = 6;
-				break;
-		}
+		this->size = GetBaseSize();
 	}
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Illusion, sizeof(Illusion_Struct));
@@ -1798,9 +1729,8 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
-	if ((in_race > 0 && in_race <= GNOME )
-		|| in_race == IKSAR || in_race == VAHSHIR || in_race == FROGLOK
-		|| in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
+	if (IsPlayableRace(in_race) ||
+		in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
 		if (in_gender >= 2) {
 			// Female default for PC Races
 			return 1;
@@ -5360,4 +5290,107 @@ float Mob::CalcZOffset()
 		mysize = RuleR(Map, BestZSizeMax);
 
 	return (RuleR(Map, BestZMultiplier) * mysize);
+}
+
+int32 Mob::GetSkillStat(SkillUseTypes skillid)
+{
+	//Weapon and Rogue skills
+	if(skillid == Skill1HBlunt || skillid == Skill1HSlashing || skillid == Skill2HBlunt || skillid == Skill2HSlashing || 
+		skillid == SkillArchery || skillid == Skill1HPiercing || skillid == SkillHandtoHand || skillid == SkillThrowing || 
+		skillid == SkillApplyPoison || skillid == SkillDisarmTraps || skillid == SkillPickLock || skillid == SkillPickPockets ||
+		skillid == SkillSenseTraps || skillid == SkillSafeFall || skillid == SkillHide || skillid == SkillSneak)
+	{
+		return GetDEX();
+	}
+	//Offensive skills
+	else if(skillid == SkillBackstab || skillid == SkillBash || skillid == SkillDisarm || skillid == SkillDoubleAttack ||
+		skillid == SkillDragonPunch || skillid == SkillTailRake || skillid == SkillDualWield || skillid == SkillEagleStrike ||
+		skillid == SkillFlyingKick || skillid == SkillKick || skillid == SkillOffense || skillid == SkillRoundKick ||
+		skillid == SkillTigerClaw || skillid ==  SkillTaunt || skillid == SkillIntimidation || skillid == SkillFrenzy)
+	{
+		return GetSTR();
+	}
+	//Defensive skills
+	else if(skillid == SkillBlock || skillid == SkillDefense || skillid == SkillDodge || skillid == SkillParry || 
+		skillid == SkillRiposte)
+	{
+		return GetAGI();
+	}
+	else if(skillid == SkillBegging)
+	{
+		return GetCHA();
+	}
+	else if(skillid == SkillSwimming)
+	{
+		return GetSTA();
+	}
+	else
+	{
+		if(EQEmu::IsSpellSkill(skillid))
+		{
+			if(GetCasterClass() == 'I')
+			{
+				return GetINT();
+			}
+			else
+			{
+				return GetWIS();
+			}
+		}
+		else
+		{
+			if(GetDEX() > GetINT() && GetDEX() > GetWIS() && (skillid == SkillFletching || skillid == SkillMakePoison))
+			{
+				return GetDEX();
+			}
+			else if(GetSTR() > GetINT() && GetSTR() > GetWIS() && skillid == SkillBlacksmithing)
+			{
+				return GetSTR();
+			}
+			else if(GetWIS() > GetINT())
+			{ 
+				return GetWIS();
+			}
+			else
+			{
+				return GetINT();
+			}
+		}
+	}
+}
+
+bool Mob::IsPlayableRace(uint16 race)
+{
+	if(race > 0 && (race <= GNOME || race == IKSAR || race == VAHSHIR))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+float Mob::GetPlayerHeight(uint16 race)
+{
+	switch (race)
+	{
+		case OGRE:
+		case TROLL:
+			return 8;
+		case VAHSHIR: case BARBARIAN:
+			return 7;
+		case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
+			return 6;
+		case HALF_ELF:
+			return 5.5;
+		case WOOD_ELF: case DARK_ELF: case WOLF: case ELEMENTAL:
+			return 5;
+		case DWARF:
+			return 4;
+		case HALFLING:
+			return 3.5;
+		case GNOME:
+			return 3;
+		default:
+			return 6;
+	}
 }

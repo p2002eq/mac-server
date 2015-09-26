@@ -391,6 +391,8 @@ void Client::CompleteConnect()
 	position_timer.Start();
 	autosave_timer.Start();
 	position_update_timer.Start();
+	client_distance_timer.Start(2000, false);
+	entity_list.UpdateNewClientDistances(this);
 	SetDuelTarget(0);
 	SetDueling(false);
 
@@ -487,7 +489,7 @@ void Client::CompleteConnect()
 				}
 				else if (spell.base[x1] == -2)
 				{
-					if (GetRace() == 128 || GetRace() == 130 || GetRace() <= 12)
+					if (IsPlayableRace(GetRace()))
 						SendIllusionPacket(GetRace(), GetGender(), spell.max[x1], spell.max[x1]);
 				}
 				else if (spell.max[x1] > 0)
@@ -498,32 +500,12 @@ void Client::CompleteConnect()
 				{
 					SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
 				}
-				switch (spell.base[x1]){
-				case OGRE:
-				case TROLL:
-					SendAppearancePacket(AT_Size, 8);
-					break;
-				case VAHSHIR:
-				case BARBARIAN:
-					SendAppearancePacket(AT_Size, 7);
-					break;
-				case HALF_ELF:
-				case WOOD_ELF:
-				case DARK_ELF:
-				case FROGLOK:
-					SendAppearancePacket(AT_Size, 5);
-					break;
-				case HALFLING:
-				case DWARF:
-					SendAppearancePacket(AT_Size, 4);
-					break;
-				case GNOME:
-					SendAppearancePacket(AT_Size, 3);
-					break;
-				default:
-					SendAppearancePacket(AT_Size, 6);
-					break;
-				}
+
+				float realsize = GetPlayerHeight(spell.base[x1]);
+				uint32 newsize = 6;
+				newsize = floor(realsize + 0.5);
+				SendAppearancePacket(AT_Size, newsize);
+		
 				break;
 			}
 			case SE_SummonHorse: {
@@ -1141,28 +1123,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.guildrank = GuildRank();
 	}
 
-	switch (race)
-	{
-	case OGRE:
-	case TROLL:
-		size = 8; base_size = 8; break;
-	case VAHSHIR: case BARBARIAN:
-		size = 7; base_size = 7; break;
-	case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
-		size = 6; base_size = 6; break;
-	case HALF_ELF:
-		size = 5.5; base_size = 5.5; break;
-	case WOOD_ELF: case DARK_ELF: case FROGLOK:
-		size = 5; base_size = 5; break;
-	case DWARF:
-		size = 4; base_size = 4; break;
-	case HALFLING:
-		size = 3.5; base_size = 3.5; break;
-	case GNOME:
-		size = 3; base_size = 3; break;
-	default:
-		size = 0; base_size = 0;
-	}
+	size = GetPlayerHeight(race);
+	base_size = size;
+
 	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
@@ -3206,7 +3169,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 	const ItemInst *inst = GetInv().GetItem(alc->from_slot);
 	if (inst && inst->GetItem()->ItemType == ItemTypeAlcohol) {
 		entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), inst->GetItem()->Name);
-		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 25);
+		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 20);
 
 		int16 AlcoholTolerance = GetSkill(SkillAlcoholTolerance);
 		int16 IntoxicationIncrease;
@@ -3588,8 +3551,6 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 		break;
 	}
 	p_timers.Start(pTimerFeignDeath, reuse - 1);
-
-	//BreakInvis();
 
 	float feignbase = 120.0f;
 	uint16 skill = GetSkill(SkillFeignDeath);
@@ -7261,7 +7222,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		}
 	}
 
-	std::string packet;
 	if (!stacked && inst) {
 		if(PutItemInInventory(freeslotid, *inst))
 		{
@@ -7922,141 +7882,180 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		Log.Out(Logs::General, Logs::Error, "OP size error: OP_TargetMouse expected:%i got:%i", sizeof(ClientTarget_Struct), app->size);
 		return;
 	}
+	if (IsAIControlled())
+		return;
 
-	if (GetTarget())
-	{
-		GetTarget()->IsTargeted(-1);
-	}
-
-	// Locate and cache new target
 	ClientTarget_Struct* ct = (ClientTarget_Struct*)app->pBuffer;
 	pClientSideTarget = ct->new_target;
-	if (!IsAIControlled())
+
+	bool tar_cmd = (app->GetOpcode() == OP_TargetCommand);
+
+	// cache current target
+	Mob *cur_tar = GetTarget();
+
+	//Message(0, "Target: %d OP_TargetCommand: %s", ct->new_target, tar_cmd ? "true" : "false");
+	if (ct->new_target == 0)
 	{
-		Mob *nt = entity_list.GetMob(ct->new_target);
-		if (nt)
+		if (tar_cmd)
 		{
-			SetTarget(nt);
-			if ((nt->IsClient() && !nt->CastToClient()->GetPVP()) ||
-				(nt->IsPet() && nt->GetOwner() && nt->GetOwner()->IsClient() && !nt->GetOwner()->CastToClient()->GetPVP()))
-				nt->SendBuffsToClient(this);
-		}
+			// searched for a target with /target (name), and not found.  Client sends over a new_target == 0
+			// dont do anything else, client keeps track of own current target.
+			Message_StringID(CC_Default, TARGET_NOT_FOUND2);
+		} 
 		else
 		{
+			// cleared target
+			if (cur_tar) {
+				cur_tar->IsTargeted(-1);
+				last_target = cur_tar->GetID();
+			}
 			SetTarget(nullptr);
-
-			return;
+			QueuePacket(app);
 		}
-	}
-	else
-	{
-		SetTarget(nullptr);
 		return;
 	}
 
-	// For /target, send reject or success packet
-	if (app->GetOpcode() == OP_TargetCommand) {
-		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (DistanceSquared(m_Position, GetTarget()->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
-			if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
-				|| GetTarget()->GetBodyType() == BT_NoTarget)
-			{
-				//Targeting something we shouldn't with /target
-				//but the client allows this without MQ so you don't flag it
+	bool send_tar = false;
 
-				if (GetTarget())
+	// Locate and cache new target
+	Mob *new_tar = entity_list.GetMob(ct->new_target);
+
+	// For /target, send reject or success packet
+	if (tar_cmd) {
+		if (new_tar) {
+			if (!new_tar->CastToMob()->IsInvisible(this) && (DistanceSquared(m_Position, new_tar->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
+				if (new_tar->GetBodyType() == BT_NoTarget2 || new_tar->GetBodyType() == BT_Special
+					|| new_tar->GetBodyType() == BT_NoTarget)
 				{
+					//Targeting something we shouldn't with /target
+					//but the client allows this without MQ so you don't flag it
+					if (!cur_tar) 
+					{
+						SendTargetCommand(0);
+						SetTarget(nullptr);
+						pClientSideTarget = 0;
+						last_target = 0;
+					}
+					return;
+				}
+				// have a valid target
+				// send target packet later if pass validation checks
+				send_tar = true;
+			}
+			else
+			{
+				Message_StringID(CC_Red,TARGET_NOT_FOUND2);
+				SendTargetCommand(cur_tar ? cur_tar->GetID() : 0);
+				if (!cur_tar) {
+					pClientSideTarget = 0;
 					SetTarget(nullptr);
 				}
 				return;
 			}
-
-			QueuePacket(app);
-			GetTarget()->IsTargeted(1);
-		}
-		else
-		{
-			if (GetTarget())
-			{
+		} else {
+			// no target found
+			Message_StringID(CC_Red,TARGET_NOT_FOUND2);
+			SendTargetCommand(cur_tar ? cur_tar->GetID() : 0);
+			if (!cur_tar) {
 				SetTarget(nullptr);
+				pClientSideTarget = 0;
 			}
+			return;
 		}
 	}
-	else
+
+	// validate target
+	if (new_tar)
 	{
-		if (GetTarget())
+		if (GetGM())
 		{
-			if (GetGM())
+			// always allow GM's to target
+		} 
+		else if (new_tar->GetBodyType() == BT_NoTarget2 || new_tar->GetBodyType() == BT_Special
+			|| new_tar->GetBodyType() == BT_NoTarget)
+		{
+			char *hacker_str = nullptr;
+			MakeAnyLenString(&hacker_str, "%s attempting to target something untargetable, %s bodytype: %i\n",
+				GetName(), new_tar->GetName(), (int)new_tar->GetBodyType());
+			database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+			safe_delete_array(hacker_str);
+			if (cur_tar)
 			{
-				GetTarget()->IsTargeted(1);
-				return;
+				SendTargetCommand(cur_tar->GetID());
+				SetTarget(cur_tar);
+			} else {
+				SendTargetCommand(0);
+				SetTarget(nullptr);
 			}
-			else if (IsAssistExempted())
+			return;
+		}
+		else if (IsAssistExempted())
+		{
+			SetAssistExemption(false);
+		}
+		else if (new_tar->IsClient())
+		{
+			if (new_tar != cur_tar && new_tar != this)
 			{
-				GetTarget()->IsTargeted(1);
-				SetAssistExemption(false);
-				return;
-			}
-			else if (GetTarget()->IsClient())
-			{
-				//make sure this client is in our raid/group
-				GetTarget()->IsTargeted(1);
-				return;
-			}
-			else if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
-				|| GetTarget()->GetBodyType() == BT_NoTarget)
-			{
-				char *hacker_str = nullptr;
-				MakeAnyLenString(&hacker_str, "%s attempting to target something untargetable, %s bodytype: %i\n",
-					GetName(), GetTarget()->GetName(), (int)GetTarget()->GetBodyType());
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-				safe_delete_array(hacker_str);
-				SetTarget((Mob*)nullptr);
-				return;
-			}
-			else if (IsPortExempted())
-			{
-				GetTarget()->IsTargeted(1);
-				return;
-			}
-			else if (IsSenseExempted())
-			{
-				GetTarget()->IsTargeted(1);
-				SetSenseExemption(false);
-				return;
-			}
-			else if (GetBindSightTarget())
-			{
-				if (DistanceSquared(GetBindSightTarget()->GetPosition(), GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+				if (new_tar)
 				{
-					if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
-					{
-						char *hacker_str = nullptr;
-						MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
-							" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
-							(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
-							GetX(), GetY(), GetZ(), GetTarget()->GetName(), GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
-						database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-						safe_delete_array(hacker_str);
-						SetTarget(nullptr);
-						return;
-					}
+					EQApplicationPacket hp_app;
+					new_tar->CreateHPPacket(&hp_app);
+					QueuePacket(&hp_app);
 				}
 			}
-			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 2500))
-			{ // client will allow targeting something just beyond max clip just out of sight, so add another 50 for that.
-				char *hacker_str = nullptr;
-				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
-					" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
-					(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
-					GetX(), GetY(), GetZ(), GetTarget()->GetName(), GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-				safe_delete_array(hacker_str);
-				SetTarget(nullptr);
-				return;
-			}
-
-			GetTarget()->IsTargeted(1);
 		}
+		else if (IsPortExempted())
+		{
+
+		}
+		else if (IsSenseExempted())
+		{
+			SetSenseExemption(false);
+		}
+		else if (GetBindSightTarget())
+		{
+			if (DistanceSquared(GetBindSightTarget()->GetPosition(), new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+			{
+				if (DistanceSquared(m_Position, new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 40000))
+				{
+					char *hacker_str = nullptr;
+					MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
+						" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
+						(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
+						GetX(), GetY(), GetZ(), new_tar->GetName(), new_tar->GetX(), new_tar->GetY(), new_tar->GetZ());
+					database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+					safe_delete_array(hacker_str);
+					SendTargetCommand(0);
+					SetTarget(nullptr);
+					return;
+				}
+			}
+		}
+		else if (DistanceSquared(m_Position, new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 40000))
+		{ // client will allow targeting something just beyond max clip just out of sight, so add another 200 for that.
+			char *hacker_str = nullptr;
+			MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
+				" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
+				(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
+				GetX(), GetY(), GetZ(), new_tar->GetName(), new_tar->GetX(), new_tar->GetY(), new_tar->GetZ());
+			database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+			safe_delete_array(hacker_str);
+		}
+		SetTarget(new_tar);
+		if (cur_tar) {
+			if(cur_tar != new_tar) {
+				cur_tar->IsTargeted(-1);
+				new_tar->IsTargeted(1);
+			}
+		} else {
+			new_tar->IsTargeted(1);
+		}
+		if (send_tar)
+			QueuePacket(app);
+	} else {
+		SendTargetCommand(0);
+		SetTarget(nullptr);
 	}
 	return;
 }
@@ -8471,7 +8470,7 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 	// Client requesting a trade session from an npc/client
 	// Trade session not started until OP_TradeRequestAck is sent
 
-	BreakInvis();
+	CommonBreakInvisible();
 
 	// Pass trade request on to recipient
 	TradeRequest_Struct* msg = (TradeRequest_Struct*)app->pBuffer;

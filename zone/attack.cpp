@@ -2098,7 +2098,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
 		Raid *kr = entity_list.GetRaidByClient(give_exp_client);
 
-		int32 finalxp = EXP_FORMULA;
+		int32 finalxp = static_cast<int32>(GetBaseEXP());
 		finalxp = give_exp_client->mod_client_xp(finalxp, this);
 
 		if(kr)
@@ -2336,7 +2336,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic, int32 jolthate) {
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
 
 	assert(other != nullptr);
 
@@ -2433,7 +2433,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		&& other &&  (buffs[spellbonuses.ImprovedTaunt[2]].casterid != other->GetID()))
 		hate = (hate*spellbonuses.ImprovedTaunt[1])/100;
 
-	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic, jolthate);
+	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic);
 
 	// then add pet owner if there's one
 	if (owner) { // Other is a pet, add him and it
@@ -3435,6 +3435,17 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				//we used to do a message to the client, but its gone now.
 				// emote goes with every one ... even npcs
 				entity_list.MessageClose(this, true, 300, MT_Emote, "%s beams a smile at %s", attacker->GetCleanName(), this->GetCleanName() );
+			}
+
+			if(IsNPC())
+			{
+				total_damage += damage;
+
+				if(attacker->IsClient())
+					player_damage += damage;
+
+				if(attacker->IsDireCharmed())
+					dire_pet_damage += damage;
 			}
 		}	//end `if there is some damage being done and theres anattacker person involved`
 

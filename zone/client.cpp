@@ -136,6 +136,7 @@ Client::Client(EQStreamInterface* ieqs)
 	charm_cast_timer(3500),
 	qglobal_purge_timer(30000),
 	TrackingTimer(2000),
+	client_distance_timer(1000),
 	ItemTickTimer(10000),
 	ItemQuestTimer(500),
 	anon_toggle_timer(250),
@@ -256,6 +257,8 @@ Client::Client(EQStreamInterface* ieqs)
 	HideCorpseMode = HideCorpseNone;
 	PendingGuildInvitation = false;
 
+	client_distance_timer.Disable();
+
 	cur_end = 0;
 
 	InitializeBuffSlots();
@@ -274,6 +277,7 @@ Client::Client(EQStreamInterface* ieqs)
 	has_zomm = false;
 	client_position_update = false;
 	ignore_zone_count = false;
+	last_target = 0;
 	clicky_override = false;
 	active_disc = 0;
 	active_disc_spell = 0;
@@ -1812,10 +1816,28 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 	// Make sure we're not already at skill cap
 	if (skillval < maxskill)
 	{
+		int32 stat = GetSkillStat(skillid);
+
+		if(stat > 300)
+			stat = 300;
+
+		int modifier = RuleI(Character, SkillUpModifier);
+		if(stat >= 100)
+			modifier = RuleI(Character, MasterSkillUpModifier);
+
+		float stat_modifier = stat;
+		stat_modifier /= 2;
+		stat_modifier /= 100;
+
+		if(chancemodi > 20)
+			chancemodi = 20;
+		if(chancemodi < -20)
+			chancemodi = -20;
+
 		// the higher your current skill level, the harder it is
 		int32 Chance = 10 + chancemodi + ((252 - skillval) / 20);
-
-		Chance = (Chance * RuleI(Character, SkillUpModifier) / 100);
+		Chance *= stat_modifier;
+		Chance = (Chance * modifier / 100);
 
 		Chance = mod_increase_skill_chance(Chance, against_who);
 
@@ -2654,6 +2676,7 @@ void Client::LinkDead()
 //	save_timer.Start(2500);
 	linkdead_timer.Start(RuleI(Zone,ClientLinkdeadMS));
 	SendAppearancePacket(AT_Linkdead, 1);
+	client_distance_timer.Disable();
 	client_state = CLIENT_LINKDEAD;
 	AI_Start(CLIENT_LD_TIMEOUT);
 	UpdateWho();

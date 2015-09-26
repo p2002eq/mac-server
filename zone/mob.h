@@ -273,7 +273,6 @@ public:
 	virtual int GetMaxTotalSlots() const { return 0; }
 	virtual void InitializeBuffSlots() { buffs = nullptr; current_buff_count = 0; }
 	virtual void UninitializeBuffSlots() { }
-	void SendBuffsToClient(Client *c);
 	inline Buffs_Struct* GetBuffs() { return buffs; }
 	void DoGravityEffect();
 	void DamageShield(Mob* other, bool spell_ds = false);
@@ -458,7 +457,6 @@ public:
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
-	void SendPositionNearby(uint8 iSendToSelf = 0);
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
@@ -470,12 +468,13 @@ public:
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, int32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
-		bool bFrenzy = false, bool iBuffTic = false, int32 jolthate = 0);
+		bool bFrenzy = false, bool iBuffTic = false);
 	bool RemoveFromHateList(Mob* mob);
 	void SetHate(Mob* other, int32 hate = 0, int32 damage = 0) { hate_list.Set(other,hate,damage);}
+	void AddHate(Mob* other, int32 hate = 0, int32 damage = 0, bool bFrenzy = false, bool iAddIfNotExist = true) { hate_list.Add(other,hate,damage,bFrenzy,iAddIfNotExist);}
 	void HalveAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate > 1 ? in_hate / 2 : 1)); }
 	void DoubleAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHate(other, (in_hate ? in_hate * 2 : 1)); }
-	uint32 GetHateAmount(Mob* tmob, bool is_dam = false) { return hate_list.GetEntHate(tmob,is_dam);}
+	uint32 GetHateAmount(Mob* tmob, bool is_dam = false, bool bonus = true) { return hate_list.GetEntHate(tmob,is_dam,bonus);}
 	uint32 GetDamageAmount(Mob* tmob) { return hate_list.GetEntHate(tmob, true);}
 	Mob* GetHateTop() { return hate_list.GetTop();}
 	Mob* GetHateDamageTop(Mob* other) { return hate_list.GetDamageTop(other);}
@@ -532,6 +531,7 @@ public:
 	void ShowBuffList(Client* client);
 	bool PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, float &z_dest,
 		bool lookForAftArc = true);
+	int32  GetSkillStat(SkillUseTypes skillid);	
 
 	//Procs
 	bool AddRangedProc(uint16 spell_id, uint16 iChance = 3, uint16 base_spell_id = SPELL_UNKNOWN);
@@ -694,6 +694,7 @@ public:
 	bool IsFamiliar() const { return(typeofpet == petFamiliar); }
 	bool IsAnimation() const { return(typeofpet == petAnimation); }
 	bool IsCharmed() const { return(typeofpet == petCharmed); }
+	bool IsDireCharmed() { return dire_charmed; }
 	void SetOwnerID(uint16 NewOwnerID);
 	inline uint16 GetOwnerID() const { return ownerid; }
 	inline virtual bool HasOwner() { if(GetOwnerID()==0){return false;} return( entity_list.GetMob(GetOwnerID()) != 0); }
@@ -966,6 +967,12 @@ public:
 	bool IsZomm() { return iszomm; }
 	void SetMerchantSession(uint16 value) { MerchantSession = value; }
 	uint16 GetMerchantSession() { return MerchantSession; }
+	uint32 player_damage;
+	uint32 dire_pet_damage;
+	uint32 total_damage;
+	float  GetBaseEXP();
+	static bool IsPlayableRace(uint16 race);
+	float GetPlayerHeight(uint16 race);
 
 protected:
 	void CommonDamage(Mob* other, int32 &damage, const uint16 spell_id, const SkillUseTypes attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic);
@@ -1049,6 +1056,7 @@ protected:
 	int16 petpower;
 	uint32 follow;
 	uint32 follow_dist;
+	bool dire_charmed;
 	bool no_target_hotkey;
 	bool can_equip_secondary;
 	bool can_dual_wield;

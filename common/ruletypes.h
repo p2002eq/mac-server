@@ -71,7 +71,8 @@ RULE_INT ( Character, ItemDSMitigationCap, 50)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
-RULE_INT ( Character, SkillUpModifier, 60) //skill ups are at 100%
+RULE_INT ( Character, SkillUpModifier, 70) //skill ups for skills with value under 100
+RULE_INT ( Character, MasterSkillUpModifier, 60) //skill ups for skills 100 and over
 RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
@@ -191,13 +192,13 @@ RULE_INT ( Zone, BoatDistance, 50) //In zones where boat name is not set in the 
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
-RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
-RULE_BOOL( AlKabor, AllowTickSplit, false)
-RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
-RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
-RULE_BOOL ( AlKabor, Count6thGroupMember, false)
-RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true)
+RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull (AK behavior is true)
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
 RULE_CATEGORY_END()
 
 

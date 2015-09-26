@@ -2965,7 +2965,7 @@ XS(XS_Client_BreakInvis)
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
-		THIS->BreakInvis();
+		THIS->CommonBreakInvisible();
 	}
 	XSRETURN_EMPTY;
 }

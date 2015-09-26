@@ -3810,23 +3810,25 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	else if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id) &&
 		     CancelMagicShouldAggro(spell_id, spelltar)) {
 		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, jolthate, isproc);
-		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
-		if(aggro_amount > 0 || jolthate < 0)
+		int32 current_hate = spelltar->GetHateAmount(this,false,false);
+		Log.Out(Logs::General, Logs::Spells, "Spell %d cast on %s generated %d hate current hate is: %d", spell_id, spelltar->GetName(), aggro_amount, current_hate);
+		if((aggro_amount > 0 || jolthate != 0) && current_hate == 0)
 		{
-			spelltar->AddToHateList(this, aggro_amount, 0, true, false, false, jolthate);	
+			spelltar->AddToHateList(this, aggro_amount);	
 		}
 		else
 		{
 			spelltar->SetPrimaryAggro(true);
-			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
-			if (newhate < 1)
+			if (aggro_amount < 1 || jolthate != 0)
 			{
-				spelltar->SetHate(this,1);
+				aggro_amount = 1;
+				if(jolthate != 0 && current_hate > 0)
+				{
+					aggro_amount = abs(current_hate);
+				}
 			} 
-			else 
-			{
-				spelltar->SetHate(this,newhate);
-			}
+
+			spelltar->AddHate(this,aggro_amount);
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
@@ -5429,12 +5431,6 @@ void Client::SendBuffDurationPacket(uint16 spell_id, int duration, int inlevel, 
 	sbf->bufffade = 0;
 	sbf->duration = duration;
 	FastQueuePacket(&outapp);
-}
-
-void Mob::SendBuffsToClient(Client *c)
-{
-	if(!c)
-		return;
 }
 
 void Mob::BuffModifyDurationBySpellID(uint16 spell_id, int32 newDuration, bool update)
