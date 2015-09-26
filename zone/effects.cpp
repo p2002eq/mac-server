@@ -144,9 +144,6 @@ int32 Client::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 
 			value -= GetFocusEffect(focusFcDamageAmt, spell_id);
 
-			if(itembonuses.SpellDmg && spells[spell_id].classes[(GetClass()%16) - 1] >= GetLevel() - 5)
-				value -= GetExtraSpellAmt(spell_id, itembonuses.SpellDmg, value)*ratio/100;
-
 			entity_list.MessageClose_StringID(this, true, 100, MT_SpellCrits,
 					OTHER_CRIT_BLAST, GetName(), itoa(-value));
 			Message_StringID(MT_SpellCrits, YOU_CRIT_BLAST, itoa(-value));
@@ -169,9 +166,6 @@ int32 Client::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	value -= GetFocusEffect(focusFcDamageAmtCrit, spell_id);
 
 	value -= GetFocusEffect(focusFcDamageAmt, spell_id);
-
-	if(itembonuses.SpellDmg && spells[spell_id].classes[(GetClass()%16) - 1] >= GetLevel() - 5)
-		 value -= GetExtraSpellAmt(spell_id, itembonuses.SpellDmg, value);
 
 	return value;
 }

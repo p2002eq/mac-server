@@ -1852,7 +1852,6 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->BackstabDmg = (uint32)((float)m_item->BackstabDmg*Mult);
 	m_scaledItem->DSMitigation = (uint32)((float)m_item->DSMitigation*Mult);
 	m_scaledItem->HealAmt = (int32)((float)m_item->HealAmt*Mult);
-	m_scaledItem->SpellDmg = (int32)((float)m_item->SpellDmg*Mult);
 
 	m_scaledItem->CharmFileID = 0;	// this stops the client from trying to scale the item itself.
 }

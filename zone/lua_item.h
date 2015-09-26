@@ -164,8 +164,6 @@ public:
 	uint32 GetBackstabDmg();
 	uint32 GetDSMitigation();
 	int GetHealAmt();
-	int GetSpellDmg();
-	uint32 GetScriptFileID();
 };
 
 #endif

@@ -427,7 +427,6 @@ public:
 	inline virtual int32 GetDS() const { return itembonuses.DamageShield; }
 	// Mod3
 	inline virtual int32 GetHealAmt() const { return itembonuses.HealAmt; }
-	inline virtual int32 GetSpellDmg() const { return itembonuses.SpellDmg; }
 	inline virtual int32 GetDSMit() const { return itembonuses.DSMitigation; }
 
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }

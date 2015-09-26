@@ -221,8 +221,6 @@ struct Item_Struct {
 	uint32 BackstabDmg;
 	uint32 DSMitigation;
 	int32 HealAmt;
-	int32 SpellDmg;
-	uint32 ScriptFileID;
 	int8	GMFlag;
 	int8	Soulbound;
 

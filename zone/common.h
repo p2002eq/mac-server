@@ -309,7 +309,6 @@ struct StatBonuses {
 	int32	MaxHPChange;						// Spell Effect
 	int16	SkillDmgTaken[HIGHEST_SKILL+2];		// All Skills + -1
 	int32	HealAmt;							// Item Effect
-	int32	SpellDmg;							// Item Effect
 	int32	DSMitigation;						// Item Effect
 	int32	DSMitigationOffHand;				// Lowers damage shield from off hand attacks.
 	uint32	SpellTriggers[MAX_SPELL_TRIGGER];	// Innate/Spell/Item Spells that trigger when you cast

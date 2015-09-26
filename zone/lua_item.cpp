@@ -706,16 +706,6 @@ int Lua_Item::GetHealAmt() {
 	return self->HealAmt;
 }
 
-int Lua_Item::GetSpellDmg() {
-	Lua_Safe_Call_Int();
-	return self->SpellDmg;
-}
-
-uint32 Lua_Item::GetScriptFileID() {
-	Lua_Safe_Call_Int();
-	return self->ScriptFileID;
-}
-
 luabind::scope lua_register_item() {
 	return luabind::class_<Lua_Item>("Item")
 		.def(luabind::constructor<>())
@@ -860,9 +850,7 @@ luabind::scope lua_register_item() {
 		.def("Filename", &Lua_Item::GetFilename)
 		.def("BackstabDmg", &Lua_Item::GetBackstabDmg)
 		.def("DSMitigation", &Lua_Item::GetDSMitigation)
-		.def("HealAmt", &Lua_Item::GetHealAmt)
-		.def("SpellDmg", &Lua_Item::GetSpellDmg)
-		.def("ScriptFileID", &Lua_Item::GetScriptFileID);
+		.def("HealAmt", &Lua_Item::GetHealAmt);
 }
 
 #endif
