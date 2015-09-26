@@ -311,10 +311,6 @@ int32 Client::GetActSpellHealing(uint16 spell_id, int32 value, Mob* target) {
 		value += GetFocusEffect(focusFcHealAmtCrit, spell_id) * modifier;
 		value += GetFocusEffect(focusFcHealAmt, spell_id);
 		value += target->GetFocusIncoming(focusFcHealAmtIncoming, SE_FcHealAmtIncoming, this, spell_id);
-
-		if(itembonuses.HealAmt && spells[spell_id].classes[(GetClass()%16) - 1] >= GetLevel() - 5)
-			value += GetExtraSpellAmt(spell_id, itembonuses.HealAmt, value) * modifier;
-
 		value += value*target->GetHealRate(spell_id, this)/100;
 
 		if (Critical) {

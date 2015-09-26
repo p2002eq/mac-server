@@ -308,8 +308,6 @@ struct StatBonuses {
 	int32	HealRate;							// Spell effect that influences effectiveness of heals
 	int32	MaxHPChange;						// Spell Effect
 	int16	SkillDmgTaken[HIGHEST_SKILL+2];		// All Skills + -1
-	int32	HealAmt;							// Item Effect
-	int32	DSMitigation;						// Item Effect
 	int32	DSMitigationOffHand;				// Lowers damage shield from off hand attacks.
 	uint32	SpellTriggers[MAX_SPELL_TRIGGER];	// Innate/Spell/Item Spells that trigger when you cast
 	uint32	SpellOnKill[MAX_SPELL_TRIGGER*3];	// Chance to proc after killing a mob

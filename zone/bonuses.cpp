@@ -333,19 +333,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		else
 			newbon->DoTShielding += item->DotShielding;
 	}
-
-	if(item->HealAmt > 0) {
-		if((newbon->HealAmt + item->HealAmt) > RuleI(Character, ItemHealAmtCap))
-			newbon->HealAmt = RuleI(Character, ItemHealAmtCap);
-		else
-			newbon->HealAmt += item->HealAmt;
-	}
-	if(item->DSMitigation > 0) {
-		if((newbon->DSMitigation + item->DSMitigation) > RuleI(Character, ItemDSMitigationCap))
-			newbon->DSMitigation = RuleI(Character, ItemDSMitigationCap);
-		else
-			newbon->DSMitigation += item->DSMitigation;
-	}
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
 		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
 	}

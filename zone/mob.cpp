@@ -3568,12 +3568,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Book);
 	if (id == "booktype")
 		stat = int32(item->BookType);
-	if (id == "backstabdmg")
-		stat = int32(item->BackstabDmg);
-	if (id == "dsmitigation")
-		stat = int32(item->DSMitigation);
-	if (id == "healamt")
-		stat = int32(item->HealAmt);
 	// Begin Effects
 	if (id == "clickeffect")
 		stat = int32(item->Click.Effect);

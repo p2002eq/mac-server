@@ -4053,7 +4053,6 @@ void Client::SendStats(Client* client)
 	client->Message(CC_Default, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
 	client->Message(CC_Default, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
-	client->Message(CC_Default, " Heal Amt.: %i  DS Mitigation: %i", GetHealAmt(), GetDSMit());
 	client->Message(CC_Default, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
 	if(GetClass() == WARRIOR)
 		client->Message(CC_Default, "HasShield: %i KickDmg: %i BashDmg: %i", HasShieldEquiped(), GetKickDamage(), GetBashDamage());

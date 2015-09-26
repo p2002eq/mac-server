@@ -216,11 +216,6 @@ struct Item_Struct {
 	uint8	Book;			// 0=Not book, 1=Book
 	uint32	BookType;
 	char	Filename[33];	// Filename for book data
-	// Begin SoF Fields
-	uint8 EvolvingLevel;
-	uint32 BackstabDmg;
-	uint32 DSMitigation;
-	int32 HealAmt;
 	int8	GMFlag;
 	int8	Soulbound;
 

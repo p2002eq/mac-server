@@ -2524,7 +2524,7 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 									attacker->aabonuses.DSMitigationOffHand;
 				DS -= DS*mitigation/100;
 			}
-			DS -= DS * attacker->itembonuses.DSMitigation / 100;
+			DS -= DS;
 		}
 		attacker->Damage(this, -DS, spellid, SkillAbjuration/*hackish*/, false);
 		//we can assume there is a spell now
