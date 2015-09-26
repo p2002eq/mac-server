@@ -329,7 +329,6 @@ public:
 
 	// Accessors
 	const int16 GetID() const { return ((m_item) ? m_item->ID : NO_ITEM); }
-	const uint32 GetItemScriptID() const { return ((m_item) ? m_item->ScriptFileID : NO_ITEM); }
 	const Item_Struct* GetItem() const;
 	const Item_Struct* GetUnscaledItem() const;
 

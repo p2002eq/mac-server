@@ -340,13 +340,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		else
 			newbon->HealAmt += item->HealAmt;
 	}
-	if(item->SpellDmg > 0) {
-		if((newbon->SpellDmg + item->SpellDmg) > RuleI(Character, ItemSpellDmgCap))
-			newbon->SpellDmg = RuleI(Character, ItemSpellDmgCap);
-		else
-			newbon->SpellDmg += item->SpellDmg;
-	}
-
 	if(item->DSMitigation > 0) {
 		if((newbon->DSMitigation + item->DSMitigation) > RuleI(Character, ItemDSMitigationCap))
 			newbon->DSMitigation = RuleI(Character, ItemDSMitigationCap);

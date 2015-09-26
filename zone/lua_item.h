@@ -161,12 +161,9 @@ public:
 	int GetBook();
 	uint32 GetBookType();
 	const char *GetFilename();
-	uint32 GetPurity();
 	uint32 GetBackstabDmg();
 	uint32 GetDSMitigation();
 	int GetHealAmt();
-	int GetSpellDmg();
-	uint32 GetScriptFileID();
 };
 
 #endif
