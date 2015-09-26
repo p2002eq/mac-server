@@ -182,6 +182,12 @@ void ErrorLog::Log(eqLogType type, const char *message, ...)
 		eqLogConsoleFormat += addspace;
 	}
 
+	CONSOLE_FONT_INFOEX info = { 0 };
+	info.cbSize = sizeof(info);
+	info.dwFontSize.Y = 12; // leave X as zero
+	info.FontWeight = FW_NORMAL;
+	wcscpy(info.FaceName, L"Lucida Console");
+	SetCurrentConsoleFontEx(hStdOut, NULL, &info);
 	SetConsoleTextAttribute(hStdOut, color);
 	printf("[ %s ][ %02d.%02d.%02d - %02d:%02d:%02d ] %s\n",
 		eqLogConsoleFormat.c_str(),
