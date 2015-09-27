@@ -6029,8 +6029,8 @@ void command_setaapts(Client *c, const Seperator *sep){
 
 	if (sep->arg[1][0] == '\0')
 		c->Message(CC_Default, "Usage: #setaapts <new AA points value>");
-	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 188)
-		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 188.");
+	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 170)
+		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 170.");
 	else {
 		t->SetEXP(t->GetEXP(), t->GetEXPForLevel(t->GetLevel(), true)*atoi(sep->arg[1]), false);
 		t->SendAAStats();

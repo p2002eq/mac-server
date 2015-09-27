@@ -131,7 +131,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 		}
 #endif
 
-	if(buffslot >= 0)
+	if(buffslot >= 0 && !IsCorpse())
 	{
 		buffs[buffslot].melee_rune = 0;
 		buffs[buffslot].magic_rune = 0;
