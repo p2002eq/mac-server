@@ -220,7 +220,8 @@ int WorldDatabase::MoveCharacterToBind(int CharID, uint8 bindnum) {
 		return 0;
 	}
 
-	int zone_id, instance_id;
+	int zone_id = NULL;
+	int instance_id = NULL;
 	double x, y, z, heading;
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		zone_id = atoi(row[0]);
@@ -229,6 +230,11 @@ int WorldDatabase::MoveCharacterToBind(int CharID, uint8 bindnum) {
 		y = atof(row[3]);
 		z = atof(row[4]);
 		heading = atof(row[5]);
+	}
+
+	if (zone_id == NULL || instance_id == NULL)
+	{
+		return 0;
 	}
 
 	query = StringFormat("UPDATE character_data SET zone_id = '%d', zone_instance = '%d', x = '%f', y = '%f', z = '%f', heading = '%f' WHERE id = %u", 
