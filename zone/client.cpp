@@ -1789,8 +1789,7 @@ uint64 Client::GetAllMoney() {
 		(static_cast<uint64>(m_pp.copper_cursor) +
 		(static_cast<uint64>(m_pp.silver_cursor) * 10) +
 		(static_cast<uint64>(m_pp.gold_cursor) * 100) +
-		(static_cast<uint64>(m_pp.platinum_cursor) * 1000) +
-		(static_cast<uint64>(m_pp.platinum_shared) * 1000)))));
+		(static_cast<uint64>(m_pp.platinum_cursor) * 1000)))));
 }
 
 bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi) {

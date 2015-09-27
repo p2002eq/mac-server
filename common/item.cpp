@@ -113,11 +113,6 @@ Inventory::~Inventory() {
 	}
 	m_bank.clear();
 
-	for (auto iter = m_shbank.begin(); iter != m_shbank.end(); ++iter) {
-		safe_delete(iter->second);
-	}
-	m_shbank.clear();
-
 	for (auto iter = m_trade.begin(); iter != m_trade.end(); ++iter) {
 		safe_delete(iter->second);
 	}
@@ -921,11 +916,6 @@ int Inventory::GetSlotByItemInst(ItemInst *inst) {
 	}
 
 	i = GetSlotByItemInstCollection(m_bank, inst);
-	if (i != INVALID_INDEX) {
-		return i;
-	}
-
-	i = GetSlotByItemInstCollection(m_shbank, inst);
 	if (i != INVALID_INDEX) {
 		return i;
 	}

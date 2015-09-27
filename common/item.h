@@ -257,7 +257,6 @@ protected:
 	std::map<int16, ItemInst*>	m_worn;		// Items worn by character
 	std::map<int16, ItemInst*>	m_inv;		// Items in character personal inventory
 	std::map<int16, ItemInst*>	m_bank;		// Items in character bank
-	std::map<int16, ItemInst*>	m_shbank;	// Items in character shared bank
 	std::map<int16, ItemInst*>	m_trade;	// Items in a trade session
 	ItemInstQueue				m_cursor;	// Items on cursor: FIFO
 
