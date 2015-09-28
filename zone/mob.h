@@ -488,6 +488,7 @@ public:
 	void FaceTarget(Mob* MobToFace = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
 		m_Position.w = iHeading; } }
+	bool SetHeading2(float iHeading);
 	void WipeHateList();
 	void AddFeignMemory(Client* attacker);
 	void RemoveFromFeignMemory(Client* attacker);
