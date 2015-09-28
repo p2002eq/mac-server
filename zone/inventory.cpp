@@ -149,10 +149,10 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 bool Client::CheckLoreConflict(const Item_Struct* item) {
 	if (!item)
 		return false;
-	if (item->Lore[0] != '*')
+	if (item->Lore[0] != '*' && item->Lore[1] != '*')
 		return false;
 
-	if (item->Lore[0] == '*')	// Standard lore items; look everywhere except unused, return the result
+	if (item->Lore[0] == '*' || item->Lore[1] == '*')	// Standard lore items; look everywhere except unused, return the result
 		return (m_inv.HasItem(item->ID, 0, ~invWhereUnused) != INVALID_INDEX);
 
 	//If the item has a lore group, we check for other items with the same group and return the result
@@ -1797,8 +1797,8 @@ void Client::RemoveDuplicateLore(bool client_update) {
 
 		for (auto iter = local_2.begin(); iter != local_2.end(); ++iter) {
 			auto inst = *iter;
-			if (inst->GetItem()->Lore[0] != '*' ||
-				((inst->GetItem()->Lore[0] == '*') && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX)) ||
+			if ((inst->GetItem()->Lore[0] != '*' && inst->GetItem()->Lore[1] != '*') ||
+				((inst->GetItem()->Lore[0] == '*' || inst->GetItem()->Lore[1] == '*') && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX)) ||
 				(inst->GetItem()->LoreGroup && (~inst->GetItem()->LoreGroup) && (m_inv.HasItemByLoreGroup(inst->GetItem()->LoreGroup, invWhereCursor) == INVALID_INDEX))) {
 				
 				m_inv.PushCursor(*inst);
