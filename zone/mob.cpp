@@ -2277,6 +2277,47 @@ void Mob::WipeHateList()
 	}
 }
 
+bool Mob::SetHeading2(float iHeading)
+{
+	if (GetHeading() != iHeading)
+	{
+		float diff = GetHeading() - iHeading;
+		if (abs(diff) < 13 || abs(diff) > 243)
+		{
+			// close enough, so snap to heading
+			m_Delta.w = 0.0f;
+			SetHeading(iHeading);
+			SendPosition();
+			return true;
+		}
+		moved = true;
+		while (diff < 0)
+			diff += 256;
+		float delta_heading = ((256 - diff) < diff) ? 12.0f : -12.0f;
+
+		bool send_update = false;
+		if (m_Delta.w == 0.0f)
+			send_update = true;
+
+		m_Delta = glm::vec4(0.0, 0.0f, 0.0f, delta_heading);
+		if (send_update)
+			SendPosUpdate(1);
+
+		float new_heading = GetHeading() + delta_heading;
+		if (new_heading >= 256.0f)
+			new_heading -= 256.0f;
+		if (new_heading < 0.0f)
+			new_heading += 256.0f;
+		SetHeading(new_heading);
+		return false;
+	} 
+	if (m_Delta.w != 0.0f) {
+		m_Delta.w = 0.0f;
+		SendPosition();
+	}
+	return true;
+}
+
 uint32 Mob::RandomTimer(int min,int max) {
 	int r = 14000;
 	if(min != 0 && max != 0 && min < max)

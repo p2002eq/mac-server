@@ -1196,8 +1196,7 @@ void Mob::AI_Process() {
 						float fear_heading = CalculateHeadingToTarget(m_FearWalkTarget.x, m_FearWalkTarget.y);
 						if (m_Position.w != fear_heading)
 						{
-							SetHeading(fear_heading);
-							SendPosition();
+							SetHeading2(fear_heading);
 						}
 					}
 				}
@@ -1734,8 +1733,18 @@ void NPC::AI_DoMovement() {
 
 	SetCurrentSpeed(walksp);
 	
-	if(walksp < 0.1f)
+	if(walksp < 0.1f) {
+		// we are stopped for some reason.
+		tar_ndx = 20;
+		if (roambox_distance > 0) {
+			SetHeading2(CalculateHeadingToTarget(roambox_movingto_x, roambox_movingto_x));
+		} else if (roamer && (m_CurrentWayPoint.x != GetX() || m_CurrentWayPoint.y != GetY())) {
+			SetHeading2(CalculateHeadingToTarget(m_CurrentWayPoint.x, m_CurrentWayPoint.y));
+		} else if (IsGuarding() && (m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y) && roambox_distance == 0 && !roamer) {
+			SetHeading2(CalculateHeadingToTarget(m_GuardPoint.x, m_GuardPoint.y));
+		}
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
+	}
 
 	if (roambox_distance > 0) {
 		float roam_z = GetZ();
@@ -1878,9 +1887,11 @@ void NPC::AI_DoMovement() {
 	}
 	else if (IsGuarding())
 	{
-		bool CP2Moved;
-		if(!RuleB(Pathing, Guard) || !zone->pathing)
-			CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+		bool CP2Moved = false;
+		if(!RuleB(Pathing, Guard) || !zone->pathing) {
+			if (m_GuardPoint.x != m_Position.x && m_GuardPoint.y != m_Position.y && m_GuardPoint.z != m_Position.z)
+				CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+		}
 		else
 		{
 			if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
@@ -1903,20 +1914,18 @@ void NPC::AI_DoMovement() {
 		{
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
-				ClearFeignMemory();
-				if (IsEngaged())
-				{
-					WipeHateList();
+				if (m_GuardPoint == m_Position) {
+					ClearFeignMemory();
+					if (IsEngaged())
+					{
+						WipeHateList();
+					}
 				}
 				moved=false;
 				SetMoving(false);
-				if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
-				{
-					SetHeading(m_GuardPoint.w);
-				} else {
-					FaceTarget(GetTarget());
-				}
-				SendPosition();
+				if (!SetHeading2(m_GuardPoint.w))
+					return;
+				
 				SetAppearance(GetGuardPointAnim());
 			}
 		}
