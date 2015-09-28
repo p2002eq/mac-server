@@ -3366,7 +3366,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 	else{
-		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id) && spell_id != 721)
+		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
 		{
 			if(!IsClient() || !CastToClient()->GetGM()) {
 				Log.Out(Logs::Detail, Logs::Spells, "Attempting to cast a detrimental spell on a player.");
@@ -3614,15 +3614,18 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 					)
 				)
 				{
-					if(spells[spell_id].targettype == ST_AEBard) {
-						//if it was a beneficial AE bard song don't spam the window that it would not hold
-						Log.Out(Logs::Detail, Logs::Spells, "Beneficial ae bard song %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
-					} else {
-						Log.Out(Logs::Detail, Logs::Spells, "Beneficial spell %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
-						Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+					if(!IsBindSightSpell(spell_id))
+					{
+						if(spells[spell_id].targettype == ST_AEBard) {
+							//if it was a beneficial AE bard song don't spam the window that it would not hold
+							Log.Out(Logs::Detail, Logs::Spells, "Beneficial ae bard song %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
+						} else {
+							Log.Out(Logs::Detail, Logs::Spells, "Beneficial spell %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
+							Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+						}
+						safe_delete(action_packet);
+						return false;
 					}
-					safe_delete(action_packet);
-					return false;
 				}
 			}
 		}

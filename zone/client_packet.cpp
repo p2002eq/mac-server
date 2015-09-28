@@ -6705,6 +6705,9 @@ void Client::Handle_OP_RezzAnswer(const EQApplicationPacket *app)
 
 	if (ra->action == 1)
 	{
+		if(GetPet() && !GetPet()->IsCharmed())
+			DepopPet();
+
 		EQApplicationPacket* outapp = app->Copy();
 		// Send the OP_RezzComplete to the world server. This finds it's way to the zone that
 		// the rezzed corpse is in to mark the corpse as rezzed.

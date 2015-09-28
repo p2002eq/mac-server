@@ -683,7 +683,6 @@ struct PlayerProfile_Struct
 /*4756*/	int32				gold_cursor;		// Gold on cursor
 /*4760*/	int32				silver_cursor;		// Silver on cursor
 /*4764*/	int32				copper_cursor;		// Copper on cursor
-/*4768*/	int32				platinum_shared;	// Platinum shared between characters
 /*4796*/	uint32				skills[MAX_PP_SKILL];	// [400] List of skills	// 100 dword buffer
 /*5408*/	uint32				autosplit;			//not used right now
 /*5418*/	uint32				boatid;

@@ -2732,9 +2732,7 @@ void command_texture(Client *c, const Seperator *sep){
 			{
 			c->SendTextureWC(i, texture);
 			}
-		else if ((c->GetTarget()->GetRace() > 0 && c->GetTarget()->GetRace() <= 12) ||
-			c->GetTarget()->GetRace() == 128 || c->GetTarget()->GetRace() == 130 ||
-			c->GetTarget()->GetRace() == 330 || c->GetTarget()->GetRace() == 522) {
+		else if (c->GetTarget()->IsPlayableRace(c->GetTarget()->GetRace())) {
 			for (i = EmuConstants::MATERIAL_BEGIN; i <= EmuConstants::MATERIAL_TINT_END; i++)
 			{
 				c->GetTarget()->SendTextureWC(i, texture);
@@ -6031,8 +6029,8 @@ void command_setaapts(Client *c, const Seperator *sep){
 
 	if (sep->arg[1][0] == '\0')
 		c->Message(CC_Default, "Usage: #setaapts <new AA points value>");
-	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 188)
-		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 188.");
+	else if (atoi(sep->arg[1]) <= 0 || atoi(sep->arg[1]) > 170)
+		c->Message(CC_Default, "You must have a number greater than 0 for points and no more than 170.");
 	else {
 		t->SetEXP(t->GetEXP(), t->GetEXPForLevel(t->GetLevel(), true)*atoi(sep->arg[1]), false);
 		t->SendAAStats();

@@ -5282,69 +5282,88 @@ float Mob::CalcZOffset()
 
 int32 Mob::GetSkillStat(SkillUseTypes skillid)
 {
-	//Weapon and Rogue skills
-	if(skillid == Skill1HBlunt || skillid == Skill1HSlashing || skillid == Skill2HBlunt || skillid == Skill2HSlashing || 
-		skillid == SkillArchery || skillid == Skill1HPiercing || skillid == SkillHandtoHand || skillid == SkillThrowing || 
-		skillid == SkillApplyPoison || skillid == SkillDisarmTraps || skillid == SkillPickLock || skillid == SkillPickPockets ||
-		skillid == SkillSenseTraps || skillid == SkillSafeFall || skillid == SkillHide || skillid == SkillSneak)
+
+	if(EQEmu::IsSpellSkill(skillid))
 	{
-		return GetDEX();
-	}
-	//Offensive skills
-	else if(skillid == SkillBackstab || skillid == SkillBash || skillid == SkillDisarm || skillid == SkillDoubleAttack ||
-		skillid == SkillDragonPunch || skillid == SkillTailRake || skillid == SkillDualWield || skillid == SkillEagleStrike ||
-		skillid == SkillFlyingKick || skillid == SkillKick || skillid == SkillOffense || skillid == SkillRoundKick ||
-		skillid == SkillTigerClaw || skillid ==  SkillTaunt || skillid == SkillIntimidation || skillid == SkillFrenzy)
-	{
-		return GetSTR();
-	}
-	//Defensive skills
-	else if(skillid == SkillBlock || skillid == SkillDefense || skillid == SkillDodge || skillid == SkillParry || 
-		skillid == SkillRiposte)
-	{
-		return GetAGI();
-	}
-	else if(skillid == SkillBegging)
-	{
-		return GetCHA();
-	}
-	else if(skillid == SkillSwimming)
-	{
-		return GetSTA();
-	}
-	else
-	{
-		if(EQEmu::IsSpellSkill(skillid))
+		if(GetCasterClass() == 'I')
 		{
-			if(GetCasterClass() == 'I')
-			{
-				return GetINT();
-			}
-			else
-			{
-				return GetWIS();
-			}
+			return GetINT();
 		}
 		else
 		{
-			if(GetDEX() > GetINT() && GetDEX() > GetWIS() && (skillid == SkillFletching || skillid == SkillMakePoison))
-			{
-				return GetDEX();
-			}
-			else if(GetSTR() > GetINT() && GetSTR() > GetWIS() && skillid == SkillBlacksmithing)
-			{
-				return GetSTR();
-			}
-			else if(GetWIS() > GetINT())
-			{ 
-				return GetWIS();
-			}
-			else
-			{
-				return GetINT();
-			}
+			return GetWIS();
 		}
 	}
+
+	int32 stat = GetINT();
+	bool penalty = true;
+	switch (skillid) 
+	{
+		case Skill1HBlunt: 
+		case Skill1HSlashing: 
+		case Skill2HBlunt: 
+		case Skill2HSlashing: 
+		case SkillArchery: 
+		case Skill1HPiercing: 
+		case SkillHandtoHand: 
+		case SkillThrowing: 
+		case SkillApplyPoison: 
+		case SkillDisarmTraps: 
+		case SkillPickLock: 
+		case SkillPickPockets:
+		case SkillSenseTraps: 
+		case SkillSafeFall: 
+		case SkillHide: 
+		case SkillSneak:
+			stat = GetDEX();
+			penalty = false;
+			break;
+		case SkillBackstab: 
+		case SkillBash: 
+		case SkillDisarm: 
+		case SkillDoubleAttack:
+		case SkillDragonPunch: 
+		case SkillDualWield: 
+		case SkillEagleStrike:
+		case SkillFlyingKick: 
+		case SkillKick: 
+		case SkillOffense: 
+		case SkillRoundKick:
+		case SkillTigerClaw: 
+		case SkillTaunt: 
+		case SkillIntimidation: 
+		case SkillFrenzy:			
+			stat = GetSTR();
+			penalty = false;
+			break;
+		case SkillBlock: 
+		case SkillDefense: 
+		case SkillDodge: 
+		case SkillParry: 
+		case SkillRiposte:
+			stat = GetAGI();
+			penalty = false;
+			break;
+		case SkillBegging:
+			stat = GetCHA();
+			penalty = false;
+			break;
+		case SkillSwimming:
+			stat = GetSTA();
+			penalty = false;
+			break;
+		default:
+			penalty = true;
+			break;
+	}
+
+	int16 higher_from_int_wis = (GetINT() > GetWIS()) ? GetINT() : GetWIS();
+	stat = (higher_from_int_wis > stat) ? higher_from_int_wis : stat;
+
+	if(penalty)
+		stat -= 15;
+
+	return stat;
 }
 
 bool Mob::IsPlayableRace(uint16 race)

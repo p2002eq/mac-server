@@ -1835,7 +1835,7 @@ void Client::MoveSlotNotAllowed(bool client_update)
 		}
 	}
 
-	// No need to check inventory, cursor, bank or shared bank since they allow max item size and containers -U
+	// No need to check inventory, cursor, bank since they allow max item size and containers -U
 	// Code can be added to check item size vs. container size, but it is left to attrition for now.
 }
 
