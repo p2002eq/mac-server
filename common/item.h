@@ -136,7 +136,8 @@ public:
 	bool SetInventoryVersion(EQClientVersion version) {
 		if (!m_versionset) {
 			m_version = version;
-			return (m_versionset = true);
+			m_versionset = true;
+			return (m_versionset);
 		}
 		else {
 			return false;

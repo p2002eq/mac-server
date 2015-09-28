@@ -122,7 +122,7 @@ bool LoginServer::Process() {
 
 				if(Config->Locked == true)
 				{
-					if((status == 0 || status < 80) && (status != -2 || status != -1))
+					if(status < 80 && status > -1)
 						utwrs->response = 0;
 					if(status >= 80)
 						utwrs->response = 1;
