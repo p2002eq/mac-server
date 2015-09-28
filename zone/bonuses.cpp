@@ -279,12 +279,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		else
 			newbon->ATK += item->Attack;
 	}
-	if(item->DamageShield > 0) {
-		if((newbon->DamageShield + item->DamageShield) > RuleI(Character, ItemDamageShieldCap))
-			newbon->DamageShield = RuleI(Character, ItemDamageShieldCap);
-		else
-			newbon->DamageShield += item->DamageShield;
-	}
 	if(item->SpellShield > 0) {
 		if((newbon->SpellShield + item->SpellShield) > RuleI(Character, ItemSpellShieldingCap))
 			newbon->SpellShield = RuleI(Character, ItemSpellShieldingCap);
@@ -2921,9 +2915,6 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				}
 				if(cur->Attack > 0) {
 					newbon->ATK += cur->Attack;
-				}
-				if(cur->DamageShield > 0) {
-					newbon->DamageShield += cur->DamageShield;
 				}
 				if(cur->SpellShield > 0) {
 					newbon->SpellDamageShield += cur->SpellShield;

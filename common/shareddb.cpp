@@ -592,7 +592,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);
 		item.EnduranceRegen = (uint32)atoul(row[ItemField::enduranceregen]);
 		item.Haste = (uint32)atoul(row[ItemField::haste]);
-		item.DamageShield = (uint32)atoul(row[ItemField::damageshield]);
 		item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
 		item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
 		item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);

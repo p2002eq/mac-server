@@ -1837,7 +1837,6 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->ManaRegen = (uint32)((float)m_item->ManaRegen*Mult);
 	m_scaledItem->EnduranceRegen = (uint32)((float)m_item->EnduranceRegen*Mult);
 	m_scaledItem->Haste = (uint32)((float)m_item->Haste*Mult);
-	m_scaledItem->DamageShield = (uint32)((float)m_item->DamageShield*Mult);
 
 	m_scaledItem->CharmFileID = 0;	// this stops the client from trying to scale the item itself.
 }

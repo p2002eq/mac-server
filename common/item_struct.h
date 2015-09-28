@@ -198,7 +198,6 @@ struct Item_Struct {
 	uint32	ManaRegen;
 	uint32	EnduranceRegen;
 	uint32	Haste;
-	uint32	DamageShield;
 	uint32	RecastDelay;
 	uint32	RecastType;
 	bool	NoPet;

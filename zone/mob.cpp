@@ -3546,8 +3546,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->EnduranceRegen);
 	if (id == "haste")
 		stat = int32(item->Haste);
-	if (id == "damageshield")
-		stat = int32(item->DamageShield);
 	if (id == "recastdelay")
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")

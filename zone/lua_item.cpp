@@ -511,11 +511,6 @@ uint32 Lua_Item::GetHaste() {
 	return self->Haste;
 }
 
-uint32 Lua_Item::GetDamageShield() {
-	Lua_Safe_Call_Int();
-	return self->DamageShield;
-}
-
 uint32 Lua_Item::GetRecastDelay() {
 	Lua_Safe_Call_Int();
 	return self->RecastDelay;
@@ -792,7 +787,6 @@ luabind::scope lua_register_item() {
 .def("ManaRegen", &Lua_Item::GetManaRegen)
 .def("EnduranceRegen", &Lua_Item::GetEnduranceRegen)
 .def("Haste", &Lua_Item::GetHaste)
-.def("DamageShield", &Lua_Item::GetDamageShield)
 .def("RecastDelay", &Lua_Item::GetRecastDelay)
 .def("RecastType", &Lua_Item::GetRecastType)
 .def("NoPet", &Lua_Item::GetNoPet)

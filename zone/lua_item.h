@@ -125,7 +125,6 @@ public:
 	uint32 GetManaRegen();
 	uint32 GetEnduranceRegen();
 	uint32 GetHaste();
-	uint32 GetDamageShield();
 	uint32 GetRecastDelay();
 	uint32 GetRecastType();
 	bool GetNoPet();
