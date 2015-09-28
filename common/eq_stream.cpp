@@ -779,7 +779,7 @@ void EQStream::Write(int eq_fd)
 					}
 				} else {
 					// Combine worked
-					Log.Out(Logs::Detail, Logs::Netcode, _L "Combined seq packet %d of len %d, yeilding %d combined." __L, seq_send, (*sitr)->size, p->size);
+					Log.Out(Logs::Detail, Logs::Netcode, _L "Combined seq packet %d of len %d, yielding %d combined." __L, seq_send, (*sitr)->size, p->size);
 					++sitr;
 					NextSequencedSend++;
 				}
@@ -788,7 +788,10 @@ void EQStream::Write(int eq_fd)
 					// If we don't have a packet to try to combine into, use this one as the base
 					// Copy it first as it will still live until it is acked
 					p=(*sitr)->Copy();
-					Log.Out(Logs::Detail, Logs::Netcode, _L "Starting combined packet with seq packet %d of len %d" __L, seq_send, p->size);
+					if (p != nullptr)
+						Log.Out(Logs::Detail, Logs::Netcode, _L "Starting combined packet with seq packet %d of len %d" __L, seq_send, p->size);
+					else
+						Log.Out(Logs::Detail, Logs::Netcode, _L "Starting combined packet with seq packet %d" __L, seq_send);
 					++sitr;
 					NextSequencedSend++;
 				} else if (!p->combine(*sitr)) {
@@ -2313,7 +2316,7 @@ void EQOldStream::SendPacketQueue(bool Block)
 	std::deque<EQOldPacket*>::iterator packit = SendQueue.begin();
 	while (packit != SendQueue.end() && !DataQueueFull()) {
 		pack = (*packit);
-		if(pack->SentCount == 0 && Timer::GetCurrentTime() >= (pack->LastSent+500))
+		if(pack != nullptr && (pack->SentCount == 0 && Timer::GetCurrentTime() >= (pack->LastSent+500)))
 		{
 			std::cout << ""; //This is really stupid... but helps packets from being discarded in high traffic scenarios
 			if (!CheckClosed() && pack->dwARQ == arsp_response + 10 && pack->dwLoopedOnce == 0) //This code checks if 10 packets have been sent since last ARSP ("we got this packet yo") response from client, and if so, tags those ten packets that haven't been verifiably recieved for a resend.

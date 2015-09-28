@@ -1506,6 +1506,11 @@ void SharedDatabase::LoadLootTables(void *data, uint32 size) {
 
 }
 
+/*
+C6262	Excessive stack usage
+Function uses '16608' bytes of stack:  exceeds /analyze:stacksize '16384'. 
+Consider moving some data to heap.	common	shareddb.cpp	1489
+*/
 void SharedDatabase::LoadLootDrops(void *data, uint32 size) {
 
 	EQEmu::FixedMemoryVariableHashSet<LootDrop_Struct> hash(reinterpret_cast<uint8*>(data), size);
