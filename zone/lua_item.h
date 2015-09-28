@@ -128,7 +128,6 @@ public:
 	uint32 GetDamageShield();
 	uint32 GetRecastDelay();
 	uint32 GetRecastType();
-	bool GetAttuneable();
 	bool GetNoPet();
 	bool GetStackable();
 	bool GetNoTransfer();

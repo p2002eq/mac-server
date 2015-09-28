@@ -201,18 +201,13 @@ struct Item_Struct {
 	uint32	DamageShield;
 	uint32	RecastDelay;
 	uint32	RecastType;
-	uint32	AugDistiller;
-	bool	Attuneable;
 	bool	NoPet;
-	bool	PotionBelt;
 	bool	Stackable;
 	int8	Stackable_; //Stackable is not a bool on EQMac
 	bool	NoTransfer;
 	bool	QuestItemFlag;
 	int16	StackSize;
-	uint8	PotionBeltSlots;
 	ItemEffect_Struct Click, Proc, Worn, Focus, Scroll, Bard;
-
 	uint8	Book;			// 0=Not book, 1=Book
 	uint32	BookType;
 	char	Filename[33];	// Filename for book data

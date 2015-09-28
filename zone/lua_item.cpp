@@ -526,11 +526,6 @@ uint32 Lua_Item::GetRecastType() {
 	return self->RecastType;
 }
 
-bool Lua_Item::GetAttuneable() {
-	Lua_Safe_Call_Bool();
-	return self->Attuneable;
-}
-
 bool Lua_Item::GetNoPet() {
 	Lua_Safe_Call_Bool();
 	return self->NoPet;
@@ -800,7 +795,6 @@ luabind::scope lua_register_item() {
 .def("DamageShield", &Lua_Item::GetDamageShield)
 .def("RecastDelay", &Lua_Item::GetRecastDelay)
 .def("RecastType", &Lua_Item::GetRecastType)
-.def("Attuneable", &Lua_Item::GetAttuneable)
 .def("NoPet", &Lua_Item::GetNoPet)
 .def("Stackable", &Lua_Item::GetStackable)
 .def("NoTransfer", &Lua_Item::GetNoTransfer)

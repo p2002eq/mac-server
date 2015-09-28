@@ -210,7 +210,6 @@ public:
 
 	//  Test for valid inventory casting slot
 	bool SupportsClickCasting(int16 slot_id);
-	bool SupportsPotionBeltCasting(int16 slot_id);
 
 	// Test whether a given slot can support a container item
 	static bool SupportsContainers(int16 slot_id);

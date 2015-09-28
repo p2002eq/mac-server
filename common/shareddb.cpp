@@ -292,7 +292,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
             }
         }
 
-		if (instnodrop || (((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) && inst->GetItem()->Attuneable))
+		if (instnodrop)
 			inst->SetInstNoDrop(true);
 
         if (color > 0)
@@ -596,8 +596,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
 		item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
 		item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
-		item.AugDistiller = (uint32)atoul(row[ItemField::augdistiller]);
-		item.Attuneable = (atoi(row[ItemField::attuneable]) == 0) ? false : true;
 		item.NoPet = (atoi(row[ItemField::nopet]) == 0) ? false : true;
 		item.PointType = (uint32)atoul(row[ItemField::pointtype]);
 		item.StackSize = (uint16)atoi(row[ItemField::stacksize]);

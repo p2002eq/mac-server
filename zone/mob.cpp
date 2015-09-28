@@ -3552,8 +3552,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")
 		stat = int32(item->RecastType);
-	if (id == "attuneable")
-		stat = int32(item->Attuneable);
 	if (id == "nopet")
 		stat = int32(item->NoPet);
 	if (id == "stackable")
