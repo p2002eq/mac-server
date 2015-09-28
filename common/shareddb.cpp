@@ -579,10 +579,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
 		item.AugRestrict = (uint32)atoul(row[ItemField::augrestrict]);
 		item.LoreGroup = disableLoreGroup ? (uint8)atoi("0") : atoi(row[ItemField::loregroup]);
-		item.LoreFlag = item.LoreGroup != 0;
-		item.PendingLoreFlag = (atoi(row[ItemField::pendingloreflag]) == 0) ? false : true;
-		item.ArtifactFlag = (atoi(row[ItemField::artifactflag]) == 0) ? false : true;
-		item.SummonedFlag = (atoi(row[ItemField::summonedflag]) == 0) ? false : true;
 		item.Favor = (uint32)atoul(row[ItemField::favor]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
 		item.Endur = (uint32)atoul(row[ItemField::endur]);

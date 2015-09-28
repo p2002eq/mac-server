@@ -92,10 +92,6 @@ struct Item_Struct {
 	uint32	Price;			// Item cost (?)
 	uint32	Icon;			// Icon Number
 	uint32	LoreGroup;		// Later items use LoreGroup instead of LoreFlag. we might want to see about changing this to int32 since it is commonly -1 and is constantly being cast from signed (-1) to unsigned (4294967295)
-	bool	LoreFlag;		// This will be true if LoreGroup is non-zero
-	bool	PendingLoreFlag;
-	bool	ArtifactFlag;
-	bool	SummonedFlag;
 	uint8	FVNoDrop;		// Firiona Vie nodrop flag
 	uint32	Favor;			// Individual favor
 	uint32	GuildFavor;		// Guild favor

@@ -325,14 +325,7 @@ void LoadItemDBFieldNames() {
 	DBFieldNames[103]="booktype";		// "book type (0=rolled up note, 1=book)"
 	DBFieldNames[104]="unknown105";
 	DBFieldNames[105]="filename";		// Book Filename
-	DBFieldNames[106]="unknown107";
-	DBFieldNames[107]="unknown108";
-	DBFieldNames[108]="loreflag";
-	DBFieldNames[109]="unknown111";
-	DBFieldNames[110]="unknown112";
-	DBFieldNames[111]="unknown113";
-	DBFieldNames[112]="unknown114";
-	DBFieldNames[113]="unknown115";		// ? (end quote)
+	DBFieldNames[106]="unknown107";  // ? (end quote)
 }
 
 void encode_length(unsigned long length, char *out)

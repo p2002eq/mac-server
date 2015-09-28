@@ -3380,14 +3380,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Icon);
 	if (id == "loregroup")
 		stat = int32(item->LoreGroup);
-	if (id == "loreflag")
-		stat = int32(item->LoreFlag);
-	if (id == "pendingloreflag")
-		stat = int32(item->PendingLoreFlag);
-	if (id == "artifactflag")
-		stat = int32(item->ArtifactFlag);
-	if (id == "summonedflag")
-		stat = int32(item->SummonedFlag);
 	if (id == "fvnodrop")
 		stat = int32(item->FVNoDrop);
 	if (id == "favor")

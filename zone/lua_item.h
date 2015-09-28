@@ -39,10 +39,6 @@ public:
 	uint32 GetPrice();
 	uint32 GetIcon();
 	uint32 GetLoreGroup();
-	bool GetLoreFlag();
-	bool GetPendingLoreFlag();
-	bool GetArtifactFlag();
-	bool GetSummonedFlag();
 	int GetFVNoDrop();
 	uint32 GetFavor();
 	uint32 GetGuildFavor();

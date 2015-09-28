@@ -81,26 +81,6 @@ uint32 Lua_Item::GetLoreGroup() {
 	return self->LoreGroup;
 }
 
-bool Lua_Item::GetLoreFlag() {
-	Lua_Safe_Call_Bool();
-	return self->LoreFlag;
-}
-
-bool Lua_Item::GetPendingLoreFlag() {
-	Lua_Safe_Call_Bool();
-	return self->PendingLoreFlag;
-}
-
-bool Lua_Item::GetArtifactFlag() {
-	Lua_Safe_Call_Bool();
-	return self->ArtifactFlag;
-}
-
-bool Lua_Item::GetSummonedFlag() {
-	Lua_Safe_Call_Bool();
-	return self->SummonedFlag;
-}
-
 int Lua_Item::GetFVNoDrop() {
 	Lua_Safe_Call_Int();
 	return self->FVNoDrop;
@@ -701,10 +681,6 @@ luabind::scope lua_register_item() {
 		.def("Price", &Lua_Item::GetPrice)
 		.def("Icon", &Lua_Item::GetIcon)
 		.def("LoreGroup", &Lua_Item::GetLoreGroup)
-		.def("LoreFlag", &Lua_Item::GetLoreFlag)
-		.def("PendingLoreFlag", &Lua_Item::GetPendingLoreFlag)
-		.def("ArtifactFlag", &Lua_Item::GetArtifactFlag)
-		.def("SummonedFlag", &Lua_Item::GetSummonedFlag)
 		.def("FVNoDrop", &Lua_Item::GetFVNoDrop)
 		.def("Favor", &Lua_Item::GetFavor)
 		.def("GuildFavor", &Lua_Item::GetGuildFavor)
