@@ -109,6 +109,12 @@ const char *MakeLowerString(const char *source) {
 	return str;
 }
 
+/*
+C6011	Dereferencing null pointer	Dereferencing NULL pointer 'target'. 	common	string_util.cpp	118
+'target' may be NULL (Enter this branch)			117
+'target' is dereferenced, but may still be NULL			118
+I can't seem to get this to go away. Mental block or something.
+*/
 void MakeLowerString(const char *source, char *target) {
 	if (!source || !target) {
 	*target=0;

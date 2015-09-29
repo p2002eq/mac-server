@@ -614,7 +614,7 @@ private:
     ULONGLONG fileVersion = 0;
     if ( (m_parent != nullptr) && (szImg != nullptr) )
     {
-      // try to retrive the file-version:
+      // try to retrieve the file-version:
       if ( (this->m_parent->m_options & StackWalker::RetrieveFileVersion) != 0)
       {
         VS_FIXEDFILEINFO *fInfo = nullptr;
