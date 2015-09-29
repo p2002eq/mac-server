@@ -1480,32 +1480,40 @@ void ItemInst::ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent)
 	std::map<uint8, ItemInst*>::const_iterator cur, end, del;
 	cur = m_contents.begin();
 	end = m_contents.end();
-	for (; cur != end;) {
+	for (; cur != end;)
+	{
 		ItemInst* inst = cur->second;
-		const Item_Struct* item = inst->GetItem();
-		del = cur;
-		++cur;
+		if (inst != nullptr)
+		{
+			const Item_Struct* item = inst->GetItem();
+			del = cur;
+			++cur;
 
-		switch (is_nodrop) {
-		case byFlagSet:
-			if (item->NoDrop == 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
+			switch (is_nodrop)
+			{
+			case byFlagSet:
+				if (item->NoDrop == 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			default:
+				break;
 			}
-		default:
-			break;
-		}
 
-		switch (is_norent) {
-		case byFlagSet:
-			if (item->NoRent == 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
+			switch (is_norent)
+			{
+			case byFlagSet:
+				if (item->NoRent == 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			default:
+				break;
 			}
-		default:
-			break;
 		}
 	}
 }
