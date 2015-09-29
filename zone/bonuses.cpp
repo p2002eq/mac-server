@@ -279,54 +279,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		else
 			newbon->ATK += item->Attack;
 	}
-	if(item->SpellShield > 0) {
-		if((newbon->SpellShield + item->SpellShield) > RuleI(Character, ItemSpellShieldingCap))
-			newbon->SpellShield = RuleI(Character, ItemSpellShieldingCap);
-		else
-			newbon->SpellShield += item->SpellShield;
-	}
-	if(item->Shielding > 0) {
-		if((newbon->MeleeMitigation + item->Shielding) > RuleI(Character, ItemShieldingCap))
-			newbon->MeleeMitigation = RuleI(Character, ItemShieldingCap);
-		else
-			newbon->MeleeMitigation += item->Shielding;
-	}
-	if(item->StunResist > 0) {
-		if((newbon->StunResist + item->StunResist) > RuleI(Character, ItemStunResistCap))
-			newbon->StunResist = RuleI(Character, ItemStunResistCap);
-		else
-			newbon->StunResist += item->StunResist;
-	}
-	if(item->StrikeThrough > 0) {
-		if((newbon->StrikeThrough + item->StrikeThrough) > RuleI(Character, ItemStrikethroughCap))
-			newbon->StrikeThrough = RuleI(Character, ItemStrikethroughCap);
-		else
-			newbon->StrikeThrough += item->StrikeThrough;
-	}
-	if(item->Avoidance > 0) {
-		if((newbon->AvoidMeleeChance + item->Avoidance) > RuleI(Character, ItemAvoidanceCap))
-			newbon->AvoidMeleeChance = RuleI(Character, ItemAvoidanceCap);
-		else
-			newbon->AvoidMeleeChance += item->Avoidance;
-	}
-	if(item->Accuracy > 0) {
-		if((newbon->HitChance + item->Accuracy) > RuleI(Character, ItemAccuracyCap))
-			newbon->HitChance = RuleI(Character, ItemAccuracyCap);
-		else
-			newbon->HitChance += item->Accuracy;
-	}
-	if(item->CombatEffects > 0) {
-		if((newbon->ProcChance + item->CombatEffects) > RuleI(Character, ItemCombatEffectsCap))
-			newbon->ProcChance = RuleI(Character, ItemCombatEffectsCap);
-		else
-			newbon->ProcChance += item->CombatEffects;
-	}
-	if(item->DotShielding > 0) {
-		if((newbon->DoTShielding + item->DotShielding) > RuleI(Character, ItemDoTShieldingCap))
-			newbon->DoTShielding = RuleI(Character, ItemDoTShieldingCap);
-		else
-			newbon->DoTShielding += item->DotShielding;
-	}
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
 		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
 	}
@@ -435,13 +387,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		{
 			AddItemFactionBonus(item->FactionMod4, item->FactionAmt4);
 		}
-	}
-
-	if (item->ExtraDmgSkill != 0 && item->ExtraDmgSkill <= HIGHEST_SKILL) {
-		if((newbon->SkillDamageAmount[item->ExtraDmgSkill] + item->ExtraDmgAmt) > RuleI(Character, ItemExtraDmgCap))
-			newbon->SkillDamageAmount[item->ExtraDmgSkill] = RuleI(Character, ItemExtraDmgCap);
-		else
-			newbon->SkillDamageAmount[item->ExtraDmgSkill] += item->ExtraDmgAmt;
 	}
 }
 
@@ -2915,27 +2860,6 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				}
 				if(cur->Attack > 0) {
 					newbon->ATK += cur->Attack;
-				}
-				if(cur->SpellShield > 0) {
-					newbon->SpellDamageShield += cur->SpellShield;
-				}
-				if(cur->Shielding > 0) {
-					newbon->MeleeMitigation += cur->Shielding;
-				}
-				if(cur->StunResist > 0) {
-					newbon->StunResist += cur->StunResist;
-				}
-				if(cur->StrikeThrough > 0) {
-					newbon->StrikeThrough += cur->StrikeThrough;
-				}
-				if(cur->Avoidance > 0) {
-					newbon->AvoidMeleeChance += cur->Avoidance;
-				}
-				if(cur->Accuracy > 0) {
-					newbon->HitChance += cur->Accuracy;
-				}
-				if(cur->CombatEffects > 0) {
-					newbon->ProcChance += cur->CombatEffects;
 				}
 				if (cur->Worn.Effect>0 && (cur->Worn.Type == ET_WornEffect)) { // latent effects
 					ApplySpellsBonuses(cur->Worn.Effect, GetLevel(), newbon);

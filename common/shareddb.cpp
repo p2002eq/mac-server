@@ -543,15 +543,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		//item.Unk059 = (uint32)atoul(row[ItemField::UNK059]);
 		item.CastTime = (uint32)atoul(row[ItemField::casttime]);
 		item.ProcRate = (int32)atoi(row[ItemField::procrate]);
-		item.CombatEffects = (int8)atoi(row[ItemField::combateffects]);
-		item.Shielding = (int8)atoi(row[ItemField::shielding]);
-		item.StunResist = (int8)atoi(row[ItemField::stunresist]);
-		item.StrikeThrough = (int8)atoi(row[ItemField::strikethrough]);
-		item.ExtraDmgSkill = (uint32)atoul(row[ItemField::extradmgskill]);
-		item.ExtraDmgAmt = (uint32)atoul(row[ItemField::extradmgamt]);
-		item.SpellShield = (int8)atoi(row[ItemField::spellshield]);
-		item.Avoidance = (int8)atoi(row[ItemField::avoidance]);
-		item.Accuracy = (int8)atoi(row[ItemField::accuracy]);
 		item.CharmFileID = (uint32)atoul(row[ItemField::charmfileid]);
 		item.FactionMod1 = (int32)atoul(row[ItemField::factionmod1]);
 		item.FactionMod2 = (int32)atoul(row[ItemField::factionmod2]);
@@ -572,7 +563,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
 		item.Endur = (uint32)atoul(row[ItemField::endur]);
-		item.DotShielding = (uint32)atoul(row[ItemField::dotshielding]);
 		item.Attack = (uint32)atoul(row[ItemField::attack]);
 		item.Regen = (uint32)atoul(row[ItemField::regen]);
 		item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);

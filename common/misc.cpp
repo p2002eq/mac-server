@@ -290,15 +290,8 @@ void LoadItemDBFieldNames() {
 	DBFieldNames[68]="unknown069";
 	DBFieldNames[69]="unknown070";		// ?
 	DBFieldNames[70]="focusid";		// Focus Effect Spell Id
-	DBFieldNames[71]="combateffects";	// CombatEffects
-	DBFieldNames[72]="shielding";		// Shielding
-	DBFieldNames[73]="stunresist";		// StunResist
-	DBFieldNames[74]="strikethrough";	// StrikeThrough
 	DBFieldNames[75]="unknown076";
 	DBFieldNames[76]="unknown077";		// ?
-	DBFieldNames[77]="spellshield";		// Spell Shield
-	DBFieldNames[78]="avoidance";		// Avoidance
-	DBFieldNames[79]="accuracy";		// Accuracy
 	DBFieldNames[80]="factionmod1";		// Faction Mod Index 1
 	DBFieldNames[81]="factionmod2";		// Faction Mod Index 2
 	DBFieldNames[82]="factionmod3";		// Faction Mod Index 3

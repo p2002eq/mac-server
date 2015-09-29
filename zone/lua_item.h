@@ -89,15 +89,7 @@ public:
 	uint32 GetFulfilment();
 	int GetCastTime();
 	int GetProcRate();
-	int GetCombatEffects();
-	int GetShielding();
-	int GetStunResist();
-	int GetStrikeThrough();
-	uint32 GetExtraDmgSkill();
-	uint32 GetExtraDmgAmt();
-	int GetSpellShield();
 	int GetAvoidance();
-	int GetAccuracy();
 	uint32 GetCharmFileID();
 	int GetFactionMod1();
 	int GetFactionMod2();
@@ -110,7 +102,6 @@ public:
 	const char *GetCharmFile();
 	uint32 GetBaneDmgRaceAmt();
 	uint32 GetEndur();
-	uint32 GetDotShielding();
 	uint32 GetAttack();
 	uint32 GetRegen();
 	uint32 GetManaRegen();

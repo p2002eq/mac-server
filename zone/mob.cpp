@@ -3503,24 +3503,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->CastTime);
 	if (id == "procrate")
 		stat = int32(item->ProcRate);
-	if (id == "combateffects")
-		stat = int32(item->CombatEffects);
-	if (id == "shielding")
-		stat = int32(item->Shielding);
-	if (id == "stunresist")
-		stat = int32(item->StunResist);
-	if (id == "strikethrough")
-		stat = int32(item->StrikeThrough);
-	if (id == "extradmgskill")
-		stat = int32(item->ExtraDmgSkill);
-	if (id == "extradmgamt")
-		stat = int32(item->ExtraDmgAmt);
-	if (id == "spellshield")
-		stat = int32(item->SpellShield);
-	if (id == "avoidance")
-		stat = int32(item->Avoidance);
-	if (id == "accuracy")
-		stat = int32(item->Accuracy);
 	if (id == "charmfileid")
 		stat = int32(item->CharmFileID);
 	if (id == "factionmod1")
@@ -3543,8 +3525,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->BaneDmgRaceAmt);
 	if (id == "endur")
 		stat = int32(item->Endur);
-	if (id == "dotshielding")
-		stat = int32(item->DotShielding);
 	if (id == "attack")
 		stat = int32(item->Attack);
 	if (id == "regen")

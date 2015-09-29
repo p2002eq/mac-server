@@ -149,15 +149,6 @@ struct Item_Struct {
 		int16 CastTime;		// Cast Time for clicky effects, in milliseconds
 	};
 	int32	ProcRate;
-	int8	CombatEffects;	// PoP: Combat Effects +
-	int8	Shielding;		// PoP: Shielding %
-	int8	StunResist;		// PoP: Stun Resist %
-	int8	StrikeThrough;	// PoP: Strike Through %
-	uint32	ExtraDmgSkill;
-	uint32	ExtraDmgAmt;
-	int8	SpellShield;	// PoP: Spell Shield %
-	int8	Avoidance;		// PoP: Avoidance +
-	int8	Accuracy;		// PoP: Accuracy +
 	uint32	CharmFileID;
 	int32	FactionMod1;	// Faction Mod 1
 	int32	FactionMod2;	// Faction Mod 2
@@ -170,7 +161,6 @@ struct Item_Struct {
 	char	CharmFile[32];	// ?
 	uint32	BaneDmgRaceAmt;
 	uint32	Endur;
-	uint32	DotShielding;
 	uint32	Attack;
 	uint32	Regen;
 	uint32	ManaRegen;

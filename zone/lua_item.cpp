@@ -331,51 +331,6 @@ int Lua_Item::GetProcRate() {
 	return self->ProcRate;
 }
 
-int Lua_Item::GetCombatEffects() {
-	Lua_Safe_Call_Int();
-	return self->CombatEffects;
-}
-
-int Lua_Item::GetShielding() {
-	Lua_Safe_Call_Int();
-	return self->Shielding;
-}
-
-int Lua_Item::GetStunResist() {
-	Lua_Safe_Call_Int();
-	return self->StunResist;
-}
-
-int Lua_Item::GetStrikeThrough() {
-	Lua_Safe_Call_Int();
-	return self->StrikeThrough;
-}
-
-uint32 Lua_Item::GetExtraDmgSkill() {
-	Lua_Safe_Call_Int();
-	return self->ExtraDmgSkill;
-}
-
-uint32 Lua_Item::GetExtraDmgAmt() {
-	Lua_Safe_Call_Int();
-	return self->ExtraDmgAmt;
-}
-
-int Lua_Item::GetSpellShield() {
-	Lua_Safe_Call_Int();
-	return self->SpellShield;
-}
-
-int Lua_Item::GetAvoidance() {
-	Lua_Safe_Call_Int();
-	return self->Avoidance;
-}
-
-int Lua_Item::GetAccuracy() {
-	Lua_Safe_Call_Int();
-	return self->Accuracy;
-}
-
 uint32 Lua_Item::GetCharmFileID() {
 	Lua_Safe_Call_Int();
 	return self->CharmFileID;
@@ -434,11 +389,6 @@ uint32 Lua_Item::GetBaneDmgRaceAmt() {
 uint32 Lua_Item::GetEndur() {
 	Lua_Safe_Call_Int();
 	return self->Endur;
-}
-
-uint32 Lua_Item::GetDotShielding() {
-	Lua_Safe_Call_Int();
-	return self->DotShielding;
 }
 
 uint32 Lua_Item::GetAttack() {
@@ -706,15 +656,6 @@ luabind::scope lua_register_item() {
 .def("Fulfilment", &Lua_Item::GetFulfilment)
 .def("CastTime", &Lua_Item::GetCastTime)
 .def("ProcRate", &Lua_Item::GetProcRate)
-.def("CombatEffects", &Lua_Item::GetCombatEffects)
-.def("Shielding", &Lua_Item::GetShielding)
-.def("StunResist", &Lua_Item::GetStunResist)
-.def("StrikeThrough", &Lua_Item::GetStrikeThrough)
-.def("ExtraDmgSkill", &Lua_Item::GetExtraDmgSkill)
-.def("ExtraDmgAmt", &Lua_Item::GetExtraDmgAmt)
-.def("SpellShield", &Lua_Item::GetSpellShield)
-.def("Avoidance", &Lua_Item::GetAvoidance)
-.def("Accuracy", &Lua_Item::GetAccuracy)
 .def("CharmFileID", &Lua_Item::GetCharmFileID)
 .def("FactionMod1", &Lua_Item::GetFactionMod1)
 .def("FactionMod2", &Lua_Item::GetFactionMod2)
@@ -727,7 +668,6 @@ luabind::scope lua_register_item() {
 .def("CharmFile", &Lua_Item::GetCharmFile)
 .def("BaneDmgRaceAmt", &Lua_Item::GetBaneDmgRaceAmt)
 .def("Endur", &Lua_Item::GetEndur)
-.def("DotShielding", &Lua_Item::GetDotShielding)
 .def("Attack", &Lua_Item::GetAttack)
 .def("Regen", &Lua_Item::GetRegen)
 .def("ManaRegen", &Lua_Item::GetManaRegen)

@@ -1719,22 +1719,12 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->ElemDmgAmt = (uint8)((float)m_item->ElemDmgAmt*Mult);
 	m_scaledItem->Damage = (uint32)((float)m_item->Damage*Mult);
 
-	m_scaledItem->CombatEffects = (int8)((float)m_item->CombatEffects*Mult);
-	m_scaledItem->Shielding = (int8)((float)m_item->Shielding*Mult);
-	m_scaledItem->StunResist = (int8)((float)m_item->StunResist*Mult);
-	m_scaledItem->StrikeThrough = (int8)((float)m_item->StrikeThrough*Mult);
-	m_scaledItem->ExtraDmgAmt = (uint32)((float)m_item->ExtraDmgAmt*Mult);
-	m_scaledItem->SpellShield = (int8)((float)m_item->SpellShield*Mult);
-	m_scaledItem->Avoidance = (int8)((float)m_item->Avoidance*Mult);
-	m_scaledItem->Accuracy = (int8)((float)m_item->Accuracy*Mult);
-
 	m_scaledItem->FactionAmt1 = (int32)((float)m_item->FactionAmt1*Mult);
 	m_scaledItem->FactionAmt2 = (int32)((float)m_item->FactionAmt2*Mult);
 	m_scaledItem->FactionAmt3 = (int32)((float)m_item->FactionAmt3*Mult);
 	m_scaledItem->FactionAmt4 = (int32)((float)m_item->FactionAmt4*Mult);
 
 	m_scaledItem->Endur = (uint32)((float)m_item->Endur*Mult);
-	m_scaledItem->DotShielding = (uint32)((float)m_item->DotShielding*Mult);
 	m_scaledItem->Attack = (uint32)((float)m_item->Attack*Mult);
 	m_scaledItem->Regen = (uint32)((float)m_item->Regen*Mult);
 	m_scaledItem->ManaRegen = (uint32)((float)m_item->ManaRegen*Mult);
