@@ -542,7 +542,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.SellRate = (float)atof(row[ItemField::sellrate]);
 		//item.Unk059 = (uint32)atoul(row[ItemField::UNK059]);
 		item.CastTime = (uint32)atoul(row[ItemField::casttime]);
-		item.EliteMaterial = (uint32)atoul(row[ItemField::elitematerial]);
 		item.ProcRate = (int32)atoi(row[ItemField::procrate]);
 		item.CombatEffects = (int8)atoi(row[ItemField::combateffects]);
 		item.Shielding = (int8)atoi(row[ItemField::shielding]);
@@ -571,7 +570,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.BookType = (uint32)atoul(row[ItemField::booktype]);
 		strcpy(item.Filename, row[ItemField::filename]);
 		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
-		item.Favor = (uint32)atoul(row[ItemField::favor]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
 		item.Endur = (uint32)atoul(row[ItemField::endur]);
 		item.DotShielding = (uint32)atoul(row[ItemField::dotshielding]);
@@ -582,9 +580,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Haste = (uint32)atoul(row[ItemField::haste]);
 		item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
 		item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
-		item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
 		item.NoPet = (atoi(row[ItemField::nopet]) == 0) ? false : true;
-		item.PointType = (uint32)atoul(row[ItemField::pointtype]);
 		item.StackSize = (uint16)atoi(row[ItemField::stacksize]);
 		item.NoTransfer = disableNoTransfer ? false : (atoi(row[ItemField::notransfer]) == 0) ? false : true;
 		item.Stackable = (atoi(row[ItemField::stackable]) == 3) ? false : true;

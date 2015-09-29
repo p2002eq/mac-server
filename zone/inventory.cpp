@@ -861,9 +861,7 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Size,
 			item->Weight,
 			item->ItemClass,
-			item->ItemType,
-			item->Favor,
-			item->GuildFavor);
+			item->ItemType);
 	} else if (item->ItemClass == 2) {	//book
 		MakeAnyLenString(&hash_str, "%d%s%d%d%09X",
 			item->ID,
@@ -885,7 +883,6 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Name,
 			item->Mana,
 			item->HP,
-			item->Favor,
 			item->Light,
 			item->Icon,
 			item->Price,
@@ -894,8 +891,7 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Size,
 			item->ItemClass,
 			item->ItemType,
-			item->AC,
-			item->GuildFavor);
+			item->AC);
 	}
 
 	//this currently crashes zone, so someone feel free to fix this so we can work with hashes:

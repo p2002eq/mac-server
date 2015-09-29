@@ -39,9 +39,6 @@ public:
 	uint32 GetPrice();
 	uint32 GetIcon();
 	int GetFVNoDrop();
-	uint32 GetFavor();
-	uint32 GetGuildFavor();
-	uint32 GetPointType();
 	int GetBagType();
 	int GetBagSlots();
 	int GetBagSize();
@@ -91,7 +88,6 @@ public:
 	double GetSellRate();
 	uint32 GetFulfilment();
 	int GetCastTime();
-	uint32 GetEliteMaterial();
 	int GetProcRate();
 	int GetCombatEffects();
 	int GetShielding();

@@ -81,21 +81,6 @@ int Lua_Item::GetFVNoDrop() {
 	return self->FVNoDrop;
 }
 
-uint32 Lua_Item::GetFavor() {
-	Lua_Safe_Call_Int();
-	return self->Favor;
-}
-
-uint32 Lua_Item::GetGuildFavor() {
-	Lua_Safe_Call_Int();
-	return self->GuildFavor;
-}
-
-uint32 Lua_Item::GetPointType() {
-	Lua_Safe_Call_Int();
-	return self->PointType;
-}
-
 int Lua_Item::GetBagType() {
 	Lua_Safe_Call_Int();
 	return self->BagType;
@@ -339,11 +324,6 @@ uint32 Lua_Item::GetFulfilment() {
 int Lua_Item::GetCastTime() {
 	Lua_Safe_Call_Int();
 	return self->CastTime;
-}
-
-uint32 Lua_Item::GetEliteMaterial() {
-	Lua_Safe_Call_Int();
-	return self->EliteMaterial;
 }
 
 int Lua_Item::GetProcRate() {
@@ -676,9 +656,6 @@ luabind::scope lua_register_item() {
 		.def("Price", &Lua_Item::GetPrice)
 		.def("Icon", &Lua_Item::GetIcon)
 		.def("FVNoDrop", &Lua_Item::GetFVNoDrop)
-		.def("Favor", &Lua_Item::GetFavor)
-		.def("GuildFavor", &Lua_Item::GetGuildFavor)
-		.def("PointType", &Lua_Item::GetPointType)
 		.def("BagType", &Lua_Item::GetBagType)
 		.def("BagSlots", &Lua_Item::GetBagSlots)
 		.def("BagSize", &Lua_Item::GetBagSize)
@@ -728,7 +705,6 @@ luabind::scope lua_register_item() {
 .def("SellRate", &Lua_Item::GetSellRate)
 .def("Fulfilment", &Lua_Item::GetFulfilment)
 .def("CastTime", &Lua_Item::GetCastTime)
-.def("EliteMaterial", &Lua_Item::GetEliteMaterial)
 .def("ProcRate", &Lua_Item::GetProcRate)
 .def("CombatEffects", &Lua_Item::GetCombatEffects)
 .def("Shielding", &Lua_Item::GetShielding)

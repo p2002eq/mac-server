@@ -2344,7 +2344,6 @@ void Mob::SendWearChange(uint8 material_slot)
 
 	wc->spawn_id = GetID();
 	wc->material = GetEquipmentMaterial(material_slot);
-	wc->elite_material = IsEliteMaterialItem(material_slot);
 	wc->color.color = GetEquipmentColor(material_slot);
 	wc->wear_slot_id = material_slot;
 
@@ -2471,19 +2470,6 @@ uint32 Mob::GetEquipmentColor(uint8 material_slot) const
 	if(item != 0)
 	{
 		return item->Color;
-	}
-
-	return 0;
-}
-
-uint32 Mob::IsEliteMaterialItem(uint8 material_slot) const
-{
-	const Item_Struct *item;
-
-	item = database.GetItem(GetEquipment(material_slot));
-	if(item != 0)
-	{
-		return item->EliteMaterial;
 	}
 
 	return 0;
@@ -3421,12 +3407,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Icon);
 	if (id == "fvnodrop")
 		stat = int32(item->FVNoDrop);
-	if (id == "favor")
-		stat = int32(item->Favor);
-	if (id == "guildfavor")
-		stat = int32(item->GuildFavor);
-	if (id == "pointtype")
-		stat = int32(item->PointType);
 	if (id == "bagtype")
 		stat = int32(item->BagType);
 	if (id == "bagslots")
@@ -3521,8 +3501,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Material);
 	if (id == "casttime")
 		stat = int32(item->CastTime);
-	if (id == "elitematerial")
-		stat = int32(item->EliteMaterial);
 	if (id == "procrate")
 		stat = int32(item->ProcRate);
 	if (id == "combateffects")

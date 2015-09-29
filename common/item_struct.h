@@ -92,14 +92,6 @@ struct Item_Struct {
 	uint32	Price;			// Item cost (?)
 	uint32	Icon;			// Icon Number
 	uint8	FVNoDrop;		// Firiona Vie nodrop flag
-	uint32	Favor;			// Individual favor
-	uint32	GuildFavor;		// Guild favor
-	uint32	PointType;
-
-	//uint32	Unk117;
-	//uint32	Unk118;
-	//uint32	Unk121;
-	//uint32	Unk124;
 
 	uint8	BagType;		// 0:Small Bag, 1:Large Bag, 2:Quiver, 3:Belt Pouch ... there are 50 types
 	uint8	BagSlots;		// Number of slots: can only be 2, 4, 6, 8, or 10
@@ -156,7 +148,6 @@ struct Item_Struct {
 		uint32 Fulfilment;	// Food fulfilment (How long it lasts)
 		int16 CastTime;		// Cast Time for clicky effects, in milliseconds
 	};
-	uint32 EliteMaterial;
 	int32	ProcRate;
 	int8	CombatEffects;	// PoP: Combat Effects +
 	int8	Shielding;		// PoP: Shielding %
