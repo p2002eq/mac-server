@@ -366,29 +366,20 @@ void Client::SendServerListPacket()
 
 void Client::Handle_Banner(const char* data, unsigned int size)
 {
-	char buf[501];
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginBanner, 5);
-	outapp->pBuffer;
-	memset(buf, 0, sizeof(buf));
-
 	std::string ticker = "Welcome to EQMacEmu";
 	if (db.CheckExtraSettings("ticker"))
 	{
 		ticker = db.LoadServerSettings("options", "ticker");
 	}
-	strcpy(buf, ticker.c_str());
-	outapp->size += strlen(ticker.c_str());
 
-	if (strlen(buf) == 0)
-	{
-		delete outapp;
-	}
-	outapp->pBuffer = new uchar[outapp->size];
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginBanner, 5);
+	outapp->size += strlen(ticker.c_str());
+	outapp->pBuffer = new uchar[outapp->size + 3];
 	outapp->pBuffer[0] = 1;
 	outapp->pBuffer[1] = 0;
 	outapp->pBuffer[2] = 0;
 	outapp->pBuffer[3] = 0;
-	strcpy((char *)&outapp->pBuffer[4], buf);
+	strcpy((char *)&outapp->pBuffer[4], ticker.c_str());
 	connection->QueuePacket(outapp);
 	delete outapp;
 }
