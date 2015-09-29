@@ -110,7 +110,7 @@ bool Client::Process()
 			}
 		case OP_LoginBanner:
 			{
-				Handle_Banner((const char*)app->pBuffer, app->Size());
+				Handle_Banner(app->Size());
 				break;
 			}
 		default:
@@ -364,7 +364,7 @@ void Client::SendServerListPacket()
 	delete outapp;
 }
 
-void Client::Handle_Banner(const char* data, unsigned int size)
+void Client::Handle_Banner(unsigned int size)
 {
 	std::string ticker = "Welcome to EQMacEmu";
 	if (db.CheckExtraSettings("ticker"))
