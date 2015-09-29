@@ -1023,7 +1023,6 @@ private:
 	int32 CalcDR();
 	int32 CalcPR();
 	int32 CalcCR();
-	int32 CalcCorrup();
 	int32 CalcMaxHP();
 	int32 CalcBaseHP();
 	int32 CalcHPRegen();

@@ -309,27 +309,27 @@ void LoadItemDBFieldNames() {
 	DBFieldNames[68]="unknown069";
 	DBFieldNames[69]="unknown070";		// ?
 	DBFieldNames[70]="focusid";		// Focus Effect Spell Id
-	DBFieldNames[75]="unknown076";
-	DBFieldNames[76]="unknown077";		// ?
-	DBFieldNames[80]="factionmod1";		// Faction Mod Index 1
-	DBFieldNames[81]="factionmod2";		// Faction Mod Index 2
-	DBFieldNames[82]="factionmod3";		// Faction Mod Index 3
-	DBFieldNames[83]="factionmod4";		// Faction Mod Index 4
-	DBFieldNames[84]="factionamt1";		// Faction Mod Value 1
-	DBFieldNames[85]="factionamt2";		// Faction Mod Value 2
-	DBFieldNames[86]="factionamt3";		// Faction Mod Value 3
-	DBFieldNames[87]="factionamt4";		// Faction Mod Value 4
-	DBFieldNames[88]="unknown089";
-	DBFieldNames[89]="charmfile";		// ** Charm File
-	DBFieldNames[90]="unknown091";
-	DBFieldNames[91]="bagtype";		// bag type
-	DBFieldNames[92]="bagslots";		// bag slots
-	DBFieldNames[93]="bagsize";		// bag size capacity
-	DBFieldNames[94]="bagwr";		// bag weight reduction
-	DBFieldNames[95]="booktype";		// "book type (0=rolled up note, 1=book)"
-	DBFieldNames[96]="unknown105";
-	DBFieldNames[97]="filename";		// Book Filename
-	DBFieldNames[98]="unknown107";  // ? (end quote)
+	DBFieldNames[71]="unknown076";
+	DBFieldNames[72]="unknown077";		// ?
+	DBFieldNames[73]="factionmod1";		// Faction Mod Index 1
+	DBFieldNames[74]="factionmod2";		// Faction Mod Index 2
+	DBFieldNames[75]="factionmod3";		// Faction Mod Index 3
+	DBFieldNames[76]="factionmod4";		// Faction Mod Index 4
+	DBFieldNames[77]="factionamt1";		// Faction Mod Value 1
+	DBFieldNames[78]="factionamt2";		// Faction Mod Value 2
+	DBFieldNames[79]="factionamt3";		// Faction Mod Value 3
+	DBFieldNames[80]="factionamt4";		// Faction Mod Value 4
+	DBFieldNames[81]="unknown089";
+	DBFieldNames[82]="charmfile";		// ** Charm File
+	DBFieldNames[83]="unknown091";
+	DBFieldNames[84]="bagtype";		// bag type
+	DBFieldNames[85]="bagslots";		// bag slots
+	DBFieldNames[86]="bagsize";		// bag size capacity
+	DBFieldNames[87]="bagwr";		// bag weight reduction
+	DBFieldNames[88]="booktype";		// "book type (0=rolled up note, 1=book)"
+	DBFieldNames[89]="unknown105";
+	DBFieldNames[90]="filename";		// Book Filename
+	DBFieldNames[91]="unknown107";  // ? (end quote)
 }
 
 void encode_length(unsigned long length, char *out)

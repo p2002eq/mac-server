@@ -100,7 +100,6 @@ void Client::CalcBonuses()
 	CalcDR();
 	CalcPR();
 	CalcCR();
-	CalcCorrup();
 
 	CalcMaxHP();
 	CalcMaxMana();
@@ -537,9 +536,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_ResistMagic:
 				newbon->MR += base1;
 				break;
-			case SE_ResistCorruption:
-				newbon->Corrup += base1;
-				break;
 			case SE_IncreaseSpellHaste:
 				break;
 			case SE_IncreaseRange:
@@ -593,9 +589,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 						break;
 					case 11: //dr
 						newbon->DRCapMod += base1;
-						break;
-					case 12: //corruption
-						newbon->CorrupCapMod += base1;
 						break;
 				}
 				break;
@@ -1518,12 +1511,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_ResistCorruption:
-			{
-				new_bonus->Corrup += effect_value;
-				break;
-			}
-
 			case SE_RaiseStatCap:
 			{
 				switch(spells[spell_id].base2[i])
@@ -1564,9 +1551,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 						break;
 					case 11: //dr
 						new_bonus->DRCapMod += effect_value;
-						break;
-					case 12: // corruption
-						new_bonus->CorrupCapMod += effect_value;
 						break;
 				}
 				break;
@@ -3292,12 +3276,6 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					itembonuses.FR = effect_value;
 					break;
 				}
-
-				case SE_ResistCorruption:
-					spellbonuses.Corrup = effect_value;
-					itembonuses.Corrup = effect_value;
-					aabonuses.Corrup = effect_value;
-					break;
 
 				case SE_CastingLevel2:
 				case SE_CastingLevel:	// Brilliance of Ro

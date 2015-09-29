@@ -4429,9 +4429,6 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	case RESIST_POISON:
 		target_resist = GetPR();
 		break;
-	case RESIST_CORRUPTION:
-		target_resist = GetCorrup();
-		break;
 	case RESIST_PRISMATIC:
 		target_resist = (GetFR() + GetCR() + GetMR() + GetDR() + GetPR()) / 5;
 		break;

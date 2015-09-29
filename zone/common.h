@@ -229,9 +229,6 @@ struct StatBonuses {
 	int32	PRCapMod;
 	int32	DR;
 	int32	DRCapMod;
-	int32	Corrup;
-	int32	CorrupCapMod;
-	int32	HeroicCorrup;
 	uint16	DamageShieldSpellID;
 	int		DamageShield;						// this is damage done to mobs that attack this
 	DmgShieldType	DamageShieldType;
