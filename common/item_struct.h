@@ -177,15 +177,7 @@ struct Item_Struct {
 	int32	FactionAmt3;	// Faction Amt 3
 	int32	FactionAmt4;	// Faction Amt 4
 	char	CharmFile[32];	// ?
-	uint32	AugType;
-	uint8	AugSlotType[EmuConstants::ITEM_COMMON_SIZE];	// LDoN: Augment Slot 1-5 Type
-	uint8	AugSlotVisible[EmuConstants::ITEM_COMMON_SIZE];	// LDoN: Augment Slot 1-5 Visible
-	uint8	AugSlotUnk2[EmuConstants::ITEM_COMMON_SIZE];	// LDoN: Augment Slot 1-5 Unknown
-	uint32	LDoNTheme;
-	uint32	LDoNPrice;
-	uint32	LDoNSold;
 	uint32	BaneDmgRaceAmt;
-	uint32	AugRestrict;
 	uint32	Endur;
 	uint32	DotShielding;
 	uint32	Attack;

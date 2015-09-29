@@ -310,22 +310,14 @@ void LoadItemDBFieldNames() {
 	DBFieldNames[88]="unknown089";
 	DBFieldNames[89]="charmfile";		// ** Charm File
 	DBFieldNames[90]="unknown091";
-	DBFieldNames[91]="augslot1type";	// Slot1Type
-	DBFieldNames[92]="augslot2type";	// Slot2Type
-	DBFieldNames[93]="augslot3type";	// Slot3Type
-	DBFieldNames[94]="augslot4type";	// Slot4Type
-	DBFieldNames[95]="augslot5type";	// Slot5Type
-	DBFieldNames[96]="ldonpointtheme";
-	DBFieldNames[97]="ldonpointcost";		// ?
-	DBFieldNames[98]="unknown099";
-	DBFieldNames[99]="bagtype";		// bag type
-	DBFieldNames[100]="bagslots";		// bag slots
-	DBFieldNames[101]="bagsize";		// bag size capacity
-	DBFieldNames[102]="bagwr";		// bag weight reduction
-	DBFieldNames[103]="booktype";		// "book type (0=rolled up note, 1=book)"
-	DBFieldNames[104]="unknown105";
-	DBFieldNames[105]="filename";		// Book Filename
-	DBFieldNames[106]="unknown107";  // ? (end quote)
+	DBFieldNames[91]="bagtype";		// bag type
+	DBFieldNames[92]="bagslots";		// bag slots
+	DBFieldNames[93]="bagsize";		// bag size capacity
+	DBFieldNames[94]="bagwr";		// bag weight reduction
+	DBFieldNames[95]="booktype";		// "book type (0=rolled up note, 1=book)"
+	DBFieldNames[96]="unknown105";
+	DBFieldNames[97]="filename";		// Book Filename
+	DBFieldNames[98]="unknown107";  // ? (end quote)
 }
 
 void encode_length(unsigned long length, char *out)

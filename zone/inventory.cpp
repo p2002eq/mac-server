@@ -2197,9 +2197,9 @@ void Client::InterrogateInventory_(bool errorcheck, Client* requester, int16 hea
 		std::string p;
 		std::string e;
 
-		if (inst) { i = StringFormat("%s (class: %u | augtype: %u)", inst->GetItem()->Name, inst->GetItem()->ItemClass, inst->GetItem()->AugType); }
+		if (inst) { i = StringFormat("%s (class: %u)", inst->GetItem()->Name, inst->GetItem()->ItemClass); }
 		else { i = "NONE"; }
-		if (parent) { p = StringFormat("%s (class: %u | augtype: %u), index: %i", parent->GetItem()->Name, parent->GetItem()->ItemClass, parent->GetItem()->AugType, index); }
+		if (parent) { p = StringFormat("%s (class: %u), index: %i", parent->GetItem()->Name, parent->GetItem()->ItemClass,index); }
 		else { p = "NONE"; }
 		if (localerror) { e = " [ERROR]"; }
 		else { e = ""; }
