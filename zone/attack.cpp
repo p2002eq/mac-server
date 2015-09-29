@@ -930,7 +930,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 			}
 
 			if(weapon_item->BaneDmgRace == against->GetRace()){
-				banedmg += weapon_item->BaneDmgRaceAmt;
+				banedmg += weapon_item->BaneDmgAmt;
 			}
 		}
 
@@ -950,7 +950,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 			}
 
 			if(weapon_item->BaneDmgRace == against->GetRace()){
-				banedmg += weapon_item->BaneDmgRaceAmt;
+				banedmg += weapon_item->BaneDmgAmt;
 			}
 		}
 
@@ -1090,10 +1090,10 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 
 			if(weapon_item->GetItem()->BaneDmgRace == against->GetRace()){
 				if(IsClient() && GetLevel() < weapon_item->GetItem()->RecLevel){
-					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgRaceAmt);
+					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgAmt);
 				}
 				else{
-					banedmg += weapon_item->GetItem()->BaneDmgRaceAmt;
+					banedmg += weapon_item->GetItem()->BaneDmgAmt;
 				}
 			}
 		}
@@ -1123,10 +1123,10 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 
 			if(weapon_item->GetItem()->BaneDmgRace == against->GetRace()){
 				if(IsClient() && GetLevel() < weapon_item->GetItem()->RecLevel){
-					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgRaceAmt);
+					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgAmt);
 				}
 				else{
-					banedmg += weapon_item->GetItem()->BaneDmgRaceAmt;
+					banedmg += weapon_item->GetItem()->BaneDmgAmt;
 				}
 			}
 		}
@@ -1799,7 +1799,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 			}
 
 			if(weapon->BaneDmgRace == other->GetRace()){
-				eleBane += weapon->BaneDmgRaceAmt;
+				eleBane += weapon->BaneDmgAmt;
 			}
 
 			if(weapon->ElemDmgAmt){

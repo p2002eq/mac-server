@@ -381,41 +381,6 @@ const char *Lua_Item::GetCharmFile() {
 	return self->CharmFile;
 }
 
-uint32 Lua_Item::GetBaneDmgRaceAmt() {
-	Lua_Safe_Call_Int();
-	return self->BaneDmgRaceAmt;
-}
-
-uint32 Lua_Item::GetEndur() {
-	Lua_Safe_Call_Int();
-	return self->Endur;
-}
-
-uint32 Lua_Item::GetAttack() {
-	Lua_Safe_Call_Int();
-	return self->Attack;
-}
-
-uint32 Lua_Item::GetRegen() {
-	Lua_Safe_Call_Int();
-	return self->Regen;
-}
-
-uint32 Lua_Item::GetManaRegen() {
-	Lua_Safe_Call_Int();
-	return self->ManaRegen;
-}
-
-uint32 Lua_Item::GetEnduranceRegen() {
-	Lua_Safe_Call_Int();
-	return self->EnduranceRegen;
-}
-
-uint32 Lua_Item::GetHaste() {
-	Lua_Safe_Call_Int();
-	return self->Haste;
-}
-
 uint32 Lua_Item::GetRecastDelay() {
 	Lua_Safe_Call_Int();
 	return self->RecastDelay;
@@ -666,13 +631,6 @@ luabind::scope lua_register_item() {
 .def("FactionAmt3", &Lua_Item::GetFactionAmt3)
 .def("FactionAmt4", &Lua_Item::GetFactionAmt4)
 .def("CharmFile", &Lua_Item::GetCharmFile)
-.def("BaneDmgRaceAmt", &Lua_Item::GetBaneDmgRaceAmt)
-.def("Endur", &Lua_Item::GetEndur)
-.def("Attack", &Lua_Item::GetAttack)
-.def("Regen", &Lua_Item::GetRegen)
-.def("ManaRegen", &Lua_Item::GetManaRegen)
-.def("EnduranceRegen", &Lua_Item::GetEnduranceRegen)
-.def("Haste", &Lua_Item::GetHaste)
 .def("RecastDelay", &Lua_Item::GetRecastDelay)
 .def("RecastType", &Lua_Item::GetRecastType)
 .def("NoPet", &Lua_Item::GetNoPet)

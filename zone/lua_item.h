@@ -100,12 +100,6 @@ public:
 	int GetFactionAmt3();
 	int GetFactionAmt4();
 	const char *GetCharmFile();
-	uint32 GetBaneDmgRaceAmt();
-	uint32 GetEndur();
-	uint32 GetAttack();
-	uint32 GetRegen();
-	uint32 GetManaRegen();
-	uint32 GetEnduranceRegen();
 	uint32 GetHaste();
 	uint32 GetRecastDelay();
 	uint32 GetRecastType();

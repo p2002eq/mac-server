@@ -159,13 +159,6 @@ struct Item_Struct {
 	int32	FactionAmt3;	// Faction Amt 3
 	int32	FactionAmt4;	// Faction Amt 4
 	char	CharmFile[32];	// ?
-	uint32	BaneDmgRaceAmt;
-	uint32	Endur;
-	uint32	Attack;
-	uint32	Regen;
-	uint32	ManaRegen;
-	uint32	EnduranceRegen;
-	uint32	Haste;
 	uint32	RecastDelay;
 	uint32	RecastType;
 	bool	NoPet;

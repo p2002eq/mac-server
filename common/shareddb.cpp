@@ -560,14 +560,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Book = (uint8)atoi(row[ItemField::book]);
 		item.BookType = (uint32)atoul(row[ItemField::booktype]);
 		strcpy(item.Filename, row[ItemField::filename]);
-		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
-		item.Endur = (uint32)atoul(row[ItemField::endur]);
-		item.Attack = (uint32)atoul(row[ItemField::attack]);
-		item.Regen = (uint32)atoul(row[ItemField::regen]);
-		item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);
-		item.EnduranceRegen = (uint32)atoul(row[ItemField::enduranceregen]);
-		item.Haste = (uint32)atoul(row[ItemField::haste]);
 		item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
 		item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
 		item.NoPet = (atoi(row[ItemField::nopet]) == 0) ? false : true;

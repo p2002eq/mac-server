@@ -1732,13 +1732,6 @@ void ItemInst::ScaleItem() {
 	m_scaledItem->FactionAmt3 = (int32)((float)m_item->FactionAmt3*Mult);
 	m_scaledItem->FactionAmt4 = (int32)((float)m_item->FactionAmt4*Mult);
 
-	m_scaledItem->Endur = (uint32)((float)m_item->Endur*Mult);
-	m_scaledItem->Attack = (uint32)((float)m_item->Attack*Mult);
-	m_scaledItem->Regen = (uint32)((float)m_item->Regen*Mult);
-	m_scaledItem->ManaRegen = (uint32)((float)m_item->ManaRegen*Mult);
-	m_scaledItem->EnduranceRegen = (uint32)((float)m_item->EnduranceRegen*Mult);
-	m_scaledItem->Haste = (uint32)((float)m_item->Haste*Mult);
-
 	m_scaledItem->CharmFileID = 0;	// this stops the client from trying to scale the item itself.
 }
 

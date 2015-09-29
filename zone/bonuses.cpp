@@ -189,7 +189,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->AC += item->AC;
 		newbon->HP += item->HP;
 		newbon->Mana += item->Mana;
-		newbon->Endurance += item->Endur;
 		newbon->STR += (item->AStr);
 		newbon->STA += (item->ASta);
 		newbon->DEX += (item->ADex);
@@ -226,7 +225,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->AC += CalcRecommendedLevelBonus( lvl, reclvl, item->AC );
 		newbon->HP += CalcRecommendedLevelBonus( lvl, reclvl, item->HP );
 		newbon->Mana += CalcRecommendedLevelBonus( lvl, reclvl, item->Mana );
-		newbon->Endurance += CalcRecommendedLevelBonus( lvl, reclvl, item->Endur );
 		newbon->STR += CalcRecommendedLevelBonus( lvl, reclvl, (item->AStr) );
 		newbon->STA += CalcRecommendedLevelBonus( lvl, reclvl, (item->ASta) );
 		newbon->DEX += CalcRecommendedLevelBonus( lvl, reclvl, (item->ADex) );
@@ -257,28 +255,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 	}
 
 	//FatherNitwit: New style haste, shields, and regens
-	if(newbon->haste < (int32)item->Haste) {
-		newbon->haste = item->Haste;
-	}
-	if(item->Regen > 0)
-		newbon->HPRegen += item->Regen;
-
-	if(item->ManaRegen > 0)
-		newbon->ManaRegen += item->ManaRegen;
-
-	if(item->EnduranceRegen > 0)
-		newbon->EnduranceRegen += item->EnduranceRegen;
-
-	if(item->Attack > 0) {
-
-		int cap = RuleI(Character, ItemATKCap);
-		cap += itembonuses.ItemATKCap + spellbonuses.ItemATKCap + aabonuses.ItemATKCap;
-
-		if((newbon->ATK + item->Attack) > cap)
-			newbon->ATK = RuleI(Character, ItemATKCap);
-		else
-			newbon->ATK += item->Attack;
-	}
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
 		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
 	}
@@ -2837,7 +2813,6 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				newbon->AC += cur->AC;
 				newbon->HP += cur->HP;
 				newbon->Mana += cur->Mana;
-				newbon->Endurance += cur->Endur;
 				newbon->STR += (cur->AStr);
 				newbon->STA += (cur->ASta);
 				newbon->DEX += (cur->ADex);
@@ -2852,20 +2827,9 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				newbon->DR += (cur->DR);
 
 				//more complex stats
-				if(cur->Regen > 0) {
-					newbon->HPRegen += cur->Regen;
-				}
-				if(cur->ManaRegen > 0) {
-					newbon->ManaRegen += cur->ManaRegen;
-				}
-				if(cur->Attack > 0) {
-					newbon->ATK += cur->Attack;
-				}
 				if (cur->Worn.Effect>0 && (cur->Worn.Type == ET_WornEffect)) { // latent effects
 					ApplySpellsBonuses(cur->Worn.Effect, GetLevel(), newbon);
 				}
-				if (cur->Haste > newbon->haste)
-					newbon->haste = cur->Haste;
 			}
 		}
 

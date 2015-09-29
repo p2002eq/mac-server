@@ -3521,20 +3521,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->FactionAmt3);
 	if (id == "factionamt4")
 		stat = int32(item->FactionAmt4);
-	if (id == "banedmgraceamt")
-		stat = int32(item->BaneDmgRaceAmt);
-	if (id == "endur")
-		stat = int32(item->Endur);
-	if (id == "attack")
-		stat = int32(item->Attack);
-	if (id == "regen")
-		stat = int32(item->Regen);
-	if (id == "manaregen")
-		stat = int32(item->ManaRegen);
-	if (id == "enduranceregen")
-		stat = int32(item->EnduranceRegen);
-	if (id == "haste")
-		stat = int32(item->Haste);
 	if (id == "recastdelay")
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")

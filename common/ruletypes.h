@@ -53,11 +53,11 @@ RULE_INT ( Character, FamishedLevel, 120) // When famished reaches this value, w
 RULE_BOOL( Character, HealOnLevel, false)
 RULE_BOOL( Character, ManaOnLevel, false)
 RULE_BOOL( Character, FeignKillsPet, false)
-RULE_INT ( Character, ItemManaRegenCap, 15)
-RULE_INT ( Character, ItemHealthRegenCap, 35)
-RULE_INT ( Character, ItemDamageShieldCap, 30)
-RULE_INT ( Character, ItemATKCap, 250)
-RULE_INT ( Character, ItemHealAmtCap, 250)
+RULE_INT(Character, ItemManaRegenCap, 15)
+RULE_INT(Character, ItemHealthRegenCap, 35)
+RULE_INT(Character, ItemDamageShieldCap, 30)
+RULE_INT(Character, ItemATKCap, 250)
+RULE_INT(Character, ItemHealAmtCap, 250)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
