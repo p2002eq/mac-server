@@ -461,12 +461,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 			disableNoDrop = true;
 		}
 	}
-	bool disableLoreGroup = false;
-	if(GetVariable("disablelore", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableLoreGroup = true;
-		}
-	}
 	bool disableNoTransfer = false;
 	if(GetVariable("disablenotransfer", ndbuffer, 4)) {
 		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
@@ -578,7 +572,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		strcpy(item.Filename, row[ItemField::filename]);
 		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
 		item.AugRestrict = (uint32)atoul(row[ItemField::augrestrict]);
-		item.LoreGroup = disableLoreGroup ? (uint8)atoi("0") : atoi(row[ItemField::loregroup]);
 		item.Favor = (uint32)atoul(row[ItemField::favor]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
 		item.Endur = (uint32)atoul(row[ItemField::endur]);
@@ -846,7 +839,7 @@ ItemInst* SharedDatabase::CreateBaseItem(const Item_Struct* item, int16 charges)
 			return nullptr;
 		}
 
-		if(item->CharmFileID != 0 || (item->LoreGroup >= 1000 && item->LoreGroup != -1)) {
+		if(item->CharmFileID != 0) {
 			inst->Initialize(this);
 		}
 	}
@@ -1068,10 +1061,6 @@ void SharedDatabase::LoadDamageShieldTypes(SPDat_Spell_Struct* sp, int32 iMaxSpe
             sp[spellID].DamageShieldType = atoi(row[1]);
     }
 
-}
-
-const EvolveInfo* SharedDatabase::GetEvolveInfo(uint32 loregroup) {
-	return nullptr;	// nothing here for now... database and/or sharemem pulls later
 }
 
 int SharedDatabase::GetMaxSpellID() {

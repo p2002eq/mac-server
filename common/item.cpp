@@ -525,45 +525,6 @@ int16 Inventory::HasItemByUse(uint8 use, uint8 quantity, uint8 where)
 	return slot_id;
 }
 
-int16 Inventory::HasItemByLoreGroup(uint32 loregroup, uint8 where)
-{
-	int16 slot_id = INVALID_INDEX;
-
-	// Check each inventory bucket
-	if (where & invWhereWorn) {
-		slot_id = _HasItemByLoreGroup(m_worn, loregroup);
-		if (slot_id != INVALID_INDEX)
-			return slot_id;
-	}
-
-	if (where & invWherePersonal) {
-		slot_id = _HasItemByLoreGroup(m_inv, loregroup);
-		if (slot_id != INVALID_INDEX)
-			return slot_id;
-	}
-
-	if (where & invWhereBank) {
-		slot_id = _HasItemByLoreGroup(m_bank, loregroup);
-		if (slot_id != INVALID_INDEX)
-			return slot_id;
-	}
-
-	if (where & invWhereTrading) {
-		slot_id = _HasItemByLoreGroup(m_trade, loregroup);
-		if (slot_id != INVALID_INDEX)
-			return slot_id;
-	}
-
-	if (where & invWhereCursor) {
-		// Check cursor queue
-		slot_id = _HasItemByLoreGroup(m_cursor, loregroup);
-		if (slot_id != INVALID_INDEX)
-			return slot_id;
-	}
-
-	return slot_id;
-}
-
 // Locate an available inventory slot
 // Returns slot_id when there's one available, else INVALID_INDEX
 int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, bool is_arrow)
@@ -1252,59 +1213,6 @@ int16 Inventory::_HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity)
 	return INVALID_INDEX;
 }
 
-int16 Inventory::_HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 loregroup)
-{
-	for (auto iter = bucket.begin(); iter != bucket.end(); ++iter) {
-		auto inst = iter->second;
-		if (inst == nullptr) { continue; }
-
-		if (inst->GetItem()->LoreGroup == loregroup)
-			return iter->first;
-
-		if (!inst->IsType(ItemClassContainer)) { continue; }
-
-		for (auto bag_iter = inst->_cbegin(); bag_iter != inst->_cend(); ++bag_iter) {
-			auto bag_inst = bag_iter->second;
-			if (bag_inst == nullptr) { continue; }
-
-			if (bag_inst->IsType(ItemClassCommon) && bag_inst->GetItem()->LoreGroup == loregroup)
-				return Inventory::CalcSlotId(iter->first, bag_iter->first);
-
-		}
-	}
-
-	return INVALID_INDEX;
-}
-
-// Internal Method: Checks an inventory queue type bucket for a particular item
-int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
-{
-	for (auto iter = iqueue.cbegin(); iter != iqueue.cend(); ++iter) {
-		auto inst = *iter;
-		if (inst == nullptr) { continue; }
-
-		if (inst->GetItem()->LoreGroup == loregroup)
-			return MainCursor;
-
-		if (!inst->IsType(ItemClassContainer)) { continue; }
-
-		for (auto bag_iter = inst->_cbegin(); bag_iter != inst->_cend(); ++bag_iter) {
-			auto bag_inst = bag_iter->second;
-			if (bag_inst == nullptr) { continue; }
-
-			if (bag_inst->IsType(ItemClassCommon) && bag_inst->GetItem()->LoreGroup == loregroup)
-				return Inventory::CalcSlotId(MainCursor, bag_iter->first);
-
-		}
-
-		// We only check the visible cursor due to lack of queue processing ability (client allows duplicate in limbo)
-		break;
-	}
-
-	return INVALID_INDEX;
-}
-
-
 //
 // class ItemInst
 //
@@ -1771,11 +1679,6 @@ void ItemInst::Initialize(SharedDatabase *db) {
 	if (m_item->CharmFileID != 0) {
 		m_scaling = true;
 		ScaleItem();
-	}
-
-	// initialize evolving items
-	else if ((db) && m_item->LoreGroup >= 1000 && m_item->LoreGroup != -1) {
-		// not complete yet
 	}
 }
 

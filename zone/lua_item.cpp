@@ -76,11 +76,6 @@ uint32 Lua_Item::GetIcon() {
 	return self->Icon;
 }
 
-uint32 Lua_Item::GetLoreGroup() {
-	Lua_Safe_Call_Int();
-	return self->LoreGroup;
-}
-
 int Lua_Item::GetFVNoDrop() {
 	Lua_Safe_Call_Int();
 	return self->FVNoDrop;
@@ -680,7 +675,6 @@ luabind::scope lua_register_item() {
 		.def("Slots", &Lua_Item::GetSlots)
 		.def("Price", &Lua_Item::GetPrice)
 		.def("Icon", &Lua_Item::GetIcon)
-		.def("LoreGroup", &Lua_Item::GetLoreGroup)
 		.def("FVNoDrop", &Lua_Item::GetFVNoDrop)
 		.def("Favor", &Lua_Item::GetFavor)
 		.def("GuildFavor", &Lua_Item::GetGuildFavor)

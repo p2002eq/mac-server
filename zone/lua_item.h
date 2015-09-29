@@ -38,7 +38,6 @@ public:
 	uint32 GetSlots();
 	uint32 GetPrice();
 	uint32 GetIcon();
-	uint32 GetLoreGroup();
 	int GetFVNoDrop();
 	uint32 GetFavor();
 	uint32 GetGuildFavor();

@@ -3419,8 +3419,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Price);
 	if (id == "icon")
 		stat = int32(item->Icon);
-	if (id == "loregroup")
-		stat = int32(item->LoreGroup);
 	if (id == "fvnodrop")
 		stat = int32(item->FVNoDrop);
 	if (id == "favor")
