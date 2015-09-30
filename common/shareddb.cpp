@@ -292,7 +292,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
             }
         }
 
-		if (instnodrop || (((slot_id >= EmuConstants::EQUIPMENT_BEGIN && slot_id <= EmuConstants::EQUIPMENT_END)) && inst->GetItem()->Attuneable))
+		if (instnodrop)
 			inst->SetInstNoDrop(true);
 
         if (color > 0)
@@ -461,12 +461,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 			disableNoDrop = true;
 		}
 	}
-	bool disableLoreGroup = false;
-	if(GetVariable("disablelore", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableLoreGroup = true;
-		}
-	}
 	bool disableNoTransfer = false;
 	if(GetVariable("disablenotransfer", ndbuffer, 4)) {
 		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
@@ -548,17 +542,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.SellRate = (float)atof(row[ItemField::sellrate]);
 		//item.Unk059 = (uint32)atoul(row[ItemField::UNK059]);
 		item.CastTime = (uint32)atoul(row[ItemField::casttime]);
-		item.EliteMaterial = (uint32)atoul(row[ItemField::elitematerial]);
 		item.ProcRate = (int32)atoi(row[ItemField::procrate]);
-		item.CombatEffects = (int8)atoi(row[ItemField::combateffects]);
-		item.Shielding = (int8)atoi(row[ItemField::shielding]);
-		item.StunResist = (int8)atoi(row[ItemField::stunresist]);
-		item.StrikeThrough = (int8)atoi(row[ItemField::strikethrough]);
-		item.ExtraDmgSkill = (uint32)atoul(row[ItemField::extradmgskill]);
-		item.ExtraDmgAmt = (uint32)atoul(row[ItemField::extradmgamt]);
-		item.SpellShield = (int8)atoi(row[ItemField::spellshield]);
-		item.Avoidance = (int8)atoi(row[ItemField::avoidance]);
-		item.Accuracy = (int8)atoi(row[ItemField::accuracy]);
 		item.CharmFileID = (uint32)atoul(row[ItemField::charmfileid]);
 		item.FactionMod1 = (int32)atoul(row[ItemField::factionmod1]);
 		item.FactionMod2 = (int32)atoul(row[ItemField::factionmod2]);
@@ -576,30 +560,10 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Book = (uint8)atoi(row[ItemField::book]);
 		item.BookType = (uint32)atoul(row[ItemField::booktype]);
 		strcpy(item.Filename, row[ItemField::filename]);
-		item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
-		item.AugRestrict = (uint32)atoul(row[ItemField::augrestrict]);
-		item.LoreGroup = disableLoreGroup ? (uint8)atoi("0") : atoi(row[ItemField::loregroup]);
-		item.LoreFlag = item.LoreGroup != 0;
-		item.PendingLoreFlag = (atoi(row[ItemField::pendingloreflag]) == 0) ? false : true;
-		item.ArtifactFlag = (atoi(row[ItemField::artifactflag]) == 0) ? false : true;
-		item.SummonedFlag = (atoi(row[ItemField::summonedflag]) == 0) ? false : true;
-		item.Favor = (uint32)atoul(row[ItemField::favor]);
 		item.FVNoDrop = (atoi(row[ItemField::fvnodrop]) == 0) ? false : true;
-		item.Endur = (uint32)atoul(row[ItemField::endur]);
-		item.DotShielding = (uint32)atoul(row[ItemField::dotshielding]);
-		item.Attack = (uint32)atoul(row[ItemField::attack]);
-		item.Regen = (uint32)atoul(row[ItemField::regen]);
-		item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);
-		item.EnduranceRegen = (uint32)atoul(row[ItemField::enduranceregen]);
-		item.Haste = (uint32)atoul(row[ItemField::haste]);
-		item.DamageShield = (uint32)atoul(row[ItemField::damageshield]);
 		item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
 		item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
-		item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
-		item.AugDistiller = (uint32)atoul(row[ItemField::augdistiller]);
-		item.Attuneable = (atoi(row[ItemField::attuneable]) == 0) ? false : true;
 		item.NoPet = (atoi(row[ItemField::nopet]) == 0) ? false : true;
-		item.PointType = (uint32)atoul(row[ItemField::pointtype]);
 		item.StackSize = (uint16)atoi(row[ItemField::stacksize]);
 		item.NoTransfer = disableNoTransfer ? false : (atoi(row[ItemField::notransfer]) == 0) ? false : true;
 		item.Stackable = (atoi(row[ItemField::stackable]) == 3) ? false : true;
@@ -630,12 +594,6 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.Bard.Level = (uint8)atoul(row[ItemField::bardlevel]);
 		item.Bard.Level2 = (uint8)atoul(row[ItemField::bardlevel2]);
 		item.QuestItemFlag = (atoi(row[ItemField::questitemflag]) == 0) ? false : true;
-		item.Purity = (uint32)atoul(row[ItemField::purity]);
-		item.BackstabDmg = (uint32)atoul(row[ItemField::damage]);
-		item.DSMitigation = (uint32)atoul(row[ItemField::dsmitigation]);
-		item.HealAmt = (int32)atoi(row[ItemField::healamt]);
-		item.SpellDmg = (int32)atoi(row[ItemField::spelldmg]);
-		item.ScriptFileID = (uint32)atoul(row[ItemField::scriptfileid]);
 		item.GMFlag = (int8)atoi(row[ItemField::gmflag]);
 		item.Soulbound = (int8)atoi(row[ItemField::soulbound]);
 
@@ -859,7 +817,7 @@ ItemInst* SharedDatabase::CreateBaseItem(const Item_Struct* item, int16 charges)
 			return nullptr;
 		}
 
-		if(item->CharmFileID != 0 || (item->LoreGroup >= 1000 && item->LoreGroup != -1)) {
+		if(item->CharmFileID != 0) {
 			inst->Initialize(this);
 		}
 	}
@@ -1081,10 +1039,6 @@ void SharedDatabase::LoadDamageShieldTypes(SPDat_Spell_Struct* sp, int32 iMaxSpe
             sp[spellID].DamageShieldType = atoi(row[1]);
     }
 
-}
-
-const EvolveInfo* SharedDatabase::GetEvolveInfo(uint32 loregroup) {
-	return nullptr;	// nothing here for now... database and/or sharemem pulls later
 }
 
 int SharedDatabase::GetMaxSpellID() {

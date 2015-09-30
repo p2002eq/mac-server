@@ -2344,7 +2344,6 @@ void Mob::SendWearChange(uint8 material_slot)
 
 	wc->spawn_id = GetID();
 	wc->material = GetEquipmentMaterial(material_slot);
-	wc->elite_material = IsEliteMaterialItem(material_slot);
 	wc->color.color = GetEquipmentColor(material_slot);
 	wc->wear_slot_id = material_slot;
 
@@ -2471,19 +2470,6 @@ uint32 Mob::GetEquipmentColor(uint8 material_slot) const
 	if(item != 0)
 	{
 		return item->Color;
-	}
-
-	return 0;
-}
-
-uint32 Mob::IsEliteMaterialItem(uint8 material_slot) const
-{
-	const Item_Struct *item;
-
-	item = database.GetItem(GetEquipment(material_slot));
-	if(item != 0)
-	{
-		return item->EliteMaterial;
 	}
 
 	return 0;
@@ -3419,24 +3405,8 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Price);
 	if (id == "icon")
 		stat = int32(item->Icon);
-	if (id == "loregroup")
-		stat = int32(item->LoreGroup);
-	if (id == "loreflag")
-		stat = int32(item->LoreFlag);
-	if (id == "pendingloreflag")
-		stat = int32(item->PendingLoreFlag);
-	if (id == "artifactflag")
-		stat = int32(item->ArtifactFlag);
-	if (id == "summonedflag")
-		stat = int32(item->SummonedFlag);
 	if (id == "fvnodrop")
 		stat = int32(item->FVNoDrop);
-	if (id == "favor")
-		stat = int32(item->Favor);
-	if (id == "guildfavor")
-		stat = int32(item->GuildFavor);
-	if (id == "pointtype")
-		stat = int32(item->PointType);
 	if (id == "bagtype")
 		stat = int32(item->BagType);
 	if (id == "bagslots")
@@ -3531,28 +3501,8 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Material);
 	if (id == "casttime")
 		stat = int32(item->CastTime);
-	if (id == "elitematerial")
-		stat = int32(item->EliteMaterial);
 	if (id == "procrate")
 		stat = int32(item->ProcRate);
-	if (id == "combateffects")
-		stat = int32(item->CombatEffects);
-	if (id == "shielding")
-		stat = int32(item->Shielding);
-	if (id == "stunresist")
-		stat = int32(item->StunResist);
-	if (id == "strikethrough")
-		stat = int32(item->StrikeThrough);
-	if (id == "extradmgskill")
-		stat = int32(item->ExtraDmgSkill);
-	if (id == "extradmgamt")
-		stat = int32(item->ExtraDmgAmt);
-	if (id == "spellshield")
-		stat = int32(item->SpellShield);
-	if (id == "avoidance")
-		stat = int32(item->Avoidance);
-	if (id == "accuracy")
-		stat = int32(item->Accuracy);
 	if (id == "charmfileid")
 		stat = int32(item->CharmFileID);
 	if (id == "factionmod1")
@@ -3571,30 +3521,10 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->FactionAmt3);
 	if (id == "factionamt4")
 		stat = int32(item->FactionAmt4);
-	if (id == "banedmgraceamt")
-		stat = int32(item->BaneDmgRaceAmt);
-	if (id == "endur")
-		stat = int32(item->Endur);
-	if (id == "dotshielding")
-		stat = int32(item->DotShielding);
-	if (id == "attack")
-		stat = int32(item->Attack);
-	if (id == "regen")
-		stat = int32(item->Regen);
-	if (id == "manaregen")
-		stat = int32(item->ManaRegen);
-	if (id == "enduranceregen")
-		stat = int32(item->EnduranceRegen);
-	if (id == "haste")
-		stat = int32(item->Haste);
-	if (id == "damageshield")
-		stat = int32(item->DamageShield);
 	if (id == "recastdelay")
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")
 		stat = int32(item->RecastType);
-	if (id == "attuneable")
-		stat = int32(item->Attuneable);
 	if (id == "nopet")
 		stat = int32(item->NoPet);
 	if (id == "stackable")
@@ -3609,18 +3539,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Book);
 	if (id == "booktype")
 		stat = int32(item->BookType);
-	if (id == "purity")
-		stat = int32(item->Purity);
-	if (id == "backstabdmg")
-		stat = int32(item->BackstabDmg);
-	if (id == "dsmitigation")
-		stat = int32(item->DSMitigation);
-	if (id == "healamt")
-		stat = int32(item->HealAmt);
-	if (id == "spelldmg")
-		stat = int32(item->SpellDmg);
-	if (id == "scriptfileid")
-		stat = int32(item->ScriptFileID);
 	// Begin Effects
 	if (id == "clickeffect")
 		stat = int32(item->Click.Effect);

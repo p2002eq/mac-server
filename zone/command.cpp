@@ -4614,7 +4614,7 @@ void command_iteminfo(Client *c, const Seperator *sep){
 	else {
 		const Item_Struct* item = inst->GetItem();
 		c->Message(CC_Default, "ID: %i Name: %s", item->ID, item->Name);
-		c->Message(CC_Default, "  Lore: %s  ND: %i  NS: %i  Type: %i", (item->LoreFlag) ? "true" : "false", item->NoDrop, item->NoRent, item->ItemClass);
+		c->Message(CC_Default, "  Lore: %s  ND: %i  NS: %i  Type: %i", item->Lore, item->NoDrop, item->NoRent, item->ItemClass);
 		c->Message(CC_Default, "  IDF: %s  Size: %i  Weight: %i  icon_id: %i  Price: %i", item->IDFile, item->Size, item->Weight, item->Icon, item->Price);
 		if (c->Admin() >= 200)
 			c->Message(CC_Default, "MinStatus: %i", item->MinStatus);

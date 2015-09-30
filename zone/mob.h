@@ -310,7 +310,6 @@ public:
 	virtual uint32 GetEquipment(uint8 material_slot) const { return(0); }
 	virtual int32 GetEquipmentMaterial(uint8 material_slot) const;
 	virtual uint32 GetEquipmentColor(uint8 material_slot) const;
-	virtual uint32 IsEliteMaterialItem(uint8 material_slot) const;
 	bool AffectedBySpellExcludingSlot(int slot, int effect);
 	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, SkillUseTypes attack_skill, uint8 killedby = 0) = 0;
 	virtual void Damage(Mob* from, int32 damage, uint16 spell_id, SkillUseTypes attack_skill,
@@ -371,7 +370,6 @@ public:
 	inline virtual int32 GetDR() const { return DR + itembonuses.DR + spellbonuses.DR; }
 	inline virtual int32 GetPR() const { return PR + itembonuses.PR + spellbonuses.PR; }
 	inline virtual int32 GetCR() const { return CR + itembonuses.CR + spellbonuses.CR; }
-	inline virtual int32 GetCorrup() const { return Corrup + itembonuses.Corrup + spellbonuses.Corrup; }
 	inline virtual int32 GetPhR() const { return PhR; }
 	inline StatBonuses GetItemBonuses() const { return itembonuses; }
 	inline StatBonuses GetSpellBonuses() const { return spellbonuses; }

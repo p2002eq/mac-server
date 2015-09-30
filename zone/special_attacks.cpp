@@ -675,7 +675,7 @@ void Mob::RogueBackstab(Mob* other, bool min_damage, int ReuseTime)
 		wpn = CastToClient()->GetInv().GetItem(MainPrimary);
 		if(wpn) {
 			primaryweapondamage = GetWeaponDamage(other, wpn);
-			backstab_dmg = wpn->GetItem()->BackstabDmg;
+			backstab_dmg = wpn->GetItem()->Damage;
 		}
 	}
 	else{
