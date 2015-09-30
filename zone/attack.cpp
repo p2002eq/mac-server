@@ -4228,7 +4228,7 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 						GetCleanName(), itoa(damage));
 				// Crippling blows also have a chance to stun
 				//Kayen: Crippling Blow would cause a chance to interrupt for npcs < 55, with a staggers message.
-				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)){
+				if (defender != nullptr && defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)){
 					defender->Emote("staggers.");
 					defender->Stun(0, this);
 				}

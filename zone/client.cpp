@@ -623,7 +623,7 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 	else {
 		if(eqs)
 			eqs->FastQueuePacket((EQApplicationPacket **)app, ack_req);
-		else if (app && (*app))
+		else if (app != nullptr && (*app))
 			delete *app;
 		*app = 0;
 	}
