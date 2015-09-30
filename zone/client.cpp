@@ -616,10 +616,11 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 		AddPacket(app, ack_req);
 		return;
 	}
-	else {
+	else if (app != nullptr && *app != nullptr)
+	{
 		if(eqs)
 			eqs->FastQueuePacket((EQApplicationPacket **)app, ack_req);
-		else if (app != nullptr && (*app))
+		else if (app && (*app))
 			delete *app;
 		*app = 0;
 	}
