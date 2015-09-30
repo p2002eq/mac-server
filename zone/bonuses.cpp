@@ -1244,7 +1244,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 	if(casterId > 0)
 		caster = entity_list.GetMob(casterId);
 
-	for (i = 0; i <= EFFECT_COUNT; i++)
+	for (i = 0; i < EFFECT_COUNT; i++)
 	{
 		//Buffs/Item effects
 		if (!IsAISpellEffect) {
