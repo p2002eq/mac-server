@@ -4915,10 +4915,16 @@ void Client::RewindCommand()
 void Client::ShowNumHits()
 {
 	uint32 buffcount = GetMaxTotalSlots();
-	for (uint32 buffslot = 0; buffslot < buffcount; buffslot++) {
-		const Buffs_Struct &curbuff = buffs[buffslot];
-		if (curbuff.spellid != SPELL_UNKNOWN && curbuff.numhits)
-			Message(CC_Default, "You have %d hits left on %s", curbuff.numhits, GetSpellName(curbuff.spellid));
+	for (uint32 buffslot = 0; buffslot < buffcount; buffslot++)
+	{
+		if (buffs != nullptr)
+		{
+			const Buffs_Struct &curbuff = buffs[buffslot];
+			if (curbuff.spellid != SPELL_UNKNOWN && curbuff.numhits)
+			{
+				Message(CC_Default, "You have %d hits left on %s", curbuff.numhits, GetSpellName(curbuff.spellid));
+			}
+		}
 	}
 	return;
 }
@@ -4942,19 +4948,21 @@ float Client::GetQuiverHaste()
 
 bool Client::IsTargetInMyGroup(Client* target)
 {
-	if (this == target)
+	if (target != nullptr)
 	{
-		return true;
+		if (this == target)
+		{
+			return true;
+		}
+		else if (this->IsRaidGrouped() && target->IsRaidGrouped())
+		{
+			return this->GetRaid() == target->GetRaid();
+		}
+		else if (this->IsGrouped() && target->IsGrouped())
+		{
+			return this->GetGroup() == target->GetGroup();
+		}
 	}
-	else if (this->IsRaidGrouped() && target->IsRaidGrouped())
-	{
-		return this->GetRaid() == target->GetRaid();
-	}
-	else if (this->IsGrouped() && target->IsGrouped()){
-
-		return this->GetGroup() == target->GetGroup();
-	}
-
 	return false;
 }
 

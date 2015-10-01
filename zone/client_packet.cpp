@@ -1586,33 +1586,41 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	const ItemInst* SecondaryWeapon = GetInv().GetItem(MainSecondary);
 	const ItemInst* PoisonItemInstance = GetInv()[ApplyPoisonData->inventorySlot];
 
-	bool IsPoison = PoisonItemInstance && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
-
-	if (!IsPoison)
+	if (PoisonItemInstance != nullptr)
 	{
-		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
-		Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
-	}
-	else if (GetClass() == ROGUE)
-	{
-		if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
-			(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
-			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
-			double ChanceRoll = zone->random.Real(0, 1);
+		bool IsPoison = PoisonItemInstance && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
 
-			CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
-
-			if (ChanceRoll < SuccessChance) {
-				ApplyPoisonSuccessResult = 1;
-				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
-				// My thinking was that DEX should be apart of the calculation.
-				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
-			}
-
-			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
-
-			Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
+		if (!IsPoison)
+		{
+			Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
+			Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
 		}
+		else if (GetClass() == ROGUE)
+		{
+			if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
+				(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
+				float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
+				double ChanceRoll = zone->random.Real(0, 1);
+
+				CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
+
+				if (ChanceRoll < SuccessChance) {
+					ApplyPoisonSuccessResult = 1;
+					// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
+					// My thinking was that DEX should be apart of the calculation.
+					AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
+				}
+
+				DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
+
+				Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
+			}
+		}
+	}
+	else
+	{
+		DumpPacket(app);
+		return;
 	}
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ApplyPoison, nullptr, sizeof(ApplyPoison_Struct));
@@ -8220,10 +8228,14 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 
 				int offset = 0;
 
-				for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset) {
+				for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset)
+				{
 					QSHandinItems_Struct* detail = reinterpret_cast<QSHandinItems_Struct*>(*iter);
-					qs_buf->items[offset] = *detail;
-					safe_delete(detail);
+					if (detail != nullptr)
+					{
+						qs_buf->items[offset] = *detail;
+						safe_delete(detail);
+					}
 				}
 
 				event_details.clear();

@@ -582,25 +582,30 @@ int command_realdispatch(Client *c, const char *message){
 
 	std::string cstr(sep.arg[0] + 1);
 
-	if (commandlist.count(cstr) != 1) {
+	if (commandlist.count(cstr) != 1)
+	{
 		return(-2);
 	}
 
 	CommandRecord *cur = commandlist[cstr];
-	if (c->Admin() < cur->access){
+	if (c->Admin() < cur->access)
+	{
 		c->Message(CC_Red, "Your access level is not high enough to use this command.");
 		return(-1);
 	}
 
 	/* QS: Player_Log_Issued_Commands */
-	if (RuleB(QueryServ, PlayerLogIssuedCommandes)){
+	if (RuleB(QueryServ, PlayerLogIssuedCommandes))
+	{
 		std::string event_desc = StringFormat("Issued command :: '%s' in zoneid:%i instid:%i", message, c->GetZoneID(), c->GetInstanceID());
 		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc);
 	}
 
-	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
-		const char* targetType;
-		if (c->GetTarget()){
+	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS)
+	{
+		const char* targetType = "notarget";
+		if (c->GetTarget())
+		{
 			if (c->GetTarget()->IsClient()) targetType = "player";
 			else if (c->GetTarget()->IsPet()) targetType = "pet";
 			else if (c->GetTarget()->IsNPC()) targetType = "NPC";
@@ -608,22 +613,24 @@ int command_realdispatch(Client *c, const char *message){
 			//else if (c->GetTarget()->IsMob()) targetType = "mob"; //doesn't register correctly so all non-pet/non-players report as NPC
 			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType, c->GetTarget()->GetName(), c->GetTarget()->GetY(), c->GetTarget()->GetX(), c->GetTarget()->GetZ(), c->GetZoneID(), zone->GetShortName());
 		}
-		else{
-			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, "notarget", "notarget", 0, 0, 0, c->GetZoneID(), zone->GetShortName());
+		else
+		{
+			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType, targetType, 0, 0, 0, c->GetZoneID(), zone->GetShortName());
 		}
 		//Log.Out(Logs::General, Logs::Commands, "%s (%s) used command: %s (target=%s)", c->GetName(), c->AccountName(), message, c->GetTarget() ? c->GetTarget()->GetName() : "NONE");
 	}
 
-	if (cur->function == nullptr) {
+	if (cur->function == nullptr)
+	{
 		Log.Out(Logs::General, Logs::Error, "Command '%s' has a null function\n", cstr.c_str());
 		return(-1);
 	}
-	else {
+	else
+	{
 		//dispatch C++ command
 		cur->function(c, &sep);	// dispatch command
 	}
 	return 0;
-
 }
 
 void command_logcommand(Client *c, const char *message){
@@ -4583,7 +4590,7 @@ void command_loc(Client *c, const Seperator *sep)
 	if(c->GetGM())
 	{
 		glm::vec3 newloc(t->GetX(), t->GetY(), t->GetZ());
-		float newz;
+		float newz = 0;
 		if(zone->zonemap)
 		{
 			newz = zone->zonemap->FindBestZ(newloc, nullptr);
