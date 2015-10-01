@@ -1747,7 +1747,7 @@ void NPC::AI_DoMovement() {
 				SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
 			}
 		} else if (IsGuarding() && (m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y) && roambox_distance == 0 && !roamer) {
-			glm::vec3 Goal (m_Position.x, m_Position.y, m_Position.z); 
+			glm::vec3 Goal(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z); 
 			if (zone->pathing)
 				Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
 			SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
