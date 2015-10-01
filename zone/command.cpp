@@ -10424,7 +10424,7 @@ void command_update(Client *c, const Seperator *sep)
 			c->Message(CC_Default, "Not yet implemented for windows.");
 #else
 			c->Message(CC_Default, "Server will be going down and building, 10 min warning issued.");
-			system("./tak_checkout");
+			system("./EQServer.sh update");
 #endif
 		}
 		else
@@ -10439,7 +10439,7 @@ void command_update(Client *c, const Seperator *sep)
 			c->Message(CC_Default, "Not yet implemented for windows.");
 #else
 			c->Message(CC_Default, "Server will be going down for reboot, 10 min warning issued.");
-			system("./tak_reboot");
+			system("./EQServer.sh reboot");
 #endif
 		}
 		else
@@ -10454,7 +10454,7 @@ void command_update(Client *c, const Seperator *sep)
 			c->Message(CC_Default, "Not yet implemented for windows.");
 #else
 			c->Message(CC_Default, "Server will be going down for reboot.");
-			system("./tak_rebootNOW");
+			system("./EQServer.sh rebootNOW");
 #endif
 		}
 		else
@@ -11068,40 +11068,54 @@ void command_undeletechar(Client *c, const Seperator *sep)
 	}
 }
 
-void command_hotfix(Client *c, const Seperator *sep) {
+void command_hotfix(Client *c, const Seperator *sep)
+{
 	char hotfix[256] = { 0 };
 	database.GetVariable("hotfix_name", hotfix, 256);
 	std::string current_hotfix = hotfix;
 
 	std::string hotfix_name;
-	if (!strcasecmp(current_hotfix.c_str(), "hotfix_")) {
+	if (!strcasecmp(current_hotfix.c_str(), "hotfix_"))
+	{
 		hotfix_name = "";
 	}
-	else {
+	else
+	{
 		hotfix_name = "hotfix_";
 	}
 
 	c->Message(CC_Default, "Creating and applying hotfix");
 	std::thread t1([c, hotfix_name]() {
+		int sysRet = -1;
 #ifdef WIN32
-		if (hotfix_name.length() > 0) {
-			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		if (hotfix_name.length() > 0)
+		{
+			sysRet = system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
 		}
-		else {
-			system(StringFormat("shared_memory").c_str());
+		else
+		{
+			sysRet = system(StringFormat("shared_memory").c_str());
 		}
 #else
-		if (hotfix_name.length() > 0) {
-			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		if (hotfix_name.length() > 0)
+		{
+			sysRet = system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
 		}
-		else {
-			system(StringFormat("./shared_memory").c_str());
+		else
+		{
+			sysRet = system(StringFormat("./shared_memory").c_str());
 		}
 #endif
+		if (sysRet == -1)
+		{
+			c->Message(CC_Default, "Hotfix failed.");
+			return;
+		}
 		database.SetVariable("hotfix_name", hotfix_name.c_str());
 
 		ServerPacket pack(ServerOP_ChangeSharedMem, hotfix_name.length() + 1);
-		if (hotfix_name.length() > 0) {
+		if (hotfix_name.length() > 0)
+		{
 			strcpy((char*)pack.pBuffer, hotfix_name.c_str());
 		}
 		worldserver.SendPacket(&pack);
@@ -11112,34 +11126,48 @@ void command_hotfix(Client *c, const Seperator *sep) {
 	t1.detach();
 }
 
-void command_load_shared_memory(Client *c, const Seperator *sep) {
+void command_load_shared_memory(Client *c, const Seperator *sep)
+{
 	char hotfix[256] = { 0 };
 	database.GetVariable("hotfix_name", hotfix, 256);
 	std::string current_hotfix = hotfix;
 
 	std::string hotfix_name;
-	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0) {
+	if(strcasecmp(current_hotfix.c_str(), sep->arg[1]) == 0)
+	{
 		c->Message(CC_Default, "Cannot attempt to load this shared memory segment as it is already loaded.");
 		return;
 	}
 
 	hotfix_name = sep->arg[1];
 	c->Message(CC_Default, "Loading shared memory segment %s", hotfix_name.c_str());
-	std::thread t1([c,hotfix_name]() {
+	std::thread t1([c, hotfix_name]()
+	{
+		int sysRet = -1;
 #ifdef WIN32
-		if(hotfix_name.length() > 0) {
-			system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
-		} else {
-			system(StringFormat("shared_memory").c_str());
+		if(hotfix_name.length() > 0)
+		{
+			sysRet = system(StringFormat("shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		}
+		else
+		{
+			sysRet = system(StringFormat("shared_memory").c_str());
 		}
 #else
-		if(hotfix_name.length() > 0) {
-			system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
+		if(hotfix_name.length() > 0)
+		{
+			sysRet = system(StringFormat("./shared_memory -hotfix=%s", hotfix_name.c_str()).c_str());
 		}
-		else {
-			system(StringFormat("./shared_memory").c_str());
+		else
+		{
+			sysRet = system(StringFormat("./shared_memory").c_str());
 		}
 #endif
+		if (sysRet == -1)
+		{
+			c->Message(CC_Default, "Shared memory segment failed loading.");
+			return;
+		}
 		c->Message(CC_Default, "Shared memory segment finished loading.");
 	});
 

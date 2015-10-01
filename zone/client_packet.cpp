@@ -1607,57 +1607,51 @@ void Client::Handle_OP_Animation(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) 
 {
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
-		DumpPacket(app);
-		return;
-	}
-
-	if (app->size != sizeof(ApplyPoison_Struct)) {
-		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
-		DumpPacket(app);
-		return;
-	}
 	uint32 ApplyPoisonSuccessResult = 0;
 	ApplyPoison_Struct* ApplyPoisonData = (ApplyPoison_Struct*)app->pBuffer;
 	const ItemInst* PrimaryWeapon = GetInv().GetItem(MainPrimary);
 	const ItemInst* SecondaryWeapon = GetInv().GetItem(MainSecondary);
 	const ItemInst* PoisonItemInstance = GetInv()[ApplyPoisonData->inventorySlot];
 
-	if (PoisonItemInstance != nullptr)
+	bool IsPoison = PoisonItemInstance != nullptr && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
+
+	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
 	{
-		bool IsPoison = PoisonItemInstance && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
-
-		if (!IsPoison)
-		{
-			Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
-			Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
-		}
-		else if (GetClass() == ROGUE)
-		{
-			if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
-				(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
-				float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
-				double ChanceRoll = zone->random.Real(0, 1);
-
-				CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
-
-				if (ChanceRoll < SuccessChance) {
-					ApplyPoisonSuccessResult = 1;
-					// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
-					// My thinking was that DEX should be apart of the calculation.
-					AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
-				}
-
-				DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
-
-				Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
-			}
-		}
+		Message(CC_Default, "Error: You are not allowed to interact with the player world as GM.");
+		IsPoison = false;
 	}
-	else
+
+	if (app->size != sizeof(ApplyPoison_Struct))
 	{
-		DumpPacket(app);
-		return;
+		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
+		IsPoison = false;
+	}
+
+	if (!IsPoison)
+	{
+		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
+		Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
+	}
+	else if (GetClass() == ROGUE)
+	{
+		if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
+			(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
+			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
+			double ChanceRoll = zone->random.Real(0, 1);
+
+			CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
+
+			if (ChanceRoll < SuccessChance) {
+				ApplyPoisonSuccessResult = 1;
+				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
+				// My thinking was that DEX should be apart of the calculation.
+				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
+			}
+
+			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
+
+			Log.Out(Logs::General, Logs::Skills, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
+		}
 	}
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_ApplyPoison, nullptr, sizeof(ApplyPoison_Struct));
