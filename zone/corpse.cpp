@@ -1258,7 +1258,7 @@ void Corpse::LootItem(Client* client, const EQApplicationPacket* app) {
 
 		char buf[88];
 		char corpse_name[64];
-		strcpy(corpse_name, corpse_name);
+		strcpy(corpse_name, GetName());
 		snprintf(buf, 87, "%d %d %s", inst->GetItem()->ID, inst->GetCharges(), EntityList::RemoveNumbers(corpse_name));
 		buf[87] = '\0';
 		std::vector<EQEmu::Any> args;

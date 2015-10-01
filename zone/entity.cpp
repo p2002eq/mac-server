@@ -1444,7 +1444,7 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 	while (it != client_list.end()) {
 		Client *ent = it->second;
 
-		if ((!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
+		if (ent != nullptr && (!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
 			eqFilterMode filter2 = ent->GetFilter(filter);
 			if(ent->Connected() &&
 				(filter == FilterNone
