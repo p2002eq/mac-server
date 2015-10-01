@@ -1736,12 +1736,21 @@ void NPC::AI_DoMovement() {
 	if(walksp < 0.1f) {
 		// we are stopped for some reason.
 		tar_ndx = 20;
+		bool WaypointChanged, NodeReached;
 		if (roambox_distance > 0) {
 			SetHeading2(CalculateHeadingToTarget(roambox_movingto_x, roambox_movingto_x));
-		} else if (roamer && (m_CurrentWayPoint.x != GetX() || m_CurrentWayPoint.y != GetY())) {
-			SetHeading2(CalculateHeadingToTarget(m_CurrentWayPoint.x, m_CurrentWayPoint.y));
+		} else if (roamer) {
+			if (m_CurrentWayPoint.x != GetX() || m_CurrentWayPoint.y != GetY()) {
+				glm::vec3 Goal(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z);
+				if (zone->pathing)
+					Goal = UpdatePath(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, walksp, WaypointChanged, NodeReached);
+				SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
+			}
 		} else if (IsGuarding() && (m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y) && roambox_distance == 0 && !roamer) {
-			SetHeading2(CalculateHeadingToTarget(m_GuardPoint.x, m_GuardPoint.y));
+			glm::vec3 Goal (m_Position.x, m_Position.y, m_Position.z); 
+			if (zone->pathing)
+				Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
+			SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
 		}
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
 	}
