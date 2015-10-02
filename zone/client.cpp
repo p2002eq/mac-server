@@ -1793,7 +1793,7 @@ uint64 Client::GetAllMoney() {
 		(static_cast<uint64>(m_pp.platinum_cursor) * 1000)))));
 }
 
-bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi) {
+bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty, float success) {
 	if (IsDead() || IsUnconscious())
 		return false;
 	if (IsAIControlled()) // no skillups while chamred =p
@@ -1816,43 +1816,49 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 	// Make sure we're not already at skill cap
 	if (skillval < maxskill)
 	{
-		int32 stat = GetSkillStat(skillid);
+		Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d %s. difficulty: %0.2f", skillid, skillval, success == 1.0 ? "succeeded" : "failed", difficulty);
+		float skillup_modifier = RuleR(Skills, SkillUpModifier);
+		float stat = GetSkillStat(skillid);
 
-		if(stat > 300)
-			stat = 300;
+		if(difficulty < 1)
+			difficulty = 1.0f;
+		if(difficulty > 15)
+			difficulty = 15.0f;
 
-		int modifier = RuleI(Character, SkillUpModifier);
-		if(stat >= 100)
-			modifier = RuleI(Character, MasterSkillUpModifier);
+		float chance1 = (stat / (difficulty * success)) * skillup_modifier;
+		if(chance1 > 95)
+			chance1 = 95.0;
 
-		float stat_modifier = stat;
-		stat_modifier /= 2;
-		stat_modifier /= 100;
-
-		if(chancemodi > 20)
-			chancemodi = 20;
-		if(chancemodi < -20)
-			chancemodi = -20;
-
-		// the higher your current skill level, the harder it is
-		int32 Chance = 10 + chancemodi + ((252 - skillval) / 20);
-		Chance *= stat_modifier;
-		Chance = (Chance * modifier / 100);
-
-		Chance = mod_increase_skill_chance(Chance, against_who);
-
-		if(Chance < 1)
-			Chance = 1; // Make it always possible
-
-		if(zone->random.Real(0, 99) < Chance)
+		if(zone->random.Real(0, 99) < chance1)
 		{
-			SetSkill(skillid, GetRawSkill(skillid) + 1);
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d successfully gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
-			return true;
-		} else {
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
+
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d passed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
+
+			float skillvalue = skillval / 2.0f;
+			if(skillvalue > 95)
+				skillvalue = 95.0f;
+
+			float chance2 = (100.0f - skillvalue) * skillup_modifier;
+			mod_increase_skill_chance(chance2, against_who);
+
+			if(zone->random.Real(0, 99) < chance2)
+			{
+				SetSkill(skillid, GetRawSkill(skillid) + 1);
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d using stat %0.2f successfully gained a point with %0.2f percent chance (diff %0.2f) first roll chance was: %0.2f", skillid, skillval, stat, chance2, difficulty, chance1);
+				return true;
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d failed second roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance2, difficulty);
+			}
+		} 
+		else 
+		{
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
 		}
-	} else {
+	} 
+	else 
+	{
 		Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
@@ -1870,7 +1876,7 @@ void Client::CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill) {
 
 	if (LangSkill < 100) {	// if the language isn't already maxed
 		int32 Chance = 5 + ((TeacherSkill - LangSkill)/10);	// greater chance to learn if teacher's skill is much higher than yours
-		Chance = (Chance * RuleI(Character, SkillUpModifier)/100);
+		Chance = (Chance * RuleI(Skills, LangSkillUpModifier)/100);
 
 		if(zone->random.Real(0,100) < Chance) {	// if they make the roll
 			IncreaseLanguageSkill(langid);	// increase the language skill by 1
@@ -2960,8 +2966,17 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst)
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst, bool skipskill)
 {
+	if(!skipskill)
+	{
+		float success = 2.0;
+		if(type > PickPocketFailed)
+			success = 1.0;
+
+		CheckIncreaseSkill(SkillPickPockets, nullptr, zone->skill_difficulty[SkillPickPockets].difficulty, success);
+	}
+
 	if(type == PickPocketItem && inst)
 	{
 		SendItemPacket(slotid, inst, ItemPacketStolenItem, GetID(), from->GetID(), GetSkill(SkillPickPockets));

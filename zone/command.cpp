@@ -397,6 +397,7 @@ int command_init(void){
 		command_add("shutdown", "- Shut this zone process down.", 250, command_shutdown) ||
 		command_add("si", nullptr, 160, command_summonitem) ||
 		command_add("size", "[size] - Change size of you or your target.", 100, command_size) ||
+		command_add("skills", "List skill difficulty.", 100, command_skill_difficulty) ||
 		command_add("spawn", "[name] [race] [level] [material] [hp] [gender] [class] [priweapon] [secweapon] [merchantid] - Spawn an NPC.", 250, command_spawn) ||
 		command_add("spawnfix", "- Find targeted NPC in database based on its X/Y/heading and update the database to make it spawn at your current location/heading.", 250, command_spawnfix) ||
 		command_add("spawnstatus", "- Show respawn timer status.", 95, command_spawnstatus) ||
@@ -11201,4 +11202,68 @@ void command_godmode(Client *c, const Seperator *sep){
 	}
 	else
 		c->Message(CC_Default, "Usage: #godmode [on/off]");
+}
+
+void command_skill_difficulty(Client *c, const Seperator *sep)
+{
+	if (sep->argnum > 0) 
+	{
+		Client *t;
+
+		if (c->GetTarget() && c->GetTarget()->IsClient())
+			t = c->GetTarget()->CastToClient();
+		else
+			t = c;
+
+		if (strcasecmp(sep->arg[1], "info") == 0)
+		{
+			for (int i = 0; i < _EmuSkillCount; ++i)
+			{
+				int skillval = t->GetRawSkill(SkillUseTypes(i));
+				int maxskill = t->GetMaxSkillAfterSpecializationRules(SkillUseTypes(i), t->MaxSkill(SkillUseTypes(i)));
+				c->Message(CC_Yellow, "Skill: %s (%d) has difficulty: %0.2f", zone->skill_difficulty[i].name, i, zone->skill_difficulty[i].difficulty);
+				if(maxskill > 0)
+				{
+					c->Message(CC_Green, "%s currently has %d of %d towards this skill.", t->GetName(), skillval, maxskill);
+				}
+			}
+		}
+		else if (strcasecmp(sep->arg[1], "difficulty") == 0)
+		{
+			if(!sep->IsNumber(2) && !sep->IsNumber(3))
+			{
+				c->Message(CC_Red, "Please specify a valid skill and difficulty.");
+				return;
+			}
+			else if(atoi(sep->arg[2]) > 74 || atoi(sep->arg[2]) < 0 || atof(sep->arg[3]) > 15 || atof(sep->arg[3]) < 1)
+			{
+				c->Message(CC_Red, "Please specify a skill between 0 and 74 and a difficulty between 1 and 15.");
+				return;
+			}
+			else
+			{
+				uint16 skillid = atoi(sep->arg[2]);
+				float difficulty = atof(sep->arg[3]);
+				database.UpdateSkillDifficulty(skillid, difficulty);
+				ServerPacket *pack = new ServerPacket(ServerOP_ReloadSkills, 0);
+				worldserver.SendPacket(pack);
+				safe_delete(pack);
+				c->Message(CC_Default, "Set skill %d to difficulty %0.2f and reloaded all zones.", skillid, difficulty);
+			}
+
+		}
+		else if (strcasecmp(sep->arg[1], "reload") == 0)
+		{
+			ServerPacket *pack = new ServerPacket(ServerOP_ReloadSkills, 0);
+			worldserver.SendPacket(pack);
+			safe_delete(pack);
+			c->Message(CC_Default, "Reloaded skills in all zones.");
+		}
+	}
+	else
+	{
+		c->Message(CC_Default, "Usage: #skills info - Provides information about target.");
+		c->Message(CC_Default, "#skills difficulty [skillid] [difficulty] - Sets difficulty for selected skill.");
+		c->Message(CC_Default, "#skills reload - Reloads skill difficulty in each zone.");
+	}
 }

@@ -1640,6 +1640,16 @@ void WorldServer::Process() {
 			}
 			break;
 		}
+		case ServerOP_ReloadSkills: 
+		{
+			if(zone)
+			{
+				zone->skill_difficulty.clear();
+				zone->LoadSkillDifficulty();
+				break;
+			}
+		}
+
 		default: {
 			std::cout << " Unknown ZSopcode:" << (int)pack->opcode;
 			std::cout << " size:" << pack->size << std::endl;

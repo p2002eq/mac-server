@@ -331,7 +331,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillBash)) { // SLAM - Bash without a shield equipped
 		if (GetTarget() != this) {
 
-			CheckIncreaseSkill(SkillBash, GetTarget(), 10);
+			CheckIncreaseSkill(SkillBash, GetTarget(), zone->skill_difficulty[SkillBash].difficulty);
 			DoAnim(Animation::Slam);
 
 			int32 ht = 0;
@@ -355,7 +355,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 	}
 
 	if ((ca_atk->m_atk == 100) && (ca_atk->m_skill == SkillFrenzy)){
-		CheckIncreaseSkill(SkillFrenzy, GetTarget(), 10);
+		CheckIncreaseSkill(SkillFrenzy, GetTarget(), zone->skill_difficulty[SkillFrenzy].difficulty);
 		int AtkRounds = 3;
 		int skillmod = 100*GetSkill(SkillFrenzy)/MaxSkill(SkillFrenzy);
 		int32 max_dmg = (26 + ((((GetLevel()-6) * 2)*skillmod)/100)) * ((100+RuleI(Combat, FrenzyBonus))/100);
@@ -397,7 +397,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 				break;
 			}
 			if (GetTarget() != this) {
-				CheckIncreaseSkill(SkillKick, GetTarget(), 10);
+				CheckIncreaseSkill(SkillKick, GetTarget(), zone->skill_difficulty[SkillKick].difficulty);
 				DoAnim(Animation::Kick);
 
 				int32 ht = 0;
@@ -448,7 +448,7 @@ void Client::OPCombatAbility(const EQApplicationPacket *app) {
 				//hackish... but we return a huge reuse time if this is an
 				// invalid skill, otherwise, we can safely assume it is a
 				// valid monk skill and just cast it to a SkillType
-				CheckIncreaseSkill((SkillUseTypes) ca_atk->m_skill, GetTarget(), 10);
+				CheckIncreaseSkill((SkillUseTypes) ca_atk->m_skill, GetTarget(), zone->skill_difficulty[ca_atk->m_skill].difficulty);
 			}
 			break;
 		}
@@ -630,7 +630,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 		}
 
 		if(IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillBackstab, other, 10);
+			CastToClient()->CheckIncreaseSkill(SkillBackstab, other, zone->skill_difficulty[SkillBackstab].difficulty);
 
 	}
 	//Live AA - Chaotic Backstab
@@ -650,7 +650,7 @@ void Mob::TryBackstab(Mob *other, int ReuseTime) {
 		}
 
 		if(IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillBackstab, other, 10);
+			CastToClient()->CheckIncreaseSkill(SkillBackstab, other, zone->skill_difficulty[SkillBackstab].difficulty);
 	}
 	else { //We do a single regular attack if we attack from the front without chaotic stab
 		Attack(other, MainPrimary);
@@ -880,7 +880,7 @@ void Client::RangedAttack(Mob* other, bool CanDoubleAttack) {
 		Log.Out(Logs::Detail, Logs::Combat, "Endless Quiver prevented ammo consumption.");
 	}
 
-	CheckIncreaseSkill(SkillArchery, GetTarget(), -15); 
+	CheckIncreaseSkill(SkillArchery, GetTarget(), zone->skill_difficulty[SkillArchery].difficulty); 
 	CommonBreakInvisible();
 }
 
@@ -1243,7 +1243,7 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	//Let Handle_OP_DeleteCharge handle the delete, to avoid item desyncs. 
 	//DeleteItemInInventory(ammo_slot, 1, false);
 
-	CheckIncreaseSkill(SkillThrowing, GetTarget()); 
+	CheckIncreaseSkill(SkillThrowing, GetTarget(), zone->skill_difficulty[SkillThrowing].difficulty); 
 	CommonBreakInvisible();
 }
 
@@ -1714,7 +1714,7 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 	}
 
 	if(skill_to_use == SkillFrenzy){
-		CheckIncreaseSkill(SkillFrenzy, GetTarget(), 10);
+		CheckIncreaseSkill(SkillFrenzy, GetTarget(), zone->skill_difficulty[SkillFrenzy].difficulty);
 		int AtkRounds = 3;
 		int skillmod = 100*GetSkill(SkillFrenzy)/MaxSkill(SkillFrenzy);
 		int32 max_dmg = (26 + ((((GetLevel()-6) * 2)*skillmod)/100)) * ((100+RuleI(Combat, FrenzyBonus))/100);
@@ -1824,7 +1824,7 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 		return;
 
 	if(!always_succeed && IsClient())
-		CastToClient()->CheckIncreaseSkill(SkillTaunt, who, 10);
+		CastToClient()->CheckIncreaseSkill(SkillTaunt, who, zone->skill_difficulty[SkillTaunt].difficulty);
 
 	Mob *hate_top = who->GetHateMost();
 

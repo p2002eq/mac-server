@@ -1263,6 +1263,10 @@ bool ZoneServer::Process() {
 				cle->ProcessTellQueue();
 				break;
 			}
+			case ServerOP_ReloadSkills: {
+				zoneserver_list.SendPacket(pack);
+				break;
+			}
 			default:
 			{
 				Log.Out(Logs::Detail, Logs::World_Server, "Unknown ServerOPcode from zone 0x%04x, size %d", pack->opcode, pack->size);

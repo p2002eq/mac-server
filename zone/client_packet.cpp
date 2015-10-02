@@ -1600,14 +1600,15 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
 			double ChanceRoll = zone->random.Real(0, 1);
 
-			CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
-
 			if (ChanceRoll < SuccessChance) {
 				ApplyPoisonSuccessResult = 1;
 				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
 				// My thinking was that DEX should be apart of the calculation.
 				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
 			}
+
+			float success = ApplyPoisonSuccessResult ? 1.0 : 2.0;
+			CheckIncreaseSkill(SkillApplyPoison, nullptr, zone->skill_difficulty[SkillApplyPoison].difficulty, success);
 
 			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
 
@@ -1796,9 +1797,10 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	uint16 CurrentSkill = GetSkill(SkillBegging);
 
 	float ChanceToBeg = ((float)(CurrentSkill / 700.0f) + 0.15f) * 100;
-
+	float success = 2.0;
 	if (RandomChance < ChanceToBeg)
 	{
+		success = 1.0;
 		Message_StringID(CC_Default, BEG_SUCCESS, GetName());
 		brs->Amount = zone->random.Int(1, 10);
 		// This needs some work to determine how much money they can beg, based on skill level etc.
@@ -1832,7 +1834,7 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	}
 	QueuePacket(outapp);
 	safe_delete(outapp);
-	CheckIncreaseSkill(SkillBegging, nullptr, -10);
+	CheckIncreaseSkill(SkillBegging, nullptr, zone->skill_difficulty[SkillBegging].difficulty, success);
 }
 
 void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app) 
@@ -2641,8 +2643,8 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
-		if(zone->random.Real(0, 100) < 70)//should be good
-			CheckIncreaseSkill(SkillTracking, nullptr, -20);
+		if(zone->random.Roll(53))
+			CheckIncreaseSkill(SkillTracking, nullptr, zone->skill_difficulty[SkillTracking].difficulty);
 	}
 	
 
@@ -2694,12 +2696,13 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		auto water_pos = glm::vec3(m_Position.x, m_Position.y, m_Position.z - 0.5);
+		if(zone->watermap->InLiquid(water_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
-			if(zone->random.Roll(73))
+			if(zone->random.Roll(53))
 			{
-				CheckIncreaseSkill(SkillSwimming, nullptr, -20);
+				CheckIncreaseSkill(SkillSwimming, nullptr, zone->skill_difficulty[SkillSwimming].difficulty);
 			}
 		}
 	}
@@ -3169,7 +3172,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 	const ItemInst *inst = GetInv().GetItem(alc->from_slot);
 	if (inst && inst->GetItem()->ItemType == ItemTypeAlcohol) {
 		entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), inst->GetItem()->Name);
-		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 20);
+		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, zone->skill_difficulty[SkillAlcoholTolerance].difficulty);
 
 		int16 AlcoholTolerance = GetSkill(SkillAlcoholTolerance);
 		int16 IntoxicationIncrease;
@@ -3248,12 +3251,14 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerDisarmTraps, reuse - 1);
 
+	float success = 2.0;
 	Trap* trap = entity_list.FindNearbyTrap(this, 60);
 	if (trap && trap->detected)
 	{
 		int uskill = GetSkill(SkillDisarmTraps);
 		if ((zone->random.Int(0, 49) + uskill) >= (zone->random.Int(0, 49) + trap->skill))
 		{
+			success = 1.0;
 			Message(MT_Skills, "You disarm a trap.");
 			trap->disarmed = true;
 			Log.Out(Logs::General, Logs::Traps, "Trap %d is disarmed.", trap->trap_id);
@@ -3269,7 +3274,7 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 				Message(MT_Skills, "You failed to disarm a trap.");
 			}
 		}
-		CheckIncreaseSkill(SkillDisarmTraps, nullptr);
+		CheckIncreaseSkill(SkillDisarmTraps, nullptr, zone->skill_difficulty[SkillDisarmTraps].difficulty, success);
 		return;
 	}
 	Message(MT_Skills, "You did not find any traps close enough to disarm.");
@@ -3567,15 +3572,17 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	if(totalfeign >= 143)
 		totalfeign = 142.5f;
 
+	float success = 2.0;
 	if (auto_attack || zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
 		entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetName());
 	}
 	else {
+		success = 1.0;
 		SetFeigned(true);
 	}
 
-	CheckIncreaseSkill(SkillFeignDeath, nullptr, 5);
+	CheckIncreaseSkill(SkillFeignDeath, nullptr, zone->skill_difficulty[SkillFeignDeath].difficulty, success);
 	return;
 }
 
@@ -4935,13 +4942,14 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 
 	float hidechance = ((GetSkill(SkillHide) / 250.0f) + .25) * 100;
 	float random = zone->random.Real(0, 100);
-	CheckIncreaseSkill(SkillHide, nullptr, 5);
+	float success = 2.0;
 	if (random < hidechance) {
 		if (GetAA(aaShroudofStealth)){
 			improved_hidden = true;
 		}
 		hidden = true;
 		SetInvisible(INVIS_HIDDEN, false); // We handle the apperance packet below based on if we failed or not.
+		success = 1.0;
 	}
 	else
 	{
@@ -4958,6 +4966,7 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 			{
 				Message_StringID(MT_Skills, EVADE_SUCCESS);
 				RogueEvade(evadetar);
+				success = 1.0;
 			}
 			else
 			{
@@ -4967,11 +4976,16 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 		else
 		{
 			if (hidden)
+			{
 				Message_StringID(MT_Skills, HIDE_SUCCESS);
+				success = 1.0;
+			}
 			else
 				Message_StringID(MT_Skills, HIDE_FAIL);
 		}
 	}
+
+	CheckIncreaseSkill(SkillHide, nullptr, zone->skill_difficulty[SkillHide].difficulty, success);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
@@ -5072,7 +5086,7 @@ void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app)
 	p_timers.Start(pTimerInstillDoubt, InstillDoubtReuseTime - 1);
 
 	InstillDoubt(GetTarget());
-	CheckIncreaseSkill(SkillIntimidation, GetTarget(), 10);
+	CheckIncreaseSkill(SkillIntimidation, GetTarget(), zone->skill_difficulty[SkillIntimidation].difficulty);
 	return;
 }
 
@@ -5372,6 +5386,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 	int mendhp = GetMaxHP() / 4;
 	int currenthp = GetHP();
+	float success = 2.0;
 	if (zone->random.Int(0, 99) < (int)GetSkill(SkillMend)) {
 
 		int criticalchance = spellbonuses.CriticalMend + itembonuses.CriticalMend + aabonuses.CriticalMend;
@@ -5383,6 +5398,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
 		Message_StringID(CC_Blue, MEND_SUCCESS);
+		success = 1.0;
 	}
 	else {
 		/* the purpose of the following is to make the chance to worsen wounds much less common,
@@ -5401,7 +5417,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 			Message_StringID(CC_Blue, MEND_FAIL);
 	}
 
-	CheckIncreaseSkill(SkillMend, nullptr, 10);
+	CheckIncreaseSkill(SkillMend, nullptr, zone->skill_difficulty[SkillMend].difficulty, success);
 	return;
 }
 
@@ -6749,7 +6765,7 @@ void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app)
 void Client::Handle_OP_SafeFallSuccess(const EQApplicationPacket *app)	// bit of a misnomer, sent whenever safe fall is used (success of fail)
 {
 	if (HasSkill(SkillSafeFall)) //this should only get called if the client has safe fall, but just in case...
-		CheckIncreaseSkill(SkillSafeFall, nullptr); //check for skill up
+		CheckIncreaseSkill(SkillSafeFall, nullptr, zone->skill_difficulty[SkillSafeFall].difficulty, 1.0); //check for skill up
 }
 
 void Client::Handle_OP_SafePoint(const EQApplicationPacket *app)
@@ -6770,7 +6786,7 @@ void Client::Handle_OP_SaveOnZoneReq(const EQApplicationPacket *app)
 
 void Client::Handle_OP_SenseHeading(const EQApplicationPacket *app)
 {
-	CheckIncreaseSkill(SkillSenseHeading, nullptr, -12);
+	CheckIncreaseSkill(SkillSenseHeading, nullptr, zone->skill_difficulty[SkillSenseHeading].difficulty, 1.0);
 	return;
 }
 
@@ -6799,10 +6815,8 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerSenseTraps, reuse - 1);
 
-	Trap* trap = entity_list.FindNearbyTrap(this, 800);
-
-	CheckIncreaseSkill(SkillSenseTraps, nullptr);
-
+	Trap* trap = entity_list.FindNearbyTrap(this, 800);	
+	float success = 2.0;
 	if (trap && trap->skill > 0) {
 		int uskill = GetSkill(SkillSenseTraps);
 		if ((zone->random.Int(0, 99) + uskill) >= (zone->random.Int(0, 99) + trap->skill*0.75))
@@ -6836,11 +6850,14 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 
 			angle *= 2;
 			MovePC(zone->GetZoneID(), zone->GetInstanceID(), GetX(), GetY(), GetZ(), angle);
-			return;
+			success = 1.0;
 		}
 	}
-	Message(MT_Skills, "You did not find any traps nearby.");
-	return;
+
+	if(success == 2)
+		Message(MT_Skills, "You did not find any traps nearby.");
+
+	CheckIncreaseSkill(SkillSenseTraps, nullptr, zone->skill_difficulty[SkillSenseTraps].difficulty, success);
 }
 
 void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
@@ -7558,8 +7575,10 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerSneak, SneakReuseTime - 1);
 
+	bool checkskill = true;
 	bool was = sneaking;
 	if (sneaking){
+		checkskill = false;
 		sneaking = false;
 		hidden = false;
 		improved_hidden = false;
@@ -7573,13 +7592,13 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 		safe_delete(outapp);
 
 	}
-	else {
-		CheckIncreaseSkill(SkillSneak, nullptr, 5);
-	}
+
+	float success = 2.0;
 	float hidechance = ((GetSkill(SkillSneak) / 300.0f) + .25) * 100;
 	float random = zone->random.Real(0, 99);
 	if (!was && random < hidechance) {
 		sneaking = true;
+		success = 1.0;
 	}
 	else
 	{
@@ -7594,6 +7613,9 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 			Message_StringID(MT_Skills, SNEAK_FAIL);
 		}
 	}
+
+	if(checkskill)
+		CheckIncreaseSkill(SkillSneak, nullptr, zone->skill_difficulty[SkillSneak].difficulty, success);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
@@ -8107,7 +8129,7 @@ void Client::Handle_OP_Track(const EQApplicationPacket *app)
 	if (GetSkill(SkillTracking) == 0)
 		SetSkill(SkillTracking, 1);
 	else
-		CheckIncreaseSkill(SkillTracking, nullptr, 15);
+		CheckIncreaseSkill(SkillTracking, nullptr, zone->skill_difficulty[SkillTracking].difficulty);
 
 	return;
 }
@@ -8792,7 +8814,10 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 	}
 
 	if(disarm_result > 0)
-		CheckIncreaseSkill(SkillDisarm, target, 5);
+	{
+		float skillsuccess = disarm_result == 2 ? 1.0 : 2.0;
+		CheckIncreaseSkill(SkillDisarm, target, zone->skill_difficulty[SkillDisarm].difficulty, skillsuccess);
+	}
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
 	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;

@@ -585,23 +585,23 @@ void Client::CheckSpecializeIncrease(uint16 spell_id) {
 	switch(spells[spell_id].skill) {
 	case SkillAbjuration:
 		if(GetRawSkill(SkillSpecializeAbjure) > 0)
-			CheckIncreaseSkill(SkillSpecializeAbjure, nullptr);
+			CheckIncreaseSkill(SkillSpecializeAbjure, nullptr, zone->skill_difficulty[SkillSpecializeAbjure].difficulty);
 		break;
 	case SkillAlteration:
 		if(GetRawSkill(SkillSpecializeAlteration) > 0)
-			CheckIncreaseSkill(SkillSpecializeAlteration, nullptr);
+			CheckIncreaseSkill(SkillSpecializeAlteration, nullptr, zone->skill_difficulty[SkillSpecializeAlteration].difficulty);
 		break;
 	case SkillConjuration:
 		if(GetRawSkill(SkillSpecializeConjuration) > 0)
-			CheckIncreaseSkill(SkillSpecializeConjuration, nullptr);
+			CheckIncreaseSkill(SkillSpecializeConjuration, nullptr, zone->skill_difficulty[SkillSpecializeConjuration].difficulty);
 		break;
 	case SkillDivination:
 		if(GetRawSkill(SkillSpecializeDivination) > 0)
-			CheckIncreaseSkill(SkillSpecializeDivination, nullptr);
+			CheckIncreaseSkill(SkillSpecializeDivination, nullptr, zone->skill_difficulty[SkillSpecializeDivination].difficulty);
 		break;
 	case SkillEvocation:
 		if(GetRawSkill(SkillSpecializeEvocation) > 0)
-			CheckIncreaseSkill(SkillSpecializeEvocation, nullptr);
+			CheckIncreaseSkill(SkillSpecializeEvocation, nullptr, zone->skill_difficulty[SkillSpecializeEvocation].difficulty);
 		break;
 	default:
 		//wtf...
@@ -622,47 +622,47 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 	switch(spells[spell_id].skill)
 	{
 	case SkillSinging:
-		CheckIncreaseSkill(SkillSinging, nullptr, -15);
+		CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillPercussionInstruments:
 		if(this->itembonuses.percussionMod > 0) {
 			if(GetRawSkill(SkillPercussionInstruments) > 0)	// no skill increases if not trained in the instrument
-				CheckIncreaseSkill(SkillPercussionInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillPercussionInstruments, nullptr, zone->skill_difficulty[SkillPercussionInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);	// tell the client that they need instrument training
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillStringedInstruments:
 		if(this->itembonuses.stringedMod > 0) {
 			if(GetRawSkill(SkillStringedInstruments) > 0)
-				CheckIncreaseSkill(SkillStringedInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillStringedInstruments, nullptr, zone->skill_difficulty[SkillStringedInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillWindInstruments:
 		if(this->itembonuses.windMod > 0) {
 			if(GetRawSkill(SkillWindInstruments) > 0)
-				CheckIncreaseSkill(SkillWindInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillWindInstruments, nullptr, zone->skill_difficulty[SkillWindInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillBrassInstruments:
 		if(this->itembonuses.brassMod > 0) {
 			if(GetRawSkill(SkillBrassInstruments) > 0)
-				CheckIncreaseSkill(SkillBrassInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillBrassInstruments, nullptr, zone->skill_difficulty[SkillBrassInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	default:
 		break;
@@ -1233,10 +1233,11 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 			// skills
 			if(slot < MAX_PP_MEMSPELL)
 			{
-				c->CheckIncreaseSkill(spells[spell_id].skill, nullptr);
+				c->CheckIncreaseSkill(spells[spell_id].skill, nullptr, zone->skill_difficulty[spells[spell_id].skill].difficulty);
 
 				// increased chance of gaining channel skill if you regained concentration
-				c->CheckIncreaseSkill(SkillChanneling, nullptr, regain_conc ? 5 : 0);
+				float chan_skill = zone->skill_difficulty[SkillChanneling].difficulty;
+				c->CheckIncreaseSkill(SkillChanneling, nullptr, regain_conc ? chan_skill : chan_skill+2);
 
 				c->CheckSpecializeIncrease(spell_id);
 			}
@@ -4301,7 +4302,8 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		}
 	}
 
-	if(IsLifetapSpell(spell_id))
+	// Exclude Greenmist and Soul Well Recourses
+	if(IsLifetapSpell(spell_id) && spell_id != 3978 && spell_id != 3980)
 	{
 		if(this == caster)
 		{

@@ -180,7 +180,7 @@ bool Client::Process() {
 		if (bindwound_timer.Check() && bindwound_target != 0) {
 			if(BindWound(bindwound_target, false))
 			{
-				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+				CheckIncreaseSkill(SkillBindWound, nullptr, zone->skill_difficulty[SkillBindWound].difficulty, 1.0);
 			}
 			else
 			{
@@ -302,7 +302,7 @@ bool Client::Process() {
 				bool tripleAttackSuccess = false;
 				if( auto_attack_target && CanThisClassDoubleAttack() ) {
 
-					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, -10);
+					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, zone->skill_difficulty[SkillDoubleAttack].difficulty);
 					if(CheckDoubleAttack()) {
 						//should we allow rampage on double attack?
 						if(CheckAAEffect(aaEffectRampage)) {
@@ -396,7 +396,7 @@ bool Client::Process() {
 				DualWieldProbability += DualWieldProbability*float(DWBonus)/ 100.0f;
 
 				float random = zone->random.Real(0, 1);
-				CheckIncreaseSkill(SkillDualWield, auto_attack_target, -10);
+				CheckIncreaseSkill(SkillDualWield, auto_attack_target, zone->skill_difficulty[SkillDualWield].difficulty);
 				if (random < DualWieldProbability){ // Max 78% of DW
 					if(CheckAAEffect(aaEffectRampage)) {
 						entity_list.AEAttack(this, 30, MainSecondary);

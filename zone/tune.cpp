@@ -678,8 +678,8 @@ int32 Client::GetMeleeDamage(Mob* other, bool GetMinDamage)
 		else if(GetLevel() < 20 && max_hit > RuleI(Combat, HitCapPre20))
 			max_hit = (RuleI(Combat, HitCapPre20));
 
-		CheckIncreaseSkill(skillinuse, other, -15);
-		CheckIncreaseSkill(SkillOffense, other, -15);
+		CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
+		CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
 
 
 #ifndef EQEMU_NO_WEAPON_DAMAGE_BONUS

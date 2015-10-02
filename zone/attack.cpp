@@ -375,7 +375,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 
 		skill = GetSkill(SkillRiposte);
 		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, zone->skill_difficulty[SkillRiposte].difficulty);
 		}
 
 		if (!ghit) {	//if they are not using a garunteed hit discipline
@@ -416,7 +416,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 
 		skill = GetSkill(SkillBlock);
 		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillBlock, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillBlock, other, zone->skill_difficulty[SkillBlock].difficulty);
 		}
 
 		if (!ghit) {	//if they are not using a garunteed hit discipline
@@ -458,7 +458,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 
 		skill = GetSkill(SkillParry);
 		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillParry, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillParry, other, zone->skill_difficulty[SkillParry].difficulty);
 		}
 
 		if (!ghit) {	//if they are not using a garunteed hit discipline
@@ -482,7 +482,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 
 		skill = GetSkill(SkillDodge);
 		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillDodge, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillDodge, other, zone->skill_difficulty[SkillDodge].difficulty);
 		}
 
 		if (!ghit) {	//if they are not using a garunteed hit discipline
@@ -1228,8 +1228,8 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 		else if (GetLevel() < 20 && max_hit > RuleI(Combat, HitCapPre20))
 			max_hit = (RuleI(Combat, HitCapPre20));
 
-		CheckIncreaseSkill(skillinuse, other, -15);
-		CheckIncreaseSkill(SkillOffense, other, -15);
+		CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
+		CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
 
 		// ***************************************************************
 		// *** Calculate the damage bonus, if applicable, for this hit ***
@@ -1413,7 +1413,7 @@ void Client::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes att
 
 	if (damage > 0) {
 		if (spell_id == SPELL_UNKNOWN) {
-			CheckIncreaseSkill(SkillDefense, other, -12);
+			CheckIncreaseSkill(SkillDefense, other, zone->skill_difficulty[SkillDefense].difficulty);
         }
 	}
 }

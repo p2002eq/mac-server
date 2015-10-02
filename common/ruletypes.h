@@ -61,9 +61,6 @@ RULE_INT(Character, ItemHealAmtCap, 250)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
-RULE_INT ( Character, SkillUpModifier, 70) //skill ups for skills with value under 100
-RULE_INT ( Character, MasterSkillUpModifier, 60) //skill ups for skills 100 and over
-RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
 RULE_INT ( Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.
@@ -107,6 +104,9 @@ RULE_INT ( Skills, MaxTrainTradeskills, 21 )
 RULE_BOOL ( Skills, UseLimitTradeskillSearchSkillDiff, true )
 RULE_INT ( Skills, MaxTradeskillSearchSkillDiff, 50 )
 RULE_INT ( Skills, MaxTrainSpecializations, 50 )	// Max level a GM trainer will train casting specializations
+RULE_INT ( Skills, LangSkillUpModifier, 70) //skill ups for skills with value under 100
+RULE_REAL ( Skills, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
+RULE_REAL ( Skills, SkillUpModifier, 1.0)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Pets )

@@ -342,7 +342,7 @@ public:
 
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
-	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr);
+	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr, bool skipskill = false);
 	bool GetPickPocketSlot(ItemInst* inst, int16& slotid);
 
 	inline const char* GetLastName() const { return lastname; }
@@ -594,7 +594,7 @@ public:
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
 	void	CheckSpecializeIncrease(uint16 spell_id);
 	void	CheckSongSkillIncrease(uint16 spell_id);
-	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi = 0); //valid values for chancemodi are -20 to 20
+	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty = 7.0, float success = 2.0); //valid values for difficulty are 1 to 15. Success is a float simply so we don't need to cast
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
