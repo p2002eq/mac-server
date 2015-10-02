@@ -5258,11 +5258,11 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 	{
 		if(GetCasterClass() == 'I')
 		{
-			return GetINT();
+			return (GetINT() <= 190) ? GetINT() : 190;
 		}
 		else
 		{
-			return GetWIS();
+			return (GetWIS() <= 190) ? GetWIS() : 190;
 		}
 	}
 
@@ -5334,7 +5334,7 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 	if(penalty)
 		stat -= 15;
 
-	return stat;
+	return (stat <= 190) ? stat : 190;
 }
 
 bool Mob::IsPlayableRace(uint16 race)
