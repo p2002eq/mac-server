@@ -4912,23 +4912,6 @@ void Client::RewindCommand()
 	}
 }
 
-void Client::ShowNumHits()
-{
-	uint32 buffcount = GetMaxTotalSlots();
-	for (uint32 buffslot = 0; buffslot < buffcount; buffslot++)
-	{
-		if (buffs != nullptr)
-		{
-			const Buffs_Struct &curbuff = buffs[buffslot];
-			if (curbuff.spellid != SPELL_UNKNOWN && curbuff.numhits)
-			{
-				Message(CC_Default, "You have %d hits left on %s", curbuff.numhits, GetSpellName(curbuff.spellid));
-			}
-		}
-	}
-	return;
-}
-
 float Client::GetQuiverHaste()
 {
 	float quiver_haste = 0;

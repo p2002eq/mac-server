@@ -1570,6 +1570,13 @@ void Client::Handle_OP_Animation(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) 
 {
+
+	if (app->size != sizeof(ApplyPoison_Struct))
+	{
+		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
+		return;
+	}
+
 	uint32 ApplyPoisonSuccessResult = 0;
 	ApplyPoison_Struct* ApplyPoisonData = (ApplyPoison_Struct*)app->pBuffer;
 	const ItemInst* PrimaryWeapon = GetInv().GetItem(MainPrimary);
@@ -1578,18 +1585,6 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 	bool IsPoison = PoisonItemInstance != nullptr && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
 
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
-	{
-		Message(CC_Default, "Error: You are not allowed to interact with the player world as GM.");
-		IsPoison = false;
-	}
-
-	if (app->size != sizeof(ApplyPoison_Struct))
-	{
-		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
-		IsPoison = false;
-	}
-
 	if (!IsPoison)
 	{
 		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
@@ -1597,7 +1592,12 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	}
 	else if (GetClass() == ROGUE)
 	{
-		if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
+		if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
+		{
+			Message(CC_Default, "Error: You are not allowed to interact with the player world as GM.");
+			ApplyPoisonSuccessResult = 0;
+		}
+		else if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
 			(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
 			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
 			double ChanceRoll = zone->random.Real(0, 1);
