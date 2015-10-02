@@ -200,22 +200,41 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	min_damage += min_damage * GetMeleeMinDamageMod_SE(skill) / 100;
 
-	if(HitChance && !who->CheckHitChance(this, skill, MainPrimary))
+	bool CanRiposte = true;
+	if (skill == SkillThrowing || skill == SkillArchery)
+	{
+		CanRiposte = false;
+	}
+
+	if (CanAvoid)
+	{
+		who->AvoidDamage(this, max_damage, CanRiposte);
+	}
+
+	if (max_damage > 0 && HitChance && !who->AvoidanceCheck(this, skill, MainPrimary))
+	{
 		max_damage = 0;
+	}
 
-	else{
-		bool CanRiposte = true;
-		if(skill == SkillThrowing || skill == SkillArchery) // changed from '&&'
-			CanRiposte = false;
+	if (max_damage > 0 )
+	{
+		uint8 roll = RollD20(GetOffense(), who->GetMitigation());
 
-		if (CanAvoid)
-			who->AvoidDamage(this, max_damage, CanRiposte);
+		if (roll > 1)
+		{
+			max_damage = (max_damage - min_damage) * (roll / 20) + min_damage;
+		}
+		else
+		{
+			max_damage = min_damage;
+		}
 
-		who->MeleeMitigation(this, max_damage, min_damage);
+		if (max_damage < 1)
+		{
+			max_damage = 1;
+		}
 
-		if(max_damage > 0)
-			CommonOutgoingHitSuccess(who, max_damage, skill);
-
+		CommonOutgoingHitSuccess(who, max_damage, skill);
 	}
 
 	who->AddToHateList(this, hate, 0);
@@ -240,6 +259,11 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	if (max_damage > 0 && HasSkillProcSuccess())
 		TrySkillProc(who, skill, ReuseTime*1000, true);
+
+	if (max_damage > 0 && IsNPC())
+	{
+		TrySpellProc(nullptr, nullptr, who);		// NPC innate procs can proc on special attacks
+	}
 
 	if(max_damage == -3 && !who->HasDied())
 		DoRiposte(who);
@@ -1508,6 +1532,8 @@ void NPC::DoClassAttacks(Mob *target) {
 	int level = GetLevel();
 	int reuse = TauntReuseTime * 1000;	//make this very long since if they dont use it once, they prolly never will
 	bool did_attack = false;
+	int32 dmg = 0;
+
 	//class specific stuff...
 	switch(GetClass()) {
 		case ROGUE: case ROGUEGM:
@@ -1534,18 +1560,15 @@ void NPC::DoClassAttacks(Mob *target) {
 			if(level >= RuleI(Combat, NPCBashKickLevel)){
 				if(zone->random.Roll(75)) { //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
 					DoAnim(Animation::Kick);
-					int32 dmg = 0;
 
 					if(GetWeaponDamage(target, (const Item_Struct*)nullptr) <= 0){
 						dmg = -5;
 					}
-					else{
-						if(target->CheckHitChance(this, SkillKick, 0)) {
-							if(RuleB(Combat, UseIntervalAC))
-								dmg = GetMaxBashKickDmg();
-							else
-								dmg = zone->random.Int(1, GetMaxBashKickDmg());
-
+					else
+					{
+						if(target->CheckHitChance(this, SkillKick, 0))
+						{
+							dmg = GetMaxBashKickDmg();
 						}
 					}
 
@@ -1579,11 +1602,9 @@ void NPC::DoClassAttacks(Mob *target) {
 					dmg = -5;
 				}
 				else{
-					if(target->CheckHitChance(this, SkillKick, 0)) {
-						if(RuleB(Combat, UseIntervalAC))
-							dmg = GetMaxBashKickDmg();
-						else
-							dmg = zone->random.Int(1, GetMaxBashKickDmg());
+					if(target->CheckHitChance(this, SkillKick, 0))
+					{
+						dmg = GetMaxBashKickDmg();
 					}
 				}
 

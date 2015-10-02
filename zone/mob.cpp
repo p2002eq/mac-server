@@ -1473,6 +1473,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(CC_Default, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
 		client->Message(CC_Default, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
 		client->Message(CC_Default, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
+		client->Message(CC_Default, "  Offense: %i  To-Hit: %i  Mitigation: %i  Avoidance: %i", GetOffense(), GetToHit(), GetMitigation(), GetAvoidance());
 		client->Message(CC_Default, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
 		client->Message(CC_Default, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(CC_Default, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());

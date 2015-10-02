@@ -374,6 +374,13 @@ public:
 	inline virtual int32 GetAC() const { return AC; }
 	inline virtual int32 GetATK() const { return ATK + itembonuses.ATK + spellbonuses.ATK + ((GetSTR() + GetSkill(SkillOffense)) * 9 / 10); }
 	inline virtual int32 GetATKBonus() const { return itembonuses.ATK + spellbonuses.ATK; }
+	virtual int32 GetOffense(int hand = MainPrimary);
+	inline int32 GetOffense(SkillUseTypes weaponSkill);
+	virtual int32 GetToHit(int hand = MainPrimary);
+	inline int32 GetToHit(SkillUseTypes weaponSkill);
+	virtual int32 GetMitigation();
+	virtual int32 GetAvoidance();
+	int32 GetEffectiveWornAC();
 	inline virtual int GetHaste() const { return Haste; }
 	int GetRawACNoShield(int &shield_ac, int spell_mod = 1) const;
 
@@ -421,7 +428,7 @@ public:
 	inline virtual int32 GetDoTShield() const { return itembonuses.DoTShielding; }
 	inline virtual int32 GetStunResist() const { return itembonuses.StunResist; }
 	inline virtual int32 GetStrikeThrough() const { return itembonuses.StrikeThrough; }
-	inline virtual int32 GetAvoidance() const { return itembonuses.AvoidMeleeChance; }
+	inline virtual int32 GetAvoidanceMod() const { return itembonuses.AvoidMeleeChance; }
 	inline virtual int32 GetAccuracy() const { return itembonuses.HitChance; }
 	inline virtual int32 GetCombatEffects() const { return itembonuses.ProcChance; }
 	inline virtual int32 GetDS() const { return itembonuses.DamageShield; }
