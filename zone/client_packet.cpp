@@ -1570,23 +1570,20 @@ void Client::Handle_OP_Animation(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) 
 {
-	if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0) {
-		DumpPacket(app);
+
+	if (app->size != sizeof(ApplyPoison_Struct))
+	{
+		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
 		return;
 	}
 
-	if (app->size != sizeof(ApplyPoison_Struct)) {
-		Log.Out(Logs::General, Logs::Error, "Wrong size: OP_ApplyPoison, size=%i, expected %i", app->size, sizeof(ApplyPoison_Struct));
-		DumpPacket(app);
-		return;
-	}
 	uint32 ApplyPoisonSuccessResult = 0;
 	ApplyPoison_Struct* ApplyPoisonData = (ApplyPoison_Struct*)app->pBuffer;
 	const ItemInst* PrimaryWeapon = GetInv().GetItem(MainPrimary);
 	const ItemInst* SecondaryWeapon = GetInv().GetItem(MainSecondary);
 	const ItemInst* PoisonItemInstance = GetInv()[ApplyPoisonData->inventorySlot];
 
-	bool IsPoison = PoisonItemInstance && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
+	bool IsPoison = PoisonItemInstance != nullptr && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
 
 	if (!IsPoison)
 	{
@@ -1595,7 +1592,12 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	}
 	else if (GetClass() == ROGUE)
 	{
-		if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
+		if (Admin() >= RuleI(GM, NoCombatLow) && Admin() <= RuleI(GM, NoCombatHigh) && Admin() != 0)
+		{
+			Message(CC_Default, "Error: You are not allowed to interact with the player world as GM.");
+			ApplyPoisonSuccessResult = 0;
+		}
+		else if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemType1HPiercing) ||
 			(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemType1HPiercing)) {
 			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
 			double ChanceRoll = zone->random.Real(0, 1);
@@ -8242,10 +8244,14 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 
 				int offset = 0;
 
-				for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset) {
+				for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset)
+				{
 					QSHandinItems_Struct* detail = reinterpret_cast<QSHandinItems_Struct*>(*iter);
-					qs_buf->items[offset] = *detail;
-					safe_delete(detail);
+					if (detail != nullptr)
+					{
+						qs_buf->items[offset] = *detail;
+						safe_delete(detail);
+					}
 				}
 
 				event_details.clear();
