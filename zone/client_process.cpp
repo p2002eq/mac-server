@@ -432,8 +432,7 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				Mob *m = entity_list.GetMob(TrackingID);
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, GetTarget(), m, false);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, GetTarget());
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;
@@ -504,6 +503,7 @@ bool Client::Process() {
 		{
 			disc_ability_timer.Disable();
 			FadeDisc();
+			Message_StringID(CC_Default, DISCIPLINE_CONLOST);
 
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
@@ -2005,60 +2005,5 @@ void Client::CalcRestState() {
 
 	if(RuleB(Character, RestRegenEndurance))
 		RestRegenEndurance = (GetMaxEndurance() * RuleI(Character, RestRegenPercent) / 100);
-}
-
-void Client::DoTracking()
-{
-	if(TrackingID == 0)
-		return;
-
-	Mob *m = entity_list.GetMob(TrackingID);
-
-	if(!m || m->IsCorpse())
-	{
-		Message_StringID(MT_Skills, TRACK_LOST_TARGET);
-
-		TrackingID = 0;
-
-		return;
-	}
-
-	float RelativeHeading = GetHeading() - CalculateHeadingToTarget(m->GetX(), m->GetY());
-
-	if(RelativeHeading < 0)
-		RelativeHeading += 256;
-
-	if((RelativeHeading <= 16) || (RelativeHeading >= 240))
-	{
-		Message_StringID(MT_Skills, TRACK_STRAIGHT_AHEAD, m->GetCleanName());
-	}
-	else if((RelativeHeading > 16) && (RelativeHeading <= 48))
-	{
-		Message_StringID(MT_Skills, TRACK_AHEAD_AND_TO, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 48) && (RelativeHeading <= 80))
-	{
-		Message_StringID(MT_Skills, TRACK_TO_THE, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 80) && (RelativeHeading <= 112))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_AND_TO, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 112) && (RelativeHeading <= 144))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_YOU, m->GetCleanName());
-	}
-	else if((RelativeHeading > 144) && (RelativeHeading <= 176))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_AND_TO, m->GetCleanName(), "left");
-	}
-	else if((RelativeHeading > 176) && (RelativeHeading <= 208))
-	{
-		Message_StringID(MT_Skills, TRACK_TO_THE, m->GetCleanName(), "left");
-	}
-	else if((RelativeHeading > 208) && (RelativeHeading < 240))
-	{
-		Message_StringID(MT_Skills, TRACK_AHEAD_AND_TO, m->GetCleanName(), "left");
-	}
 }
 

@@ -163,7 +163,6 @@ Client::Client(EQStreamInterface* ieqs)
 	client_state = CLIENT_CONNECTING;
 	Trader=false;
 	CustomerID = 0;
-	TrackingID = 0;
 	WID = 0;
 	account_id = 0;
 	admin = 0;

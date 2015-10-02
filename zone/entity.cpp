@@ -1511,7 +1511,7 @@ void EntityList::QueueCloseClientsPrecalc(Mob *sender, const EQApplicationPacket
 		Client *ent = it->second;
 
 		if ((!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
-			if (ent->GetInside(sender->GetID()) || (special && (ent->GetGM() || ent->IsTracking()))) {
+			if (ent->GetInside(sender->GetID()) || (special && (ent->GetGM()))) {
 				ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
 				ent->SetLastPosition(sender->GetID(), sender->GetPosition());
 			}
