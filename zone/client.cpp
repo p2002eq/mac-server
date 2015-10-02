@@ -1837,7 +1837,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float d
 			if(skillvalue > 95)
 				skillvalue = 95.0f;
 
-			float chance2 = (100.0f - skillvalue) * skillup_modifier;
+			float chance2 = 100.0f - skillvalue;
 			mod_increase_skill_chance(chance2, against_who);
 
 			if(zone->random.Real(0, 99) < chance2)
