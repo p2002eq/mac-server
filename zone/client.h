@@ -927,7 +927,6 @@ public:
 	void SetEngagedRaidTarget(bool value) { EngagedRaidTarget = value; }
 	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }
 
-	void ShowNumHits(); // work around function for numhits not showing on buffs
 	bool IsTargetInMyGroup(Client* target);
 
 	void TripInterrogateInvState() { interrogateinv_flag = true; }
