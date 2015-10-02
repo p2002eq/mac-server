@@ -30,6 +30,7 @@ extern EQCrypto eq_crypto;
 extern ErrorLog *server_log;
 extern LoginServer server;
 extern Database db;
+extern Saltme mysalt;
 
 Client::Client(EQStreamInterface *c, ClientVersion v)
 {
@@ -109,7 +110,7 @@ bool Client::Process()
 			}
 		case OP_LoginBanner:
 			{
-				Handle_Banner((const char*)app->pBuffer, app->Size());
+				Handle_Banner(app->Size());
 				break;
 			}
 		default:
@@ -222,12 +223,7 @@ void Client::Handle_Login(const char* data, unsigned int size, string client)
 		created = 1;
 	}
 
-	string salt;
-	if (db.CheckExtraSettings("salt"))
-	{
-		salt = db.LoadServerSettings("options", "salt").c_str();
-	}
-	string userandpass = password + salt;
+	string userandpass = mysalt.Salt(password);
 	status = cs_logged_in;
 	unsigned int d_account_id = 0;
 	string d_pass_hash;
@@ -368,31 +364,22 @@ void Client::SendServerListPacket()
 	delete outapp;
 }
 
-void Client::Handle_Banner(const char* data, unsigned int size)
+void Client::Handle_Banner(unsigned int size)
 {
-	char buf[501];
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginBanner, 5);
-	outapp->pBuffer;
-	memset(buf, 0, sizeof(buf));
-
 	std::string ticker = "Welcome to EQMacEmu";
 	if (db.CheckExtraSettings("ticker"))
 	{
 		ticker = db.LoadServerSettings("options", "ticker");
 	}
-	strcpy(buf, ticker.c_str());
-	outapp->size += strlen(ticker.c_str());
 
-	if (strlen(buf) == 0)
-	{
-		delete outapp;
-	}
-	outapp->pBuffer = new uchar[outapp->size];
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_LoginBanner, 5);
+	outapp->size += strlen(ticker.c_str());
+	outapp->pBuffer = new uchar[outapp->size + 3];
 	outapp->pBuffer[0] = 1;
 	outapp->pBuffer[1] = 0;
 	outapp->pBuffer[2] = 0;
 	outapp->pBuffer[3] = 0;
-	strcpy((char *)&outapp->pBuffer[4], buf);
+	strcpy((char *)&outapp->pBuffer[4], ticker.c_str());
 	connection->QueuePacket(outapp);
 	delete outapp;
 }

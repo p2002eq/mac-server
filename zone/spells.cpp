@@ -585,23 +585,23 @@ void Client::CheckSpecializeIncrease(uint16 spell_id) {
 	switch(spells[spell_id].skill) {
 	case SkillAbjuration:
 		if(GetRawSkill(SkillSpecializeAbjure) > 0)
-			CheckIncreaseSkill(SkillSpecializeAbjure, nullptr);
+			CheckIncreaseSkill(SkillSpecializeAbjure, nullptr, zone->skill_difficulty[SkillSpecializeAbjure].difficulty);
 		break;
 	case SkillAlteration:
 		if(GetRawSkill(SkillSpecializeAlteration) > 0)
-			CheckIncreaseSkill(SkillSpecializeAlteration, nullptr);
+			CheckIncreaseSkill(SkillSpecializeAlteration, nullptr, zone->skill_difficulty[SkillSpecializeAlteration].difficulty);
 		break;
 	case SkillConjuration:
 		if(GetRawSkill(SkillSpecializeConjuration) > 0)
-			CheckIncreaseSkill(SkillSpecializeConjuration, nullptr);
+			CheckIncreaseSkill(SkillSpecializeConjuration, nullptr, zone->skill_difficulty[SkillSpecializeConjuration].difficulty);
 		break;
 	case SkillDivination:
 		if(GetRawSkill(SkillSpecializeDivination) > 0)
-			CheckIncreaseSkill(SkillSpecializeDivination, nullptr);
+			CheckIncreaseSkill(SkillSpecializeDivination, nullptr, zone->skill_difficulty[SkillSpecializeDivination].difficulty);
 		break;
 	case SkillEvocation:
 		if(GetRawSkill(SkillSpecializeEvocation) > 0)
-			CheckIncreaseSkill(SkillSpecializeEvocation, nullptr);
+			CheckIncreaseSkill(SkillSpecializeEvocation, nullptr, zone->skill_difficulty[SkillSpecializeEvocation].difficulty);
 		break;
 	default:
 		//wtf...
@@ -622,47 +622,47 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 	switch(spells[spell_id].skill)
 	{
 	case SkillSinging:
-		CheckIncreaseSkill(SkillSinging, nullptr, -15);
+		CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillPercussionInstruments:
 		if(this->itembonuses.percussionMod > 0) {
 			if(GetRawSkill(SkillPercussionInstruments) > 0)	// no skill increases if not trained in the instrument
-				CheckIncreaseSkill(SkillPercussionInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillPercussionInstruments, nullptr, zone->skill_difficulty[SkillPercussionInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);	// tell the client that they need instrument training
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillStringedInstruments:
 		if(this->itembonuses.stringedMod > 0) {
 			if(GetRawSkill(SkillStringedInstruments) > 0)
-				CheckIncreaseSkill(SkillStringedInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillStringedInstruments, nullptr, zone->skill_difficulty[SkillStringedInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillWindInstruments:
 		if(this->itembonuses.windMod > 0) {
 			if(GetRawSkill(SkillWindInstruments) > 0)
-				CheckIncreaseSkill(SkillWindInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillWindInstruments, nullptr, zone->skill_difficulty[SkillWindInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	case SkillBrassInstruments:
 		if(this->itembonuses.brassMod > 0) {
 			if(GetRawSkill(SkillBrassInstruments) > 0)
-				CheckIncreaseSkill(SkillBrassInstruments, nullptr, -15);
+				CheckIncreaseSkill(SkillBrassInstruments, nullptr, zone->skill_difficulty[SkillBrassInstruments].difficulty);
 			else
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, -15);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
 		break;
 	default:
 		break;
@@ -1233,10 +1233,11 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 			// skills
 			if(slot < MAX_PP_MEMSPELL)
 			{
-				c->CheckIncreaseSkill(spells[spell_id].skill, nullptr);
+				c->CheckIncreaseSkill(spells[spell_id].skill, nullptr, zone->skill_difficulty[spells[spell_id].skill].difficulty);
 
 				// increased chance of gaining channel skill if you regained concentration
-				c->CheckIncreaseSkill(SkillChanneling, nullptr, regain_conc ? 5 : 0);
+				float chan_skill = zone->skill_difficulty[SkillChanneling].difficulty;
+				c->CheckIncreaseSkill(SkillChanneling, nullptr, regain_conc ? chan_skill : chan_skill+2);
 
 				c->CheckSpecializeIncrease(spell_id);
 			}
@@ -3366,7 +3367,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 	else{
-		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id) && spell_id != 721)
+		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
 		{
 			if(!IsClient() || !CastToClient()->GetGM()) {
 				Log.Out(Logs::Detail, Logs::Spells, "Attempting to cast a detrimental spell on a player.");
@@ -3614,15 +3615,18 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 					)
 				)
 				{
-					if(spells[spell_id].targettype == ST_AEBard) {
-						//if it was a beneficial AE bard song don't spam the window that it would not hold
-						Log.Out(Logs::Detail, Logs::Spells, "Beneficial ae bard song %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
-					} else {
-						Log.Out(Logs::Detail, Logs::Spells, "Beneficial spell %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
-						Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+					if(!IsBindSightSpell(spell_id))
+					{
+						if(spells[spell_id].targettype == ST_AEBard) {
+							//if it was a beneficial AE bard song don't spam the window that it would not hold
+							Log.Out(Logs::Detail, Logs::Spells, "Beneficial ae bard song %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
+						} else {
+							Log.Out(Logs::Detail, Logs::Spells, "Beneficial spell %d can't take hold %s -> %s, IBA? %d", spell_id, GetName(), spelltar->GetName(), IsBeneficialAllowed(spelltar));
+							Message_StringID(MT_SpellFailure, SPELL_NO_HOLD);
+						}
+						safe_delete(action_packet);
+						return false;
 					}
-					safe_delete(action_packet);
-					return false;
 				}
 			}
 		}
@@ -3810,23 +3814,25 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	else if (spelltar->IsAIControlled() && IsDetrimentalSpell(spell_id) && !IsHarmonySpell(spell_id) &&
 		     CancelMagicShouldAggro(spell_id, spelltar)) {
 		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, jolthate, isproc);
-		Log.Out(Logs::Detail, Logs::Spells, "Spell %d cast on %s generated %d hate", spell_id, spelltar->GetName(), aggro_amount);
-		if(aggro_amount > 0 || jolthate < 0)
+		int32 current_hate = spelltar->GetHateAmount(this,false,false);
+		Log.Out(Logs::General, Logs::Spells, "Spell %d cast on %s generated %d hate current hate is: %d", spell_id, spelltar->GetName(), aggro_amount, current_hate);
+		if((aggro_amount > 0 || jolthate != 0) && current_hate == 0)
 		{
-			spelltar->AddToHateList(this, aggro_amount, 0, true, false, false, jolthate);	
+			spelltar->AddToHateList(this, aggro_amount);	
 		}
 		else
 		{
 			spelltar->SetPrimaryAggro(true);
-			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
-			if (newhate < 1)
+			if (aggro_amount < 1 || jolthate != 0)
 			{
-				spelltar->SetHate(this,1);
+				aggro_amount = 1;
+				if(jolthate != 0 && current_hate > 0)
+				{
+					aggro_amount = abs(current_hate);
+				}
 			} 
-			else 
-			{
-				spelltar->SetHate(this,newhate);
-			}
+
+			spelltar->AddHate(this,aggro_amount);
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
@@ -4298,7 +4304,8 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		}
 	}
 
-	if(IsLifetapSpell(spell_id))
+	// Exclude Greenmist and Soul Well Recourses
+	if(IsLifetapSpell(spell_id) && spell_id != 3978 && spell_id != 3980)
 	{
 		if(this == caster)
 		{
@@ -4425,9 +4432,6 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		break;
 	case RESIST_POISON:
 		target_resist = GetPR();
-		break;
-	case RESIST_CORRUPTION:
-		target_resist = GetCorrup();
 		break;
 	case RESIST_PRISMATIC:
 		target_resist = (GetFR() + GetCR() + GetMR() + GetDR() + GetPR()) / 5;

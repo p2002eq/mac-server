@@ -80,7 +80,6 @@ public:
 		bool LoadItems(const std::string &prefix);
 		const Item_Struct* IterateItems(uint32* id);
 		const Item_Struct* GetItem(uint32 id);
-		const EvolveInfo* GetEvolveInfo(uint32 loregroup);
 
 		//faction lists
 		void GetFactionListInfo(uint32 &list_count, uint32 &max_lists);

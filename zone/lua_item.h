@@ -38,15 +38,7 @@ public:
 	uint32 GetSlots();
 	uint32 GetPrice();
 	uint32 GetIcon();
-	uint32 GetLoreGroup();
-	bool GetLoreFlag();
-	bool GetPendingLoreFlag();
-	bool GetArtifactFlag();
-	bool GetSummonedFlag();
 	int GetFVNoDrop();
-	uint32 GetFavor();
-	uint32 GetGuildFavor();
-	uint32 GetPointType();
 	int GetBagType();
 	int GetBagSlots();
 	int GetBagSize();
@@ -96,17 +88,8 @@ public:
 	double GetSellRate();
 	uint32 GetFulfilment();
 	int GetCastTime();
-	uint32 GetEliteMaterial();
 	int GetProcRate();
-	int GetCombatEffects();
-	int GetShielding();
-	int GetStunResist();
-	int GetStrikeThrough();
-	uint32 GetExtraDmgSkill();
-	uint32 GetExtraDmgAmt();
-	int GetSpellShield();
 	int GetAvoidance();
-	int GetAccuracy();
 	uint32 GetCharmFileID();
 	int GetFactionMod1();
 	int GetFactionMod2();
@@ -117,18 +100,9 @@ public:
 	int GetFactionAmt3();
 	int GetFactionAmt4();
 	const char *GetCharmFile();
-	uint32 GetBaneDmgRaceAmt();
-	uint32 GetEndur();
-	uint32 GetDotShielding();
-	uint32 GetAttack();
-	uint32 GetRegen();
-	uint32 GetManaRegen();
-	uint32 GetEnduranceRegen();
 	uint32 GetHaste();
-	uint32 GetDamageShield();
 	uint32 GetRecastDelay();
 	uint32 GetRecastType();
-	bool GetAttuneable();
 	bool GetNoPet();
 	bool GetStackable();
 	bool GetNoTransfer();
@@ -161,12 +135,6 @@ public:
 	int GetBook();
 	uint32 GetBookType();
 	const char *GetFilename();
-	uint32 GetPurity();
-	uint32 GetBackstabDmg();
-	uint32 GetDSMitigation();
-	int GetHealAmt();
-	int GetSpellDmg();
-	uint32 GetScriptFileID();
 };
 
 #endif

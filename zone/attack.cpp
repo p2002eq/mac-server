@@ -471,7 +471,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, int hand)
 	if (hand != MainRange && CanThisClassRiposte() && InFront)
 	{
 		if (IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, zone->skill_difficulty[SkillRiposte].difficulty);
 
 		// check auto discs ... I guess aa/items too :P
 		if (spellbonuses.RiposteChance == 10000 || aabonuses.RiposteChance == 10000 || itembonuses.RiposteChance == 10000) {
@@ -502,8 +502,9 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, int hand)
 
 	if (CanThisClassBlock() && (InFront || bBlockFromRear)) {
 		if (IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillBlock, other, -10);
-		// check auto discs ... I guess aa/items too :P
+			CastToClient()->CheckIncreaseSkill(SkillBlock, other, zone->skill_difficulty[SkillBlock].difficulty);
+
+			// check auto discs ... I guess aa/items too :P
 		if (spellbonuses.IncreaseBlockChance == 10000 || aabonuses.IncreaseBlockChance == 10000 ||
 			itembonuses.IncreaseBlockChance == 10000) {
 			damage = -1;
@@ -523,7 +524,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, int hand)
 	if (CanThisClassParry() && InFront && hand != MainRange)
 	{
 		if (IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillParry, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillParry, other, zone->skill_difficulty[SkillParry].difficulty);
 
 		// check auto discs ... I guess aa/items too :P
 		if (spellbonuses.ParryChance == 10000 || aabonuses.ParryChance == 10000 || itembonuses.ParryChance == 10000) {
@@ -544,7 +545,7 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, int hand)
 	if (CanThisClassDodge() && (InFront || GetClass() == MONK))
 	{
 		if (IsClient())
-			CastToClient()->CheckIncreaseSkill(SkillDodge, other, -10);
+			CastToClient()->CheckIncreaseSkill(SkillDodge, other, zone->skill_difficulty[SkillDodge].difficulty);
 
 		// check auto discs ... I guess aa/items too :P
 		if (spellbonuses.DodgeChance == 10000 || aabonuses.DodgeChance == 10000 || itembonuses.DodgeChance == 10000) {
@@ -1028,7 +1029,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 			}
 
 			if(weapon_item->BaneDmgRace == against->GetRace()){
-				banedmg += weapon_item->BaneDmgRaceAmt;
+				banedmg += weapon_item->BaneDmgAmt;
 			}
 		}
 
@@ -1048,7 +1049,7 @@ int Mob::GetWeaponDamage(Mob *against, const Item_Struct *weapon_item) {
 			}
 
 			if(weapon_item->BaneDmgRace == against->GetRace()){
-				banedmg += weapon_item->BaneDmgRaceAmt;
+				banedmg += weapon_item->BaneDmgAmt;
 			}
 		}
 
@@ -1188,10 +1189,10 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 
 			if(weapon_item->GetItem()->BaneDmgRace == against->GetRace()){
 				if(IsClient() && GetLevel() < weapon_item->GetItem()->RecLevel){
-					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgRaceAmt);
+					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgAmt);
 				}
 				else{
-					banedmg += weapon_item->GetItem()->BaneDmgRaceAmt;
+					banedmg += weapon_item->GetItem()->BaneDmgAmt;
 				}
 			}
 		}
@@ -1221,10 +1222,10 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 
 			if(weapon_item->GetItem()->BaneDmgRace == against->GetRace()){
 				if(IsClient() && GetLevel() < weapon_item->GetItem()->RecLevel){
-					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgRaceAmt);
+					banedmg += CastToClient()->CalcRecommendedLevelBonus(GetLevel(), weapon_item->GetItem()->RecLevel, weapon_item->GetItem()->BaneDmgAmt);
 				}
 				else{
-					banedmg += weapon_item->GetItem()->BaneDmgRaceAmt;
+					banedmg += weapon_item->GetItem()->BaneDmgAmt;
 				}
 			}
 		}
@@ -1417,8 +1418,8 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			else if (mylevel < 20 && damage > RuleI(Combat, HitCapPre20))
 				damage = (RuleI(Combat, HitCapPre20));
 
-			CheckIncreaseSkill(skillinuse, other, -15);
-			CheckIncreaseSkill(SkillOffense, other, -15);
+			CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
+			CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
 
 			// ***************************************************************
 			// *** Calculate the damage bonus, if applicable, for this hit ***
@@ -1552,7 +1553,7 @@ void Client::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes att
 
 	if (damage > 0) {
 		if (spell_id == SPELL_UNKNOWN) {
-			CheckIncreaseSkill(SkillDefense, other, -12);
+			CheckIncreaseSkill(SkillDefense, other, zone->skill_difficulty[SkillDefense].difficulty);
         }
 	}
 }
@@ -1964,8 +1965,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 				eleBane += weapon->BaneDmgAmt;
 			}
 
-			if (weapon->BaneDmgRace == other->GetRace()){
-				eleBane += weapon->BaneDmgRaceAmt;
+			if(weapon->BaneDmgRace == other->GetRace()){
+				eleBane += weapon->BaneDmgAmt;
 			}
 
 			if (weapon->ElemDmgAmt){
@@ -2515,7 +2516,7 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic, int32 jolthate) {
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
 
 	assert(other != nullptr);
 
@@ -2612,7 +2613,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		&& other &&  (buffs[spellbonuses.ImprovedTaunt[2]].casterid != other->GetID()))
 		hate = (hate*spellbonuses.ImprovedTaunt[1])/100;
 
-	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic, jolthate);
+	hate_list.Add(other, hate, damage, bFrenzy, !iBuffTic);
 
 	// then add pet owner if there's one
 	if (owner) { // Other is a pet, add him and it
@@ -2703,7 +2704,7 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 									attacker->aabonuses.DSMitigationOffHand;
 				DS -= DS*mitigation/100;
 			}
-			DS -= DS * attacker->itembonuses.DSMitigation / 100;
+			DS -= DS;
 		}
 		attacker->Damage(this, -DS, spellid, SkillAbjuration/*hackish*/, false);
 		//we can assume there is a spell now
@@ -4407,7 +4408,7 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 						GetCleanName(), itoa(damage));
 				// Crippling blows also have a chance to stun
 				//Kayen: Crippling Blow would cause a chance to interrupt for npcs < 55, with a staggers message.
-				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)){
+				if (defender != nullptr && defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)){
 					defender->Emote("staggers.");
 					defender->Stun(0, this);
 				}

@@ -342,8 +342,8 @@ int main(int argc, char** argv) {
 	time_t realtime;
 	eqTime = database.LoadTime(realtime);
 	zoneserver_list.worldclock.setEQTimeOfDay(eqTime,realtime);
-	Timer EQTimeTimer(3600000);
-	EQTimeTimer.Start(3600000);
+	Timer EQTimeTimer(600000);
+	EQTimeTimer.Start(600000);
 
 	Log.Out(Logs::General, Logs::World_Server, "Loading launcher list..");
 	launcher_list.LoadList();
@@ -574,10 +574,6 @@ int main(int argc, char** argv) {
 
 void CatchSignal(int sig_num) {
 	Log.Out(Logs::General, Logs::World_Server,"Caught signal %d",sig_num);
-	TimeOfDay_Struct eqTime;
-	zoneserver_list.worldclock.getEQTimeOfDay(time(0), &eqTime);
-	if(!database.SaveTime(eqTime.minute,eqTime.hour,eqTime.day,eqTime.month,eqTime.year))
-		Log.Out(Logs::General, Logs::World_Server, "Failed to save eqtime.");
 	RunLoops = false;
 }
 

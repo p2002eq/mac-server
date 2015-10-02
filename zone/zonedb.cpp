@@ -3736,3 +3736,13 @@ bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::cons
 
 	return false;
 }
+
+bool ZoneDatabase::UpdateSkillDifficulty(uint16 skillid, float difficulty)
+{
+		std::string query = StringFormat("UPDATE skill_difficulty SET difficulty = %0.2f "
+                                    "WHERE skillid = %u;", difficulty, skillid);
+    auto results = QueryDatabase(query);
+	if (!results.Success())
+
+	return results.RowsAffected() > 0;
+}

@@ -138,12 +138,7 @@ int32 Client::GetMaxFR() const {
 		+ spellbonuses.FRCapMod
 		+ aabonuses.FRCapMod;
 }
-int32 Client::GetMaxCorrup() const {
-	return GetMaxResist()
-		+ itembonuses.CorrupCapMod
-		+ spellbonuses.CorrupCapMod
-		+ aabonuses.CorrupCapMod;
-}
+
 int32 Client::LevelRegen()
 {
 	bool sitting = IsSitting();
@@ -1010,7 +1005,7 @@ int32 Client::CalcManaRegen()
 			this->medding = true;
 			regen = (((GetSkill(SkillMeditate) / 10) + (clevel - (clevel / 4))) / 4) + 4;
 			regen += spellbonuses.ManaRegen + itembonuses.ManaRegen;
-			CheckIncreaseSkill(SkillMeditate, nullptr, -5);
+			CheckIncreaseSkill(SkillMeditate, nullptr, zone->skill_difficulty[SkillMeditate].difficulty);
 		}
 		else
 			regen = 2 + spellbonuses.ManaRegen + itembonuses.ManaRegen;
@@ -1745,16 +1740,6 @@ int32	Client::CalcCR()
 		CR = GetMaxCR();
 
 	return(CR);
-}
-
-int32	Client::CalcCorrup()
-{
-	Corrup = GetBaseCorrup() + itembonuses.Corrup + spellbonuses.Corrup + aabonuses.Corrup;
-
-	if(Corrup > GetMaxCorrup())
-		Corrup = GetMaxCorrup();
-
-	return(Corrup);
 }
 
 int32 Client::CalcATK() {

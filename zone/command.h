@@ -329,6 +329,7 @@ void command_reloadmerchants(Client* c, const Seperator *sep);
 void command_trapinfo(Client* c, const Seperator *sep);
 void command_reloadtraps(Client* c, const Seperator *sep);
 void command_godmode(Client* c, const Seperator *sep);
+void command_skill_difficulty(Client* c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);

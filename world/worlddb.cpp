@@ -220,8 +220,12 @@ int WorldDatabase::MoveCharacterToBind(int CharID, uint8 bindnum) {
 		return 0;
 	}
 
-	int zone_id, instance_id;
-	double x, y, z, heading;
+	int zone_id = 0;
+	int instance_id = 0;
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	double heading = 0;
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		zone_id = atoi(row[0]);
 		instance_id = atoi(row[1]);

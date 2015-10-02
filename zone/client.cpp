@@ -620,7 +620,8 @@ void Client::FastQueuePacket(EQApplicationPacket** app, bool ack_req, CLIENT_CON
 		AddPacket(app, ack_req);
 		return;
 	}
-	else {
+	else if (app != nullptr && *app != nullptr)
+	{
 		if(eqs)
 			eqs->FastQueuePacket((EQApplicationPacket **)app, ack_req);
 		else if (app && (*app))
@@ -1789,11 +1790,10 @@ uint64 Client::GetAllMoney() {
 		(static_cast<uint64>(m_pp.copper_cursor) +
 		(static_cast<uint64>(m_pp.silver_cursor) * 10) +
 		(static_cast<uint64>(m_pp.gold_cursor) * 100) +
-		(static_cast<uint64>(m_pp.platinum_cursor) * 1000) +
-		(static_cast<uint64>(m_pp.platinum_shared) * 1000)))));
+		(static_cast<uint64>(m_pp.platinum_cursor) * 1000)))));
 }
 
-bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi) {
+bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty, float success) {
 	if (IsDead() || IsUnconscious())
 		return false;
 	if (IsAIControlled()) // no skillups while chamred =p
@@ -1816,43 +1816,49 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 	// Make sure we're not already at skill cap
 	if (skillval < maxskill)
 	{
-		int32 stat = GetSkillStat(skillid);
+		Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d %s. difficulty: %0.2f", skillid, skillval, success == 1.0 ? "succeeded" : "failed", difficulty);
+		float skillup_modifier = RuleR(Skills, SkillUpModifier);
+		float stat = GetSkillStat(skillid);
 
-		if(stat > 300)
-			stat = 300;
+		if(difficulty < 1)
+			difficulty = 1.0f;
+		if(difficulty > 15)
+			difficulty = 15.0f;
 
-		int modifier = RuleI(Character, SkillUpModifier);
-		if(stat >= 100)
-			modifier = RuleI(Character, MasterSkillUpModifier);
+		float chance1 = (stat / (difficulty * success)) * skillup_modifier;
+		if(chance1 > 95)
+			chance1 = 95.0;
 
-		float stat_modifier = stat;
-		stat_modifier /= 2;
-		stat_modifier /= 100;
-
-		if(chancemodi > 20)
-			chancemodi = 20;
-		if(chancemodi < -20)
-			chancemodi = -20;
-
-		// the higher your current skill level, the harder it is
-		int32 Chance = 10 + chancemodi + ((252 - skillval) / 20);
-		Chance *= stat_modifier;
-		Chance = (Chance * modifier / 100);
-
-		Chance = mod_increase_skill_chance(Chance, against_who);
-
-		if(Chance < 1)
-			Chance = 1; // Make it always possible
-
-		if(zone->random.Real(0, 99) < Chance)
+		if(zone->random.Real(0, 99) < chance1)
 		{
-			SetSkill(skillid, GetRawSkill(skillid) + 1);
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d successfully gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
-			return true;
-		} else {
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
+
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d passed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
+
+			float skillvalue = skillval / 2.0f;
+			if(skillvalue > 95)
+				skillvalue = 95.0f;
+
+			float chance2 = (100.0f - skillvalue) * skillup_modifier;
+			mod_increase_skill_chance(chance2, against_who);
+
+			if(zone->random.Real(0, 99) < chance2)
+			{
+				SetSkill(skillid, GetRawSkill(skillid) + 1);
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d using stat %0.2f successfully gained a point with %0.2f percent chance (diff %0.2f) first roll chance was: %0.2f", skillid, skillval, stat, chance2, difficulty, chance1);
+				return true;
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d failed second roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance2, difficulty);
+			}
+		} 
+		else 
+		{
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
 		}
-	} else {
+	} 
+	else 
+	{
 		Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
@@ -1870,7 +1876,7 @@ void Client::CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill) {
 
 	if (LangSkill < 100) {	// if the language isn't already maxed
 		int32 Chance = 5 + ((TeacherSkill - LangSkill)/10);	// greater chance to learn if teacher's skill is much higher than yours
-		Chance = (Chance * RuleI(Character, SkillUpModifier)/100);
+		Chance = (Chance * RuleI(Skills, LangSkillUpModifier)/100);
 
 		if(zone->random.Real(0,100) < Chance) {	// if they make the roll
 			IncreaseLanguageSkill(langid);	// increase the language skill by 1
@@ -2960,8 +2966,17 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst)
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst, bool skipskill)
 {
+	if(!skipskill)
+	{
+		float success = 2.0;
+		if(type > PickPocketFailed)
+			success = 1.0;
+
+		CheckIncreaseSkill(SkillPickPockets, nullptr, zone->skill_difficulty[SkillPickPockets].difficulty, success);
+	}
+
 	if(type == PickPocketItem && inst)
 	{
 		SendItemPacket(slotid, inst, ItemPacketStolenItem, GetID(), from->GetID(), GetSkill(SkillPickPockets));
@@ -4040,7 +4055,7 @@ void Client::SendStats(Client* client)
 	GetRawACNoShield(shield_ac);
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
-	client->Message(CC_Default, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
+	client->Message(CC_Default, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(CC_Default, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
 	client->Message(CC_Default, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetMitigation(), GetAvoidance(), spellbonuses.AC, shield_ac);
 	client->Message(CC_Default, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i GMInvul: %d LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), GetGMInvul(), IsLD(), GetClientVersionBit());
@@ -4053,7 +4068,6 @@ void Client::SendStats(Client* client)
 	client->Message(CC_Default, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
 	client->Message(CC_Default, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
 	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidanceMod(), GetAccuracy(), GetCombatEffects());
-	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetDSMit());
 	client->Message(CC_Default, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
 	if(GetClass() == WARRIOR)
 		client->Message(CC_Default, "HasShield: %i KickDmg: %i BashDmg: %i", HasShieldEquiped(), GetKickDamage(), GetBashDamage());
@@ -4332,7 +4346,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		this_faction_max = std::max(0, this_faction_max);
 
 		// Get the characters current value with that faction
-		current_value = GetCharacterFactionLevel(faction_id[i]);
+		current_value = GetCharacterFactionLevel(faction_id[i], true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
@@ -4375,7 +4389,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 		this_faction_max = std::max(0, this_faction_max);
 
 		//Get the faction modifiers
-		current_value = GetCharacterFactionLevel(faction_id);
+		current_value = GetCharacterFactionLevel(faction_id, true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, value, faction_id, &current_value, temp, this_faction_min, this_faction_max);
@@ -4388,18 +4402,22 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 	return;
 }
 
-int32 Client::GetCharacterFactionLevel(int32 faction_id)
+int32 Client::GetCharacterFactionLevel(int32 faction_id, bool updating)
 {
-	if (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0)
+	int32 faction = 0;
+	if (!updating && (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0))
 	{
-		Log.Out(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction.", GetRace());
+		Log.Out(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction. This is %s.", GetRace(), updating ? "a save" : "not a save");
 		return 0;
 	}
 	faction_map::iterator res;
 	res = factionvalues.find(faction_id);
 	if (res == factionvalues.end())
 		return 0;
-	return res->second;
+	faction = res->second;
+
+	Log.Out(Logs::Detail, Logs::Faction, "%s has %d personal faction with %d This is %s.", GetName(), faction, faction_id, updating ? "a save" : "not a save");
+	return faction;
 }
 
 // Common code to set faction level.
@@ -4440,10 +4458,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 			*current_value = this_faction_min;
 
 		database.SetCharacterFactionLevel(char_id, faction_id, *current_value, temp, factionvalues);
-	}
-	else
-	{
-		Log.Out(Logs::General, Logs::Faction, "ERROR: change(%d) and repair(%d) are both false! current_value %d this_faction_max %d this_faction_min %d npc_value %d", change, repair, *current_value, this_faction_max, this_faction_min, npc_value);
 	}
 
 return;
@@ -4913,17 +4927,6 @@ void Client::RewindCommand()
 	}
 }
 
-void Client::ShowNumHits()
-{
-	uint32 buffcount = GetMaxTotalSlots();
-	for (uint32 buffslot = 0; buffslot < buffcount; buffslot++) {
-		const Buffs_Struct &curbuff = buffs[buffslot];
-		if (curbuff.spellid != SPELL_UNKNOWN && curbuff.numhits)
-			Message(CC_Default, "You have %d hits left on %s", curbuff.numhits, GetSpellName(curbuff.spellid));
-	}
-	return;
-}
-
 float Client::GetQuiverHaste()
 {
 	float quiver_haste = 0;
@@ -4943,19 +4946,21 @@ float Client::GetQuiverHaste()
 
 bool Client::IsTargetInMyGroup(Client* target)
 {
-	if (this == target)
+	if (target != nullptr)
 	{
-		return true;
+		if (this == target)
+		{
+			return true;
+		}
+		else if (this->IsRaidGrouped() && target->IsRaidGrouped())
+		{
+			return this->GetRaid() == target->GetRaid();
+		}
+		else if (this->IsGrouped() && target->IsGrouped())
+		{
+			return this->GetGroup() == target->GetGroup();
+		}
 	}
-	else if (this->IsRaidGrouped() && target->IsRaidGrouped())
-	{
-		return this->GetRaid() == target->GetRaid();
-	}
-	else if (this->IsGrouped() && target->IsGrouped()){
-
-		return this->GetGroup() == target->GetGroup();
-	}
-
 	return false;
 }
 

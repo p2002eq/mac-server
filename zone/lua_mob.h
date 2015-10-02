@@ -124,7 +124,6 @@ public:
 	int GetDR();
 	int GetPR();
 	int GetCR();
-	int GetCorruption();
 	int GetMaxSTR();
 	int GetMaxSTA();
 	int GetMaxDEX();

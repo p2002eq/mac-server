@@ -293,6 +293,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	raid_target = d->raid_target;
 	npc_assist_cap = 0;
 	ignore_distance = d->ignore_distance;
+	base_texture = d->texture;
+	base_size = d->size;
 }
 
 NPC::~NPC()
@@ -1258,7 +1260,7 @@ void NPC::PickPocket(Client* thief)
 
 	if(bodytype == BT_Undead || IsPet())
 	{
-		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+		thief->SendPickPocketResponse(this, 0, PickPocketFailed, 0, nullptr, true);
 		return;
 	}
 
@@ -1268,18 +1270,16 @@ void NPC::PickPocket(Client* thief)
 		if(olevel > 45) 
 		{
 			thief->Message_StringID(CC_User_Skills, STEAL_OUTSIDE_LEVEL);
-			thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+			thief->SendPickPocketResponse(this, 0, PickPocketFailed, 0, nullptr, true);
 			return;
 		}
 	} 
 	else if(olevel > (thief->GetLevel() + THIEF_PICKPOCKET_OVER)) 
 	{
 		thief->Message_StringID(CC_User_Skills, STEAL_OUTSIDE_LEVEL);
-		thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+		thief->SendPickPocketResponse(this, 0, PickPocketFailed, 0, nullptr, true);
 		return;
 	}
-
-	thief->CheckIncreaseSkill(SkillPickPockets, nullptr, -5);
 
 	uint16 steal_skill = thief->GetSkill(SkillPickPockets);
 
@@ -1292,6 +1292,7 @@ void NPC::PickPocket(Client* thief)
 		return;
 	}
 
+	float success = 2.0;
 	ItemInst* inst = nullptr;
 	uint16 steal_items[50];
 	uint8 charges[50];

@@ -100,7 +100,6 @@ void Client::CalcBonuses()
 	CalcDR();
 	CalcPR();
 	CalcCR();
-	CalcCorrup();
 
 	CalcMaxHP();
 	CalcMaxMana();
@@ -189,7 +188,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->AC += item->AC;
 		newbon->HP += item->HP;
 		newbon->Mana += item->Mana;
-		newbon->Endurance += item->Endur;
 		newbon->STR += (item->AStr);
 		newbon->STA += (item->ASta);
 		newbon->DEX += (item->ADex);
@@ -226,7 +224,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		newbon->AC += CalcRecommendedLevelBonus( lvl, reclvl, item->AC );
 		newbon->HP += CalcRecommendedLevelBonus( lvl, reclvl, item->HP );
 		newbon->Mana += CalcRecommendedLevelBonus( lvl, reclvl, item->Mana );
-		newbon->Endurance += CalcRecommendedLevelBonus( lvl, reclvl, item->Endur );
 		newbon->STR += CalcRecommendedLevelBonus( lvl, reclvl, (item->AStr) );
 		newbon->STA += CalcRecommendedLevelBonus( lvl, reclvl, (item->ASta) );
 		newbon->DEX += CalcRecommendedLevelBonus( lvl, reclvl, (item->ADex) );
@@ -257,102 +254,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 	}
 
 	//FatherNitwit: New style haste, shields, and regens
-	if(newbon->haste < (int32)item->Haste) {
-		newbon->haste = item->Haste;
-	}
-	if(item->Regen > 0)
-		newbon->HPRegen += item->Regen;
-
-	if(item->ManaRegen > 0)
-		newbon->ManaRegen += item->ManaRegen;
-
-	if(item->EnduranceRegen > 0)
-		newbon->EnduranceRegen += item->EnduranceRegen;
-
-	if(item->Attack > 0) {
-
-		int cap = RuleI(Character, ItemATKCap);
-		cap += itembonuses.ItemATKCap + spellbonuses.ItemATKCap + aabonuses.ItemATKCap;
-
-		if((newbon->ATK + item->Attack) > cap)
-			newbon->ATK = RuleI(Character, ItemATKCap);
-		else
-			newbon->ATK += item->Attack;
-	}
-	if(item->DamageShield > 0) {
-		if((newbon->DamageShield + item->DamageShield) > RuleI(Character, ItemDamageShieldCap))
-			newbon->DamageShield = RuleI(Character, ItemDamageShieldCap);
-		else
-			newbon->DamageShield += item->DamageShield;
-	}
-	if(item->SpellShield > 0) {
-		if((newbon->SpellShield + item->SpellShield) > RuleI(Character, ItemSpellShieldingCap))
-			newbon->SpellShield = RuleI(Character, ItemSpellShieldingCap);
-		else
-			newbon->SpellShield += item->SpellShield;
-	}
-	if(item->Shielding > 0) {
-		if((newbon->MeleeMitigation + item->Shielding) > RuleI(Character, ItemShieldingCap))
-			newbon->MeleeMitigation = RuleI(Character, ItemShieldingCap);
-		else
-			newbon->MeleeMitigation += item->Shielding;
-	}
-	if(item->StunResist > 0) {
-		if((newbon->StunResist + item->StunResist) > RuleI(Character, ItemStunResistCap))
-			newbon->StunResist = RuleI(Character, ItemStunResistCap);
-		else
-			newbon->StunResist += item->StunResist;
-	}
-	if(item->StrikeThrough > 0) {
-		if((newbon->StrikeThrough + item->StrikeThrough) > RuleI(Character, ItemStrikethroughCap))
-			newbon->StrikeThrough = RuleI(Character, ItemStrikethroughCap);
-		else
-			newbon->StrikeThrough += item->StrikeThrough;
-	}
-	if(item->Avoidance > 0) {
-		if((newbon->AvoidMeleeChance + item->Avoidance) > RuleI(Character, ItemAvoidanceCap))
-			newbon->AvoidMeleeChance = RuleI(Character, ItemAvoidanceCap);
-		else
-			newbon->AvoidMeleeChance += item->Avoidance;
-	}
-	if(item->Accuracy > 0) {
-		if((newbon->HitChance + item->Accuracy) > RuleI(Character, ItemAccuracyCap))
-			newbon->HitChance = RuleI(Character, ItemAccuracyCap);
-		else
-			newbon->HitChance += item->Accuracy;
-	}
-	if(item->CombatEffects > 0) {
-		if((newbon->ProcChance + item->CombatEffects) > RuleI(Character, ItemCombatEffectsCap))
-			newbon->ProcChance = RuleI(Character, ItemCombatEffectsCap);
-		else
-			newbon->ProcChance += item->CombatEffects;
-	}
-	if(item->DotShielding > 0) {
-		if((newbon->DoTShielding + item->DotShielding) > RuleI(Character, ItemDoTShieldingCap))
-			newbon->DoTShielding = RuleI(Character, ItemDoTShieldingCap);
-		else
-			newbon->DoTShielding += item->DotShielding;
-	}
-
-	if(item->HealAmt > 0) {
-		if((newbon->HealAmt + item->HealAmt) > RuleI(Character, ItemHealAmtCap))
-			newbon->HealAmt = RuleI(Character, ItemHealAmtCap);
-		else
-			newbon->HealAmt += item->HealAmt;
-	}
-	if(item->SpellDmg > 0) {
-		if((newbon->SpellDmg + item->SpellDmg) > RuleI(Character, ItemSpellDmgCap))
-			newbon->SpellDmg = RuleI(Character, ItemSpellDmgCap);
-		else
-			newbon->SpellDmg += item->SpellDmg;
-	}
-
-	if(item->DSMitigation > 0) {
-		if((newbon->DSMitigation + item->DSMitigation) > RuleI(Character, ItemDSMitigationCap))
-			newbon->DSMitigation = RuleI(Character, ItemDSMitigationCap);
-		else
-			newbon->DSMitigation += item->DSMitigation;
-	}
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
 		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
 	}
@@ -461,13 +362,6 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 		{
 			AddItemFactionBonus(item->FactionMod4, item->FactionAmt4);
 		}
-	}
-
-	if (item->ExtraDmgSkill != 0 && item->ExtraDmgSkill <= HIGHEST_SKILL) {
-		if((newbon->SkillDamageAmount[item->ExtraDmgSkill] + item->ExtraDmgAmt) > RuleI(Character, ItemExtraDmgCap))
-			newbon->SkillDamageAmount[item->ExtraDmgSkill] = RuleI(Character, ItemExtraDmgCap);
-		else
-			newbon->SkillDamageAmount[item->ExtraDmgSkill] += item->ExtraDmgAmt;
 	}
 }
 
@@ -642,9 +536,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_ResistMagic:
 				newbon->MR += base1;
 				break;
-			case SE_ResistCorruption:
-				newbon->Corrup += base1;
-				break;
 			case SE_IncreaseSpellHaste:
 				break;
 			case SE_IncreaseRange:
@@ -698,9 +589,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 						break;
 					case 11: //dr
 						newbon->DRCapMod += base1;
-						break;
-					case 12: //corruption
-						newbon->CorrupCapMod += base1;
 						break;
 				}
 				break;
@@ -1623,12 +1511,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_ResistCorruption:
-			{
-				new_bonus->Corrup += effect_value;
-				break;
-			}
-
 			case SE_RaiseStatCap:
 			{
 				switch(spells[spell_id].base2[i])
@@ -1669,9 +1551,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 						break;
 					case 11: //dr
 						new_bonus->DRCapMod += effect_value;
-						break;
-					case 12: // corruption
-						new_bonus->CorrupCapMod += effect_value;
 						break;
 				}
 				break;
@@ -2918,7 +2797,6 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				newbon->AC += cur->AC;
 				newbon->HP += cur->HP;
 				newbon->Mana += cur->Mana;
-				newbon->Endurance += cur->Endur;
 				newbon->STR += (cur->AStr);
 				newbon->STA += (cur->ASta);
 				newbon->DEX += (cur->ADex);
@@ -2933,44 +2811,9 @@ void NPC::CalcItemBonuses(StatBonuses *newbon)
 				newbon->DR += (cur->DR);
 
 				//more complex stats
-				if(cur->Regen > 0) {
-					newbon->HPRegen += cur->Regen;
-				}
-				if(cur->ManaRegen > 0) {
-					newbon->ManaRegen += cur->ManaRegen;
-				}
-				if(cur->Attack > 0) {
-					newbon->ATK += cur->Attack;
-				}
-				if(cur->DamageShield > 0) {
-					newbon->DamageShield += cur->DamageShield;
-				}
-				if(cur->SpellShield > 0) {
-					newbon->SpellDamageShield += cur->SpellShield;
-				}
-				if(cur->Shielding > 0) {
-					newbon->MeleeMitigation += cur->Shielding;
-				}
-				if(cur->StunResist > 0) {
-					newbon->StunResist += cur->StunResist;
-				}
-				if(cur->StrikeThrough > 0) {
-					newbon->StrikeThrough += cur->StrikeThrough;
-				}
-				if(cur->Avoidance > 0) {
-					newbon->AvoidMeleeChance += cur->Avoidance;
-				}
-				if(cur->Accuracy > 0) {
-					newbon->HitChance += cur->Accuracy;
-				}
-				if(cur->CombatEffects > 0) {
-					newbon->ProcChance += cur->CombatEffects;
-				}
 				if (cur->Worn.Effect>0 && (cur->Worn.Type == ET_WornEffect)) { // latent effects
 					ApplySpellsBonuses(cur->Worn.Effect, GetLevel(), newbon);
 				}
-				if (cur->Haste > newbon->haste)
-					newbon->haste = cur->Haste;
 			}
 		}
 
@@ -3433,12 +3276,6 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					itembonuses.FR = effect_value;
 					break;
 				}
-
-				case SE_ResistCorruption:
-					spellbonuses.Corrup = effect_value;
-					itembonuses.Corrup = effect_value;
-					aabonuses.Corrup = effect_value;
-					break;
 
 				case SE_CastingLevel2:
 				case SE_CastingLevel:	// Brilliance of Ro

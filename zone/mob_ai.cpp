@@ -883,7 +883,7 @@ void Client::AI_Process()
 				moved=false;
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
 				SendPosition();
-				tar_ndx =0;
+				tar_ndx = 20;
 			}
 
 			if(GetTarget() && !IsStunned() && !IsMezzed() && !GetFeigned()) {
@@ -1171,7 +1171,7 @@ void Mob::AI_Process() {
 				if(AImovement_timer->Check()) {
 					float f_speed = GetFearSpeed();
 					SetCurrentSpeed(f_speed);
-					if (f_speed > 0.0f)
+					if (f_speed >= 0.1f)
 					{
 						// Check if we have reached the last fear point
 						if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
@@ -1191,6 +1191,12 @@ void Mob::AI_Process() {
 								tar_ndx = 20;
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, f_speed);
+						}
+					} else {
+						float fear_heading = CalculateHeadingToTarget(m_FearWalkTarget.x, m_FearWalkTarget.y);
+						if (m_Position.w != fear_heading)
+						{
+							SetHeading2(fear_heading);
 						}
 					}
 				}
@@ -1720,14 +1726,34 @@ void Mob::AI_Process() {
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
-	if ((IsGuarding() && (m_Position == m_GuardPoint)) && roambox_distance == 0 || (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
+		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
 		walksp = 0.0f;
 	}
 
 	SetCurrentSpeed(walksp);
 	
-	if(walksp < 0.1f)
+	if(walksp < 0.1f) {
+		// we are stopped for some reason.
+		tar_ndx = 20;
+		bool WaypointChanged, NodeReached;
+		if (roambox_distance > 0) {
+			SetHeading2(CalculateHeadingToTarget(roambox_movingto_x, roambox_movingto_x));
+		} else if (roamer) {
+			if (m_CurrentWayPoint.x != GetX() || m_CurrentWayPoint.y != GetY()) {
+				glm::vec3 Goal(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z);
+				if (zone->pathing)
+					Goal = UpdatePath(m_CurrentWayPoint.x, m_CurrentWayPoint.y, m_CurrentWayPoint.z, walksp, WaypointChanged, NodeReached);
+				SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
+			}
+		} else if (IsGuarding() && (m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y) && roambox_distance == 0 && !roamer) {
+			glm::vec3 Goal(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z); 
+			if (zone->pathing)
+				Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
+			SetHeading2(CalculateHeadingToTarget(Goal.x, Goal.y));
+		}
 		return;	//this is idle movement at walk speed, and we are unable to walk right now.
+	}
 
 	if (roambox_distance > 0) {
 		float roam_z = GetZ();
@@ -1870,9 +1896,11 @@ void NPC::AI_DoMovement() {
 	}
 	else if (IsGuarding())
 	{
-		bool CP2Moved;
-		if(!RuleB(Pathing, Guard) || !zone->pathing)
-			CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+		bool CP2Moved = false;
+		if(!RuleB(Pathing, Guard) || !zone->pathing) {
+			if (m_GuardPoint.x != m_Position.x && m_GuardPoint.y != m_Position.y && m_GuardPoint.z != m_Position.z)
+				CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
+		}
 		else
 		{
 			if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
@@ -1895,20 +1923,18 @@ void NPC::AI_DoMovement() {
 		{
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
-				ClearFeignMemory();
-				if (IsEngaged())
-				{
-					WipeHateList();
+				if (m_GuardPoint == m_Position) {
+					ClearFeignMemory();
+					if (IsEngaged())
+					{
+						WipeHateList();
+					}
 				}
 				moved=false;
 				SetMoving(false);
-				if (GetTarget() == nullptr || DistanceSquared(m_Position, GetTarget()->GetPosition()) >= 5*5 )
-				{
-					SetHeading(m_GuardPoint.w);
-				} else {
-					FaceTarget(GetTarget());
-				}
-				SendPosition();
+				if (!SetHeading2(m_GuardPoint.w))
+					return;
+				
 				SetAppearance(GetGuardPointAnim());
 			}
 		}

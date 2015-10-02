@@ -8,6 +8,7 @@ SET(eqlogin_sources
 	EQCrypto.cpp
 	error_log.cpp
 	main.cpp
+	salt.cpp
 	server_manager.cpp
 	world_server.cpp
 )
@@ -21,6 +22,7 @@ SET(eqlogin_headers
 	error_log.h
 	login_server.h
 	login_structures.h
+	salt.h
 	server_manager.h
 	world_server.h
 )

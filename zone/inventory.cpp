@@ -149,14 +149,12 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 bool Client::CheckLoreConflict(const Item_Struct* item) {
 	if (!item)
 		return false;
-	if (!(item->LoreFlag))
+	if (item->Lore[0] != '*')
 		return false;
 
-	if (item->LoreGroup == -1)	// Standard lore items; look everywhere except unused, return the result
+	if (item->Lore[0] == '*')	// Standard lore items; look everywhere except unused, return the result
 		return (m_inv.HasItem(item->ID, 0, ~invWhereUnused) != INVALID_INDEX);
 
-	//If the item has a lore group, we check for other items with the same group and return the result
-	return (m_inv.HasItemByLoreGroup(item->LoreGroup, ~invWhereUnused) != INVALID_INDEX);
 }
 
 bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_slot, bool force_charges) {
@@ -863,9 +861,7 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Size,
 			item->Weight,
 			item->ItemClass,
-			item->ItemType,
-			item->Favor,
-			item->GuildFavor);
+			item->ItemType);
 	} else if (item->ItemClass == 2) {	//book
 		MakeAnyLenString(&hash_str, "%d%s%d%d%09X",
 			item->ID,
@@ -887,7 +883,6 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Name,
 			item->Mana,
 			item->HP,
-			item->Favor,
 			item->Light,
 			item->Icon,
 			item->Price,
@@ -896,8 +891,7 @@ int Client::GetItemLinkHash(const ItemInst* inst) {
 			item->Size,
 			item->ItemClass,
 			item->ItemType,
-			item->AC,
-			item->GuildFavor);
+			item->AC);
 	}
 
 	//this currently crashes zone, so someone feel free to fix this so we can work with hashes:
@@ -1311,9 +1305,6 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	else {
 		// Not dealing with charges - just do direct swap
 		if(src_inst && dst_slot_id <= EmuConstants::EQUIPMENT_END && dst_slot_id >= EmuConstants::EQUIPMENT_BEGIN) {
-			if (src_inst->GetItem()->Attuneable) {
-				src_inst->SetInstNoDrop(true);
-			}
 			SetMaterial(dst_slot_id,src_inst->GetItem()->ID);
 		}
 		if(!m_inv.SwapItem(src_slot_id, dst_slot_id)) {
@@ -1800,9 +1791,8 @@ void Client::RemoveDuplicateLore(bool client_update) {
 
 		for (auto iter = local_2.begin(); iter != local_2.end(); ++iter) {
 			auto inst = *iter;
-			if (!inst->GetItem()->LoreFlag ||
-				((inst->GetItem()->LoreGroup == -1) && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX)) ||
-				(inst->GetItem()->LoreGroup && (~inst->GetItem()->LoreGroup) && (m_inv.HasItemByLoreGroup(inst->GetItem()->LoreGroup, invWhereCursor) == INVALID_INDEX))) {
+			if ((inst->GetItem()->Lore[0] != '*') ||
+				((inst->GetItem()->Lore[0] == '*') && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX))) {
 				
 				m_inv.PushCursor(*inst);
 			}
@@ -1835,7 +1825,7 @@ void Client::MoveSlotNotAllowed(bool client_update)
 		}
 	}
 
-	// No need to check inventory, cursor, bank or shared bank since they allow max item size and containers -U
+	// No need to check inventory, cursor, bank since they allow max item size and containers -U
 	// Code can be added to check item size vs. container size, but it is left to attrition for now.
 }
 
@@ -2203,9 +2193,9 @@ void Client::InterrogateInventory_(bool errorcheck, Client* requester, int16 hea
 		std::string p;
 		std::string e;
 
-		if (inst) { i = StringFormat("%s (class: %u | augtype: %u)", inst->GetItem()->Name, inst->GetItem()->ItemClass, inst->GetItem()->AugType); }
+		if (inst) { i = StringFormat("%s (class: %u)", inst->GetItem()->Name, inst->GetItem()->ItemClass); }
 		else { i = "NONE"; }
-		if (parent) { p = StringFormat("%s (class: %u | augtype: %u), index: %i", parent->GetItem()->Name, parent->GetItem()->ItemClass, parent->GetItem()->AugType, index); }
+		if (parent) { p = StringFormat("%s (class: %u), index: %i", parent->GetItem()->Name, parent->GetItem()->ItemClass,index); }
 		else { p = "NONE"; }
 		if (localerror) { e = " [ERROR]"; }
 		else { e = ""; }

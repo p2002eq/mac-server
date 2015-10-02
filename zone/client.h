@@ -342,7 +342,7 @@ public:
 
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
-	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr);
+	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr, bool skipskill = false);
 	bool GetPickPocketSlot(ItemInst* inst, int16& slotid);
 
 	inline const char* GetLastName() const { return lastname; }
@@ -433,10 +433,6 @@ public:
 	inline virtual int32 GetCombatEffects() const { return itembonuses.ProcChance; }
 	inline virtual int32 GetDS() const { return itembonuses.DamageShield; }
 	// Mod3
-	inline virtual int32 GetHealAmt() const { return itembonuses.HealAmt; }
-	inline virtual int32 GetSpellDmg() const { return itembonuses.SpellDmg; }
-	inline virtual int32 GetDSMit() const { return itembonuses.DSMitigation; }
-
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }
 	inline virtual int32 GetBrassMod() const { return itembonuses.brassMod; }
 	inline virtual int32 GetPercMod() const { return itembonuses.percussionMod; }
@@ -532,7 +528,7 @@ public:
 
 	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
 	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
-	int32 GetCharacterFactionLevel(int32 faction_id);
+	int32 GetCharacterFactionLevel(int32 faction_id, bool updating = false);
 	int32 GetModCharacterFactionLevel(int32 faction_id);
 	void MerchantRejectMessage(Mob *merchant, int primaryfaction);
 	void SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp,  int32 this_faction_min, int32 this_faction_max);
@@ -605,7 +601,7 @@ public:
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
 	void	CheckSpecializeIncrease(uint16 spell_id);
 	void	CheckSongSkillIncrease(uint16 spell_id);
-	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi = 0); //valid values for chancemodi are -20 to 20
+	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty = 7.0, float success = 2.0); //valid values for difficulty are 1 to 15. Success is a float simply so we don't need to cast
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
@@ -735,7 +731,6 @@ public:
 	eqFilterMode GetFilter(eqFilterType filter_id) const { return ClientFilters[filter_id]; }
 	void SetFilter(eqFilterType filter_id, eqFilterMode value) { ClientFilters[filter_id]=value; }
 
-	void BreakInvis();
 	void LeaveGroup();
 
 	bool Hungry() const {if (GetGM()) return false; return m_pp.hunger_level <= 3000;}
@@ -934,7 +929,6 @@ public:
 	void SetEngagedRaidTarget(bool value) { EngagedRaidTarget = value; }
 	bool GetEngagedRaidTarget() const { return EngagedRaidTarget; }
 
-	void ShowNumHits(); // work around function for numhits not showing on buffs
 	bool IsTargetInMyGroup(Client* target);
 
 	void TripInterrogateInvState() { interrogateinv_flag = true; }
@@ -1035,7 +1029,6 @@ private:
 	int32 CalcDR();
 	int32 CalcPR();
 	int32 CalcCR();
-	int32 CalcCorrup();
 	int32 CalcMaxHP();
 	int32 CalcBaseHP();
 	int32 CalcHPRegen();

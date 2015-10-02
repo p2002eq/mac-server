@@ -180,7 +180,7 @@ bool Client::Process() {
 		if (bindwound_timer.Check() && bindwound_target != 0) {
 			if(BindWound(bindwound_target, false))
 			{
-				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+				CheckIncreaseSkill(SkillBindWound, nullptr, zone->skill_difficulty[SkillBindWound].difficulty, 1.0);
 			}
 			else
 			{
@@ -302,7 +302,7 @@ bool Client::Process() {
 				bool tripleAttackSuccess = false;
 				if( auto_attack_target && CanThisClassDoubleAttack() ) {
 
-					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, -10);
+					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, zone->skill_difficulty[SkillDoubleAttack].difficulty);
 					if(CheckDoubleAttack()) {
 						//should we allow rampage on double attack?
 						if(CheckAAEffect(aaEffectRampage)) {
@@ -396,7 +396,7 @@ bool Client::Process() {
 				DualWieldProbability += DualWieldProbability*float(DWBonus)/ 100.0f;
 
 				float random = zone->random.Real(0, 1);
-				CheckIncreaseSkill(SkillDualWield, auto_attack_target, -10);
+				CheckIncreaseSkill(SkillDualWield, auto_attack_target, zone->skill_difficulty[SkillDualWield].difficulty);
 				if (random < DualWieldProbability){ // Max 78% of DW
 					if(CheckAAEffect(aaEffectRampage)) {
 						entity_list.AEAttack(this, 30, MainSecondary);
@@ -1243,25 +1243,6 @@ void Client::OPMemorizeSpell(const EQApplicationPacket* app)
 	Save();
 }
 
-void Client::BreakInvis()
-{
-	if (invisible)
-	{
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
-		sa_out->spawn_id = GetID();
-		sa_out->type = 0x03;
-		sa_out->parameter = 0;
-		entity_list.QueueClients(this, outapp, true);
-		safe_delete(outapp);
-		invisible = false;
-		invisible_undead = false;
-		invisible_animals = false;
-		hidden = false;
-		improved_hidden = false;
-	}
-}
-
 static uint64 CoinTypeCoppers(uint32 type) {
 	switch(type) {
 	case COINTYPE_PP:
@@ -1374,23 +1355,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 			// can't move coin from trade
 			break;
 		}
-		case 4:	// shared bank
-		{
-			uint32 distance = 0;
-			NPC *banker = entity_list.GetClosestBanker(this, distance);
-			if(!banker || distance > USE_NPC_RANGE2)
-			{
-				char *hacked_string = nullptr;
-				MakeAnyLenString(&hacked_string, "Player tried to make use of a banker(shared coin move) but %s is non-existant or too far away (%u units).",
-					banker ? banker->GetName() : "UNKNOWN NPC", distance);
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacked_string, zone->GetShortName());
-				safe_delete_array(hacked_string);
-				return;
-			}
-			if(mc->cointype1 == COINTYPE_PP)	// there's only platinum here
-				from_bucket = (int32 *) &m_pp.platinum_shared;
-			break;
-		}
 	}
 
 	switch(mc->to_slot)
@@ -1472,23 +1436,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 						to_bucket = (int32 *) &trade->cp; break;
 				}
 			}
-			break;
-		}
-		case 4:	// shared bank
-		{
-			uint32 distance = 0;
-			NPC *banker = entity_list.GetClosestBanker(this, distance);
-			if(!banker || distance > USE_NPC_RANGE2)
-			{
-				char *hacked_string = nullptr;
-				MakeAnyLenString(&hacked_string, "Player tried to make use of a banker(shared coin move) but %s is non-existant or too far away (%u units).",
-					banker ? banker->GetName() : "UNKNOWN NPC", distance);
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacked_string, zone->GetShortName());
-				safe_delete_array(hacked_string);
-				return;
-			}
-			if(mc->cointype2 == COINTYPE_PP)	// there's only platinum here
-				to_bucket = (int32 *) &m_pp.platinum_shared;
 			break;
 		}
 	}
