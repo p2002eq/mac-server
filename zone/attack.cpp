@@ -164,7 +164,7 @@ bool Mob::AttackAnimation(SkillUseTypes &skillinuse, int Hand, const ItemInst* w
 
 // called when a mob is attacked, does the checks to see if it's a hit
 // and does other mitigation checks. 'this' is the mob being attacked.
-bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 chance_mod)
+bool Mob::CheckHitChance(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod)
 {
 /*/
 		//Reworked a lot of this code to achieve better balance at higher levels.
@@ -172,7 +172,6 @@ bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 c
 		//both parties always had 95% chance to hit the other one.
 /*/
 
-	Mob *attacker=other;
 	Mob *defender=this;
 	float chancetohit = RuleR(Combat, BaseHitChance);
 
@@ -182,7 +181,7 @@ bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 c
 	Log.Out(Logs::Detail, Logs::Attack, "CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
 
 	bool pvpmode = false;
-	if(IsClient() && other->IsClient())
+	if(IsClient() && attacker->IsClient())
 		pvpmode = true;
 
 	if (chance_mod >= 10000)
@@ -333,7 +332,96 @@ bool Mob::CheckHitChance(Mob* other, SkillUseTypes skillinuse, int Hand, int16 c
 	return(tohit_roll <= chancetohit);
 }
 
-bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
+bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod)
+{
+	Mob *defender = this;
+
+	if (chance_mod >= 10000)
+		return true;
+
+	int32 toHit = attacker->GetToHit();
+	int32 avoidance = defender->GetAvoidance();
+	int32 percentMod = 0;
+
+	Log.Out(Logs::Detail, Logs::Attack, "AvoidanceCheck: %s attacked by %s;  Avoidance: %i  To-Hit: %i", defender->GetName(), attacker->GetName(), avoidance, toHit);
+
+	// Hit Chance percent modifier
+	// Disciplines: Evasive, Precision, Deadeye, Trueshot, Charge
+	percentMod = attacker->itembonuses.HitChanceEffect[skillinuse] +
+		attacker->spellbonuses.HitChanceEffect[skillinuse] +
+		attacker->aabonuses.HitChanceEffect[skillinuse] +
+		attacker->itembonuses.HitChanceEffect[HIGHEST_SKILL + 1] +
+		attacker->spellbonuses.HitChanceEffect[HIGHEST_SKILL + 1] +
+		attacker->aabonuses.HitChanceEffect[HIGHEST_SKILL + 1];
+
+	// Avoidance chance percent modifier
+	// Disciplines: Evasive, Precision, Voiddance, Fortitude
+	percentMod -= (defender->spellbonuses.AvoidMeleeChanceEffect +
+		defender->itembonuses.AvoidMeleeChanceEffect +
+		defender->aabonuses.AvoidMeleeChanceEffect);
+
+	percentMod += chance_mod;
+
+	if (percentMod != 0)
+	{
+		if (skillinuse == SkillArchery && percentMod > 0)
+			percentMod -= static_cast<int32>(static_cast<float>(percentMod) * RuleR(Combat, ArcheryHitPenalty));
+
+		Log.Out(Logs::Detail, Logs::Attack, "Modified chance to hit: %i%%", percentMod);
+
+		if (percentMod > 0)
+		{
+			if (zone->random.Int(0, 100) > percentMod)
+			{
+				Log.Out(Logs::Detail, Logs::Attack, "Modified Hit");
+				return true;
+			}
+		}
+		else
+		{
+			if (zone->random.Int(0, 100) > -percentMod)
+			{
+				Log.Out(Logs::Detail, Logs::Attack, "Modified Miss");
+				return false;
+			}
+		}
+	}
+
+	/*
+		This is an approximation of Sony's unknown function.  It is not precise.
+		I needed two different curves to fit the data well. This fits the data
+		within +/-1% for most levels, but does not model very low avoidance or
+		to-hit values as well. (still around +/- a few percent, way better than
+		the old code)
+
+		The data these curves conform to was parsed from PC vs PC combat duels
+		with precisely known avoidance and to-hit values.  It's possible PC vs
+		PC combat follows different rules, but as the NPC to-hit values were
+		also derived from this curve, the hit rate still ends up accurate even
+		if the to-hit values for NPCs are wrong.
+	*/
+	if (toHit > avoidance)
+	{
+		if (zone->random.Real(0.0, 1.0) > (avoidance / (toHit*1.75)))		// this calculates the miss rate, not the hit rate
+		{
+			Log.Out(Logs::Detail, Logs::Attack, "Hit");
+			return true;
+		}
+	}
+	else
+	{
+		if (zone->random.Real(0.0, 1.0) < (toHit / 2.2 / avoidance))		// hit rate
+		{
+			Log.Out(Logs::Detail, Logs::Attack, "Hit");
+			return true;
+		}
+	}
+
+	Log.Out(Logs::Detail, Logs::Attack, "Miss");
+	return false;
+}
+
+bool Mob::AvoidDamage(Mob* other, int32 &damage, int hand)
 {
 	/* solar: called when a mob is attacked, does the checks to see if it's a hit
 	* and does other mitigation checks. 'this' is the mob being attacked.
@@ -345,179 +433,190 @@ bool Mob::AvoidDamage(Mob* other, int32 &damage, bool CanRiposte)
 	* -4 - dodge
 	*
 	*/
-	float skill;
-	float bonus;
-	float RollTable[4] = {0,0,0,0};
-	float roll;
-	Mob *attacker=other;
-	Mob *defender=this;
+	/* Order according to current (SoF+?) dev quotes:
+	* https://forums.daybreakgames.com/eq/index.php?threads/test-update-06-10-15.223510/page-2#post-3261772
+	* https://forums.daybreakgames.com/eq/index.php?threads/test-update-06-10-15.223510/page-2#post-3268227
+	* Riposte 50, hDEX, must have weapon/fists, doesn't work on archery/throwing
+	* Block 25, hDEX, works on archery/throwing, behind block done here if back to attacker base1 is chance
+	* Parry 45, hDEX, doesn't work on throwing/archery, must be facing target
+	* Dodge 45, hAGI, works on archery/throwing, monks can dodge attacks from behind
+	* Shield Block, rand base1
+	* Staff Block, rand base1 (Alaris AA; not implemented here)
+	*    regular strike through
+	*    avoiding the attack (CheckHitChance)
+	* As soon as one succeeds, none of the rest are checked
+	*
+	* Formula (all int math)
+	* (posted for parry, assume rest at the same)
+	* Chance = (((SKILL + 100) + [((SKILL+100) * SPA(175).Base1) / 100]) / 45) + [(hDex / 25) - min([hDex / 25], hStrikethrough)].
+	* hStrikethrough is a mob stat that was added to counter the bonuses of heroic stats
+	* Number rolled against 100, if the chance is greater than 100 it happens 100% of time
+	*
+	* Things with 10k accuracy mods can be avoided with these skills qq
+	*/
+	Mob *attacker = other;
+	Mob *defender = this;
 
-	//garunteed hit
-	bool ghit = false;
-	if((attacker->spellbonuses.MeleeSkillCheck + attacker->itembonuses.MeleeSkillCheck) > 500)
-		ghit = true;
+	bool InFront = attacker->InFrontMob(this, attacker->GetX(), attacker->GetY());
 
 	//////////////////////////////////////////////////////////
 	// make enrage same as riposte
 	/////////////////////////////////////////////////////////
-	if (IsEnraged() && other->InFrontMob(this, other->GetX(), other->GetY())) {
+	if (IsEnraged() && InFront) {
 		damage = -3;
 		Log.Out(Logs::Detail, Logs::Combat, "I am enraged, riposting frontal attack.");
 	}
 
-	/////////////////////////////////////////////////////////
-	// riposte
-	/////////////////////////////////////////////////////////
-	float riposte_chance = 0.0f;
-	if (CanRiposte && damage > 0 && CanThisClassRiposte() && other->InFrontMob(this, other->GetX(), other->GetY()))
+	// Need to check if we have something in MainHand to actually attack with (or fists)
+	if (hand != MainRange && CanThisClassRiposte() && InFront)
 	{
-		riposte_chance = (100.0f + (float)defender->aabonuses.RiposteChance + (float)defender->spellbonuses.RiposteChance + (float)defender->itembonuses.RiposteChance) / 100.0f;
-
-		skill = GetSkill(SkillRiposte);
-		if (IsClient()) {
+		if (IsClient())
 			CastToClient()->CheckIncreaseSkill(SkillRiposte, other, zone->skill_difficulty[SkillRiposte].difficulty);
-		}
 
-		if (!ghit) {	//if they are not using a garunteed hit discipline
-			bonus = 2.0 + skill/60.0 + (GetDEX()/200);
-			bonus *= riposte_chance;
-			bonus = mod_riposte_chance(bonus, attacker);
-			RollTable[0] = bonus; // 25 heroic = 1%, applies to ripo, parry, block
-		}
-	}
-
-	///////////////////////////////////////////////////////
-	// block
-	///////////////////////////////////////////////////////
-
-	bool bBlockFromRear = false;
-	bool bShieldBlockFromRear = false;
-
-	if (this->IsClient()) {
-		int aaChance = 0;
-
-		// a successful roll on this does not mean a successful block is forthcoming. only that a chance to block
-		// from a direction other than the rear is granted.
-
-		//Live AA - HightenedAwareness
-		int BlockBehindChance = aabonuses.BlockBehind + spellbonuses.BlockBehind + itembonuses.BlockBehind;
-
-		if (BlockBehindChance && zone->random.Roll(BlockBehindChance)) {
-			bBlockFromRear = true;
-
-			if (spellbonuses.BlockBehind || itembonuses.BlockBehind)
-				bShieldBlockFromRear = true; //This bonus should allow a chance to Shield Block from behind.
-		}
-	}
-
-	float block_chance = 0.0f;
-	if (damage > 0 && CanThisClassBlock() && (other->InFrontMob(this, other->GetX(), other->GetY()) || bBlockFromRear)) {
-		block_chance = (100.0f + (float)spellbonuses.IncreaseBlockChance + (float)itembonuses.IncreaseBlockChance) / 100.0f;
-
-		skill = GetSkill(SkillBlock);
-		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillBlock, other, zone->skill_difficulty[SkillBlock].difficulty);
-		}
-
-		if (!ghit) {	//if they are not using a garunteed hit discipline
-			bonus = 2.0 + skill/35.0 + (GetDEX()/200);
-			bonus = mod_block_chance(bonus, attacker);
-			RollTable[1] = RollTable[0] + (bonus * block_chance);
-		}
-	}
-	else{
-		RollTable[1] = RollTable[0];
-	}
-
-	if(damage > 0 && HasShieldEquiped()	&& (aabonuses.ShieldBlock || spellbonuses.ShieldBlock || itembonuses.ShieldBlock)
-		&& (other->InFrontMob(this, other->GetX(), other->GetY()) || bShieldBlockFromRear)) {
-
-		float bonusShieldBlock = 0.0f;
-		bonusShieldBlock = static_cast<float>(aabonuses.ShieldBlock + spellbonuses.ShieldBlock + itembonuses.ShieldBlock);
-		RollTable[1] += bonusShieldBlock;
-	}
-
-	if(IsClient() && damage > 0 && (aabonuses.TwoHandBluntBlock || spellbonuses.TwoHandBluntBlock || itembonuses.TwoHandBluntBlock)
-		&& (other->InFrontMob(this, other->GetX(), other->GetY()) || bShieldBlockFromRear)) {
-		if(CastToClient()->m_inv.GetItem(MainPrimary)) {
-			float bonusStaffBlock = 0.0f;
-			if (CastToClient()->m_inv.GetItem(MainPrimary)->GetItem()->ItemType == ItemType2HBlunt){
-				bonusStaffBlock = static_cast<float>(aabonuses.TwoHandBluntBlock + spellbonuses.TwoHandBluntBlock + itembonuses.TwoHandBluntBlock);
-				RollTable[1] += bonusStaffBlock;
-			}
-		}
-	}
-
-	//////////////////////////////////////////////////////
-	// parry
-	//////////////////////////////////////////////////////
-	float parry_chance = 0.0f;
-	if (damage > 0 && CanThisClassParry() && other->InFrontMob(this, other->GetX(), other->GetY()))
-	{
-		parry_chance = (100.0f + (float)defender->spellbonuses.ParryChance + (float)defender->itembonuses.ParryChance) / 100.0f;
-
-		skill = GetSkill(SkillParry);
-		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillParry, other, zone->skill_difficulty[SkillParry].difficulty);
-		}
-
-		if (!ghit) {	//if they are not using a garunteed hit discipline
-			bonus = 2.0 + skill/60.0 + (GetDEX()/200);
-			bonus *= parry_chance;
-			bonus = mod_parry_chance(bonus, attacker);
-			RollTable[2] = RollTable[1] + bonus;
-		}
-	}
-	else{
-		RollTable[2] = RollTable[1];
-	}
-
-	////////////////////////////////////////////////////////
-	// dodge
-	////////////////////////////////////////////////////////
-	float dodge_chance = 0.0f;
-	if (damage > 0 && CanThisClassDodge() && other->InFrontMob(this, other->GetX(), other->GetY()))
-	{
-		dodge_chance = (100.0f + (float)defender->spellbonuses.DodgeChance + (float)defender->itembonuses.DodgeChance) / 100.0f;
-
-		skill = GetSkill(SkillDodge);
-		if (IsClient()) {
-			CastToClient()->CheckIncreaseSkill(SkillDodge, other, zone->skill_difficulty[SkillDodge].difficulty);
-		}
-
-		if (!ghit) {	//if they are not using a garunteed hit discipline
-			bonus = 2.0 + skill/60.0 + (GetAGI()/200);
-			bonus *= dodge_chance;
-			//DCBOOMKAR
-			bonus = mod_dodge_chance(bonus, attacker);
-			RollTable[3] = RollTable[2] + bonus;
-		}
-	}
-	else{
-		RollTable[3] = RollTable[2];
-	}
-
-	if(damage > 0){
-		roll = zone->random.Real(0,100);
-		if(roll <= RollTable[0]){
+		// check auto discs ... I guess aa/items too :P
+		if (spellbonuses.RiposteChance == 10000 || aabonuses.RiposteChance == 10000 || itembonuses.RiposteChance == 10000) {
 			damage = -3;
+			return true;
 		}
-		else if(roll <= RollTable[1]){
-			damage = -1;
-		}
-		else if(roll <= RollTable[2]){
-			damage = -2;
-		}
-		else if(roll <= RollTable[3]){
-			damage = -4;
+
+		int chance = GetSkill(SkillRiposte) + 100;
+		chance += (chance * (aabonuses.RiposteChance + spellbonuses.RiposteChance + itembonuses.RiposteChance)) / 100;
+		chance /= 50;
+
+		if (chance > 0 && zone->random.Roll(chance)) { // could be <0 from offhand stuff
+			damage = -3;
+			return true;
 		}
 	}
 
-	Log.Out(Logs::Detail, Logs::Combat, "Final damage after all avoidances: %d", damage);
+	// block
+	bool bBlockFromRear = false;
 
-	if (damage < 0)
-		return true;
+	// a successful roll on this does not mean a successful block is forthcoming. only that a chance to block
+	// from a direction other than the rear is granted.
+
+	int BlockBehindChance = aabonuses.BlockBehind + spellbonuses.BlockBehind + itembonuses.BlockBehind;
+
+	if (BlockBehindChance && zone->random.Roll(BlockBehindChance))
+		bBlockFromRear = true;
+
+	if (CanThisClassBlock() && (InFront || bBlockFromRear)) {
+		if (IsClient())
+			CastToClient()->CheckIncreaseSkill(SkillBlock, other, zone->skill_difficulty[SkillBlock].difficulty);
+
+			// check auto discs ... I guess aa/items too :P
+		if (spellbonuses.IncreaseBlockChance == 10000 || aabonuses.IncreaseBlockChance == 10000 ||
+			itembonuses.IncreaseBlockChance == 10000) {
+			damage = -1;
+			return true;
+		}
+		int chance = GetSkill(SkillBlock) + 100;
+		chance += (chance * (aabonuses.IncreaseBlockChance + spellbonuses.IncreaseBlockChance + itembonuses.IncreaseBlockChance)) / 100;
+		chance /= 25;
+
+		if (zone->random.Roll(chance)) {
+			damage = -1;
+			return true;
+		}
+	}
+
+	// parry
+	if (CanThisClassParry() && InFront && hand != MainRange)
+	{
+		if (IsClient())
+			CastToClient()->CheckIncreaseSkill(SkillParry, other, zone->skill_difficulty[SkillParry].difficulty);
+
+		// check auto discs ... I guess aa/items too :P
+		if (spellbonuses.ParryChance == 10000 || aabonuses.ParryChance == 10000 || itembonuses.ParryChance == 10000) {
+			damage = -2;
+			return true;
+		}
+		int chance = GetSkill(SkillParry) + 100;
+		chance += (chance * (aabonuses.ParryChance + spellbonuses.ParryChance + itembonuses.ParryChance)) / 100;
+		chance /= 45;
+
+		if (zone->random.Roll(chance)) {
+			damage = -2;
+			return true;
+		}
+	}
+
+	// dodge
+	if (CanThisClassDodge() && (InFront || GetClass() == MONK))
+	{
+		if (IsClient())
+			CastToClient()->CheckIncreaseSkill(SkillDodge, other, zone->skill_difficulty[SkillDodge].difficulty);
+
+		// check auto discs ... I guess aa/items too :P
+		if (spellbonuses.DodgeChance == 10000 || aabonuses.DodgeChance == 10000 || itembonuses.DodgeChance == 10000) {
+			damage = -4;
+			return true;
+		}
+		int chance = GetSkill(SkillDodge) + 100;
+		chance += (chance * (aabonuses.DodgeChance + spellbonuses.DodgeChance + itembonuses.DodgeChance)) / 100;
+		chance /= 45;
+
+		if (zone->random.Roll(chance)) {
+			damage = -4;
+			return true;
+		}
+	}
+
+	// Try Shield Block
+	if (HasShieldEquiped() && (aabonuses.ShieldBlock || spellbonuses.ShieldBlock || itembonuses.ShieldBlock) && (InFront || bBlockFromRear))
+	{
+		int chance = aabonuses.ShieldBlock + spellbonuses.ShieldBlock + itembonuses.ShieldBlock;
+
+		if (zone->random.Roll(chance)) {
+			damage = -1;
+			return true;
+		}
+	}
+
 	return false;
+}
+
+/*
+	This function employs the Box-Muller Transform to generate a Guassian Distribution bell curve.
+	EQ's mitigation is based on a 1-20 roll derived from a bell curve as mentioned in this post:
+	https://forums.daybreakgames.com/eq/index.php?threads/so-are-melee-still-crap.224298/page-3#post-3297852
+	and also is easily observed in parsed logs.  DI1 and DI20 are more frequent because the trailing ends
+	of the curve are added together.  This is not a perfect representation of Sony's function, but fairly close.
+
+	Returns a value from 1 to 20, inclusive.
+*/
+int8 Mob::RollD20(int32 offense, int32 mitigation)
+{
+	double diff = static_cast<double>(offense) - static_cast<double>(mitigation);
+	double mean = 0;
+
+	// changing the mean shifts the bell curve
+	// this was mostly determined by trial and error to find what fit best
+	if (offense > mitigation)
+	{
+		mean = diff / offense * 15;
+	}
+	else if (mitigation > offense)
+	{
+		mean = diff / mitigation * 15;
+	}
+	double stddev = 8.7;	// standard deviation adjusts the height of the bell
+							// again, trial and error to find what fit best
+	double theta = 2 * M_PI * zone->random.Real(0.0, 1.0);
+	double rho = sqrt(-2 * log(1 - zone->random.Real(0.0, 1.0)));
+	double d = mean + stddev * rho * cos(theta);
+
+	// this combined with the stddev will produce ~15% DI1 and ~15% DI20 when mitigation == offense
+	if (d < -9.5)
+	{
+		d = -9.5;
+	}
+	else if (d > 9.5)
+	{
+		d = 9.5;
+	}
+	d = d + 11;
+	return static_cast<int8>(d);
 }
 
 void Mob::MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttackOptions *opts)
@@ -1205,136 +1304,177 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 	Log.Out(Logs::Detail, Logs::Combat, "Attacking with %s in slot %d using skill %d", weapon?weapon->GetItem()->Name:"Fist", Hand, skillinuse);
 
 	/// Now figure out damage
-	int damage = 0;
+	int damage = 1;
 	uint8 mylevel = GetLevel() ? GetLevel() : 1;
 	uint32 hate = 0;
-	if (weapon) hate = weapon->GetItem()->Damage + weapon->GetItem()->ElemDmgAmt;
+	if (weapon)
+	{
+		hate = weapon->GetItem()->Damage + weapon->GetItem()->ElemDmgAmt;
+	}
 	int weapon_damage = GetWeaponDamage(other, weapon, &hate);
-	if (hate == 0 && weapon_damage > 1) hate = weapon_damage;
 
 	//if weapon damage > 0 then we know we can hit the target with this weapon
 	//otherwise we cannot and we set the damage to -5 later on
-	if(weapon_damage > 0){
-
-		//try a finishing blow.. if successful end the attack
-		if(TryFinishingBlow(other, skillinuse))
-			return (true);
-
-		int min_hit = 1;
-		int max_hit = (2 * weapon_damage*GetDamageTable(skillinuse)) / 100;
-
-		if (GetLevel() < 10 && max_hit > RuleI(Combat, HitCapPre10))
-			max_hit = (RuleI(Combat, HitCapPre10));
-		else if (GetLevel() < 20 && max_hit > RuleI(Combat, HitCapPre20))
-			max_hit = (RuleI(Combat, HitCapPre20));
-
-		CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
-		CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
-
-		// ***************************************************************
-		// *** Calculate the damage bonus, if applicable, for this hit ***
-		// ***************************************************************
-
-		int ucDamageBonus = 0;
-
-		if (Hand == MainPrimary && GetLevel() >= 28 && IsWarriorClass())
-		{
-			// Damage bonuses apply only to hits from the main hand (Hand == MainPrimary) by characters level 28 and above
-			// who belong to a melee class. If we're here, then all of these conditions apply.
-
-			ucDamageBonus = GetWeaponDamageBonus(weapon ? weapon->GetItem() : (const Item_Struct*) nullptr);
-
-			min_hit += (int)ucDamageBonus;
-			max_hit += (int)ucDamageBonus;
-			hate += ucDamageBonus;
-		}
-
-		//Live AA - Sinister Strikes *Adds weapon damage bonus to offhand weapon.
-		if (Hand == MainSecondary) {
-			if (aabonuses.SecondaryDmgInc || itembonuses.SecondaryDmgInc || spellbonuses.SecondaryDmgInc){
-
-				ucDamageBonus = GetWeaponDamageBonus( weapon ? weapon->GetItem() : (const Item_Struct*) nullptr );
-
-				min_hit += (int) ucDamageBonus;
-				max_hit += (int) ucDamageBonus;
-				hate += ucDamageBonus;
-			}
-		}
-
-		min_hit += min_hit * GetMeleeMinDamageMod_SE(skillinuse) / 100;
-
-		if(max_hit < min_hit)
-			max_hit = min_hit;
-
-		if(RuleB(Combat, UseIntervalAC))
-			damage = max_hit;
-		else
-			damage = zone->random.Int(min_hit, max_hit);
-
-		damage = mod_client_damage(damage, skillinuse, Hand, weapon, other);
-
-		Log.Out(Logs::Detail, Logs::Combat, "Damage calculated to %d (min %d, max %d, str %d, skill %d, DMG %d, lv %d)",
-			damage, min_hit, max_hit, GetSTR(), GetSkill(skillinuse), weapon_damage, mylevel);
-
-		int hit_chance_bonus = 0;
-
-		if(opts) {
-			damage *= opts->damage_percent;
-			damage += opts->damage_flat;
-			hate *= opts->hate_percent;
-			hate += opts->hate_flat;
-			hit_chance_bonus += opts->hit_chance;
-		}
-
-		//check to see if we hit..
-		if(!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus)) {
-			Log.Out(Logs::Detail, Logs::Combat, "Attack missed. Damage set to 0.");
-			damage = 0;
-		} else {	//we hit, try to avoid it
-			other->AvoidDamage(this, damage);
-			other->MeleeMitigation(this, damage, min_hit, opts);
-			if(damage > 0)
-				CommonOutgoingHitSuccess(other, damage, skillinuse);
-
-			Log.Out(Logs::Detail, Logs::Combat, "Final damage after all reductions: %d", damage);
-		}
+	if(weapon_damage > 0)
+	{
+		// check avoidance skills
+		other->AvoidDamage(this, damage, Hand);
 
 		//riposte
-		bool slippery_attack = false; // Part of hack to allow riposte to become a miss, but still allow a Strikethrough chance (like on Live)
-		if (damage == -3) {
-			if (bRiposte) return false;
-			else {
-				if (Hand == MainSecondary) {// Do we even have it & was attack with mainhand? If not, don't bother with other calculations
-					//Live AA - SlipperyAttacks
-					//This spell effect most likely directly modifies the actual riposte chance when using offhand attack.
-					int32 OffhandRiposteFail = aabonuses.OffhandRiposteFail + itembonuses.OffhandRiposteFail + spellbonuses.OffhandRiposteFail;
-					OffhandRiposteFail *= -1; //Live uses a negative value for this.
-
-					if (OffhandRiposteFail &&
-						(OffhandRiposteFail > 99 || zone->random.Roll(OffhandRiposteFail))) {
-						damage = 0; // Counts as a miss
-						slippery_attack = true;
-					} else
-						DoRiposte(other);
-						if (IsDead()) return false;
-				}
-				else
-					DoRiposte(other);
-					if (IsDead()) return false;
+		if (damage == -3)
+		{
+			if (bRiposte)
+			{
+				return false;
+			}
+			else
+			{
+				DoRiposte(other);
+				if (IsDead()) return false;
 			}
 		}
 
-		if (((damage < 0) || slippery_attack) && !bRiposte && !IsStrikethrough) { // Hack to still allow Strikethrough chance w/ Slippery Attacks AA
+		// Strikethrough
+		if (((damage < 0)) && !bRiposte && !IsStrikethrough)
+		{
 			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
 
-			if(bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough)) {
+			if (bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough))
+			{
 				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
 				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
 				return false;
 			}
 		}
+
+		if (damage > 0)
+		{
+			// swing not avoided by skills; do avoidance AC check
+
+			int hit_chance_bonus = 0;
+			if (opts)
+			{
+				hit_chance_bonus += opts->hit_chance;
+			}
+
+			//if (!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus))
+			if (!other->AvoidanceCheck(this, skillinuse, Hand, hit_chance_bonus))
+			{
+				Log.Out(Logs::Detail, Logs::Combat, "Attack missed. Damage set to 0.");
+				damage = 0;
+			}
+		}
+
+		if (damage > 0)
+		{
+			//try a finishing blow.. if successful end the attack
+			if(TryFinishingBlow(other, skillinuse))
+				return (true);
+
+			int32 offense = GetOffense(skillinuse);
+			int32 mitigation = other->GetMitigation();
+
+			if (opts)
+			{
+				mitigation = static_cast<int32>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
+				mitigation -= opts->armor_pen_flat;
+				if (mitigation < 1)
+				{
+					mitigation = 1;
+				}
+			}
+
+			// mitigation roll
+			uint16 roll = RollD20(offense, mitigation);
+
+			damage = (roll * weapon_damage * 10 + 5) / 100;				// damage rounds to nearest whole number
+			
+			// 80% chance to apply a damage multiplier roll for clients if sufficient offense
+			// many logs were parsed for this
+			if (offense > 153 && zone->random.Int(1, 100) > 20)
+			{
+				if (level <= 50)
+				{
+					roll = offense * 37 / 100 + 50;
+				}
+				else
+				{
+					roll = offense * 37 / 100 + level + 10;
+				}
+				roll = zone->random.Int(100, roll);
+
+				uint16 cap = GetDamageTable(skillinuse);
+
+				if (roll > cap)
+				{
+					roll = cap;
+				}
+
+				damage = damage * roll / 100;
+			}
+
+			if (mylevel < 10 && damage > RuleI(Combat, HitCapPre10))
+				damage = (RuleI(Combat, HitCapPre10));
+			else if (mylevel < 20 && damage > RuleI(Combat, HitCapPre20))
+				damage = (RuleI(Combat, HitCapPre20));
+
+			CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
+			CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
+
+			// ***************************************************************
+			// *** Calculate the damage bonus, if applicable, for this hit ***
+			// ***************************************************************
+
+			int ucDamageBonus = 0;
+
+			if (Hand == MainPrimary && mylevel >= 28 && IsWarriorClass())
+			{
+				// Damage bonuses apply only to hits from the main hand (Hand == MainPrimary) by characters level 28 and above
+				// who belong to a melee class. If we're here, then all of these conditions apply.
+
+				ucDamageBonus = GetWeaponDamageBonus(weapon ? weapon->GetItem() : (const Item_Struct*) nullptr);
+
+				damage += ucDamageBonus;
+				hate += ucDamageBonus;
+			}
+
+			int min_hit = (weapon_damage + 5) / 10 + ucDamageBonus;		// +5 is to round to nearest whole number
+
+			min_hit += min_hit * GetMeleeMinDamageMod_SE(skillinuse) / 100;
+
+			if (min_hit < 1) min_hit = 1;
+			if (damage < min_hit) damage = min_hit;
+
+			damage = mod_client_damage(damage, skillinuse, Hand, weapon, other);
+
+			Log.Out(Logs::Detail, Logs::Combat, "Damage calculated to %d (min %d, str %d, skill %d, DMG %d, lv %d)",
+				damage, min_hit, GetSTR(), GetSkill(skillinuse), weapon_damage, mylevel);
+
+			if(opts)
+			{
+				damage = static_cast<int>(opts->damage_percent * static_cast<float>(damage));
+				damage += opts->damage_flat;
+				hate = static_cast<uint32>(opts->hate_percent * static_cast<float>(hate));
+				hate += opts->hate_flat;
+			}
+
+			if (other->IsClient() && min_hit > 1)
+			{
+				// shielding
+				damage -= (min_hit * other->GetItemBonuses().MeleeMitigation / 100);
+				// defensive disc
+				damage -= (damage * (other->GetSpellBonuses().MeleeMitigationEffect
+									+ other->GetItemBonuses().MeleeMitigationEffect
+									+ other->GetAABonuses().MeleeMitigationEffect) / 100);
+			}
+
+			CommonOutgoingHitSuccess(other, damage, skillinuse);
+
+			Log.Out(Logs::Detail, Logs::Combat, "Final damage after all reductions: %d", damage);
+		}
 	}
-	else{
+	else
+	{
 		damage = -5;
 	}
 
@@ -1694,7 +1834,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		GetOwner()->Message_StringID(CC_Yellow, CANNOT_WAKE, GetCleanName(), other->GetCleanName());
 		return false;
 	}
-	int damage = 0;
+	int damage = 1;
 
 	if(DivineAura())
 		return false;
@@ -1786,15 +1926,42 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	if(skillinuse == 99)
 		skillinuse = static_cast<SkillUseTypes>(36);
 
-	//basically "if not immune" then do the attack
-	if((weapon_damage) > 0) {
+	if (weapon_damage == 0)
+	{
+		damage = -5;		// immune to weapon
+	}
+	else
+	{
+		// check avoidance skills
+		other->AvoidDamage(this, damage, Hand);
 
+		if (damage > 0)
+		{
+			int hit_chance_bonus = 0;
+
+			if (opts)
+			{
+				hit_chance_bonus += opts->hit_chance;
+			}
+
+			// check avoidance AC
+			//if (!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus))
+			if (!other->AvoidanceCheck(this, skillinuse, Hand, hit_chance_bonus))
+			{
+				damage = 0;	//miss
+			}
+		}
+	}
+
+	if (damage > 0)
+	{
 		//ele and bane dmg too
 		//NPCs add this differently than PCs
 		//if NPCs can't inheriently hit the target we don't add bane/magic dmg which isn't exactly the same as PCs
 		uint32 eleBane = 0;
-		if(weapon){
-			if(weapon->BaneDmgBody == other->GetBodyType()){
+		if (weapon)
+		{
+			if (weapon->BaneDmgBody == other->GetBodyType()){
 				eleBane += weapon->BaneDmgAmt;
 			}
 
@@ -1802,84 +1969,99 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 				eleBane += weapon->BaneDmgAmt;
 			}
 
-			if(weapon->ElemDmgAmt){
+			if (weapon->ElemDmgAmt){
 				eleBane += (weapon->ElemDmgAmt * other->ResistSpell(weapon->ElemDmgType, 0, this) / 100);
 			}
 		}
 
-		if(!RuleB(NPC, UseItemBonusesForNonPets)){
-			if(!GetOwner()){
+		if (!RuleB(NPC, UseItemBonusesForNonPets)){
+			if (!GetOwner()){
 				eleBane = 0;
 			}
 		}
 
-		uint8 otherlevel = other->GetLevel();
-		uint8 mylevel = this->GetLevel();
+		int32 hate = max_dmg + eleBane;
+		hate = hate < 2 ? 1 : hate / 2;
 
-		otherlevel = otherlevel ? otherlevel : 1;
-		mylevel = mylevel ? mylevel : 1;
+		int32 offense = GetOffense();
+		int32 mitigation = other->GetMitigation();
 
-		//instead of calcing damage in floats lets just go straight to ints
-		if(RuleB(Combat, UseIntervalAC))
-			damage = (max_dmg+eleBane);
-		else
-			damage = zone->random.Int((min_dmg+eleBane),(max_dmg+eleBane));
-
-		//check if we're hitting above our max or below it.
-		if((min_dmg+eleBane) != 0 && damage < (min_dmg+eleBane)) {
-			Log.Out(Logs::Detail, Logs::Combat, "Damage (%d) is below min (%d). Setting to min.", damage, (min_dmg+eleBane));
-			damage = (min_dmg+eleBane);
+		if (opts)
+		{
+			mitigation = static_cast<int32>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
+			mitigation -= opts->armor_pen_flat;
+			if (mitigation < 1)
+			{
+				mitigation = 1;
+			}
 		}
-		if((max_dmg+eleBane) != 0 && damage > (max_dmg+eleBane)) {
-			Log.Out(Logs::Detail, Logs::Combat, "Damage (%d) is above max (%d). Setting to max.", damage, (max_dmg+eleBane));
-			damage = (max_dmg+eleBane);
+
+		// mitigation roll
+		uint16 roll = RollD20(offense, mitigation);
+
+		if (other->IsClient() && other->CastToClient()->IsSitting())
+		{
+			roll = 20;
+		}
+
+		uint32 maxHit = max_dmg;
+		uint32 di1k;
+
+		// lower level pets and NPCs with weapons hit harder
+		if (weapon && maxHit < (weapon->Damage * 2))
+		{
+			maxHit = weapon->Damage * 2;
+		}
+
+		maxHit += eleBane;
+		if (maxHit <= min_dmg)
+		{
+			maxHit = min_dmg;
+			roll = 20;
+			di1k = 1;
+		}
+		else
+		{
+			di1k = (maxHit - min_dmg) * 1000 / 19;			// multiply damage interval by 1000 so truncation doesn't reduce accuracy
+		}
+
+		if (roll == 20)
+		{
+			damage = maxHit;
+		}
+		else
+		{
+			// EQ uses a DB + DI * d20 system
+			// Our database merely has a min hit and a max hit
+			// so this (or similar) is required to emulate Sony's system
+			damage = (di1k * roll + (min_dmg * 1000 - di1k)) / 1000;
 		}
 
 		damage = mod_npc_damage(damage, skillinuse, Hand, weapon, other);
 
-		int32 hate = max_dmg + eleBane;
-		hate = hate < 2 ? 1 : hate / 2;
-
-		if(other->IsClient() && other->CastToClient()->IsSitting()) {
-			Log.Out(Logs::Detail, Logs::Combat, "Client %s is sitting. Hitting for max damage (%d).", other->GetName(), (max_dmg+eleBane));
-			damage = (max_dmg+eleBane);
-			damage += (damage * other->GetSkillDmgTaken(skillinuse) / 100) + GetSkillDmgAmt(skillinuse);
-
-			if(opts) {
-				damage *= opts->damage_percent;
-				damage += opts->damage_flat;
-				hate *= opts->hate_percent;
-				hate += opts->hate_flat;
-			}
-
-			Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
-			// now add done damage to the hate list
-			other->AddToHateList(this, hate);
-
-		} else {
-
-			int hit_chance_bonus = 0;
-
-			if(opts) {
-				damage *= opts->damage_percent;
-				damage += opts->damage_flat;
-				hate *= opts->hate_percent;
-				hate += opts->hate_flat;
-				hit_chance_bonus += opts->hit_chance;
-			}
-
-			if(!other->CheckHitChance(this, skillinuse, Hand, hit_chance_bonus)) {
-				damage = 0;	//miss
-			} else {	//hit, check for damage avoidance
-				other->AvoidDamage(this, damage);
-				other->MeleeMitigation(this, damage, min_dmg+eleBane, opts);
-				if(damage > 0) {
-					CommonOutgoingHitSuccess(other, damage, skillinuse);
-				}
-				Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
-			}
-			other->AddToHateList(this, hate);
+		if (opts)
+		{
+			damage = static_cast<int>(opts->damage_percent * static_cast<float>(damage));
+			damage += opts->damage_flat;
+			hate = static_cast<int>(opts->hate_percent * static_cast<float>(hate));
+			hate += opts->hate_flat;
 		}
+
+		if (other->IsClient() && min_dmg > 1)
+		{
+			// shielding
+			damage -= ((min_dmg * 1000 - di1k) / 1000 * other->GetItemBonuses().MeleeMitigation / 100);
+			// defensive disc
+			damage -= (damage * (other->GetSpellBonuses().MeleeMitigationEffect
+				+ other->GetItemBonuses().MeleeMitigationEffect
+				+ other->GetAABonuses().MeleeMitigationEffect) / 100);
+		}
+
+		CommonOutgoingHitSuccess(other, damage, skillinuse);
+
+		Log.Out(Logs::Detail, Logs::Combat, "Generating hate %d towards %s", hate, GetName());
+
+		other->AddToHateList(this, hate);
 
 		Log.Out(Logs::Detail, Logs::Combat, "Final damage against %s: %d", other->GetName(), damage);
 
@@ -1888,8 +2070,6 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 			damage=damage/2;
 		}
 	}
-	else
-		damage = -5;
 
 	//cant riposte a riposte
 	if (bRiposte && damage == -3) {
@@ -4259,7 +4439,7 @@ bool Mob::TryFinishingBlow(Mob *defender, SkillUseTypes skillinuse)
 			FB_Level = itembonuses.FinishingBlowLvl[0];
 
 		//Proc Chance value of 500 = 5%
-		uint32 ProcChance = (aabonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0])/10;
+		int32 ProcChance = (aabonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0])/10;
 
 		if(FB_Level && FB_Dmg && (defender->GetLevel() <= FB_Level) && (ProcChance >= zone->random.Int(0, 1000))){
 			entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, FINISHING_BLOW, GetName());
@@ -4334,40 +4514,55 @@ bool Mob::HasDied() {
 	return Result;
 }
 
+// returns the player character damage multiplier cap
 uint16 Mob::GetDamageTable(SkillUseTypes skillinuse)
 {
-	if(GetLevel() <= 51)
+	// PC damage multiplier caps for levels 51-65, non-monks
+	static int caps[15] = {
+		245, 245, 245, 245, 245,		// 51-55
+		265, 265, 265, 265,				// 56-59
+		285, 285, 285,					// 60-62
+		290, 290,						// 63-64
+		295								// 65
+	};
+
+	// monk caps
+	static int monk[15] = {
+		245, 245, 245, 245, 245,		// 51-55
+		285, 285, 285, 285,				// 56-59
+		290, 290, 290,					// 60-62
+		295, 295,						// 63-64
+		300								// 65
+	};
+
+	uint8 level = GetLevel();
+
+	if (level < 1)
+		level = 1;
+	else if (level > 65)
+		level = 65;
+
+	if (level <= 50)
 	{
-		uint32 ret_table = 0;
-		int str_over_75 = 0;
-		if(GetSTR() > 75)
-			str_over_75 = GetSTR() - 75;
-		if(str_over_75 > 255)
-			ret_table = (GetSkill(skillinuse)+255)/2;
+		if (GetClass() == MONK)
+		{
+			return 220;
+		}
 		else
-			ret_table = (GetSkill(skillinuse)+str_over_75)/2;
-
-		if(ret_table < 100)
-			return 100;
-
-		return ret_table;
+		{
+			return 210;
+		}
 	}
 	else
 	{
-		uint32 dmg_table[] = {
-			275, 275, 275, 275, 275,
-			280, 280, 280, 280,	285,
-			285, 285, 290, 290, 295,
-			295, 300, 300, 300, 305,
-			305, 305, 310, 310, 315,
-			315, 320, 320, 320, 325,
-			325, 325, 330, 330, 335,
-			335, 340, 340, 340,
-		};
-		if(GetClass() == MONK)
-			return (dmg_table[GetLevel()-51]*(100+RuleI(Combat,MonkDamageTableBonus))/100);
+		if (GetClass() == MONK)
+		{
+			return monk[level - 51];
+		}
 		else
-			return dmg_table[GetLevel()-51];
+		{
+			return caps[level - 51];
+		}
 	}
 }
 
@@ -4819,7 +5014,7 @@ void Client::SetAttackTimer()
 		speed = static_cast<int>(((delay / haste_mod) + ((hhe / 100.0f) * delay)) * 100);
 		// this is probably wrong
 		if (quiver_haste > 0)
-			speed *= quiver_haste;
+			speed *= static_cast<int>(quiver_haste);
 		TimerToUse->SetAtTrigger(std::max(RuleI(Combat, MinHastedDelay), speed), true, true);
 
 		if (i == MainPrimary)
@@ -4877,4 +5072,516 @@ uint32 NPC::GetAttackTimer()
 	speed = static_cast<int>(((attack_delay / haste_mod) + ((hhe / 100.0f) * attack_delay)) * 100);
 
 	return speed;
+}
+
+// crude approximation until I can come up with something more accurate
+// finding out how much str or weapon skill an NPC has is sort of impossible after all
+int32 Mob::GetOffense(int hand)
+{
+	return GetLevel() * 65 / 10 - 1 + ATK;
+}
+
+int32 Client::GetOffense(SkillUseTypes weaponSkill)
+{
+	int32 strAtk = 0;
+	if (GetSTR() > 75)
+	{
+		strAtk = (2 * GetSTR() - 150) / 3;
+	}
+
+	// this is the precise formula Sony/DBG uses, at least for clients
+	return (GetSkill(weaponSkill) + ATK + strAtk) * 1000 / 744;
+}
+
+int32 Client::GetOffense(int hand)
+{
+	ItemInst* weapon;
+
+	if (hand == MainSecondary)
+	{
+		weapon = GetInv().GetItem(MainSecondary);
+	}
+	else
+	{
+		weapon = GetInv().GetItem(MainPrimary);
+	}
+
+	if (weapon && weapon->IsType(ItemClassCommon))
+	{
+		return GetOffense(static_cast<SkillUseTypes>(GetSkillByItemType(weapon->GetItem()->ItemType)));
+	}
+	else
+	{
+		return GetOffense(SkillHandtoHand);
+	}
+}
+
+// very crude approximation that I will refine as data is created and evaluated
+// still way better than before
+int32 Mob::GetToHit(int hand)
+{
+	int32 accuracy = 0;
+
+	if (IsNPC())
+	{
+		accuracy = CastToNPC()->GetAccuracyRating();	// database value
+	}
+
+	if (GetLevel() > 45)
+	{
+		return GetLevel() * 4 + 425 + accuracy;
+	}
+	return GetLevel() * 14 + 5 + accuracy;
+}
+
+int32 Client::GetToHit(SkillUseTypes weaponSkill)
+{
+	int32 accuracy = itembonuses.Accuracy[HIGHEST_SKILL + 1] +
+		spellbonuses.Accuracy[HIGHEST_SKILL + 1] +
+		aabonuses.Accuracy[HIGHEST_SKILL + 1] +
+		aabonuses.Accuracy[weaponSkill] +
+		itembonuses.HitChance; //Item Mod 'Accuracy'
+
+	// this is the precise formula Sony/DBG uses, at least for clients
+	int32 toHit = (7 + GetSkill(SkillOffense) + GetSkill(weaponSkill)) * 1000 / 744 + accuracy;
+
+	if (toHit < 25)
+	{
+		toHit = 25;			// level 1s with no skills need a boost with the current avoidance model
+	}
+
+	return toHit;
+}
+
+int32 Client::GetToHit(int hand)
+{
+	ItemInst* weapon;
+
+	if (hand == MainSecondary)
+	{
+		weapon = GetInv().GetItem(MainSecondary);
+	}
+	else
+	{
+		weapon = GetInv().GetItem(MainPrimary);
+	}
+
+	if (weapon && weapon->IsType(ItemClassCommon))
+	{
+		return GetToHit(static_cast<SkillUseTypes>(GetSkillByItemType(weapon->GetItem()->ItemType)));
+	}
+	else
+	{
+		return GetToHit(SkillHandtoHand);
+	}
+}
+
+int32 Mob::GetMitigation()
+{
+	int32 ac = GetLevel() * 3;		// ensure NPC AC isn't too low, although this prevents low mitigation NPCs
+
+	// current database AC values are way too high and are pulled out of the air
+	// should probably run a script on the DB to adjust AC values and remove these conditionals
+	if ((GetAC() / 2) > ac)
+	{
+		return GetAC() / 2;
+	}
+	else
+	{
+		return ac;
+	}
+}
+
+// This returns the mitigation portion of the client AC value
+// this is accurate and based on a Sony developer post
+// See https://forums.daybreakgames.com/eq/index.php?threads/ac-vs-acv2.210028/
+int32 Client::GetMitigation()
+{
+	int32 acSum = itembonuses.AC;
+	uint8 playerClass = GetClass();
+	uint8 level = GetLevel();
+
+	acSum = 4 * acSum / 3;
+
+	// anti-twink
+	if (level < 50 && acSum > (GetLevel() * 26 + 25))
+	{
+		acSum = GetLevel() * 26 + 25;
+	}
+
+	if (playerClass == MONK)
+	{
+		int32 hardcap, softcap;
+
+		// NOTE: these are Live values and need to be reduced for TAKP (I think)
+		if (level <= 15)
+		{
+			hardcap = 32;
+			softcap = 15;
+		}
+		else if (level <= 30)
+		{
+			hardcap = 34;
+			softcap = 16;
+		}
+		else if (level <= 45)
+		{
+			hardcap = 36;
+			softcap = 17;
+		}
+		else if (level <= 51)
+		{
+			hardcap = 38;
+			softcap = 18;
+		}
+		else if (level <= 55)
+		{
+			hardcap = 40;
+			softcap = 20;
+		}
+		else if (level <= 60)
+		{
+			hardcap = 45;
+			softcap = 24;
+		}
+		else if (level <= 62)
+		{
+			hardcap = 47;
+			softcap = 24;
+		}
+		else if (level <= 64)
+		{
+			hardcap = 50;
+			softcap = 24;
+		}
+		else
+		{
+			hardcap = 53;
+			softcap = 26;
+		}
+
+		int32 weight = GetWeight();
+		if (weight > softcap)
+		{
+			int32 acBonus = level + 5;
+			float reduction = (weight - softcap) * 6.66667f;
+			if (reduction > 100.f) reduction = 100.0f;
+			reduction = (100.0f - reduction) / 100;
+			acBonus *= static_cast<int32>(reduction);
+			acBonus = 4 * acBonus / 3;
+
+			acSum += acBonus;
+		}
+		else if (weight > (hardcap + 1))
+		{
+			int32 penalty = level + 5;
+			float multiplier = (weight - (hardcap - 10)) / 100.0f;
+			if (multiplier > 1.0f) multiplier = 1.0f;
+			penalty = 4 * penalty / 3;
+			penalty = static_cast<int32>(multiplier) * penalty;
+
+			acSum -= penalty;
+		}
+
+	}
+	else if (playerClass == ROGUE)
+	{
+		if (level > 30 && GetAGI() > 75)
+		{
+			int32 levelScaler = level - 26;
+			int32 acBonus = 0;
+
+			if (GetAGI() < 80)
+			{
+				acBonus = levelScaler / 4;
+			}
+			else if (GetAGI() < 85)
+			{
+				acBonus = levelScaler * 2 / 4;
+			}
+			else if (GetAGI() < 90)
+			{
+				acBonus = levelScaler * 3 / 4;
+			}
+			else if (GetAGI() < 100)
+			{
+				acBonus = levelScaler * 4 / 4;
+			}
+			else
+			{
+				acBonus = levelScaler * 5 / 4;
+			}
+
+			if (acBonus > 12) acBonus = 12;
+
+			acSum += acBonus;
+		}
+	}
+	else if (playerClass = BEASTLORD)
+	{
+		if (level > 10)
+		{
+			int32 levelScaler = level - 6;
+			int32 acBonus = 0;
+
+			if (GetAGI() < 80)
+			{
+				acBonus = levelScaler / 5;
+			}
+			else if (GetAGI() < 85)
+			{
+				acBonus = levelScaler * 2 / 5;
+			}
+			else if (GetAGI() < 90)
+			{
+				acBonus = levelScaler * 3 / 5;
+			}
+			else if (GetAGI() < 90)
+			{
+				acBonus = levelScaler * 3 / 5;
+			}
+			else if (GetAGI() < 100)
+			{
+				acBonus = levelScaler * 4 / 5;
+			}
+			else
+			{
+				acBonus = levelScaler * 5 / 5;
+			}
+
+			if (acBonus > 16) acBonus = 16;
+
+			acSum += acBonus;
+		}
+	}
+	if (GetRace() == IKSAR)
+	{
+		if (level < 10)
+		{
+			acSum += 10;
+		}
+		else if (level > 35)
+		{
+			acSum += 35;
+		}
+		else
+		{
+			acSum += level;
+		}
+	}
+
+	if (acSum < 1)
+	{
+		acSum = 1;
+	}
+
+	int32 defense = GetSkill(SkillDefense);
+	if (defense > 0)
+	{
+		if (playerClass == WIZARD || playerClass == NECROMANCER || playerClass == ENCHANTER || playerClass == MAGICIAN)
+		{
+			acSum += defense / 2;
+		}
+		else
+		{
+			acSum += defense / 3;
+		}
+	}
+
+	int spellACDivisor = 4;
+	if (playerClass == WIZARD || playerClass == MAGICIAN || playerClass == NECROMANCER || playerClass == ENCHANTER)
+	{
+		spellACDivisor = 3;
+	}
+	acSum += (spellbonuses.AC / spellACDivisor);
+
+	if (GetAGI() > 70)
+	{
+		acSum += GetAGI() / 20;
+	}
+
+	int32 softcap;
+
+	// the AC softcap values and logic were taken from Demonstar55's client decompile
+	switch (playerClass)
+	{
+		case WARRIOR:
+		{
+			softcap = 430;
+			break;
+		}
+		case PALADIN:
+		case SHADOWKNIGHT:
+		case CLERIC:
+		case BARD:
+		{
+			softcap = 403;
+			break;
+		}
+		case RANGER:
+		case SHAMAN:
+		{
+		   softcap = 375;
+		   break;
+		}
+		case MONK:
+		{
+			softcap = 315;
+			break;
+		}
+		default:
+		{
+			softcap = 350;		// dru, rog, wiz, ench, nec, mag, bst
+		}
+	}
+
+	// Combat Stability AA - this raises the softcap
+	softcap += aabonuses.CombatStability + itembonuses.CombatStability + spellbonuses.CombatStability;
+
+	const ItemInst *inst = m_inv.GetItem(MainSecondary);
+	if (inst)
+	{
+		if (inst->GetItem()->ItemType == ItemTypeShield)
+		{
+			acSum += inst->GetItem()->AC;
+			softcap += inst->GetItem()->AC;
+		}
+	}
+
+	if (acSum > softcap)
+	{
+		if (level < 50)
+		{
+			return softcap;		// it's hard < level 50
+		}
+
+		int32 overcap = acSum - softcap;
+		int32 returns = 20;					// CLR, DRU, SHM, NEC, WIZ, MAG, ENC
+
+		if (playerClass == WARRIOR)
+		{
+			if (level <= 61)
+			{
+				returns = 5;
+			}
+			else if (level <= 63)
+			{
+				returns = 4;
+			}
+			else
+			{
+				returns = 4;
+			}
+		}
+		else if (playerClass == PALADIN || playerClass == SHADOWKNIGHT)
+		{
+			if (level <= 61)
+			{
+				returns = 6;
+			}
+			else if (level <= 63)
+			{
+				returns = 5;
+			}
+			else
+			{
+				returns = 4;
+			}
+		}
+		else if (playerClass == BARD)
+		{
+			if (level <= 61)
+			{
+				returns = 8;
+			}
+			else if (level <= 63)
+			{
+				returns = 7;
+			}
+			else
+			{
+				returns = 6;
+			}
+		}
+		else if (playerClass == MONK || playerClass == ROGUE)
+		{
+			if (level <= 61)
+			{
+				returns = 20;
+			}
+			else if (level == 62)
+			{
+				returns = 18;
+			}
+			else if (level == 63)
+			{
+				returns = 16;
+			}
+			else if (level == 64)
+			{
+				returns = 14;
+			}
+			else
+			{
+				returns = 12;
+			}
+		}
+		else if (playerClass == RANGER || playerClass == BEASTLORD)
+		{
+			if (level <= 61)
+			{
+				returns = 10;
+			}
+			else if (level == 62)
+			{
+				returns = 9;
+			}
+			else if (level == 63)
+			{
+				returns = 8;
+			}
+			else
+			{
+				returns = 7;
+			}
+		}
+
+		acSum = softcap + overcap / returns;
+	}
+
+	return acSum;
+}
+
+// crude estimate based on arena test dummy data
+// will refine this as data is generated and evaluated
+int32 Mob::GetAvoidance()
+{
+	uint8 level = GetLevel();
+
+	if (level <= 45)
+	{
+		return level * 914 / 100 + 10;
+	}
+	else if (level <= 50)
+	{
+		return 420;
+	}
+	else
+	{
+		return 470;
+	}
+}
+
+// this is the precise formula that Sony/DBG uses
+// minus the drunkeness reduction (add this later)
+int32 Client::GetAvoidance()
+{
+	int32 defense = GetSkill(SkillDefense);
+
+	if (defense > 0)
+	{
+		defense = defense * 400 / 225;
+	}
+
+	return defense + (GetAGI() > 40 ? (GetAGI() - 40) * 8000 / 36000 : 0) + itembonuses.AvoidMeleeChance;	//Item Mod 'Avoidence'
 }

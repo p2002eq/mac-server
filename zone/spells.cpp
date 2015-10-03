@@ -4209,7 +4209,9 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	if(IsEffectInSpell(spell_id, SE_Fear))
 	{
 		effect_index = GetSpellEffectIndex(spell_id, SE_Fear);
-		if(GetSpecialAbility(UNFEARABLE)) {
+
+		if (GetSpecialAbility(UNFEARABLE) || (IsNPC() && GetLevel() > 52))	// level 52 hardcap immunity for fear spells
+		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Fear spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
 			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
