@@ -2294,6 +2294,8 @@ bool Mob::SetHeading2(float iHeading)
 		moved = true;
 		while (diff < 0)
 			diff += 256;
+		while (diff >= 256.0)
+			diff -= 256.0f;
 		float delta_heading = ((256 - diff) < diff) ? 12.0f : -12.0f;
 
 		bool send_update = false;
@@ -2305,10 +2307,12 @@ bool Mob::SetHeading2(float iHeading)
 			SendPosUpdate(1);
 
 		float new_heading = GetHeading() + delta_heading;
-		if (new_heading >= 256.0f)
-			new_heading -= 256.0f;
+
 		if (new_heading < 0.0f)
 			new_heading += 256.0f;
+		if (new_heading >= 256.0f)
+			new_heading -= 256.0f;
+
 		SetHeading(new_heading);
 		return false;
 	} 
