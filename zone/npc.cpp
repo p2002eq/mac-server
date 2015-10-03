@@ -2325,8 +2325,6 @@ void NPC::DoQuestPause(Mob *other) {
 	} else if(!IsMoving()) {
 		FaceTarget(other);
 	}
-	// this stops them from auto changing direction, in AI_DoMovement()
-	AIhail_timer->Start((RuleI(NPC, SayPauseTimeInSec)-1)*1000);
 }
 
 void NPC::DepopSwarmPets()

@@ -5318,7 +5318,7 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 		case SkillParry: 
 		case SkillRiposte:
 			stat = GetAGI();
-			penalty = false;
+			penalty = true;
 			break;
 		case SkillBegging:
 			stat = GetCHA();

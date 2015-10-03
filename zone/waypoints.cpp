@@ -183,8 +183,12 @@ void NPC::PauseWandering(int pausetime)
 	else 
 	{
 		Log.Out(Logs::General, Logs::Error, "NPC not on grid - can't pause wandering: %lu", (unsigned long)GetNPCTypeID());
+		return;
 	}
-	return;
+
+	// this stops them from auto changing direction, in AI_DoMovement()
+	AIhail_timer->Start((RuleI(NPC, SayPauseTimeInSec)-1)*1000);
+	
 }
 
 void NPC::MoveTo(const glm::vec4& position, bool saveguardspot)
