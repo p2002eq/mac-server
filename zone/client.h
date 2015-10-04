@@ -378,6 +378,7 @@ public:
 	inline int32 GetOffense(SkillUseTypes weaponSkill);
 	virtual int32 GetToHit(int hand = MainPrimary);
 	inline int32 GetToHit(SkillUseTypes weaponSkill);
+	uint32 RollDamageMultiplier(uint32 offense);
 	virtual int32 GetMitigation();
 	virtual int32 GetAvoidance();
 	int32 GetEffectiveWornAC();
@@ -898,7 +899,7 @@ public:
 	int32 GetActCHA() { return( std::min(GetMaxCHA(), GetCHA()) ); }
 	void LoadAccountFlags();
 	void SetAccountFlag(std::string flag, std::string val);
-	std::string GetAccountFlag(std::string flag); float GetDamageMultiplier(SkillUseTypes);
+	std::string GetAccountFlag(std::string flag);
 	void Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume);
 	int mod_client_damage(int damage, SkillUseTypes skillinuse, int hand, const ItemInst* weapon, Mob* other);
 	bool mod_client_message(char* message, uint8 chan_num);
@@ -938,10 +939,6 @@ public:
 
 	uint8 Disarm(Client* client, float chance);
 	void SendSoulMarks(SoulMarkList_Struct* SMS);
-
-	//Command #Tune functions
-	virtual int32 Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
-	int32 GetMeleeDamage(Mob* other, bool GetMinDamage = false);
 
 	bool has_zomm;
 	bool client_position_update;

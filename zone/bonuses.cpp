@@ -755,14 +755,8 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_DoubleSpecialAttack:
 				newbon->DoubleSpecialAttack += base1;
 				break;
-			case SE_TripleBackstab:
-				newbon->TripleBackstab += base1;
-				break;
 			case SE_FrontalBackstabMinDmg:
 				newbon->FrontalBackstabMinDmg = true;
-				break;
-			case SE_FrontalBackstabChance:
-				newbon->FrontalBackstabChance += base1;
 				break;
 			case SE_BlockBehind:
 				newbon->BlockBehind += base1;
@@ -2342,16 +2336,8 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->DoubleSpecialAttack += effect_value;
 				break;
 
-			case SE_TripleBackstab:
-				new_bonus->TripleBackstab += effect_value;
-				break;
-
 			case SE_FrontalBackstabMinDmg:
 				new_bonus->FrontalBackstabMinDmg = true;
-				break;
-
-			case SE_FrontalBackstabChance:
-				new_bonus->FrontalBackstabChance += effect_value;
 				break;
 
 			case SE_ConsumeProjectile:
@@ -3820,20 +3806,8 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					itembonuses.DoubleSpecialAttack = effect_value;
 					break;
 
-				case SE_TripleBackstab:
-					spellbonuses.TripleBackstab = effect_value;
-					aabonuses.TripleBackstab = effect_value;
-					itembonuses.TripleBackstab = effect_value;
-					break;
-
 				case SE_FrontalBackstabMinDmg:
 					spellbonuses.FrontalBackstabMinDmg = false;
-					break;
-
-				case SE_FrontalBackstabChance:
-					spellbonuses.FrontalBackstabChance = effect_value;
-					aabonuses.FrontalBackstabChance = effect_value;
-					itembonuses.FrontalBackstabChance = effect_value;
 					break;
 
 				case SE_ConsumeProjectile:

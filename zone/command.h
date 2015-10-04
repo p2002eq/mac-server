@@ -315,7 +315,6 @@ void command_update(Client *c, const Seperator *sep);
 void command_coredump(Client *c, const Seperator *sep);
 void command_push(Client *c, const Seperator *sep);
 void command_xpinfo(Client *c, const Seperator *sep);
-void command_tune(Client *c, const Seperator *sep);
 void command_logtest(Client *c, const Seperator *sep);
 void command_mysqltest(Client *c, const Seperator *sep);
 void command_chattest(Client *c, const Seperator *sep);
