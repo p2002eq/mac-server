@@ -1273,26 +1273,6 @@ void Lua_Mob::DoThrowingAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon, Lua_
 	self->DoThrowingAttackDmg(other, range_weapon, item, weapon_damage, chance_mod, focus);
 }
 
-void Lua_Mob::DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill) {
-	Lua_Safe_Call_Void();
-	self->DoMeleeSkillAttackDmg(other, weapon_damage, static_cast<SkillUseTypes>(skill));
-}
-
-void Lua_Mob::DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod) {
-	Lua_Safe_Call_Void();
-	self->DoMeleeSkillAttackDmg(other, weapon_damage, static_cast<SkillUseTypes>(skill), chance_mod);
-}
-
-void Lua_Mob::DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod, int focus) {
-	Lua_Safe_Call_Void();
-	self->DoMeleeSkillAttackDmg(other, weapon_damage, static_cast<SkillUseTypes>(skill), chance_mod, focus);
-}
-
-void Lua_Mob::DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod, int focus, bool can_riposte) {
-	Lua_Safe_Call_Void();
-	self->DoMeleeSkillAttackDmg(other, weapon_damage, static_cast<SkillUseTypes>(skill), chance_mod, focus, can_riposte);
-}
-
 void Lua_Mob::DoArcheryAttackDmg(Lua_Mob other) {
 	Lua_Safe_Call_Void();
 	self->DoArcheryAttackDmg(other);
@@ -1976,10 +1956,6 @@ luabind::scope lua_register_mob() {
 		.def("DoThrowingAttackDmg", (void(Lua_Mob::*)(Lua_Mob,Lua_ItemInst,Lua_Item,int))&Lua_Mob::DoThrowingAttackDmg)
 		.def("DoThrowingAttackDmg", (void(Lua_Mob::*)(Lua_Mob,Lua_ItemInst,Lua_Item,int,int))&Lua_Mob::DoThrowingAttackDmg)
 		.def("DoThrowingAttackDmg", (void(Lua_Mob::*)(Lua_Mob,Lua_ItemInst,Lua_Item,int,int,int))&Lua_Mob::DoThrowingAttackDmg)
-		.def("DoMeleeSkillAttackDmg", (void(Lua_Mob::*)(Lua_Mob,int,int))&Lua_Mob::DoMeleeSkillAttackDmg)
-		.def("DoMeleeSkillAttackDmg", (void(Lua_Mob::*)(Lua_Mob,int,int,int))&Lua_Mob::DoMeleeSkillAttackDmg)
-		.def("DoMeleeSkillAttackDmg", (void(Lua_Mob::*)(Lua_Mob,int,int,int,int))&Lua_Mob::DoMeleeSkillAttackDmg)
-		.def("DoMeleeSkillAttackDmg", (void(Lua_Mob::*)(Lua_Mob,int,int,int,int,bool))&Lua_Mob::DoMeleeSkillAttackDmg)
 		.def("DoArcheryAttackDmg", (void(Lua_Mob::*)(Lua_Mob))&Lua_Mob::DoArcheryAttackDmg)
 		.def("DoArcheryAttackDmg", (void(Lua_Mob::*)(Lua_Mob,Lua_ItemInst))&Lua_Mob::DoArcheryAttackDmg)
 		.def("DoArcheryAttackDmg", (void(Lua_Mob::*)(Lua_Mob,Lua_ItemInst,Lua_ItemInst))&Lua_Mob::DoArcheryAttackDmg)

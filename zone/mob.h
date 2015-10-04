@@ -132,7 +132,7 @@ public:
 	//Somewhat sorted: needs documenting!
 
 	//Attack
-	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);
+	virtual void RogueBackstab(Mob* defender, bool doMinDmg = false, int ReuseTime = 10);
 	virtual void RogueAssassinate(Mob* other); // solar
 	float MobAngle(Mob *other = 0, float ourx = 0.0f, float oury = 0.0f) const;
 	// greater than 90 is behind
@@ -154,16 +154,15 @@ public:
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
 	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
-	virtual bool AvoidDamage(Mob* attacker, int32 &damage, int hand);
+	virtual bool AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte = false, bool isRangedAttack = false);
 	virtual bool CheckHitChance(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod = 0);
-	virtual bool AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod = 0);
+	virtual bool AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_mod = 0);
 	virtual void TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttackOptions *opts = nullptr);
 	void TryPetCriticalHit(Mob *defender, uint16 skill, int32 &damage);
 	virtual bool TryFinishingBlow(Mob *defender, SkillUseTypes skillinuse);
 	uint32 TryHeadShot(Mob* defender, SkillUseTypes skillInUse);
 	uint32 TryAssassinate(Mob* defender, SkillUseTypes skillInUse, uint16 ReuseTime);
 	virtual void DoRiposte(Mob* defender);
-	void ApplyMeleeDamageBonus(uint16 skill, int32 &damage);
 	static int8 RollD20(int32 offense, int32 mitigation);
 	virtual void MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttackOptions *opts = nullptr);
 	virtual int32 GetMeleeMitDmg(Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
@@ -729,7 +728,7 @@ public:
 	virtual int GetHaste();
 
 	uint8 GetWeaponDamageBonus(const Item_Struct* Weapon);
-	uint16 GetDamageTable(SkillUseTypes skillinuse);
+	uint16 GetDamageTable();
 	virtual int GetMonkHandToHandDamage(void);
 
 	bool CanThisClassDoubleAttack(void) const;
@@ -753,7 +752,6 @@ public:
 
 	virtual void DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage, int32 min_damage = 1, int32 hate_override = -1, int ReuseTime = 10, bool HitChance=false, bool CanAvoid=true);
 	virtual void DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon=nullptr, const Item_Struct* item=nullptr, uint16 weapon_damage=0, int16 chance_mod=0,int16 focus=0, int ReuseTime=0);
-	virtual void DoMeleeSkillAttackDmg(Mob* other, uint16 weapon_damage, SkillUseTypes skillinuse, int16 chance_mod=0, int16 focus=0, bool CanRiposte=false, int ReuseTime=0);
 	virtual void DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon=nullptr, const ItemInst* Ammo=nullptr, uint16 weapon_damage=0, int16 chance_mod=0, int16 focus=0, int ReuseTime=0);
 	bool CanDoSpecialAttack(Mob *other);
 	bool Flurry(ExtraAttackOptions *opts);
@@ -954,15 +952,6 @@ public:
 	uint8	DualWieldChance();
 	uint8	Disarm(float chance);
 
-	//Command #Tune functions
-	int32 Tune_MeleeMitigation(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg =0,	int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
-	virtual int32 Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
-	uint32 Tune_GetMeanDamage(Mob* GM, Mob *attacker, int32 damage, int32 minhit, ExtraAttackOptions *opts = nullptr, int Msg = 0,int ac_override=0, int atk_override=0, int add_ac=0, int add_atk = 0);
-	void Tune_FindATKByPctMitigation(Mob* defender, Mob *attacker, float pct_mitigation,  int interval = 50, int max_loop = 100, int ac_override=0,int Msg =0);
-	void Tune_FindACByPctMitigation(Mob* defender, Mob *attacker, float pct_mitigation,  int interval = 50, int max_loop = 100, int atk_override=0,int Msg =0);
-	float Tune_CheckHitChance(Mob* defender, Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod, int Msg = 1,int acc_override=0, int avoid_override=0, int add_acc=0, int add_avoid = 0);
-	void Tune_FindAccuaryByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int avoid_override, int Msg = 0);
-	void Tune_FindAvoidanceByHitChance(Mob* defender, Mob *attacker, float hit_chance, int interval, int max_loop, int acc_override, int Msg = 0);
 	float CalcZOffset();
 	uint8 NPCAssistCap() { return npc_assist_cap; }
 	void AddAssistCap() { ++npc_assist_cap; }

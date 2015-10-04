@@ -2081,40 +2081,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_SkillAttack:
-			{
-#ifdef SPELL_EFFECT_SPAM
-				snprintf(effect_desc, _EDLEN, "Skill Attack");
-#endif
-				/*
-				Weapon Damage = spells[spell_id].base[i]
-				Chance to Hit Bonus = spells[spell_id].base2[i]
-				???? = spells[spell_id].max[i] - MOST of the effects have this value.
-				*Max is lower value then Weapon base, possibly min hit vs Weapon Damage range ie. MakeRandInt(max,base)
-				*/
-				int16 focus = 0;
-				int ReuseTime = spells[spell_id].recast_time + spells[spell_id].recovery_time;
-
-				if(caster->IsClient())
-					focus = caster->CastToClient()->GetFocusEffect(focusFcBaseEffects, spell_id);
-
-				switch(spells[spell_id].skill)
-				{
-					case SkillThrowing:
-						caster->DoThrowingAttackDmg(this, nullptr, nullptr, spells[spell_id].base[i],spells[spell_id].base2[i], focus,  ReuseTime);
-					break;
-
-					case SkillArchery:
-						caster->DoArcheryAttackDmg(this, nullptr, nullptr, spells[spell_id].base[i],spells[spell_id].base2[i],focus,  ReuseTime);
-					break;
-
-					default:
-						caster->DoMeleeSkillAttackDmg(this, spells[spell_id].base[i], spells[spell_id].skill, spells[spell_id].base2[i], focus, false, ReuseTime);
-					break;
-				}
-				break;
-			}
-
 			case SE_WakeTheDead:
 			{
 #ifdef SPELL_EFFECT_SPAM
@@ -2830,6 +2796,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_PetMeleeMitigation:
 			case SE_SkillProc:
 			case SE_SkillProcSuccess:
+			case SE_SkillAttack:			// Used after PoP
 			{
 				break;
 			}

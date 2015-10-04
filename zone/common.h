@@ -384,9 +384,7 @@ struct StatBonuses {
 	int32	ChannelChanceSpells;				// Modify chance to channel a spell.
 	int32	ChannelChanceItems;					// Modify chance to channel a items.
 	uint8	SeeInvis;							// See Invs.
-	uint8	TripleBackstab;						// Chance to triple backstab
 	bool	FrontalBackstabMinDmg;				// Allow frontal backstabs for min damage
-	uint8	FrontalBackstabChance;				// Chance to backstab from the front for full damage
 	uint8	ConsumeProjectile;					// Chance to not consume arrow.
 	uint8	ForageAdditionalItems;				// Chance to forage another item.
 	uint8	SalvageChance;						// Chance to salvage a tradeskill components on fail.
