@@ -2297,6 +2297,8 @@ bool Mob::SetHeading2(float iHeading)
 		while (diff >= 256.0)
 			diff -= 256.0f;
 		float delta_heading = ((256 - diff) < diff) ? 12.0f : -12.0f;
+		if (IsBoat())
+			delta_heading /= 2.0f;
 
 		bool send_update = false;
 		if (m_Delta.w == 0.0f)

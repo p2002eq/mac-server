@@ -1910,12 +1910,12 @@ void NPC::AI_DoMovement() {
 	{
 		bool CP2Moved = false;
 		if(!RuleB(Pathing, Guard) || !zone->pathing) {
-			if (m_GuardPoint.x != m_Position.x && m_GuardPoint.y != m_Position.y && m_GuardPoint.z != m_Position.z)
+			if (m_GuardPoint.x != m_Position.x || m_GuardPoint.y != m_Position.y || m_GuardPoint.z != m_Position.z)
 				CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
 		}
 		else
 		{
-			if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
+			if(m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y || m_Position.z == m_GuardPoint.z)
 			{
 				bool WaypointChanged, NodeReached;
 				glm::vec3 Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
