@@ -412,23 +412,6 @@ bool Database::DeleteCharacter(char *name) {
 	return true;
 }
 
-void Database::DeleteCharacterCorpses(uint32 charid) 
-{
-
-	std::string query = StringFormat("SELECT `id` from `character_corpses` WHERE `charid` = '%d'", charid);
-	auto results = QueryDatabase(query);
-	for (auto row = results.begin(); row != results.end(); ++row) 
-	{ 
-		uint32 corpseid = atoi(row[0]); 
-		std::string delete_query = StringFormat("DELETE FROM `character_corpse_items` WHERE `corpse_id` = '%d'", corpseid); QueryDatabase(delete_query);	
-		delete_query = StringFormat("DELETE FROM `character_corpse_items_backup` WHERE `corpse_id` = '%d'", corpseid); QueryDatabase(delete_query);	
-	}
-
-	query = StringFormat("DELETE FROM `character_corpses` WHERE `charid` = '%d'", charid); QueryDatabase(query);	
-	query = StringFormat("DELETE FROM `character_corpses_backup` WHERE `charid` = '%d'", charid); QueryDatabase(query);	
-
-}
-
 bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp){
 	std::string query = StringFormat(
 		"REPLACE INTO `character_data` ("
