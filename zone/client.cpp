@@ -163,7 +163,6 @@ Client::Client(EQStreamInterface* ieqs)
 	client_state = CLIENT_CONNECTING;
 	Trader=false;
 	CustomerID = 0;
-	TrackingID = 0;
 	WID = 0;
 	account_id = 0;
 	admin = 0;
@@ -1838,7 +1837,7 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float d
 			if(skillvalue > 95)
 				skillvalue = 95.0f;
 
-			float chance2 = (100.0f - skillvalue) * skillup_modifier;
+			float chance2 = 100.0f - skillvalue;
 			mod_increase_skill_chance(chance2, against_who);
 
 			if(zone->random.Real(0, 99) < chance2)

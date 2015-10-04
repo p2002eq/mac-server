@@ -2294,7 +2294,11 @@ bool Mob::SetHeading2(float iHeading)
 		moved = true;
 		while (diff < 0)
 			diff += 256;
+		while (diff >= 256.0)
+			diff -= 256.0f;
 		float delta_heading = ((256 - diff) < diff) ? 12.0f : -12.0f;
+		if (IsBoat())
+			delta_heading /= 2.0f;
 
 		bool send_update = false;
 		if (m_Delta.w == 0.0f)
@@ -2305,10 +2309,12 @@ bool Mob::SetHeading2(float iHeading)
 			SendPosUpdate(1);
 
 		float new_heading = GetHeading() + delta_heading;
-		if (new_heading >= 256.0f)
-			new_heading -= 256.0f;
+
 		if (new_heading < 0.0f)
 			new_heading += 256.0f;
+		if (new_heading >= 256.0f)
+			new_heading -= 256.0f;
+
 		SetHeading(new_heading);
 		return false;
 	} 
@@ -5314,7 +5320,7 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 		case SkillParry: 
 		case SkillRiposte:
 			stat = GetAGI();
-			penalty = false;
+			penalty = true;
 			break;
 		case SkillBegging:
 			stat = GetCHA();

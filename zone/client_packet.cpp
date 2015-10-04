@@ -2643,13 +2643,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		}
 
 	}
-
-	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
-		if(zone->random.Roll(53))
-			CheckIncreaseSkill(SkillTracking, nullptr, zone->skill_difficulty[SkillTracking].difficulty);
-	}
 	
-
 	// Break Hide, Trader, and fishing mode if moving and set rewind timer
 	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
 	{

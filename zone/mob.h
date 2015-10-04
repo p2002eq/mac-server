@@ -487,7 +487,7 @@ public:
 	bool HateSummon();
 	void FaceTarget(Mob* MobToFace = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { SetChanged();
-		m_Position.w = iHeading; } }
+		m_Position.w = iHeading;} }
 	bool SetHeading2(float iHeading);
 	void WipeHateList();
 	void AddFeignMemory(Client* attacker);
@@ -1222,6 +1222,7 @@ protected:
 	std::unique_ptr<Timer> AIscanarea_timer;
 	std::unique_ptr<Timer> AIwalking_timer;
 	std::unique_ptr<Timer> AIfeignremember_timer;
+	std::unique_ptr<Timer> AIhail_timer;
 	uint32 pLastFightingDelayMoving;
 	HateList hate_list;
 	std::set<uint32> feign_memory_list;

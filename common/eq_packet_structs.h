@@ -2376,17 +2376,10 @@ struct SendAA_Struct {
 /* EMU additions for internal use */
 	char name[128];
 	int16 cost_inc;
-	uint32 sof_current_level;
-	uint32 sof_next_id;
 	uint8 level_inc;
 	uint8 eqmacid;
 
 /*0000*/	uint32 id;
-/*0004*/	uint32 unknown004;
-/*0008*/	uint32 hotkey_sid;
-/*0012*/	uint32 hotkey_sid2;
-/*0016*/	uint32 title_sid;
-/*0020*/	uint32 desc_sid;
 /*0024*/	uint32 class_type;
 /*0028*/	uint32 cost;
 /*0032*/	uint32 seq;
@@ -2398,20 +2391,12 @@ struct SendAA_Struct {
 /*0056*/	uint32 spell_type;
 /*0060*/	uint32 spell_refresh;
 /*0064*/	uint16 classes;
-/*0066*/	uint16 berserker; //seems to be 1 if its a berserker ability
 /*0068*/	uint32 max_level;
 /*0072*/	uint32 last_id;
 /*0076*/	uint32 next_id;
 /*0080*/	uint32 cost2;
-/*0084*/	uint32 unknown80[2]; //0s
-// Begin SoF Specific/Adjusted AA Fields
 /*0088*/	uint32 aa_expansion;
 /*0092*/	uint32 special_category;
-/*0096*/	uint32 sof_type;
-/*0100*/	uint32 sof_cost_inc;
-/*0104*/	uint32 sof_max_level;
-/*0108*/	uint32 sof_next_skill;
-/*0112*/	uint32 clientver;
 /*0016*/	uint32 account_time_required;
 /*0120*/	uint32 total_abilities;
 /*0124*/	AA_Ability abilities[0];

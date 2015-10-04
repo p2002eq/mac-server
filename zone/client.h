@@ -863,8 +863,6 @@ public:
 	void SetBoatName(const char* boatname);
 	QGlobalCache *GetQGlobals() { return qGlobals; }
 	QGlobalCache *CreateQGlobals() { qGlobals = new QGlobalCache(); return qGlobals; }
-	void DoTracking();
-	inline bool IsTracking() { return (TrackingID > 0); }
 	inline void SetPendingGuildInvitation(bool inPendingGuildInvitation) { PendingGuildInvitation = inPendingGuildInvitation; }
 	inline bool GetPendingGuildInvitation() { return PendingGuildInvitation; }
 	void LocateCorpse();
@@ -1076,7 +1074,6 @@ private:
 	bool				berserk;
 	bool				dead;
 	uint16				BoatID;
-	uint16				TrackingID;
 	uint16				CustomerID;
 	uint32				account_creation;
 	uint8				firstlogon;

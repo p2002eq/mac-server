@@ -494,6 +494,7 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 	AItarget_check_timer = std::unique_ptr<Timer>(new Timer(AItarget_check_duration));
 	AIfeignremember_timer = std::unique_ptr<Timer>(new Timer(AIfeignremember_delay));
 	AIscanarea_timer = std::unique_ptr<Timer>(new Timer(AIscanarea_delay));
+	AIhail_timer = std::unique_ptr<Timer>(new Timer(RuleI(NPC, SayPauseTimeInSec)*1000));
 	if(IsNPC() && !CastToNPC()->WillAggroNPCs())
 		AIscanarea_timer->Disable();
 
@@ -1731,12 +1732,23 @@ void NPC::AI_DoMovement() {
 		walksp = 0.0f;
 	}
 
+	if (AIhail_timer->Enabled()) {
+		if (!AIhail_timer->Check()) {
+			return;
+		} else {
+			AIhail_timer->Disable();
+			moved = true;
+			walksp = 0.0f;
+		}
+	}
+
 	SetCurrentSpeed(walksp);
 	
 	if(walksp < 0.1f) {
 		// we are stopped for some reason.
 		tar_ndx = 20;
 		bool WaypointChanged, NodeReached;
+
 		if (roambox_distance > 0) {
 			SetHeading2(CalculateHeadingToTarget(roambox_movingto_x, roambox_movingto_x));
 		} else if (roamer) {
@@ -1898,12 +1910,12 @@ void NPC::AI_DoMovement() {
 	{
 		bool CP2Moved = false;
 		if(!RuleB(Pathing, Guard) || !zone->pathing) {
-			if (m_GuardPoint.x != m_Position.x && m_GuardPoint.y != m_Position.y && m_GuardPoint.z != m_Position.z)
+			if (m_GuardPoint.x != m_Position.x || m_GuardPoint.y != m_Position.y || m_GuardPoint.z != m_Position.z)
 				CP2Moved = CalculateNewPosition2(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp);
 		}
 		else
 		{
-			if(!((m_Position.x == m_GuardPoint.x) && (m_Position.y == m_GuardPoint.y) && (m_Position.z == m_GuardPoint.z)))
+			if(m_Position.x != m_GuardPoint.x || m_Position.y != m_GuardPoint.y || m_Position.z == m_GuardPoint.z)
 			{
 				bool WaypointChanged, NodeReached;
 				glm::vec3 Goal = UpdatePath(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, walksp, WaypointChanged, NodeReached);
