@@ -1986,6 +1986,7 @@ namespace Mac {
 				mac_pop_item->container.BagSlots = item->BagSlots;         
 				mac_pop_item->container.BagSize = item->BagSize;    
 				mac_pop_item->container.BagWR = item->BagWR; 
+				mac_pop_item->container.IsBagOpen = 0;
 			}
 			else if(item->ItemClass == 2)
 			{

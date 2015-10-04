@@ -1435,7 +1435,7 @@ void ZoneDatabase::FillAAEffects(SendAA_Struct* aa_struct){
 
 uint32 ZoneDatabase::CountAAs(){
 
-	const std::string query = "SELECT count(title_sid) FROM altadv_vars";
+	const std::string query = "SELECT count(*) FROM altadv_vars";
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
         return 0;
@@ -1463,13 +1463,6 @@ uint32 ZoneDatabase::CountAAEffects() {
 	auto row = results.begin();
 
 	return atoi(row[0]);
-}
-
-uint32 ZoneDatabase::GetSizeAA(){
-	int size = CountAAs()*sizeof(SendAA_Struct);
-	if (size>0)
-		size += CountAAEffects()*sizeof(AA_Ability);
-	return size;
 }
 
 void ZoneDatabase::LoadAAs(SendAA_Struct **load)
@@ -1515,7 +1508,7 @@ SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
         return nullptr;
     }
 
-    query = StringFormat("SELECT a.cost, a.max_level, a.hotkey_sid, a.hotkey_sid2, a.title_sid, a.desc_sid, a.type, "
+    query = StringFormat("SELECT a.cost, a.max_level, a.type, "
                         "COALESCE("	//So we can return 0 if it's null.
                         "("	// this is our derived table that has the row #
                             // that we can SELECT from, because the client is stupid.
@@ -1524,10 +1517,8 @@ SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
 						"FROM altadv_vars a2) AS p "
                         "WHERE p.skill_id = a.prereq_skill), 0) "
                         "AS prereq_skill_index, a.prereq_minpoints, a.spell_type, a.spell_refresh, a.classes, "
-                        "a.berserker, a.spellid, a.class_type, a.name, a.cost_inc, a.aa_expansion, a.special_category, "
-                        "a.sof_type, a.sof_cost_inc, a.sof_max_level, a.sof_next_skill, "
-                        "a.clientver, "	// Client Version 0 = None, 1 = All, 2 = Titanium/6.2, 4 = SoF 5 = SOD 6 = UF
-                        "a.account_time_required, a.sof_current_level, a.sof_next_id, a.level_inc, a.eqmacid "
+                        "a.spellid, a.class_type, a.name, a.cost_inc, a.aa_expansion, a.special_category, "
+                        "a.account_time_required, a.level_inc, a.eqmacid "
                         "FROM altadv_vars a WHERE skill_id=%i", skill_id);
     results = QueryDatabase(query);
     if (!results.Success()) {
@@ -1554,23 +1545,18 @@ SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
 	sendaa->cost = atoul(row[0]);
 	sendaa->cost2 = sendaa->cost;
 	sendaa->max_level = atoul(row[1]);
-	sendaa->hotkey_sid = atoul(row[2]);
 	sendaa->id = skill_id;
-	sendaa->hotkey_sid2 = atoul(row[3]);
-	sendaa->title_sid = atoul(row[4]);
-	sendaa->desc_sid = atoul(row[5]);
-	sendaa->type = atoul(row[6]);
-	sendaa->prereq_skill = atoul(row[7]);
-	sendaa->prereq_minpoints = atoul(row[8]);
-	sendaa->spell_type = atoul(row[9]);
-	sendaa->spell_refresh = atoul(row[10]);
-	sendaa->classes = static_cast<uint16>(atoul(row[11]));
-	sendaa->berserker = static_cast<uint16>(atoul(row[12]));
+	sendaa->type = atoul(row[2]);
+	sendaa->prereq_skill = atoul(row[3]);
+	sendaa->prereq_minpoints = atoul(row[4]); // reference only
+	sendaa->spell_type = atoul(row[5]);
+	sendaa->spell_refresh = atoul(row[6]);
+	sendaa->classes = static_cast<uint16>(atoul(row[7]));
 	sendaa->last_id = 0xFFFFFFFF;
 	sendaa->current_level = 1;
-	sendaa->spellid = atoul(row[13]);
-	sendaa->class_type = atoul(row[14]);
-	strcpy(sendaa->name, row[15]);
+	sendaa->spellid = atoul(row[8]);
+	sendaa->class_type = atoul(row[9]);
+	strcpy(sendaa->name, row[10]);
 
 	sendaa->total_abilities = total_abilities;
 	if (sendaa->max_level > 1)
@@ -1578,23 +1564,12 @@ SendAA_Struct* ZoneDatabase::GetAASkillVars(uint32 skill_id)
 	else
 		sendaa->next_id = 0xFFFFFFFF;
 
-	sendaa->cost_inc = atoi(row[16]);
-
-	// Begin SoF Specific/Adjusted AA Fields
-	sendaa->aa_expansion = atoul(row[17]);
-	sendaa->special_category = atoul(row[18]);
-	sendaa->sof_type = atoul(row[19]);
-	sendaa->sof_cost_inc = atoi(row[20]);
-	sendaa->sof_max_level = atoul(row[21]);
-	sendaa->sof_next_skill = atoul(row[22]);
-	sendaa->clientver = atoul(row[23]);
-	sendaa->account_time_required = atoul(row[24]);
-
-	//Internal use only - not sent to client
-	sendaa->sof_current_level = atoul(row[25]);
-	sendaa->sof_next_id = atoul(row[26]);
-	sendaa->level_inc = static_cast<uint8>(atoul(row[27]));
-	sendaa->eqmacid = static_cast<uint8>(atoul(row[28]));
+	sendaa->cost_inc = atoi(row[11]);
+	sendaa->aa_expansion = atoul(row[12]); // reference only
+	sendaa->special_category = atoul(row[13]);
+	sendaa->account_time_required = atoul(row[14]);
+	sendaa->level_inc = static_cast<uint8>(atoul(row[15])); // reference only
+	sendaa->eqmacid = static_cast<uint8>(atoul(row[16]));
 
 	return sendaa;
 }
