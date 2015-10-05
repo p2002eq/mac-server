@@ -5345,7 +5345,7 @@ int32 Client::GetMitigation()
 			acSum += acBonus;
 		}
 	}
-	else if (playerClass = BEASTLORD)
+	else if (playerClass == BEASTLORD)
 	{
 		if (level > 10)
 		{
@@ -5359,10 +5359,6 @@ int32 Client::GetMitigation()
 			else if (GetAGI() < 85)
 			{
 				acBonus = levelScaler * 2 / 5;
-			}
-			else if (GetAGI() < 90)
-			{
-				acBonus = levelScaler * 3 / 5;
 			}
 			else if (GetAGI() < 90)
 			{
