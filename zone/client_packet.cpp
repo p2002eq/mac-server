@@ -411,7 +411,7 @@ void Client::CompleteConnect()
 			m_pp.spell_book[spellInt] = 0xFFFFFFFF;
 	}
 
-	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0))
+	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0 || tellsoff))
 	{
 		std::string state = "currently ";
 
@@ -420,6 +420,7 @@ void Client::CompleteConnect()
 		if (GetGMInvul()) state += "invulnerable to all damage, ";
 		if (flymode == 1) state += "flying, ";
 		else if (flymode == 2) state += "levitating, ";
+		if (tellsoff) state += "ignoring tells, ";
 
 		if (state.size () > 0) 
 		{
@@ -1019,6 +1020,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		account_creation = atoul(row[6]);
 		gminvul = atoi(row[7]);
 		flymode = atoi(row[8]);
+		tellsoff = gmhideme;
 	}
 
 	/* Load Character Data */
@@ -3659,17 +3661,28 @@ void Client::Handle_OP_GMBecomeNPC(const EQApplicationPacket *app)
 	BecomeNPC_Struct* bnpc = (BecomeNPC_Struct*)app->pBuffer;
 
 	Mob* cli = (Mob*)entity_list.GetMob(bnpc->id);
-	if (cli == 0)
+	if (cli == nullptr)
 		return;
 
 	if (cli->IsClient())
-		cli->CastToClient()->QueuePacket(app);
-	cli->SendAppearancePacket(AT_NPCName, 1, true);
-	cli->CastToClient()->SetBecomeNPC(true);
-	cli->CastToClient()->SetBecomeNPCLevel(bnpc->maxlevel);
-	cli->Message_StringID(CC_Default, TOGGLE_OFF);
-	cli->CastToClient()->tellsoff = true;
-	//TODO: Make this toggle a BecomeNPC flag so that it gets updated when people zone in as well; Make combat work with this.
+	{
+		Client* target = cli->CastToClient();
+		target->QueuePacket(app);
+		if(target->GetGM())
+		{
+			target->SetInvul(false);
+			target->SetHideMe(false);
+			target->SetGM(false);
+		}
+
+		cli->SendAppearancePacket(AT_NPCName, 1, true);
+		target->SetBecomeNPC(true);
+		target->SetBecomeNPCLevel(bnpc->maxlevel);
+		cli->Message_StringID(CC_Default, TOGGLE_OFF);
+		target->tellsoff = true;
+		target->UpdateWho();
+	}
+
 	return;
 }
 
@@ -4073,13 +4086,9 @@ void Client::Handle_OP_GMToggle(const EQApplicationPacket *app)
 	}
 	GMToggle_Struct *ts = (GMToggle_Struct *)app->pBuffer;
 	if (ts->toggle == 0) {
-		this->Message_StringID(CC_Default, TOGGLE_OFF);
-		//Message(CC_Default, "Turning tells OFF");
 		tellsoff = true;
 	}
 	else if (ts->toggle == 1) {
-		//Message(CC_Default, "Turning tells ON");
-		this->Message_StringID(CC_Default, TOGGLE_ON);
 		tellsoff = false;
 	}
 	else {
