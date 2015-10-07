@@ -402,6 +402,7 @@ public:
 	bool IsBoat();
 	void ShowQuickStats(Client* client);
 	bool IsEquipped(int16 itemid);
+	uint8 GetBaseTexture() const { return base_texture; }
 
 protected:
 
@@ -503,6 +504,7 @@ protected:
 
 	bool raid_target;
 	float ignore_distance;
+	uint8 base_texture;
 
 private:
 	uint32	loottable_id;

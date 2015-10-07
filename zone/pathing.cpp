@@ -760,7 +760,8 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 	if (From == PathingLastPosition)
 	{
-		++PathingLoopCount;
+		if (Speed >= 0.1f)
+			++PathingLoopCount;
 
 		if ((PathingLoopCount > 5) && !IsRooted())
 		{

@@ -931,14 +931,6 @@ void Client::ZoneUnavail() {
 	autobootup_timeout.Disable();
 }
 
-bool Client::GenPassKey(char* key) {
-	char* passKey=nullptr;
-	*passKey += ((char)('A'+((int)emu_random.Int(0, 25))));
-	*passKey += ((char)('A'+((int)emu_random.Int(0, 25))));
-	memcpy(key, passKey, strlen(passKey));
-	return true;
-}
-
 void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req) {
 	Log.Out(Logs::Detail, Logs::World_Server, "Sending EQApplicationPacket OpCode 0x%04x",app->GetOpcode());
 

@@ -61,6 +61,11 @@ struct ZoneEXPModInfo {
 	float AAExpMod;
 };
 
+struct SkillDifficulty {
+	float	difficulty;
+	char	name[32];
+};
+
 struct item_tick_struct {
     uint32       itemid;
     uint32       chance;
@@ -167,7 +172,8 @@ public:
 	void	SaveMerchantItem(uint32 merchantid, int16 item, int8 charges, int8 slot);
 	void	ResetMerchantQuantity(uint32 merchantid);
 	void	ClearMerchantLists();
-	void LoadLevelEXPMods();
+	void	LoadLevelEXPMods();
+	void	LoadSkillDifficulty();
 
 	void SetInstanceTimer(uint32 new_duration);
 
@@ -175,6 +181,7 @@ public:
 	std::map<uint32,std::list<MerchantList> > merchanttable;
 	std::map<uint32,std::list<TempMerchantList> > tmpmerchanttable;
 	std::map<uint32, ZoneEXPModInfo> level_exp_mod;
+	std::map<uint32, SkillDifficulty> skill_difficulty;
 
 	void	LoadNPCEmotes(LinkedList<NPC_Emote_Struct*>* NPCEmoteList);
 	void	ReloadWorld(uint32 Option);
@@ -234,6 +241,7 @@ public:
 	LinkedList<Spawn2*> spawn2_list;
 	LinkedList<ZonePoint*> zone_point_list;
 	uint32	numzonepoints;
+	float	update_range;
 
 	LinkedList<NPC_Emote_Struct*> NPCEmoteList;
 

@@ -342,10 +342,23 @@ public:
 
 	inline uint8 GetLanguageSkill(uint16 n) const { return m_pp.languages[n]; }
 
-	void SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item = nullptr);
-	bool SendPickPocketItem(ItemInst* inst);
+	void SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid = 0, ItemInst* inst = nullptr, bool skipskill = false);
+	bool GetPickPocketSlot(ItemInst* inst, int16& slotid);
 
 	inline const char* GetLastName() const { return lastname; }
+
+	typedef struct {
+		glm::vec4 l_Position;
+		float last_distance;
+		bool  inside;
+	} DynamicPosition_Struct;
+	std::unordered_map<uint16, DynamicPosition_Struct> dynamic_positions;
+	inline void SetLastDistance(uint16 entity_id, float distance) { dynamic_positions[entity_id].last_distance = distance; }
+	inline float GetLastDistance(uint16 entity_id) { return dynamic_positions[entity_id].last_distance; }
+	inline bool GetInside(uint16 entity_id) { return dynamic_positions[entity_id].inside; }
+	inline void SetInside(uint16 entity_id, bool state) { dynamic_positions[entity_id].inside = state; }
+	inline glm::vec4 GetLastPosition(uint16 entity_id) { return dynamic_positions[entity_id].l_Position; }
+	inline void SetLastPosition(uint16 entity_id, glm::vec4 pos) { dynamic_positions[entity_id].l_Position = pos; }
 
 	inline float ProximityX() const { return m_Proximity.x; }
 	inline float ProximityY() const { return m_Proximity.y; }
@@ -361,6 +374,14 @@ public:
 	inline virtual int32 GetAC() const { return AC; }
 	inline virtual int32 GetATK() const { return ATK + itembonuses.ATK + spellbonuses.ATK + ((GetSTR() + GetSkill(SkillOffense)) * 9 / 10); }
 	inline virtual int32 GetATKBonus() const { return itembonuses.ATK + spellbonuses.ATK; }
+	virtual int32 GetOffense(int hand = MainPrimary);
+	inline int32 GetOffense(SkillUseTypes weaponSkill);
+	virtual int32 GetToHit(int hand = MainPrimary);
+	inline int32 GetToHit(SkillUseTypes weaponSkill);
+	uint32 RollDamageMultiplier(uint32 offense);
+	virtual int32 GetMitigation();
+	virtual int32 GetAvoidance();
+	int32 GetEffectiveWornAC();
 	inline virtual int GetHaste() const { return Haste; }
 	int GetRawACNoShield(int &shield_ac, int spell_mod = 1) const;
 
@@ -402,35 +423,17 @@ public:
 	inline uint8 GetBaseWIS() const { return m_pp.WIS; }
 	inline uint8 GetBaseCorrup() const { return 15; } // Same for all
 
-	inline virtual int32 GetHeroicSTR() const { return itembonuses.HeroicSTR; }
-	inline virtual int32 GetHeroicSTA() const { return itembonuses.HeroicSTA; }
-	inline virtual int32 GetHeroicDEX() const { return itembonuses.HeroicDEX; }
-	inline virtual int32 GetHeroicAGI() const { return itembonuses.HeroicAGI; }
-	inline virtual int32 GetHeroicINT() const { return itembonuses.HeroicINT; }
-	inline virtual int32 GetHeroicWIS() const { return itembonuses.HeroicWIS; }
-	inline virtual int32 GetHeroicCHA() const { return itembonuses.HeroicCHA; }
-	inline virtual int32 GetHeroicMR() const { return itembonuses.HeroicMR; }
-	inline virtual int32 GetHeroicFR() const { return itembonuses.HeroicFR; }
-	inline virtual int32 GetHeroicDR() const { return itembonuses.HeroicDR; }
-	inline virtual int32 GetHeroicPR() const { return itembonuses.HeroicPR; }
-	inline virtual int32 GetHeroicCR() const { return itembonuses.HeroicCR; }
-	inline virtual int32 GetHeroicCorrup() const { return itembonuses.HeroicCorrup; }
 	// Mod2
 	inline virtual int32 GetShielding() const { return itembonuses.MeleeMitigation; }
 	inline virtual int32 GetSpellShield() const { return itembonuses.SpellShield; }
 	inline virtual int32 GetDoTShield() const { return itembonuses.DoTShielding; }
 	inline virtual int32 GetStunResist() const { return itembonuses.StunResist; }
 	inline virtual int32 GetStrikeThrough() const { return itembonuses.StrikeThrough; }
-	inline virtual int32 GetAvoidance() const { return itembonuses.AvoidMeleeChance; }
+	inline virtual int32 GetAvoidanceMod() const { return itembonuses.AvoidMeleeChance; }
 	inline virtual int32 GetAccuracy() const { return itembonuses.HitChance; }
 	inline virtual int32 GetCombatEffects() const { return itembonuses.ProcChance; }
 	inline virtual int32 GetDS() const { return itembonuses.DamageShield; }
 	// Mod3
-	inline virtual int32 GetHealAmt() const { return itembonuses.HealAmt; }
-	inline virtual int32 GetSpellDmg() const { return itembonuses.SpellDmg; }
-	inline virtual int32 GetClair() const { return itembonuses.Clairvoyance; }
-	inline virtual int32 GetDSMit() const { return itembonuses.DSMitigation; }
-
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }
 	inline virtual int32 GetBrassMod() const { return itembonuses.brassMod; }
 	inline virtual int32 GetPercMod() const { return itembonuses.percussionMod; }
@@ -599,10 +602,11 @@ public:
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
 	void	CheckSpecializeIncrease(uint16 spell_id);
 	void	CheckSongSkillIncrease(uint16 spell_id);
-	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi = 0);
+	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty = 7.0, float success = 2.0); //valid values for difficulty are 1 to 15. Success is a float simply so we don't need to cast
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();
+
 	void	SendStats(Client* client);
 	void	SendQuickStats(Client* client);
 
@@ -720,7 +724,7 @@ public:
 	bool	MakeItemLink(char* &ret_link, const ItemInst* inst);
 	int		GetItemLinkHash(const ItemInst* inst);
 	void	SendLootItemInPacket(const ItemInst* inst, int16 slot_id);
-	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0);
+	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type, int16 fromid = 0, int16 toid = 0, int16 skill = 0);
 	bool	IsValidSlot(uint32 slot);
 	bool	IsBankSlot(uint32 slot);
 
@@ -859,8 +863,6 @@ public:
 	void SetBoatName(const char* boatname);
 	QGlobalCache *GetQGlobals() { return qGlobals; }
 	QGlobalCache *CreateQGlobals() { qGlobals = new QGlobalCache(); return qGlobals; }
-	void DoTracking();
-	inline bool IsTracking() { return (TrackingID > 0); }
 	inline void SetPendingGuildInvitation(bool inPendingGuildInvitation) { PendingGuildInvitation = inPendingGuildInvitation; }
 	inline bool GetPendingGuildInvitation() { return PendingGuildInvitation; }
 	void LocateCorpse();
@@ -897,7 +899,7 @@ public:
 	int32 GetActCHA() { return( std::min(GetMaxCHA(), GetCHA()) ); }
 	void LoadAccountFlags();
 	void SetAccountFlag(std::string flag, std::string val);
-	std::string GetAccountFlag(std::string flag); float GetDamageMultiplier(SkillUseTypes);
+	std::string GetAccountFlag(std::string flag);
 	void Consume(const Item_Struct *item, uint8 type, int16 slot, bool auto_consume);
 	int mod_client_damage(int damage, SkillUseTypes skillinuse, int hand, const ItemInst* weapon, Mob* other);
 	bool mod_client_message(char* message, uint8 chan_num);
@@ -935,16 +937,13 @@ public:
 
 	bool IsLFG() { return LFG; }
 
-	bool Disarm(Client* client);
+	uint8 Disarm(Client* client, float chance);
 	void SendSoulMarks(SoulMarkList_Struct* SMS);
-
-	//Command #Tune functions
-	virtual int32 Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
-	int32 GetMeleeDamage(Mob* other, bool GetMinDamage = false);
 
 	bool has_zomm;
 	bool client_position_update;
 	bool ignore_zone_count; 
+	uint16 last_target;
 
 	inline virtual int32 GetLastLogin() const { return m_pp.lastlogin; }
 	inline virtual int32 GetTimePlayedMin() const { return m_pp.timePlayedMin; }
@@ -1025,7 +1024,6 @@ private:
 	int32 CalcDR();
 	int32 CalcPR();
 	int32 CalcCR();
-	int32 CalcCorrup();
 	int32 CalcMaxHP();
 	int32 CalcBaseHP();
 	int32 CalcHPRegen();
@@ -1076,7 +1074,6 @@ private:
 	bool				berserk;
 	bool				dead;
 	uint16				BoatID;
-	uint16				TrackingID;
 	uint16				CustomerID;
 	uint32				account_creation;
 	uint8				firstlogon;
@@ -1142,6 +1139,7 @@ private:
 	Timer	charm_cast_timer;
 	Timer	qglobal_purge_timer;
 	Timer	TrackingTimer;
+	Timer	client_distance_timer;
 
 	Timer anon_toggle_timer;
 	Timer afk_toggle_timer;

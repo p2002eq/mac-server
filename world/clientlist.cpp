@@ -273,7 +273,7 @@ bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin, ClientLis
 		
 		// If the IP matches, and the connection admin status is below the exempt status,
 		// or exempt status is less than 0 (no-one is exempt)
-		if ((countCLEIPs->GetIP() == iIP) &&
+		if ((countCLEIPs != nullptr && countCLEIPs->GetIP() == iIP) &&
 			((admin < (RuleI(World, ExemptMaxClientsStatus))) ||
 			(RuleI(World, ExemptMaxClientsStatus) < 0))) {
 

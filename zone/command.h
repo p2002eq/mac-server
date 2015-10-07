@@ -315,7 +315,6 @@ void command_update(Client *c, const Seperator *sep);
 void command_coredump(Client *c, const Seperator *sep);
 void command_push(Client *c, const Seperator *sep);
 void command_xpinfo(Client *c, const Seperator *sep);
-void command_tune(Client *c, const Seperator *sep);
 void command_logtest(Client *c, const Seperator *sep);
 void command_mysqltest(Client *c, const Seperator *sep);
 void command_chattest(Client *c, const Seperator *sep);
@@ -329,6 +328,7 @@ void command_reloadmerchants(Client* c, const Seperator *sep);
 void command_trapinfo(Client* c, const Seperator *sep);
 void command_reloadtraps(Client* c, const Seperator *sep);
 void command_godmode(Client* c, const Seperator *sep);
+void command_skill_difficulty(Client* c, const Seperator *sep);
 
 #ifdef EQPROFILE
 void command_profiledump(Client *c, const Seperator *sep);

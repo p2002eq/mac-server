@@ -715,7 +715,7 @@ enum MaterialUseSlots : uint8
 enum InventoryMapTypes : int16 {
 	MapPossessions = 0,
 	MapBank,
-	MapSharedBank,
+	MapUnused,
 	MapTrade,
 	MapWorld,
 	MapLimbo,
@@ -730,7 +730,7 @@ enum InventoryMapTypes : int16 {
 	MapRealEstate,
 	MapViewMODPC,
 	MapViewMODBank,
-	MapViewMODSharedBank,
+	MapViewMODUnused,
 	MapViewMODLimbo,
 	MapAltStorage,
 	MapArchived,
@@ -850,11 +850,6 @@ namespace legacy {
 		SLOT_BANK_END			= 2007,
 		SLOT_BANK_BAGS_BEGIN	= 2030,
 		SLOT_BANK_BAGS_END		= 2107,
-
-		SLOT_SHARED_BANK_BEGIN		= 2500,
-		SLOT_SHARED_BANK_END		= 2501,
-		SLOT_SHARED_BANK_BAGS_BEGIN	= 2531,
-		SLOT_SHARED_BANK_BAGS_END	= 2550,
 
 		SLOT_TRADE_BEGIN		= 3000,
 		SLOT_TRADE_END			= 3007,

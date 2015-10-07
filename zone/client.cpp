@@ -136,6 +136,7 @@ Client::Client(EQStreamInterface* ieqs)
 	charm_cast_timer(3500),
 	qglobal_purge_timer(30000),
 	TrackingTimer(2000),
+	client_distance_timer(1000),
 	ItemTickTimer(10000),
 	ItemQuestTimer(500),
 	anon_toggle_timer(250),
@@ -162,7 +163,6 @@ Client::Client(EQStreamInterface* ieqs)
 	client_state = CLIENT_CONNECTING;
 	Trader=false;
 	CustomerID = 0;
-	TrackingID = 0;
 	WID = 0;
 	account_id = 0;
 	admin = 0;
@@ -256,6 +256,8 @@ Client::Client(EQStreamInterface* ieqs)
 	HideCorpseMode = HideCorpseNone;
 	PendingGuildInvitation = false;
 
+	client_distance_timer.Disable();
+
 	cur_end = 0;
 
 	InitializeBuffSlots();
@@ -274,6 +276,7 @@ Client::Client(EQStreamInterface* ieqs)
 	has_zomm = false;
 	client_position_update = false;
 	ignore_zone_count = false;
+	last_target = 0;
 	clicky_override = false;
 	active_disc = 0;
 	active_disc_spell = 0;
@@ -1786,11 +1789,10 @@ uint64 Client::GetAllMoney() {
 		(static_cast<uint64>(m_pp.copper_cursor) +
 		(static_cast<uint64>(m_pp.silver_cursor) * 10) +
 		(static_cast<uint64>(m_pp.gold_cursor) * 100) +
-		(static_cast<uint64>(m_pp.platinum_cursor) * 1000) +
-		(static_cast<uint64>(m_pp.platinum_shared) * 1000)))));
+		(static_cast<uint64>(m_pp.platinum_cursor) * 1000)))));
 }
 
-bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int chancemodi) {
+bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty, float success) {
 	if (IsDead() || IsUnconscious())
 		return false;
 	if (IsAIControlled()) // no skillups while chamred =p
@@ -1813,25 +1815,49 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, int cha
 	// Make sure we're not already at skill cap
 	if (skillval < maxskill)
 	{
-		// the higher your current skill level, the harder it is
-		int32 Chance = 10 + chancemodi + ((252 - skillval) / 20);
+		Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d %s. difficulty: %0.2f", skillid, skillval, success == 1.0 ? "succeeded" : "failed", difficulty);
+		float skillup_modifier = RuleR(Skills, SkillUpModifier);
+		float stat = GetSkillStat(skillid);
 
-		Chance = (Chance * RuleI(Character, SkillUpModifier) / 100);
+		if(difficulty < 1)
+			difficulty = 1.0f;
+		if(difficulty > 15)
+			difficulty = 15.0f;
 
-		Chance = mod_increase_skill_chance(Chance, against_who);
+		float chance1 = (stat / (difficulty * success)) * skillup_modifier;
+		if(chance1 > 95)
+			chance1 = 95.0;
 
-		if(Chance < 1)
-			Chance = 1; // Make it always possible
-
-		if(zone->random.Real(0, 99) < Chance)
+		if(zone->random.Real(0, 99) < chance1)
 		{
-			SetSkill(skillid, GetRawSkill(skillid) + 1);
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d successfully gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
-			return true;
-		} else {
-			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed to gain with %i percent chance (mod %d)", skillid, skillval, Chance, chancemodi);
+
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d passed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
+
+			float skillvalue = skillval / 2.0f;
+			if(skillvalue > 95)
+				skillvalue = 95.0f;
+
+			float chance2 = 100.0f - skillvalue;
+			mod_increase_skill_chance(chance2, against_who);
+
+			if(zone->random.Real(0, 99) < chance2)
+			{
+				SetSkill(skillid, GetRawSkill(skillid) + 1);
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d using stat %0.2f successfully gained a point with %0.2f percent chance (diff %0.2f) first roll chance was: %0.2f", skillid, skillval, stat, chance2, difficulty, chance1);
+				return true;
+			}
+			else
+			{
+				Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d failed second roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance2, difficulty);
+			}
+		} 
+		else 
+		{
+			Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d failed first roll with %0.2f percent chance (diff %0.2f)", skillid, skillval, chance1, difficulty);
 		}
-	} else {
+	} 
+	else 
+	{
 		Log.Out(Logs::Detail, Logs::Skills, "Skill %d at value %d cannot increase due to maximum %d", skillid, skillval, maxskill);
 	}
 	return false;
@@ -1849,7 +1875,7 @@ void Client::CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill) {
 
 	if (LangSkill < 100) {	// if the language isn't already maxed
 		int32 Chance = 5 + ((TeacherSkill - LangSkill)/10);	// greater chance to learn if teacher's skill is much higher than yours
-		Chance = (Chance * RuleI(Character, SkillUpModifier)/100);
+		Chance = (Chance * RuleI(Skills, LangSkillUpModifier)/100);
 
 		if(zone->random.Real(0,100) < Chance) {	// if they make the roll
 			IncreaseLanguageSkill(langid);	// increase the language skill by 1
@@ -2608,6 +2634,7 @@ void Client::SetHideMe(bool flag)
 		CreateDespawnPacket(&app, false);
 		entity_list.RemoveFromTargets(this);
 		trackable = false;
+		tellsoff = true;
 	}
 	else
 	{
@@ -2615,9 +2642,11 @@ void Client::SetHideMe(bool flag)
 		database.SetHideMe(AccountID(),false);
 		CreateSpawnPacket(&app);
 		trackable = true;
+		tellsoff = false;
 	}
 
 	entity_list.QueueClientsStatus(this, &app, true, 0, Admin()-1);
+	UpdateWho();
 }
 
 void Client::SetLanguageSkill(int langid, int value)
@@ -2655,6 +2684,7 @@ void Client::LinkDead()
 //	save_timer.Start(2500);
 	linkdead_timer.Start(RuleI(Zone,ClientLinkdeadMS));
 	SendAppearancePacket(AT_Linkdead, 1);
+	client_distance_timer.Disable();
 	client_state = CLIENT_LINKDEAD;
 	AI_Start(CLIENT_LD_TIMEOUT);
 	UpdateWho();
@@ -2938,53 +2968,58 @@ void Client::SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID) {
 	return;
 }
 
-void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, const Item_Struct* item)
+void Client::SendPickPocketResponse(Mob *from, uint32 amt, int type, int16 slotid, ItemInst* inst, bool skipskill)
 {
-		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(Item_PickPocket_Struct));
-		Item_PickPocket_Struct* pick_out = (Item_PickPocket_Struct*) outapp->pBuffer;
+	if(!skipskill)
+	{
+		float success = 2.0;
+		if(type > PickPocketFailed)
+			success = 1.0;
+
+		CheckIncreaseSkill(SkillPickPockets, nullptr, zone->skill_difficulty[SkillPickPockets].difficulty, success);
+	}
+
+	if(type == PickPocketItem && inst)
+	{
+		SendItemPacket(slotid, inst, ItemPacketStolenItem, GetID(), from->GetID(), GetSkill(SkillPickPockets));
+		return;
+	}
+	else
+	{
+
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(PickPocket_Struct));
+		PickPocket_Struct* pick_out = (PickPocket_Struct*) outapp->pBuffer;
 		pick_out->coin = amt;
 		pick_out->from = GetID();
 		pick_out->to = from->GetID();
 		pick_out->myskill = GetSkill(SkillPickPockets);
-		pick_out->reply = 0;
-		if(item)
-			strncpy(pick_out->itemname, item->Name, 32);
-		else
-			pick_out->itemname[0] = '\0';
 
-		if((type >= PickPocketPlatinum) && (type <= PickPocketCopper) && (amt == 0))
+		if(amt == 0)
 			type = PickPocketFailed;
 
 		pick_out->type = type;
 
 		QueuePacket(outapp);
 		safe_delete(outapp);
+	}
 }
 
-bool Client::SendPickPocketItem(ItemInst* inst)
+bool Client::GetPickPocketSlot(ItemInst* inst, int16& freeslotid)
 {
-	bool stacked = TryStacking(inst);
-	int32 freeslotid = 0;
+	bool is_arrow = (inst->GetItem()->ItemType == ItemTypeArrow) ? true : false;
+	freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size, is_arrow);
 
-	if (!stacked)
+	//make sure we are not completely full...
+	if ((freeslotid == MainCursor && m_inv.GetItem(MainCursor) != nullptr) || freeslotid == INVALID_INDEX)
 	{
-		freeslotid = m_inv.FindFreeSlot(false, true, inst->GetItem()->Size);
-
-		//make sure we are not completely full...
-		if (freeslotid == MainCursor || freeslotid == INVALID_INDEX) {
-			if (m_inv.GetItem(MainCursor) != nullptr || freeslotid == INVALID_INDEX) 
-			{
-				Message(CC_Red, "You do not have room for any more items.");
-				entity_list.CreateGroundObject(inst->GetID(), glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, FullInvDecayTime));
-				return false;
-			}
-		}
-
-		PutItemInInventory(freeslotid, *inst);
-		SendItemPacket(freeslotid, inst, ItemPacketTrade);
+		freeslotid == INVALID_INDEX;
+		return false;
 	}
-
-	return true;
+	else
+	{
+		PutItemInInventory(freeslotid, *inst);
+		return true;
+	}
 }
 
 bool Client::IsDiscovered(uint32 itemid) {
@@ -4022,20 +4057,19 @@ void Client::SendStats(Client* client)
 	GetRawACNoShield(shield_ac);
 
 	client->Message(CC_Yellow, "~~~~~ %s %s ~~~~~", GetCleanName(), GetLastName());
-	client->Message(CC_Default, " Level: %i Class: %i Race: %i RaceBit: %i DS: %i/%i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetDS(), RuleI(Character, ItemDamageShieldCap), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
+	client->Message(CC_Default, " Level: %i Class: %i Race: %i RaceBit: %i Size: %1.1f BaseSize: %1.1f Weight: %.1f/%d  ", GetLevel(), GetClass(), GetRace(), GetRaceBitmask(GetRace()), GetSize(), GetBaseSize(), (float)CalcCurrentWeight() / 10.0f, GetSTR());
 	client->Message(CC_Default, " HP: %i/%i  HP Regen: %i/%i",GetHP(), GetMaxHP(), CalcHPRegen()+RestRegenHP, CalcHPRegenCap());
-	client->Message(CC_Default, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i", CalcAC(), GetACMit(), GetACAvoid(), spellbonuses.AC, shield_ac);
-	client->Message(CC_Default, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i GMInvul: %d LD: %i ClientVersion: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), GetGMInvul(), IsLD(), GetClientVersionBit());
+	client->Message(CC_Default, " AC: %i ( Mit.: %i + Avoid.: %i + Spell: %i ) | Shield AC: %i DS: %i", CalcAC(), GetMitigation(), GetAvoidance(), spellbonuses.AC, shield_ac, GetDS());
+	client->Message(CC_Default, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i GMInvul: %d LD: %i ClientVersion: %i TellsOff: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), GetGMInvul(), IsLD(), GetClientVersionBit(), tellsoff);
 	if(CalcMaxMana() > 0)
 		client->Message(CC_Default, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen()+RestRegenMana, CalcManaRegenCap());
 	client->Message(CC_Default, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
 	client->Message(CC_Default, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen()+RestRegenEndurance, CalcEnduranceRegenCap());
-	client->Message(CC_Default, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
+	client->Message(CC_Default, " Offense: %i  To-Hit: %i  ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetOffense(), GetToHit(), GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
 	client->Message(CC_Default, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);
 	client->Message(CC_Default, " STR: %i  STA: %i  AGI: %i DEX: %i  WIS: %i INT: %i  CHA: %i", GetSTR(), GetSTA(), GetAGI(), GetDEX(), GetWIS(), GetINT(), GetCHA());
 	client->Message(CC_Default, " PR: %i MR: %i  DR: %i FR: %i  CR: %i  ", GetPR(), GetMR(), GetDR(), GetFR(), GetCR());
-	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidance(), GetAccuracy(), GetCombatEffects());
-	client->Message(CC_Default, " Heal Amt.: %i  Spell Dmg.: %i  Clairvoyance: %i DS Mitigation: %i", GetHealAmt(), GetSpellDmg(), GetClair(), GetDSMit());
+	client->Message(CC_Default, " Shielding: %i  Spell Shield: %i  DoT Shielding: %i Stun Resist: %i  Strikethrough: %i  Avoidance: %i  Accuracy: %i  Combat Effects: %i", GetShielding(), GetSpellShield(), GetDoTShield(), GetStunResist(), GetStrikeThrough(), GetAvoidanceMod(), GetAccuracy(), GetCombatEffects());
 	client->Message(CC_Default, " Runspeed: %0.1f  Walkspeed: %0.1f Hunger: %i Thirst: %i Famished: %i Boat: %s (Ent %i : NPC %i)", GetRunspeed(), GetWalkspeed(), GetHunger(), GetThirst(), GetFamished(), GetBoatName(), GetBoatID(), GetBoatNPCID());
 	if(GetClass() == WARRIOR)
 		client->Message(CC_Default, "HasShield: %i KickDmg: %i BashDmg: %i", HasShieldEquiped(), GetKickDamage(), GetBashDamage());
@@ -4398,20 +4432,6 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 	bool repair = false;
 	bool change = false;
 
-	if (this->itembonuses.HeroicCHA)
-	{
-		int faction_mod = itembonuses.HeroicCHA / 5;
-		// If our result isn't truncated, then just do that
-		if (npc_value * faction_mod / 100 != 0)
-			npc_value += npc_value * faction_mod / 100;
-		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
-		else
-		{
-			if (zone->random.Int(0, 100) < faction_mod)
-				npc_value *= 2;
-		}
-	}
-
 	// Set flag when to update db
 	// Repair needed, as db changes could modify a base value for a faction
 	// and we need to auto correct when that happens.
@@ -4582,7 +4602,7 @@ void Client::SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_
 
 	if(!gained)
 		type = "lost";
-	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, total, new_value);
+	Log.Out(Logs::General, Logs::Faction, "You have %s %d faction with %s (%d)! Your total now including bonuses is %d (Personal: %d)", type.c_str(), tmpvalue, name, faction_id, total, new_value);
 	// Log.Out(Logs::General, Logs::Faction, "Your faction standing with %s has been adjusted by %d", name, tmpvalue);
 	return;
 }
@@ -4946,23 +4966,32 @@ bool Client::IsTargetInMyGroup(Client* target)
 	return false;
 }
 
-bool Client::Disarm(Client* client)
+uint8 Client::Disarm(Client* client, float chance)
 {
 	ItemInst* weapon = client->m_inv.GetItem(MainPrimary);
 	if(weapon)
 	{
-		uint8 charges = weapon->GetCharges();
-		uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
-		if(freeslotid != INVALID_INDEX)
+		float roll = zone->random.Real(0, 150);
+		if (roll < chance) 
 		{
-			client->DeleteItemInInventory(MainPrimary,0,true);
-			client->SummonItem(weapon->GetID(),charges,false,freeslotid);
-			client->WearChange(MaterialPrimary,0,0);
+			uint8 charges = weapon->GetCharges();
+			uint16 freeslotid = client->m_inv.FindFreeSlot(false, true, weapon->GetItem()->Size);
+			if(freeslotid != INVALID_INDEX)
+			{
+				client->DeleteItemInInventory(MainPrimary,0,true);
+				client->SummonItem(weapon->GetID(),charges,false,freeslotid);
+				client->WearChange(MaterialPrimary,0,0);
 
-			return true;
+				return 2;
+			}
+		}
+		else
+		{
+			return 1;
 		}
 	}
-	return false;
+
+	return 0;
 }
 
 
@@ -5074,7 +5103,7 @@ void Client::FixClientXP()
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM character_keyring "
-									"WHERE char_id = '%i' ORDER BY item_id", character_id);
+									"WHERE id = '%i' ORDER BY item_id", character_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;
@@ -5094,7 +5123,7 @@ void Client::KeyRingAdd(uint32 item_id)
 	if (found)
 		return;
 
-	std::string query = StringFormat("INSERT INTO character_keyring(char_id, item_id) VALUES(%i, %i)", character_id, item_id);
+	std::string query = StringFormat("INSERT INTO character_keyring(id, item_id) VALUES(%i, %i)", character_id, item_id);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return;

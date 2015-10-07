@@ -171,29 +171,8 @@ void HateList::Set(Mob* other, uint32 in_hate, uint32 in_dam)
 		if(in_dam > 0)
 			p->damage = in_dam;
 
-		if(p->jolthate != 0)
-		{
-			p->jolthate += in_hate;
-			if(p->hate + p->jolthate > 0)
-			{
-				p->hate = p->hate + p->jolthate;
-				p->jolthate = 0;
-			}
-			else
-			{
-				int32 newhate = p->hate - 1;
-				p->jolthate += newhate;
-				p->hate = 1;
-			}
-
-			if(p->jolthate < -600)
-				p->jolthate = -600;
-		}
-		else
-		{
-			if(in_hate > 0)
-				p->hate = in_hate;
-		}
+		if(in_hate > 0)
+			p->hate = in_hate;
 	}
 }
 
@@ -264,7 +243,7 @@ Mob* HateList::GetClosest(Mob *hater) {
 
 
 // a few comments added, rearranged code for readability
-void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAddIfNotExist, int32 in_jolthate)
+void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAddIfNotExist)
 {
 	if(!ent)
 		return;
@@ -278,33 +257,8 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 	tHateEntry *p = Find(ent);
 	if (p)
 	{
-		int32 newhate = p->hate + in_hate;
-		if(in_jolthate == 0 && p->jolthate != 0)
-		{
-			p->jolthate += in_hate;
-			if(p->jolthate + p->hate > 0)
-			{
-				newhate = p->jolthate + p->hate;
-				p->jolthate = 0;
-			}
-			else
-			{
-				p->jolthate += p->hate - 1;
-				newhate = 1;
-			}
-		}
-		else if(in_jolthate != 0)
-		{
-			p->jolthate += in_jolthate + in_hate;
-			p->jolthate += p->hate - 1;
-			newhate = 1;
-		}
-
-		if(p->jolthate < -600)
-			p->jolthate = -600;
-
 		p->damage+=(in_dam>=0)?in_dam:0;
-		p->hate = newhate;
+		p->hate += in_hate;
 		p->bFrenzy = bFrenzy;
 	}
 	else if (iAddIfNotExist)
@@ -318,7 +272,6 @@ void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAd
 		p->damage = (in_dam>=0)?in_dam:0;
 		p->hate = in_hate;
 		p->bFrenzy = bFrenzy;
-		p->jolthate = in_jolthate;
 		list.push_back(p);
 		parse->EventNPC(EVENT_HATE_LIST, owner->CastToNPC(), ent, "1", 0);
 
@@ -778,15 +731,15 @@ void HateList::PrintToClient(Client *c)
 
 		if (bonusHate > 0)
 		{
-			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d (+%i), jolthate: %d",
+			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d (+%i)",
 				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-				timer, e->damage, e->hate, bonusHate, e->jolthate);
+				timer, e->damage, e->hate, bonusHate);
 		}
 		else
 		{
-			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d, jolthate: %d",
+			c->Message(CC_Default, "- name: %s, timer: %i, damage: %d, hate: %d",
 				(e->ent && e->ent->GetName()) ? e->ent->GetName() : "(null)",
-				timer, e->damage, e->hate, e->jolthate);
+				timer, e->damage, e->hate);
 		}
 
 		++iterator;

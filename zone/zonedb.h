@@ -270,7 +270,6 @@ public:
 	SendAA_Struct*	GetAASkillVars(uint32 skill_id);
 	uint8	GetTotalAALevels(uint32 skill_id);
 	uint32	GetMacToEmuAA(uint8 eqmacid);
-	uint32	GetSizeAA();
 	uint32	CountAAs();
 	void	LoadAAs(SendAA_Struct **load);
 	uint32 CountAAEffects();
@@ -355,6 +354,7 @@ public:
 	void	UpdateRecipeMadecount(uint32 recipe_id, uint32 char_id, uint32 madecount);
 	bool	EnableRecipe(uint32 recipe_id);
 	bool	DisableRecipe(uint32 recipe_id);
+	bool	UpdateSkillDifficulty(uint16 skillid, float difficulty);
 
 	/*
 	* Doors
@@ -407,8 +407,7 @@ public:
 	void	GetEventLogs(const char* name,char* target,uint32 account_id=0,uint8 eventid=0,char* detail=0,char* timestamp=0, CharacterEventLog_Struct* cel=0);
 	uint32	GetKarma(uint32 acct_id);
 	void	UpdateKarma(uint32 acct_id, uint32 amount);
-	/* Things which really dont belong here... */
-	//int16	CommandRequirement(const char* commandname); //Orphaned code?
+
 
 protected:
 	void ZDBInitVars();

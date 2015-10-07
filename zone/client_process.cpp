@@ -79,6 +79,9 @@ bool Client::Process() {
 		if(hpupdate_timer.Check())
 			SendHPUpdate();
 
+		if(client_distance_timer.Enabled() && client_distance_timer.Check())
+			entity_list.UpdateDistances(this);
+
 		if(mana_timer.Check())
 			SendManaUpdatePacket();
 
@@ -177,7 +180,7 @@ bool Client::Process() {
 		if (bindwound_timer.Check() && bindwound_target != 0) {
 			if(BindWound(bindwound_target, false))
 			{
-				CheckIncreaseSkill(SkillBindWound, nullptr, 5);
+				CheckIncreaseSkill(SkillBindWound, nullptr, zone->skill_difficulty[SkillBindWound].difficulty, 1.0);
 			}
 			else
 			{
@@ -299,7 +302,7 @@ bool Client::Process() {
 				bool tripleAttackSuccess = false;
 				if( auto_attack_target && CanThisClassDoubleAttack() ) {
 
-					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, -10);
+					CheckIncreaseSkill(SkillDoubleAttack, auto_attack_target, zone->skill_difficulty[SkillDoubleAttack].difficulty);
 					if(CheckDoubleAttack()) {
 						//should we allow rampage on double attack?
 						if(CheckAAEffect(aaEffectRampage)) {
@@ -393,7 +396,7 @@ bool Client::Process() {
 				DualWieldProbability += DualWieldProbability*float(DWBonus)/ 100.0f;
 
 				float random = zone->random.Real(0, 1);
-				CheckIncreaseSkill(SkillDualWield, auto_attack_target, -10);
+				CheckIncreaseSkill(SkillDualWield, auto_attack_target, zone->skill_difficulty[SkillDualWield].difficulty);
 				if (random < DualWieldProbability){ // Max 78% of DW
 					if(CheckAAEffect(aaEffectRampage)) {
 						entity_list.AEAttack(this, 30, MainSecondary);
@@ -429,7 +432,7 @@ bool Client::Process() {
 			// Send a position packet every 8 seconds - if not done, other clients
 			// see this char disappear after 10-12 seconds of inactivity
 			if (position_timer_counter >= 16) { // Approx. 4 ticks per second
-				entity_list.SendPositionUpdates(this, pLastUpdateWZ, 300, GetTarget(), false);
+				entity_list.SendPositionUpdates(this, pLastUpdateWZ, GetTarget());
 				pLastUpdate = Timer::GetCurrentTime();
 				pLastUpdateWZ = pLastUpdate;
 				position_timer_counter = 0;
@@ -500,6 +503,7 @@ bool Client::Process() {
 		{
 			disc_ability_timer.Disable();
 			FadeDisc();
+			Message_StringID(CC_Default, DISCIPLINE_CONLOST);
 
 			EQApplicationPacket *outapp = new EQApplicationPacket(OP_DisciplineChange, sizeof(ClientDiscipline_Struct));
 			ClientDiscipline_Struct *d = (ClientDiscipline_Struct*)outapp->pBuffer;
@@ -1351,23 +1355,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 			// can't move coin from trade
 			break;
 		}
-		case 4:	// shared bank
-		{
-			uint32 distance = 0;
-			NPC *banker = entity_list.GetClosestBanker(this, distance);
-			if(!banker || distance > USE_NPC_RANGE2)
-			{
-				char *hacked_string = nullptr;
-				MakeAnyLenString(&hacked_string, "Player tried to make use of a banker(shared coin move) but %s is non-existant or too far away (%u units).",
-					banker ? banker->GetName() : "UNKNOWN NPC", distance);
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacked_string, zone->GetShortName());
-				safe_delete_array(hacked_string);
-				return;
-			}
-			if(mc->cointype1 == COINTYPE_PP)	// there's only platinum here
-				from_bucket = (int32 *) &m_pp.platinum_shared;
-			break;
-		}
 	}
 
 	switch(mc->to_slot)
@@ -1451,23 +1438,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 			}
 			break;
 		}
-		case 4:	// shared bank
-		{
-			uint32 distance = 0;
-			NPC *banker = entity_list.GetClosestBanker(this, distance);
-			if(!banker || distance > USE_NPC_RANGE2)
-			{
-				char *hacked_string = nullptr;
-				MakeAnyLenString(&hacked_string, "Player tried to make use of a banker(shared coin move) but %s is non-existant or too far away (%u units).",
-					banker ? banker->GetName() : "UNKNOWN NPC", distance);
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacked_string, zone->GetShortName());
-				safe_delete_array(hacked_string);
-				return;
-			}
-			if(mc->cointype2 == COINTYPE_PP)	// there's only platinum here
-				to_bucket = (int32 *) &m_pp.platinum_shared;
-			break;
-		}
 	}
 
 	if(!from_bucket)
@@ -1501,23 +1471,6 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	{
 		if(*to_bucket + amount_to_add > *to_bucket)	// overflow check
 			*to_bucket += amount_to_add;
-
-		//shared bank plat
-		if (RuleB(Character, SharedBankPlat))
-		{
-			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared)
-			{
-				if (from_bucket == &m_pp.platinum_shared)
-					amount_to_add = 0 - amount_to_take;
-
-				database.SetSharedPlatinum(AccountID(),amount_to_add);
-			}
-		}
-		else{
-			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared){
-				this->Message(CC_Red, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM WILL BE DESTROYED IF YOU PUT IT HERE");
-			}
-		}
 	}
 
 	// if this is a trade move, inform the person being traded with
@@ -2052,60 +2005,5 @@ void Client::CalcRestState() {
 
 	if(RuleB(Character, RestRegenEndurance))
 		RestRegenEndurance = (GetMaxEndurance() * RuleI(Character, RestRegenPercent) / 100);
-}
-
-void Client::DoTracking()
-{
-	if(TrackingID == 0)
-		return;
-
-	Mob *m = entity_list.GetMob(TrackingID);
-
-	if(!m || m->IsCorpse())
-	{
-		Message_StringID(MT_Skills, TRACK_LOST_TARGET);
-
-		TrackingID = 0;
-
-		return;
-	}
-
-	float RelativeHeading = GetHeading() - CalculateHeadingToTarget(m->GetX(), m->GetY());
-
-	if(RelativeHeading < 0)
-		RelativeHeading += 256;
-
-	if((RelativeHeading <= 16) || (RelativeHeading >= 240))
-	{
-		Message_StringID(MT_Skills, TRACK_STRAIGHT_AHEAD, m->GetCleanName());
-	}
-	else if((RelativeHeading > 16) && (RelativeHeading <= 48))
-	{
-		Message_StringID(MT_Skills, TRACK_AHEAD_AND_TO, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 48) && (RelativeHeading <= 80))
-	{
-		Message_StringID(MT_Skills, TRACK_TO_THE, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 80) && (RelativeHeading <= 112))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_AND_TO, m->GetCleanName(), "right");
-	}
-	else if((RelativeHeading > 112) && (RelativeHeading <= 144))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_YOU, m->GetCleanName());
-	}
-	else if((RelativeHeading > 144) && (RelativeHeading <= 176))
-	{
-		Message_StringID(MT_Skills, TRACK_BEHIND_AND_TO, m->GetCleanName(), "left");
-	}
-	else if((RelativeHeading > 176) && (RelativeHeading <= 208))
-	{
-		Message_StringID(MT_Skills, TRACK_TO_THE, m->GetCleanName(), "left");
-	}
-	else if((RelativeHeading > 208) && (RelativeHeading < 240))
-	{
-		Message_StringID(MT_Skills, TRACK_AHEAD_AND_TO, m->GetCleanName(), "left");
-	}
 }
 

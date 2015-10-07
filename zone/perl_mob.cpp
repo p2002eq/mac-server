@@ -2829,32 +2829,6 @@ XS(XS_Mob_GetCR)
 	XSRETURN(1);
 }
 
-XS(XS_Mob_GetCorruption); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Mob_GetCorruption)
-{
-	dXSARGS;
-	if (items != 1)
-		Perl_croak(aTHX_ "Usage: Mob::GetCorruption(THIS)");
-	{
-		Mob *		THIS;
-		int32		RETVAL;
-		dXSTARG;
-
-		if (sv_derived_from(ST(0), "Mob")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Mob *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Mob");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		RETVAL = THIS->GetCorrup();
-		XSprePUSH; PUSHi((IV)RETVAL);
-	}
-	XSRETURN(1);
-}
-
 XS(XS_Mob_GetMaxSTR); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Mob_GetMaxSTR)
 {
@@ -7657,44 +7631,6 @@ XS(XS_Mob_GetModVulnerability)
 	XSRETURN(1);
 }
 
-XS(XS_Mob_DoMeleeSkillAttackDmg); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Mob_DoMeleeSkillAttackDmg)
-{
-	dXSARGS;
-	if (items != 7)
-		Perl_croak(aTHX_ "Usage: Mob::DoMeleeSkillAttackDmg(THIS, target, weapon_damage, skill, chance_mod, focus, CanRiposte)");
-	{
-		Mob *		THIS;
-		Mob*		target;
-		uint16		weapon_damage = (uint16)SvIV(ST(2));
-		SkillUseTypes	skill = (SkillUseTypes)SvUV(ST(3));
-		int16		chance_mod = (int16)SvIV(ST(4));
-		int16		focus = (int16)SvIV(ST(5));
-		uint8		CanRiposte = (uint8)SvIV(ST(6));
-
-		if (sv_derived_from(ST(0), "Mob")) {
-			IV tmp = SvIV((SV*)SvRV(ST(0)));
-			THIS = INT2PTR(Mob *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "THIS is not of type Mob");
-		if(THIS == nullptr)
-			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		if (sv_derived_from(ST(1), "Mob")) {
-			IV tmp = SvIV((SV*)SvRV(ST(1)));
-			target = INT2PTR(Mob *,tmp);
-		}
-		else
-			Perl_croak(aTHX_ "target is not of type Mob");
-		if(target == nullptr)
-			Perl_croak(aTHX_ "target is nullptr, avoiding crash.");
-
-		THIS->DoMeleeSkillAttackDmg(target, weapon_damage, skill, chance_mod, focus, CanRiposte);
-	}
-	XSRETURN_EMPTY;
-}
-
 XS(XS_Mob_DoArcheryAttackDmg); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Mob_DoArcheryAttackDmg)
 {
@@ -8171,7 +8107,6 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "GetDR"), XS_Mob_GetDR, file, "$");
 		newXSproto(strcpy(buf, "GetPR"), XS_Mob_GetPR, file, "$");
 		newXSproto(strcpy(buf, "GetCR"), XS_Mob_GetCR, file, "$");
-		newXSproto(strcpy(buf, "GetCorruption"), XS_Mob_GetCR, file, "$");
 		newXSproto(strcpy(buf, "GetMaxSTR"), XS_Mob_GetMaxSTR, file, "$");
 		newXSproto(strcpy(buf, "GetMaxSTA"), XS_Mob_GetMaxSTA, file, "$");
 		newXSproto(strcpy(buf, "GetMaxDEX"), XS_Mob_GetMaxDEX, file, "$");
@@ -8339,7 +8274,6 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "IsBeneficialAllowed"), XS_Mob_IsBeneficialAllowed, file, "$$");
 		newXSproto(strcpy(buf, "ModVulnerability"), XS_Mob_ModVulnerability, file, "$$$");
 		newXSproto(strcpy(buf, "GetModVulnerability"), XS_Mob_GetModVulnerability, file, "$$");
-		newXSproto(strcpy(buf, "DoMeleeSkillAttackDmg"), XS_Mob_DoMeleeSkillAttackDmg, file, "$$$$$$$");
 		newXSproto(strcpy(buf, "DoArcheryAttackDmg"), XS_Mob_DoArcheryAttackDmg, file, "$$$$$$$");
 		newXSproto(strcpy(buf, "DoThrowingAttackDmg"), XS_Mob_DoThrowingAttackDmg, file, "$$$$$$$");
 		newXSproto(strcpy(buf, "SetDisableMelee"), XS_Mob_SetDisableMelee, file, "$$");

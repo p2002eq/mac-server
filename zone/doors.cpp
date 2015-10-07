@@ -265,7 +265,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 					{
 						if(!IsDoorOpen())
 						{
-							sender->CheckIncreaseSkill(SkillPickLock, nullptr, 1);
+							sender->CheckIncreaseSkill(SkillPickLock, nullptr, zone->skill_difficulty[SkillPickLock].difficulty, 1.0);
 							md->action = invert_state == 0 ? OPEN_DOOR : OPEN_INVDOOR;
 						}
 						else

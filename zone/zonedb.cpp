@@ -745,10 +745,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"eye_color_2,               "
 		"hair_style,                "
 		"beard,                     "
-		"ability_time_seconds,      "
-		"ability_number,            "
-		"ability_time_minutes,      "
-		"ability_time_hours,        "
 		"title,                     "
 		"suffix,                    "
 		"exp,                       "
@@ -769,10 +765,8 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		"heading,                   "
 		"autosplit_enabled,         "
 		"zone_change_count,         "
-		"toxicity,                  "
 		"hunger_level,              "
 		"thirst_level,              "
-		"ability_up,                "
 		"zone_id,                   "
 		"zone_instance,             "
 		"endurance,                 "
@@ -812,10 +806,6 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->eyecolor2 = atoi(row[r]); r++;										 // "eye_color_2,               "
 		pp->hairstyle = atoi(row[r]); r++;										 // "hair_style,                "
 		pp->beard = atoi(row[r]); r++;											 // "beard,                     "
-		pp->ability_time_seconds = atoi(row[r]); r++;							 // "ability_time_seconds,      "
-		pp->ability_number = atoi(row[r]); r++;									 // "ability_number,            "
-		pp->ability_time_minutes = atoi(row[r]); r++;							 // "ability_time_minutes,      "
-		pp->ability_time_hours = atoi(row[r]); r++;								 // "ability_time_hours,        "
 		strcpy(pp->title, row[r]); r++;											 // "title,                     "
 		strcpy(pp->suffix, row[r]); r++;										 // "suffix,                    "
 		pp->exp = atoi(row[r]); r++;											 // "exp,                       "
@@ -836,10 +826,8 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 		pp->heading = atof(row[r]); r++;										 // "heading,                   "
 		pp->autosplit = atoi(row[r]); r++;										 // "autosplit_enabled,         "
 		pp->zone_change_count = atoi(row[r]); r++;								 // "zone_change_count,         "
-		pp->toxicity = atoi(row[r]); r++;										 // "toxicity,                  "
 		pp->hunger_level = atoi(row[r]); r++;									 // "hunger_level,              "
 		pp->thirst_level = atoi(row[r]); r++;									 // "thirst_level,              "
-		pp->ability_up = atoi(row[r]); r++;										 // "ability_up,                "
 		pp->zone_id = atoi(row[r]); r++;										 // "zone_id,                   "
 		pp->zoneInstance = atoi(row[r]); r++;									 // "zone_instance,             "
 		pp->endurance = atoi(row[r]); r++;										 // "endurance,                 "
@@ -858,7 +846,7 @@ bool ZoneDatabase::LoadCharacterData(uint32 character_id, PlayerProfile_Struct* 
 }
 
 bool ZoneDatabase::LoadCharacterFactionValues(uint32 character_id, faction_map & val_list) {
-	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `faction_values` WHERE `char_id` = %i", character_id);
+	std::string query = StringFormat("SELECT `faction_id`, `current_value` FROM `character_faction_values` WHERE `id` = %i", character_id);
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) 
 	{ 
@@ -1099,10 +1087,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" eye_color_2,               "
 		" hair_style,                "
 		" beard,                     "
-		" ability_time_seconds,      "
-		" ability_number,            "
-		" ability_time_minutes,      "
-		" ability_time_hours,        "
 		" title,                     "
 		" suffix,                    "
 		" exp,                       "
@@ -1123,10 +1107,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" heading,                   "
 		" autosplit_enabled,         "
 		" zone_change_count,         "
-		" toxicity,                  "
 		" hunger_level,              "
 		" thirst_level,              "
-		" ability_up,                "
 		" zone_id,                   "
 		" zone_instance,             "
 		" endurance,                 "
@@ -1165,10 +1147,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // eye_color_2				  pp->eyecolor2,						" eye_color_2,               "
 		"%u,"  // hair_style				  pp->hairstyle,						" hair_style,                "
 		"%u,"  // beard						  pp->beard,							" beard,                     "
-		"%u,"  // ability_time_seconds		  pp->ability_time_seconds,				" ability_time_seconds,      "
-		"%u,"  // ability_number			  pp->ability_number,					" ability_number,            "
-		"%u,"  // ability_time_minutes		  pp->ability_time_minutes,				" ability_time_minutes,      "
-		"%u,"  // ability_time_hours		  pp->ability_time_hours,				" ability_time_hours,        "
 		"'%s',"  // title						  pp->title,						" title,                     "   "
 		"'%s',"  // suffix					  pp->suffix,							" suffix,                    "
 		"%u,"  // exp						  pp->exp,								" exp,                       "
@@ -1189,10 +1167,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%f,"  // heading					  pp->heading,							" heading,                   "
 		"%u,"  // autosplit_enabled			  pp->autosplit,						" autosplit_enabled,         "
 		"%u,"  // zone_change_count			  pp->zone_change_count,				" zone_change_count,         "
-		"%i,"  // toxicity					  pp->toxicity,							" toxicity,                  "
 		"%i,"  // hunger_level				  pp->hunger_level,						" hunger_level,              "
 		"%i,"  // thirst_level				  pp->thirst_level,						" thirst_level,              "
-		"%u,"  // ability_up				  pp->ability_up,						" ability_up,                "
 		"%u,"  // zone_id					  pp->zone_id,							" zone_id,                   "
 		"%u,"  // zone_instance				  pp->zoneInstance,						" zone_instance,             "
 		"%u,"  // endurance					  pp->endurance,						" endurance,                 "
@@ -1230,10 +1206,6 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->eyecolor2,					  // " eye_color_2,               "
 		pp->hairstyle,					  // " hair_style,                "
 		pp->beard,						  // " beard,                     "
-		pp->ability_time_seconds,		  // " ability_time_seconds,      "
-		pp->ability_number,				  // " ability_number,            "
-		pp->ability_time_minutes,		  // " ability_time_minutes,      "
-		pp->ability_time_hours,			  // " ability_time_hours,        "
 		EscapeString(pp->title).c_str(),						  // " title,                     "
 		EscapeString(pp->suffix).c_str(),						  // " suffix,                    "
 		pp->exp,						  // " exp,                       "
@@ -1254,10 +1226,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		pp->heading,					  // " heading,                   "
 		pp->autosplit,					  // " autosplit_enabled,         "
 		pp->zone_change_count,			  // " zone_change_count,         "
-		pp->toxicity,					  // " toxicity,                  "
 		pp->hunger_level,				  // " hunger_level,              "
 		pp->thirst_level,				  // " thirst_level,              "
-		pp->ability_up,					  // " ability_up,                "
 		pp->zone_id,					  // " zone_id,                   "
 		pp->zoneInstance,				  // " zone_instance,             "
 		pp->endurance,					  // " endurance,                 "
@@ -2196,7 +2166,7 @@ uint8 ZoneDatabase::GetCommandAccess(const char* command) {
 
 void ZoneDatabase::SaveBuffs(Client *client) {
 
-	std::string query = StringFormat("DELETE FROM `character_buffs` WHERE `character_id` = '%u'", client->CharacterID());
+	std::string query = StringFormat("DELETE FROM `character_buffs` WHERE `id` = '%u'", client->CharacterID());
 	database.QueryDatabase(query);
 
 	uint32 buff_count = client->GetMaxBuffSlots();
@@ -2206,7 +2176,7 @@ void ZoneDatabase::SaveBuffs(Client *client) {
 		if(buffs[index].spellid == SPELL_UNKNOWN)
             continue;
 
-		query = StringFormat("INSERT INTO `character_buffs` (character_id, slot_id, spell_id, "
+		query = StringFormat("INSERT INTO `character_buffs` (id, slot_id, spell_id, "
                             "caster_level, caster_name, ticsremaining, counters, numhits, melee_rune, "
                             "magic_rune, persistent, dot_rune, caston_x, caston_y, caston_z, ExtraDIChance) "
                             "VALUES('%u', '%u', '%u', '%u', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', "
@@ -2231,7 +2201,7 @@ void ZoneDatabase::LoadBuffs(Client *client) {
 	std::string query = StringFormat("SELECT spell_id, slot_id, caster_level, caster_name, ticsremaining, "
                                     "counters, numhits, melee_rune, magic_rune, persistent, dot_rune, "
                                     "caston_x, caston_y, caston_z, ExtraDIChance "
-                                    "FROM `character_buffs` WHERE `character_id` = '%u'", client->CharacterID());
+                                    "FROM `character_buffs` WHERE `id` = '%u'", client->CharacterID());
     auto results = QueryDatabase(query);
     if (!results.Success()) {
 		return;
@@ -2386,8 +2356,8 @@ void ZoneDatabase::SavePetInfo(Client *client)
 
 void ZoneDatabase::RemoveTempFactions(Client *client) {
 
-	std::string query = StringFormat("DELETE FROM faction_values "
-                                    "WHERE temp = 1 AND char_id = %u",
+	std::string query = StringFormat("DELETE FROM character_faction_values "
+                                    "WHERE temp = 1 AND id = %u",
                                     client->CharacterID());
 	QueryDatabase(query);
 }
@@ -2629,8 +2599,8 @@ bool ZoneDatabase::SetCharacterFactionLevel(uint32 char_id, int32 faction_id, in
 	if(temp == 3)
 		temp = 1;
 
-	query = StringFormat("INSERT INTO `faction_values` "
-						"(`char_id`, `faction_id`, `current_value`, `temp`) "
+	query = StringFormat("INSERT INTO `character_faction_values` "
+						"(`id`, `faction_id`, `current_value`, `temp`) "
 						"VALUES (%i, %i, %i, %i) "
 						"ON DUPLICATE KEY UPDATE `current_value`=%i,`temp`=%i",
 						char_id, faction_id, value, temp, value, temp);
@@ -3727,7 +3697,7 @@ bool ZoneDatabase::ViewMBMessage(uint32 id, char* outData) {
 bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::const_iterator &start, std::list<ItemInst*>::const_iterator &end)
 {
 		// Delete cursor items
-	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
+	std::string query = StringFormat("DELETE FROM character_inventory WHERE id = %i "
                                     "AND ((slotid >= %i AND slotid <= %i) "
                                     "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
                                     client->CharacterID(), EmuConstants::CURSOR_QUEUE_BEGIN, EmuConstants::CURSOR_QUEUE_END, 
@@ -3765,4 +3735,14 @@ bool ZoneDatabase::SaveSoulboundItems(Client* client, std::list<ItemInst*>::cons
 		return true;
 
 	return false;
+}
+
+bool ZoneDatabase::UpdateSkillDifficulty(uint16 skillid, float difficulty)
+{
+		std::string query = StringFormat("UPDATE skill_difficulty SET difficulty = %0.2f "
+                                    "WHERE skillid = %u;", difficulty, skillid);
+    auto results = QueryDatabase(query);
+	if (!results.Success())
+
+	return results.RowsAffected() > 0;
 }

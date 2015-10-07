@@ -285,7 +285,7 @@ public:
 	void	InterruptTargeted(Mob* mob);
 	void	ReplaceWithTarget(Mob* pOldMob, Mob*pNewTarget);
 	void	QueueCloseClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
-	void	QueueCloseClientsSplit(Mob* sender, const EQApplicationPacket* app, const EQApplicationPacket* app2 = nullptr, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);
+	void	QueueCloseClientsPrecalc(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, Mob* SkipThisMob = 0, bool ackreq = true, bool special = false);
 	void	QueueClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, bool ackreq = true);
 	void	QueueClientsStatus(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint8 minstatus = 0, uint8 maxstatus = 0);
 	void	QueueClientsGuild(Mob* sender, const EQApplicationPacket* app, bool ignore_sender = false, uint32 guildeqid = 0);
@@ -310,7 +310,7 @@ public:
 	void	OpenDoorsNear(NPC* opener);
 	void	OpenDoorsNearCoords(NPC* opener, glm::vec4 position);
 	void	UpdateWho(bool iSendFullUpdate = false);
-	void	SendPositionUpdates(Client* client, uint32 cLastUpdate = 0, float range = 0, Entity* alwayssend = 0, bool iSendEvenIfNotChanged = false);
+	void	SendPositionUpdates(Client* client, uint32 cLastUpdate = 0, Entity* alwayssend = 0, Entity* alwayssend2 = 0, bool iSendEvenIfNotChanged = false);
 	char*	MakeNameUnique(char* name);
 	static char* RemoveNumbers(char* name);
 	void	SignalMobsByNPCID(uint32 npc_type, int signal_id);
@@ -361,6 +361,8 @@ public:
 	bool	AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint16 iSpellTypes);
 	Mob*	GetTargetForMez(Mob* caster);
 	uint32	CheckNPCsClose(Mob *center);
+	void	UpdateNewClientDistances(Client *client);
+	void	UpdateDistances(Client *client);
 
 	Corpse* GetClosestCorpse(Mob* sender, const char *Name);
 	NPC* GetClosestBanker(Mob* sender, uint32 &distance);

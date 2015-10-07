@@ -342,8 +342,8 @@ int main(int argc, char** argv) {
 	time_t realtime;
 	eqTime = database.LoadTime(realtime);
 	zoneserver_list.worldclock.setEQTimeOfDay(eqTime,realtime);
-	Timer EQTimeTimer(3600000);
-	EQTimeTimer.Start(3600000);
+	Timer EQTimeTimer(600000);
+	EQTimeTimer.Start(600000);
 
 	Log.Out(Logs::General, Logs::World_Server, "Loading launcher list..");
 	launcher_list.LoadList();

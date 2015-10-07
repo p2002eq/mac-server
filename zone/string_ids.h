@@ -104,6 +104,7 @@
 #define DUP_LORE					290		//Duplicate lore items are not allowed.
 #define TGB_ON						293		//Target other group buff is *ON*.
 #define TGB_OFF						294		//Target other group buff is *OFF*.
+#define TARGET_NOT_FOUND2			303		//I don't see anyone by that name around here...
 #define TRADESKILL_NOCOMBINE		334		//You cannot combine these items in this container type!
 #define TRADESKILL_FAILED			336		//You lacked the skills to fashion the items together.
 #define TRADESKILL_TRIVIAL			338		//You can no longer advance your skill from making this item.
@@ -413,6 +414,7 @@
 #define DIVINE_AURA_NO_ATK			12695	//You can't attack while invulnerable!
 #define TRY_ATTACKING_SOMEONE		12696	//Try attacking someone other than yourself, it's more productive.
 #define BACKSTAB_WEAPON				12874	//You need a piercing weapon as your primary weapon in order to backstab
+#define DROPPED_ITEM				12904	//There was no room in your inventory, and the item has dropped to the ground.
 #define MORE_SKILLED_THAN_I			12931	//%1 tells you, 'You are more skilled than I! What could I possibly teach you?'
 #define SURNAME_EXISTS				12939	//You already have a surname. Operation failed.
 #define SURNAME_LEVEL				12940	//You can only submit a surname upon reaching the 20th level. Operation failed.

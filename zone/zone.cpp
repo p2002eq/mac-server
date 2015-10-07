@@ -844,6 +844,8 @@ Zone::~Zone() {
 bool Zone::Init(bool iStaticZone) {
 	SetStaticZone(iStaticZone);
 
+	zone->update_range = 1000.0f;
+
 	Log.Out(Logs::General, Logs::Status, "Loading spawn conditions...");
 	if(!spawn_conditions.LoadSpawnConditions(short_name, instanceid)) {
 		Log.Out(Logs::General, Logs::Error, "Loading spawn conditions failed, continuing without them.");
@@ -919,6 +921,9 @@ bool Zone::Init(bool iStaticZone) {
 	if (RuleB(Zone, LevelBasedEXPMods))
 		zone->LoadLevelEXPMods();
 
+	skill_difficulty.clear();
+	zone->LoadSkillDifficulty();
+
 	petition_list.ClearPetitions();
 	petition_list.ReadDatabase();
 
@@ -944,6 +949,11 @@ bool Zone::Init(bool iStaticZone) {
 
 	//MODDING HOOK FOR ZONE INIT
 	mod_init();
+	
+	if (zone->newzone_data.maxclip > 100.0f)
+		zone->update_range = zone->newzone_data.maxclip + 100.0f;
+
+	zone->update_range *= zone->update_range;
 
 	return true;
 }
@@ -1935,6 +1945,34 @@ void Zone::LoadNPCEmotes(LinkedList<NPC_Emote_Struct*>* NPCEmoteList)
 
 }
 
+void Zone::LoadSkillDifficulty()
+{
+    const std::string query = "SELECT skillid, difficulty, name FROM skill_difficulty order by skillid";
+    auto results = database.QueryDatabase(query);
+    if (!results.Success()) {
+        return;
+    }
+
+	int i = 0;
+    for (auto row = results.begin(); row != results.end(); ++row)
+    {
+        uint8 skillid = atoi(row[0]);
+
+		while (i < skillid && i < _EmuSkillCount)
+		{
+			skill_difficulty[i].difficulty = 7.5;
+			strncpy(skill_difficulty[i].name, "SkillUnknown", 32);
+			Log.Out(Logs::General, Logs::Error, "Skill %d is not in the database!", i);
+			++i;
+		}
+
+        skill_difficulty[skillid].difficulty = atof(row[1]);
+		strncpy(skill_difficulty[skillid].name, row[2], 32);
+		++i;
+    }
+
+}
+
 void Zone::ReloadWorld(uint32 Option){
 	if (Option == 0) {
 		entity_list.ClearAreas();
@@ -1945,6 +1983,7 @@ void Zone::ReloadWorld(uint32 Option){
 		LoadTempMerchantData();
 		LoadNPCEmotes(&NPCEmoteList);
 		zone->Repop(0);
+		zone->LoadSkillDifficulty();
 	}
 }
 

@@ -633,6 +633,27 @@ struct TradeItemsPacket_Struct
 	/*000*/	
 };
 
+struct PickPocket_Struct 
+{
+// Size 18
+    uint16 to;
+    uint16 from;
+    uint16 myskill;
+    uint16 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint32 coin;
+    uint8 data[6];
+};
+
+struct PickPocketItemPacket_Struct 
+{
+    uint16 to;
+    uint16 from;
+    uint16 myskill;
+    uint16 type; // -1 you are being picked, 0 failed , 1 = plat, 2 = gold, 3 = silver, 4 = copper, 5 = item
+    uint32 coin;
+	struct Item_Struct	item;
+};
+
 struct MerchantItems_Struct
 {
 	/*000*/	int16		count;	

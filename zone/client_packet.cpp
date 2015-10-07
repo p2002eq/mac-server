@@ -391,6 +391,8 @@ void Client::CompleteConnect()
 	position_timer.Start();
 	autosave_timer.Start();
 	position_update_timer.Start();
+	client_distance_timer.Start(2000, false);
+	entity_list.UpdateNewClientDistances(this);
 	SetDuelTarget(0);
 	SetDueling(false);
 
@@ -409,7 +411,7 @@ void Client::CompleteConnect()
 			m_pp.spell_book[spellInt] = 0xFFFFFFFF;
 	}
 
-	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0))
+	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0 || tellsoff))
 	{
 		std::string state = "currently ";
 
@@ -418,6 +420,7 @@ void Client::CompleteConnect()
 		if (GetGMInvul()) state += "invulnerable to all damage, ";
 		if (flymode == 1) state += "flying, ";
 		else if (flymode == 2) state += "levitating, ";
+		if (tellsoff) state += "ignoring tells, ";
 
 		if (state.size () > 0) 
 		{
@@ -487,7 +490,7 @@ void Client::CompleteConnect()
 				}
 				else if (spell.base[x1] == -2)
 				{
-					if (GetRace() == 128 || GetRace() == 130 || GetRace() <= 12)
+					if (IsPlayableRace(GetRace()))
 						SendIllusionPacket(GetRace(), GetGender(), spell.max[x1], spell.max[x1]);
 				}
 				else if (spell.max[x1] > 0)
@@ -498,32 +501,12 @@ void Client::CompleteConnect()
 				{
 					SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
 				}
-				switch (spell.base[x1]){
-				case OGRE:
-				case TROLL:
-					SendAppearancePacket(AT_Size, 8);
-					break;
-				case VAHSHIR:
-				case BARBARIAN:
-					SendAppearancePacket(AT_Size, 7);
-					break;
-				case HALF_ELF:
-				case WOOD_ELF:
-				case DARK_ELF:
-				case FROGLOK:
-					SendAppearancePacket(AT_Size, 5);
-					break;
-				case HALFLING:
-				case DWARF:
-					SendAppearancePacket(AT_Size, 4);
-					break;
-				case GNOME:
-					SendAppearancePacket(AT_Size, 3);
-					break;
-				default:
-					SendAppearancePacket(AT_Size, 6);
-					break;
-				}
+
+				float realsize = GetPlayerHeight(spell.base[x1]);
+				uint32 newsize = 6;
+				newsize = floor(realsize + 0.5);
+				SendAppearancePacket(AT_Size, newsize);
+		
 				break;
 			}
 			case SE_SummonHorse: {
@@ -1037,6 +1020,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		account_creation = atoul(row[6]);
 		gminvul = atoi(row[7]);
 		flymode = atoi(row[8]);
+		tellsoff = gmhideme;
 	}
 
 	/* Load Character Data */
@@ -1141,28 +1125,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		m_pp.guildrank = GuildRank();
 	}
 
-	switch (race)
-	{
-	case OGRE:
-	case TROLL:
-		size = 8; base_size = 8; break;
-	case VAHSHIR: case BARBARIAN:
-		size = 7; base_size = 7; break;
-	case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
-		size = 6; base_size = 6; break;
-	case HALF_ELF:
-		size = 5.5; base_size = 5.5; break;
-	case WOOD_ELF: case DARK_ELF: case FROGLOK:
-		size = 5; base_size = 5; break;
-	case DWARF:
-		size = 4; base_size = 4; break;
-	case HALFLING:
-		size = 3.5; base_size = 3.5; break;
-	case GNOME:
-		size = 3; base_size = 3; break;
-	default:
-		size = 0; base_size = 0;
-	}
+	size = GetPlayerHeight(race);
+	base_size = size;
+
 	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
 	for (uint32 a = 0; a < MAX_PP_AA_ARRAY; a++){ aa[a] = &m_pp.aa_array[a]; }
@@ -1639,14 +1604,15 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 			float SuccessChance = (GetSkill(SkillApplyPoison) + GetLevel()) / 400.0f;
 			double ChanceRoll = zone->random.Real(0, 1);
 
-			CheckIncreaseSkill(SkillApplyPoison, nullptr, 10);
-
 			if (ChanceRoll < SuccessChance) {
 				ApplyPoisonSuccessResult = 1;
 				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
 				// My thinking was that DEX should be apart of the calculation.
 				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
 			}
+
+			float success = ApplyPoisonSuccessResult ? 1.0 : 2.0;
+			CheckIncreaseSkill(SkillApplyPoison, nullptr, zone->skill_difficulty[SkillApplyPoison].difficulty, success);
 
 			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
 
@@ -1835,9 +1801,10 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	uint16 CurrentSkill = GetSkill(SkillBegging);
 
 	float ChanceToBeg = ((float)(CurrentSkill / 700.0f) + 0.15f) * 100;
-
+	float success = 2.0;
 	if (RandomChance < ChanceToBeg)
 	{
+		success = 1.0;
 		Message_StringID(CC_Default, BEG_SUCCESS, GetName());
 		brs->Amount = zone->random.Int(1, 10);
 		// This needs some work to determine how much money they can beg, based on skill level etc.
@@ -1871,7 +1838,7 @@ void Client::Handle_OP_Begging(const EQApplicationPacket *app)
 	}
 	QueuePacket(outapp);
 	safe_delete(outapp);
-	CheckIncreaseSkill(SkillBegging, nullptr, -10);
+	CheckIncreaseSkill(SkillBegging, nullptr, zone->skill_difficulty[SkillBegging].difficulty, success);
 }
 
 void Client::Handle_OP_Bind_Wound(const EQApplicationPacket *app) 
@@ -2678,13 +2645,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		}
 
 	}
-
-	if(IsTracking() && ((m_Position.x!=ppu->x_pos) || (m_Position.y!=ppu->y_pos))){
-		if(zone->random.Real(0, 100) < 70)//should be good
-			CheckIncreaseSkill(SkillTracking, nullptr, -20);
-	}
 	
-
 	// Break Hide, Trader, and fishing mode if moving and set rewind timer
 	if(ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x)
 	{
@@ -2733,12 +2694,13 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	
 	if(zone->watermap)
 	{
-		if(zone->watermap->InLiquid(glm::vec3(m_Position)) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
+		auto water_pos = glm::vec3(m_Position.x, m_Position.y, m_Position.z - 0.5);
+		if(zone->watermap->InLiquid(water_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
-			if(zone->random.Roll(73))
+			if(zone->random.Roll(53))
 			{
-				CheckIncreaseSkill(SkillSwimming, nullptr, -20);
+				CheckIncreaseSkill(SkillSwimming, nullptr, zone->skill_difficulty[SkillSwimming].difficulty);
 			}
 		}
 	}
@@ -3208,7 +3170,7 @@ void Client::Handle_OP_DeleteCharge(const EQApplicationPacket *app)
 	const ItemInst *inst = GetInv().GetItem(alc->from_slot);
 	if (inst && inst->GetItem()->ItemType == ItemTypeAlcohol) {
 		entity_list.MessageClose_StringID(this, true, 50, 0, DRINKING_MESSAGE, GetName(), inst->GetItem()->Name);
-		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, 25);
+		CheckIncreaseSkill(SkillAlcoholTolerance, nullptr, zone->skill_difficulty[SkillAlcoholTolerance].difficulty);
 
 		int16 AlcoholTolerance = GetSkill(SkillAlcoholTolerance);
 		int16 IntoxicationIncrease;
@@ -3287,12 +3249,14 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerDisarmTraps, reuse - 1);
 
+	float success = 2.0;
 	Trap* trap = entity_list.FindNearbyTrap(this, 60);
 	if (trap && trap->detected)
 	{
 		int uskill = GetSkill(SkillDisarmTraps);
 		if ((zone->random.Int(0, 49) + uskill) >= (zone->random.Int(0, 49) + trap->skill))
 		{
+			success = 1.0;
 			Message(MT_Skills, "You disarm a trap.");
 			trap->disarmed = true;
 			Log.Out(Logs::General, Logs::Traps, "Trap %d is disarmed.", trap->trap_id);
@@ -3308,7 +3272,7 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 				Message(MT_Skills, "You failed to disarm a trap.");
 			}
 		}
-		CheckIncreaseSkill(SkillDisarmTraps, nullptr);
+		CheckIncreaseSkill(SkillDisarmTraps, nullptr, zone->skill_difficulty[SkillDisarmTraps].difficulty, success);
 		return;
 	}
 	Message(MT_Skills, "You did not find any traps close enough to disarm.");
@@ -3606,15 +3570,17 @@ void Client::Handle_OP_FeignDeath(const EQApplicationPacket *app)
 	if(totalfeign >= 143)
 		totalfeign = 142.5f;
 
-	if (zone->random.Real(0, 150) > totalfeign) {
+	float success = 2.0;
+	if (auto_attack || zone->random.Real(0, 150) > totalfeign) {
 		SetFeigned(false);
 		entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetName());
 	}
 	else {
+		success = 1.0;
 		SetFeigned(true);
 	}
 
-	CheckIncreaseSkill(SkillFeignDeath, nullptr, 5);
+	CheckIncreaseSkill(SkillFeignDeath, nullptr, zone->skill_difficulty[SkillFeignDeath].difficulty, success);
 	return;
 }
 
@@ -3695,17 +3661,28 @@ void Client::Handle_OP_GMBecomeNPC(const EQApplicationPacket *app)
 	BecomeNPC_Struct* bnpc = (BecomeNPC_Struct*)app->pBuffer;
 
 	Mob* cli = (Mob*)entity_list.GetMob(bnpc->id);
-	if (cli == 0)
+	if (cli == nullptr)
 		return;
 
 	if (cli->IsClient())
-		cli->CastToClient()->QueuePacket(app);
-	cli->SendAppearancePacket(AT_NPCName, 1, true);
-	cli->CastToClient()->SetBecomeNPC(true);
-	cli->CastToClient()->SetBecomeNPCLevel(bnpc->maxlevel);
-	cli->Message_StringID(CC_Default, TOGGLE_OFF);
-	cli->CastToClient()->tellsoff = true;
-	//TODO: Make this toggle a BecomeNPC flag so that it gets updated when people zone in as well; Make combat work with this.
+	{
+		Client* target = cli->CastToClient();
+		target->QueuePacket(app);
+		if(target->GetGM())
+		{
+			target->SetInvul(false);
+			target->SetHideMe(false);
+			target->SetGM(false);
+		}
+
+		cli->SendAppearancePacket(AT_NPCName, 1, true);
+		target->SetBecomeNPC(true);
+		target->SetBecomeNPCLevel(bnpc->maxlevel);
+		cli->Message_StringID(CC_Default, TOGGLE_OFF);
+		target->tellsoff = true;
+		target->UpdateWho();
+	}
+
 	return;
 }
 
@@ -4109,13 +4086,9 @@ void Client::Handle_OP_GMToggle(const EQApplicationPacket *app)
 	}
 	GMToggle_Struct *ts = (GMToggle_Struct *)app->pBuffer;
 	if (ts->toggle == 0) {
-		this->Message_StringID(CC_Default, TOGGLE_OFF);
-		//Message(CC_Default, "Turning tells OFF");
 		tellsoff = true;
 	}
 	else if (ts->toggle == 1) {
-		//Message(CC_Default, "Turning tells ON");
-		this->Message_StringID(CC_Default, TOGGLE_ON);
 		tellsoff = false;
 	}
 	else {
@@ -4974,13 +4947,14 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 
 	float hidechance = ((GetSkill(SkillHide) / 250.0f) + .25) * 100;
 	float random = zone->random.Real(0, 100);
-	CheckIncreaseSkill(SkillHide, nullptr, 5);
+	float success = 2.0;
 	if (random < hidechance) {
 		if (GetAA(aaShroudofStealth)){
 			improved_hidden = true;
 		}
 		hidden = true;
 		SetInvisible(INVIS_HIDDEN, false); // We handle the apperance packet below based on if we failed or not.
+		success = 1.0;
 	}
 	else
 	{
@@ -4997,6 +4971,7 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 			{
 				Message_StringID(MT_Skills, EVADE_SUCCESS);
 				RogueEvade(evadetar);
+				success = 1.0;
 			}
 			else
 			{
@@ -5006,11 +4981,16 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 		else
 		{
 			if (hidden)
+			{
 				Message_StringID(MT_Skills, HIDE_SUCCESS);
+				success = 1.0;
+			}
 			else
 				Message_StringID(MT_Skills, HIDE_FAIL);
 		}
 	}
+
+	CheckIncreaseSkill(SkillHide, nullptr, zone->skill_difficulty[SkillHide].difficulty, success);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
@@ -5111,7 +5091,7 @@ void Client::Handle_OP_InstillDoubt(const EQApplicationPacket *app)
 	p_timers.Start(pTimerInstillDoubt, InstillDoubtReuseTime - 1);
 
 	InstillDoubt(GetTarget());
-	CheckIncreaseSkill(SkillIntimidation, GetTarget(), 10);
+	CheckIncreaseSkill(SkillIntimidation, GetTarget(), zone->skill_difficulty[SkillIntimidation].difficulty);
 	return;
 }
 
@@ -5413,6 +5393,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 	int mendhp = GetMaxHP() / 4;
 	int currenthp = GetHP();
+	float success = 2.0;
 	if (zone->random.Int(0, 99) < (int)GetSkill(SkillMend)) {
 
 		int criticalchance = spellbonuses.CriticalMend + itembonuses.CriticalMend + aabonuses.CriticalMend;
@@ -5424,6 +5405,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
 		Message_StringID(CC_Blue, MEND_SUCCESS);
+		success = 1.0;
 	}
 	else {
 		/* the purpose of the following is to make the chance to worsen wounds much less common,
@@ -5445,7 +5427,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
         }
 	}
 
-	CheckIncreaseSkill(SkillMend, nullptr, 10);
+	CheckIncreaseSkill(SkillMend, nullptr, zone->skill_difficulty[SkillMend].difficulty, success);
 	return;
 }
 
@@ -5966,12 +5948,14 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		return;
 	}
 
+	p_timers.Start(pTimerBeggingPickPocket, 8);
+
 	PickPocket_Struct* pick_in = (PickPocket_Struct*)app->pBuffer;
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(sPickPocket_Struct));
-	sPickPocket_Struct* pick_out = (sPickPocket_Struct*)outapp->pBuffer;
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_PickPocket, sizeof(PickPocket_Struct));
+	PickPocket_Struct* pick_out = (PickPocket_Struct*)outapp->pBuffer;
 
 	Mob* victim = entity_list.GetMob(pick_in->to);
-	if (!victim)
+	if (!victim || m_inv.GetItem(MainCursor) != nullptr)
 	{
 		pick_out->coin = 0;
 		pick_out->from = 0;
@@ -5982,8 +5966,6 @@ void Client::Handle_OP_PickPocket(const EQApplicationPacket *app)
 		safe_delete(outapp);
 		return;
 	}
-
-	p_timers.Start(pTimerBeggingPickPocket, 8);
 
 	if (victim->IsNPC())
 	{
@@ -6749,6 +6731,9 @@ void Client::Handle_OP_RezzAnswer(const EQApplicationPacket *app)
 
 	if (ra->action == 1)
 	{
+		if(GetPet() && !GetPet()->IsCharmed())
+			DepopPet();
+
 		EQApplicationPacket* outapp = app->Copy();
 		// Send the OP_RezzComplete to the world server. This finds it's way to the zone that
 		// the rezzed corpse is in to mark the corpse as rezzed.
@@ -6790,7 +6775,7 @@ void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app)
 void Client::Handle_OP_SafeFallSuccess(const EQApplicationPacket *app)	// bit of a misnomer, sent whenever safe fall is used (success of fail)
 {
 	if (HasSkill(SkillSafeFall)) //this should only get called if the client has safe fall, but just in case...
-		CheckIncreaseSkill(SkillSafeFall, nullptr); //check for skill up
+		CheckIncreaseSkill(SkillSafeFall, nullptr, zone->skill_difficulty[SkillSafeFall].difficulty, 1.0); //check for skill up
 }
 
 void Client::Handle_OP_SafePoint(const EQApplicationPacket *app)
@@ -6811,7 +6796,7 @@ void Client::Handle_OP_SaveOnZoneReq(const EQApplicationPacket *app)
 
 void Client::Handle_OP_SenseHeading(const EQApplicationPacket *app)
 {
-	CheckIncreaseSkill(SkillSenseHeading, nullptr, -12);
+	CheckIncreaseSkill(SkillSenseHeading, nullptr, zone->skill_difficulty[SkillSenseHeading].difficulty, 1.0);
 	return;
 }
 
@@ -6840,10 +6825,8 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerSenseTraps, reuse - 1);
 
-	Trap* trap = entity_list.FindNearbyTrap(this, 800);
-
-	CheckIncreaseSkill(SkillSenseTraps, nullptr);
-
+	Trap* trap = entity_list.FindNearbyTrap(this, 800);	
+	float success = 2.0;
 	if (trap && trap->skill > 0) {
 		int uskill = GetSkill(SkillSenseTraps);
 		if ((zone->random.Int(0, 99) + uskill) >= (zone->random.Int(0, 99) + trap->skill*0.75))
@@ -6877,11 +6860,14 @@ void Client::Handle_OP_SenseTraps(const EQApplicationPacket *app)
 
 			angle *= 2;
 			MovePC(zone->GetZoneID(), zone->GetInstanceID(), GetX(), GetY(), GetZ(), angle);
-			return;
+			success = 1.0;
 		}
 	}
-	Message(MT_Skills, "You did not find any traps nearby.");
-	return;
+
+	if(success == 2)
+		Message(MT_Skills, "You did not find any traps nearby.");
+
+	CheckIncreaseSkill(SkillSenseTraps, nullptr, zone->skill_difficulty[SkillSenseTraps].difficulty, success);
 }
 
 void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
@@ -7266,7 +7252,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		}
 	}
 
-	std::string packet;
 	if (!stacked && inst) {
 		if(PutItemInInventory(freeslotid, *inst))
 		{
@@ -7600,8 +7585,10 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 	}
 	p_timers.Start(pTimerSneak, SneakReuseTime - 1);
 
+	bool checkskill = true;
 	bool was = sneaking;
 	if (sneaking){
+		checkskill = false;
 		sneaking = false;
 		hidden = false;
 		improved_hidden = false;
@@ -7615,13 +7602,13 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 		safe_delete(outapp);
 
 	}
-	else {
-		CheckIncreaseSkill(SkillSneak, nullptr, 5);
-	}
+
+	float success = 2.0;
 	float hidechance = ((GetSkill(SkillSneak) / 300.0f) + .25) * 100;
 	float random = zone->random.Real(0, 99);
 	if (!was && random < hidechance) {
 		sneaking = true;
+		success = 1.0;
 	}
 	else
 	{
@@ -7636,6 +7623,9 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 			Message_StringID(MT_Skills, SNEAK_FAIL);
 		}
 	}
+
+	if(checkskill)
+		CheckIncreaseSkill(SkillSneak, nullptr, zone->skill_difficulty[SkillSneak].difficulty, success);
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
 	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
@@ -7927,144 +7917,180 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		Log.Out(Logs::General, Logs::Error, "OP size error: OP_TargetMouse expected:%i got:%i", sizeof(ClientTarget_Struct), app->size);
 		return;
 	}
+	if (IsAIControlled())
+		return;
 
-	if (GetTarget())
-	{
-		GetTarget()->IsTargeted(-1);
-	}
-
-	// Locate and cache new target
 	ClientTarget_Struct* ct = (ClientTarget_Struct*)app->pBuffer;
 	pClientSideTarget = ct->new_target;
-	if (!IsAIControlled())
+
+	bool tar_cmd = (app->GetOpcode() == OP_TargetCommand);
+
+	// cache current target
+	Mob *cur_tar = GetTarget();
+
+	//Message(0, "Target: %d OP_TargetCommand: %s", ct->new_target, tar_cmd ? "true" : "false");
+	if (ct->new_target == 0)
 	{
-		Mob *nt = entity_list.GetMob(ct->new_target);
-		if (nt)
+		if (tar_cmd)
 		{
-			SetTarget(nt);
-			if ((nt->IsClient() && !nt->CastToClient()->GetPVP()) ||
-				(nt->IsPet() && nt->GetOwner() && nt->GetOwner()->IsClient() && !nt->GetOwner()->CastToClient()->GetPVP()))
-				nt->SendBuffsToClient(this);
-		}
+			// searched for a target with /target (name), and not found.  Client sends over a new_target == 0
+			// dont do anything else, client keeps track of own current target.
+			Message_StringID(CC_Default, TARGET_NOT_FOUND2);
+		} 
 		else
 		{
+			// cleared target
+			if (cur_tar) {
+				cur_tar->IsTargeted(-1);
+				last_target = cur_tar->GetID();
+			}
 			SetTarget(nullptr);
-
-			return;
+			QueuePacket(app);
 		}
-	}
-	else
-	{
-		SetTarget(nullptr);
 		return;
 	}
 
-	// For /target, send reject or success packet
-	if (app->GetOpcode() == OP_TargetCommand) {
-		if (GetTarget() && !GetTarget()->CastToMob()->IsInvisible(this) && (DistanceSquared(m_Position, GetTarget()->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
-			if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
-				|| GetTarget()->GetBodyType() == BT_NoTarget)
-			{
-				//Targeting something we shouldn't with /target
-				//but the client allows this without MQ so you don't flag it
+	bool send_tar = false;
 
-				if (GetTarget())
+	// Locate and cache new target
+	Mob *new_tar = entity_list.GetMob(ct->new_target);
+
+	// For /target, send reject or success packet
+	if (tar_cmd) {
+		if (new_tar) {
+			if (!new_tar->CastToMob()->IsInvisible(this) && (DistanceSquared(m_Position, new_tar->GetPosition())  <= TARGETING_RANGE*TARGETING_RANGE || GetGM())) {
+				if (new_tar->GetBodyType() == BT_NoTarget2 || new_tar->GetBodyType() == BT_Special
+					|| new_tar->GetBodyType() == BT_NoTarget)
 				{
+					//Targeting something we shouldn't with /target
+					//but the client allows this without MQ so you don't flag it
+					if (!cur_tar) 
+					{
+						SendTargetCommand(0);
+						SetTarget(nullptr);
+						pClientSideTarget = 0;
+						last_target = 0;
+					}
+					return;
+				}
+				// have a valid target
+				// send target packet later if pass validation checks
+				send_tar = true;
+			}
+			else
+			{
+				Message_StringID(CC_Red,TARGET_NOT_FOUND2);
+				SendTargetCommand(cur_tar ? cur_tar->GetID() : 0);
+				if (!cur_tar) {
+					pClientSideTarget = 0;
 					SetTarget(nullptr);
 				}
 				return;
 			}
-
-			QueuePacket(app);
-			GetTarget()->IsTargeted(1);
-		}
-		else
-		{
-			if (GetTarget())
-			{
+		} else {
+			// no target found
+			Message_StringID(CC_Red,TARGET_NOT_FOUND2);
+			SendTargetCommand(cur_tar ? cur_tar->GetID() : 0);
+			if (!cur_tar) {
 				SetTarget(nullptr);
+				pClientSideTarget = 0;
 			}
+			return;
 		}
 	}
-	else
+
+	// validate target
+	if (new_tar)
 	{
-		if (GetTarget())
+		if (GetGM())
 		{
-			if (GetGM())
+			// always allow GM's to target
+		}
+		else if (new_tar->GetBodyType() == BT_NoTarget2 || new_tar->GetBodyType() == BT_Special
+			|| new_tar->GetBodyType() == BT_NoTarget)
+		{
+			char *hacker_str = nullptr;
+			MakeAnyLenString(&hacker_str, "%s attempting to target something untargetable, %s bodytype: %i\n",
+				GetName(), new_tar->GetName(), (int)new_tar->GetBodyType());
+			database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+			safe_delete_array(hacker_str);
+			if (cur_tar)
 			{
-				GetTarget()->IsTargeted(1);
-				return;
+				SendTargetCommand(cur_tar->GetID());
+				SetTarget(cur_tar);
+			} else {
+				SendTargetCommand(0);
+				SetTarget(nullptr);
 			}
-			else if (IsAssistExempted())
+			return;
+		}
+		else if (IsAssistExempted())
+		{
+			SetAssistExemption(false);
+		}
+		else if (new_tar->IsClient())
+		{
+			if (new_tar != cur_tar && new_tar != this)
 			{
-				if (cur_tar)
+				if (new_tar)
 				{
 					EQApplicationPacket hp_app;
-					cur_tar->CreateHPPacket(&hp_app);
+					new_tar->CreateHPPacket(&hp_app);
 					QueuePacket(&hp_app);
 				}
 			}
-			else if (GetTarget()->IsClient())
+		}
+		else if (IsPortExempted())
+		{
+
+		}
+		else if (IsSenseExempted())
+		{
+			SetSenseExemption(false);
+		}
+		else if (GetBindSightTarget())
+		{
+			if (DistanceSquared(GetBindSightTarget()->GetPosition(), new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 			{
-				//make sure this client is in our raid/group
-				GetTarget()->IsTargeted(1);
-				return;
-			}
-			else if (GetTarget()->GetBodyType() == BT_NoTarget2 || GetTarget()->GetBodyType() == BT_Special
-				|| GetTarget()->GetBodyType() == BT_NoTarget)
-			{
-				char *hacker_str = nullptr;
-				MakeAnyLenString(&hacker_str, "%s attempting to target something untargetable, %s bodytype: %i\n",
-					GetName(), GetTarget()->GetName(), (int)GetTarget()->GetBodyType());
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-				safe_delete_array(hacker_str);
-				SetTarget((Mob*)nullptr);
-				return;
-			}
-			else if (IsPortExempted())
-			{
-				GetTarget()->IsTargeted(1);
-				return;
-			}
-			else if (IsSenseExempted())
-			{
-				GetTarget()->IsTargeted(1);
-				SetSenseExemption(false);
-				return;
-			}
-			else if (GetBindSightTarget())
-			{
-				if (DistanceSquared(GetBindSightTarget()->GetPosition(), GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
+				if (DistanceSquared(m_Position, new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 40000))
 				{
-					if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
-					{
-						char *hacker_str = nullptr;
-						MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
-							" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
-							(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
-							GetX(), GetY(), GetZ(), GetTarget()->GetName(), GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
-						database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-						safe_delete_array(hacker_str);
-						SetTarget(nullptr);
-						return;
-					}
+					char *hacker_str = nullptr;
+					MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
+						" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
+						(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
+						GetX(), GetY(), GetZ(), new_tar->GetName(), new_tar->GetX(), new_tar->GetY(), new_tar->GetZ());
+					database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+					safe_delete_array(hacker_str);
+					SendTargetCommand(0);
+					SetTarget(nullptr);
+					return;
 				}
 			}
-			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 2500))
-			{ // client will allow targeting something just beyond max clip just out of sight, so add another 50 for that.
-				char *hacker_str = nullptr;
-				MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
-					" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
-					(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
-					GetX(), GetY(), GetZ(), GetTarget()->GetName(), GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ());
-				database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
-				safe_delete_array(hacker_str);
-				SetTarget(nullptr);
-				return;
-			}
-
-			GetTarget()->IsTargeted(1);
 		}
+		else if (DistanceSquared(m_Position, new_tar->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip + 40000))
+		{ // client will allow targeting something just beyond max clip just out of sight, so add another 200 for that.
+			char *hacker_str = nullptr;
+			MakeAnyLenString(&hacker_str, "%s attempting to target something beyond the clip plane of %.2f units,"
+				" from (%.2f, %.2f, %.2f) to %s (%.2f, %.2f, %.2f)", GetName(),
+				(zone->newzone_data.maxclip*zone->newzone_data.maxclip),
+				GetX(), GetY(), GetZ(), new_tar->GetName(), new_tar->GetX(), new_tar->GetY(), new_tar->GetZ());
+			database.SetMQDetectionFlag(AccountName(), GetName(), hacker_str, zone->GetShortName());
+			safe_delete_array(hacker_str);
+		}
+		SetTarget(new_tar);
+		if (cur_tar) {
+			if(cur_tar != new_tar) {
+				cur_tar->IsTargeted(-1);
+				new_tar->IsTargeted(1);
+			}
+		} else {
+			new_tar->IsTargeted(1);
+		}
+		if (send_tar)
+			QueuePacket(app);
+	} else {
+		SendTargetCommand(0);
+		SetTarget(nullptr);
 	}
 	return;
 }
@@ -8113,7 +8139,7 @@ void Client::Handle_OP_Track(const EQApplicationPacket *app)
 	if (GetSkill(SkillTracking) == 0)
 		SetSkill(SkillTracking, 1);
 	else
-		CheckIncreaseSkill(SkillTracking, nullptr, 15);
+		CheckIncreaseSkill(SkillTracking, nullptr, zone->skill_difficulty[SkillTracking].difficulty);
 
 	return;
 }
@@ -8778,28 +8804,34 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 	if(totaldisarm <= 0)
 		totaldisarm = 0.1f;
 
-	int8 success = 0;
-	float roll = zone->random.Real(0, 150);
-	if (roll < totaldisarm) {
-		success = 1;
-		if(target->IsClient())
-		{
-			if(!Disarm(target->CastToClient()))
-			{
-				Message(CC_Red, "Unable to disarm target.");
-			}
-		}
-		else if(target->IsNPC())
-		{
-			if (!target->Disarm())
-				success = 0;
+	bool success = 0;
+	int8 disarm_result = 0;
+	
+	if(target->IsClient())
+	{
+		disarm_result = Disarm(target->CastToClient(), totaldisarm);
+		if (disarm_result < 2)
+			success = false;
+		else
+			success = true;
+	}
+	else if(target->IsNPC())
+	{
+		disarm_result = target->Disarm(totaldisarm);
+		if (disarm_result < 2)
+			success = false;
+		else
+			success = true;
 
-			if(!GetGM())
-				AddToHateList(target, 1);
-		}
+		if(!GetGM())
+			target->AddToHateList(this, 1);
 	}
 
-	Log.Out(Logs::Detail, Logs::Skills, "Disarm: Roll: %0.2f < TOTAL: %0.2f (142.5 max) Base: %0.2f Chance: %0.2f Diff: %i SUCCESS %i)", roll, totaldisarm, disarmbase, disarmchance, level_diff, success);
+	if(disarm_result > 0)
+	{
+		float skillsuccess = disarm_result == 2 ? 1.0 : 2.0;
+		CheckIncreaseSkill(SkillDisarm, target, zone->skill_difficulty[SkillDisarm].difficulty, skillsuccess);
+	}
 
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_Disarm, sizeof(Disarm_Struct));
 	Disarm_Struct* dis = (Disarm_Struct*)outapp->pBuffer;
@@ -8810,8 +8842,6 @@ void Client::Handle_OP_Disarm(const EQApplicationPacket *app)
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
-
-	CheckIncreaseSkill(SkillDisarm, target, 5);
 
 	return;
 }

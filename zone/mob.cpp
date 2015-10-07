@@ -422,6 +422,10 @@ Mob::Mob(const char* in_name,
 	PrimaryAggro = false;
 	AssistAggro = false;
 	MerchantSession = 0;
+	dire_charmed = false;
+	player_damage = 0;
+	dire_pet_damage = 0;
+	total_damage = 0;
 }
 
 Mob::~Mob()
@@ -1331,55 +1335,9 @@ void Mob::SendPosition()
 	MakeSpawnUpdateNoDelta(&spu->spawn_update);
 	move_tic_count = 0;
 	tar_ndx = 20;
-	entity_list.QueueClients(this, app, true, false);
+	entity_list.QueueCloseClientsPrecalc(this, app, true, nullptr, false);
+	//entity_list.QueueCloseClients(this, app, true, 1000, nullptr, false);
 	safe_delete(app);
-}
-
-// this one is for mobs on the move, and clients.
-void Mob::SendPositionNearby(uint8 iSendToSelf) 
-{
-	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
-	spu->num_updates = 1; // hack - only one spawn position per update
-	MakeSpawnUpdate(&spu->spawn_update);
-
-	if (iSendToSelf == 2) {
-		if (this->IsClient()) {
-			this->CastToClient()->FastQueuePacket(&app,false);
-			return;
-		}
-	}
-	else
-	{
-		if(IsClient())
-		{
-			entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
-		}
-		else
-		{
-			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
-			if(move_tic_count == position_update)
-			{
-				EQApplicationPacket* app2 = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
-				SpawnPositionUpdates_Struct* spu2 = (SpawnPositionUpdates_Struct*)app2->pBuffer;
-				spu2->num_updates = 1; // hack - only one spawn position per update
-				MakeSpawnUpdateNoDelta(&spu2->spawn_update);
-				entity_list.QueueCloseClientsSplit(this, app, app2, (iSendToSelf==0), 1000, nullptr, false);
-				if (HasOwner() || (IsNPC() && Route.size() > 0))
-					move_tic_count = 0;
-				else
-					move_tic_count = RuleI(Zone, NPCPositonUpdateTicCount) - 6;
-				safe_delete(app2);
-			}
-			else
-			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
-				move_tic_count++;
-			}
-		}
-	}
-	safe_delete(app);
-
 }
 
 // this one is for mobs on the move, and clients.
@@ -1403,19 +1361,19 @@ void Mob::SendPosUpdate(uint8 iSendToSelf)
 			if(CastToClient()->gmhideme)
 				entity_list.QueueClientsStatus(this,app,(iSendToSelf==0),CastToClient()->Admin(),255);
 			else
-				entity_list.QueueCloseClients(this,app,(iSendToSelf==0),500,nullptr,false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 		}
 		else
 		{
 			uint32 position_update = RuleI(Zone, NPCPositonUpdateTicCount);
 			if(move_tic_count == position_update)
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 1000, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false, true);
 				move_tic_count = 0;
 			}
 			else
 			{
-				entity_list.QueueCloseClients(this, app, (iSendToSelf==0), 500, nullptr, false);
+				entity_list.QueueCloseClientsPrecalc(this, app, (iSendToSelf==0), nullptr, false);
 				move_tic_count++;
 			}
 		}
@@ -1515,6 +1473,7 @@ void Mob::ShowStats(Client* client)
 		client->Message(CC_Default, "  HP: %i  Max HP: %i",GetHP(), GetMaxHP());
 		client->Message(CC_Default, "  Mana: %i  Max Mana: %i", GetMana(), GetMaxMana());
 		client->Message(CC_Default, "  X: %0.2f Y: %0.2f Z: %0.2f", GetX(), GetY(), GetZ());
+		client->Message(CC_Default, "  Offense: %i  To-Hit: %i  Mitigation: %i  Avoidance: %i", GetOffense(), GetToHit(), GetMitigation(), GetAvoidance());
 		client->Message(CC_Default, "  Total ATK: %i  Worn/Spell ATK (Cap %i): %i", GetATK(), RuleI(Character, ItemATKCap), GetATKBonus());
 		client->Message(CC_Default, "  STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 		client->Message(CC_Default, "  MR: %i  PR: %i  FR: %i  CR: %i  DR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR());
@@ -1668,7 +1627,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 			gender = in_gender;
 	}
 	if (in_texture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->texture = 0xFF;
 		else
 			this->texture = GetTexture();
@@ -1677,7 +1636,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->texture = in_texture;
 
 	if (in_helmtexture == 0xFF) {
-		if (in_race <= 12 || in_race == 128 || in_race == 130 || in_race == 330 || in_race == 522)
+		if (IsPlayableRace(in_race))
 			this->helmtexture = 0xFF;
 		else if (in_texture != 0xFF)
 			this->helmtexture = in_texture;
@@ -1743,34 +1702,7 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 		this->luclinface = CastToClient()->GetBaseFace();
 		this->beard	= CastToClient()->GetBaseBeard();
 		this->aa_title = 0xFF;
-		switch(race){
-			case OGRE:
-				this->size = 9;
-				break;
-			case TROLL:
-				this->size = 8;
-				break;
-			case VAHSHIR:
-			case BARBARIAN:
-				this->size = 7;
-				break;
-			case HALF_ELF:
-			case WOOD_ELF:
-			case DARK_ELF:
-			case FROGLOK:
-				this->size = 5;
-				break;
-			case DWARF:
-				this->size = 4;
-				break;
-			case HALFLING:
-			case GNOME:
-				this->size = 3;
-				break;
-			default:
-				this->size = 6;
-				break;
-		}
+		this->size = GetBaseSize();
 	}
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Illusion, sizeof(Illusion_Struct));
@@ -1798,9 +1730,8 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 }
 
 uint8 Mob::GetDefaultGender(uint16 in_race, uint8 in_gender) {
-	if ((in_race > 0 && in_race <= GNOME )
-		|| in_race == IKSAR || in_race == VAHSHIR || in_race == FROGLOK
-		|| in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
+	if (IsPlayableRace(in_race) ||
+		in_race == 15 || in_race == 50 || in_race == 57 || in_race == 70 || in_race == 98 || in_race == 118) {
 		if (in_gender >= 2) {
 			// Female default for PC Races
 			return 1;
@@ -2347,6 +2278,53 @@ void Mob::WipeHateList()
 	}
 }
 
+bool Mob::SetHeading2(float iHeading)
+{
+	if (GetHeading() != iHeading)
+	{
+		float diff = GetHeading() - iHeading;
+		if (abs(diff) < 13 || abs(diff) > 243)
+		{
+			// close enough, so snap to heading
+			m_Delta.w = 0.0f;
+			SetHeading(iHeading);
+			SendPosition();
+			return true;
+		}
+		moved = true;
+		while (diff < 0)
+			diff += 256;
+		while (diff >= 256.0)
+			diff -= 256.0f;
+		float delta_heading = ((256 - diff) < diff) ? 12.0f : -12.0f;
+		if (IsBoat())
+			delta_heading /= 2.0f;
+
+		bool send_update = false;
+		if (m_Delta.w == 0.0f)
+			send_update = true;
+
+		m_Delta = glm::vec4(0.0, 0.0f, 0.0f, delta_heading);
+		if (send_update)
+			SendPosUpdate(1);
+
+		float new_heading = GetHeading() + delta_heading;
+
+		if (new_heading < 0.0f)
+			new_heading += 256.0f;
+		if (new_heading >= 256.0f)
+			new_heading -= 256.0f;
+
+		SetHeading(new_heading);
+		return false;
+	} 
+	if (m_Delta.w != 0.0f) {
+		m_Delta.w = 0.0f;
+		SendPosition();
+	}
+	return true;
+}
+
 uint32 Mob::RandomTimer(int min,int max) {
 	int r = 14000;
 	if(min != 0 && max != 0 && min < max)
@@ -2373,7 +2351,6 @@ void Mob::SendWearChange(uint8 material_slot)
 
 	wc->spawn_id = GetID();
 	wc->material = GetEquipmentMaterial(material_slot);
-	wc->elite_material = IsEliteMaterialItem(material_slot);
 	wc->color.color = GetEquipmentColor(material_slot);
 	wc->wear_slot_id = material_slot;
 
@@ -2500,19 +2477,6 @@ uint32 Mob::GetEquipmentColor(uint8 material_slot) const
 	if(item != 0)
 	{
 		return item->Color;
-	}
-
-	return 0;
-}
-
-uint32 Mob::IsEliteMaterialItem(uint8 material_slot) const
-{
-	const Item_Struct *item;
-
-	item = database.GetItem(GetEquipment(material_slot));
-	if(item != 0)
-	{
-		return item->EliteMaterial;
 	}
 
 	return 0;
@@ -3447,24 +3411,8 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Price);
 	if (id == "icon")
 		stat = int32(item->Icon);
-	if (id == "loregroup")
-		stat = int32(item->LoreGroup);
-	if (id == "loreflag")
-		stat = int32(item->LoreFlag);
-	if (id == "pendingloreflag")
-		stat = int32(item->PendingLoreFlag);
-	if (id == "artifactflag")
-		stat = int32(item->ArtifactFlag);
-	if (id == "summonedflag")
-		stat = int32(item->SummonedFlag);
 	if (id == "fvnodrop")
 		stat = int32(item->FVNoDrop);
-	if (id == "favor")
-		stat = int32(item->Favor);
-	if (id == "guildfavor")
-		stat = int32(item->GuildFavor);
-	if (id == "pointtype")
-		stat = int32(item->PointType);
 	if (id == "bagtype")
 		stat = int32(item->BagType);
 	if (id == "bagslots")
@@ -3559,28 +3507,8 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Material);
 	if (id == "casttime")
 		stat = int32(item->CastTime);
-	if (id == "elitematerial")
-		stat = int32(item->EliteMaterial);
 	if (id == "procrate")
 		stat = int32(item->ProcRate);
-	if (id == "combateffects")
-		stat = int32(item->CombatEffects);
-	if (id == "shielding")
-		stat = int32(item->Shielding);
-	if (id == "stunresist")
-		stat = int32(item->StunResist);
-	if (id == "strikethrough")
-		stat = int32(item->StrikeThrough);
-	if (id == "extradmgskill")
-		stat = int32(item->ExtraDmgSkill);
-	if (id == "extradmgamt")
-		stat = int32(item->ExtraDmgAmt);
-	if (id == "spellshield")
-		stat = int32(item->SpellShield);
-	if (id == "avoidance")
-		stat = int32(item->Avoidance);
-	if (id == "accuracy")
-		stat = int32(item->Accuracy);
 	if (id == "charmfileid")
 		stat = int32(item->CharmFileID);
 	if (id == "factionmod1")
@@ -3599,30 +3527,10 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->FactionAmt3);
 	if (id == "factionamt4")
 		stat = int32(item->FactionAmt4);
-	if (id == "banedmgraceamt")
-		stat = int32(item->BaneDmgRaceAmt);
-	if (id == "endur")
-		stat = int32(item->Endur);
-	if (id == "dotshielding")
-		stat = int32(item->DotShielding);
-	if (id == "attack")
-		stat = int32(item->Attack);
-	if (id == "regen")
-		stat = int32(item->Regen);
-	if (id == "manaregen")
-		stat = int32(item->ManaRegen);
-	if (id == "enduranceregen")
-		stat = int32(item->EnduranceRegen);
-	if (id == "haste")
-		stat = int32(item->Haste);
-	if (id == "damageshield")
-		stat = int32(item->DamageShield);
 	if (id == "recastdelay")
 		stat = int32(item->RecastDelay);
 	if (id == "recasttype")
 		stat = int32(item->RecastType);
-	if (id == "attuneable")
-		stat = int32(item->Attuneable);
 	if (id == "nopet")
 		stat = int32(item->NoPet);
 	if (id == "stackable")
@@ -3637,50 +3545,6 @@ int32 Mob::GetItemStat(uint32 itemid, const char *identifier)
 		stat = int32(item->Book);
 	if (id == "booktype")
 		stat = int32(item->BookType);
-	if (id == "svcorruption")
-		stat = int32(item->SVCorruption);
-	if (id == "purity")
-		stat = int32(item->Purity);
-	if (id == "backstabdmg")
-		stat = int32(item->BackstabDmg);
-	if (id == "dsmitigation")
-		stat = int32(item->DSMitigation);
-	if (id == "heroicstr")
-		stat = int32(item->HeroicStr);
-	if (id == "heroicint")
-		stat = int32(item->HeroicInt);
-	if (id == "heroicwis")
-		stat = int32(item->HeroicWis);
-	if (id == "heroicagi")
-		stat = int32(item->HeroicAgi);
-	if (id == "heroicdex")
-		stat = int32(item->HeroicDex);
-	if (id == "heroicsta")
-		stat = int32(item->HeroicSta);
-	if (id == "heroiccha")
-		stat = int32(item->HeroicCha);
-	if (id == "heroicmr")
-		stat = int32(item->HeroicMR);
-	if (id == "heroicfr")
-		stat = int32(item->HeroicFR);
-	if (id == "heroiccr")
-		stat = int32(item->HeroicCR);
-	if (id == "heroicdr")
-		stat = int32(item->HeroicDR);
-	if (id == "heroicpr")
-		stat = int32(item->HeroicPR);
-	if (id == "heroicsvcorrup")
-		stat = int32(item->HeroicSVCorrup);
-	if (id == "healamt")
-		stat = int32(item->HealAmt);
-	if (id == "spelldmg")
-		stat = int32(item->SpellDmg);
-	if (id == "scriptfileid")
-		stat = int32(item->ScriptFileID);
-	if (id == "expendablearrow")
-		stat = int32(item->ExpendableArrow);
-	if (id == "clairvoyance")
-		stat = int32(item->Clairvoyance);
 	// Begin Effects
 	if (id == "clickeffect")
 		stat = int32(item->Click.Effect);
@@ -5332,46 +5196,57 @@ uint8 Mob::DualWieldChance()
 	}
 }
 
-bool Mob::Disarm()
+uint8 Mob::Disarm(float chance)
 {
 	if(this->IsNPC())
 	{
 		ServerLootItem_Struct* weapon = CastToNPC()->GetItem(MainPrimary);
 		if(weapon)
 		{
-			uint16 weaponid = weapon->item_id;
-			const ItemInst* inst = database.CreateItem(weaponid);
-
-			if (inst->GetItem()->Magic)
+			float roll = zone->random.Real(0, 150);
+			if (roll < chance) 
 			{
+				uint16 weaponid = weapon->item_id;
+				const ItemInst* inst = database.CreateItem(weaponid);
+
+				if (inst->GetItem()->Magic)
+				{
+					safe_delete(inst);
+					return 0;				// magic weapons cannot be disarmed
+				}
+
+				const Item_Struct* item = inst->GetItem();
+				int8 charges = item->MaxCharges;
+				CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
+
+				if (inst->GetItem()->NoDrop == 0)
+				{
+					CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				}
+				else
+				{
+					entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				}
+
+				CastToNPC()->SetPrimSkill(SkillHandtoHand);
+				if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
+					can_dual_wield = false;
+
+				WearChange(MaterialPrimary, 0, 0);
+
 				safe_delete(inst);
-				return false;				// magic weapons cannot be disarmed
-			}
 
-			const Item_Struct* item = inst->GetItem();
-			int8 charges = item->MaxCharges;
-			CastToNPC()->RemoveItem(weaponid, 1, MainPrimary);
-
-			if (inst->GetItem()->NoDrop == 0)
-			{
-				CastToNPC()->AddLootDrop(item, &CastToNPC()->itemlist, charges, 1, 127, false, true);
+				// NPC has a weapon and was disarmed.
+				return 2;
 			}
 			else
 			{
-				entity_list.CreateGroundObject(weaponid, glm::vec4(GetX(), GetY(), GetZ(), 0), RuleI(Groundspawns, DisarmDecayTime));
+				// NPC has a weapon, but the roll failed.
+				return 1;
 			}
-
-			CastToNPC()->SetPrimSkill(SkillHandtoHand);
-			if (!GetSpecialAbility(SPECATK_INNATE_DW) && !GetSpecialAbility(SPECATK_QUAD))
-				can_dual_wield = false;
-
-			WearChange(MaterialPrimary, 0, 0);
-
-			safe_delete(inst);
-			return true;
 		}
 	}
-	return false;
+	return 0;
 }
 
 float Mob::CalcZOffset()
@@ -5381,4 +5256,126 @@ float Mob::CalcZOffset()
 		mysize = RuleR(Map, BestZSizeMax);
 
 	return (RuleR(Map, BestZMultiplier) * mysize);
+}
+
+int32 Mob::GetSkillStat(SkillUseTypes skillid)
+{
+
+	if(EQEmu::IsSpellSkill(skillid))
+	{
+		if(GetCasterClass() == 'I')
+		{
+			return (GetINT() <= 190) ? GetINT() : 190;
+		}
+		else
+		{
+			return (GetWIS() <= 190) ? GetWIS() : 190;
+		}
+	}
+
+	int32 stat = GetINT();
+	bool penalty = true;
+	switch (skillid) 
+	{
+		case Skill1HBlunt: 
+		case Skill1HSlashing: 
+		case Skill2HBlunt: 
+		case Skill2HSlashing: 
+		case SkillArchery: 
+		case Skill1HPiercing: 
+		case SkillHandtoHand: 
+		case SkillThrowing: 
+		case SkillApplyPoison: 
+		case SkillDisarmTraps: 
+		case SkillPickLock: 
+		case SkillPickPockets:
+		case SkillSenseTraps: 
+		case SkillSafeFall: 
+		case SkillHide: 
+		case SkillSneak:
+			stat = GetDEX();
+			penalty = false;
+			break;
+		case SkillBackstab: 
+		case SkillBash: 
+		case SkillDisarm: 
+		case SkillDoubleAttack:
+		case SkillDragonPunch: 
+		case SkillDualWield: 
+		case SkillEagleStrike:
+		case SkillFlyingKick: 
+		case SkillKick: 
+		case SkillOffense: 
+		case SkillRoundKick:
+		case SkillTigerClaw: 
+		case SkillTaunt: 
+		case SkillIntimidation: 
+		case SkillFrenzy:			
+			stat = GetSTR();
+			penalty = false;
+			break;
+		case SkillBlock: 
+		case SkillDefense: 
+		case SkillDodge: 
+		case SkillParry: 
+		case SkillRiposte:
+			stat = GetAGI();
+			penalty = true;
+			break;
+		case SkillBegging:
+			stat = GetCHA();
+			penalty = false;
+			break;
+		case SkillSwimming:
+			stat = GetSTA();
+			penalty = false;
+			break;
+		default:
+			penalty = true;
+			break;
+	}
+
+	int16 higher_from_int_wis = (GetINT() > GetWIS()) ? GetINT() : GetWIS();
+	stat = (higher_from_int_wis > stat) ? higher_from_int_wis : stat;
+
+	if(penalty)
+		stat -= 15;
+
+	return (stat <= 190) ? stat : 190;
+}
+
+bool Mob::IsPlayableRace(uint16 race)
+{
+	if(race > 0 && (race <= GNOME || race == IKSAR || race == VAHSHIR))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+float Mob::GetPlayerHeight(uint16 race)
+{
+	switch (race)
+	{
+		case OGRE:
+		case TROLL:
+			return 8;
+		case VAHSHIR: case BARBARIAN:
+			return 7;
+		case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
+			return 6;
+		case HALF_ELF:
+			return 5.5;
+		case WOOD_ELF: case DARK_ELF: case WOLF: case ELEMENTAL:
+			return 5;
+		case DWARF:
+			return 4;
+		case HALFLING:
+			return 3.5;
+		case GNOME:
+			return 3;
+		default:
+			return 6;
+	}
 }

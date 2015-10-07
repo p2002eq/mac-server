@@ -53,28 +53,14 @@ RULE_INT ( Character, FamishedLevel, 120) // When famished reaches this value, w
 RULE_BOOL( Character, HealOnLevel, false)
 RULE_BOOL( Character, ManaOnLevel, false)
 RULE_BOOL( Character, FeignKillsPet, false)
-RULE_INT ( Character, ItemManaRegenCap, 15)
-RULE_INT ( Character, ItemHealthRegenCap, 35)
-RULE_INT ( Character, ItemDamageShieldCap, 30)
-RULE_INT ( Character, ItemAccuracyCap, 150)
-RULE_INT ( Character, ItemAvoidanceCap, 100)
-RULE_INT ( Character, ItemCombatEffectsCap, 100)
-RULE_INT ( Character, ItemShieldingCap, 35)
-RULE_INT ( Character, ItemSpellShieldingCap, 35)
-RULE_INT ( Character, ItemDoTShieldingCap, 35)
-RULE_INT ( Character, ItemStunResistCap, 35)
-RULE_INT ( Character, ItemStrikethroughCap, 35)
-RULE_INT ( Character, ItemATKCap, 250)
-RULE_INT ( Character, ItemHealAmtCap, 250)
-RULE_INT ( Character, ItemSpellDmgCap, 250)
-RULE_INT ( Character, ItemClairvoyanceCap, 250)
-RULE_INT ( Character, ItemDSMitigationCap, 50)
+RULE_INT(Character, ItemManaRegenCap, 15)
+RULE_INT(Character, ItemHealthRegenCap, 35)
+RULE_INT(Character, ItemDamageShieldCap, 30)
+RULE_INT(Character, ItemATKCap, 250)
+RULE_INT(Character, ItemHealAmtCap, 250)
 RULE_INT ( Character, ItemEnduranceRegenCap, 15)
 RULE_INT ( Character, ItemExtraDmgCap, 150) // Cap for bonuses to melee skills like Bash, Frenzy, etc
 RULE_INT ( Character, HasteCap, 100) // Haste cap for non-v3(overhaste) haste.
-RULE_INT ( Character, SkillUpModifier, 60) //skill ups are at 100%
-RULE_REAL ( Character, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
-RULE_BOOL ( Character, SharedBankPlat, false) //off by default to prevent duping for now
 RULE_BOOL ( Character, BindAnywhere, false)
 RULE_INT ( Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus HP and mana regen.
 RULE_INT ( Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.
@@ -118,6 +104,9 @@ RULE_INT ( Skills, MaxTrainTradeskills, 21 )
 RULE_BOOL ( Skills, UseLimitTradeskillSearchSkillDiff, true )
 RULE_INT ( Skills, MaxTradeskillSearchSkillDiff, 50 )
 RULE_INT ( Skills, MaxTrainSpecializations, 50 )	// Max level a GM trainer will train casting specializations
+RULE_INT ( Skills, LangSkillUpModifier, 70) //skill ups for skills with value under 100
+RULE_REAL ( Skills, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
+RULE_REAL ( Skills, SkillUpModifier, 0.5)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Pets )
@@ -193,13 +182,13 @@ RULE_INT ( Zone, BoatDistance, 50) //In zones where boat name is not set in the 
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( AlKabor )
-RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull
-RULE_BOOL( AlKabor, AllowTickSplit, false)
-RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true)
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true)
-RULE_BOOL ( AlKabor, GroupEXPBonuses, false)
-RULE_BOOL ( AlKabor, Count6thGroupMember, false)
-RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true)
+RULE_BOOL( AlKabor, AllowPetPull, false) // Allow Green Pet Pull (AK behavior is true)
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
 RULE_CATEGORY_END()
 
 

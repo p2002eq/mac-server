@@ -256,12 +256,9 @@ bool IsBeneficialSpell(uint16 spell_id)
 						sai == SAI_Memory_Blur || sai == SAI_Calm_Song)
 					return false;
 			} else {
-				// If the resisttype is not magic and spell is Bind Sight or Cast Sight or Harmony
+				// If the resisttype is not magic and spell is Harmony
 				// It's not beneficial
-				if ((sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony))
-					|| (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
-					|| (sai == SAI_Dispell_Sight && spells[spell_id].skill == 18 &&
-						!IsEffectInSpell(spell_id, SE_VoiceGraft)))
+				if (sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony))
 					return false;
 			}
 		}
@@ -323,6 +320,14 @@ bool IsSummonPCSpell(uint16 spell_id)
 bool IsCharmSpell(uint16 spell_id)
 {
 	return IsEffectInSpell(spell_id, SE_Charm);
+}
+
+bool IsDireCharmSpell(uint16 spell_id)
+{
+	if(IsEffectInSpell(spell_id, SE_Charm) && spells[spell_id].buffdurationformula == 50)
+		return true;
+	else
+		return false;
 }
 
 bool IsBlindSpell(uint16 spell_id)

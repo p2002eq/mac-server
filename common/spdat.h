@@ -512,7 +512,6 @@ typedef enum {
 //#define SE_PassiveSenseTrap			359	// *not implemented - Invulnerability (Brell's Blessing)
 #define SE_ProcOnKillShot				360	// implemented - a buff that has a base1 % to cast spell base2 when you kill a "challenging foe" base3 min level
 #define SE_SpellOnDeath					361	// implemented - casts spell on death of buffed
-//#define SE_PotionBeltSlots			362	// *not implemented[AA] 'Quick Draw' expands the potion belt by one additional available item slot per rank.
 //#define SE_BandolierSlots				363	// *not implemented[AA] 'Battle Ready' expands the bandolier by one additional save slot per rank.
 #define SE_TripleAttackChance			364	// implemented
 #define SE_ProcOnSpellKillShot			365	// implemented - chance to trigger a spell on kill when the kill is caused by a specific spell with this effect in it (10470 Venin)
@@ -814,6 +813,7 @@ bool IsSummonSkeletonSpell(uint16 spell_id);
 bool IsSummonPetSpell(uint16 spell_id);
 bool IsSummonPCSpell(uint16 spell_id);
 bool IsCharmSpell(uint16 spell_id);
+bool IsDireCharmSpell(uint16 spell_id);
 bool IsBlindSpell(uint16 spell_id);
 bool IsEffectHitpointsSpell(uint16 spell_id);
 bool IsReduceCastTimeSpell(uint16 spell_id);

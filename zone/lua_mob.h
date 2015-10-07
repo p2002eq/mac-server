@@ -124,7 +124,6 @@ public:
 	int GetDR();
 	int GetPR();
 	int GetCR();
-	int GetCorruption();
 	int GetMaxSTR();
 	int GetMaxSTA();
 	int GetMaxDEX();
@@ -263,10 +262,6 @@ public:
 	void DoThrowingAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon, Lua_Item item, int weapon_damage);
 	void DoThrowingAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon, Lua_Item item, int weapon_damage, int chance_mod);
 	void DoThrowingAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon, Lua_Item item, int weapon_damage, int chance_mod, int focus);
-	void DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill);
-	void DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod);
-	void DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod, int focus);
-	void DoMeleeSkillAttackDmg(Lua_Mob other, int weapon_damage, int skill, int chance_mod, int focus, bool can_riposte);
 	void DoArcheryAttackDmg(Lua_Mob other);
 	void DoArcheryAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon);
 	void DoArcheryAttackDmg(Lua_Mob other, Lua_ItemInst range_weapon, Lua_ItemInst ammo);
