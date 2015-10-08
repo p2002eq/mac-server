@@ -5147,7 +5147,11 @@ int32 Mob::GetToHit(int hand)
 		accuracy = CastToNPC()->GetAccuracyRating();	// database value
 	}
 
-	if (GetLevel() > 45)
+	if (GetLevel() > 50)
+	{
+		return GetLevel() * 4 + 500 + accuracy;
+	}
+	else if (GetLevel() > 45)
 	{
 		return GetLevel() * 4 + 425 + accuracy;
 	}
