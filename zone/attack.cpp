@@ -1380,8 +1380,6 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			}
 		}
 
-		int min_hit = 1;
-		int max_hit = (2*weapon_damage*GetDamageTable(skillinuse)) / 100;
 		// Strikethrough
 		if (((damage < 0)) && !bRiposte && !IsStrikethrough)
 		{
