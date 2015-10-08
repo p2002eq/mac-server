@@ -687,6 +687,12 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 	{
 		base = backstab_dmg * 2;
 	}
+	// discipline tome spells are not accurate
+	// hardcoding this for accuracy
+	if (CastToClient()->active_disc == disc_fellstrike)		// duelist
+	{
+		base *= 2;
+	}
 
 	if (primaryweapondamage <= 0)
 	{
@@ -718,7 +724,11 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 			{
 				min_hit = level * 2;
 			}
-			min_hit += min_hit * GetMeleeMinDamageMod_SE(SkillBackstab) / 100;
+
+			if (CastToClient()->active_disc == disc_fellstrike)		// duelist
+			{
+				min_hit *= 2;
+			}
 
 			if (doMinDmg || damage < min_hit)
 			{
