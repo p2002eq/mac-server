@@ -1,1 +1,0 @@
-alter table loottable_entries add column `multiplier_min` tinyint(2) unsigned not null default 0;
