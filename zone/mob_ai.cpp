@@ -1729,6 +1729,11 @@ void NPC::AI_DoMovement() {
 
 	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
 		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+		ClearFeignMemory();
+		if (IsEngaged())
+		{
+			WipeHateList();
+		}
 		walksp = 0.0f;
 	}
 
@@ -1866,8 +1871,13 @@ void NPC::AI_DoMovement() {
 						doMove = false;
 
 					// wipe feign memory since we reached our first waypoint
-					if(cur_wp == 1)
+					if(cur_wp == 1) {
 						ClearFeignMemory();
+						if (IsEngaged())
+						{
+							WipeHateList();
+						}
+					}
 				}
 				if (doMove)
 				{	// not at waypoint yet or at 0 pause WP, so keep moving
