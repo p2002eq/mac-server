@@ -11023,6 +11023,7 @@ void command_godmode(Client *c, const Seperator *sep){
 		c->SendAppearancePacket(AT_Levitate, state);
 		database.SetGMFlymode(account, state);
 		c->SetHideMe(state);
+		database.SetGMIgnoreTells(account, state ? 1 : 0);
 		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
 	}
 	else

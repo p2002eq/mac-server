@@ -46,6 +46,7 @@ public:
 	uint32	GetTotalTimeEntitledOnAccount(uint32 AccountID);
 	bool	SetGMInvul(uint32 account_id, bool gminvul);
 	bool	SetGMFlymode(uint32 account_id, uint8 flymode);
+	bool	SetGMIgnoreTells(uint32 account_id, uint8 ignoretells);
 
 	/*
 	* Character Inventory

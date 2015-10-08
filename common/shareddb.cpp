@@ -95,6 +95,17 @@ bool SharedDatabase::SetGMFlymode(uint32 account_id, uint8 flymode)
 	return true;
 }
 
+bool SharedDatabase::SetGMIgnoreTells(uint32 account_id, uint8 ignoretells)
+{
+	std::string query = StringFormat("UPDATE account SET ignore_tells = %i WHERE id = %i", ignoretells, account_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
 uint32 SharedDatabase::GetTotalTimeEntitledOnAccount(uint32 AccountID) {
 	uint32 EntitledTime = 0;
 	std::string query = StringFormat("SELECT `time_played` FROM `character_data` WHERE `account_id` = %u", AccountID);
