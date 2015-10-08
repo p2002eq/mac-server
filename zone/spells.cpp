@@ -3815,24 +3815,27 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		     CancelMagicShouldAggro(spell_id, spelltar)) {
 		int32 aggro_amount = CheckAggroAmount(spell_id, spelltar, jolthate, isproc);
 		int32 current_hate = spelltar->GetHateAmount(this,false,false);
-		Log.Out(Logs::General, Logs::Spells, "Spell %d cast on %s generated %d hate current hate is: %d", spell_id, spelltar->GetName(), aggro_amount, current_hate);
-		if((aggro_amount > 0 || jolthate != 0) && current_hate == 0)
+		if((aggro_amount > 0 || jolthate != 0))
 		{
-			spelltar->AddToHateList(this, aggro_amount);	
-		}
-		else
-		{
-			spelltar->SetPrimaryAggro(true);
-			if (aggro_amount < 1 || jolthate != 0)
+			Log.Out(Logs::General, Logs::Spells, "Spell %d cast on %s generated %d hate current hate is: %d", spell_id, spelltar->GetName(), aggro_amount, current_hate);
+			if(current_hate == 0)
 			{
-				aggro_amount = 1;
-				if(jolthate != 0 && current_hate > 0)
+				spelltar->AddToHateList(this, aggro_amount);	
+			}
+			else
+			{
+				spelltar->SetPrimaryAggro(true);
+				if (aggro_amount < 1 || jolthate != 0)
 				{
-					aggro_amount = abs(current_hate);
-				}
-			} 
+					aggro_amount = 1;
+					if(jolthate != 0 && current_hate > 0)
+					{
+						aggro_amount = abs(current_hate);
+					}
+				} 
 
-			spelltar->AddHate(this,aggro_amount);
+				spelltar->AddHate(this,aggro_amount);
+			}
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)
