@@ -1908,6 +1908,7 @@ void NPC::AI_DoMovement() {
 	}
 	else if (IsGuarding())
 	{
+		AIwalking_timer->Disable();
 		bool CP2Moved = false;
 		if(!RuleB(Pathing, Guard) || !zone->pathing) {
 			if (m_GuardPoint.x != m_Position.x || m_GuardPoint.y != m_Position.y || m_GuardPoint.z != m_Position.z)

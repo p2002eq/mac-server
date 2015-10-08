@@ -106,6 +106,7 @@ void NPC::StopWandering()
 	roamer=false;
 	CastToNPC()->SetGrid(0);
 	SendPosition();
+	AIwalking_timer->Start(2000);
 	Log.Out(Logs::Detail, Logs::Pathing, "Stop Wandering requested.");
 	return;
 }
