@@ -5209,13 +5209,20 @@ int32 Mob::GetMitigation()
 	{
 		return GetLevel() * 3 + 2;
 	}
-	if (GetLevel() < 45)
+	if (GetLevel() < 50)
 	{
 		return GetLevel() * 7 - 43;
 	}
 	else
 	{
-		return GetAC() / 2;
+		if (GetAC() > 600)
+		{
+			return GetAC() / 2;
+		}
+		else
+		{
+			return GetLevel() * 6;
+		}
 	}
 }
 
