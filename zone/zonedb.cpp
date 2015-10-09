@@ -3743,6 +3743,7 @@ bool ZoneDatabase::UpdateSkillDifficulty(uint16 skillid, float difficulty)
                                     "WHERE skillid = %u;", difficulty, skillid);
     auto results = QueryDatabase(query);
 	if (!results.Success())
+		return false;
 
 	return results.RowsAffected() > 0;
 }

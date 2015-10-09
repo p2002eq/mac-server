@@ -1480,8 +1480,9 @@ void Mob::ShowStats(Client* client)
 		client->Message(CC_Default, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(CC_Default, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
 		client->Message(CC_Default, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
+		client->Message(CC_Default, "  IsPet: %i PetID: %i  OwnerID: %i IsFamiliar: %i IsCharmed: %i IsDireCharm: %i IsZomm: %i ", IsPet(), GetPetID(), GetOwnerID(), IsFamiliar(), IsCharmed(), IsDireCharmed(), iszomm);
 		if (client->Admin() >= 100)
-			client->Message(CC_Default, "  EntityID: %i IsPet: %i PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), IsPet(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
+			client->Message(CC_Default, "  EntityID: %i AIControlled: %i Targetted: %i", GetID(), IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
