@@ -1728,6 +1728,11 @@ void NPC::AI_DoMovement() {
 
 	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
 		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+		ClearFeignMemory();
+		if (IsEngaged())
+		{
+			WipeHateList();
+		}
 		walksp = 0.0f;
 	}
 
@@ -1907,6 +1912,7 @@ void NPC::AI_DoMovement() {
 	}
 	else if (IsGuarding())
 	{
+		AIwalking_timer->Disable();
 		bool CP2Moved = false;
 		if(!RuleB(Pathing, Guard) || !zone->pathing) {
 			if (m_GuardPoint.x != m_Position.x || m_GuardPoint.y != m_Position.y || m_GuardPoint.z != m_Position.z)

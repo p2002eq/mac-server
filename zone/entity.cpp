@@ -1511,7 +1511,7 @@ void EntityList::QueueCloseClientsPrecalc(Mob *sender, const EQApplicationPacket
 		Client *ent = it->second;
 
 		if ((!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
-			if (ent->GetInside(sender->GetID()) || (special && (ent->GetGM()))) {
+			if (ent->GetInside(sender->GetID()) || sender->IsCorpse() || (special && (ent->GetGM()))) {
 				ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
 				ent->SetLastPosition(sender->GetID(), sender->GetPosition());
 			}
@@ -3944,7 +3944,7 @@ void EntityList::UpdateDistances(Client* client) {
 				it = mob_list.begin();
 				while(it != mob_list.end()) {
 					Mob* ent = it->second->CastToMob();
-					if (ent->GetID() > 0 && !ent->IsCorpse() && ent != client) {
+					if (ent->GetID() > 0 && ent != client) {
 						mydist = DistanceSquaredNoZ(ent->GetPosition(), myeye->GetPosition());
 						if (mydist < client->GetLastDistance(ent->GetID()))
 							client->SetLastDistance(ent->GetID(), mydist);
@@ -3958,7 +3958,7 @@ void EntityList::UpdateDistances(Client* client) {
 		it = mob_list.begin();
 		while(it != mob_list.end()) {
 			Mob* ent = it->second->CastToMob();
-			if (ent->GetID() > 0 && !ent->IsCorpse() && ent != client) {
+			if (ent->GetID() > 0 && ent != client) {
 				mydist = DistanceSquaredNoZ(ent->GetPosition(), client->GetBindSightTarget()->GetPosition());
 				if (mydist < client->GetLastDistance(ent->GetID()))
 					client->SetLastDistance(ent->GetID(), mydist);

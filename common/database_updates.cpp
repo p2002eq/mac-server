@@ -565,6 +565,19 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "flymode column created.");
 	}
+
+	std::string check_queryg = StringFormat("SHOW COLUMNS FROM `account` LIKE 'ignore_tells'");
+	auto resultsg = QueryDatabase(check_queryg);
+	if (resultsg.RowCount() == 0){
+		std::string create_queryg = StringFormat("ALTER table `account` add column `ignore_tells` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add ignore_tells column to account...");
+		auto create_resultsg = QueryDatabase(create_queryg);
+		if (!create_resultsg.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating ignore_tells column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "ignore_tells column created.");
+	}
 	return true;
 }
 

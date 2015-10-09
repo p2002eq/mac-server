@@ -1008,7 +1008,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterFactionValues(cid, factionvalues);
 
 	/* Load Character Account Data: Temp until I move */
-	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation`, `gminvul`, `flymode` FROM `account` WHERE `id` = %u", this->AccountID());
+	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation`, `gminvul`, `flymode`, `ignore_tells` FROM `account` WHERE `id` = %u", this->AccountID());
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		admin = atoi(row[0]);
@@ -1020,7 +1020,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		account_creation = atoul(row[6]);
 		gminvul = atoi(row[7]);
 		flymode = atoi(row[8]);
-		tellsoff = gmhideme;
+		tellsoff = atoi(row[9]);
 	}
 
 	/* Load Character Data */
@@ -1398,7 +1398,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	{
 		// This prevents hopping on logging in.
 		glm::vec3 loc(sze->player.spawn.x,sze->player.spawn.y,sze->player.spawn.z);
-		if (m_pp.boatid == 0 && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)))
+		if (m_pp.boatid == 0 && (!zone->HasWaterMap() || !zone->watermap->InLiquid(loc)) && 
+			zone->GetZoneID() != hole && zone->GetZoneID() != airplane)
 		{
 			m_Position.z = zone->zonemap->FindBestZ(loc, nullptr);
 			if(size > 0)
@@ -4086,9 +4087,11 @@ void Client::Handle_OP_GMToggle(const EQApplicationPacket *app)
 	}
 	GMToggle_Struct *ts = (GMToggle_Struct *)app->pBuffer;
 	if (ts->toggle == 0) {
+		database.SetGMIgnoreTells(AccountID(), 1);
 		tellsoff = true;
 	}
 	else if (ts->toggle == 1) {
+		database.SetGMIgnoreTells(AccountID(), 0);
 		tellsoff = false;
 	}
 	else {
