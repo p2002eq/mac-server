@@ -2683,7 +2683,7 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 // and not when they're attacked
 //a damage shield on a spell is a negative value but on an item it's a positive value so add the spell value and subtract the item value to get the end ds value
 void Mob::DamageShield(Mob* attacker, bool spell_ds) {
-
+	
 	if(!attacker || this == attacker)
 		return;
 
@@ -2695,7 +2695,7 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 	{
 		DS = spellbonuses.DamageShield;
 		rev_ds = attacker->spellbonuses.ReverseDamageShield;
-
+		
 		if(spellbonuses.DamageShieldSpellID != 0 && spellbonuses.DamageShieldSpellID != SPELL_UNKNOWN)
 			spellid = spellbonuses.DamageShieldSpellID;
 	}
@@ -2713,21 +2713,11 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 
 	//invert DS... spells yield negative values for a true damage shield
 	if(DS < 0) {
-		if(!spell_ds)	{
-
+		if(!spell_ds)
+		{
 			DS += aabonuses.DamageShield; //Live AA - coat of thistles. (negative value)
-			DS -= itembonuses.DamageShield; //+Damage Shield should only work when you already have a DS spell
-
-			//Spell data for damage shield mitigation shows a negative value for spells for clients and positive
-			//value for spells that effect pets. Unclear as to why. For now will convert all positive to be consistent.
-			if (attacker->IsOffHandAtk()){
-				int32 mitigation = attacker->itembonuses.DSMitigationOffHand +
-									attacker->spellbonuses.DSMitigationOffHand +
-									attacker->aabonuses.DSMitigationOffHand;
-				DS -= DS*mitigation/100;
-			}
-			DS -= DS;
 		}
+		
 		attacker->Damage(this, -DS, spellid, SkillAbjuration/*hackish*/, false);
 		//we can assume there is a spell now
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
