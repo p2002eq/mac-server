@@ -1433,6 +1433,11 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			// mitigation roll
 			uint16 roll = RollD20(offense, mitigation);
 
+			if (roll > 1 && GetClass() == WARRIOR && active_disc == disc_defensive)
+			{
+				roll /= 2;
+			}
+
 			damage = (roll * weapon_damage * 10 + 5) / 100;				// damage rounds to nearest whole number
 			damage = damage * RollDamageMultiplier(offense) / 100;		// client only damage multiplier
 			
@@ -1483,12 +1488,11 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 
 			if (other->IsClient() && min_hit > 1)
 			{
-				// shielding
-				damage -= (min_hit * other->GetItemBonuses().MeleeMitigation / 100);
-				// defensive disc
-				damage -= (damage * (other->GetSpellBonuses().MeleeMitigationEffect
-									+ other->GetItemBonuses().MeleeMitigationEffect
-									+ other->GetAABonuses().MeleeMitigationEffect) / 100);
+				// Shielding
+				damage -= min_hit * other->GetItemBonuses().MeleeMitigation / 100;
+
+				// Stonestance & Protective Spirit Disciplines.  Defensive handled above
+				damage -= damage * other->GetSpellBonuses().MeleeMitigationEffect / 100;
 			}
 
 			CommonOutgoingHitSuccess(other, damage, skillinuse);
