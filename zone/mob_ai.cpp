@@ -1729,6 +1729,11 @@ void NPC::AI_DoMovement() {
 
 	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
 		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+		ClearFeignMemory();
+		if (IsEngaged())
+		{
+			WipeHateList();
+		}
 		walksp = 0.0f;
 	}
 
