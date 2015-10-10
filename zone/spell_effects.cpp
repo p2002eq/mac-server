@@ -1625,9 +1625,12 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					basesize = GetPlayerHeight(GetRace());
 				}
 
-				// Only allow 1 size changes from Base Size
+				// Allow only 1 growth change, or 2 shrinks for large races and 1 for everybody else.
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
 				float maxModAmount = basesize * modifyAmount;
+				if(basesize >= 7 && modifyAmount < 1)
+					maxModAmount *= modifyAmount;
+
 				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
 					(GetSize() >= basesize && GetSize() < maxModAmount))
 				{
