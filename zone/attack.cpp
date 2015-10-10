@@ -340,6 +340,11 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 	if (chance_mod >= 10000)
 		return true;
 
+	if (IsClient() && CastToClient()->IsSitting())
+	{
+		return true;
+	}
+
 	int32 toHit = attacker->GetToHit(skillinuse);
 	int32 avoidance = defender->GetAvoidance();
 	int32 percentMod = 0;
@@ -372,7 +377,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 
 		if (percentMod > 0)
 		{
-			if (zone->random.Int(0, 100) > percentMod)
+			if (zone->random.Int(0, 100) < percentMod)
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Hit");
 				return true;
@@ -380,7 +385,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 		}
 		else
 		{
-			if (zone->random.Int(0, 100) > -percentMod)
+			if (zone->random.Int(0, 100) < -percentMod)
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Miss");
 				return false;
@@ -1380,19 +1385,6 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			}
 		}
 
-		// Strikethrough
-		if (((damage < 0)) && !bRiposte && !IsStrikethrough)
-		{
-			int32 bonusStrikeThrough = itembonuses.StrikeThrough + spellbonuses.StrikeThrough + aabonuses.StrikeThrough;
-
-			if (bonusStrikeThrough && zone->random.Roll(bonusStrikeThrough))
-			{
-				Message(MT_StrikeThrough, "You strike through your opponent's defenses!");
-				Attack(other, Hand, false, true); // Strikethrough only gives another attempted hit
-				return false;
-			}
-		}
-
 		if (damage > 0)
 		{
 			// swing not avoided by skills; do avoidance AC check
@@ -1432,6 +1424,19 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 
 			// mitigation roll
 			uint16 roll = RollD20(offense, mitigation);
+
+			if (other->IsClient())
+			{
+				if (other->CastToClient()->IsSitting())
+				{
+					roll = 20;
+				}
+				// hardcoding defensive disc for accuracy
+				if (roll > 1 && other->GetClass() == WARRIOR && other->CastToClient()->GetActiveDisc() == disc_defensive)
+				{
+					roll /= 2;
+				}
+			}
 
 			damage = (roll * weapon_damage * 10 + 5) / 100;				// damage rounds to nearest whole number
 			damage = damage * RollDamageMultiplier(offense) / 100;		// client only damage multiplier
@@ -1481,14 +1486,10 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 				hate += opts->hate_flat;
 			}
 
-			if (other->IsClient() && min_hit > 1)
+			// Stonestance & Protective Spirit Disciplines.  Defensive handled above
+			if (other->IsClient() && other->GetClass() != WARRIOR)
 			{
-				// shielding
-				damage -= (min_hit * other->GetItemBonuses().MeleeMitigation / 100);
-				// defensive disc
-				damage -= (damage * (other->GetSpellBonuses().MeleeMitigationEffect
-									+ other->GetItemBonuses().MeleeMitigationEffect
-									+ other->GetAABonuses().MeleeMitigationEffect) / 100);
+				damage -= damage * other->GetSpellBonuses().MeleeMitigationEffect / 100;
 			}
 
 			CommonOutgoingHitSuccess(other, damage, skillinuse);
@@ -1516,14 +1517,9 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 
 	if (damage > 0){
 		CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
-		if (HasSkillProcSuccess() && other && other->GetHP() > 0)
-			TrySkillProc(other, skillinuse, 0, true, Hand);
 	}
 
 	CommonBreakInvisible();
-
-	if(GetTarget())
-		TriggerDefensiveProcs(weapon, other, Hand, damage);
 
 	if (damage > 0)
 		return true;
@@ -2021,9 +2017,17 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		// mitigation roll
 		uint16 roll = RollD20(offense, mitigation);
 
-		if (other->IsClient() && other->CastToClient()->IsSitting())
+		if (other->IsClient())
 		{
-			roll = 20;
+			if (other->CastToClient()->IsSitting())
+			{
+				roll = 20;
+			}
+			// hardcoding defensive disc for accuracy
+			if (roll > 1 && other->GetClass() == WARRIOR && other->CastToClient()->GetActiveDisc() == disc_defensive)
+			{
+				roll /= 2;
+			}
 		}
 
 		uint32 maxHit = max_dmg;
@@ -2069,14 +2073,10 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 			hate += opts->hate_flat;
 		}
 
-		if (other->IsClient() && min_dmg > 1)
+		// Stonestance & Protective Spirit Disciplines.  Defensive handled above
+		if (other->IsClient() && other->GetClass() != WARRIOR)
 		{
-			// shielding
-			damage -= ((min_dmg * 1000 - di1k) / 1000 * other->GetItemBonuses().MeleeMitigation / 100);
-			// defensive disc
-			damage -= (damage * (other->GetSpellBonuses().MeleeMitigationEffect
-				+ other->GetItemBonuses().MeleeMitigationEffect
-				+ other->GetAABonuses().MeleeMitigationEffect) / 100);
+			damage -= damage * other->GetSpellBonuses().MeleeMitigationEffect / 100;
 		}
 
 		CommonOutgoingHitSuccess(other, damage, skillinuse);
@@ -2122,14 +2122,8 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		if (damage > 0)			// NPCs only proc innate procs on a hit
 		{
 			TrySpellProc(nullptr, weapon, other, Hand);
-
-			if (HasSkillProcSuccess())
-				TrySkillProc(other, skillinuse, 0, true, Hand);
 		}
 	}
-
-	if(GetHP() > 0 && !other->HasDied())
-		TriggerDefensiveProcs(nullptr, other, Hand, damage);
 
 	// now check ripostes
 	if (damage == -3) { // riposting
@@ -4852,8 +4846,12 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, int32 &damage, SkillUseTypes s
 	if (!defender)
 		return;
 
+	// SE_DamageModifier for Disciplines: Aggressive, Defensive, Trueshot, Silentfist, Ashenhand, Thunderkick
 	damage += damage * GetMeleeDamageMod_SE(skillInUse) / 100;
+
+	// SE_SkillDamageTaken for Aggressive discipline
 	damage += (damage * defender->GetSkillDmgTaken(skillInUse) / 100) + (GetSkillDmgAmt(skillInUse) + defender->GetFcDamageAmtIncoming(this, 0, true, skillInUse));
+
 	TryCriticalHit(defender, skillInUse, damage);
 	CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
 }
