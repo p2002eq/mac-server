@@ -335,26 +335,52 @@ int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charg
 		}
 		i++;
 	}
-	if (update_charges) {
+	if (update_charges)
+	{
 		tmp_merlist.clear();
 		std::list<TempMerchantList> oldtmp_merlist = tmpmerchanttable[npcid];
-		for (tmp_itr = oldtmp_merlist.begin(); tmp_itr != oldtmp_merlist.end(); ++tmp_itr) {
+		for (tmp_itr = oldtmp_merlist.begin(); tmp_itr != oldtmp_merlist.end(); ++tmp_itr) 
+		{
 			TempMerchantList ml2 = *tmp_itr;
 			if(ml2.item != item)
+			{
+				//Push the items not affected back into the list. 
 				tmp_merlist.push_back(ml2);
-		}
-		if (sold)
-			ml.charges = ml.charges + charges;
-		else
-			ml.charges = charges;
-		if (!ml.origslot)
-			ml.origslot = ml.slot;
-		if (charges > 0) {
-			database.SaveMerchantTemp(npcid, ml.origslot, item, ml.charges);
-			tmp_merlist.push_back(ml);
-		}
-		else {
-			database.DeleteMerchantTemp(npcid, ml.origslot);
+			}
+			else 
+			{
+				if (sold)
+				{
+					if(database.ItemQuantityType(item) != Quantity_Stacked)
+					{
+						++ml.quantity;
+					}
+					ml.charges = ml.charges + charges;
+				}
+				else
+				{
+					if(database.ItemQuantityType(item) != Quantity_Stacked)
+					{
+						--ml.quantity;
+					}
+					ml.charges = charges;
+				}
+
+				if (!ml.origslot)
+					ml.origslot = ml.slot;
+
+				if (charges > 0) //This is a save
+				{
+					database.SaveMerchantTemp(npcid, ml.origslot, item, ml.charges, ml.quantity);
+					tmp_merlist.push_back(ml);
+					Log.Out(Logs::General, Logs::Trading, "%d SAVED to temp in slot %d with charges/qty %d/%d", item, ml.origslot, ml.charges, ml.quantity);
+				}
+				else //This is a delete
+				{
+					database.DeleteMerchantTemp(npcid, ml.origslot);
+					Log.Out(Logs::General, Logs::Trading, "%d DELETED from temp in slot %d", item, ml.origslot);
+				}
+			}
 		}
 		tmpmerchanttable[npcid] = tmp_merlist;
 
@@ -365,7 +391,9 @@ int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charg
 	if (freeslot) {
 		if (charges < 0) //sanity check only, shouldnt happen
 			charges = 0x7FFF;
-		database.SaveMerchantTemp(npcid, freeslot, item, charges);
+		database.SaveMerchantTemp(npcid, freeslot, item, charges, 1);
+		Log.Out(Logs::General, Logs::Trading, "%d ADDED to temp in slot %d with charges/qty %d/%d", item, freeslot, charges, 1);
+
 		tmp_merlist = tmpmerchanttable[npcid];
 		TempMerchantList ml2;
 		ml2.charges = charges;
@@ -373,6 +401,7 @@ int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charg
 		ml2.npcid = npcid;
 		ml2.slot = freeslot;
 		ml2.origslot = ml2.slot;
+		ml2.quantity = 1;
 		tmp_merlist.push_back(ml2);
 		tmpmerchanttable[npcid] = tmp_merlist;
 	}
@@ -463,6 +492,20 @@ uint32 Zone::GetTempMerchantQuantity(uint32 NPCID, uint32 Slot) {
 	return 0;
 }
 
+int8 Zone::GetTempMerchantQtyNoSlot(uint32 NPCID, int16 itemid) {
+
+	std::list<TempMerchantList> TmpMerchantList = tmpmerchanttable[NPCID];
+	std::list<TempMerchantList>::const_iterator Iterator;
+
+	for (Iterator = TmpMerchantList.begin(); Iterator != TmpMerchantList.end(); ++Iterator)
+	{
+		if ((*Iterator).item == itemid && (*Iterator).quantity > 0)
+			return (*Iterator).charges/(*Iterator).quantity;
+	}
+
+	return -1;
+}
+
 void Zone::LoadTempMerchantData() {
 	Log.Out(Logs::General, Logs::Status, "Loading Temporary Merchant Lists...");
 	std::string query = StringFormat(
@@ -470,7 +513,8 @@ void Zone::LoadTempMerchantData() {
 		"DISTINCT ml.npcid,					   "
 		"ml.slot,							   "
 		"ml.charges,						   "
-		"ml.itemid							   "
+		"ml.itemid,							   "
+		"ml.quantity						   "
 		"FROM								   "
 		"merchantlist_temp ml,				   "
 		"spawnentry se,						   "
@@ -502,6 +546,7 @@ void Zone::LoadTempMerchantData() {
 		ml.charges = atoul(row[2]);
 		ml.item = atoul(row[3]);
 		ml.origslot = ml.slot;
+		ml.quantity = atoul(row[4]);
 		cur->second.push_back(ml);
 	}
 	pQueuedMerchantsWorkID = 0;

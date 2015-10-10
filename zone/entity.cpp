@@ -4538,3 +4538,26 @@ void EntityList::SendMerchantEnd(Mob* merchant)
 
 	return;
 }
+
+void EntityList::SendMerchantInventory(Mob* merchant)
+{
+
+	if(!merchant || !merchant->IsNPC())
+		return;
+
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		Client *c = it->second;
+
+		if (!c)
+			continue;
+
+		if(c->GetMerchantSession() == merchant->GetID())
+		{
+			c->BulkSendMerchantInventory(merchant->CastToNPC()->MerchantType, merchant->GetNPCTypeID());
+		}
+		++it;
+	}
+
+	return;
+}
