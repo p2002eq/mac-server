@@ -1127,10 +1127,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				break;
 			}
 
-			case SE_PetMeleeMitigation:
-				newbon->PetMeleeMitigation += base1;
-				break;
-
 			case SE_MeleeVulnerability:
 				newbon->MeleeVulnerability += base1;
 				break;
@@ -2034,15 +2030,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->CriticalDotDecay = true;
 				break;
 
-			case SE_MitigateDamageShield:
-			{
-				if (effect_value < 0)
-					effect_value = effect_value*-1;
-
-				new_bonus->DSMitigationOffHand += effect_value;
-				break;
-			}
-
 			case SE_CriticalDoTChance:
 				new_bonus->CriticalDoTChance += effect_value;
 				break;
@@ -2696,10 +2683,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				}
 				break;
 			}
-
-			case SE_PetMeleeMitigation:
-				new_bonus->PetMeleeMitigation += effect_value;
-				break;
 
 			case SE_MeleeVulnerability:
 				new_bonus->MeleeVulnerability += effect_value;
@@ -3604,12 +3587,6 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					itembonuses.CriticalHealOverTime = effect_value;
 					break;
 
-				case SE_MitigateDamageShield:
-					spellbonuses.DSMitigationOffHand = effect_value;
-					itembonuses.DSMitigationOffHand = effect_value;
-					aabonuses.DSMitigationOffHand = effect_value;
-					break;
-
 				case SE_CriticalDoTChance:
 					spellbonuses.CriticalDoTChance = effect_value;
 					aabonuses.CriticalDoTChance = effect_value;
@@ -3898,12 +3875,6 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					spellbonuses.GivePetGroupTarget = false;
 					aabonuses.GivePetGroupTarget = false;
 					itembonuses.GivePetGroupTarget = false;
-					break;
-
-				case SE_PetMeleeMitigation:
-					spellbonuses.PetMeleeMitigation = effect_value;
-					itembonuses.PetMeleeMitigation = effect_value;
-					aabonuses.PetMeleeMitigation = effect_value;
 					break;
 
 				case SE_RootBreakChance:
