@@ -687,11 +687,20 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 	{
 		base = backstab_dmg * 2;
 	}
-	// discipline tome spells are not accurate
+	// discipline tome spells are not accurate for backstab
 	// hardcoding this for accuracy
 	if (CastToClient()->active_disc == disc_fellstrike)		// duelist
 	{
-		base *= 2;
+		base *= 2;					// base is doubled
+		min_hit = base * 2;			// duelist min damage is non-disc base * 4.  388 damage with epic at 60
+	}
+	else if (level >= 60)
+	{
+		min_hit = level * 2;
+	}
+	else if (level > 50)
+	{
+		min_hit = level * 3 / 2;
 	}
 
 	if (primaryweapondamage <= 0)
@@ -715,21 +724,6 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 			damage = base + (base * roll + 10) / 20;									// +10 is to round and make the numbers slightly more accurate
 			damage = damage * CastToClient()->RollDamageMultiplier(offense) / 100;		// client only damage multiplier
 
-			// determine minimum hits
-			if (level < 59)
-			{
-				min_hit = level * 3 / 2;
-			}
-			else
-			{
-				min_hit = level * 2;
-			}
-
-			if (CastToClient()->active_disc == disc_fellstrike)		// duelist
-			{
-				min_hit *= 2;
-			}
-
 			if (doMinDmg || damage < min_hit)
 			{
 				damage = min_hit;
@@ -746,7 +740,8 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 		}
 	}
 
-	CommonOutgoingHitSuccess(defender, damage, SkillBackstab);
+	TryCriticalHit(defender, SkillBackstab, damage);
+	CheckNumHitsRemaining(NUMHIT_OutgoingHitSuccess);
 	DoAnim(Animation::Piercing);
 
 	hate = base;		// might not be correct
