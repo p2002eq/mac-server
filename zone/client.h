@@ -463,6 +463,7 @@ public:
 	uint32 GetWeight() const { return(weight); }
 	inline void RecalcWeight() { weight = CalcCurrentWeight(); }
 	uint32 CalcCurrentWeight();
+	bool IsEncumbered() { return (weight > (GetSTR() * 10)); }
 	inline uint32 GetCopper() const { return m_pp.copper; }
 	inline uint32 GetSilver() const { return m_pp.silver; }
 	inline uint32 GetGold() const { return m_pp.gold; }

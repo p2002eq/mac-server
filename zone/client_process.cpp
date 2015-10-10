@@ -1502,6 +1502,7 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	}
 
 	SaveCurrency();
+	RecalcWeight();
 }
 
 void Client::OPGMTraining(const EQApplicationPacket *app)
