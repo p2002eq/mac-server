@@ -898,6 +898,7 @@ public:
 	inline bool IsFindable() { return findable; }
 	inline uint8 GetManaPercent() { return (uint8)((float)cur_mana / (float)max_mana * 100.0f); }
 	virtual uint8 GetEndurancePercent() { return 0; }
+	inline void SpawnPacketSent(bool val) { spawnpacket_sent = val; };
 
 	inline virtual bool IsBlockedBuff(int16 SpellID) { return false; }
 	inline virtual bool IsBlockedPetBuff(int16 SpellID) { return false; }
@@ -1074,6 +1075,7 @@ protected:
 	bool held;
 	bool nocast;
 	bool focused;
+	bool spawnpacket_sent;
 	void CalcSpellBonuses(StatBonuses* newbon);
 	virtual void CalcBonuses();
 	void TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success = false, uint16 hand = 0, bool IsDefensive = false); // hand = MainCursor?

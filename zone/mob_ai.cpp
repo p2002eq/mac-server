@@ -538,7 +538,6 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer->Disable();
 	} else {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
-		AIautocastspell_timer->Start(RandomTimer(2000, 15000), false);
 	}
 
 	if (NPCTypedata) {
@@ -1139,7 +1138,11 @@ void Mob::DoOffHandRound(Mob* victim, ExtraAttackOptions *opts)
 }
 
 void Mob::AI_Process() {
+	
 	if (!IsAIControlled())
+		return;
+
+	if (IsNPC() && !spawnpacket_sent)
 		return;
 
 	if (!(AIthink_timer->Check() || attack_timer.Check(false)))
@@ -2817,7 +2820,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 	if (AIspells.size() == 0)
 		AIautocastspell_timer->Disable();
 	else
-		AIautocastspell_timer->Trigger();
+		AIautocastspell_timer->Start(RandomTimer(2000, 15000), false);
 	return true;
 }
 
