@@ -1820,10 +1820,10 @@ uint8 ZoneDatabase::GetGridType(uint32 grid, uint32 zoneid) {
 	return atoi(row[0]);
 }
 
-void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges){
+void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges, uint32 quantity){
 
-	std::string query = StringFormat("REPLACE INTO merchantlist_temp (npcid, slot, itemid, charges) "
-                                    "VALUES(%d, %d, %d, %d)", npcid, slot, item, charges);
+	std::string query = StringFormat("REPLACE INTO merchantlist_temp (npcid, slot, itemid, charges, quantity) "
+                                    "VALUES(%d, %d, %d, %d, %d)", npcid, slot, item, charges, quantity);
     QueryDatabase(query);
 }
 
@@ -3617,21 +3617,21 @@ int8 ZoneDatabase::ItemQuantityType(int16 item_id)
 		//Item does not have quantity and is not stackable (Normal item.)
 		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
 		{ 
-			return 1;
+			return Quantity_Normal;
 		}
 		//Item is not stackable, and uses charges.
 		else if(item->StackSize < 1 || !item->Stackable) 
 		{
-			return 2;
+			return Quantity_Charges;
 		}
 		//Due to the previous checks, item has to stack.
 		else
 		{
-			return 3;
+			return Quantity_Stacked;
 		}
 	}
 
-	return 0;
+	return Quantity_Unknown;
 }
 
 bool ZoneDatabase::RetrieveMBMessages(uint16 category, std::vector<MBMessageRetrievalGen_Struct>& outData) {

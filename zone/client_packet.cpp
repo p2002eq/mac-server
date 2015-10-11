@@ -7159,33 +7159,30 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	else if(quantity_left > 0)
 		tmp_qty = quantity_left;
 
-	if ((tmpmer_used || quantity_left > 0) && (mp->quantity > tmp_qty || item->MaxCharges > 1))
+	if ((tmpmer_used || quantity_left > 0) && (mp->quantity > tmp_qty || database.ItemQuantityType(item_id) == Quantity_Charges))
 	{
-		if (tmp_qty > item->MaxCharges && item->MaxCharges > 1)
-			mp->quantity = item->MaxCharges;
+		if (database.ItemQuantityType(item_id) == Quantity_Charges && tmpmer_used)
+			mp->quantity = zone->GetTempMerchantQtyNoSlot(tmp->GetNPCTypeID(), item_id);	
 		else
 			mp->quantity = tmp_qty;
 	}
+	else if(database.ItemQuantityType(item_id) == Quantity_Charges && !tmpmer_used)
+		mp->quantity = item->MaxCharges;
+
 	uint8 quantity = mp->quantity;
-	//This sets the correct price for items with charges.
-	if(database.ItemQuantityType(item_id) == Quantity_Charges)
-		quantity = 1; 
 	//This makes sure we don't overflow the quantity in our packet.
-	else if(database.ItemQuantityType(item_id) == Quantity_Stacked && quantity > 20)
+	if(database.ItemQuantityType(item_id) == Quantity_Stacked && quantity > 20)
 		quantity = 20; 
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
-	mpo->quantity = quantity;
+	mpo->quantity = (item->MaxCharges > 1 ? 1 : quantity);
 	mpo->playerid = mp->playerid;
 	mpo->npcid = mp->npcid;
 	mpo->itemslot = mp->itemslot;
 
 	int16 freeslotid = INVALID_INDEX;
 	uint8 charges = quantity;
-	// We want to actually give the player an item with maxed charges, regardless of what we send in the packet
-	if(database.ItemQuantityType(item_id) == Quantity_Charges)
-		charges = item->MaxCharges;
 
 	ItemInst* inst = database.CreateItem(item, charges);
 
@@ -7277,7 +7274,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			new_charges = quantity_left - mp->quantity;
 			zone->SaveMerchantItem(merchantid,item_id, new_charges, mp->itemslot);
 		}
-		if (new_charges <= 0){
+		if (new_charges <= 0)
+		{
 			EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
 			delitem->itemslot = mp->itemslot;
@@ -7287,12 +7285,13 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			entity_list.QueueClients(tmp, delitempacket); //que for anyone that could be using the merchant so they see the update
 			safe_delete(delitempacket);
 		}
-		else {
-			// Since we only show 1 in the merchant window, no need to send a packet here.
+		else 
+		{
 			inst->SetCharges(new_charges);
 			inst->SetPrice(SinglePrice);
 			inst->SetMerchantSlot(mp->itemslot);
 			inst->SetMerchantCount(new_charges);
+			entity_list.SendMerchantInventory(tmp);
 		}
 	}
 	safe_delete(inst);
@@ -7387,7 +7386,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	int cost_quantity = mp->quantity;
 	if (inst->IsCharged())
-		int cost_quantity = 1;
+		int cost_quantity = 1; //Always sell items to merchants for base cost
 
 	if (RuleB(Merchant, UsePriceMod))
 		price = (int)((item->Price*cost_quantity)*(RuleR(Merchant, BuyCostMod))*Client::CalcPriceMod(vendor, true) + 0.5); // need to round up, because client does it automatically when displaying price
@@ -7402,9 +7401,14 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 			mp->quantity = i_quan;
 	}
 	else if(inst->IsCharged())
-		mp->quantity = item->MaxCharges; //AK recharges items
+	{
+		int8 final_charges = zone->GetTempMerchantQtyNoSlot(vendor->GetNPCTypeID(), item->ID);
+		mp->quantity = (final_charges < 0 ? inst->GetCharges() : final_charges);
+	}
 	else
+	{
 		mp->quantity = 1;
+	}
 
 	if (RuleB(EventLog, RecordSellToMerchant))
 		LogMerchant(this, vendor, mp->quantity, price, item, false);
@@ -7427,7 +7431,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		}
 		inst2->SetMerchantCount(MerchantQuantity);
 
-		BulkSendMerchantInventory(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID());
+		entity_list.SendMerchantInventory(vendor);
 
 		safe_delete(inst2);
 	}
