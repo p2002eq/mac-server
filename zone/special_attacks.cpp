@@ -1101,8 +1101,7 @@ void NPC::RangedAttack(Mob* other)
 		SkillUseTypes skillinuse = SkillArchery;
 		skillinuse = static_cast<SkillUseTypes>(GetRangedSkill());
 
-		if(!ammo && !GetAmmoIDfile())
-			ammo = database.GetItem(8005);
+		ammo = database.GetItem(8005);
 
 		if (ammo)
 			//SendItemAnimation(GetTarget(), ammo, SkillArchery);
@@ -1169,6 +1168,7 @@ void NPC::RangedAttack(Mob* other)
 			}
 		}
 
+		DoAnim(Animation::ShootBow);
 		other->Damage(this, damage, SPELL_UNKNOWN, skillinuse);
 		other->AddToHateList(this, max_dmg / 2, 0);
 
