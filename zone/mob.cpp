@@ -5360,6 +5360,7 @@ float Mob::GetPlayerHeight(uint16 race)
 	switch (race)
 	{
 		case OGRE:
+			return 9;
 		case TROLL:
 			return 8;
 		case VAHSHIR: case BARBARIAN:

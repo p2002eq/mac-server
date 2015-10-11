@@ -406,6 +406,7 @@ public:
 	uint8 GetClientCountByBoatID(uint32 boatid);
 	bool TransferPrimaryAggro(Mob* other);
 	void SendMerchantEnd(Mob* merchant);
+	void SendMerchantInventory(Mob* merchant);
 
 
 protected:

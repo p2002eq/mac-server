@@ -578,6 +578,20 @@ bool Database::DBSetup_player_updates() {
 		}
 		Log.Out(Logs::Detail, Logs::Debug, "ignore_tells column created.");
 	}
+
+	std::string check_queryh = StringFormat("SHOW COLUMNS FROM `merchantlist_temp` LIKE 'quantity'");
+	auto resultsh = QueryDatabase(check_queryh);
+	if (resultsh.RowCount() == 0){
+		std::string create_queryh = StringFormat("ALTER table `merchantlist_temp` add column `quantity` tinyint(4) not null default 0");
+		Log.Out(Logs::Detail, Logs::Debug, "Attempting to add quantity column to merchantlist_temp...");
+		auto create_resultsh = QueryDatabase(create_queryh);
+		if (!create_resultsh.Success()){
+			Log.Out(Logs::Detail, Logs::Error, "Error creating merchantlist_temp column.");
+			return false;
+		}
+		Log.Out(Logs::Detail, Logs::Debug, "merchantlist_temp quantity column created.");
+	}
+
 	return true;
 }
 

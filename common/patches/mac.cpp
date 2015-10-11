@@ -1926,9 +1926,9 @@ namespace Mac {
 		// Items on a merchant
   		else if(type == 1)
   		{ 
-  			mac_pop_item->Charges = 1;
+  			mac_pop_item->Charges = inst->GetCharges();
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate, faction, cha, and vendor greed for us. 
 			mac_pop_item->SellRate = 1;
 		}
 		// Item links

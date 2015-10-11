@@ -2262,6 +2262,7 @@ struct TempMerchantList {
 	uint32	item;
 	uint32	charges; //charges/quantity
 	uint32	origslot;
+	uint32  quantity; //This is used to determine how many charged items we have, since the charges clump together
 };
 
 
