@@ -1341,6 +1341,17 @@ void Mob::SendPosition()
 	safe_delete(app);
 }
 
+// this one just warps the mob to the current location
+void Mob::SendRealPosition()
+{
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
+	spu->num_updates = 1; // hack - only one spawn position per update
+	MakeSpawnUpdateNoDelta(&spu->spawn_update);
+	entity_list.QueueClients(this, app, true);
+	safe_delete(app);
+}
+
 // this one is for mobs on the move, and clients.
 void Mob::SendPosUpdate(uint8 iSendToSelf) 
 {
