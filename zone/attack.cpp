@@ -372,7 +372,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 
 		if (percentMod > 0)
 		{
-			if (zone->random.Int(0, 100) > percentMod)
+			if (zone->random.Int(0, 100) < percentMod)
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Hit");
 				return true;
@@ -380,7 +380,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 		}
 		else
 		{
-			if (zone->random.Int(0, 100) > -percentMod)
+			if (zone->random.Int(0, 100) < -percentMod)
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Miss");
 				return false;
