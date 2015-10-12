@@ -681,8 +681,6 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
 	}
 
-
-
 	if (SendSpawnPacket) {
 		if (dontqueue) { // aka, SEND IT NOW BITCH!
 			EQApplicationPacket *app = new EQApplicationPacket;
@@ -702,7 +700,14 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 			npc->FillSpawnStruct(ns, nullptr);	// Not working on player newspawns, so it's safe to use a ForWho of 0
 			AddToSpawnQueue(npc->GetID(), &ns);
 			safe_delete(ns);
+			if (client_list.size() == 0) {
+				npc->SpawnPacketSent(true);
+				parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
+			}
 		}
+	} else {
+		npc->SpawnPacketSent(true);
+		parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
 	}
 
 	// update distances to us for clients.
