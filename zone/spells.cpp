@@ -4889,7 +4889,6 @@ void Mob::SendSpellBarEnable(uint16 spell_id)
 	ManaChange_Struct* manachange = (ManaChange_Struct*)outapp->pBuffer;
 	manachange->new_mana = GetMana();
 	manachange->spell_id = spell_id;
-	manachange->stamina = CastToClient()->GetEndurance();
 	outapp->priority = 6;
 	CastToClient()->QueuePacket(outapp);
 	safe_delete(outapp);

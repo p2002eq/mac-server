@@ -1291,14 +1291,13 @@ void Client::SendManaUpdatePacket() {
 	if (!Connected() || IsCasting())
 		return;
 
-	if (last_reported_mana != cur_mana || last_reported_endur != cur_end) {
+	if (last_reported_mana != cur_mana) {
 
 
 
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_ManaChange, sizeof(ManaChange_Struct));
 		ManaChange_Struct* manachange = (ManaChange_Struct*)outapp->pBuffer;
 		manachange->new_mana = cur_mana;
-		manachange->stamina = cur_end;
 		manachange->spell_id = casting_spell_id;	//always going to be 0... since we check IsCasting()
 		outapp->priority = 6;
 		QueuePacket(outapp);
@@ -1365,7 +1364,7 @@ void Client::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	} else {
 		ns->spawn.guildrank = guild_mgr.GetDisplayedRank(GuildID(), GuildRank(), AccountID());
 	}
-	ns->spawn.size			= 0; // Changing size works, but then movement stops! (wth?)
+	ns->spawn.size			= size;
 	ns->spawn.runspeed		= (gmspeed == 0) ? runspeed : 3.1f;
 
 	// pp also hold this info; should we pull from there or inventory?
@@ -5362,3 +5361,4 @@ float Client::GetPortHeading(uint16 newx, uint16 newy)
 
 	return 0.0f;
 }
+

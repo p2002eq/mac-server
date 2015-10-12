@@ -154,9 +154,9 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	/* Load up the Safe Coordinates, restrictions and verify the zone name*/
 	float safe_x, safe_y, safe_z;
 	int16 minstatus = 0;
-	uint8 minlevel = 0;
+	uint8 minlevel = 0, expansion = 0;
 	char flag_needed[128];
-	if(!database.GetSafePoints(target_zone_name, database.GetInstanceVersion(target_instance_id), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed)) {
+	if(!database.GetSafePoints(target_zone_name, database.GetInstanceVersion(target_instance_id), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed, &expansion)) {
 		//invalid zone...
 		Message(CC_Red, "Invalid target zone while getting safe points.");
 		Log.Out(Logs::General, Logs::Error, "Zoning %s: Unable to get safe coordinates for zone '%s'.", GetName(), target_zone_name);
@@ -254,6 +254,13 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 	int8 myerror = 1;		//1 is succes
 
 	//not sure when we would use ZONE_ERROR_NOTREADY
+	
+	bool has_expansion = expansion & m_pp.expansions;
+	if(!ignorerestrictions && Admin() < minStatusToIgnoreZoneFlags && expansion > ClassicEQ && !has_expansion)
+	{
+		myerror = ZONE_ERROR_NOEXPANSION;
+		Log.Out(Logs::General, Logs::Error, "Zoning %s: Does not have the required expansion (%d) to enter %s. Player expansions: %d", GetName(), expansion, target_zone_name, m_pp.expansions);
+	}
 
 	//enforce min status and level
 	if (!ignorerestrictions && (Admin() < minstatus || GetLevel() < minlevel))
@@ -905,9 +912,9 @@ bool Client::CanBeInZone() {
 
 	float safe_x, safe_y, safe_z;
 	int16 minstatus = 0;
-	uint8 minlevel = 0;
+	uint8 minlevel = 0, expansion = 0;
 	char flag_needed[128];
-	if(!database.GetSafePoints(zone->GetShortName(), zone->GetInstanceVersion(), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed)) {
+	if(!database.GetSafePoints(zone->GetShortName(), zone->GetInstanceVersion(), &safe_x, &safe_y, &safe_z, &minstatus, &minlevel, flag_needed, &expansion)) {
 		//this should not happen...
 		Log.Out(Logs::Detail, Logs::Character, "[CLIENT] Unable to query zone info for ourself '%s'", zone->GetShortName());
 		return(false);
@@ -928,6 +935,13 @@ bool Client::CanBeInZone() {
 			Log.Out(Logs::Detail, Logs::Character, "[CLIENT] Character does not have the flag to be in this zone (%s)!", flag_needed);
 			return(false);
 		}
+	}
+
+	bool has_expansion = expansion & m_pp.expansions;
+	if(Admin() < minStatusToIgnoreZoneFlags && expansion > ClassicEQ && !has_expansion)
+	{
+		Log.Out(Logs::Detail, Logs::Character, "[CLIENT] Character does not have the required expansion (%d ~ %d)!", m_pp.expansions, expansion);
+		return(false);
 	}
 
 	return(true);

@@ -665,7 +665,7 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 {
 	npc->SetID(GetFreeID());
 	//npc->SetMerchantProbability((uint8) zone->random.Int(0, 99));
-	parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
+
 
 	/* Web Interface: NPC Spawn (Pop) */
 	if (RemoteCallSubscriptionHandler::Instance()->IsSubscribed("NPC.Position")) {
@@ -681,23 +681,33 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 		RemoteCallSubscriptionHandler::Instance()->OnEvent("NPC.Position", params);
 	}
 
-	uint16 emoteid = npc->GetEmoteID();
-	if (emoteid != 0)
-		npc->DoNPCEmote(ONSPAWN, emoteid);
-
 	if (SendSpawnPacket) {
 		if (dontqueue) { // aka, SEND IT NOW BITCH!
 			EQApplicationPacket *app = new EQApplicationPacket;
 			npc->CreateSpawnPacket(app, npc);
 			QueueClients(npc, app);
 			safe_delete(app);
+			npc->SpawnPacketSent(true);
+			parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
+			if (!npc->GetDepop()) {
+				uint16 emoteid = npc->GetEmoteID();
+				if (emoteid != 0)
+					npc->DoNPCEmote(ONSPAWN, emoteid);
+			}
 		} else {
 			NewSpawn_Struct *ns = new NewSpawn_Struct;
 			memset(ns, 0, sizeof(NewSpawn_Struct));
 			npc->FillSpawnStruct(ns, nullptr);	// Not working on player newspawns, so it's safe to use a ForWho of 0
 			AddToSpawnQueue(npc->GetID(), &ns);
 			safe_delete(ns);
+			if (client_list.size() == 0) {
+				npc->SpawnPacketSent(true);
+				parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
+			}
 		}
+	} else {
+		npc->SpawnPacketSent(true);
+		parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
 	}
 
 	// update distances to us for clients.
@@ -788,6 +798,18 @@ void EntityList::CheckSpawnQueue()
 			outapp = new EQApplicationPacket;
 			Mob::CreateSpawnPacket(outapp, iterator.GetData());
 			QueueClients(0, outapp);
+			Mob* mob = GetMob(iterator.GetData()->spawn.spawnId);
+			if (mob && mob->IsNPC())
+			{
+				mob->SpawnPacketSent(true);
+				parse->EventNPC(EVENT_SPAWN, mob->CastToNPC(), nullptr, "", 0);
+				if (!mob->CastToNPC()->GetDepop()) {
+					uint16 emoteid = mob->CastToNPC()->GetEmoteID();
+					if (emoteid != 0)
+						mob->CastToNPC()->DoNPCEmote(ONSPAWN, emoteid);
+				}
+			}
+			
 			safe_delete(outapp);
 			iterator.RemoveCurrent();
 		}
