@@ -1634,7 +1634,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	uint8 killed_level = GetLevel();
 
 	SendLogoutPackets();
-
+	SendRealPosition();
 	/* Make Death Packet */
 	EQApplicationPacket app(OP_Death, sizeof(Death_Struct));
 	Death_Struct* d = (Death_Struct*)app.pBuffer;
@@ -2231,6 +2231,8 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 
 	if(p_depop == true)
 		return false;
+
+	SendRealPosition();
 
 	HasAISpellEffects = false;
 	BuffFadeAll();
