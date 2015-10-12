@@ -1582,7 +1582,7 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 	if (m_Position.w != 0.01)
 		this->m_Position.w = heading;
 	if(IsNPC())
-		CastToNPC()->SaveGuardSpot(true);
+		CastToNPC()->SaveGuardSpot();
 	if(SendUpdate)
 		SendPosition();
 }

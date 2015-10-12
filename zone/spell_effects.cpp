@@ -3743,8 +3743,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					WipeHateList();
 					if(tempmob)
 					{
-						entity_list.ReplaceWithTarget(this, tempmob);
-						AddToHateList(tempmob, 1, 0);
+						int32 charmBreakHate = GetMaxHP() / 8;
+						if (charmBreakHate > 2400) charmBreakHate = 2400;
+						if (charmBreakHate < 50) charmBreakHate = 50;
+
+						AddToHateList(tempmob, charmBreakHate, 0);
 					}
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
 				}

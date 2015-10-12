@@ -1730,7 +1730,9 @@ void NPC::AI_DoMovement() {
 	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
 		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
 		ClearFeignMemory();
-		if (IsEngaged())
+
+		// this wipes hate list when NPC returns home after outdistancing hated players
+		if (IsEngaged() && zone->random.Int(0, 100) < 10)		// random delay before wiping hate list
 		{
 			WipeHateList();
 		}
