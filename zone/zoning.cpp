@@ -715,6 +715,11 @@ void Client::Gate()
 
 void NPC::Gate() {
 	entity_list.MessageClose_StringID(this, true, 200, MT_Spells, GATES, GetCleanName());
+	
+	if (GetHPRatio() < 25)
+	{
+		SetHP(GetMaxHP() / 4);
+	}
 
 	Mob::Gate();
 }

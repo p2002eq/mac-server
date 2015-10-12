@@ -20,6 +20,7 @@
 
 #include "map.h"
 #include "pathing.h"
+#include "string_ids.h"
 #include "water_map.h"
 #include "zone.h"
 
@@ -50,7 +51,7 @@ void Mob::CheckFlee() {
 	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
 	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
 
-	if(ratio >= fleeratio)
+	if(ratio >= (fleeratio * 2))
 		return;
 
 	//we might be hurt enough, check con now..
@@ -74,24 +75,40 @@ void Mob::CheckFlee() {
 	switch(con) {
 		//these values are not 100% researched
 		case CON_GREEN:
-			run_ratio = fleeratio;
+			run_ratio = fleeratio * 2;
 			break;
 		case CON_LIGHTBLUE:
-			run_ratio = fleeratio * 9 / 10;
+			run_ratio = fleeratio * 3 / 2;
 			break;
-		case CON_BLUE:
-			run_ratio = fleeratio * 8 / 10;
+		case CON_YELLOW:
+			run_ratio = fleeratio * 2 / 3;
+			break;
+		case CON_RED:
+			run_ratio = fleeratio / 2;
 			break;
 		default:
-			run_ratio = fleeratio * 7 / 10;
+			run_ratio = fleeratio;
 			break;
 	}
 	if(ratio < run_ratio)
 	{
 		if (RuleB(Combat, FleeIfNotAlone) ||
 			GetSpecialAbility(ALWAYS_FLEE) ||
-			(!RuleB(Combat, FleeIfNotAlone) && (entity_list.GetHatedCountByFaction(hate_top, this) == 0)))
-			StartFleeing();
+			(!RuleB(Combat, FleeIfNotAlone) && (entity_list.GetHatedCountByFaction(hate_top, this) == 0))
+			)
+		{
+			if (IsWarriorClass() || GetMana() < 70 || GetLevel() < 30
+				|| !IsNPC() || DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) < 40000
+			)
+			{
+				StartFleeing();
+			}
+			else if (!IsCasting())
+			{
+				CastSpell(SEPLL_GATE, GetID(), 1, 5000, 70);
+				entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
+			}
+		}
 	}
 }
 

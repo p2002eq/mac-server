@@ -190,6 +190,7 @@
 #define OTHER_REGAIN_CAST			1033	//%1 regains concentration and continues casting.
 #define GENERIC_SHOUT				1034	//%1 shouts '%2'
 #define GENERIC_EMOTE				1036	//%1 %2
+#define BEGIN_GATE					1038	//%1 begins to cast the gate spell.
 #define OTHER_CRIT_HEAL				1039	//%1 performs an exceptional heal! (%2)
 #define OTHER_CRIT_BLAST			1040	//%1 delivers a critical blast! (%2)
 #define NPC_ENRAGE_START			1042	//%1 has become ENRAGED.

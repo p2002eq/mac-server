@@ -3286,7 +3286,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		// hundreds of spells have the skill id set to tiger claw in the spell data
 		// without this, lots of stuff will 'strike' instead of give a proper spell damage message
 		uint8 skill_id = skill_used;
-		if (skill_used == SkillTigerClaw && spell_id > 0 && (attacker->GetClass() != MONK || spell_id != 65535))
+		if (skill_used == SkillTigerClaw && spell_id > 0 && (attacker->GetClass() != MONK || spell_id != SPELL_UNKNOWN))
 		{
 			skill_id = SkillEvocation;
 		}
