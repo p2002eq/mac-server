@@ -1066,6 +1066,16 @@ enum Boats
 	//Captains_Skiff = //Shuttle timorous-butcherblock
 };
 
+// Values are bitwise, so we can compare with the expansion field in account.
+enum Expansions
+{
+	ClassicEQ = 0,
+	KunarkEQ = 1,
+	VeliousEQ = 2,
+	LuclinEQ = 4,
+	PlanesEQ = 8
+};
+
 static const uint32 MAX_SPELL_DB_ID_VAL = 65535;
 
 #endif

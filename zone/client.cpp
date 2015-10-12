@@ -5361,3 +5361,4 @@ float Client::GetPortHeading(uint16 newx, uint16 newy)
 
 	return 0.0f;
 }
+

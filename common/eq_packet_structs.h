@@ -293,6 +293,7 @@ struct ServerZoneEntry_Struct
 	struct NewSpawn_Struct player;
 };
 
+//This should be treated as an internal struct
 struct NewZone_Struct {
 /*0000*/	char	char_name[64];			// Character Name
 /*0064*/	char	zone_short_name[32];	// Zone Short Name
@@ -334,6 +335,7 @@ struct NewZone_Struct {
 /*0692*/	uint8	unknown692[8];
 /*0700*/	float	fog_density;
 /*0704*/	uint32	SuspendBuffs;
+			uint8	expansion;
 /*0704*/
 };
 
