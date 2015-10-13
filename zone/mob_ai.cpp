@@ -537,7 +537,6 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer->Disable();
 	} else {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
-		AIautocastspell_timer->Start(RandomTimer(2000, 15000), false);
 	}
 
 	if (NPCTypedata) {
@@ -1138,7 +1137,11 @@ void Mob::DoOffHandRound(Mob* victim, ExtraAttackOptions *opts)
 }
 
 void Mob::AI_Process() {
+	
 	if (!IsAIControlled())
+		return;
+
+	if (IsNPC() && !spawnpacket_sent)
 		return;
 
 	if (!(AIthink_timer->Check() || attack_timer.Check(false)))
@@ -1726,13 +1729,17 @@ void Mob::AI_Process() {
 void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
-	if ((IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) || 
-		(AIwalking_timer->Enabled() && !AIwalking_timer->Check(false))) {
+	if (IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) {
 		ClearFeignMemory();
-		if (IsEngaged())
+
+		// this wipes hate list when NPC returns home after outdistancing hated players
+		if (IsEngaged() && zone->random.Int(0, 100) < 10)		// random delay before wiping hate list
 		{
 			WipeHateList();
 		}
+		walksp = 0.0f;
+	} else if (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false)) {
+		ClearFeignMemory();
 		walksp = 0.0f;
 	}
 
@@ -2087,6 +2094,12 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 void Mob::AI_Event_NoLongerEngaged() {
 	if (!IsAIControlled())
 		return;
+	// Reset some pathing information
+	PathingLOSState = UnknownLOS;
+	PathingLastNodeSearched = -1;
+	PathingTraversedNodes = 0;
+	PathingLastNodeVisited = -1;
+	Route.clear();
 	this->AIwalking_timer->Start(RandomTimer(3000,20000));
 	pLastFightingDelayMoving = Timer::GetCurrentTime();
 	if (minLastFightingDelayMoving == maxLastFightingDelayMoving)
@@ -2816,7 +2829,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 	if (AIspells.size() == 0)
 		AIautocastspell_timer->Disable();
 	else
-		AIautocastspell_timer->Trigger();
+		AIautocastspell_timer->Start(RandomTimer(2000, 15000), false);
 	return true;
 }
 

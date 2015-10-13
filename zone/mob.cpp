@@ -250,6 +250,7 @@ Mob::Mob(const char* in_name,
 	invulnerable = false;
 	IsFullHP	= (cur_hp == max_hp);
 	qglobal=0;
+	spawnpacket_sent = false;
 
 	InitializeBuffSlots();
 
@@ -1340,6 +1341,17 @@ void Mob::SendPosition()
 	safe_delete(app);
 }
 
+// this one just warps the mob to the current location
+void Mob::SendRealPosition()
+{
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
+	spu->num_updates = 1; // hack - only one spawn position per update
+	MakeSpawnUpdateNoDelta(&spu->spawn_update);
+	entity_list.QueueClients(this, app, true);
+	safe_delete(app);
+}
+
 // this one is for mobs on the move, and clients.
 void Mob::SendPosUpdate(uint8 iSendToSelf) 
 {
@@ -1582,7 +1594,7 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 	if (m_Position.w != 0.01)
 		this->m_Position.w = heading;
 	if(IsNPC())
-		CastToNPC()->SaveGuardSpot(true);
+		CastToNPC()->SaveGuardSpot();
 	if(SendUpdate)
 		SendPosition();
 }
@@ -1818,15 +1830,14 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	if (!bNoRestriction)
 	{
 		if (this->IsClient() || this->petid != 0)
+		{
 			if (in_size < 3.0)
 				in_size = 3.0;
 
-
-			if (this->IsClient() || this->petid != 0)
-				if (in_size > 15.0)
-					in_size = 15.0;
+			if (in_size > 15.0)
+				in_size = 15.0;
+		}
 	}
-
 
 	if (in_size < 1.0)
 		in_size = 1.0;

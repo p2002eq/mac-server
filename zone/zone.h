@@ -174,6 +174,7 @@ public:
 	void	ResetMerchantQuantity(uint32 merchantid);
 	void	ClearMerchantLists();
 
+	uint8	GetZoneExpansion() { return newzone_data.expansion; }
 
 	void	LoadLevelEXPMods();
 	void	LoadSkillDifficulty();

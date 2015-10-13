@@ -1127,6 +1127,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	size = GetPlayerHeight(race);
 	base_size = size;
+	m_pp.height = size;
+	m_pp.width = size;
 
 	z_offset = CalcZOffset();
 	/* Initialize AA's : Move to function eventually */
