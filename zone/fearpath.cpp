@@ -110,7 +110,7 @@ void Mob::CheckFlee() {
 		(!RuleB(Combat, FleeIfNotAlone) && (entity_list.GetHatedCountByFaction(hate_top, this) == 0))
 		)
 	{
-		if (roamer || IsWarriorClass() || GetMana() < 70 || GetLevel() < 30
+		if (roamer || IsWarriorClass() || zone->GetZoneExpansion() == ClassicEQ || GetMana() < 70 || GetLevel() < 30
 			|| !IsNPC() || DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) < 40000
 		)
 		{
