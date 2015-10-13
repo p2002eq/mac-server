@@ -2093,6 +2093,12 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 void Mob::AI_Event_NoLongerEngaged() {
 	if (!IsAIControlled())
 		return;
+	// Reset some pathing information
+	PathingLOSState = UnknownLOS;
+	PathingLastNodeSearched = -1;
+	PathingTraversedNodes = 0;
+	PathingLastNodeVisited = -1;
+	Route.clear();
 	this->AIwalking_timer->Start(RandomTimer(3000,20000));
 	pLastFightingDelayMoving = Timer::GetCurrentTime();
 	if (minLastFightingDelayMoving == maxLastFightingDelayMoving)
