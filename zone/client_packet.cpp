@@ -8293,6 +8293,9 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 		return;
 	}
 
+	if(zone->GetZoneID() != bazaar)
+		return;
+
 	uint32 max_items = 80;
 
 	//Show Items
