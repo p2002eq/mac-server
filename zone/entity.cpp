@@ -1386,9 +1386,11 @@ void EntityList::SendZoneObjects(Client *client)
 {
 	auto it = object_list.begin();
 	while (it != object_list.end()) {
-		EQApplicationPacket *app = new EQApplicationPacket;
-		it->second->CreateSpawnPacket(app);
-		client->FastQueuePacket(&app);
+		if (!it->second->IsGroundSpawn() || !it->second->RespawnTimerEnabled()) {
+			EQApplicationPacket *app = new EQApplicationPacket;
+			it->second->CreateSpawnPacket(app);
+			client->FastQueuePacket(&app);
+		}
 		++it;
 	}
 }
