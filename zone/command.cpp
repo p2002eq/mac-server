@@ -4599,6 +4599,19 @@ void command_loc(Client *c, const Seperator *sep)
 
 		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
 	}
+
+	if(t->CanCastBindAffinity() && (zone->CanBind() || zone->IsCity() || zone->CanBindOthers()))
+	{
+		c->Message(CC_Default, "%s can bind themself here.", t->GetName());
+	}
+	else if(!t->CanCastBindAffinity() && (zone->IsCity() || zone->IsBindArea(t->GetX(), t->GetY())))
+	{
+		c->Message(CC_Default, "%s can be bound here.", t->GetName());
+	}
+	else
+	{
+		c->Message(CC_Default, "%s cannot bind here.", t->GetName());
+	}
 }
 
 void command_goto(Client *c, const Seperator *sep)

@@ -5392,3 +5392,22 @@ float Mob::GetPlayerHeight(uint16 race)
 			return 6;
 	}
 }
+
+bool Mob::CanCastBindAffinity()
+{
+	uint8 class_ = GetClass();
+	uint8 level = GetLevel();
+
+	if(level >= 12 && (class_ == NECROMANCER || class_ == WIZARD || class_ == MAGICIAN || class_ == ENCHANTER))
+	{
+		return true;
+	}
+	else if(level >= 14 && (class_ == CLERIC || class_ == SHAMAN || class_ == DRUID))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
