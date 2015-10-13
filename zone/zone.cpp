@@ -2140,16 +2140,58 @@ bool Zone::IsBindArea(float x_coord, float y_coord)
 			else
 				return false;
 		}
-		// RM gypsies
-		else if(GetZoneID() == rathemtn)
+		// Ruins of Kaesora
+		else if(GetZoneID() == fieldofbone)
 		{
-			if(x_coord >= 1395 && x_coord <= 1474 && y_coord >= 3918 && y_coord <= 4008)
+			if(x_coord >= -540 && x_coord <= 250 && y_coord >= -2216 && y_coord <= -1226)
+				return true;
+			else
+				return false;
+		}
+		// Docks
+		else if(GetZoneID() == firiona)
+		{
+			if(x_coord >= 1172 && x_coord <= 3500 && y_coord >= -4400 && y_coord <= -2500)
+				return true;
+			else
+				return false;
+		}
+		// Empty Ruins
+		else if(GetZoneID() == frontiermtns)
+		{
+			if(x_coord >= 1186 && x_coord <= 1551 && y_coord >= -2253 && y_coord <= -2109)
+				return true;
+			else
+				return false;
+		}
+		// Docks
+		else if(GetZoneID() == overthere)
+		{
+			if(x_coord >= 2057 && x_coord <= 3847 && y_coord >= 2333 && y_coord <= 3456)
+				return true;
+			else
+				return false;
+		}
+		// Entrances
+		else if(GetZoneID() == kael)
+		{
+			if(x_coord >= 2985 || x_coord <= -600)
+				return true;
+			else
+				return false;
+		}
+		// Dock
+		else if(GetZoneID() == iceclad)
+		{
+			if(x_coord >= 341 && x_coord <= 499 && y_coord >= 5296 && y_coord <= 5357)
 				return true;
 			else
 				return false;
 		}
 		else
+		{
 			return true;
+		}
 	}
 
 	return false;
