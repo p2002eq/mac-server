@@ -470,7 +470,9 @@ Mob *HateList::GetTop()
 				distance = owner->CastToNPC()->GetIgnoreDistance();
 
 			// ignore players farther away than distance specified in the database.
-			if (!rememberDistantMobs && distance > 0 && distSquared > distance*distance)
+			if (!rememberDistantMobs && distance > 0 && distSquared > distance*distance
+				// exception for damaged summoning NPCs
+				&& (!owner->GetSpecialAbility(SPECATK_SUMMON) || owner->GetHPRatio() > 90))
 			{
 				++iterator;
 				continue;

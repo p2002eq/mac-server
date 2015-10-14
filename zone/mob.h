@@ -145,7 +145,6 @@ public:
 	float HeadingAngleToMob(Mob *other); // to keep consistent with client generated messages
 	virtual void RangedAttack(Mob* other) { }
 	virtual void ThrowingAttack(Mob* other) { }
-	uint16 GetThrownDamage(int16 wDmg, int32& TotalDmg, int& minDmg);
 	// 13 = Primary (default), 14 = secondary
 	virtual bool Attack(Mob* other, int Hand = MainPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
 		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
@@ -155,17 +154,13 @@ public:
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
 	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
 	virtual bool AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte = false, bool isRangedAttack = false);
-	virtual bool CheckHitChance(Mob* attacker, SkillUseTypes skillinuse, int Hand, int16 chance_mod = 0);
 	virtual bool AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_mod = 0);
 	virtual void TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttackOptions *opts = nullptr);
 	void TryPetCriticalHit(Mob *defender, uint16 skill, int32 &damage);
 	virtual bool TryFinishingBlow(Mob *defender, SkillUseTypes skillinuse);
-	uint32 TryHeadShot(Mob* defender, SkillUseTypes skillInUse);
 	uint32 TryAssassinate(Mob* defender, SkillUseTypes skillInUse, uint16 ReuseTime);
 	virtual void DoRiposte(Mob* defender);
 	static int8 RollD20(int32 offense, int32 mitigation);
-	virtual void MeleeMitigation(Mob *attacker, int32 &damage, int32 minhit, ExtraAttackOptions *opts = nullptr);
-	virtual int32 GetMeleeMitDmg(Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
 	bool CombatRange(Mob* other);
 	virtual inline bool IsBerserk() { return false; } // only clients
 	void RogueEvade(Mob *other);
@@ -301,6 +296,7 @@ public:
 	bool IsBuffed();
 	bool IsDebuffed();
 	bool IsPacified();
+	bool CanCastBindAffinity();
 
 	//Basic Stats/Inventory
 	virtual void SetLevel(uint8 in_level, bool command = false) { level = in_level; }
@@ -456,6 +452,7 @@ public:
 	void MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu);
 	void SetSpawnUpdate(SpawnPositionUpdate_Struct* incoming, SpawnPositionUpdate_Struct* outgoing);
 	void SendPosition();
+	void SendRealPosition();
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
@@ -809,6 +806,7 @@ public:
 	inline bool IsFleeing() { return flee_mode; }
 	void ProcessFlee();
 	void CheckFlee();
+	int GetFleeRatio();
 	inline bool IsBlind() { return spellbonuses.IsBlind; }
 
 	inline bool			CheckAggro(Mob* other) {return hate_list.IsOnHateList(other);}
@@ -903,6 +901,7 @@ public:
 	inline bool IsFindable() { return findable; }
 	inline uint8 GetManaPercent() { return (uint8)((float)cur_mana / (float)max_mana * 100.0f); }
 	virtual uint8 GetEndurancePercent() { return 0; }
+	inline void SpawnPacketSent(bool val) { spawnpacket_sent = val; };
 
 	inline virtual bool IsBlockedBuff(int16 SpellID) { return false; }
 	inline virtual bool IsBlockedPetBuff(int16 SpellID) { return false; }
@@ -1079,6 +1078,7 @@ protected:
 	bool held;
 	bool nocast;
 	bool focused;
+	bool spawnpacket_sent;
 	void CalcSpellBonuses(StatBonuses* newbon);
 	virtual void CalcBonuses();
 	void TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success = false, uint16 hand = 0, bool IsDefensive = false); // hand = MainCursor?

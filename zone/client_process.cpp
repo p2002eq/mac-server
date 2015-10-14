@@ -905,7 +905,8 @@ void Client::FillPPItems()
 	}
 }
 
-void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
+void Client::BulkSendMerchantInventory(int merchant_id, int npcid) 
+{
 	const Item_Struct* handyitem = nullptr;
 	uint32 numItemSlots = 79; //The max number of items passed in the transaction.
 	const Item_Struct *item;
@@ -1007,10 +1008,15 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			else
 				handychance--;
 			int charges = 1;
-			//if(item->ItemClass==ItemClassCommon && (int16)ml.charges <= item->MaxCharges)
-			//	charges=ml.charges;
-			//else
-			charges = item->MaxCharges;
+			if(database.ItemQuantityType(item->ID) == Quantity_Charges)
+			{
+				if(ml.charges > 0)
+				{
+					charges = zone->GetTempMerchantQtyNoSlot(npcid, item->ID);
+				}
+				else
+					charges = 1;
+			}
 			ItemInst* inst = database.CreateItem(item, charges);
 			if (inst) {
 				if (RuleB(Merchant, UsePriceMod)) {
@@ -1021,7 +1027,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 				inst->SetMerchantSlot(ml.slot);
 				inst->SetMerchantCount(ml.charges);
 				if(charges > 0)
-					inst->SetCharges(item->MaxCharges);//inst->SetCharges(charges);
+					inst->SetCharges(charges);
 				else
 					inst->SetCharges(1);
 				if(inst) 
@@ -1031,12 +1037,34 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 					size += packet.length();
 					m++;
 				}
-
+				Log.Out(Logs::General, Logs::Trading, "%s was added to merchant in slot %d with %d charges", item->Name, ml.slot, ml.charges);
 			}
 		}
 		tmp_merlist.push_back(ml);
 		i++;
 	}
+
+	uint8 lastslot = i;
+
+	uint32 entityid = 0;
+	if(merch)
+		entityid = merch->GetID();
+
+	EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
+	Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
+	delitem->itemslot = lastslot;
+	delitem->npcid = entityid;
+	delitem->playerid = GetID();
+	delitempacket->priority = 6;
+
+	if(merch)
+		entity_list.QueueClients(merch, delitempacket); //que for anyone that could be using the merchant so they see the update
+	else
+		QueuePacket(delitempacket);
+
+	safe_delete(delitempacket);
+	Log.Out(Logs::General, Logs::Trading, "Cleared last merchant slot %d", lastslot);
+
 	//this resets the slot
 	zone->tmpmerchanttable[npcid] = tmp_merlist;
 	if (merch != nullptr && handyitem) {
@@ -1502,6 +1530,7 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	}
 
 	SaveCurrency();
+	RecalcWeight();
 }
 
 void Client::OPGMTraining(const EQApplicationPacket *app)

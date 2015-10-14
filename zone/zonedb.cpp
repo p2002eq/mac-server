@@ -107,7 +107,7 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
                                     "rain_duration1, rain_duration2, rain_duration3, rain_duration4, " // 4
                                     "snow_chance1, snow_chance2, snow_chance3, snow_chance4, " // 4
                                     "snow_duration1, snow_duration2, snow_duration3, snow_duration4, " // 4
-									"skylock, skip_los, music " // 3
+									"skylock, skip_los, music, expansion " // 3
                                     "FROM zone WHERE zoneidnumber = %i AND version = %i", zoneid, instance_id);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
@@ -185,6 +185,25 @@ bool ZoneDatabase::GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct 
         zone_data->snow_duration[index]=atof(row[52 + index]);
 
 	skip_los = atoi(row[57]) == 0? false: true;
+
+	uint8 zone_expansion = atoi(row[59]);
+	if(zone_expansion == 1)
+		zone_data->expansion = ClassicEQ;
+
+	else if(zone_expansion == 2)
+		zone_data->expansion = KunarkEQ;
+
+	else if(zone_expansion == 3)
+		zone_data->expansion = VeliousEQ;
+
+	else if(zone_expansion == 4)
+		zone_data->expansion = LuclinEQ;
+
+	else if(zone_expansion == 5)
+		zone_data->expansion = PlanesEQ;
+
+	else
+		zone_data->expansion = 0;
 
 	return true;
 }
@@ -1820,10 +1839,10 @@ uint8 ZoneDatabase::GetGridType(uint32 grid, uint32 zoneid) {
 	return atoi(row[0]);
 }
 
-void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges){
+void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges, uint32 quantity){
 
-	std::string query = StringFormat("REPLACE INTO merchantlist_temp (npcid, slot, itemid, charges) "
-                                    "VALUES(%d, %d, %d, %d)", npcid, slot, item, charges);
+	std::string query = StringFormat("REPLACE INTO merchantlist_temp (npcid, slot, itemid, charges, quantity) "
+                                    "VALUES(%d, %d, %d, %d, %d)", npcid, slot, item, charges, quantity);
     QueryDatabase(query);
 }
 
@@ -3617,21 +3636,21 @@ int8 ZoneDatabase::ItemQuantityType(int16 item_id)
 		//Item does not have quantity and is not stackable (Normal item.)
 		if (item->MaxCharges < 1 && (item->StackSize < 1 || !item->Stackable)) 
 		{ 
-			return 1;
+			return Quantity_Normal;
 		}
 		//Item is not stackable, and uses charges.
 		else if(item->StackSize < 1 || !item->Stackable) 
 		{
-			return 2;
+			return Quantity_Charges;
 		}
 		//Due to the previous checks, item has to stack.
 		else
 		{
-			return 3;
+			return Quantity_Stacked;
 		}
 	}
 
-	return 0;
+	return Quantity_Unknown;
 }
 
 bool ZoneDatabase::RetrieveMBMessages(uint16 category, std::vector<MBMessageRetrievalGen_Struct>& outData) {
@@ -3743,6 +3762,7 @@ bool ZoneDatabase::UpdateSkillDifficulty(uint16 skillid, float difficulty)
                                     "WHERE skillid = %u;", difficulty, skillid);
     auto results = QueryDatabase(query);
 	if (!results.Success())
+		return false;
 
 	return results.RowsAffected() > 0;
 }

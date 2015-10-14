@@ -802,7 +802,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	if (Route.size() > 0)
 	{
 		if (!SameDestination) {
-						// We are already pathing, destination changed, no LOS. Find the nearest node to our destination.
+			// We are already pathing, destination changed, no LOS. Find the nearest node to our destination.
 			int DestinationPathNode = zone->pathing->FindNearestPathNode(To);
 
 			// Destination unreachable via pathing, return direct route.
@@ -810,14 +810,16 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			{
 				Log.Out(Logs::Detail, Logs::Pathing, "  Unable to find path node for new destination. Running straight to target.");
 				Route.clear();
+				PathingLOSState = UnknownLOS;
 				return To;
 			}
 			// If the nearest path node to our new destination is the same as for the previous
 			// one, we will carry on on our path.
-			if (DestinationPathNode == Route.back() || DestinationPathNode == PathingLastNodeSearched)
+			if (DestinationPathNode == Route.back() || (PathingLastNodeSearched != -1 && DestinationPathNode == PathingLastNodeSearched))
 			{
 				Log.Out(Logs::Detail, Logs::Pathing, "  Same destination Node (%i). Continue with current path.", DestinationPathNode);
 				SameDestination = true;
+				PathingLOSState = UnknownLOS;
 				PathingDestination = To;
 			} else {
 				if (Route.size() > 5) {
@@ -832,6 +834,7 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 						SameDestination = true;
 						PathingLastNodeSearched = Route.back();
 						PathingDestination = To;
+						PathingLOSState = UnknownLOS;
 					}
 				}
 			}
@@ -840,8 +843,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		// If we are already pathing, and the destination is the same as before ...
 		if (SameDestination)
 		{
-			if (!PathingRouteUpdateTimerLong->Check() && PathingLOSState == Direct)
-				return To;
 			Log.Out(Logs::Detail, Logs::Pathing, "  Still pathing to the same destination.");
 
 			// Get the coordinates of the first path node we are going to.
@@ -1003,8 +1004,8 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		{
 			// We get here if we were already pathing, but our destination has now changed.
 			//
-			if(PathingLOSState == Direct)
-				PathingLOSState = UnknownLOS;
+			Route.clear();
+			PathingLOSState = UnknownLOS;
 			Log.Out(Logs::Detail, Logs::Pathing, "  Target has changed position.");
 			// Update our record of where we are going to.
 			PathingDestination = To;
@@ -1030,38 +1031,12 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 						PathingLOSState = Direct;
 						return To;
 					}
-					else
-					{
-						Log.Out(Logs::Detail, Logs::Pathing, "  Continuing on node path.");
-					}
 				}
-			}
-
-			// If the player is moving, we don't want to recalculate our route too frequently.
-			//
-			if (static_cast<int>(Route.size()) <= RuleI(Pathing, RouteUpdateFrequencyNodeCount))
-			{
-				if (!PathingRouteUpdateTimerShort->Check())
-				{
-					Log.Out(Logs::Detail, Logs::Pathing, "Short route update timer not yet expired.");
-					return zone->pathing->GetPathNodeCoordinates(Route.front());
-				}
-				Log.Out(Logs::Detail, Logs::Pathing, "Short route update timer expired.");
-			}
-			else
-			{
-				if (!PathingRouteUpdateTimerLong->Check())
-				{
-					Log.Out(Logs::Detail, Logs::Pathing, "Long route update timer not yet expired.");
-					return zone->pathing->GetPathNodeCoordinates(Route.front());
-				}
-				Log.Out(Logs::Detail, Logs::Pathing, "Long route update timer expired.");
 			}
 		}
 	}
 	Log.Out(Logs::Detail, Logs::Pathing, "  Our route list is empty.");
-	if (SameDestination && PathingLOSState == Direct)
-		return To;
+
 	PathingLOSState = UnknownLOS;
 
 	PathingDestination = To;

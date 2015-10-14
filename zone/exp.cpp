@@ -53,11 +53,12 @@ float Mob::GetBaseEXP()
 	totalmod += 0.20;
 	
 	float basexp = exp * zemmod * totalmod;
+	float logged_xp = basexp;
 
 	if(player_damage == 0)
 	{
 		basexp *= 0.25f;
-		Log.Out(Logs::General, Logs::EQMac, "%s was not damaged by a player. Full XP was: %0.2f Earned XP is: %0.2f", GetName(), exp, basexp);
+		Log.Out(Logs::General, Logs::EQMac, "%s was not damaged by a player. Full XP was: %0.2f Earned XP is: %0.2f", GetName(), logged_xp, basexp);
 	}
 	else if(dire_pet_damage > 0)
 	{
@@ -68,7 +69,7 @@ float Mob::GetBaseEXP()
 		else if(percentage >= 75)
 			basexp *= 0.50f;
 
-		Log.Out(Logs::General, Logs::EQMac, "%s was %0.2f percent damaged by a dire charmed pet (%d/%d). Full XP was: %0.2f Earned XP is: %0.2f", GetName(), percentage, dire_pet_damage, total_damage, exp, basexp);
+		Log.Out(Logs::General, Logs::EQMac, "%s was %0.2f percent damaged by a dire charmed pet (%d/%d). Full XP was: %0.2f Earned XP is: %0.2f", GetName(), percentage, dire_pet_damage, total_damage, logged_xp, basexp);
 	}
 
 	return basexp;

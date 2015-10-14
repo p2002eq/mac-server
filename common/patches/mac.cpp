@@ -162,9 +162,16 @@ namespace Mac {
 			eq->deity = emu->player.spawn.deity;
 			eq->race = emu->player.spawn.race;
 			if ((emu->player.spawn.race == 42 || emu->player.spawn.race == 120) && emu->player.spawn.gender == 2)
+			{
 				eq->size = emu->player.spawn.size + 4.0f;
+				eq->width = emu->player.spawn.size + 4.0f;
+			}
 			else
+			{
 				eq->size = emu->player.spawn.size;
+				eq->width = emu->player.spawn.size;
+			}
+			
 			eq->NPC = emu->player.spawn.NPC;
 			eq->invis = emu->player.spawn.invis;
 			eq->max_hp = emu->player.spawn.max_hp;
@@ -347,6 +354,10 @@ namespace Mac {
 		OUT_array(spellSlotRefresh, structs::MAX_PP_MEMSPELL);
 		eq->eqbackground = 0;
 		OUT(fatigue);
+		OUT(height);
+		OUT(width);
+		eq->length = 0;
+		eq->view_height = 0;
 		OUT_array(cursorbaginventory,pp_cursorbaginventory_size);
 		for(r = 0; r < pp_cursorbaginventory_size; r++)
 		{
@@ -1495,15 +1506,6 @@ namespace Mac {
 		FINISH_ENCODE();
 	}
 
-	ENCODE(OP_ManaChange)
-	{
-		ENCODE_LENGTH_EXACT(ManaChange_Struct);
-		SETUP_DIRECT_ENCODE(ManaChange_Struct, structs::ManaChange_Struct);
-		OUT(new_mana);
-		OUT(spell_id);
-		FINISH_ENCODE();
-	}
-
 	ENCODE(OP_DeleteSpawn)
 	{
 		SETUP_DIRECT_ENCODE(DeleteSpawn_Struct, structs::DeleteSpawn_Struct);
@@ -1926,9 +1928,9 @@ namespace Mac {
 		// Items on a merchant
   		else if(type == 1)
   		{ 
-  			mac_pop_item->Charges = 1;
+  			mac_pop_item->Charges = inst->GetCharges();
   			mac_pop_item->equipSlot = inst->GetMerchantSlot();
-			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate for us. 
+			mac_pop_item->Price = inst->GetPrice();  //This handles sellrate, faction, cha, and vendor greed for us. 
 			mac_pop_item->SellRate = 1;
 		}
 		// Item links
@@ -2129,7 +2131,7 @@ namespace Mac {
 		memcpy(eq->name, emu->name, 64);
 		eq->deity = emu->deity;
 		if ((emu->race == 42 || emu->race == 120) && emu->gender == 2)
-				eq->size = emu->size + 4.0f;
+			eq->size = emu->size + 4.0f;
 		else
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;

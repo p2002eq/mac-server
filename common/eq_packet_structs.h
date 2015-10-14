@@ -293,6 +293,7 @@ struct ServerZoneEntry_Struct
 	struct NewSpawn_Struct player;
 };
 
+//This should be treated as an internal struct
 struct NewZone_Struct {
 /*0000*/	char	char_name[64];			// Character Name
 /*0064*/	char	zone_short_name[32];	// Zone Short Name
@@ -334,6 +335,7 @@ struct NewZone_Struct {
 /*0692*/	uint8	unknown692[8];
 /*0700*/	float	fog_density;
 /*0704*/	uint32	SuspendBuffs;
+			uint8	expansion;
 /*0704*/
 };
 
@@ -379,10 +381,9 @@ struct DeleteSpell_Struct
 
 struct ManaChange_Struct
 {
-	uint32	new_mana; // New Mana AMount
-	uint32	stamina;
-	uint32	spell_id;
-	uint32	unknown12;
+	/*00*/	uint16 new_mana;	// Comment:  New Mana AMount
+	/*02*/	uint16 spell_id;	// Comment:  Last Spell Cast
+	/*04*/
 };
 
 struct SwapSpell_Struct
@@ -716,6 +717,8 @@ struct PlayerProfile_Struct
 			struct  OldItemProperties_Struct	bankinvitemproperties[8];
 			int16				bank_cont_inv[80];
 			struct  OldItemProperties_Struct	bankbagitemproperties[80];
+			float				height;
+			float				width;
 /*19568*/
 };
 
@@ -2262,6 +2265,7 @@ struct TempMerchantList {
 	uint32	item;
 	uint32	charges; //charges/quantity
 	uint32	origslot;
+	uint32  quantity; //This is used to determine how many charged items we have, since the charges clump together
 };
 
 

@@ -2365,33 +2365,32 @@ void command_iplookup(Client *c, const Seperator *sep){
 void command_size(Client *c, const Seperator *sep){
 	Mob *target = c->GetTarget();
 	if (!sep->IsNumber(1))
-		c->Message(CC_Default, "Usage: #size [0 - 255] (Decimal increments are allowed)");
-	else {
+	{
+		// ChangeSize just sends the AT_Size apperance packet, which doesn't support float.
+		// All attempts to workaround this using the illusion packet have failed. 
+		c->Message(CC_Default, "Usage: #size [0 - 255] This command does not support decimals.");
+	}
+	else 
+	{
 		float newsize = atof(sep->arg[1]);
 		if (newsize > 255)
+		{
 			c->Message(CC_Default, "Error: #size: Size can not be greater than 255.");
+			return;
+		}
 		else if (newsize < 0)
+		{
 			c->Message(CC_Default, "Error: #size: Size can not be less than 0.");
+			return;
+		}
 		else if (!target)
-			c->Message(CC_Default, "Error: this command requires a target");
-		else {
-			uint16 Race = target->GetRace();
-			uint8 Gender = target->GetGender();
-			uint8 Texture = 0xFF;
-			uint8 HelmTexture = 0xFF;
-			uint8 HairColor = target->GetHairColor();
-			uint8 BeardColor = target->GetBeardColor();
-			uint8 EyeColor1 = target->GetEyeColor1();
-			uint8 EyeColor2 = target->GetEyeColor2();
-			uint8 HairStyle = target->GetHairStyle();
-			uint8 LuclinFace = target->GetLuclinFace();
-			uint8 Beard = target->GetBeard();
-
-			//	target->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
-			//								EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF, newsize);
+		{
+			target = c;
+		}
+		else 
+		{
 			target->ChangeSize(newsize);
-
-			c->Message(CC_Default, "Size = %f", atof(sep->arg[1]));
+			c->Message(CC_Default, "%s is now size %0.1f", target->GetName(), atof(sep->arg[1]));
 		}
 	}
 }
@@ -4599,6 +4598,19 @@ void command_loc(Client *c, const Seperator *sep)
 		}
 
 		c->Message(CC_Default, "Bestz is: %1.2f  Calculatedz is: %1.2f Clientz is: %1.2f", newz, newloc.z, t->GetEQZ());
+	}
+
+	if(t->CanCastBindAffinity() && (zone->CanBind() || zone->IsCity() || zone->CanBindOthers()))
+	{
+		c->Message(CC_Default, "%s can bind themself here.", t->GetName());
+	}
+	else if(!t->CanCastBindAffinity() && (zone->IsCity() || zone->IsBindArea(t->GetX(), t->GetY())))
+	{
+		c->Message(CC_Default, "%s can be bound here.", t->GetName());
+	}
+	else
+	{
+		c->Message(CC_Default, "%s cannot bind here.", t->GetName());
 	}
 }
 

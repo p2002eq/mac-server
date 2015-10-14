@@ -184,7 +184,6 @@ public:
 	virtual Raid* GetRaid() { return entity_list.GetRaidByClient(this); }
 	virtual Group* GetGroup() { return entity_list.GetGroupByClient(this); }
 	virtual inline bool IsBerserk() { return berserk; }
-	virtual int32 GetMeleeMitDmg(Mob *attacker, int32 damage, int32 minhit, float mit_rating, float atk_rating);
 	virtual void SetAttackTimer();
 	float GetQuiverHaste();
 
@@ -463,6 +462,7 @@ public:
 	uint32 GetWeight() const { return(weight); }
 	inline void RecalcWeight() { weight = CalcCurrentWeight(); }
 	uint32 CalcCurrentWeight();
+	bool IsEncumbered() { return (weight > (GetSTR() * 10)); }
 	inline uint32 GetCopper() const { return m_pp.copper; }
 	inline uint32 GetSilver() const { return m_pp.silver; }
 	inline uint32 GetGold() const { return m_pp.gold; }

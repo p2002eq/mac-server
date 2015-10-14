@@ -886,6 +886,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					{
 						if(!zone->CanBind())
 						{
+							//Nobody can bind here.
 							Message_StringID(MT_SpellFailure, CANNOT_BIND);
 							break;
 						}
@@ -894,6 +895,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						{
 							if(caster != this)
 							{
+								//Only the caster can bind here
 								Message_StringID(MT_SpellFailure, CANNOT_BIND);
 								break;
 							}
@@ -1625,9 +1627,12 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					basesize = GetPlayerHeight(GetRace());
 				}
 
-				// Only allow 1 size changes from Base Size
+				// Allow only 1 growth change, or 2 shrinks for large races and 1 for everybody else.
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
 				float maxModAmount = basesize * modifyAmount;
+				if(basesize >= 7 && modifyAmount < 1)
+					maxModAmount *= modifyAmount;
+
 				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
 					(GetSize() >= basesize && GetSize() < maxModAmount))
 				{
@@ -3740,8 +3745,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					WipeHateList();
 					if(tempmob)
 					{
-						entity_list.ReplaceWithTarget(this, tempmob);
-						AddToHateList(tempmob, 1, 0);
+						int32 charmBreakHate = GetMaxHP() / 8;
+						if (charmBreakHate > 2400) charmBreakHate = 2400;
+						if (charmBreakHate < 50) charmBreakHate = 50;
+
+						AddToHateList(tempmob, charmBreakHate, 0);
 					}
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
 				}

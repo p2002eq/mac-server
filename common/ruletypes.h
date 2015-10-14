@@ -323,7 +323,6 @@ RULE_INT ( Combat, RogueCritThrowingChance, 25) //Rogue throwing crit bonus
 RULE_INT ( Combat, RogueDeadlyStrikeChance, 80) //Rogue chance throwing from behind crit becomes a deadly strike
 RULE_INT ( Combat, RogueDeadlyStrikeMod, 2) //Deadly strike modifier to crit damage
 RULE_INT ( Combat, ClientBaseCritChance, 0 ) //The base crit chance for all clients, this will stack with warrior's/zerker's crit chance.
-RULE_BOOL ( Combat, UseIntervalAC, true)
 RULE_INT ( Combat, PetAttackMagicLevel, 30)
 RULE_BOOL ( Combat, EnableFearPathing, true)
 RULE_INT ( Combat, FleeHPRatio, 25)	  //HP % when a NPC starts to flee.
@@ -336,17 +335,8 @@ RULE_REAL ( Combat, BaseProcChance, 0.035)
 RULE_REAL ( Combat, ProcDexDivideBy, 11000)
 RULE_BOOL ( Combat, AdjustSpecialProcPerMinute, true)  //Set PPM for special abilities like HeadShot (Live does this as of 4-14)
 RULE_REAL ( Combat, AvgSpecialProcsPerMinute, 2.0) //Unclear what best value is atm.
-RULE_REAL ( Combat, BaseHitChance, 69.0)
-RULE_REAL ( Combat, NPCBonusHitChance, 26.0)
-RULE_REAL ( Combat, HitFalloffMinor, 5.0) //hit will fall off up to 5% over the initial level range
-RULE_REAL ( Combat, HitFalloffModerate, 7.0) //hit will fall off up to 7% over the three levels after the initial level range
-RULE_REAL ( Combat, HitFalloffMajor, 50.0) //hit will fall off sharply if we're outside the minor and moderate range
-RULE_REAL ( Combat, HitBonusPerLevel, 1.2) //You gain this % of hit for every level you are above your target
 RULE_REAL ( Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
 RULE_REAL ( Combat, ArcheryHitPenalty, 0.25) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
-RULE_REAL ( Combat, AgiHitFactor, 0.01)
-RULE_REAL ( Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular melee/ranged 
-RULE_REAL ( Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT ( Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL ( Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
 RULE_REAL ( Combat, ArcheryBaseDamageBonus, 1) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
@@ -364,29 +354,6 @@ RULE_INT ( Combat, TigerClawBonus, 10) //% Modifier that this skill gets to str 
 RULE_INT ( Combat, RoundKickBonus, 5) //% Modifier that this skill gets to str and skill bonuses
 RULE_INT ( Combat, FrenzyBonus, 0) //% Modifier to damage
 RULE_BOOL ( Combat, ProcTargetOnly, true) //true = procs will only affect our target, false = procs will affect all of our targets
-RULE_REAL ( Combat, NPCACFactor, 2.25)
-RULE_INT ( Combat, ClothACSoftcap, 75)
-RULE_INT ( Combat, LeatherACSoftcap, 100)
-RULE_INT ( Combat, MonkACSoftcap, 120)
-RULE_INT ( Combat, ChainACSoftcap, 200)
-RULE_INT ( Combat, PlateACSoftcap, 300)
-RULE_REAL ( Combat, AAMitigationACFactor, 3.0)
-RULE_REAL ( Combat, WarriorACSoftcapReturn, 0.45)
-RULE_REAL ( Combat, KnightACSoftcapReturn, 0.33)
-RULE_REAL ( Combat, LowPlateChainACSoftcapReturn, 0.23)
-RULE_REAL ( Combat, LowChainLeatherACSoftcapReturn, 0.17)
-RULE_REAL ( Combat, CasterACSoftcapReturn, 0.06)
-RULE_REAL ( Combat, MiscACSoftcapReturn, 0.3)
-RULE_BOOL ( Combat, OldACSoftcapRules, false) // use old softcaps
-RULE_BOOL ( Combat, UseOldDamageIntervalRules, false) // use old damage formulas for everything
-RULE_REAL ( Combat, WarACSoftcapReturn, 0.3448) // new AC returns
-RULE_REAL ( Combat, ClrRngMnkBrdACSoftcapReturn, 0.3030)
-RULE_REAL ( Combat, PalShdACSoftcapReturn, 0.3226)
-RULE_REAL ( Combat, DruNecWizEncMagACSoftcapReturn, 0.2000)
-RULE_REAL ( Combat, RogShmBstBerACSoftcapReturn, 0.2500)
-RULE_REAL ( Combat, SoftcapFactor, 1.88)
-RULE_REAL ( Combat, ACthac0Factor, 0.55)
-RULE_REAL ( Combat, ACthac20Factor, 0.55)
 RULE_INT ( Combat, HitCapPre20, 40) // live has it capped at 40 for whatever dumb reason... this is mainly for custom servers
 RULE_INT ( Combat, HitCapPre10, 20) // live has it capped at 20, see above :p
 RULE_INT ( Combat, MinHastedDelay, 400) // how fast we can get with haste.
@@ -397,7 +364,6 @@ RULE_INT ( Combat, NPCFlurryChance, 20) // Chance for NPC to flurry.
 RULE_BOOL (Combat,TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
 RULE_REAL (Combat,TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
 RULE_BOOL (Combat,EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
-RULE_INT ( Combat, MonkACBonusWeight, 15)
 RULE_INT ( Combat, ClientStunLevel, 55) //This is the level where client kicks and bashes can stun the target
 RULE_INT ( Combat, QuiverWRHasteDiv, 3) //Weight Reduction is divided by this to get haste contribution for quivers
 RULE_BOOL ( Combat, UseArcheryBonusRoll, false) //Make the 51+ archery bonus require an actual roll
@@ -406,7 +372,6 @@ RULE_INT ( Combat, BerserkerFrenzyStart, 35)
 RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
 RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
 RULE_REAL ( Combat, PushBackAmount, 1.5)
-RULE_BOOL ( Combat, NewACCurves, true)
 RULE_INT ( Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
 RULE_INT ( Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will take to clear assist aggro cap space
 RULE_CATEGORY_END()

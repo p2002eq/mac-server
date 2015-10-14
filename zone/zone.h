@@ -168,10 +168,14 @@ public:
 	void	LoadNewMerchantData(uint32 merchantid);
 	void	LoadTempMerchantData();
 	uint32	GetTempMerchantQuantity(uint32 NPCID, uint32 Slot);
+	int8	GetTempMerchantQtyNoSlot(uint32 NPCID, int16 itemid);
 	int		SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold=false);
 	void	SaveMerchantItem(uint32 merchantid, int16 item, int8 charges, int8 slot);
 	void	ResetMerchantQuantity(uint32 merchantid);
 	void	ClearMerchantLists();
+
+	uint8	GetZoneExpansion() { return newzone_data.expansion; }
+
 	void	LoadLevelEXPMods();
 	void	LoadSkillDifficulty();
 

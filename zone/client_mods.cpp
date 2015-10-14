@@ -1040,7 +1040,7 @@ uint32 Client::CalcCurrentWeight() {
 	ItemInst* ins;
 	uint32 Total = 0;
 	int x;
-	for (x = EmuConstants::EQUIPMENT_BEGIN; x <= EmuConstants::GENERAL_END; x++) // include cursor or not?
+	for (x = MainCursor; x <= EmuConstants::GENERAL_END; x++)
 	{
 		TempItem = 0;
 		ins = GetInv().GetItem(x);
@@ -1048,46 +1048,53 @@ uint32 Client::CalcCurrentWeight() {
 			TempItem = ins->GetItem();
 		if (TempItem)
 			Total += TempItem->Weight;
-	}
-	for (x = EmuConstants::GENERAL_BAGS_BEGIN; x <= EmuConstants::GENERAL_BAGS_END; x++) // include cursor bags or not?
-	{
-		int TmpWeight = 0;
-		TempItem = 0;
-		ins = GetInv().GetItem(x);
-		if (ins)
-			TempItem = ins->GetItem();
-		if (TempItem)
-			TmpWeight = TempItem->Weight;
-		if (TmpWeight > 0)
+
+		ItemInst* baginst = ins;
+		ItemInst* inst;
+		const Item_Struct* Item = 0;
+		if (baginst && baginst->GetItem() && baginst->IsType(ItemClassContainer))
 		{
-			// this code indicates that weight redux bags can only be in the first general inventory slot to be effective...
-			// is this correct? or can we scan for the highest weight redux and use that? (need client verifications)
-			int bagslot = MainGeneral1;
-			int reduction = 0;
-			for (int m = EmuConstants::GENERAL_BAGS_BEGIN + 10; m <= EmuConstants::GENERAL_BAGS_END; m += 10) // include cursor bags or not?
+			uint32 bag_weight = 0;
+			int i;
+			for (i = 0; i < baginst->GetItem()->BagSlots; i++) 
 			{
-				if (x >= m)
-					bagslot += 1;
+				inst = GetInv().GetItem(m_inv.CalcSlotId(x, i));
+				if (inst)
+					Item = inst->GetItem();
+				if (Item)
+				{
+					bag_weight += Item->Weight;
+				}
 			}
-			ItemInst* baginst = GetInv().GetItem(bagslot);
-			if (baginst && baginst->GetItem() && baginst->IsType(ItemClassContainer))
-				reduction = baginst->GetItem()->BagWR;
-			if (reduction > 0)
-				TmpWeight -= TmpWeight*reduction/100;
-			Total += TmpWeight;
+
+			int reduction = baginst->GetItem()->BagWR;
+			if (reduction > 0 && bag_weight > 0)
+				bag_weight -= bag_weight*reduction/100;
+
+			Total += bag_weight;
 		}
 	}
 
-	//TODO: coin weight reduction (from purses, etc), since client already calculates it
-	/*From the Wiki http://www.eqemulator.net/wiki/wikka.php?wakka=EQEmuDBSchemaitems under bagwr (thanks Trevius):
-	Interestingly, you can also have bags that reduce coin weight. However, in order to set bags to reduce coin weight, you MUST set the Item ID somewhere between 17201 and 17230. This is hard coded into the client.
-	The client is set to have certain coin weight reduction on a per Item ID basis within this range. The best way to create an new item to reduce coin weight is to examine existing bags in this range.
-	Search for the words "coin purse" with the #finditem command in game and the Bag WR setting on those bags is the amount they will reduce coin weight. It is easiest to overwrite one of those bags if you wish to create one with the
-	same weight reduction amount for coins. You can use other Item IDs in this range for setting coin weight reduction, but by using an existing item, at least you will know the amount the client will reduce it by before you create it.
-	This is the ONLY instance I have seen where the client is hard coded to particular Item IDs to set a certain property for an item. It is very odd.
-	*/
+	uint32 coin_weight = (m_pp.platinum + m_pp.gold + m_pp.silver + m_pp.copper) / 4;
 
-	Total += (m_pp.platinum + m_pp.gold + m_pp.silver + m_pp.copper) / 4;
+	// Coin purses only work when in a main inventory slot
+	const Item_Struct* CoinItem = 0;
+	ItemInst* cins;
+	uint32 coin_reduction = 0;
+	for (x = EmuConstants::GENERAL_BEGIN; x <= EmuConstants::GENERAL_END; x++)
+	{
+		CoinItem = 0;
+		cins = GetInv().GetItem(x);
+		if (cins && cins->GetID() >= 17201 && cins->GetID() <= 17230)
+		{
+			CoinItem = cins->GetItem();
+			if(CoinItem)
+				coin_reduction = CoinItem->BagWR > coin_reduction ? CoinItem->BagWR : coin_reduction;
+		}
+	}
+
+	coin_weight -= coin_weight*coin_reduction/100;
+	Total += coin_weight;
 
 	float Packrat = (float)spellbonuses.Packrat + (float)aabonuses.Packrat + (float)itembonuses.Packrat;
 	if (Packrat > 0)
@@ -1145,7 +1152,7 @@ int32 Client::CalcAGI() {
 	int32 str = GetSTR();
 
 	//Encumbered penalty
-	if(weight > (str * 10)) {
+	if(IsEncumbered()) {
 		//AGI is halved when we double our weight, zeroed (defaults to 1) when we triple it. this includes AGI from AAs
 		float total_agi = float(val + mod);
 		float str_float = float(str);

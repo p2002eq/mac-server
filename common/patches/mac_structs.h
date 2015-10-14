@@ -210,13 +210,6 @@ struct Action_Struct
 	/*34*/	uint16  unknown34;
 };
 
-struct ManaChange_Struct
-{
-	/*00*/	uint16 new_mana;	// Comment:  New Mana AMount
-	/*02*/	uint16 spell_id;	// Comment:  Last Spell Cast
-	/*04*/
-};
-
 struct BeginCast_Struct
 {
 	/*000*/	uint16	caster_id;		// Comment: Unknown -> needs confirming -> ID of Spell Caster? 

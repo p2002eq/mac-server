@@ -996,9 +996,9 @@ bool Database::SetVariable(const char* varname_in, const char* varvalue_in) {
 }
 
 // Get zone starting points from DB
-bool Database::GetSafePoints(const char* short_name, uint32 version, float* safe_x, float* safe_y, float* safe_z, int16* minstatus, uint8* minlevel, char *flag_needed) {
+bool Database::GetSafePoints(const char* short_name, uint32 version, float* safe_x, float* safe_y, float* safe_z, int16* minstatus, uint8* minlevel, char *flag_needed, uint8* expansion) {
 	
-	std::string query = StringFormat("SELECT safe_x, safe_y, safe_z, min_status, min_level, flag_needed FROM zone "
+	std::string query = StringFormat("SELECT safe_x, safe_y, safe_z, min_status, min_level, flag_needed, expansion FROM zone "
 		" WHERE short_name='%s' AND (version=%i OR version=0) ORDER BY version DESC", short_name, version);
 	auto results = QueryDatabase(query);
 
@@ -1022,6 +1022,27 @@ bool Database::GetSafePoints(const char* short_name, uint32 version, float* safe
 		*minlevel = atoi(row[4]);
 	if (flag_needed != nullptr)
 		strcpy(flag_needed, row[5]);
+	if(expansion != nullptr)
+	{
+		uint8 zone_expansion = atoi(row[6]);
+		if(zone_expansion == 1)
+			*expansion = ClassicEQ;
+
+		else if(zone_expansion == 2)
+			*expansion = KunarkEQ;
+
+		else if(zone_expansion == 3)
+			*expansion = VeliousEQ;
+
+		else if(zone_expansion == 4)
+			*expansion = LuclinEQ;
+
+		else if(zone_expansion == 5)
+			*expansion = PlanesEQ;
+
+		else
+			*expansion = 0;
+	}
 
 	return true;
 }

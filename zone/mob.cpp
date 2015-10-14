@@ -250,6 +250,7 @@ Mob::Mob(const char* in_name,
 	invulnerable = false;
 	IsFullHP	= (cur_hp == max_hp);
 	qglobal=0;
+	spawnpacket_sent = false;
 
 	InitializeBuffSlots();
 
@@ -1340,6 +1341,17 @@ void Mob::SendPosition()
 	safe_delete(app);
 }
 
+// this one just warps the mob to the current location
+void Mob::SendRealPosition()
+{
+	EQApplicationPacket* app = new EQApplicationPacket(OP_MobUpdate, sizeof(SpawnPositionUpdates_Struct));
+	SpawnPositionUpdates_Struct* spu = (SpawnPositionUpdates_Struct*)app->pBuffer;
+	spu->num_updates = 1; // hack - only one spawn position per update
+	MakeSpawnUpdateNoDelta(&spu->spawn_update);
+	entity_list.QueueClients(this, app, true);
+	safe_delete(app);
+}
+
 // this one is for mobs on the move, and clients.
 void Mob::SendPosUpdate(uint8 iSendToSelf) 
 {
@@ -1480,8 +1492,9 @@ void Mob::ShowStats(Client* client)
 		client->Message(CC_Default, "  Race: %i  BaseRace: %i Gender: %i  BaseGender: %i BodyType: %i", GetRace(), GetBaseRace(), GetGender(), GetBaseGender(), GetBodyType());
 		client->Message(CC_Default, "  Face: % i Beard: %i  BeardColor: %i  Hair: %i  HairColor: %i Light: %i ActiveLight: %i ", GetLuclinFace(), GetBeard(), GetBeardColor(), GetHairStyle(), GetHairColor(), GetInnateLightType(), GetActiveLightType());
 		client->Message(CC_Default, "  Texture: %i  HelmTexture: %i  Chest: %i Arms: %i Bracer: %i Hands: %i Legs: %i Feet: %i ", GetTexture(), GetHelmTexture(), GetChestTexture(), GetArmTexture(), GetBracerTexture(), GetHandTexture(), GetLegTexture(), GetFeetTexture());
+		client->Message(CC_Default, "  IsPet: %i PetID: %i  OwnerID: %i IsFamiliar: %i IsCharmed: %i IsDireCharm: %i IsZomm: %i ", IsPet(), GetPetID(), GetOwnerID(), IsFamiliar(), IsCharmed(), IsDireCharmed(), iszomm);
 		if (client->Admin() >= 100)
-			client->Message(CC_Default, "  EntityID: %i IsPet: %i PetID: %i  OwnerID: %i IsZomm: %i AIControlled: %i Targetted: %i", GetID(), IsPet(), GetPetID(), GetOwnerID(), iszomm, IsAIControlled(), targeted);
+			client->Message(CC_Default, "  EntityID: %i AIControlled: %i Targetted: %i", GetID(), IsAIControlled(), targeted);
 
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
@@ -1581,7 +1594,7 @@ void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 	if (m_Position.w != 0.01)
 		this->m_Position.w = heading;
 	if(IsNPC())
-		CastToNPC()->SaveGuardSpot(true);
+		CastToNPC()->SaveGuardSpot();
 	if(SendUpdate)
 		SendPosition();
 }
@@ -1817,15 +1830,14 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	if (!bNoRestriction)
 	{
 		if (this->IsClient() || this->petid != 0)
+		{
 			if (in_size < 3.0)
 				in_size = 3.0;
 
-
-			if (this->IsClient() || this->petid != 0)
-				if (in_size > 15.0)
-					in_size = 15.0;
+			if (in_size > 15.0)
+				in_size = 15.0;
+		}
 	}
-
 
 	if (in_size < 1.0)
 		in_size = 1.0;
@@ -5359,6 +5371,7 @@ float Mob::GetPlayerHeight(uint16 race)
 	switch (race)
 	{
 		case OGRE:
+			return 9;
 		case TROLL:
 			return 8;
 		case VAHSHIR: case BARBARIAN:
@@ -5377,5 +5390,24 @@ float Mob::GetPlayerHeight(uint16 race)
 			return 3;
 		default:
 			return 6;
+	}
+}
+
+bool Mob::CanCastBindAffinity()
+{
+	uint8 class_ = GetClass();
+	uint8 level = GetLevel();
+
+	if(level >= 12 && (class_ == NECROMANCER || class_ == WIZARD || class_ == MAGICIAN || class_ == ENCHANTER))
+	{
+		return true;
+	}
+	else if(level >= 14 && (class_ == CLERIC || class_ == SHAMAN || class_ == DRUID))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
