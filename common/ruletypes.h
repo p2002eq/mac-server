@@ -106,7 +106,8 @@ RULE_INT ( Skills, MaxTradeskillSearchSkillDiff, 50 )
 RULE_INT ( Skills, MaxTrainSpecializations, 50 )	// Max level a GM trainer will train casting specializations
 RULE_INT ( Skills, LangSkillUpModifier, 70) //skill ups for skills with value under 100
 RULE_REAL ( Skills, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
-RULE_REAL ( Skills, SkillUpModifier, 0.5)
+RULE_REAL ( Skills, SkillUpModifier, 0.62)
+RULE_REAL ( Skills, HighStatSkillUpModifier, 0.5)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Pets )
