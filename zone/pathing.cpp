@@ -798,6 +798,20 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 		PathingLastPosition = From;
 	}
+	// We are on LoS -> If we still have it, continue.
+	if(PathingLOSState == Direct) {
+		if(!SameDestination)
+			WaypointChanged = true;
+		if (!PathingLOSCheckTimer->Check() || (zone->pathing->NoHazards(From, To) && !zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr))) {
+			return To;
+		} else {
+			Route.clear();
+			PathingTraversedNodes = 0;
+			PathingLOSState = UnknownLOS;
+		}
+	} else {
+		PathingLOSState = UnknownLOS;
+	}
 
 	if (Route.size() > 0)
 	{
@@ -1004,8 +1018,8 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 		{
 			// We get here if we were already pathing, but our destination has now changed.
 			//
-			Route.clear();
-			PathingLOSState = UnknownLOS;
+			if(PathingLOSState == Direct)
+				PathingLOSState = UnknownLOS;
 			Log.Out(Logs::Detail, Logs::Pathing, "  Target has changed position.");
 			// Update our record of where we are going to.
 			PathingDestination = To;
@@ -1027,7 +1041,6 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 					if ((PathingLOSState == HaveLOS) && zone->pathing->NoHazards(From, To))
 					{
 						Log.Out(Logs::Detail, Logs::Pathing, "  No hazards. Running directly to target.");
-						Route.clear();
 						PathingLOSState = Direct;
 						return To;
 					}
@@ -1035,7 +1048,13 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 			}
 		}
 	}
+
 	Log.Out(Logs::Detail, Logs::Pathing, "  Our route list is empty.");
+
+	if (SameDestination && PathingLOSState == Direct)
+		return To;
+
+	Route.clear();
 
 	PathingLOSState = UnknownLOS;
 
@@ -1146,6 +1165,15 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 	}
 
 	NodeLoc = zone->pathing->GetPathNodeCoordinates(Route.front());
+
+	if (SameDestination && (Route.front() == PathingLastNodeVisited))
+	{
+		Log.Out(Logs::Detail, Logs::Pathing, "  Probable loop detected. Same destination and Route.front() == PathingLastNodeVisited.");
+
+		Route.clear();
+
+		return To;
+	}
 
 	Log.Out(Logs::Detail, Logs::Pathing, "  New route determined, heading for node %i", Route.front());
 
