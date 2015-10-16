@@ -794,9 +794,12 @@ void Client::AI_Process()
 				{
 					if(GetTarget())
 						SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+					animation = 0;
+					SetCurrentSpeed(0.0f);
 					SetRunAnimSpeed(0);
-					SendPosition();
 					SetMoving(false);
+					SendPosition();
+					SendPosUpdate(2);
 					moved=false;
 				}
 				//continue on to attack code, ensuring that we execute the engaged code
@@ -804,10 +807,10 @@ void Client::AI_Process()
 			} else {
 				if(AImovement_timer->Check()) {
 					float f_speed = GetFearSpeed();
-					SetCurrentSpeed(f_speed);
-					if (f_speed > 0.0f)
+					if (f_speed >= 0.1f)
 					{
 						animation = static_cast<uint16>(f_speed * 10.0f);
+						SetCurrentSpeed(f_speed);
 						// Check if we have reached the last fear point
 						if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 							// Calculate a new point to run to
@@ -827,13 +830,28 @@ void Client::AI_Process()
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, f_speed);
 						}
+					} else {
+						animation = 0;
+						SetCurrentSpeed(0.0f);
+						if(IsMoving())
+						{
+							if(GetTarget())
+								SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));	
+							animation = 0;
+							SetCurrentSpeed(0.0f);
+							SetRunAnimSpeed(0);
+							SetMoving(false);
+							SendPosition();
+							SendPosUpdate(2);
+							moved=false;
+						}
 					}
 				}
 				return;
 			}
 		}
 	}
-
+	Mob *cur_tar = GetTarget();
 	if (engaged)
 	{
 		if (camp_timer.Enabled())
@@ -876,14 +894,27 @@ void Client::AI_Process()
 			}
 
 			if (AImovement_timer->Check()) {
+				animation = 0;
+				SetCurrentSpeed(0.0f);
 				SetRunAnimSpeed(0);
 			}
 			if(IsMoving()) {
+				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				animation = 0;
+				SetCurrentSpeed(0.0f);
+				SetRunAnimSpeed(0);
 				SetMoving(false);
+				SendPosition();
+				SendPosUpdate(2);
 				moved=false;
+				tar_ndx = 20;
+			} else if (cur_tar && cur_tar != GetTarget()) {
+				animation = 0;
+				SetRunAnimSpeed(0);
+				SetMoving(false);
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
 				SendPosition();
-				tar_ndx = 20;
+				SendPosUpdate(2);
 			}
 
 			if(GetTarget() && !IsStunned() && !IsMezzed() && !GetFeigned()) {
@@ -982,11 +1013,11 @@ void Client::AI_Process()
 			if(!IsRooted())
 			{
 				if(AImovement_timer->Check()) {
-					float r_speed = GetRunspeed();
-					animation = static_cast<uint16>(r_speed * 10.0f);
-					SetCurrentSpeed(r_speed);
-					if (r_speed > 0)
+					float r_speed = GetRunspeed();				
+					if (r_speed >= 0.1f)
 					{
+						animation = static_cast<uint16>(r_speed * 10.0f);
+						SetCurrentSpeed(r_speed);
 						if(!RuleB(Pathing, Aggro) || !zone->pathing)
 							CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), r_speed);
 						else
@@ -1000,16 +1031,42 @@ void Client::AI_Process()
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, r_speed);
 						}
+					} else {
+						animation = 0;
+						SetRunAnimSpeed(0);
+						SetCurrentSpeed(0.0f);
+						if(IsMoving()) {
+							SetMoving(false);
+							moved=false;
+							SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+							SendPosition();
+							SendPosUpdate(2);
+							tar_ndx = 20;
+						} else if (cur_tar && cur_tar != GetTarget()) {
+							SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+							SendPosition();
+							SendPosUpdate(2);
+						}
 					}
 				}
 			}
 			else if(IsMoving())
 			{
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				animation = 0;
 				SetRunAnimSpeed(0);
-				SendPosition();
+				SetCurrentSpeed(0.0f);
 				SetMoving(false);
+				SendPosition();
+				SendPosUpdate(2);
 				moved=false;
+			} else if (cur_tar && cur_tar != GetTarget()) {
+				animation = 0;
+				SetRunAnimSpeed(0);
+				SetCurrentSpeed(0.0f);
+				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				SendPosition();
+				SendPosUpdate(2);
 			}
 		}
 		AI_SpellCast();
@@ -1046,10 +1103,21 @@ void Client::AI_Process()
 			{
 				float speed = dist >= 225 ? GetRunspeed() : GetWalkspeed();
 				SetCurrentSpeed(speed);
-				if (speed > 0.0f)
+				if (speed >= 0.1f)
 				{
 					animation = static_cast<uint16>(10.0f * speed);
 					CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
+				} else {
+					animation = 0;
+					SetRunAnimSpeed(0);
+					SetCurrentSpeed(0.0f);
+					if(IsMoving()) {
+						SetMoving(false);
+						moved=false;
+						SendPosition();
+						SendPosUpdate(2);
+						tar_ndx = 20;
+					}
 				}
 			}
 			else
@@ -1057,10 +1125,12 @@ void Client::AI_Process()
 				SetHeading(owner->GetHeading());
 				if(moved)
 				{
+					animation = 0;
 					moved=false;
+					SetRunAnimSpeed(0);
 					SetMoving(false);
 					SendPosition();
-					SetRunAnimSpeed(0);
+					SendPosUpdate(2);
 				}
 			}
 		}
@@ -1715,7 +1785,6 @@ void Mob::AI_Process() {
 						CastToNPC()->AI_DoMovement();
 					}
 				}
-
 			}
 		} // else if (AImovement_timer->Check())
 	}
