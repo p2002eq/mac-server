@@ -1600,6 +1600,10 @@ void Mob::AI_Process() {
 						SetMoving(false);
 						moved=false;
 					}
+					else if (!IsFacingTarget())
+					{
+						FaceTarget(target);
+					}
 				}
 			}
 		}
