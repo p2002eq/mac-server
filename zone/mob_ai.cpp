@@ -179,9 +179,12 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 
-					case SpellType_Escape: {
-						if (GetHPRatio() <= 5 )
+					case SpellType_Escape:
+					{
+						if (!roamer && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
+							&& DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) > 40000)
 						{
+							entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
@@ -1214,8 +1217,6 @@ void Mob::AI_Process() {
 		CastToNPC()->CheckSignal();
 	}
 
-	Mob *oldTarget = target;
-
 	if (engaged)
 	{
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1251,10 +1252,6 @@ void Mob::AI_Process() {
 		{
 			RemoveFromHateList(this);
 			return;
-		}
-		if (oldTarget != target)
-		{
-			FaceTarget(target);
 		}
 
 		if(DivineAura())
@@ -1298,6 +1295,10 @@ void Mob::AI_Process() {
 				SetHeading(CalculateHeadingToTarget(target->GetX(), target->GetY()));
 				SendPosition();
 				tar_ndx =0;
+			}
+			else if (!IsFacingTarget())
+			{
+				FaceTarget(target);
 			}
 
 			//casting checked above...
@@ -1528,9 +1529,6 @@ void Mob::AI_Process() {
 						SendPosition();
 						SetMoving(false);
 						moved=false;
-					}
-					else if(IsRooted()){
-						FaceTarget(target);
 					}
 				}
 			}

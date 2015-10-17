@@ -373,13 +373,13 @@ public:
 	inline virtual int32 GetAC() const { return AC; }
 	inline virtual int32 GetATK() const { return ATK + itembonuses.ATK + spellbonuses.ATK + ((GetSTR() + GetSkill(SkillOffense)) * 9 / 10); }
 	inline virtual int32 GetATKBonus() const { return itembonuses.ATK + spellbonuses.ATK; }
-	virtual int32 GetOffense(int hand = MainPrimary);
-	inline int32 GetOffense(SkillUseTypes weaponSkill);
-	virtual int32 GetToHit(int hand = MainPrimary);
-	inline int32 GetToHit(SkillUseTypes weaponSkill);
+	virtual int GetOffense(int hand = MainPrimary);
+	inline int GetOffense(SkillUseTypes weaponSkill);
+	virtual int GetToHit(int hand = MainPrimary);
+	inline int GetToHit(SkillUseTypes weaponSkill);
 	uint32 RollDamageMultiplier(uint32 offense);
-	virtual int32 GetMitigation();
-	virtual int32 GetAvoidance();
+	virtual int GetMitigation();
+	virtual int GetAvoidance();
 	int32 GetEffectiveWornAC();
 	inline virtual int GetHaste() const { return Haste; }
 	int GetRawACNoShield(int &shield_ac, int spell_mod = 1) const;

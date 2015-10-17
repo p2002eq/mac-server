@@ -160,7 +160,7 @@ public:
 	virtual bool TryFinishingBlow(Mob *defender, SkillUseTypes skillinuse);
 	uint32 TryAssassinate(Mob* defender, SkillUseTypes skillInUse, uint16 ReuseTime);
 	virtual void DoRiposte(Mob* defender);
-	static int8 RollD20(int32 offense, int32 mitigation);
+	static int RollD20(int32 offense, int32 mitigation);
 	bool CombatRange(Mob* other);
 	virtual inline bool IsBerserk() { return false; } // only clients
 	void RogueEvade(Mob *other);
@@ -198,7 +198,6 @@ public:
 	void ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* newbon, uint16 casterID = 0,
 		bool item_bonus = false, int16 instrumentmod = 10, uint32 ticsremaining = 0, int buffslot = -1,
 		bool IsAISpellEffect = false, uint16 effect_id = 0, int32 se_base = 0, int32 se_limit = 0, int32 se_max = 0);
-	void NegateSpellsBonuses(uint16 spell_id);
 	virtual float GetActSpellRange(uint16 spell_id, float range, bool IsBard = false) { return range;}
 	virtual int32 GetActSpellDamage(uint16 spell_id, int32 value, Mob* target = nullptr) { return value; }
 	virtual int32 GetActSpellHealing(uint16 spell_id, int32 value, Mob* target = nullptr) { return value; }
@@ -399,6 +398,7 @@ public:
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
 	inline const float GetHeading() const { return m_Position.w; }
+	inline float GetHeadingRadians();
 	inline const float GetEQX() const { return m_EQPosition.x; }
 	inline const float GetEQY() const { return m_EQPosition.y; }
 	inline const float GetEQZ() const { return m_EQPosition.z; }
@@ -456,6 +456,7 @@ public:
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; }
 	void SetAnimation(uint8 anim) { animation = anim; } // For Eye of Zomm. It's a NPC, but uses PC position updates.
+	bool IsFacingTarget();
 	float adjustedz; // Fixes NPCs z coord.
 
 	//AI
@@ -617,10 +618,10 @@ public:
 	void CastOnCure(uint32 spell_id);
 	void CastOnNumHitFade(uint32 spell_id);
 	void SlowMitigation(Mob* caster);
-	virtual int32 GetOffense(int hand = MainPrimary);
-	virtual int32 GetToHit(int hand = MainPrimary);
-	virtual int32 GetMitigation();
-	virtual int32 GetAvoidance();
+	virtual int GetOffense(int hand = MainPrimary);
+	virtual int GetToHit(int hand = MainPrimary);
+	virtual int GetMitigation();
+	virtual int GetAvoidance();
 	int16 GetCritDmgMob(uint16 skill);
 	int16 GetMeleeDamageMod_SE(uint16 skill);
 	int16 GetMeleeMinDamageMod_SE(uint16 skill);

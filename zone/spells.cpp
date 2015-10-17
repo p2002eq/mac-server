@@ -2084,14 +2084,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				casterPos2d.y = GetY();
 				float distance2d = Distance(casterPos2d, targetPos2d);
 
-				float headingRadians = GetHeading();
-				headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
-				if (headingRadians < 270)
-					headingRadians += 90;
-				else
-					headingRadians -= 270;
-
-				headingRadians = headingRadians * 3.1415f / 180.0f;
+				float headingRadians = GetHeadingRadians();
 
 				// direction vector of caster with magnitude of caster to target distance
 				casterHeadingV.x = cosf(headingRadians) * distance2d;

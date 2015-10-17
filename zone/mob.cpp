@@ -1911,14 +1911,8 @@ float Mob::MobAngle(Mob *other, float ourx, float oury) const {
 	float angle, lengthb, vectorx, vectory, dotp;
 	float mobx = -(other->GetX());	// mob xloc (inverse because eq)
 	float moby = other->GetY();		// mob yloc
-	float heading = other->GetHeading();	// mob heading
-	heading = (heading * 360.0f) / 256.0f;	// convert to degrees
-	if (heading < 270)
-		heading += 90;
-	else
-		heading -= 270;
+	float heading = other->GetHeadingRadians();	// mob heading
 
-	heading = heading * 3.1415f / 180.0f;	// convert to radians
 	vectorx = mobx + (10.0f * cosf(heading));	// create a vector based on heading
 	vectory = moby + (10.0f * sinf(heading));	// of mob length 10
 
@@ -5391,4 +5385,39 @@ float Mob::GetPlayerHeight(uint16 race)
 		default:
 			return 6;
 	}
+}
+
+float Mob::GetHeadingRadians()
+{
+	float headingRadians = GetHeading();
+	headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
+	if (headingRadians < 270)
+		headingRadians += 90;
+	else
+		headingRadians -= 270;
+	
+	return headingRadians * 3.141592f / 180.0f;
+}
+
+bool Mob::IsFacingTarget()
+{
+	if (!target)
+		return false;
+
+	float heading = GetHeadingRadians();
+	float headingUnitVx = cosf(heading);
+	float headingUnitVy = sinf(heading);
+
+	float toTargetVx = -GetTarget()->GetPosition().x - -m_Position.x;
+	float toTargetVy = GetTarget()->GetPosition().y - m_Position.y;
+
+	float distance = sqrtf(toTargetVx * toTargetVx + toTargetVy * toTargetVy);
+
+	float dotp = headingUnitVx * (toTargetVx / distance) +
+		headingUnitVy * (toTargetVy / distance);
+
+	if (dotp > 0.95f)
+		return true;
+
+	return false;
 }

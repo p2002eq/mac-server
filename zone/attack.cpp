@@ -175,9 +175,9 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 		return true;
 	}
 
-	int32 toHit = attacker->GetToHit(skillinuse);
-	int32 avoidance = defender->GetAvoidance();
-	int32 percentMod = 0;
+	int toHit = attacker->GetToHit(skillinuse);
+	int avoidance = defender->GetAvoidance();
+	int percentMod = 0;
 	
 	Log.Out(Logs::Detail, Logs::Attack, "AvoidanceCheck: %s attacked by %s;  Avoidance: %i  To-Hit: %i", defender->GetName(), attacker->GetName(), avoidance, toHit);
 
@@ -201,7 +201,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 	if (percentMod != 0)
 	{
 		if (skillinuse == SkillArchery && percentMod > 0)
-			percentMod -= static_cast<int32>(static_cast<float>(percentMod) * RuleR(Combat, ArcheryHitPenalty));
+			percentMod -= static_cast<int>(static_cast<float>(percentMod) * RuleR(Combat, ArcheryHitPenalty));
 
 		Log.Out(Logs::Detail, Logs::Attack, "Modified chance to hit: %i%%", percentMod);
 
@@ -432,7 +432,7 @@ bool Mob::AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte, bool isRange
 	of the curve are added together.  This is not a perfect representation of Sony's function, but fairly close.
 
 	Returns a value from 1 to 20, inclusive.*/
-int8 Mob::RollD20(int32 offense, int32 mitigation)
+int Mob::RollD20(int32 offense, int32 mitigation)
 {
 	double diff = static_cast<double>(offense) - static_cast<double>(mitigation);
 	double mean = 0;
@@ -907,12 +907,12 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			if(TryFinishingBlow(other, skillinuse))
 				return (true);
 
-			int32 offense = GetOffense(skillinuse);
-			int32 mitigation = other->GetMitigation();
+			int offense = GetOffense(skillinuse);
+			int mitigation = other->GetMitigation();
 
 			if (opts)
 			{
-				mitigation = static_cast<int32>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
+				mitigation = static_cast<int>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
 				mitigation -= opts->armor_pen_flat;
 				if (mitigation < 1)
 				{
@@ -921,7 +921,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			}
 
 			// mitigation roll
-			uint16 roll = RollD20(offense, mitigation);
+			int roll = RollD20(offense, mitigation);
 
 			if (other->IsClient())
 			{
@@ -4571,12 +4571,20 @@ uint32 NPC::GetAttackTimer()
 
 // crude approximation until I can come up with something more accurate
 // finding out how much str or weapon skill an NPC has is sort of impossible after all
-int32 Mob::GetOffense(int hand)
+int Mob::GetOffense(int hand)
 {
-	return GetLevel() * 65 / 10 - 1 + ATK;
+	int offense = GetLevel() * 65 / 10 - 1 + ATK;
+	int bonus = 0;
+
+	if (spellbonuses.ATK < 0 && -spellbonuses.ATK > (offense / 2))
+	{
+		return offense / 2;
+	}
+
+	return offense + spellbonuses.ATK;
 }
 
-int32 Client::GetOffense(SkillUseTypes weaponSkill)
+int Client::GetOffense(SkillUseTypes weaponSkill)
 {
 	// this is the precise formula Sony/DBG uses, at least for clients
 	// reminder: implement atk cap and primal weapon proc to item atk instead of spell atk logic
@@ -4590,16 +4598,16 @@ int32 Client::GetOffense(SkillUseTypes weaponSkill)
 	{
 		statBonus = GetSTR();
 	}
-	int32 offense = (GetSkill(weaponSkill) + ATK + (statBonus > 75 ? ((2 * statBonus - 250) / 3) : 0));
+	int offense = GetSkill(weaponSkill) + spellbonuses.ATK + (statBonus > 75 ? ((2 * statBonus - 150) / 3) : 0);
 	if (offense < 1)
 	{
 		offense = 1;
 	}
-
+	
 	return offense * 1000 / 744;
 }
 
-int32 Client::GetOffense(int hand)
+int Client::GetOffense(int hand)
 {
 	ItemInst* weapon;
 
@@ -4624,7 +4632,7 @@ int32 Client::GetOffense(int hand)
 
 // very crude approximation that I will refine as data is created and evaluated
 // still way better than before
-int32 Mob::GetToHit(int hand)
+int Mob::GetToHit(int hand)
 {
 	int32 accuracy = 0;
 
@@ -4644,7 +4652,7 @@ int32 Mob::GetToHit(int hand)
 	return GetLevel() * 14 + 5 + accuracy;
 }
 
-int32 Client::GetToHit(SkillUseTypes weaponSkill)
+int Client::GetToHit(SkillUseTypes weaponSkill)
 {
 	int32 accuracy = itembonuses.Accuracy[HIGHEST_SKILL + 1] +
 		spellbonuses.Accuracy[HIGHEST_SKILL + 1] +
@@ -4663,7 +4671,7 @@ int32 Client::GetToHit(SkillUseTypes weaponSkill)
 	return toHit;
 }
 
-int32 Client::GetToHit(int hand)
+int Client::GetToHit(int hand)
 {
 	ItemInst* weapon;
 
@@ -4689,7 +4697,7 @@ int32 Client::GetToHit(int hand)
 // NOTE: Current database AC values are completely out of whack and pulled from nowhere
 // using this crude algorithm as a temporary placeholder until I get the data to adjust
 // database values permanently.  If I didn't do this, players would have a really hard time
-int32 Mob::GetMitigation()
+int Mob::GetMitigation()
 {
 	if (GetLevel() < 10)
 	{
@@ -4715,7 +4723,7 @@ int32 Mob::GetMitigation()
 // This returns the mitigation portion of the client AC value
 // this is accurate and based on a Sony developer post
 // See https://forums.daybreakgames.com/eq/index.php?threads/ac-vs-acv2.210028/
-int32 Client::GetMitigation()
+int Client::GetMitigation()
 {
 	int32 acSum = itembonuses.AC;
 	uint8 playerClass = GetClass();
@@ -5074,7 +5082,7 @@ int32 Client::GetMitigation()
 
 // crude estimate based on arena test dummy data
 // will refine this as data is generated and evaluated
-int32 Mob::GetAvoidance()
+int Mob::GetAvoidance()
 {
 	uint8 level = GetLevel();
 
@@ -5094,7 +5102,7 @@ int32 Mob::GetAvoidance()
 
 // this is the precise formula that Sony/DBG uses
 // minus the drunkeness reduction (add this later)
-int32 Client::GetAvoidance()
+int Client::GetAvoidance()
 {
 	int32 defense = GetSkill(SkillDefense);
 
