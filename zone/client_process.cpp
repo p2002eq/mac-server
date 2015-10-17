@@ -512,7 +512,8 @@ bool Client::Process() {
 			safe_delete(outapp);
 		}
 
-		if (tic_timer.Check() && !dead) {
+		if (tic_timer.Check() && !dead) 
+		{
 			CalcMaxHP();
 			CalcMaxMana();
 			CalcATK();
@@ -522,13 +523,19 @@ bool Client::Process() {
 			DoManaRegen();
 			DoEnduranceRegen();
 			BuffProcess();
-			DoStaminaUpdate();
 
-			if (fishing_timer.Check()) {
+			if(stamina_timer.Check()) 
+			{
+				DoStaminaUpdate();
+			}
+
+			if (fishing_timer.Check()) 
+			{
 				GoFish();
 			}
 
-			if (autosave_timer.Check()) {
+			if (autosave_timer.Check()) 
+			{
 				Save(0);
 			}
 
@@ -1836,9 +1843,6 @@ void Client::DoManaRegen() {
 
 
 void Client::DoStaminaUpdate() {
-
-	if(!stamina_timer.Check())
-		return;
 
 	//Change timers based on race. The shorter the timer, the more food is consumed.
 	if(stamina_timer.GetDuration() == 40000)

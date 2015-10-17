@@ -602,7 +602,7 @@ public:
 	void	AddSkill(SkillUseTypes skillid, uint16 value);
 	void	CheckSpecializeIncrease(uint16 spell_id);
 	void	CheckSongSkillIncrease(uint16 spell_id);
-	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty = 7.0, float success = 2.0); //valid values for difficulty are 1 to 15. Success is a float simply so we don't need to cast
+	bool	CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float difficulty = 7.0, float success = 1.0); //valid values for difficulty are 1 to 15. Success is a float simply so we don't need to cast
 	void	CheckLanguageSkillIncrease(uint8 langid, uint8 TeacherSkill);
 	void	SetLanguageSkill(int langid, int value);
 	void	ShowSkillsWindow();

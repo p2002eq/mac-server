@@ -1815,8 +1815,8 @@ bool Client::CheckIncreaseSkill(SkillUseTypes skillid, Mob *against_who, float d
 	if (skillval < maxskill)
 	{
 		Log.Out(Logs::General, Logs::Skills, "Skill %d at value %d %s. difficulty: %0.2f", skillid, skillval, success == 1.0 ? "succeeded" : "failed", difficulty);
-		float skillup_modifier = RuleR(Skills, SkillUpModifier);
 		float stat = GetSkillStat(skillid);
+		float skillup_modifier = stat > 135 ? RuleR(Skills, HighStatSkillUpModifier) : RuleR(Skills, SkillUpModifier);
 
 		if(difficulty < 1)
 			difficulty = 1.0f;

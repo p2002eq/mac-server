@@ -1007,7 +1007,10 @@ bool IsResistDebuffSpell(uint16 spell_id)
 
 bool IsSelfConversionSpell(uint16 spell_id)
 {
-	if (GetSpellTargetType(spell_id) == ST_Self && IsEffectInSpell(spell_id, SE_CurrentMana) &&
+	if(!IsValidSpell(spell_id))
+		return false;
+
+	if (spells[spell_id].targettype == ST_Self && IsEffectInSpell(spell_id, SE_CurrentMana) &&
 			IsEffectInSpell(spell_id, SE_CurrentHP) && spells[spell_id].base[GetSpellEffectIndex(spell_id, SE_CurrentMana)] > 0 &&
 			spells[spell_id].base[GetSpellEffectIndex(spell_id, SE_CurrentHP)] < 0)
 		return true;

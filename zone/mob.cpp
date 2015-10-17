@@ -5334,7 +5334,7 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 			break;
 		case SkillSwimming:
 			stat = GetSTA();
-			penalty = false;
+			penalty = true;
 			break;
 		default:
 			penalty = true;
@@ -5420,4 +5420,23 @@ bool Mob::IsFacingTarget()
 		return true;
 
 	return false;
+}
+
+bool Mob::CanCastBindAffinity()
+{
+	uint8 class_ = GetClass();
+	uint8 level = GetLevel();
+
+	if(level >= 12 && (class_ == NECROMANCER || class_ == WIZARD || class_ == MAGICIAN || class_ == ENCHANTER))
+	{
+		return true;
+	}
+	else if(level >= 14 && (class_ == CLERIC || class_ == SHAMAN || class_ == DRUID))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

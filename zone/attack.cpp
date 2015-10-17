@@ -3055,7 +3055,8 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 	// Agro pet someone tried to damage me
 	AggroPet(attacker);
 
-	CommonBreakInvisible();
+	if(!IsSelfConversionSpell(spell_id))
+		CommonBreakInvisible();
 
 	// This method is called with skill_used=ABJURE for Damage Shield damage.
 	bool FromDamageShield = (skill_used == SkillAbjuration);

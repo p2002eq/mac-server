@@ -886,6 +886,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					{
 						if(!zone->CanBind())
 						{
+							//Nobody can bind here.
 							Message_StringID(MT_SpellFailure, CANNOT_BIND);
 							break;
 						}
@@ -894,6 +895,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						{
 							if(caster != this)
 							{
+								//Only the caster can bind here
 								Message_StringID(MT_SpellFailure, CANNOT_BIND);
 								break;
 							}
