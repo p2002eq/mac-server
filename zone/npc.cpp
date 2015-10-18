@@ -1324,7 +1324,7 @@ void NPC::PickPocket(Client* thief)
 			if (item)
 			{
 				inst = database.CreateItem(item, citem->charges);
-				if (!IsEquipped(item->ID) && !item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer))
+				if (!IsEquipped(item->ID) && !item->Magic && item->NoDrop != 0 && !inst->IsType(ItemClassContainer) && !thief->CheckLoreConflict(item))
 				{
 					steal_items[x] = item->ID;
 					if (inst->IsStackable())
@@ -1347,15 +1347,22 @@ void NPC::PickPocket(Client* thief)
 				{
 					if (steal_skill > zone->random.Int(1,210))
 					{
-						int16 slotid = 0;
+						int16 slotid = -1;
 						if(!thief->GetPickPocketSlot(inst, slotid))
 						{
 							thief->SendPickPocketResponse(this, 0, PickPocketFailed);
 						}
 						else
 						{
-							thief->SendPickPocketResponse(this, 0, PickPocketItem, slotid, inst);
-							RemoveItem(item->ID);
+							if(slotid >= 0)
+							{
+								thief->SendPickPocketResponse(this, 0, PickPocketItem, slotid, inst);
+								RemoveItem(item->ID);
+							}
+							else
+							{
+								thief->SendPickPocketResponse(this, 0, PickPocketFailed);
+							}
 						}
 						safe_delete(inst);
 						return;
