@@ -1143,10 +1143,6 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool 
 	{
 		standardSpellHate = 1200;
 	}
-	if (isproc && standardSpellHate > 400)
-	{
-		standardSpellHate = 400;
-	}
 
 	for (int o = 0; o < EFFECT_COUNT; o++)
 	{
@@ -1335,6 +1331,10 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool 
 	{
 		AggroAmount += damage;
 	}
+
+	// procs and clickables capped at 400
+	if (isproc && AggroAmount > 400)
+		AggroAmount = 400;
 
 	if (spells[spell_id].HateAdded > 0)
 		AggroAmount = spells[spell_id].HateAdded;

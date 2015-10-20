@@ -152,11 +152,9 @@ public:
 	void DoOffHandRound(Mob* victim = nullptr, ExtraAttackOptions *opts = nullptr);
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
-	void TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary, int damage = 0);
 	virtual bool AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte = false, bool isRangedAttack = false);
 	virtual bool AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_mod = 0);
 	virtual void TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttackOptions *opts = nullptr);
-	void TryPetCriticalHit(Mob *defender, uint16 skill, int32 &damage);
 	virtual bool TryFinishingBlow(Mob *defender, SkillUseTypes skillinuse);
 	uint32 TryAssassinate(Mob* defender, SkillUseTypes skillInUse, uint16 ReuseTime);
 	virtual void DoRiposte(Mob* defender);
@@ -532,14 +530,6 @@ public:
 	int32  GetSkillStat(SkillUseTypes skillid);	
 
 	//Procs
-	bool AddRangedProc(uint16 spell_id, uint16 iChance = 3, uint16 base_spell_id = SPELL_UNKNOWN);
-	bool RemoveRangedProc(uint16 spell_id, bool bAll = false);
-	bool HasRangedProcs() const;
-	bool AddDefensiveProc(uint16 spell_id, uint16 iChance = 3, uint16 base_spell_id = SPELL_UNKNOWN);
-	bool RemoveDefensiveProc(uint16 spell_id, bool bAll = false);
-	bool HasDefensiveProcs() const;
-	bool HasSkillProcs() const;
-	bool HasSkillProcSuccess() const;
 	bool AddProcToWeapon(uint16 spell_id, bool bPerma = false, uint16 iChance = 3, uint16 base_spell_id = SPELL_UNKNOWN);
 	bool RemoveProcFromWeapon(uint16 spell_id, bool bAll = false);
 	bool HasProcs() const;
@@ -1082,19 +1072,15 @@ protected:
 	bool spawnpacket_sent;
 	void CalcSpellBonuses(StatBonuses* newbon);
 	virtual void CalcBonuses();
-	void TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success = false, uint16 hand = 0, bool IsDefensive = false); // hand = MainCursor?
 	bool PassLimitToSkill(uint16 spell_id, uint16 skill);
 	bool PassLimitClass(uint32 Classes_, uint16 Class_);
-	void TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary);
 	void TryWeaponProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = MainPrimary);
 	void TrySpellProc(const ItemInst* inst, const Item_Struct* weapon, Mob *on, uint16 hand = MainPrimary);
 	void TryWeaponProc(const ItemInst* weapon, Mob *on, uint16 hand = MainPrimary);
 	void ExecWeaponProc(const ItemInst* weapon, uint16 spell_id, Mob *on);
-	virtual float GetProcChances(float ProcBonus, uint16 hand = MainPrimary);
-	virtual float GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand = MainPrimary, Mob *on = nullptr);
+	virtual float GetProcChance(uint16 hand = MainPrimary);
 	virtual float GetSpecialProcChances(uint16 hand);
 	virtual float GetAssassinateProcChances(uint16 ReuseTime);
-	virtual float GetSkillProcChances(uint16 ReuseTime, uint16 hand = 0); // hand = MainCursor?
 	uint16 GetWeaponSpeedbyHand(uint16 hand);
 	int GetWeaponDamage(Mob *against, const Item_Struct *weapon_item);
 	int GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate = nullptr);
@@ -1111,8 +1097,6 @@ protected:
 	enum {MAX_PROCS = 4};
 	tProc PermaProcs[MAX_PROCS];
 	tProc SpellProcs[MAX_PROCS];
-	tProc DefensiveProcs[MAX_PROCS];
-	tProc RangedProcs[MAX_PROCS];
 
 	char name[64];
 	char orig_name[64];

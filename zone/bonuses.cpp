@@ -721,12 +721,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_SongModCap:
 				newbon->songModCap += base1;
 				break;
-			case SE_PetCriticalHit:
-				newbon->PetCriticalHit += base1;
-				break;
-			case SE_PetAvoidance:
-				newbon->PetAvoidance += base1;
-				break;
 			case SE_ShieldBlock:
 				newbon->ShieldBlock += base1;
 				break;
@@ -771,9 +765,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				break;
 			case SE_GiveDoubleAttack:
 				newbon->GiveDoubleAttack += base1;
-				break;
-			case SE_ProcChance:
-				newbon->ProcChanceSPA += base1;
 				break;
 			case SE_RiposteChance:
 				newbon->RiposteChance += base1;
@@ -1073,10 +1064,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				newbon->FrenziedDevastation += base2;
 				break;
 
-			case SE_SpellProcChance:
-				newbon->SpellProcChance += base1;
-				break;
-
 			case SE_Berserk:
 				newbon->BerserkSPA = true;
 				break;
@@ -1148,35 +1135,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_LimitToSkill:{
 				if (base1 <= HIGHEST_SKILL)
 					newbon->LimitToSkill[base1] = true;
-				break;
-			}
-
-			case SE_SkillProc:{
-				for(int e = 0; e < MAX_SKILL_PROCS; e++)
-				{
-					if(newbon->SkillProc[e] && newbon->SkillProc[e] == aaid)
-						break; //Do not use the same aa id more than once.
-
-					else if(!newbon->SkillProc[e]){
-						newbon->SkillProc[e] = aaid;
-						break;
-					}
-				}
-				break;
-			}
-
-			case SE_SkillProcSuccess:{
-				
-				for(int e = 0; e < MAX_SKILL_PROCS; e++)
-				{
-					if(newbon->SkillProcSuccess[e] && newbon->SkillProcSuccess[e] == aaid)
-						break; //Do not use the same spell id more than once.
-
-					else if(!newbon->SkillProcSuccess[e]){
-						newbon->SkillProcSuccess[e] = aaid;
-						break;
-					}
-				}
 				break;
 			}
 
@@ -1868,20 +1826,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_ProcChance:
-			{
-				if (RuleB(Spells, AdditiveBonusValues) && item_bonus)
-					new_bonus->ProcChanceSPA += effect_value;
-
-				else if((effect_value < 0) && (new_bonus->ProcChanceSPA > effect_value))
-					new_bonus->ProcChanceSPA = effect_value;
-
-				if(new_bonus->ProcChanceSPA < effect_value)
-					new_bonus->ProcChanceSPA = effect_value;
-
-				break;
-			}
-
 			case SE_ExtraAttackChance:
 				new_bonus->ExtraAttackChance += effect_value;
 				break;
@@ -2151,10 +2095,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->ImmuneToFlee = true;
 				break;
 
-			case SE_SpellProcChance:
-				new_bonus->SpellProcChance += effect_value;
-				break;
-
 			case SE_CharmBreakChance:
 				new_bonus->CharmBreakChance += effect_value;
 				break;
@@ -2349,10 +2289,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->GiveDoubleAttack += effect_value;
 				break;
 
-			case SE_PetCriticalHit:
-				new_bonus->PetCriticalHit += effect_value;
-				break;
-
 			case SE_CombatStability:
 				new_bonus->CombatStability += effect_value;
 				break;
@@ -2377,10 +2313,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_SongModCap:
 				new_bonus->songModCap += effect_value;
-				break;
-
-			case SE_PetAvoidance:
-				new_bonus->PetAvoidance += effect_value;
 				break;
 
 			case SE_Ambidexterity:
@@ -2698,36 +2630,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 			case SE_LimitToSkill:{
 				if (effect_value <= HIGHEST_SKILL){
 					new_bonus->LimitToSkill[effect_value] = true;
-				}
-				break;
-			}
-
-			case SE_SkillProc:{
-				
-				for(int e = 0; e < MAX_SKILL_PROCS; e++)
-				{
-					if(new_bonus->SkillProc[e] && new_bonus->SkillProc[e] == spell_id)
-						break; //Do not use the same spell id more than once.
-
-					else if(!new_bonus->SkillProc[e]){
-						new_bonus->SkillProc[e] = spell_id;
-						break;
-					}
-				}
-				break;
-			}
-
-			case SE_SkillProcSuccess:{
-				
-				for(int e = 0; e < MAX_SKILL_PROCS; e++)
-				{
-					if(new_bonus->SkillProcSuccess[e] && new_bonus->SkillProcSuccess[e] == spell_id)
-						break; //Do not use the same spell id more than once.
-
-					else if(!new_bonus->SkillProcSuccess[e]){
-						new_bonus->SkillProcSuccess[e] = spell_id;
-						break;
-					}
 				}
 				break;
 			}

@@ -569,16 +569,6 @@ void Client::CompleteConnect()
 				AddProcToWeapon(GetProcID(buffs[j1].spellid, x1), false, 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
 				break;
 			}
-			case SE_DefensiveProc:
-			{
-				AddDefensiveProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
-				break;
-			}
-			case SE_RangedProc:
-			{
-				AddRangedProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
-				break;
-			}
 			}
 		}
 	}
