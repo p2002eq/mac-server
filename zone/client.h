@@ -206,6 +206,7 @@ public:
 	virtual bool IsClient() const { return true; }
 	void	CompleteConnect();
 	bool	TryStacking(ItemInst* item, uint8 type = ItemPacketTrade, bool try_worn = true, bool try_cursor = true);
+	int16	GetStackSlot(ItemInst* item, bool try_worn = true, bool try_cursor = true);
 	void	SendTraderPacket(Client* trader, uint32 Unknown72 = 51);
 	GetItems_Struct* GetTraderItems();
 	GetItem_Struct* RefetchItem(uint16 item_id);

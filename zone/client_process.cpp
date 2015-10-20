@@ -1017,12 +1017,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 			int charges = 1;
 			if(database.ItemQuantityType(item->ID) == Quantity_Charges)
 			{
-				if(ml.charges > 0)
-				{
-					charges = zone->GetTempMerchantQtyNoSlot(npcid, item->ID);
-				}
-				else
-					charges = 1;
+				charges = zone->GetTempMerchantQtyNoSlot(npcid, item->ID);
 			}
 			ItemInst* inst = database.CreateItem(item, charges);
 			if (inst) {
@@ -1033,10 +1028,8 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 					inst->SetPrice((item->Price * (RuleR(Merchant, SellCostMod)) * item->SellRate));
 				inst->SetMerchantSlot(ml.slot);
 				inst->SetMerchantCount(ml.charges);
-				if(charges > 0)
-					inst->SetCharges(charges);
-				else
-					inst->SetCharges(1);
+				inst->SetCharges(charges);
+		
 				if(inst) 
 				{
 					std::string packet = inst->Serialize(ml.slot-1);

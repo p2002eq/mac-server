@@ -149,11 +149,14 @@ uint32 Client::NukeItem(uint32 itemnum, uint8 where_to_check) {
 bool Client::CheckLoreConflict(const Item_Struct* item) {
 	if (!item)
 		return false;
-	if (item->Lore[0] != '*')
+	if (item->Lore[0] != '*' && item->Lore[0] != '#')
 		return false;
 
 	if (item->Lore[0] == '*')	// Standard lore items; look everywhere except unused, return the result
 		return (m_inv.HasItem(item->ID, 0, ~invWhereUnused) != INVALID_INDEX);
+
+	else if(item->Lore[0] == '#')
+		return (m_inv.HasArtifactItem() != INVALID_INDEX);
 
 }
 
@@ -175,7 +178,10 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_
 	// check that there is not a lore conflict between base item and existing inventory
 	else if(CheckLoreConflict(item)) {
 		// DuplicateLoreMessage(item_id);
-		Message(CC_Red, "You already have a lore %s (%i) in your inventory.", item->Name, item_id);
+		if(item->Lore[0] == '#')
+			Message(CC_Red, "You already have an artifact item in your inventory.");
+		else
+			Message(CC_Red, "You already have a lore %s (%i) in your inventory.", item->Name, item_id);
 
 		return false;
 	}
@@ -682,6 +688,70 @@ bool Client::TryStacking(ItemInst* item, uint8 type, bool try_worn, bool try_cur
 	}
 	return false;
 }
+
+int16 Client::GetStackSlot(ItemInst* item, bool try_worn, bool try_cursor)
+{
+
+	if(!item || !item->IsStackable())
+		return -1;
+	int16 i;
+	uint32 item_id = item->GetItem()->ID;
+	// Do all we can get to arrows to go to quiver first.
+	if(item->GetItem()->ItemType == ItemTypeArrow)
+	{
+		for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
+		{
+			ItemInst* bag = m_inv.GetItem(i);
+			if(bag)
+			{
+				if(bag->GetItem()->BagType == BagTypeQuiver)
+				{
+					int8 slots = bag->GetItem()->BagSlots;
+					uint16 emptyslot = 0;
+					for (uint8 j = SUB_BEGIN; j < slots; j++)
+					{
+						uint16 slotid = Inventory::CalcSlotId(i, j);
+						ItemInst* tmp_inst = m_inv.GetItem(slotid);
+						if(!tmp_inst)
+						{
+							emptyslot = slotid;
+						}
+						// Partial stack found use this first
+						if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
+							return slotid;
+						}
+					}
+					// Use empty slot if no partial stacks
+					if(emptyslot != 0)
+					{
+						return emptyslot;
+					}
+				}
+			}
+		}
+	}
+	for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
+	{
+		ItemInst* tmp_inst = m_inv.GetItem(i);
+		if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
+			return i;
+		}
+	}
+	for (i = EmuConstants::GENERAL_BEGIN; i <= EmuConstants::GENERAL_END; i++)
+	{
+		for (uint8 j = SUB_BEGIN; j < EmuConstants::ITEM_CONTAINER_SIZE; j++)
+		{
+			uint16 slotid = Inventory::CalcSlotId(i, j);
+			ItemInst* tmp_inst = m_inv.GetItem(slotid);
+
+			if(tmp_inst && tmp_inst->GetItem()->ID == item_id && tmp_inst->GetCharges() < tmp_inst->GetItem()->StackSize){
+				return slotid;
+			}
+		}
+	}
+	return -1;
+}
+
 // Locate an available space in inventory to place an item
 // and then put the item there
 // The change will be saved to the database
@@ -1791,8 +1861,9 @@ void Client::RemoveDuplicateLore(bool client_update) {
 
 		for (auto iter = local_2.begin(); iter != local_2.end(); ++iter) {
 			auto inst = *iter;
-			if ((inst->GetItem()->Lore[0] != '*') ||
-				((inst->GetItem()->Lore[0] == '*') && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX))) {
+			if ((inst->GetItem()->Lore[0] != '*' && inst->GetItem()->Lore[0] != '#') ||
+				((inst->GetItem()->Lore[0] == '*') && (m_inv.HasItem(inst->GetID(), 0, invWhereCursor) == INVALID_INDEX)) ||
+				((inst->GetItem()->Lore[0] == '#') && (m_inv.HasArtifactItem() == INVALID_INDEX))) {
 				
 				m_inv.PushCursor(*inst);
 			}

@@ -397,7 +397,7 @@ public:
 	inline const float GetY() const { return m_Position.y; }
 	inline const float GetZ() const { return m_Position.z; }
 	inline const float GetHeading() const { return m_Position.w; }
-	inline float GetHeadingRadians();
+	float GetHeadingRadians();
 	inline const float GetEQX() const { return m_EQPosition.x; }
 	inline const float GetEQY() const { return m_EQPosition.y; }
 	inline const float GetEQZ() const { return m_EQPosition.z; }

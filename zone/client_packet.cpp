@@ -1578,12 +1578,12 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	const ItemInst* SecondaryWeapon = GetInv().GetItem(MainSecondary);
 	const ItemInst* PoisonItemInstance = GetInv()[ApplyPoisonData->inventorySlot];
 
-	bool IsPoison = PoisonItemInstance != nullptr && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison);
+	bool IsPoison = PoisonItemInstance != nullptr && (PoisonItemInstance->GetItem()->ItemType == ItemTypePoison && PoisonItemInstance->GetCharges() > 0);
 
 	if (!IsPoison)
 	{
 		Log.Out(Logs::General, Logs::Skills, "Item %s used to cast spell effect from a poison item was missing from inventory slot %d after casting, or is not a poison! Item type is %d", PoisonItemInstance->GetItem()->Name, ApplyPoisonData->inventorySlot, PoisonItemInstance->GetItem()->ItemType);
-		Message(CC_Default, "Error: item not found for inventory slot #%i or is not a poison", ApplyPoisonData->inventorySlot);
+		Message_StringID(CC_Default, ITEM_OUT_OF_CHARGES);
 	}
 	else if (GetClass() == ROGUE)
 	{
@@ -7174,9 +7174,8 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	mpo->itemslot = mp->itemslot;
 
 	int16 freeslotid = INVALID_INDEX;
-	uint8 charges = quantity;
 
-	ItemInst* inst = database.CreateItem(item, charges);
+	ItemInst* inst = database.CreateItem(item, quantity);
 
 	int SinglePrice = 0;
 	if (RuleB(Merchant, UsePriceMod))
@@ -7266,7 +7265,10 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 			new_charges = quantity_left - mp->quantity;
 			zone->SaveMerchantItem(merchantid,item_id, new_charges, mp->itemslot);
 		}
-		if (new_charges <= 0)
+
+		int8 new_quantity = zone->GetTempMerchantQtyNoSlot(tmp->GetNPCTypeID(), item_id);
+		if ((database.ItemQuantityType(item_id) == Quantity_Charges && new_quantity < 0) ||
+			(database.ItemQuantityType(item_id) != Quantity_Charges && new_charges <= 0))
 		{
 			EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
@@ -7377,7 +7379,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	}
 
 	int cost_quantity = mp->quantity;
-	if (inst->IsCharged())
+	if (database.ItemQuantityType(inst->GetID()) == Quantity_Charges)
 		int cost_quantity = 1; //Always sell items to merchants for base cost
 
 	if (RuleB(Merchant, UsePriceMod))
@@ -7392,7 +7394,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		if (mp->quantity > i_quan)
 			mp->quantity = i_quan;
 	}
-	else if(inst->IsCharged())
+	else if(database.ItemQuantityType(inst->GetID()) == Quantity_Charges)
 	{
 		int8 final_charges = zone->GetTempMerchantQtyNoSlot(vendor->GetNPCTypeID(), item->ID);
 		mp->quantity = (final_charges < 0 ? inst->GetCharges() : final_charges);
@@ -7407,7 +7409,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	int charges = mp->quantity;
 	int freeslot = 0;
-	if (charges > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, charges, true)) > 0){
+	if (charges >= 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, charges, true)) > 0){
 		ItemInst* inst2 = inst->Clone();
 		if (RuleB(Merchant, UsePriceMod)){
 			inst2->SetPrice(item->Price*(RuleR(Merchant, SellCostMod))*item->SellRate*Client::CalcPriceMod(vendor, false));
@@ -7464,7 +7466,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 		this->DeleteItemInInventory(mp->itemslot, mp->quantity, false);
 
 	//This forces the price to show up correctly for charged items.
-	if (inst->IsCharged())
+	if (database.ItemQuantityType(inst->GetID()) == Quantity_Charges)
 		mp->quantity = 1;
 
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ShopPlayerSell, sizeof(OldMerchant_Purchase_Struct));
