@@ -432,8 +432,8 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 
 		if(m_inv[slot_id]) { delete_count += m_inv.GetItem(slot_id)->GetTotalItemCount(); }
 
-		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogDeletes, sizeof(QSPlayerLogDelete_Struct) + (sizeof(QSDeleteItems_Struct) * delete_count));
-		QSPlayerLogDelete_Struct* qsaudit = (QSPlayerLogDelete_Struct*)qspack->pBuffer;
+		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogItemDeletes, sizeof(QSPlayerLogItemDelete_Struct) + (sizeof(QSDeleteItems_Struct) * delete_count));
+		QSPlayerLogItemDelete_Struct* qsaudit = (QSPlayerLogItemDelete_Struct*)qspack->pBuffer;
 		uint16 parent_offset = 0;
 
 		qsaudit->char_id	= character_id;
@@ -1558,8 +1558,8 @@ void Client::QSSwapItemAuditor(MoveItem_Struct* move_in, bool postaction_call) {
 	if(m_inv[from_slot_id]) { move_count += m_inv[from_slot_id]->GetTotalItemCount(); }
 	if(to_slot_id != from_slot_id) { if(m_inv[to_slot_id]) { move_count += m_inv[to_slot_id]->GetTotalItemCount(); } }
 
-	ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMoves, sizeof(QSPlayerLogMove_Struct) + (sizeof(QSMoveItems_Struct) * move_count));
-	QSPlayerLogMove_Struct* qsaudit = (QSPlayerLogMove_Struct*)qspack->pBuffer;
+	ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogItemMoves, sizeof(QSPlayerLogItemMove_Struct) + (sizeof(QSMoveItems_Struct) * move_count));
+	QSPlayerLogItemMove_Struct* qsaudit = (QSPlayerLogItemMove_Struct*)qspack->pBuffer;
 
 	qsaudit->char_id	= character_id;
 	qsaudit->stack_size = move_amount;

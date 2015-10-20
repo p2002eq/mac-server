@@ -27,11 +27,12 @@
 #include "raids.h"
 
 #include "queryserv.h"
+#include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 
 extern QueryServ* QServ;
-
+extern WorldServer worldserver;
 
 float Mob::GetBaseEXP()
 {
@@ -273,10 +274,28 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		Message_StringID(CC_Yellow, GAIN_ABILITY_POINT,ConvertArray(m_pp.aapoints, val1),m_pp.aapoints == 1 ? "" : "(s)");	//You have gained an ability point! You now have %1 ability point%2.
 		
 		/* QS: PlayerLogAARate */
-		if (RuleB(QueryServ, PlayerLogAARate)){
-			int add_points = (m_pp.aapoints - last_unspentAA);
-			std::string query = StringFormat("INSERT INTO `qs_player_aa_rate_hourly` (char_id, aa_count, hour_time) VALUES (%i, %i, UNIX_TIMESTAMP() - MOD(UNIX_TIMESTAMP(), 3600)) ON DUPLICATE KEY UPDATE `aa_count` = `aa_count` + %i", this->CharacterID(), add_points, add_points);
-			QServ->SendQuery(query.c_str());
+		Log.Out(Logs::General, Logs::QS_Server, "LogPlayerAARateHourly pre-rule.");
+		if (RuleB(QueryServ, PlayerLogAARate))
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "LogPlayerAARateHourly rule passed entered.");
+			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerAARateHourly, sizeof(QSPlayerAARateHourly_Struct));
+			QSPlayerAARateHourly_Struct* QS = (QSPlayerAARateHourly_Struct*)pack->pBuffer;
+			QS->id = this->CharacterID();
+			QS->add_points = m_pp.aapoints - last_unspentAA;
+			worldserver.SendPacket(pack);
+			safe_delete(pack);
+
+			//uint32 add_points = (m_pp.aapoints - last_unspentAA);
+			//std::string query = StringFormat("INSERT INTO `qs_player_aa_rate_hourly` (char_id, aa_count, hour_time) "
+			//									"VALUES "
+			//									"(%i, %i, UNIX_TIMESTAMP() - MOD(UNIX_TIMESTAMP(), 3600)) "
+			//									"ON DUPLICATE KEY UPDATE "
+			//									"`aa_count` = `aa_count` + %i",
+												//this->CharacterID(),
+			//									add_points,
+			//									add_points);
+
+			//QServ->SendQuery(query.c_str());
 		}
 
 		//Message(CC_Yellow, "You now have %d skill points available to spend.", m_pp.aapoints);

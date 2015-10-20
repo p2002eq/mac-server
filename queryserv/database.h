@@ -43,11 +43,12 @@ public:
 	bool Connect(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
 	~Database();
 
+	void LogPlayerAARateHourly(QSPlayerAARateHourly_Struct* QS, uint32 items);
 	void LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 DetailCount);
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);
 	void LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 Members);
-	void LogPlayerDelete(QSPlayerLogDelete_Struct* QS, uint32 Items);
-	void LogPlayerMove(QSPlayerLogMove_Struct* QS, uint32 Items);
+	void LogPlayerItemDelete(QSPlayerLogItemDelete_Struct* QS, uint32 Items);
+	void LogPlayerItemMove(QSPlayerLogItemMove_Struct* QS, uint32 Items);
 	void LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint32 Items);
 	void GeneralQueryReceive(ServerPacket *pack);
 

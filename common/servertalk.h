@@ -165,12 +165,13 @@
 #define ServerOP_QSPlayerLogTrades					0x5010
 #define ServerOP_QSPlayerLogHandins					0x5011
 #define ServerOP_QSPlayerLogNPCKills				0x5012
-#define ServerOP_QSPlayerLogDeletes					0x5013
-#define ServerOP_QSPlayerLogMoves					0x5014
+#define ServerOP_QSPlayerLogItemDeletes				0x5013
+#define ServerOP_QSPlayerLogItemMoves				0x5014
 #define ServerOP_QSPlayerLogMerchantTransactions	0x5015
 #define ServerOP_QSSendQuery						0x5016
 #define ServerOP_CZSignalNPC						0x5017
 #define ServerOP_CZSetEntityVariableByNPCTypeID		0x5018
+#define ServerOP_QSPlayerAARateHourly				0x5019
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -985,7 +986,7 @@ struct QSDeleteItems_Struct {
 	uint16 charges;
 };
 
-struct QSPlayerLogDelete_Struct {
+struct QSPlayerLogItemDelete_Struct {
 	uint32					char_id;
 	uint16					stack_size; // '0' indicates full stack or non-stackable item move
 	uint16					char_count;
@@ -999,7 +1000,7 @@ struct QSMoveItems_Struct {
 	uint16 charges;
 };
 
-struct QSPlayerLogMove_Struct {
+struct QSPlayerLogItemMove_Struct {
 	uint32			char_id;
 	uint16			from_slot;
 	uint16			to_slot;
@@ -1024,6 +1025,11 @@ struct QSMerchantLogTransaction_Struct {
 	MoneyUpdate_Struct		char_money;
 	uint16					char_count;
 	QSTransactionItems_Struct items[0];
+};
+
+struct QSPlayerAARateHourly_Struct {
+	uint32 id;
+	uint32 add_points;
 };
 
 struct QSGeneralQuery_Struct {

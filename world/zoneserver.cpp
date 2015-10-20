@@ -1180,8 +1180,8 @@ bool ZoneServer::Process() {
 			case ServerOP_QSPlayerLogTrades:
 			case ServerOP_QSPlayerLogHandins:
 			case ServerOP_QSPlayerLogNPCKills:
-			case ServerOP_QSPlayerLogDeletes:
-			case ServerOP_QSPlayerLogMoves:
+			case ServerOP_QSPlayerLogItemDeletes:
+			case ServerOP_QSPlayerLogItemMoves:
 			case ServerOP_QSPlayerLogMerchantTransactions:
 			{
 				QSLink.SendPacket(pack);
