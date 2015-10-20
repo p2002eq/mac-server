@@ -255,7 +255,7 @@ void Client::AddItemBonuses(const ItemInst *inst, StatBonuses* newbon) {
 
 	//FatherNitwit: New style haste, shields, and regens
 	if (item->Worn.Effect>0 && (item->Worn.Type == ET_WornEffect)) { // latent effects
-		ApplySpellsBonuses(item->Worn.Effect, GetLevel(), newbon, 0, true);
+		ApplySpellsBonuses(item->Worn.Effect, item->Worn.Level > 0 ? item->Worn.Level : GetLevel(), newbon, 0, true);
 	}
 
 	if (item->Focus.Effect>0 && (item->Focus.Type == ET_Focus)) { // focus effects
