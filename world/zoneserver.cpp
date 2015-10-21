@@ -1177,6 +1177,7 @@ bool ZoneServer::Process() {
 			case ServerOP_QSSendQuery:
 			case ServerOP_QueryServGeneric:
 			case ServerOP_Speech:
+			case ServerOP_QSPlayerAARateHourly:
 			case ServerOP_QSPlayerLogTrades:
 			case ServerOP_QSPlayerLogHandins:
 			case ServerOP_QSPlayerLogNPCKills:

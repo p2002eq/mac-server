@@ -308,6 +308,7 @@ struct ServerChangeWID_Struct {
 	uint32	charid;
 	uint32	newwid;
 };
+
 struct SendGroup_Struct{
 	uint8	grouptotal;
 	uint32	zoneid;
@@ -324,7 +325,6 @@ struct ServerGroupFollow_Struct {
 struct ServerGroupFollowAck_Struct {
 	char Name[64];
 };
-
 
 struct ServerChannelMessage_Struct {
 	char deliverto[64];
@@ -457,22 +457,26 @@ struct ServerLSStatus_Struct {
 	int32 num_players;
 	int32 num_zones;
 };
+
 struct ZoneInfo_Struct {
 	uint32 zone;
 	uint16 count;
 	uint32 zone_wid;
 };
+
 struct ZoneBoot_Struct {
 	uint32 zone;
 	uint32 instance;
 	char compile_time[25];
 	uint32 zone_wid;
 };
+
 struct ZoneShutdown_Struct {
 	uint32 zone;
 	uint32 instance;
 	uint32 zone_wid;
 };
+
 struct ServerLSZoneSleep_Struct {
 	uint32 zone;
 	uint32 instance;
@@ -494,6 +498,7 @@ struct ServerLSPlayerZoneChange_Struct {
 	uint32 from; // 0 = world
 	uint32 to; // 0 = world
 };
+
 struct ServerLSClientAuth {
 	uint32	lsaccount_id;	// ID# in login server's db
 	char	name[30];		// username in login server's db
@@ -607,10 +612,12 @@ struct WorldToZone_Struct {
 	uint32	account_id;
 	int8	response;
 };
+
 struct WorldShutDown_Struct {
 	uint32	time;
 	uint32	interval;
 };
+
 struct ServerSyncWorldList_Struct {
 	uint32	RemoteID;
 	uint32	ip;
@@ -743,6 +750,7 @@ typedef enum {
 	ZR_Restart,
 	ZR_Stop
 } ZoneRequestCommands;
+
 struct LauncherZoneRequest {
 	uint8 command;
 	char short_name[33];
@@ -754,7 +762,6 @@ struct LauncherZoneStatus {
 	uint32 start_count;
 	uint8 running;
 };
-
 
 struct ServerGuildID_Struct {
 	uint32 guild_id;
@@ -1010,21 +1017,24 @@ struct QSPlayerLogItemMove_Struct {
 	QSMoveItems_Struct items[0];
 };
 
-struct QSTransactionItems_Struct {
-	uint16 char_slot;
-	uint32 item_id;
-	uint16 charges;
-};
+//struct QSTransactionItems_Struct {
+//	uint16 char_slot;
+//	uint32 item_id;
+//	uint16 charges;
+//};
 
 struct QSMerchantLogTransaction_Struct {
+	uint32					char_id;
+	uint16					char_slot;
+	uint32					item_id;
+	uint16					charges;
 	uint32					zone_id;
 	uint32					merchant_id;
 	MoneyUpdate_Struct		merchant_money;
 	uint16					merchant_count;
-	uint32					char_id;
 	MoneyUpdate_Struct		char_money;
 	uint16					char_count;
-	QSTransactionItems_Struct items[0];
+	//QSTransactionItems_Struct items[0];
 };
 
 struct QSPlayerAARateHourly_Struct {

@@ -105,9 +105,8 @@ void WorldServer::Process()
 			}
 			case ServerOP_QSPlayerAARateHourly: {
 				QSPlayerAARateHourly_Struct *QS = (QSPlayerAARateHourly_Struct*)pack->pBuffer;
-				uint32 id;
-				uint32 add_points = QS->add_points;
-				database.LogPlayerAARateHourly(QS, add_points);
+				uint32 Items = QS->id;
+				database.LogPlayerAARateHourly(QS, Items);
 				break;
 			}
 			case ServerOP_QueryServGeneric: {

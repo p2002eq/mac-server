@@ -54,6 +54,20 @@ public:
 
 	void LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
 
+	/*
+	 * Database Setup for bootstraps only.
+	 */
+	bool DBSetup();
+	bool DBSetup_CheckLegacy();
+
+	bool Check_Delete_Tables();
+	bool Create_Delete_Table();
+	bool Copy_Delete_Record();
+
+	bool Check_Merchant_Tables();
+	bool Create_Merchant_Table();
+	bool Copy_Merchant_Record();
+
 protected:
 	void HandleMysqlError(uint32 errnum);
 private:
