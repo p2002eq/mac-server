@@ -569,16 +569,6 @@ void Client::CompleteConnect()
 				AddProcToWeapon(GetProcID(buffs[j1].spellid, x1), false, 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
 				break;
 			}
-			case SE_DefensiveProc:
-			{
-				AddDefensiveProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
-				break;
-			}
-			case SE_RangedProc:
-			{
-				AddRangedProc(GetProcID(buffs[j1].spellid, x1), 100 + spells[buffs[j1].spellid].base2[x1], buffs[j1].spellid);
-				break;
-			}
 			}
 		}
 	}
@@ -7923,7 +7913,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		Log.Out(Logs::General, Logs::Error, "OP size error: OP_TargetMouse expected:%i got:%i", sizeof(ClientTarget_Struct), app->size);
 		return;
 	}
-	if (IsAIControlled())
+	if (IsAIControlled() && !has_zomm)
 		return;
 
 	ClientTarget_Struct* ct = (ClientTarget_Struct*)app->pBuffer;

@@ -265,12 +265,6 @@ Mob::Mob(const char* in_name,
 		SpellProcs[j].spellID = SPELL_UNKNOWN;
 		SpellProcs[j].chance = 0;
 		SpellProcs[j].base_spellID = SPELL_UNKNOWN;
-		DefensiveProcs[j].spellID = SPELL_UNKNOWN;
-		DefensiveProcs[j].chance = 0;
-		DefensiveProcs[j].base_spellID = SPELL_UNKNOWN;
-		RangedProcs[j].spellID = SPELL_UNKNOWN;
-		RangedProcs[j].chance = 0;
-		RangedProcs[j].base_spellID = SPELL_UNKNOWN;
 	}
 
 	for (i = 0; i < _MaterialCount; i++)
@@ -2892,42 +2886,6 @@ int Mob::GetSnaredAmount()
 	}
 
 	return worst_snare;
-}
-
-void Mob::TriggerDefensiveProcs(const ItemInst* weapon, Mob *on, uint16 hand, int damage)
-{
-	if (!on)
-		return;
-
-	on->TryDefensiveProc(weapon, this, hand);
-
-	//Defensive Skill Procs
-	if (damage < 0 && damage >= -4) {
-		uint16 skillinuse = 0;
-		switch (damage) {
-			case (-1):
-				skillinuse = SkillBlock;
-			break;
-
-			case (-2):
-				skillinuse = SkillParry;
-			break;
-
-			case (-3):
-				skillinuse = SkillRiposte;
-			break;
-
-			case (-4):
-				skillinuse = SkillDodge;
-			break;
-		}
-
-		if (on->HasSkillProcs())
-			on->TrySkillProc(this, skillinuse, 0, false, hand, true);
-
-		if (on->HasSkillProcSuccess())
-			on->TrySkillProc(this, skillinuse, 0, true, hand, true);
-	}
 }
 
 void Mob::SetEntityVariable(const char *id, const char *m_var)

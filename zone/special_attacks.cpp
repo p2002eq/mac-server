@@ -1868,12 +1868,6 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 
 	//else
 	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
-
-	if (HasSkillProcs())
-		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000);
-
-	if (Success && HasSkillProcSuccess())
-		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000, true);
 }
 
 
