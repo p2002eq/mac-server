@@ -1619,25 +1619,27 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Model Size: %d%%", effect_value);
 #endif
-				float basesize = GetBaseSize();
 
-				// Check for an illusion
-				if (GetRace() != GetBaseRace())
-				{
-					basesize = GetPlayerHeight(GetRace());
-				}
-
-				// Allow only 1 growth change, or 2 shrinks for large races and 1 for everybody else.
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
-				float maxModAmount = basesize * modifyAmount;
-				if(basesize >= 7 && modifyAmount < 1)
-					maxModAmount *= modifyAmount;
+				float newsize = GetSize() * modifyAmount;
 
-				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
-					(GetSize() >= basesize && GetSize() < maxModAmount))
+				if(modifyAmount < 1)
 				{
-					ChangeSize(GetSize() * modifyAmount, true);
+					if(newsize >= 1.98)
+					{
+						Log.Out(Logs::General, Logs::Spells, "Shrink successful from %0.2f to %0.2f.", GetSize(), newsize);
+						ChangeSize(newsize, true);
+					}
 				}
+				else
+				{
+					if(newsize <= 11.98)
+					{
+						Log.Out(Logs::General, Logs::Spells, "Growth successful from %0.2f to %0.2f.", GetSize(), newsize);
+						ChangeSize(newsize, true);
+					}
+				}
+
 				break;
 			}
 
@@ -2035,20 +2037,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_RangedProc:
-			{
-#ifdef SPELL_EFFECT_SPAM
-				snprintf(effect_desc, _EDLEN, "Ranged Proc: %+i", effect_value);
-#endif
-				uint16 procid = GetProcID(spell_id, i);
-
-				if(spells[spell_id].base2[i] == 0)
-					AddRangedProc(procid, 100, spell_id);
-				else
-					AddRangedProc(procid, spells[spell_id].base2[i]+100, spell_id);
-				break;
-			}
-
 			case SE_Rampage:
 			{
 #ifdef SPELL_EFFECT_SPAM
@@ -2111,21 +2099,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					int pet_duration = spells[spell_id].max[i];
 					caster->CastToClient()->Doppelganger(spell_id, this, pet_name, pet_count, pet_duration);
 				}
-				break;
-			}
-
-			case SE_DefensiveProc:
-			{
-				uint16 procid = GetProcID(spell_id, i);
-#ifdef SPELL_EFFECT_SPAM
-				snprintf(effect_desc, _EDLEN, "Defensive Proc: %s (id %d)", spells[effect_value].name, procid);
-#endif
-				if(spells[spell_id].base2[i] == 0)
-					AddDefensiveProc(procid, 100,spell_id);
-				else
-					AddDefensiveProc(procid, spells[spell_id].base2[i]+100,spell_id);
-				break;
-
 				break;
 			}
 
@@ -3575,20 +3548,6 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 				break;
 			}
 
-			case SE_DefensiveProc:
-			{
-				uint16 procid = GetProcID(buffs[slot].spellid, i);
-				RemoveDefensiveProc(procid);
-				break;
-			}
-
-			case SE_RangedProc:
-			{
-				uint16 procid = GetProcID(buffs[slot].spellid, i);
-				RemoveRangedProc(procid);
-				break;
-			}
-
 			case SE_SummonHorse:
 			{
 				if(IsClient())
@@ -4481,6 +4440,7 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 
 //given an item/spell's focus ID and the spell being cast, determine the focus ammount, if any
 //assumes that spell_id is not a bard spell and that both ids are valid spell ids
+// best_focus disables the randomizing of the focus value for damage/healing/mana preservation
 int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, bool best_focus) {
 
 	if(!IsValidSpell(focus_id) || !IsValidSpell(spell_id))
@@ -4726,64 +4686,18 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 			break;
 
 
-		//handle effects
 		case SE_ImprovedDamage:
-			if (type == focusImprovedDamage) {
-				// This is used to determine which focus should be used for the random calculation
-				if(best_focus) {
-					// If the spell contains a value in the base2 field then that is the max value
-					if (focus_spell.base2[i] != 0) {
-						value = focus_spell.base2[i];
-					}
-					// If the spell does not contain a base2 value, then its a straight non random value
-					else {
-						value = focus_spell.base[i];
-					}
-				}
-				// Actual focus calculation starts here
-				else if (focus_spell.base2[i] == 0 || focus_spell.base[i] == focus_spell.base2[i]) {
-					value = focus_spell.base[i];
-				}
-				else {
-					value = zone->random.Int(focus_spell.base[i], focus_spell.base2[i]);
-				}
-			}
-			break;
-
 		case SE_ImprovedHeal:
-			if (type == focusImprovedHeal) {
-				if(best_focus) {
-					if (focus_spell.base2[i] != 0) {
-						value = focus_spell.base2[i];
-					}
-					else {
-						value = focus_spell.base[i];
-					}
-				}
-				else if (focus_spell.base2[i] == 0 || focus_spell.base[i] == focus_spell.base2[i]) {
-					value = focus_spell.base[i];
-				}
-				else {
-					value = zone->random.Int(focus_spell.base[i], focus_spell.base2[i]);
-				}
-			}
-			break;
-
 		case SE_ReduceManaCost:
-			if (type == focusManaCost) {
-				if(best_focus) {
-					if (focus_spell.base2[i] != 0) {
-						value = focus_spell.base2[i];
-					}
-					else {
-						value = focus_spell.base[i];
-					}
-				}
-				else if (focus_spell.base2[i] == 0 || focus_spell.base[i] == focus_spell.base2[i]) {
+			if (type == focusImprovedDamage || type == focusImprovedHeal || type == focusManaCost)
+			{
+				if (best_focus)
+				{
 					value = focus_spell.base[i];
 				}
-				else {
-					value = zone->random.Int(focus_spell.base[i], focus_spell.base2[i]);
+				else
+				{
+					value = zone->random.Int(1, focus_spell.base[i]);
 				}
 			}
 			break;

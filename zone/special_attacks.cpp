@@ -218,11 +218,11 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	if (damage > 0)
 	{
-		uint8 roll = RollD20(GetOffense(skill), who->GetMitigation());
-		uint32 di1k = 1;
+		int roll = RollD20(GetOffense(skill), who->GetMitigation());
+		int di1k = 1;
 
 		// SE_MinDamageModifier for disciplines: Fellstrike, Innerflame, Duelist, Beastial Rage
-		int32 minDmgModDmg = min_damage * GetMeleeMinDamageMod_SE(skill) / 100;
+		int minDmgModDmg = min_damage * GetMeleeMinDamageMod_SE(skill) / 100;
 		if (min_damage < minDmgModDmg) min_damage = minDmgModDmg;
 
 		// SE_DamageModifier for disciplines: Silentfist, Ashenhand, Thunderkick
@@ -724,8 +724,8 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 			}
 			base += base * GetMeleeDamageMod_SE(SkillBackstab) / 100;		// duelist discipline
 
-			int32 offense = GetOffense(SkillBackstab);
-			int8 roll = RollD20(offense, defender->GetMitigation());
+			int offense = GetOffense(SkillBackstab);
+			int roll = RollD20(offense, defender->GetMitigation());
 
 			damage = base + (base * roll + 10) / 20;									// +10 is to round and make the numbers slightly more accurate
 			damage = damage * CastToClient()->RollDamageMultiplier(offense) / 100;		// client only damage multiplier
@@ -959,7 +959,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 		combinedDmg = static_cast<int>(RuleR(Combat, ArcheryBaseDamageBonus) * 100.0)*combinedDmg / 100;
 
 		// for discipline: Trueshot
-		uint16 bonusArcheryDamageModifier = aabonuses.ArcheryDamageModifier + itembonuses.ArcheryDamageModifier + spellbonuses.ArcheryDamageModifier;
+		int bonusArcheryDamageModifier = aabonuses.ArcheryDamageModifier + itembonuses.ArcheryDamageModifier + spellbonuses.ArcheryDamageModifier;
 		combinedDmg += combinedDmg * bonusArcheryDamageModifier / 100;
 
 		if (combinedDmg > weapon_damage)
@@ -967,11 +967,11 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 			hate = combinedDmg;
 		}
 
-		int32 offense = GetOffense(SkillArchery);
-		int32 mitigation = other->GetMitigation();
+		int offense = GetOffense(SkillArchery);
+		int mitigation = other->GetMitigation();
 
 		// mitigation roll
-		uint16 roll = RollD20(offense, mitigation);
+		int roll = RollD20(offense, mitigation);
 
 		damage = (roll * combinedDmg * 10 + 5) / 100;
 		if (IsClient())
@@ -1135,8 +1135,8 @@ void NPC::RangedAttack(Mob* other)
 				int32 maxDmg = max_dmg * RuleR(Combat, ArcheryNPCMultiplier); // should add a field to npc_types
 				int32 minDmg = min_dmg * RuleR(Combat, ArcheryNPCMultiplier);
 				
-				uint8 roll = RollD20(GetOffense(), other->GetMitigation());
-				uint32 di1k = 1;
+				int roll = RollD20(GetOffense(), other->GetMitigation());
+				int di1k = 1;
 
 				if (maxDmg <= minDmg)
 				{
@@ -1283,11 +1283,11 @@ void Mob::DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Ite
 
 		int minDmg = 1;
 
-		int32 offense = GetOffense(SkillThrowing);
-		int32 mitigation = other->GetMitigation();
+		int offense = GetOffense(SkillThrowing);
+		int mitigation = other->GetMitigation();
 
 		// mitigation roll
-		uint16 roll = RollD20(offense, mitigation);
+		int roll = RollD20(offense, mitigation);
 
 		damage = (roll * weaponDmg * 10 + 5) / 100;
 		if (IsClient())
@@ -1868,12 +1868,6 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 
 	//else
 	//	Message_StringID(MT_SpellFailure,FAILED_TAUNT);
-
-	if (HasSkillProcs())
-		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000);
-
-	if (Success && HasSkillProcSuccess())
-		TrySkillProc(who, SkillTaunt, TauntReuseTime*1000, true);
 }
 
 

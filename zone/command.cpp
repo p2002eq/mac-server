@@ -259,7 +259,6 @@ int command_init(void){
 		command_add("iplookup", "[charname] - Look up IP address of charname.", 95, command_iplookup) ||
 		command_add("iteminfo", "- Get information about the item on your cursor.", 50, command_iteminfo) ||
 		command_add("itemsearch", "[search criteria] - Search for an item.", 100, command_itemsearch) ||
-		command_add("itemtest", "- merth's test function.", 255, command_itemtest) ||
 		command_add("keyring", "Displays target's keyring items.", 90, command_keyring) ||
 		command_add("kick", "[charname] - Disconnect charname.", 90, command_kick) ||
 		command_add("kill", "- Kill your target.", 150, command_kill) ||
@@ -2070,24 +2069,6 @@ void command_spon(Client *c, const Seperator *sep){
 void command_spoff(Client *c, const Seperator *sep){
 	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ManaChange, 0);
 	outapp->priority = 5;
-	c->QueuePacket(outapp);
-	safe_delete(outapp);
-}
-
-void command_itemtest(Client *c, const Seperator *sep){
-	char chBuffer[8192] = { 0 };
-	//Using this to determine new item layout
-	FILE* f = nullptr;
-	if (!(f = fopen("c:\\EQEMUcvs\\ItemDump.txt", "rb"))) {
-		c->Message(CC_Red, "Error: Could not open c:\\EQEMUcvs\\ItemDump.txt");
-		return;
-	}
-
-	fread(chBuffer, sizeof(chBuffer), sizeof(char), f);
-	fclose(f);
-
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_ItemLinkResponse, strlen(chBuffer) + 5);
-	memcpy(&outapp->pBuffer[4], chBuffer, strlen(chBuffer));
 	c->QueuePacket(outapp);
 	safe_delete(outapp);
 }
@@ -4635,6 +4616,7 @@ void command_iteminfo(Client *c, const Seperator *sep){
 		c->Message(CC_Default, "ID: %i Name: %s", item->ID, item->Name);
 		c->Message(CC_Default, "  Lore: %s  ND: %i  NS: %i  Type: %i", item->Lore, item->NoDrop, item->NoRent, item->ItemClass);
 		c->Message(CC_Default, "  IDF: %s  Size: %i  Weight: %i  icon_id: %i  Price: %i", item->IDFile, item->Size, item->Weight, item->Icon, item->Price);
+		c->Message(CC_Default, "  QuantityType: %d (1 Normal, 2 Charges, 3 Stacked)", database.ItemQuantityType(inst->GetItem()->ID));
 		if (c->Admin() >= 200)
 			c->Message(CC_Default, "MinStatus: %i", item->MinStatus);
 		if (item->ItemClass == ItemClassBook)

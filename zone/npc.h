@@ -404,6 +404,7 @@ public:
 	void ShowQuickStats(Client* client);
 	bool IsEquipped(int16 itemid);
 	uint8 GetBaseTexture() const { return base_texture; }
+	bool UnEquipItem(int16 itemid, uint16 slotid);
 
 protected:
 
