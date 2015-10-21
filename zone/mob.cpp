@@ -5340,7 +5340,7 @@ int32 Mob::GetSkillStat(SkillUseTypes skillid)
 			break;
 		case SkillSwimming:
 			stat = GetSTA();
-			penalty = false;
+			penalty = true;
 			break;
 		default:
 			penalty = true;

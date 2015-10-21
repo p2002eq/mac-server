@@ -2701,9 +2701,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(zone->watermap->InLiquid(water_pos) && ((ppu->x_pos != water_x) || (ppu->y_pos != water_y)))
 		{
 			// Update packets happen so quickly, that we have to limit here or else swimming skillups are super fast.
-			if(zone->random.Roll(53))
+			if(zone->random.Roll(40))
 			{
-				CheckIncreaseSkill(SkillSwimming, nullptr, zone->skill_difficulty[SkillSwimming].difficulty);
+				CheckIncreaseSkill(SkillSwimming, nullptr, zone->skill_difficulty[SkillSwimming].difficulty, 2.0);
 			}
 		}
 	}

@@ -619,6 +619,7 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 		return;
 	*/
 
+	float success = 2.0;
 	switch(spells[spell_id].skill)
 	{
 	case SkillSinging:
@@ -632,7 +633,7 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);	// tell the client that they need instrument training
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty, success);
 		break;
 	case SkillStringedInstruments:
 		if(this->itembonuses.stringedMod > 0) {
@@ -642,7 +643,7 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty, success);
 		break;
 	case SkillWindInstruments:
 		if(this->itembonuses.windMod > 0) {
@@ -652,7 +653,7 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty, success);
 		break;
 	case SkillBrassInstruments:
 		if(this->itembonuses.brassMod > 0) {
@@ -662,7 +663,7 @@ void Client::CheckSongSkillIncrease(uint16 spell_id){
 				Message_StringID(CC_Red,NO_INSTRUMENT_SKILL);
 		}
 		else
-			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty);
+			CheckIncreaseSkill(SkillSinging, nullptr, zone->skill_difficulty[SkillSinging].difficulty, success);
 		break;
 	default:
 		break;
@@ -1237,7 +1238,9 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 				// increased chance of gaining channel skill if you regained concentration
 				float chan_skill = zone->skill_difficulty[SkillChanneling].difficulty;
-				c->CheckIncreaseSkill(SkillChanneling, nullptr, regain_conc ? chan_skill : chan_skill+2);
+				float final_diff = regain_conc ? chan_skill : chan_skill+2;
+				float success = final_diff == chan_skill ? 1.0 : 2.0;
+				c->CheckIncreaseSkill(SkillChanneling, nullptr, final_diff, success);
 
 				c->CheckSpecializeIncrease(spell_id);
 			}
