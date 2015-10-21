@@ -208,7 +208,6 @@ public:
 		int resist_override = 0, bool CharismaCheck = false, bool CharmTick = false, bool IsRoot = false);
 	int ResistPhysical(int level_diff, uint8 caster_level);
 	uint16 GetSpecializeSkillValue(uint16 spell_id) const;
-	void SendSpellBarDisable();
 	void SendSpellBarEnable(uint16 spellid);
 	void ZeroCastingVars();
 	virtual void SpellProcess();
