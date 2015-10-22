@@ -229,7 +229,7 @@ public:
 	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster);
 	virtual float GetAOERange(uint16 spell_id);
 	void InterruptSpell(uint16 spellid = SPELL_UNKNOWN);
-	void InterruptSpell(uint16, uint16, uint16 spellid = SPELL_UNKNOWN);
+	void InterruptSpell(uint16, uint16, uint16 spellid = SPELL_UNKNOWN, bool fizzle = false);
 	inline bool IsCasting() const { return((casting_spell_id != 0)); }
 	uint16 CastingSpellID() const { return casting_spell_id; }
 	bool DoCastingChecks();

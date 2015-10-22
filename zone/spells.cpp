@@ -201,7 +201,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	//cannot cast under divine aura
 	if(DivineAura()) {
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: cannot cast while Divine Aura is in effect.");
-		InterruptSpell(SPELL_FIZZLE, CC_User_SpellFailure, false);
+		InterruptSpell(SPELL_FIZZLE, CC_User_SpellFailure, spell_id, true);
 		return(false);
 	}
 
@@ -231,7 +231,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if(slot < MAX_PP_MEMSPELL && !CheckFizzle(spell_id))
 	{
 		int fizzle_msg = IsBardSong(spell_id) ? MISS_NOTE : SPELL_FIZZLE;
-		InterruptSpell(fizzle_msg, CC_User_SpellFailure, spell_id);
+		InterruptSpell(fizzle_msg, CC_User_SpellFailure, spell_id, true);
 
 		uint32 use_mana = ((spells[spell_id].mana) / 4);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: fizzled. %d mana has been consumed", use_mana);
@@ -800,7 +800,7 @@ void Mob::InterruptSpell(uint16 spellid)
 	InterruptSpell(message, CC_User_Spells, spellid);
 }
 
-void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid)
+void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid, bool fizzle)
 {
 	EQApplicationPacket *outapp;
 	uint16 message_other;
@@ -852,7 +852,10 @@ void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid)
 
 		SendSpellBarEnable(spellid);
 
-		CastToClient()->RefreshSpellIcon(true);
+		if(!fizzle)
+		{
+			CastToClient()->RefreshSpellIcon(true);
+		}
 	}
 
 	// notify people in the area
