@@ -86,7 +86,10 @@ int main() {
 	}
 
 	/* Bootstrap Database updates */
-	database.DBSetup();
+	if (!database.DBSetup())
+	{
+		return 1;
+	}
 
 	/* Register Log System and Settings */
 	database.LoadLogSettings(Log.log_settings);

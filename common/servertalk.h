@@ -954,7 +954,7 @@ struct QSPlayerLogTrade_Struct {
 };
 
 struct QSHandinItems_Struct {
-	char action_type[7]; // handin, return or reward
+	char action_type[7]; // hand in, return or reward
 	uint16 char_slot;
 	uint32 item_id;
 	uint16 charges;
@@ -987,17 +987,20 @@ struct QSPlayerLogNPCKill_Struct{
 	QSPlayerLogNPCKillsPlayers_Struct Chars[0];
 };
 
-struct QSDeleteItems_Struct {
+//struct QSDeleteItems_Struct {
+//	uint16 char_slot;
+//	uint32 item_id;
+//	uint16 charges;
+//};
+
+struct QSPlayerLogItemDelete_Struct {
+	uint32 char_id;
+	uint16 stack_size; // '0' indicates full stack or non-stackable item move
+	uint16 char_count;
 	uint16 char_slot;
 	uint32 item_id;
 	uint16 charges;
-};
-
-struct QSPlayerLogItemDelete_Struct {
-	uint32					char_id;
-	uint16					stack_size; // '0' indicates full stack or non-stackable item move
-	uint16					char_count;
-	QSDeleteItems_Struct	items[0];
+	//QSDeleteItems_Struct	items[0];
 };
 
 struct QSMoveItems_Struct {

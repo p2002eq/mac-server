@@ -286,9 +286,9 @@ void Database::LogPlayerItemDelete(QSPlayerLogItemDelete_Struct* QS, uint32 item
 				"`char_items` = '%i', "
 				"`time` = now();",
 				QS->char_id,
-				QS->items[i].char_slot,
-				QS->items[i].item_id,
-				QS->items[i].charges,
+				QS->char_slot,
+				QS->item_id,
+				QS->charges,
 				QS->stack_size,
 				QS->char_count);
 

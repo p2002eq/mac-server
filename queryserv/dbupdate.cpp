@@ -26,7 +26,10 @@
 
 bool Database::DBSetup()
 {
-	DBSetup_CheckLegacy();
+	if (!DBSetup_CheckLegacy())
+	{
+		return false;
+	}
 	return true;
 }
 

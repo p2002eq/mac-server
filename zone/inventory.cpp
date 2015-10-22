@@ -432,17 +432,16 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 
 		if(m_inv[slot_id]) { delete_count += m_inv.GetItem(slot_id)->GetTotalItemCount(); }
 
-		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogItemDeletes, sizeof(QSPlayerLogItemDelete_Struct) + (sizeof(QSDeleteItems_Struct) * delete_count));
+		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogItemDeletes, sizeof(QSPlayerLogItemDelete_Struct) * delete_count);
 		QSPlayerLogItemDelete_Struct* QS = (QSPlayerLogItemDelete_Struct*)pack->pBuffer;
-		uint16 parent_offset = 0;
 
 		QS->char_id = character_id;
 		QS->stack_size = quantity;
 		QS->char_count = delete_count;
 
-		QS->items[parent_offset].char_slot = slot_id;
-		QS->items[parent_offset].item_id = m_inv[slot_id]->GetID();
-		QS->items[parent_offset].charges = m_inv[slot_id]->GetCharges();
+		QS->char_slot = slot_id;
+		QS->item_id = m_inv[slot_id]->GetID();
+		QS->charges = m_inv[slot_id]->GetCharges();
 
 		if(m_inv[slot_id]->IsType(ItemClassContainer)) {
 			for(uint8 bag_idx = SUB_BEGIN; bag_idx < m_inv[slot_id]->GetItem()->BagSlots; bag_idx++) {
@@ -451,9 +450,9 @@ void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_upd
 				if(bagitem) {
 					int16 bagslot_id = Inventory::CalcSlotId(slot_id, bag_idx);
 
-					QS->items[++parent_offset].char_slot = bagslot_id;
-					QS->items[parent_offset].item_id = bagitem->GetID();
-					QS->items[parent_offset].charges = bagitem->GetCharges();
+					QS->char_slot = bagslot_id;
+					QS->item_id = bagitem->GetID();
+					QS->charges = bagitem->GetCharges();
 				}
 			}
 		}
