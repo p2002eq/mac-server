@@ -326,14 +326,9 @@ RULE_INT ( Combat, RogueDeadlyStrikeMod, 2) //Deadly strike modifier to crit dam
 RULE_INT ( Combat, ClientBaseCritChance, 0 ) //The base crit chance for all clients, this will stack with warrior's/zerker's crit chance.
 RULE_INT ( Combat, PetAttackMagicLevel, 30)
 RULE_BOOL ( Combat, EnableFearPathing, true)
-RULE_INT ( Combat, FleeHPRatio, 25)	  //HP % when a NPC starts to flee.
+RULE_INT ( Combat, FleeHPRatio, 21)	  //HP % under which an NPC starts to flee.
 RULE_REAL ( Combat, FleeMultiplier, 3.25) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
 RULE_BOOL ( Combat, FleeIfNotAlone, false) // If false, mobs won't flee if other mobs are in combat with it.
-RULE_BOOL ( Combat, AdjustProcPerMinute, true)
-RULE_REAL ( Combat, AvgProcsPerMinute, 2.0)
-RULE_REAL ( Combat, ProcPerMinDexContrib, 0.075)
-RULE_REAL ( Combat, BaseProcChance, 0.035)
-RULE_REAL ( Combat, ProcDexDivideBy, 11000)
 RULE_BOOL ( Combat, AdjustSpecialProcPerMinute, true)  //Set PPM for special abilities like HeadShot (Live does this as of 4-14)
 RULE_REAL ( Combat, AvgSpecialProcsPerMinute, 2.0) //Unclear what best value is atm.
 RULE_REAL ( Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
@@ -371,7 +366,6 @@ RULE_BOOL ( Combat, UseArcheryBonusRoll, false) //Make the 51+ archery bonus req
 RULE_INT ( Combat, ArcheryBonusChance, 50)
 RULE_INT ( Combat, BerserkerFrenzyStart, 35)
 RULE_INT ( Combat, BerserkerFrenzyEnd, 45)
-RULE_BOOL ( Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per round
 RULE_REAL ( Combat, PushBackAmount, 1.5)
 RULE_INT ( Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
 RULE_INT ( Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will take to clear assist aggro cap space

@@ -431,7 +431,6 @@ public:
 	inline virtual int32 GetStrikeThrough() const { return itembonuses.StrikeThrough; }
 	inline virtual int32 GetAvoidanceMod() const { return itembonuses.AvoidMeleeChance; }
 	inline virtual int32 GetAccuracy() const { return itembonuses.HitChance; }
-	inline virtual int32 GetCombatEffects() const { return itembonuses.ProcChance; }
 	inline virtual int32 GetDS() const { return itembonuses.DamageShield; }
 	// Mod3
 	inline virtual int32 GetSingMod() const { return itembonuses.singingMod; }
@@ -964,6 +963,7 @@ public:
 
 	void SendMerchantEnd();
 	float GetPortHeading(uint16 newx, uint16 newy);
+	void RefreshSpellIcon(bool disableslot = false);
 
 protected:
 	friend class Mob;

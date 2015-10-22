@@ -2838,11 +2838,6 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 		rproc_chance = spell_list->rproc_chance;
 	}
 
-	if (spell_list->defensive_proc >= 0) {
-		defensive_proc_spell = spell_list->defensive_proc;
-		dproc_chance = spell_list->dproc_chance;
-	}
-
 	//If any casting variables are defined in the current list, ignore those in the parent list.
 	if (spell_list->fail_recast || spell_list->engaged_no_sp_recast_min || spell_list->engaged_no_sp_recast_max
 		|| spell_list->engaged_beneficial_self_chance || spell_list->engaged_beneficial_other_chance || spell_list->engaged_detrimental_chance
@@ -2876,12 +2871,6 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 
 	if (IsValidSpell(attack_proc_spell))
 		AddProcToWeapon(attack_proc_spell, true, proc_chance);
-
-	if (IsValidSpell(range_proc_spell))
-		AddRangedProc(range_proc_spell, (rproc_chance + 100));
-
-	if (IsValidSpell(defensive_proc_spell))
-		AddDefensiveProc(defensive_proc_spell, (dproc_chance + 100));
 
 	//Set AI casting variables
 

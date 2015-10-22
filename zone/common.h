@@ -291,8 +291,6 @@ struct StatBonuses {
 	int32	DamageModifier[HIGHEST_SKILL+2];	//i
 	int32	DamageModifier2[HIGHEST_SKILL+2];	//i
 	int32	MinDamageModifier[HIGHEST_SKILL+2]; //i
-	int32	ProcChance;							// ProcChance/10 == % increase i = CombatEffects
-	int32	ProcChanceSPA;						// ProcChance from spell effects
 	int32	ExtraAttackChance;
 	int32	DoTShielding;
 	int32	DivineSaveChance[2];				// Second Chance (base1 = chance, base2 = spell on trigger)
@@ -327,7 +325,6 @@ struct StatBonuses {
 	//uint16	BlockSpellEffect[EFFECT_COUNT];		// Prevents spells with certain effects from landing on you *no longer used
 	bool	ImmuneToFlee;						// Bypass the fleeing flag
 	uint32	VoiceGraft;							// Stores the ID of the mob with which to talk through
-	int32	SpellProcChance;					// chance to proc from sympathetic spell effects
 	int32	CharmBreakChance;					// chance to break charm
 	int32	SongRange;							// increases range of beneficial bard songs
 	uint32	HPToManaConvert;					// Uses HP to cast spells at specific conversion
@@ -368,8 +365,6 @@ struct StatBonuses {
 	int32   FactionModPct;						// Modifies amount of faction gained.
 	int32	MeleeVulnerability;					// Weakness/mitigation to melee damage
 	bool	LimitToSkill[HIGHEST_SKILL+2];		// Determines if we need to search for a skill proc.
-	uint32  SkillProc[MAX_SKILL_PROCS];			// Max number of spells containing skill_procs.
-	uint32  SkillProcSuccess[MAX_SKILL_PROCS];	// Max number of spells containing skill_procs_success.
 
 	// AAs
 	int8	Packrat;							//weight reduction for items, 1 point = 10%
@@ -392,8 +387,6 @@ struct StatBonuses {
 	bool	SecondaryDmgInc;					// Allow off hand weapon to recieve damage bonus.
 	uint32	GiveDoubleAttack;					// Allow classes to double attack with a specified chance.
 	int32	SlayUndead[2];						// Allow classes to do extra damage verse undead.(base1 = rate, base2 = damage mod)
-	int32	PetCriticalHit;						// Allow pets to critical hit with % value.
-	int32	PetAvoidance;						// Pet avoidance chance.
 	int32	CombatStability;					// Melee damage mitigation.
 	int32	DoubleRiposte;						// Chance to double riposte
 	int32	GiveDoubleRiposte[3];				// 0=Regular Chance, 1=Skill Attack Chance, 2=Skill
