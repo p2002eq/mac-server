@@ -72,7 +72,7 @@ bool Database::Check_Trade_Tables()
 
 bool Database::Create_Trade_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create trade table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create trade table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_player_trade_log` ( "
 		"`char1_id` int(11) DEFAULT '0', "
@@ -139,44 +139,44 @@ bool Database::Copy_Trade_Record()
 
 		std::string query3 = StringFormat(
 			"INSERT into qs_player_trade_log SET "
-			"char1_id='%i', "
-			"char1_pp='%i', "
-			"char1_gp='%i', "
-			"char1_sp='%i', "
-			"char1_cp='%i', "
-			"char1_items='%i', "
-			"char2_id='%i', "
-			"char2_pp='%i', "
-			"char2_gp='%i', "
-			"char2_sp='%i', "
-			"char2_cp='%i', "
-			"char2_items='%i', "
-			"from_id='%i', "
-			"from_slot='%i', "
-			"to_id='%i', "
-			"to_slot='%i', "
-			"item_id='%i', "
-			"charges='%i', "
-			"time='%s'",
-			char1_id,
-			char1_pp,
-			char1_gp,
-			char1_sp,
-			char1_cp,
-			char1_items,
-			char2_id,
-			char2_pp,
-			char2_gp,
-			char2_sp,
-			char2_cp,
-			char2_items,
-			from_id,
-			from_slot,
-			to_id,
-			to_slot,
-			item_id,
-			charges,
-			time.c_str());
+				"`char1_id` = '%i', "
+				"`char1_pp` = '%i', "
+				"`char1_gp` = '%i', "
+				"`char1_sp` = '%i', "
+				"`char1_cp` = '%i', "
+				"`char1_items` = '%i', "
+				"`char2_id` = '%i', "
+				"`char2_pp` = '%i', "
+				"`char2_gp` = '%i', "
+				"`char2_sp` = '%i', "
+				"`char2_cp` = '%i', "
+				"`char2_items` = '%i', "
+				"`from_id` = '%i', "
+				"`from_slot` = '%i', "
+				"`to_id` = '%i', "
+				"`to_slot` = '%i', "
+				"`item_id` = '%i', "
+				"`charges` = '%i', "
+				"`time` = '%s'",
+				char1_id,
+				char1_pp,
+				char1_gp,
+				char1_sp,
+				char1_cp,
+				char1_items,
+				char2_id,
+				char2_pp,
+				char2_gp,
+				char2_sp,
+				char2_cp,
+				char2_items,
+				from_id,
+				from_slot,
+				to_id,
+				to_slot,
+				item_id,
+				charges,
+				time.c_str());
 
 		Log.Out(Logs::Detail, Logs::QS_Server, 
 			"trade_id: %i time: %s\n"
@@ -238,7 +238,7 @@ bool Database::Check_Handin_Tables()
 
 bool Database::Create_Handin_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create handin table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create handin table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_player_handin_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
@@ -320,7 +320,7 @@ bool Database::Copy_Handin_Record()
 				"`npc_sp` = '%i', "
 				"`npc_cp` = '%i', "
 				"`npc_items` = '%i', "
-				"time='%s'",
+				"`time` = '%s'",
 				char_id,
 				action_type.c_str(),
 				quest_id,
@@ -399,7 +399,7 @@ bool Database::Check_NPCKills_Tables()
 
 bool Database::Create_NPCKills_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create npc kills table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create npc kills table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_player_npc_kill_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
@@ -438,16 +438,16 @@ bool Database::Copy_NPCKills_Record()
 
 		std::string query3 = StringFormat(
 			"INSERT into qs_player_npc_kill_log SET "
-			"`char_id` = '%i', "
-			"`npc_id` = '%i', "
-			"`type` = '%i', "
-			"`zone_id` = '%i', "
-			"time='%s'",
-			char_id,
-			npc_id,
-			type,
-			zone_id,
-			time.c_str());
+				"`char_id` = '%i', "
+				"`npc_id` = '%i', "
+				"`type` = '%i', "
+				"`zone_id` = '%i', "
+				"`time` = '%s'",
+				char_id,
+				npc_id,
+				type,
+				zone_id,
+				time.c_str());
 
 		Log.Out(Logs::Detail, Logs::QS_Server,
 			"fight_id: %i npc_id: %i type: %i zone_id: %i time: %s\n"
@@ -505,7 +505,7 @@ bool Database::Check_Merchant_Tables()
 
 bool Database::Create_Merchant_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create merchant table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create merchant table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_merchant_transaction_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
@@ -568,23 +568,23 @@ bool Database::Copy_Merchant_Record()
 
 		std::string query3 = StringFormat(
 			"INSERT into qs_merchant_transaction_log SET "
-				"char_id='%i', "
-				"char_slot='%i', "
-				"item_id='%i', "
-				"charges='%i', "
-				"zone_id='%i', "
-				"merchant_id='%i', "
-				"merchant_pp='%i', "
-				"merchant_gp='%i', "
-				"merchant_sp='%i', "
-				"merchant_cp='%i', "
-				"merchant_items='%i', "
-				"char_pp='%i', "
-				"char_gp='%i', "
-				"char_sp='%i', "
-				"char_cp='%i', "
-				"char_items='%i', "
-				"time='%s'",
+				"`char_id` = '%i', "
+				"`char_slot` = '%i', "
+				"`item_id` = '%i', "
+				"`charges` = '%i', "
+				"`zone_id` = '%i', "
+				"`merchant_id` = '%i', "
+				"`merchant_pp` = '%i', "
+				"`merchant_gp` = '%i', "
+				"`merchant_sp` = '%i', "
+				"`merchant_cp` = '%i', "
+				"`merchant_items` = '%i', "
+				"`char_pp` = '%i', "
+				"`char_gp` = '%i', "
+				"`char_sp` = '%i', "
+				"`char_cp` = '%i', "
+				"`char_items` = '%i', "
+				"`time` = '%s'",
 				char_id,
 				char_slot,
 				item_id,
@@ -662,7 +662,7 @@ bool Database::Check_Delete_Tables()
 
 bool Database::Create_Delete_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create delete table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create delete table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_player_item_delete_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
@@ -705,13 +705,13 @@ bool Database::Copy_Delete_Record()
 
 		std::string query3 = StringFormat(
 			"INSERT into qs_player_item_delete_log SET "
-				"char_id='%i', "
-				"char_slot='%i', "
-				"item_id='%i', "
-				"charges='%i', "
-				"stack_size='%i', "
-				"char_items='%i', "
-				"time='%s'",
+				"`char_id` = '%i', "
+				"`char_slot` = '%i', "
+				"`item_id` = '%i', "
+				"`charges` = '%i', "
+				"`stack_size` = '%i', "
+				"`char_items` = '%i', "
+				"`time` = '%s'",
 				char_id,
 				char_slot,
 				item_id,
@@ -775,7 +775,7 @@ bool Database::Check_ItemMove_Tables()
 
 bool Database::Create_ItemMove_Table()
 {
-	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create item move table.");
+	Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create item move table.");
 	std::string query = StringFormat(
 		"CREATE TABLE `qs_player_item_move_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
@@ -832,7 +832,7 @@ bool Database::Copy_ItemMove_Record()
 				"`stack_size` = '%i', "
 				"`char_items` = '%i', "
 				"`postaction` = '%i', "
-				"time='%s'",
+				"`time` = '%s'",
 				char_id,
 				from_slot,
 				to_slot,
