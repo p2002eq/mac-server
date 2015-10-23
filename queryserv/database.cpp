@@ -94,54 +94,41 @@ void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount)
 		return;
 	}
 
-	std::string query = StringFormat(
-		"INSERT INTO `qs_player_trade_record` SET "
-			"`time` = NOW(), "
-			"`char1_id` = '%i', "
-			"`char1_pp` = '%i', "
-			"`char1_gp` = '%i', "
-			"`char1_sp` = '%i', "
-			"`char1_cp` = '%i', "
-			"`char1_items` = '%i', "
-			"`char2_id` = '%i', "
-			"`char2_pp` = '%i', "
-			"`char2_gp` = '%i', "
-			"`char2_sp` = '%i', "
-			"`char2_cp` = '%i', "
-			"`char2_items` = '%i'",
-			QS->char1_id,
-			QS->char1_money.platinum,
-			QS->char1_money.gold,
-			QS->char1_money.silver,
-			QS->char1_money.copper,
-			QS->char1_count,
-			QS->char2_id,
-			QS->char2_money.platinum,
-			QS->char2_money.gold,
-			QS->char2_money.silver,
-			QS->char2_money.copper,
-			QS->char2_count);
-
-    auto results = QueryDatabase(query);
-	if(!results.Success())
-	{
-		Log.Out(Logs::Detail, Logs::QS_Server, "Failed Trade Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
-	}
-
-	int lastIndex = results.LastInsertedID();
-
     for(uint32 i = 0; i < detailCount; i++)
 	{
-        query = StringFormat(
-			"INSERT INTO `qs_player_trade_record_entries` SET "
-				"`event_id` = '%i', "
+		std::string query = StringFormat(
+			"INSERT INTO `qs_player_trade_log` SET "
+				"`char1_id` = '%i', "
+				"`char1_pp` = '%i', "
+				"`char1_gp` = '%i', "
+				"`char1_sp` = '%i', "
+				"`char1_cp` = '%i', "
+				"`char1_items` = '%i', "
+				"`char2_id` = '%i', "
+				"`char2_pp` = '%i', "
+				"`char2_gp` = '%i', "
+				"`char2_sp` = '%i', "
+				"`char2_cp` = '%i', "
+				"`char2_items` = '%i'"
 				"`from_id` = '%i', "
 				"`from_slot` = '%i', "
 				"`to_id` = '%i', "
 				"`to_slot` = '%i', "
 				"`item_id` = '%i', "
-				"`charges` = '%i'",
-				lastIndex,
+				"`charges` = '%i', "
+				"`time` = NOW();",
+				QS->char1_id,
+				QS->char1_money.platinum,
+				QS->char1_money.gold,
+				QS->char1_money.silver,
+				QS->char1_money.copper,
+				QS->char1_count,
+				QS->char2_id,
+				QS->char2_money.platinum,
+				QS->char2_money.gold,
+				QS->char2_money.silver,
+				QS->char2_money.copper,
+				QS->char2_count,
 				QS->items[i].from_id,
 				QS->items[i].from_slot,
 				QS->items[i].to_id,
@@ -149,7 +136,7 @@ void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount)
 				QS->items[i].item_id,
 				QS->items[i].charges);
 
-        results = QueryDatabase(query);
+        auto results = QueryDatabase(query);
         if(!results.Success())
 		{
 			Log.Out(Logs::Detail, Logs::QS_Server, "Failed Trade Log Record Entry Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());

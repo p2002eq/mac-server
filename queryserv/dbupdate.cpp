@@ -33,6 +33,173 @@ bool Database::DBSetup()
 	return true;
 }
 
+#pragma region Trade Tables
+bool Database::Check_Trade_Tables()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_trade_record'");
+	std::string check_query2 = StringFormat("SHOW TABLES LIKE 'qs_player_trade_record_entries'");
+	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_trade_log'");
+	auto results1 = QueryDatabase(check_query1);
+	auto results2 = QueryDatabase(check_query2);
+	auto results3 = QueryDatabase(check_query3);
+	if (results1.RowCount() == 0 && results2.RowCount() == 0 && results3.RowCount() == 0)
+	{
+		if (!Create_Trade_Table())
+		{
+			return false;
+		}
+	}
+	else if (results3.RowCount() == 0)
+	{
+		if (!Create_Trade_Table())
+		{
+			return false;
+		}
+	}
+
+	if (results1.RowCount() != 0 && results2.RowCount() != 0)
+	{
+		if (Copy_Trade_Record())
+		{
+			std::string drop_query1 = StringFormat("drop table if exists `qs_player_trade_record`;");
+			std::string drop_query2 = StringFormat("drop table if exists `qs_player_trade_record_entries`;");
+			auto drop_results1 = QueryDatabase(drop_query1);
+			auto drop_results2 = QueryDatabase(drop_query2);
+			return true;
+		}
+	}
+	return true;
+}
+
+bool Database::Create_Trade_Table()
+{
+	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create trade table.");
+	std::string query = StringFormat(
+		"CREATE TABLE `qs_player_trade_log` ( "
+		"`char1_id` int(11) DEFAULT '0', "
+		"`char1_pp` int(11) DEFAULT '0', "
+		"`char1_gp` int(11) DEFAULT '0', "
+		"`char1_sp` int(11) DEFAULT '0', "
+		"`char1_cp` int(11) DEFAULT '0', "
+		"`char1_items` mediumint(7) DEFAULT '0', "
+		"`char2_id` int(11) DEFAULT '0', "
+		"`char2_pp` int(11) DEFAULT '0', "
+		"`char2_gp` int(11) DEFAULT '0', "
+		"`char2_sp` int(11) DEFAULT '0', "
+		"`char2_cp` int(11) DEFAULT '0', "
+		"`char2_items` mediumint(7) DEFAULT '0', "
+		"`from_id` int(11) DEFAULT '0', "
+		"`from_slot` mediumint(7) DEFAULT '0', "
+		"`to_id` int(11) DEFAULT '0', "
+		"`to_slot` mediumint(7) DEFAULT '0', "
+		"`item_id` int(11) DEFAULT '0', "
+		"`charges` mediumint(7) DEFAULT '0', "
+		"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+		") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_trade_log. \n%s", query.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool Database::Copy_Trade_Record()
+{
+	std::string query1 = StringFormat("SELECT * from `qs_player_trade_record`");
+	auto results1 = QueryDatabase(query1);
+	for (auto row = results1.begin(); row != results1.end(); ++row)
+	{
+		int32 trade_id = atoi(row[0]);
+		std::string time = row[1];
+		int32 char1_id = atoi(row[2]);
+		int32 char1_pp = atoi(row[3]);
+		int32 char1_gp = atoi(row[4]);
+		int32 char1_sp = atoi(row[5]);
+		int32 char1_cp = atoi(row[6]);
+		int32 char1_items = atoi(row[7]);
+		int32 char2_id = atoi(row[8]);
+		int32 char2_pp = atoi(row[9]);
+		int32 char2_gp = atoi(row[10]);
+		int32 char2_sp = atoi(row[11]);
+		int32 char2_cp = atoi(row[12]);
+		int32 char2_items = atoi(row[13]);
+
+		std::string query2 = StringFormat("SELECT * from `qs_player_trade_record_entries` WHERE `event_id` = '%i'", trade_id);
+		auto results2 = QueryDatabase(query2);
+
+		auto row2 = results2.begin();
+		int32 event_id = atoi(row2[0]);
+		int32 from_id = atoi(row2[1]);
+		int32 from_slot = atoi(row2[2]);
+		int32 to_id = atoi(row2[3]);
+		int32 to_slot = atoi(row2[4]);
+		int32 item_id = atoi(row2[5]);
+		int32 charges = atoi(row2[6]);
+
+		std::string query3 = StringFormat(
+			"INSERT into qs_player_trade_log SET "
+			"char1_id='%i', "
+			"char1_pp='%i', "
+			"char1_gp='%i', "
+			"char1_sp='%i', "
+			"char1_cp='%i', "
+			"char1_items='%i', "
+			"char2_id='%i', "
+			"char2_pp='%i', "
+			"char2_gp='%i', "
+			"char2_sp='%i', "
+			"char2_cp='%i', "
+			"char2_items='%i', "
+			"from_id='%i', "
+			"from_slot='%i', "
+			"to_id='%i', "
+			"to_slot='%i', "
+			"item_id='%i', "
+			"charges='%i', "
+			"time='%s'",
+			char1_id,
+			char1_pp,
+			char1_gp,
+			char1_sp,
+			char1_cp,
+			char1_items,
+			char2_id,
+			char2_pp,
+			char2_gp,
+			char2_sp,
+			char2_cp,
+			char2_items,
+			from_id,
+			from_slot,
+			to_id,
+			to_slot,
+			item_id,
+			charges,
+			time.c_str());
+
+		Log.Out(Logs::Detail, Logs::QS_Server, 
+			"trade_id: %i time: %s\n"
+			"char1_id: %i char1_pp: %i char1_gp: %i char1_sp: %i char1_cp: %i char1_items: %i\n"
+			"char2_id: %i char2_pp: %i char2_gp: %i char2_sp: %i char2_cp: %i char2_items: %i\n"
+			"event_id: %i from_id: %i from_slot: %i to_id: %i to_slot: %i item_id: %i charges: %i\n",
+			trade_id, time.c_str(),
+			char1_id, char1_pp, char1_gp, char1_sp, char1_cp, char1_items,
+			char2_id, char2_pp, char2_gp, char2_sp, char2_cp, char2_items,
+			event_id, from_id, from_slot, to_id, to_slot, item_id, charges);
+
+		auto results3 = QueryDatabase(query3);
+		if (!results3.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_trade_log: \n%s", query3.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+#pragma endregion
+
 #pragma region Merchant Tables
 bool Database::Check_Merchant_Tables()
 {
@@ -305,6 +472,10 @@ bool Database::Copy_Delete_Record()
 
 bool Database::DBSetup_CheckLegacy()
 {
+	if (!Check_Trade_Tables())
+	{
+		return false;
+	}
 	if (!Check_Delete_Tables())
 	{
 		return false;

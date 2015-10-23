@@ -64,6 +64,10 @@ public:
 	bool Create_Delete_Table();
 	bool Copy_Delete_Record();
 
+	bool Check_Trade_Tables();
+	bool Create_Trade_Table();
+	bool Copy_Trade_Record();
+
 	bool Check_Merchant_Tables();
 	bool Create_Merchant_Table();
 	bool Copy_Merchant_Record();
