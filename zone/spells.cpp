@@ -201,7 +201,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	//cannot cast under divine aura
 	if(DivineAura()) {
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: cannot cast while Divine Aura is in effect.");
-		InterruptSpell(SPELL_FIZZLE, CC_User_SpellFailure, false);
+		InterruptSpell(SPELL_FIZZLE, CC_User_SpellFailure, spell_id, true);
 		return(false);
 	}
 
@@ -231,7 +231,7 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	if(slot < MAX_PP_MEMSPELL && !CheckFizzle(spell_id))
 	{
 		int fizzle_msg = IsBardSong(spell_id) ? MISS_NOTE : SPELL_FIZZLE;
-		InterruptSpell(fizzle_msg, CC_User_SpellFailure, spell_id);
+		InterruptSpell(fizzle_msg, CC_User_SpellFailure, spell_id, true);
 
 		uint32 use_mana = ((spells[spell_id].mana) / 4);
 		Log.Out(Logs::Detail, Logs::Spells, "Spell casting canceled: fizzled. %d mana has been consumed", use_mana);
@@ -800,7 +800,7 @@ void Mob::InterruptSpell(uint16 spellid)
 	InterruptSpell(message, CC_User_Spells, spellid);
 }
 
-void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid)
+void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid, bool fizzle)
 {
 	EQApplicationPacket *outapp;
 	uint16 message_other;
@@ -851,6 +851,11 @@ void Mob::InterruptSpell(uint16 message, uint16 color, uint16 spellid)
 		safe_delete(outapp);
 
 		SendSpellBarEnable(spellid);
+
+		if(!fizzle)
+		{
+			CastToClient()->RefreshSpellIcon(true);
+		}
 	}
 
 	// notify people in the area
@@ -2087,14 +2092,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				casterPos2d.y = GetY();
 				float distance2d = Distance(casterPos2d, targetPos2d);
 
-				float headingRadians = GetHeading();
-				headingRadians = (headingRadians * 360.0f) / 256.0f;	// convert to degrees first; heading range is 0-255
-				if (headingRadians < 270)
-					headingRadians += 90;
-				else
-					headingRadians -= 270;
-
-				headingRadians = headingRadians * 3.1415f / 180.0f;
+				float headingRadians = GetHeadingRadians();
 
 				// direction vector of caster with magnitude of caster to target distance
 				casterHeadingV.x = cosf(headingRadians) * distance2d;
@@ -3768,7 +3766,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 				if(spelltar->IsAIControlled())
 				{
-					int32 aggro = CheckAggroAmount(spell_id, spelltar, jolthate);
+					int32 aggro = CheckAggroAmount(spell_id, spelltar, jolthate, isproc);
 					if(aggro > 0) 
 					{
 						if(!IsHarmonySpell(spell_id))
@@ -4876,14 +4874,6 @@ void Mob::Spin() {
 	}
 }
 
-void Mob::SendSpellBarDisable()
-{
-	if (!IsClient())
-		return;
-
-	CastToClient()->MemorizeSpell(0, SPELLBAR_UNLOCK, memSpellSpellbar);
-}
-
 // this puts the spell bar back into a usable state fast
 void Mob::SendSpellBarEnable(uint16 spell_id)
 {
@@ -5264,8 +5254,8 @@ bool Mob::IsCombatProc(uint16 spell_id) {
 	{
 
 		for (int i = 0; i < MAX_PROCS; i++){
-			if (PermaProcs[i].spellID == spell_id || SpellProcs[i].spellID == spell_id
-				 || RangedProcs[i].spellID == spell_id){
+			if (PermaProcs[i].spellID == spell_id || SpellProcs[i].spellID == spell_id)
+			{
 				return true;
 			}
 		}
@@ -5313,70 +5303,6 @@ bool Mob::RemoveProcFromWeapon(uint16 spell_id, bool bAll) {
 			SpellProcs[i].chance = 0;
 			SpellProcs[i].base_spellID = SPELL_UNKNOWN;
 			Log.Out(Logs::Detail, Logs::Spells, "Removed proc %d from slot %d", spell_id, i);
-		}
-	}
-	return true;
-}
-
-bool Mob::AddDefensiveProc(uint16 spell_id, uint16 iChance, uint16 base_spell_id)
-{
-	if(spell_id == SPELL_UNKNOWN)
-		return(false);
-
-	int i;
-	for (i = 0; i < MAX_PROCS; i++) {
-		if (DefensiveProcs[i].spellID == SPELL_UNKNOWN) {
-			DefensiveProcs[i].spellID = spell_id;
-			DefensiveProcs[i].chance = iChance;
-			DefensiveProcs[i].base_spellID = base_spell_id;
-			Log.Out(Logs::Detail, Logs::Spells, "Added spell-granted defensive proc spell %d with chance %d to slot %d", spell_id, iChance, i);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool Mob::RemoveDefensiveProc(uint16 spell_id, bool bAll)
-{
-	for (int i = 0; i < MAX_PROCS; i++) {
-		if (bAll || DefensiveProcs[i].spellID == spell_id) {
-			DefensiveProcs[i].spellID = SPELL_UNKNOWN;
-			DefensiveProcs[i].chance = 0;
-			DefensiveProcs[i].base_spellID = SPELL_UNKNOWN;
-			Log.Out(Logs::Detail, Logs::Spells, "Removed defensive proc %d from slot %d", spell_id, i);
-		}
-	}
-	return true;
-}
-
-bool Mob::AddRangedProc(uint16 spell_id, uint16 iChance, uint16 base_spell_id)
-{
-	if(spell_id == SPELL_UNKNOWN)
-		return(false);
-
-	int i;
-	for (i = 0; i < MAX_PROCS; i++) {
-		if (RangedProcs[i].spellID == SPELL_UNKNOWN) {
-			RangedProcs[i].spellID = spell_id;
-			RangedProcs[i].chance = iChance;
-			RangedProcs[i].base_spellID = base_spell_id;
-			Log.Out(Logs::Detail, Logs::Spells, "Added spell-granted ranged proc spell %d with chance %d to slot %d", spell_id, iChance, i);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool Mob::RemoveRangedProc(uint16 spell_id, bool bAll)
-{
-	for (int i = 0; i < MAX_PROCS; i++) {
-		if (bAll || RangedProcs[i].spellID == spell_id) {
-			RangedProcs[i].spellID = SPELL_UNKNOWN;
-			RangedProcs[i].chance = 0;
-			RangedProcs[i].base_spellID = SPELL_UNKNOWN;
-			Log.Out(Logs::Detail, Logs::Spells, "Removed ranged proc %d from slot %d", spell_id, i);
 		}
 	}
 	return true;
@@ -5563,4 +5489,32 @@ bool Mob::IsPacified()
 	}
 	
 	return false;
+}
+
+void Client::RefreshSpellIcon(bool disableslot)
+{
+	for (unsigned int i = 0; i < MAX_PP_MEMSPELL; ++i)
+	{
+		if (IsValidSpell(m_pp.mem_spells[i]) && p_timers.Enabled(pTimerSpellStart + m_pp.mem_spells[i]))
+		{
+			m_pp.spellSlotRefresh[i] = p_timers.GetRemainingTime(pTimerSpellStart + m_pp.mem_spells[i]);
+			if(disableslot)
+			{
+				if(m_pp.spellSlotRefresh[i] > 0)
+				{
+					MemorizeSpell(i, m_pp.mem_spells[i], memSpellSpellbar);
+					Log.Out(Logs::General, Logs::Spells, "Sending slot disable for spell %d in slot %d which has %d seconds left", m_pp.mem_spells[i], i, m_pp.spellSlotRefresh[i]);
+				}
+			}
+			else
+			{
+				if(m_pp.spellSlotRefresh[i] == 0)
+				{
+					MemorizeSpell(i, SPELLBAR_UNLOCK, memSpellSpellbar);
+					Log.Out(Logs::General, Logs::Spells, "Sending slot enable for spell %d in slot %d", m_pp.mem_spells[i], i);
+					p_timers.Clear(&database, pTimerSpellStart + m_pp.mem_spells[i]);
+				}
+			}
+		}
+	}
 }

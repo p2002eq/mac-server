@@ -512,7 +512,8 @@ bool Client::Process() {
 			safe_delete(outapp);
 		}
 
-		if (tic_timer.Check() && !dead) {
+		if (tic_timer.Check() && !dead) 
+		{
 			CalcMaxHP();
 			CalcMaxMana();
 			CalcATK();
@@ -522,13 +523,20 @@ bool Client::Process() {
 			DoManaRegen();
 			DoEnduranceRegen();
 			BuffProcess();
-			DoStaminaUpdate();
+			RefreshSpellIcon();
 
-			if (fishing_timer.Check()) {
+			if(stamina_timer.Check()) 
+			{
+				DoStaminaUpdate();
+			}
+
+			if (fishing_timer.Check()) 
+			{
 				GoFish();
 			}
 
-			if (autosave_timer.Check()) {
+			if (autosave_timer.Check()) 
+			{
 				Save(0);
 			}
 
@@ -1010,12 +1018,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 			int charges = 1;
 			if(database.ItemQuantityType(item->ID) == Quantity_Charges)
 			{
-				if(ml.charges > 0)
-				{
-					charges = zone->GetTempMerchantQtyNoSlot(npcid, item->ID);
-				}
-				else
-					charges = 1;
+				charges = zone->GetTempMerchantQtyNoSlot(npcid, item->ID);
 			}
 			ItemInst* inst = database.CreateItem(item, charges);
 			if (inst) {
@@ -1026,10 +1029,8 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 					inst->SetPrice((item->Price * (RuleR(Merchant, SellCostMod)) * item->SellRate));
 				inst->SetMerchantSlot(ml.slot);
 				inst->SetMerchantCount(ml.charges);
-				if(charges > 0)
-					inst->SetCharges(charges);
-				else
-					inst->SetCharges(1);
+				inst->SetCharges(charges);
+		
 				if(inst) 
 				{
 					std::string packet = inst->Serialize(ml.slot-1);
@@ -1836,9 +1837,6 @@ void Client::DoManaRegen() {
 
 
 void Client::DoStaminaUpdate() {
-
-	if(!stamina_timer.Check())
-		return;
 
 	//Change timers based on race. The shorter the timer, the more food is consumed.
 	if(stamina_timer.GetDuration() == 40000)

@@ -175,9 +175,9 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 		return true;
 	}
 
-	int32 toHit = attacker->GetToHit(skillinuse);
-	int32 avoidance = defender->GetAvoidance();
-	int32 percentMod = 0;
+	int toHit = attacker->GetToHit(skillinuse);
+	int avoidance = defender->GetAvoidance();
+	int percentMod = 0;
 	
 	Log.Out(Logs::Detail, Logs::Attack, "AvoidanceCheck: %s attacked by %s;  Avoidance: %i  To-Hit: %i", defender->GetName(), attacker->GetName(), avoidance, toHit);
 
@@ -201,13 +201,13 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 	if (percentMod != 0)
 	{
 		if (skillinuse == SkillArchery && percentMod > 0)
-			percentMod -= static_cast<int32>(static_cast<float>(percentMod) * RuleR(Combat, ArcheryHitPenalty));
+			percentMod -= static_cast<int>(static_cast<float>(percentMod) * RuleR(Combat, ArcheryHitPenalty));
 
 		Log.Out(Logs::Detail, Logs::Attack, "Modified chance to hit: %i%%", percentMod);
 
 		if (percentMod > 0)
 		{
-			if (zone->random.Int(0, 100) < percentMod)
+			if (zone->random.Roll(percentMod))
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Hit");
 				return true;
@@ -215,7 +215,7 @@ bool Mob::AvoidanceCheck(Mob* attacker, SkillUseTypes skillinuse, int16 chance_m
 		}
 		else
 		{
-			if (zone->random.Int(0, 100) < -percentMod)
+			if (zone->random.Roll(-percentMod))
 			{
 				Log.Out(Logs::Detail, Logs::Attack, "Modified Miss");
 				return false;
@@ -432,7 +432,7 @@ bool Mob::AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte, bool isRange
 	of the curve are added together.  This is not a perfect representation of Sony's function, but fairly close.
 
 	Returns a value from 1 to 20, inclusive.*/
-int8 Mob::RollD20(int32 offense, int32 mitigation)
+int Mob::RollD20(int32 offense, int32 mitigation)
 {
 	double diff = static_cast<double>(offense) - static_cast<double>(mitigation);
 	double mean = 0;
@@ -757,9 +757,34 @@ int Mob::GetWeaponDamage(Mob *against, const ItemInst *weapon_item, uint32 *hate
 // divide by 100 after
 uint32 Client::RollDamageMultiplier(uint32 offense)
 {
-	// 80% chance to apply a damage multiplier roll for clients if sufficient offense
-	// many logs were parsed for this
-	if (offense > 153 && zone->random.Int(1, 100) > 20)
+	// many logs were parsed for this; may not be complete however
+	int rollChance = 50;
+
+	if (GetLevel() >= 60)
+	{
+		rollChance = 80;
+	}
+	else if (GetLevel() >= 56)
+	{
+		if (GetClass() == MONK)
+		{
+			rollChance = 75;
+		}
+		else
+		{
+			rollChance = 70;
+		}
+	}
+	else if (GetLevel() > 50)
+	{
+		rollChance = 65;
+	}
+	else if (GetClass() == MONK)
+	{
+		rollChance = 55;
+	}
+
+	if (offense > 153 && zone->random.Roll(rollChance))
 	{
 		uint32 roll;
 		if (GetLevel() <= 50)
@@ -854,11 +879,40 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 	int damage = 1;
 	uint8 mylevel = GetLevel() ? GetLevel() : 1;
 	uint32 hate = 0;
+	int weapon_damage = GetWeaponDamage(other, weapon, &hate);
 	if (weapon)
 	{
-		hate = weapon->GetItem()->Damage + weapon->GetItem()->ElemDmgAmt;
+		hate = weapon->GetItem()->Damage + weapon->GetItem()->ElemDmgAmt + weapon->GetItem()->BaneDmgAmt;
 	}
-	int weapon_damage = GetWeaponDamage(other, weapon, &hate);
+	else if (GetClass() == MONK)
+	{
+		hate = GetMonkHandToHandDamage();
+	}
+	else
+	{
+		hate = 4;		// how much damage is non-monk hand-to-hand?
+	}
+
+	// SE_MinDamageModifier for disciplines: Fellstrike, Innerflame, Duelist, Bestial Rage
+	// min hit becomes 4 x weapon damage + 1 x damage bonus
+	int minDmgModDmg = weapon_damage * GetMeleeMinDamageMod_SE(skillinuse) / 100;
+
+	// SE_DamageModifier for Disciplines: Aggressive, Defensive, Fellstrike, Duelist, Innerflame, Bestial Rage
+	// For fellstrke, innerflame, duelist, and bestial rage max hit should be 2 x weapon dmg + 1 x dmg bonus
+	// Under defensive, max roll becomes 9, so meleedmgmod should be -55
+	int meleeDmgMod = GetMeleeDamageMod_SE(skillinuse);
+	if (meleeDmgMod)
+	{
+		weapon_damage += weapon_damage * meleeDmgMod / 100;
+		hate += hate * meleeDmgMod / 100;
+	}
+
+	int damageBonus = 0;
+	if (Hand == MainPrimary && mylevel >= 28 && IsWarriorClass())
+	{
+		damageBonus = GetWeaponDamageBonus(weapon ? weapon->GetItem() : (const Item_Struct*) nullptr);
+		hate += damageBonus;
+	}
 
 	if(weapon_damage < 1)
 	{
@@ -907,12 +961,12 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			if(TryFinishingBlow(other, skillinuse))
 				return (true);
 
-			int32 offense = GetOffense(skillinuse);
-			int32 mitigation = other->GetMitigation();
+			int offense = GetOffense(skillinuse);
+			int mitigation = other->GetMitigation();
 
 			if (opts)
 			{
-				mitigation = static_cast<int32>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
+				mitigation = static_cast<int>((1.0f - opts->armor_pen_percent) * static_cast<float>(mitigation));
 				mitigation -= opts->armor_pen_flat;
 				if (mitigation < 1)
 				{
@@ -921,7 +975,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			}
 
 			// mitigation roll
-			uint16 roll = RollD20(offense, mitigation);
+			int roll = RollD20(offense, mitigation);
 
 			if (other->IsClient())
 			{
@@ -936,14 +990,6 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 				}
 			}
 
-			// SE_MinDamageModifier for disciplines: Fellstrike, Innerflame, Duelist, Bestial Rage
-			// min hit becomes 4 x weapon damage + 1 x damage bonus
-			int32 minDmgModDmg = weapon_damage * GetMeleeMinDamageMod_SE(skillinuse) / 100;
-
-			// SE_DamageModifier for Disciplines: Aggressive, Defensive, Fellstrike, Duelist, Innerflame, Bestial Rage
-			// for fellstrke, innerflame, duelist, and bestial rage max hit should be 2 x weapon dmg + 1 x dmg bonus
-			weapon_damage += weapon_damage * GetMeleeDamageMod_SE(skillinuse) / 100;
-
 			damage = (roll * weapon_damage * 10 + 5) / 100;				// damage rounds to nearest whole number
 			damage = damage * RollDamageMultiplier(offense) / 100;		// client only damage multiplier
 			
@@ -955,22 +1001,10 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 			CheckIncreaseSkill(skillinuse, other, zone->skill_difficulty[skillinuse].difficulty);
 			CheckIncreaseSkill(SkillOffense, other, zone->skill_difficulty[SkillOffense].difficulty);
 
-			// ***************************************************************
-			// *** Calculate the damage bonus, if applicable, for this hit ***
-			// ***************************************************************
+			damage += damageBonus;
 
-			int ucDamageBonus = 0;
-
-			if (Hand == MainPrimary && mylevel >= 28 && IsWarriorClass())
-			{
-				ucDamageBonus = GetWeaponDamageBonus(weapon ? weapon->GetItem() : (const Item_Struct*) nullptr);
-
-				damage += ucDamageBonus;
-				hate += ucDamageBonus;
-			}
-
-			minDmgModDmg += ucDamageBonus;
-			int min_hit = (weapon_damage + 5) / 10 + ucDamageBonus;		// +5 is to round to nearest whole number
+			minDmgModDmg += damageBonus;
+			int min_hit = (weapon_damage + 5) / 10 + damageBonus;		// +5 is to round to nearest whole number
 
 			if (min_hit < minDmgModDmg) min_hit = minDmgModDmg;
 			if (min_hit < 1) min_hit = 1;
@@ -2967,41 +3001,6 @@ bool Mob::HasProcs() const
 	return false;
 }
 
-bool Mob::HasDefensiveProcs() const
-{
-	for (int i = 0; i < MAX_PROCS; i++)
-		if (DefensiveProcs[i].spellID != SPELL_UNKNOWN)
-			return true;
-	return false;
-}
-
-bool Mob::HasSkillProcs() const
-{
-
-	for(int i = 0; i < MAX_SKILL_PROCS; i++){
-		if (spellbonuses.SkillProc[i] || itembonuses.SkillProc[i] || aabonuses.SkillProc[i])
-			return true;
-	}
-	return false;
-}
-
-bool Mob::HasSkillProcSuccess() const
-{
-	for(int i = 0; i < MAX_SKILL_PROCS; i++){
-		if (spellbonuses.SkillProcSuccess[i] || itembonuses.SkillProcSuccess[i] || aabonuses.SkillProcSuccess[i])
-			return true;
-	}
-	return false;
-}
-
-bool Mob::HasRangedProcs() const
-{
-	for (int i = 0; i < MAX_PROCS; i++)
-		if (RangedProcs[i].spellID != SPELL_UNKNOWN)
-			return true;
-	return false;
-}
-
 bool Client::CheckDoubleAttack(bool tripleAttack) {
 
 	//Check for bonuses that give you a double attack chance regardless of skill (ie Bestial Frenzy/Harmonious Attack AA)
@@ -3488,79 +3487,32 @@ void Mob::HealDamage(uint32 amount, Mob *caster, uint16 spell_id)
 	}
 }
 
-//proc chance includes proc bonus
-float Mob::GetProcChances(float ProcBonus, uint16 hand)
+float Mob::GetProcChance(uint16 hand)
 {
-	int mydex = GetDEX();
-	float ProcChance = 0.0f;
+	double chance = 0.0;
+	double weapon_speed = GetWeaponSpeedbyHand(hand);
+	weapon_speed /= 100.0;
 
-	uint32 weapon_speed = GetWeaponSpeedbyHand(hand);
+	double dex = GetDEX();
+	if (dex > 255.0)
+		dex = 255.0;		// proc chance caps at 255 (possibly 250; need more logs)
+	
+	/* Kind of ugly, but results are very accurate
+	   Proc chance is a linear function based on dexterity
+	   0.0004166667 == base proc chance at 1 delay with 0 dex (~0.25 PPM for main hand)
+	   1.1437908496732e-5 == chance increase per point of dex at 1 delay
+	   Result is 0.25 PPM at 0 dex, 2 PPM at 255 dex
+	*/
+	chance = static_cast<float>((0.0004166667 + 1.1437908496732e-5 * dex) * weapon_speed);
 
-	if (RuleB(Combat, AdjustProcPerMinute)) {
-		ProcChance = (static_cast<float>(weapon_speed) *
-				RuleR(Combat, AvgProcsPerMinute) / 60000.0f); // compensate for weapon_speed being in ms
-		ProcBonus += static_cast<float>(mydex) * RuleR(Combat, ProcPerMinDexContrib);
-		ProcChance += ProcChance * ProcBonus / 100.0f;
-	} else {
-		ProcChance = RuleR(Combat, BaseProcChance) +
-			static_cast<float>(mydex) / RuleR(Combat, ProcDexDivideBy);
-		ProcChance += ProcChance * ProcBonus / 100.0f;
-	}
-
-	Log.Out(Logs::Detail, Logs::Combat, "Proc chance %.2f (%.2f from bonuses)", ProcChance, ProcBonus);
-	return ProcChance;
-}
-
-float Mob::GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand, Mob* on) {
-
-	if (!on)
-		return ProcChance;
-
-	int myagi = on->GetAGI();
-	ProcBonus = 0;
-	ProcChance = 0;
-
-	uint32 weapon_speed = GetWeaponSpeedbyHand(hand);
-
-	ProcChance = (static_cast<float>(weapon_speed) * RuleR(Combat, AvgDefProcsPerMinute) / 60000.0f); // compensate for weapon_speed being in ms
-	ProcBonus += static_cast<float>(myagi) * RuleR(Combat, DefProcPerMinAgiContrib) / 100.0f;
-	ProcChance = ProcChance + (ProcChance * ProcBonus);
-
-	Log.Out(Logs::Detail, Logs::Combat, "Defensive Proc chance %.2f (%.2f from bonuses)", ProcChance, ProcBonus);
-	return ProcChance;
-}
-
-// argument 'weapon' not used
-void Mob::TryDefensiveProc(const ItemInst* weapon, Mob *on, uint16 hand) {
-
-	if (!on) {
-		SetTarget(nullptr);
-		Log.Out(Logs::General, Logs::Error, "A null Mob object was passed to Mob::TryDefensiveProc for evaluation!");
-		return;
-	}
-
-	bool bDefensiveProc = HasDefensiveProcs();
-
-	if (!bDefensiveProc)
-		return;
-
-	float ProcChance, ProcBonus;
-	on->GetDefensiveProcChances(ProcBonus, ProcChance, hand , this);
-
-	if(hand != MainPrimary)
-		ProcChance /= 2;
-
-		if (bDefensiveProc){
-			for (int i = 0; i < MAX_PROCS; i++) {
-				if (IsValidSpell(DefensiveProcs[i].spellID)) {
-					float chance = ProcChance * (static_cast<float>(DefensiveProcs[i].chance)/100.0f);
-					if (zone->random.Roll(chance)) {
-						ExecWeaponProc(nullptr, DefensiveProcs[i].spellID, on);
-						CheckNumHitsRemaining(NUMHIT_DefensiveSpellProcs,0,DefensiveProcs[i].base_spellID);
-					}
-				}
-			}
-		}
+	if (hand == MainSecondary)
+	{
+		chance /= 1.6f;				// parses show offhand procs at half the rate,
+	}								// but dual wield doesn't always succeed, so
+									// divide by 1.6 instead of 2.0
+	
+	Log.Out(Logs::Detail, Logs::Combat, "Proc chance %.2f", chance);
+	return chance;
 }
 
 void Mob::TryWeaponProc(const ItemInst* weapon_g, Mob *on, uint16 hand) {
@@ -3585,8 +3537,6 @@ void Mob::TryWeaponProc(const ItemInst* weapon_g, Mob *on, uint16 hand) {
 		return;
 	}
 
-	// Innate + aug procs from weapons
-	// TODO: powersource procs
 	TryWeaponProc(weapon_g, weapon_g->GetItem(), on, hand);
 	// Procs from Buffs and AA both melee and range
 	TrySpellProc(weapon_g, weapon_g->GetItem(), on, hand);
@@ -3596,66 +3546,50 @@ void Mob::TryWeaponProc(const ItemInst* weapon_g, Mob *on, uint16 hand) {
 
 void Mob::TryWeaponProc(const ItemInst *inst, const Item_Struct *weapon, Mob *on, uint16 hand)
 {
-
 	if (!weapon)
 		return;
-	uint16 skillinuse = 28;
-	int ourlevel = GetLevel();
-	float ProcBonus = static_cast<float>(aabonuses.ProcChanceSPA +
-			spellbonuses.ProcChanceSPA + itembonuses.ProcChanceSPA);
-	ProcBonus += static_cast<float>(itembonuses.ProcChance) / 10.0f; // Combat Effects
-	float ProcChance = GetProcChances(ProcBonus, hand);
 
-	if (hand != MainPrimary) //Is Archery intened to proc at 50% rate?
-		ProcChance /= 2;
+	float ProcChance = GetProcChance(hand);
 
-	// Try innate proc on weapon
-	// We can proc once here, either weapon or one aug
-	bool proced = false; // silly bool to prevent augs from going if weapon does
-	skillinuse = GetSkillByItemType(weapon->ItemType);
-	if (weapon->Proc.Type == ET_CombatProc) {
-		float WPC = ProcChance * (100.0f + // Proc chance for this weapon
-				static_cast<float>(weapon->ProcRate)) / 100.0f;
-		if (zone->random.Roll(WPC)) {	// 255 dex = 0.084 chance of proc. No idea what this number should be really.
-			if (weapon->Proc.Level > ourlevel) {
+	if (weapon->Proc.Type == ET_CombatProc)
+	{
+		float WPC = ProcChance * (100.0f + static_cast<float>(weapon->ProcRate)) / 100.0f;
+
+		if (zone->random.Roll(WPC))
+		{
+			if (weapon->Proc.Level > GetLevel())
+			{
 				Log.Out(Logs::Detail, Logs::Combat,
 						"Tried to proc (%s), but our level (%d) is lower than required (%d)",
-						weapon->Name, ourlevel, weapon->Proc.Level);
-				if (IsPet()) {
+						weapon->Name, GetLevel(), weapon->Proc.Level);
+
+				if (IsPet())
+				{
 					Mob *own = GetOwner();
 					if (own)
 						own->Message_StringID(CC_Red, PROC_PETTOOLOW);
-				} else {
+				}
+				else
+				{
 					Message_StringID(CC_Red, PROC_TOOLOW);
 				}
-			} else {
+			}
+			else
+			{
 				Log.Out(Logs::Detail, Logs::Combat,
 						"Attacking weapon (%s) successfully procing spell %d (%.2f percent chance)",
 						weapon->Name, weapon->Proc.Effect, WPC * 100);
+
 				ExecWeaponProc(inst, weapon->Proc.Effect, on);
-				proced = true;
 			}
 		}
 	}
-	//If OneProcPerWeapon is not enabled, we reset the try for that weapon regardless of if we procced or not.
-	//This is for some servers that may want to have as many procs triggering from weapons as possible in a single round.
-	if(!RuleB(Combat, OneProcPerWeapon))
-		proced = false;
-
-	// TODO: Powersource procs
-
 	return;
 }
 
 void Mob::TrySpellProc(const ItemInst *inst, const Item_Struct *weapon, Mob *on, uint16 hand)
 {
-	float ProcBonus = static_cast<float>(spellbonuses.SpellProcChance +
-			itembonuses.SpellProcChance + aabonuses.SpellProcChance);
-	float ProcChance = 0.0f;
-	ProcChance = GetProcChances(ProcBonus, hand);
-
-	if (hand != MainPrimary) //Is Archery intened to proc at 50% rate?
-		ProcChance /= 2;
+	float ProcChance = GetProcChance(hand);
 
 	bool rangedattk = false;
 	if (weapon && hand == MainRange) {
@@ -3704,100 +3638,16 @@ void Mob::TrySpellProc(const ItemInst *inst, const Item_Struct *weapon, Mob *on,
 							i, SpellProcs[i].spellID, chance);
 				}
 			}
-		} else if (rangedattk) { // ranged only
-			// ranged spell procs (buffs)
-			if (RangedProcs[i].spellID != SPELL_UNKNOWN) {
-				float chance = ProcChance * (static_cast<float>(RangedProcs[i].chance) / 100.0f);
-					if (zone->random.Roll(chance)) {
-					Log.Out(Logs::Detail, Logs::Combat,
-							"Ranged proc %d procing spell %d (%.2f percent chance)",
-							i, RangedProcs[i].spellID, chance);
-					ExecWeaponProc(nullptr, RangedProcs[i].spellID, on);
-					CheckNumHitsRemaining(NUMHIT_OffensiveSpellProcs, 0, RangedProcs[i].base_spellID);
-				} else {
-					Log.Out(Logs::Detail, Logs::Combat,
-							"Ranged proc %d failed to proc %d (%.2f percent chance)",
-							i, RangedProcs[i].spellID, chance);
-				}
-			}
 		}
-	}
-
-	if (HasSkillProcs() && hand != MainRange){ //We check ranged skill procs within the attack functions.
-		uint16 skillinuse = 28;
-		if (weapon)
-			skillinuse = GetSkillByItemType(weapon->ItemType);
-
-		TrySkillProc(on, skillinuse, 0, false, hand);
 	}
 
 	return;
-}
-
-void Mob::TryPetCriticalHit(Mob *defender, uint16 skill, int32 &damage)
-{
-	if(damage < 1)
-		return;
-
-	//Allows pets to perform critical hits.
-	//Each rank adds an additional 1% chance for any melee hit (primary, secondary, kick, bash, etc) to critical,
-	//dealing up to 63% more damage. http://www.magecompendium.com/aa-short-library.html
-
-	Mob *owner = nullptr;
-	float critChance = 0.0f;
-	critChance += RuleI(Combat, MeleeBaseCritChance);
-	uint32 critMod = 163;
-
-	if (damage < 1) //We can't critical hit if we don't hit.
-		return;
-
-	if (IsPet())
-		owner = GetOwner();
-	else if ((IsNPC() && CastToNPC()->GetSwarmOwner()))
-		owner = entity_list.GetMobID(CastToNPC()->GetSwarmOwner());
-	else
-		return;
-
-	if (!owner)
-		return;
-
-	int32 CritPetChance = owner->aabonuses.PetCriticalHit + owner->itembonuses.PetCriticalHit + owner->spellbonuses.PetCriticalHit;
-	int32 CritChanceBonus = GetCriticalChanceBonus(skill);
-
-	if (CritPetChance || critChance) {
-
-		//For pets use PetCriticalHit for base chance, pets do not innately critical with without it
-		//even if buffed with a CritChanceBonus effects.
-		critChance += CritPetChance;
-		critChance += critChance*CritChanceBonus/100.0f;
-	}
-
-	if(critChance > 0){
-
-		critChance /= 100;
-
-		if(zone->random.Roll(critChance))
-		{
-			critMod += GetCritDmgMob(skill) * 2; // To account for base crit mod being 200 not 100
-			damage = (damage * critMod) / 100;
-			entity_list.FilteredMessageClose_StringID(this, false, 200,
-					MT_CritMelee, FilterMeleeCrits, CRITICAL_HIT,
-					GetCleanName(), itoa(damage));
-		}
-	}
 }
 
 void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttackOptions *opts)
 {
 	if(damage < 1)
 		return;
-
-	// decided to branch this into it's own function since it's going to be duplicating a lot of the
-	// code in here, but could lead to some confusion otherwise
-	if ((IsPet() && GetOwner()->IsClient()) || (IsNPC() && CastToNPC()->GetSwarmOwner())) {
-		TryPetCriticalHit(defender,skill,damage);
-		return;
-	}
 
 	float critChance = 0.0f;
 	bool IsBerskerSPA = false;
@@ -4058,183 +3908,6 @@ uint16 Mob::GetDamageTable()
 			return caps[level - 51];
 		}
 	}
-}
-
-void Mob::TrySkillProc(Mob *on, uint16 skill, uint16 ReuseTime, bool Success, uint16 hand, bool IsDefensive)
-{
-
-	if (!on) {
-		SetTarget(nullptr);
-		Log.Out(Logs::General, Logs::Error, "A null Mob object was passed to Mob::TrySkillProc for evaluation!");
-		return;
-	}
-
-	if (!spellbonuses.LimitToSkill[skill] && !itembonuses.LimitToSkill[skill] && !aabonuses.LimitToSkill[skill])
-		return;
-
-	/*Allow one proc from each (Spell/Item/AA)
-	Kayen: Due to limited avialability of effects on live it is too difficult
-	to confirm how they stack at this time, will adjust formula when more data is avialablle to test.*/
-	bool CanProc = true;
-
-	uint16 base_spell_id = 0;
-	uint16 proc_spell_id = 0;
-	float ProcMod = 0;
-	float chance = 0;
-
-	if (IsDefensive)
-		chance = on->GetSkillProcChances(ReuseTime, hand);
-	else
-		chance = GetSkillProcChances(ReuseTime, hand);
-
-	if (spellbonuses.LimitToSkill[skill]){
-
-		for(int e = 0; e < MAX_SKILL_PROCS; e++){
-
-			if (CanProc &&
-				(!Success && spellbonuses.SkillProc[e] && IsValidSpell(spellbonuses.SkillProc[e]))
-				|| (Success && spellbonuses.SkillProcSuccess[e] && IsValidSpell(spellbonuses.SkillProcSuccess[e]))) {
-				base_spell_id = spellbonuses.SkillProc[e];
-				base_spell_id = 0;
-				ProcMod = 0;
-
-				for (int i = 0; i < EFFECT_COUNT; i++) {
-
-					if (spells[base_spell_id].effectid[i] == SE_SkillProc) {
-						proc_spell_id = spells[base_spell_id].base[i];
-						ProcMod = static_cast<float>(spells[base_spell_id].base2[i]);
-					}
-
-					else if (spells[base_spell_id].effectid[i] == SE_LimitToSkill && spells[base_spell_id].effectid[i] <= HIGHEST_SKILL) {
-
-						if (CanProc && spells[base_spell_id].base[i] == skill && IsValidSpell(proc_spell_id)) {
-							float final_chance = chance * (ProcMod / 100.0f);
-							if (zone->random.Roll(final_chance)) {
-								ExecWeaponProc(nullptr, proc_spell_id, on);
-								CheckNumHitsRemaining(NUMHIT_OffensiveSpellProcs,0, base_spell_id);
-								CanProc = false;
-								break;
-							}
-						}
-					}
-					else {
-						proc_spell_id = 0;
-						ProcMod = 0;
-					}
-				}
-			}
-		}
-	}
-
-	if (itembonuses.LimitToSkill[skill]){
-		CanProc = true;
-		for(int e = 0; e < MAX_SKILL_PROCS; e++){
-
-			if (CanProc &&
-				(!Success && itembonuses.SkillProc[e] && IsValidSpell(itembonuses.SkillProc[e]))
-				|| (Success && itembonuses.SkillProcSuccess[e] && IsValidSpell(itembonuses.SkillProcSuccess[e]))) {
-				base_spell_id = itembonuses.SkillProc[e];
-				base_spell_id = 0;
-				ProcMod = 0;
-
-				for (int i = 0; i < EFFECT_COUNT; i++) {
-
-					if (spells[base_spell_id].effectid[i] == SE_SkillProc) {
-						proc_spell_id = spells[base_spell_id].base[i];
-						ProcMod = static_cast<float>(spells[base_spell_id].base2[i]);
-					}
-
-					else if (spells[base_spell_id].effectid[i] == SE_LimitToSkill && spells[base_spell_id].effectid[i] <= HIGHEST_SKILL) {
-
-						if (CanProc && spells[base_spell_id].base[i] == skill && IsValidSpell(proc_spell_id)) {
-							float final_chance = chance * (ProcMod / 100.0f);
-							if (zone->random.Roll(final_chance)) {
-								ExecWeaponProc(nullptr, proc_spell_id, on);
-								CanProc = false;
-								break;
-							}
-						}
-					}
-					else {
-						proc_spell_id = 0;
-						ProcMod = 0;
-					}
-				}
-			}
-		}
-	}
-
-	if (IsClient() && aabonuses.LimitToSkill[skill]){
-
-		CanProc = true;
-		uint32 effect = 0;
-		int32 base1 = 0;
-		int32 base2 = 0;
-		uint32 slot = 0;
-
-		for(int e = 0; e < MAX_SKILL_PROCS; e++){
-
-			if (CanProc &&
-				(!Success && aabonuses.SkillProc[e])
-				|| (Success && aabonuses.SkillProcSuccess[e])){
-				int aaid = aabonuses.SkillProc[e];
-				base_spell_id = 0;
-				ProcMod = 0;
-
-				std::map<uint32, std::map<uint32, AA_Ability> >::const_iterator find_iter = aa_effects.find(aaid);
-				if(find_iter == aa_effects.end())
-					break;
-
-				for (std::map<uint32, AA_Ability>::const_iterator iter = aa_effects[aaid].begin(); iter != aa_effects[aaid].end(); ++iter) {
-					effect = iter->second.skill_id;
-					base1 = iter->second.base1;
-					base2 = iter->second.base2;
-					slot = iter->second.slot;
-
-					if (effect == SE_SkillProc) {
-						proc_spell_id = base1;
-						ProcMod = static_cast<float>(base2);
-					}
-
-					else if (effect == SE_LimitToSkill && effect <= HIGHEST_SKILL) {
-
-						if (CanProc && base1 == skill && IsValidSpell(proc_spell_id)) {
-							float final_chance = chance * (ProcMod / 100.0f);
-
-							if (zone->random.Roll(final_chance)) {
-								ExecWeaponProc(nullptr, proc_spell_id, on);
-								CanProc = false;
-								break;
-							}
-						}
-					}
-					else {
-						proc_spell_id = 0;
-						ProcMod = 0;
-					}
-				}
-			}
-		}
-	}
-}
-
-float Mob::GetSkillProcChances(uint16 ReuseTime, uint16 hand) {
-
-	uint32 weapon_speed;
-	float ProcChance = 0;
-
-	if (!ReuseTime && hand) {
-		weapon_speed = GetWeaponSpeedbyHand(hand);
-		ProcChance = static_cast<float>(weapon_speed) * (RuleR(Combat, AvgProcsPerMinute) / 60000.0f);
-
-		if (hand != MainPrimary)
-			ProcChance /= 2;
-	}
-
-	else
-		ProcChance = static_cast<float>(ReuseTime) * (RuleR(Combat, AvgProcsPerMinute) / 60000.0f);
-
-	return ProcChance;
 }
 
 bool Mob::TryRootFadeByDamage(int buffslot, Mob* attacker) {
@@ -4571,12 +4244,20 @@ uint32 NPC::GetAttackTimer()
 
 // crude approximation until I can come up with something more accurate
 // finding out how much str or weapon skill an NPC has is sort of impossible after all
-int32 Mob::GetOffense(int hand)
+int Mob::GetOffense(int hand)
 {
-	return GetLevel() * 65 / 10 - 1 + ATK;
+	int offense = GetLevel() * 65 / 10 - 1 + ATK;
+	int bonus = 0;
+
+	if (spellbonuses.ATK < 0 && -spellbonuses.ATK > (offense / 2))
+	{
+		return offense / 2;
+	}
+
+	return offense + spellbonuses.ATK;
 }
 
-int32 Client::GetOffense(SkillUseTypes weaponSkill)
+int Client::GetOffense(SkillUseTypes weaponSkill)
 {
 	// this is the precise formula Sony/DBG uses, at least for clients
 	// reminder: implement atk cap and primal weapon proc to item atk instead of spell atk logic
@@ -4590,16 +4271,16 @@ int32 Client::GetOffense(SkillUseTypes weaponSkill)
 	{
 		statBonus = GetSTR();
 	}
-	int32 offense = (GetSkill(weaponSkill) + ATK + (statBonus > 75 ? ((2 * statBonus - 250) / 3) : 0));
+	int offense = GetSkill(weaponSkill) + spellbonuses.ATK + (statBonus > 75 ? ((2 * statBonus - 150) / 3) : 0);
 	if (offense < 1)
 	{
 		offense = 1;
 	}
-
+	
 	return offense * 1000 / 744;
 }
 
-int32 Client::GetOffense(int hand)
+int Client::GetOffense(int hand)
 {
 	ItemInst* weapon;
 
@@ -4624,7 +4305,7 @@ int32 Client::GetOffense(int hand)
 
 // very crude approximation that I will refine as data is created and evaluated
 // still way better than before
-int32 Mob::GetToHit(int hand)
+int Mob::GetToHit(int hand)
 {
 	int32 accuracy = 0;
 
@@ -4644,7 +4325,7 @@ int32 Mob::GetToHit(int hand)
 	return GetLevel() * 14 + 5 + accuracy;
 }
 
-int32 Client::GetToHit(SkillUseTypes weaponSkill)
+int Client::GetToHit(SkillUseTypes weaponSkill)
 {
 	int32 accuracy = itembonuses.Accuracy[HIGHEST_SKILL + 1] +
 		spellbonuses.Accuracy[HIGHEST_SKILL + 1] +
@@ -4663,7 +4344,7 @@ int32 Client::GetToHit(SkillUseTypes weaponSkill)
 	return toHit;
 }
 
-int32 Client::GetToHit(int hand)
+int Client::GetToHit(int hand)
 {
 	ItemInst* weapon;
 
@@ -4689,7 +4370,7 @@ int32 Client::GetToHit(int hand)
 // NOTE: Current database AC values are completely out of whack and pulled from nowhere
 // using this crude algorithm as a temporary placeholder until I get the data to adjust
 // database values permanently.  If I didn't do this, players would have a really hard time
-int32 Mob::GetMitigation()
+int Mob::GetMitigation()
 {
 	if (GetLevel() < 10)
 	{
@@ -4715,7 +4396,7 @@ int32 Mob::GetMitigation()
 // This returns the mitigation portion of the client AC value
 // this is accurate and based on a Sony developer post
 // See https://forums.daybreakgames.com/eq/index.php?threads/ac-vs-acv2.210028/
-int32 Client::GetMitigation()
+int Client::GetMitigation()
 {
 	int32 acSum = itembonuses.AC;
 	uint8 playerClass = GetClass();
@@ -5074,7 +4755,7 @@ int32 Client::GetMitigation()
 
 // crude estimate based on arena test dummy data
 // will refine this as data is generated and evaluated
-int32 Mob::GetAvoidance()
+int Mob::GetAvoidance()
 {
 	uint8 level = GetLevel();
 
@@ -5094,7 +4775,7 @@ int32 Mob::GetAvoidance()
 
 // this is the precise formula that Sony/DBG uses
 // minus the drunkeness reduction (add this later)
-int32 Client::GetAvoidance()
+int Client::GetAvoidance()
 {
 	int32 defense = GetSkill(SkillDefense);
 

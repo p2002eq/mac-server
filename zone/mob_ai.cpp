@@ -176,9 +176,12 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 
-					case SpellType_Escape: {
-						if (GetHPRatio() <= 5 )
+					case SpellType_Escape:
+					{
+						if (!roamer && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
+							&& DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) > 40000)
 						{
+							entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
@@ -793,9 +796,12 @@ void Client::AI_Process()
 				{
 					if(GetTarget())
 						SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+					animation = 0;
+					SetCurrentSpeed(0.0f);
 					SetRunAnimSpeed(0);
-					SendPosition();
 					SetMoving(false);
+					SendPosition();
+					SendPosUpdate(2);
 					moved=false;
 				}
 				//continue on to attack code, ensuring that we execute the engaged code
@@ -803,10 +809,10 @@ void Client::AI_Process()
 			} else {
 				if(AImovement_timer->Check()) {
 					float f_speed = GetFearSpeed();
-					SetCurrentSpeed(f_speed);
-					if (f_speed > 0.0f)
+					if (f_speed >= 0.1f)
 					{
 						animation = static_cast<uint16>(f_speed * 10.0f);
+						SetCurrentSpeed(f_speed);
 						// Check if we have reached the last fear point
 						if((std::abs(GetX()-m_FearWalkTarget.x) < 0.1) && (std::abs(GetY()-m_FearWalkTarget.y) <0.1)) {
 							// Calculate a new point to run to
@@ -826,13 +832,28 @@ void Client::AI_Process()
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, f_speed);
 						}
+					} else {
+						animation = 0;
+						SetCurrentSpeed(0.0f);
+						if(IsMoving())
+						{
+							if(GetTarget())
+								SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));	
+							animation = 0;
+							SetCurrentSpeed(0.0f);
+							SetRunAnimSpeed(0);
+							SetMoving(false);
+							SendPosition();
+							SendPosUpdate(2);
+							moved=false;
+						}
 					}
 				}
 				return;
 			}
 		}
 	}
-
+	Mob *cur_tar = GetTarget();
 	if (engaged)
 	{
 		if (camp_timer.Enabled())
@@ -875,14 +896,27 @@ void Client::AI_Process()
 			}
 
 			if (AImovement_timer->Check()) {
+				animation = 0;
+				SetCurrentSpeed(0.0f);
 				SetRunAnimSpeed(0);
 			}
 			if(IsMoving()) {
+				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				animation = 0;
+				SetCurrentSpeed(0.0f);
+				SetRunAnimSpeed(0);
 				SetMoving(false);
+				SendPosition();
+				SendPosUpdate(2);
 				moved=false;
+				tar_ndx = 20;
+			} else if (cur_tar && cur_tar != GetTarget()) {
+				animation = 0;
+				SetRunAnimSpeed(0);
+				SetMoving(false);
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
 				SendPosition();
-				tar_ndx = 20;
+				SendPosUpdate(2);
 			}
 
 			if(GetTarget() && !IsStunned() && !IsMezzed() && !GetFeigned()) {
@@ -981,11 +1015,11 @@ void Client::AI_Process()
 			if(!IsRooted())
 			{
 				if(AImovement_timer->Check()) {
-					float r_speed = GetRunspeed();
-					animation = static_cast<uint16>(r_speed * 10.0f);
-					SetCurrentSpeed(r_speed);
-					if (r_speed > 0)
+					float r_speed = GetRunspeed();				
+					if (r_speed >= 0.1f)
 					{
+						animation = static_cast<uint16>(r_speed * 10.0f);
+						SetCurrentSpeed(r_speed);
 						if(!RuleB(Pathing, Aggro) || !zone->pathing)
 							CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), r_speed);
 						else
@@ -999,16 +1033,42 @@ void Client::AI_Process()
 
 							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, r_speed);
 						}
+					} else {
+						animation = 0;
+						SetRunAnimSpeed(0);
+						SetCurrentSpeed(0.0f);
+						if(IsMoving()) {
+							SetMoving(false);
+							moved=false;
+							SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+							SendPosition();
+							SendPosUpdate(2);
+							tar_ndx = 20;
+						} else if (cur_tar && cur_tar != GetTarget()) {
+							SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+							SendPosition();
+							SendPosUpdate(2);
+						}
 					}
 				}
 			}
 			else if(IsMoving())
 			{
 				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				animation = 0;
 				SetRunAnimSpeed(0);
-				SendPosition();
+				SetCurrentSpeed(0.0f);
 				SetMoving(false);
+				SendPosition();
+				SendPosUpdate(2);
 				moved=false;
+			} else if (cur_tar && cur_tar != GetTarget()) {
+				animation = 0;
+				SetRunAnimSpeed(0);
+				SetCurrentSpeed(0.0f);
+				SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
+				SendPosition();
+				SendPosUpdate(2);
 			}
 		}
 		AI_SpellCast();
@@ -1045,10 +1105,21 @@ void Client::AI_Process()
 			{
 				float speed = dist >= 225 ? GetRunspeed() : GetWalkspeed();
 				SetCurrentSpeed(speed);
-				if (speed > 0.0f)
+				if (speed >= 0.1f)
 				{
 					animation = static_cast<uint16>(10.0f * speed);
 					CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
+				} else {
+					animation = 0;
+					SetRunAnimSpeed(0);
+					SetCurrentSpeed(0.0f);
+					if(IsMoving()) {
+						SetMoving(false);
+						moved=false;
+						SendPosition();
+						SendPosUpdate(2);
+						tar_ndx = 20;
+					}
 				}
 			}
 			else
@@ -1056,10 +1127,12 @@ void Client::AI_Process()
 				SetHeading(owner->GetHeading());
 				if(moved)
 				{
+					animation = 0;
 					moved=false;
+					SetRunAnimSpeed(0);
 					SetMoving(false);
 					SendPosition();
-					SetRunAnimSpeed(0);
+					SendPosUpdate(2);
 				}
 			}
 		}
@@ -1213,8 +1286,6 @@ void Mob::AI_Process() {
 		CastToNPC()->CheckSignal();
 	}
 
-	Mob *oldTarget = target;
-
 	if (engaged)
 	{
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1250,10 +1321,6 @@ void Mob::AI_Process() {
 		{
 			RemoveFromHateList(this);
 			return;
-		}
-		if (oldTarget != target)
-		{
-			FaceTarget(target);
 		}
 
 		if(DivineAura())
@@ -1297,6 +1364,10 @@ void Mob::AI_Process() {
 				SetHeading(CalculateHeadingToTarget(target->GetX(), target->GetY()));
 				SendPosition();
 				tar_ndx =0;
+			}
+			else if (!IsFacingTarget())
+			{
+				FaceTarget(target);
 			}
 
 			//casting checked above...
@@ -1528,7 +1599,8 @@ void Mob::AI_Process() {
 						SetMoving(false);
 						moved=false;
 					}
-					else if(IsRooted()){
+					else if (!IsFacingTarget())
+					{
 						FaceTarget(target);
 					}
 				}
@@ -1714,7 +1786,6 @@ void Mob::AI_Process() {
 						CastToNPC()->AI_DoMovement();
 					}
 				}
-
 			}
 		} // else if (AImovement_timer->Check())
 	}
@@ -2766,11 +2837,6 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 		rproc_chance = spell_list->rproc_chance;
 	}
 
-	if (spell_list->defensive_proc >= 0) {
-		defensive_proc_spell = spell_list->defensive_proc;
-		dproc_chance = spell_list->dproc_chance;
-	}
-
 	//If any casting variables are defined in the current list, ignore those in the parent list.
 	if (spell_list->fail_recast || spell_list->engaged_no_sp_recast_min || spell_list->engaged_no_sp_recast_max
 		|| spell_list->engaged_beneficial_self_chance || spell_list->engaged_beneficial_other_chance || spell_list->engaged_detrimental_chance
@@ -2804,12 +2870,6 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 
 	if (IsValidSpell(attack_proc_spell))
 		AddProcToWeapon(attack_proc_spell, true, proc_chance);
-
-	if (IsValidSpell(range_proc_spell))
-		AddRangedProc(range_proc_spell, (rproc_chance + 100));
-
-	if (IsValidSpell(defensive_proc_spell))
-		AddDefensiveProc(defensive_proc_spell, (dproc_chance + 100));
 
 	//Set AI casting variables
 
