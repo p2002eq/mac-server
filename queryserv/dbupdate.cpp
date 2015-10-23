@@ -65,7 +65,6 @@ bool Database::Check_Trade_Tables()
 			std::string drop_query2 = StringFormat("drop table if exists `qs_player_trade_record_entries`;");
 			auto drop_results1 = QueryDatabase(drop_query1);
 			auto drop_results2 = QueryDatabase(drop_query2);
-			return true;
 		}
 	}
 	return true;
@@ -193,6 +192,273 @@ bool Database::Copy_Trade_Record()
 		if (!results3.Success())
 		{
 			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_trade_log: \n%s", query3.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+#pragma endregion
+
+#pragma region Handin Tables
+bool Database::Check_Handin_Tables()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_handin_record'");
+	std::string check_query2 = StringFormat("SHOW TABLES LIKE 'qs_player_handin_record_entries'");
+	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_handin_log'");
+	auto results1 = QueryDatabase(check_query1);
+	auto results2 = QueryDatabase(check_query2);
+	auto results3 = QueryDatabase(check_query3);
+	if (results1.RowCount() == 0 && results2.RowCount() == 0 && results3.RowCount() == 0)
+	{
+		if (!Create_Handin_Table())
+		{
+			return false;
+		}
+	}
+	else if (results3.RowCount() == 0)
+	{
+		if (!Create_Handin_Table())
+		{
+			return false;
+		}
+	}
+
+	if (results1.RowCount() != 0 && results2.RowCount() != 0)
+	{
+		if (Copy_Handin_Record())
+		{
+			std::string drop_query1 = StringFormat("drop table if exists `qs_player_handin_record`;");
+			std::string drop_query2 = StringFormat("drop table if exists `qs_player_handin_record_entries`;");
+			auto drop_results1 = QueryDatabase(drop_query1);
+			auto drop_results2 = QueryDatabase(drop_query2);
+		}
+	}
+	return true;
+}
+
+bool Database::Create_Handin_Table()
+{
+	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create handin table.");
+	std::string query = StringFormat(
+		"CREATE TABLE `qs_player_handin_log` ( "
+		"`char_id` int(11) DEFAULT '0', "
+		"`action_type` char(6) DEFAULT 'action', "
+		"`quest_id` int(11) DEFAULT '0', "
+		"`char_slot` mediumint(7) DEFAULT '0', "
+		"`item_id` int(11) DEFAULT '0', "
+		"`charges` mediumint(7) DEFAULT '0', "
+		"`char_pp` int(11) DEFAULT '0', "
+		"`char_gp` int(11) DEFAULT '0', "
+		"`char_sp` int(11) DEFAULT '0', "
+		"`char_cp` int(11) DEFAULT '0', "
+		"`char_items` mediumint(7) DEFAULT '0', "
+		"`npc_id` int(11) DEFAULT '0', "
+		"`npc_pp` int(11) DEFAULT '0', "
+		"`npc_gp` int(11) DEFAULT '0', "
+		"`npc_sp` int(11) DEFAULT '0', "
+		"`npc_cp` int(11) DEFAULT '0', "
+		"`npc_items` mediumint(7) DEFAULT '0', "
+		"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+		") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_handin_log. \n%s", query.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool Database::Copy_Handin_Record()
+{
+	std::string query1 = StringFormat("SELECT * from `qs_player_handin_record`");
+	auto results1 = QueryDatabase(query1);
+	for (auto row = results1.begin(); row != results1.end(); ++row)
+	{
+		int32 handin_id = atoi(row[0]);
+		std::string time = row[1];
+		int32 quest_id = atoi(row[2]);
+		int32 char_id = atoi(row[3]);
+		int32 char_pp = atoi(row[4]);
+		int32 char_gp = atoi(row[5]);
+		int32 char_sp = atoi(row[6]);
+		int32 char_cp = atoi(row[7]);
+		int32 char_items = atoi(row[8]);
+		int32 npc_id = atoi(row[9]);
+		int32 npc_pp = atoi(row[10]);
+		int32 npc_gp = atoi(row[11]);
+		int32 npc_sp = atoi(row[12]);
+		int32 npc_cp = atoi(row[13]);
+		int32 npc_items = atoi(row[14]);
+
+		std::string query2 = StringFormat("SELECT * from `qs_player_handin_record_entries` WHERE `event_id` = '%i'", handin_id);
+		auto results2 = QueryDatabase(query2);
+
+		auto row2 = results2.begin();
+		int32 event_id = atoi(row2[0]);
+		std::string action_type = row2[1];
+		int32 char_slot = atoi(row2[2]);
+		int32 item_id = atoi(row2[3]);
+		int32 charges = atoi(row2[3]);
+
+		std::string query3 = StringFormat(
+			"INSERT into qs_player_handin_log SET "
+				"`char_id` = '%i', "
+				"`action_type` = '%s', "
+				"`quest_id` = '%i', "
+				"`char_slot` = '%i', "
+				"`item_id` = '%i', "
+				"`charges` = '%i', "
+				"`char_pp` = '%i', "
+				"`char_gp` = '%i', "
+				"`char_sp` = '%i', "
+				"`char_cp` = '%i', "
+				"`char_items` = '%i', "
+				"`npc_id` = '%i', "
+				"`npc_pp` = '%i', "
+				"`npc_gp` = '%i', "
+				"`npc_sp` = '%i', "
+				"`npc_cp` = '%i', "
+				"`npc_items` = '%i', "
+				"time='%s'",
+				char_id,
+				action_type.c_str(),
+				quest_id,
+				char_slot,
+				item_id,
+				charges,
+				char_pp,
+				char_gp,
+				char_sp,
+				char_cp,
+				char_items,
+				npc_id,
+				npc_pp,
+				npc_gp,
+				npc_sp,
+				npc_cp,
+				npc_items,
+				time.c_str());
+
+		Log.Out(Logs::Detail, Logs::QS_Server, "handin_id: %i time: %s quest_id: %i\n"
+			"char_id: %i char_pp: %i char_gp: %i char_sp: %i char_cp: %i char_items: %i\n"
+			"npc_id: %i npc_pp: %i npc_gp: %i npc_sp: %i npc_cp: %i npc_items: %i \n"
+			"event_id: %i action_type: %s char_slot: %i item_id: %i charges: %i\n",
+			handin_id, time.c_str(), quest_id,
+			char_id, char_pp, char_gp, char_sp, char_cp, char_items,
+			npc_id, npc_pp, npc_gp, npc_sp, npc_cp, npc_items,
+			event_id, action_type.c_str(), char_slot, item_id, charges);
+
+		auto results3 = QueryDatabase(query3);
+		if (!results3.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_handin_log: \n%s", query3.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+#pragma endregion
+
+#pragma region NPCKills
+bool Database::Check_NPCKills_Tables()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_npc_kill_record'");
+	std::string check_query2 = StringFormat("SHOW TABLES LIKE 'qs_player_npc_kill_record_entries'");
+	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_npc_kill_log'");
+	auto results1 = QueryDatabase(check_query1);
+	auto results2 = QueryDatabase(check_query2);
+	auto results3 = QueryDatabase(check_query3);
+	if (results1.RowCount() == 0 && results2.RowCount() == 0 && results3.RowCount() == 0)
+	{
+		if (!Create_NPCKills_Table())
+		{
+			return false;
+		}
+	}
+	else if (results3.RowCount() == 0)
+	{
+		if (!Create_NPCKills_Table())
+		{
+			return false;
+		}
+	}
+
+	if (results1.RowCount() != 0 && results2.RowCount() != 0)
+	{
+		if (Copy_NPCKills_Record())
+		{
+			std::string drop_query1 = StringFormat("drop table if exists `qs_player_npc_kill_record`;");
+			std::string drop_query2 = StringFormat("drop table if exists `qs_player_npc_kill_record_entries`;");
+			auto drop_results1 = QueryDatabase(drop_query1);
+			auto drop_results2 = QueryDatabase(drop_query2);
+		}
+	}
+	return true;
+}
+
+bool Database::Create_NPCKills_Table()
+{
+	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create npc kills table.");
+	std::string query = StringFormat(
+		"CREATE TABLE `qs_player_npc_kill_log` ( "
+		"`char_id` int(11) DEFAULT '0', "
+		"`npc_id` int(11) DEFAULT NULL, "
+		"`type` int(11) DEFAULT NULL, "
+		"`zone_id` int(11) DEFAULT NULL, "
+		"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+		") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_npc_kill_log. \n%s", query.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool Database::Copy_NPCKills_Record()
+{
+	std::string query1 = StringFormat("SELECT * from `qs_player_npc_kill_record`");
+	auto results1 = QueryDatabase(query1);
+	for (auto row = results1.begin(); row != results1.end(); ++row)
+	{
+		int32 fight_id = atoi(row[0]);
+		int32 npc_id = atoi(row[1]);
+		int32 type = atoi(row[2]);
+		int32 zone_id = atoi(row[3]);
+		std::string time = row[4];
+
+		std::string query2 = StringFormat("SELECT * from `qs_player_npc_kill_record_entries` WHERE `event_id` = '%i'", fight_id);
+		auto results2 = QueryDatabase(query2);
+
+		auto row2 = results2.begin();
+		int32 event_id = atoi(row2[0]);
+		int32 char_id = atoi(row2[1]);
+
+		std::string query3 = StringFormat(
+			"INSERT into qs_player_npc_kill_log SET "
+			"`char_id` = '%i', "
+			"`npc_id` = '%i', "
+			"`type` = '%i', "
+			"`zone_id` = '%i', "
+			"time='%s'",
+			char_id,
+			npc_id,
+			type,
+			zone_id,
+			time.c_str());
+
+		Log.Out(Logs::Detail, Logs::QS_Server,
+			"fight_id: %i npc_id: %i type: %i zone_id: %i time: %s\n"
+			"event_id: %i char_id: %i\n",
+			fight_id, npc_id, type, zone_id, time.c_str(),
+			event_id, char_id);
+
+		auto results3 = QueryDatabase(query3);
+		if (!results3.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_npc_kill_log: \n%s", query3.c_str());
 			return false;
 		}
 	}
@@ -362,7 +628,7 @@ bool Database::Check_Delete_Tables()
 {
 	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_delete_record'");
 	std::string check_query2 = StringFormat("SHOW TABLES LIKE 'qs_player_delete_record_entries'");
-	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_Item_deletes'");
+	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_item_delete_log'");
 	auto results1 = QueryDatabase(check_query1);
 	auto results2 = QueryDatabase(check_query2);
 	auto results3 = QueryDatabase(check_query3);
@@ -398,7 +664,7 @@ bool Database::Create_Delete_Table()
 {
 	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create delete table.");
 	std::string query = StringFormat(
-		"CREATE TABLE `qs_player_Item_deletes` ( "
+		"CREATE TABLE `qs_player_item_delete_log` ( "
 		"`char_id` int(11) DEFAULT '0', "
 		"`char_slot` mediumint(7) DEFAULT '0', "
 		"`item_id` int(11) DEFAULT '0', "
@@ -410,7 +676,7 @@ bool Database::Create_Delete_Table()
 	auto results = QueryDatabase(query);
 	if (!results.Success())
 	{
-		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_Item_deletes. \n%s", query.c_str());
+		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_item_delete_log. \n%s", query.c_str());
 		return false;
 	}
 	return true;
@@ -438,7 +704,7 @@ bool Database::Copy_Delete_Record()
 		int32 charges = atoi(row2[3]);
 
 		std::string query3 = StringFormat(
-			"INSERT into qs_player_Item_deletes SET "
+			"INSERT into qs_player_item_delete_log SET "
 				"char_id='%i', "
 				"char_slot='%i', "
 				"item_id='%i', "
@@ -462,7 +728,131 @@ bool Database::Copy_Delete_Record()
 		auto results3 = QueryDatabase(query3);
 		if (!results3.Success())
 		{
-			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_Item_deletes: \n%s", query3.c_str());
+			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_item_delete_log: \n%s", query3.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+#pragma endregion
+
+#pragma region ItemMove Tables
+bool Database::Check_ItemMove_Tables()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_move_record'");
+	std::string check_query2 = StringFormat("SHOW TABLES LIKE 'qs_player_move_record_entries'");
+	std::string check_query3 = StringFormat("SHOW TABLES LIKE 'qs_player_item_move_log'");
+	auto results1 = QueryDatabase(check_query1);
+	auto results2 = QueryDatabase(check_query2);
+	auto results3 = QueryDatabase(check_query3);
+	if (results1.RowCount() == 0 && results2.RowCount() == 0 && results3.RowCount() == 0)
+	{
+		if (!Create_ItemMove_Table())
+		{
+			return false;
+		}
+	}
+	else if (results3.RowCount() == 0)
+	{
+		if (!Create_ItemMove_Table())
+		{
+			return false;
+		}
+	}
+
+	if (results1.RowCount() != 0 && results2.RowCount() != 0)
+	{
+		if (Copy_ItemMove_Record())
+		{
+			std::string drop_query1 = StringFormat("drop table if exists `qs_player_move_record`;");
+			std::string drop_query2 = StringFormat("drop table if exists `qs_player_move_record_entries`;");
+			auto drop_results1 = QueryDatabase(drop_query1);
+			auto drop_results2 = QueryDatabase(drop_query2);
+		}
+	}
+	return true;
+}
+
+bool Database::Create_ItemMove_Table()
+{
+	Log.Out(Logs::General, Logs::QS_Server, "Attempting to create item move table.");
+	std::string query = StringFormat(
+		"CREATE TABLE `qs_player_item_move_log` ( "
+		"`char_id` int(11) DEFAULT '0', "
+		"`from_slot` mediumint(7) DEFAULT '0', "
+		"`to_slot` mediumint(7) DEFAULT '0', "
+		"`item_id` int(11) DEFAULT '0', "
+		"`charges` mediumint(7) DEFAULT '0', "
+		"`stack_size` mediumint(7) DEFAULT '0', "
+		"`char_items` mediumint(7) DEFAULT '0', "
+		"`postaction` tinyint(1) DEFAULT '0', "
+		"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+		") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_item_move_log. \n%s", query.c_str());
+		return false;
+	}
+	return true;
+}
+
+bool Database::Copy_ItemMove_Record()
+{
+	std::string query1 = StringFormat("SELECT * from `qs_player_move_record`");
+	auto results1 = QueryDatabase(query1);
+	for (auto row = results1.begin(); row != results1.end(); ++row)
+	{
+		int32 move_id = atoi(row[0]);
+		std::string time = row[1];
+		int32 char_id = atoi(row[2]);
+		int32 from_slot = atoi(row[3]);
+		int32 to_slot = atoi(row[4]);
+		int32 stack_size = atoi(row[5]);
+		int32 char_items = atoi(row[6]);
+		int32 postaction = atoi(row[7]);
+
+		std::string query2 = StringFormat("SELECT * from `qs_player_move_record_entries` WHERE `event_id` = '%i'", move_id);
+		auto results2 = QueryDatabase(query2);
+
+		auto row2 = results2.begin();
+		int32 event_id = atoi(row2[0]);
+		int32 from_slot2 = atoi(row[1]);
+		int32 to_slot2 = atoi(row[2]);
+		int32 item_id = atoi(row2[3]);
+		int32 charges = atoi(row2[4]);
+
+		std::string query3 = StringFormat(
+			"INSERT into qs_player_item_move_log SET "
+				"`char_id` = '%i', "
+				"`from_slot` = '%i', "
+				"`to_slot` = '%i', "
+				"`item_id` = '%i', "
+				"`charges` = '%i', "
+				"`stack_size` = '%i', "
+				"`char_items` = '%i', "
+				"`postaction` = '%i', "
+				"time='%s'",
+				char_id,
+				from_slot,
+				to_slot,
+				item_id,
+				charges,
+				stack_size,
+				char_items,
+				postaction,
+				time.c_str());
+
+		Log.Out(Logs::Detail, Logs::QS_Server,
+			"move_id: %i time: %s char_id: %i from_slot: %i to_slot: %i stack_size: %i char_items: %i postaction: %i\n"
+			"event_id: %i from_slot: %i to_slot: %i item_id: %i charges: %i\n",
+			move_id, time.c_str(), char_id, from_slot, to_slot, stack_size, char_items, postaction,
+			event_id, from_slot2, to_slot2, item_id, charges);
+
+		auto results3 = QueryDatabase(query3);
+		if (!results3.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error copying to qs_player_item_move_log: \n%s", query3.c_str());
 			return false;
 		}
 	}
@@ -476,11 +866,23 @@ bool Database::DBSetup_CheckLegacy()
 	{
 		return false;
 	}
-	if (!Check_Delete_Tables())
+	if (!Check_Handin_Tables())
+	{
+		return false;
+	}
+	if (!Check_NPCKills_Tables())
 	{
 		return false;
 	}
 	if (!Check_Merchant_Tables())
+	{
+		return false;
+	}
+	if (!Check_Delete_Tables())
+	{
+		return false;
+	}
+	if (!Check_ItemMove_Tables())
 	{
 		return false;
 	}

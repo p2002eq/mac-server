@@ -151,58 +151,45 @@ void Database::LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 detailCount)
 		return;
 	}
 
-    std::string query = StringFormat(
-		"INSERT INTO `qs_player_handin_record` SET "
-			"`time` = NOW(), "
-			"`quest_id` = '%i', "
-			"`char_id` = '%i', "
-			"`char_pp` = '%i', "
-			"`char_gp` = '%i', "
-			"`char_sp` = '%i', "
-			"`char_cp` = '%i', "
-			"`char_items` = '%i', "
-			"`npc_id` = '%i', "
-			"`npc_pp` = '%i', "
-			"`npc_gp` = '%i', "
-			"`npc_sp` = '%i', "
-			"`npc_cp` = '%i', "
-			"`npc_items`='%i'",
-			QS->quest_id,
-			QS->char_id,
-			QS->char_money.platinum,
-			QS->char_money.gold,
-			QS->char_money.silver,
-			QS->char_money.copper,
-			QS->char_count,
-			QS->npc_id,
-			QS->npc_money.platinum,
-			QS->npc_money.gold,
-			QS->npc_money.silver,
-			QS->npc_money.copper,
-			QS->npc_count);
-
-    auto results = QueryDatabase(query);
-	if(!results.Success())
-	{
-		Log.Out(Logs::Detail, Logs::QS_Server, "Failed Hand in Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
-	}
-
-	int lastIndex = results.LastInsertedID();
-
     for(uint32 i = 0; i < detailCount; i++)
 	{
-        query = StringFormat(
-			"INSERT INTO `qs_player_handin_record_entries` SET "
-				"`event_id` = '%i', "
+        std::string query = StringFormat(
+			"INSERT INTO `qs_player_handin_log` SET "
+				"`char_id` = '%i', "
 				"`action_type` = '%s', "
+				"`quest_id` = '%i', "
 				"`char_slot` = '%i', "
 				"`item_id` = '%i', "
-				"`charges` = '%i'",
-				lastIndex,
+				"`charges` = '%i', "
+				"`char_pp` = '%i', "
+				"`char_gp` = '%i', "
+				"`char_sp` = '%i', "
+				"`char_cp` = '%i', "
+				"`char_items` = '%i', "
+				"`npc_id` = '%i', "
+				"`npc_pp` = '%i', "
+				"`npc_gp` = '%i', "
+				"`npc_sp` = '%i', "
+				"`npc_cp` = '%i', "
+				"`npc_items` = '%i', "
+				"`time` = now()",
+				QS->char_id,
 				QS->items[i].action_type,
+				QS->quest_id,
 				QS->items[i].char_slot,
 				QS->items[i].item_id,
-				QS->items[i].charges);
+				QS->items[i].charges,
+				QS->char_money.platinum,
+				QS->char_money.gold,
+				QS->char_money.silver,
+				QS->char_money.copper,
+				QS->char_count,
+				QS->npc_id,
+				QS->npc_money.platinum,
+				QS->npc_money.gold,
+				QS->npc_money.silver,
+				QS->npc_money.copper,
+				QS->npc_count);
 
 		auto results = QueryDatabase(query);
         if(!results.Success())
@@ -219,32 +206,19 @@ void Database::LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 members)
 		return;
 	}
 
-	std::string query = StringFormat(
-		"INSERT INTO `qs_player_npc_kill_record` SET "
-			"`npc_id` = '%i', "
-			"`type` = '%i', "
-			"`zone_id` = '%i', "
-			"`time` = NOW()",
-			QS->s1.NPCID,
-			QS->s1.Type,
-			QS->s1.ZoneID);
-
-	auto results = QueryDatabase(query);
-	if(!results.Success())
-	{
-		Log.Out(Logs::Detail, Logs::QS_Server, "Failed NPC Kill Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
-	}
-
-	int lastIndex = results.LastInsertedID();
-
 	for (uint32 i = 0; i < members; i++)
 	{
-        query = StringFormat(
+		std::string query = StringFormat(
 			"INSERT INTO `qs_player_npc_kill_record_entries` SET "
-				"`event_id` = '%i', "
-				"`char_id` = '%i'",
-				lastIndex,
-				QS->Chars[i].char_id);
+				"`char_id` = '%i'"
+				"`npc_id` = '%i', "
+				"`type` = '%i', "
+				"`zone_id` = '%i', "
+				"`time` = now()",
+				QS->Chars[i].char_id,
+				QS->s1.NPCID,
+				QS->s1.Type,
+				QS->s1.ZoneID);
 
 		auto results = QueryDatabase(query);
 		if(!results.Success())
@@ -264,7 +238,7 @@ void Database::LogPlayerItemDelete(QSPlayerLogItemDelete_Struct* QS, uint32 item
     for(uint32 i = 0; i < items; i++)
 	{
 		std::string query = StringFormat(
-			"INSERT INTO `qs_player_Item_deletes` SET "
+			"INSERT INTO `qs_player_item_delete_log` SET "
 				"`char_id` = '%i', "
 				"`char_slot` = '%i', "
 				"`item_id` = '%i', "
@@ -294,46 +268,29 @@ void Database::LogPlayerItemMove(QSPlayerLogItemMove_Struct* QS, uint32 items)
 		return;
 	}
 
-	std::string query = StringFormat(
-		"INSERT INTO `qs_player_move_record` SET "
-			"`time` = NOW(), "
-			"`char_id` = '%i', "
-			"`from_slot` = '%i', "
-			"`to_slot` = '%i', "
-			"`stack_size` = '%i', "
-			"`char_items` = '%i', "
-			"`postaction` = '%i'",
-			QS->char_id,
-			QS->from_slot,
-			QS->to_slot,
-			QS->stack_size,
-			QS->char_count,
-			QS->postaction);
-
-    auto results = QueryDatabase(query);
-	if(!results.Success())
-	{
-		Log.Out(Logs::Detail, Logs::QS_Server, "Failed Move Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
-	}
-
-    int lastIndex = results.LastInsertedID();
-
     for(uint32 i = 0; i < items; i++)
 	{
-        query = StringFormat(
-			"INSERT INTO `qs_player_move_record_entries` SET "
-				"`event_id` = '%i', "
+        std::string query = StringFormat(
+			"INSERT INTO `qs_player_item_move_log` SET "
+				"`char_id` = '%i', "
 				"`from_slot` = '%i', "
 				"`to_slot` = '%i', "
 				"`item_id` = '%i', "
-				"`charges` = '%i'",
-				lastIndex,
+				"`charges` = '%i', "
+				"`stack_size` = '%i', "
+				"`char_items` = '%i', "
+				"`postaction` = '%i', "
+				"`time` = now()",
+				QS->char_id,
 				QS->items[i].from_slot,
 				QS->items[i].to_slot,
 				QS->items[i].item_id,
-				QS->items[i].charges);
+				QS->items[i].charges,
+				QS->stack_size,
+				QS->char_count,
+				QS->postaction);
 
-        results = QueryDatabase(query);
+        auto results = QueryDatabase(query);
         if(!results.Success())
 		{
 			Log.Out(Logs::Detail, Logs::QS_Server, "Failed Move Log Record Entry Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());

@@ -60,17 +60,29 @@ public:
 	bool DBSetup();
 	bool DBSetup_CheckLegacy();
 
-	bool Check_Delete_Tables();
-	bool Create_Delete_Table();
-	bool Copy_Delete_Record();
-
 	bool Check_Trade_Tables();
 	bool Create_Trade_Table();
 	bool Copy_Trade_Record();
 
+	bool Check_Handin_Tables();
+	bool Create_Handin_Table();
+	bool Copy_Handin_Record();
+
+	bool Check_NPCKills_Tables();
+	bool Create_NPCKills_Table();
+	bool Copy_NPCKills_Record();
+
 	bool Check_Merchant_Tables();
 	bool Create_Merchant_Table();
 	bool Copy_Merchant_Record();
+
+	bool Check_Delete_Tables();
+	bool Create_Delete_Table();
+	bool Copy_Delete_Record();
+
+	bool Check_ItemMove_Tables();
+	bool Create_ItemMove_Table();
+	bool Copy_ItemMove_Record();
 
 protected:
 	void HandleMysqlError(uint32 errnum);
