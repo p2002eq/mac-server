@@ -34,6 +34,10 @@ bool Database::DBSetup()
 	{
 		return false;
 	}
+	if (!DBSetup_PlayerDeathBy())
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -59,6 +63,33 @@ bool Database::DBSetup_PlayerAAPurchase()
 		if (!results2.Success())
 		{
 			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_aa_purchase_log. \n%s", query2.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Database::DBSetup_PlayerDeathBy()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_killed_by_log'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create player deaths table.");
+		std::string query2 = StringFormat(
+			"CREATE TABLE `qs_player_killed_by_log` ( "
+			"`char_id` int(11) DEFAULT '0', "
+			"`zone_id` int(11) DEFAULT '0', "
+			"`instance_id` int(11) DEFAULT '0', "
+			"`killed_by` varchar(255) DEFAULT NULL, "
+			"`spell` int(11) DEFAULT '0', "
+			"`damage` int(11) DEFAULT '0', "
+			"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+			") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+		auto results2 = QueryDatabase(query2);
+		if (!results2.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_killed_by_log. \n%s", query2.c_str());
 			return false;
 		}
 	}

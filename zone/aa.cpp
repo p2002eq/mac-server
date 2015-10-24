@@ -29,21 +29,18 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 #include "corpse.h"
 #include "groups.h"
 #include "mob.h"
-//#include "queryserv.h"
 #include "worldserver.h"
 #include "raids.h"
 #include "string_ids.h"
 #include "titles.h"
 #include "zonedb.h"
 
-//extern QueryServ* QServ;
 extern WorldServer worldserver;
 
 AA_DBAction AA_Actions[aaHighestID][MAX_AA_ACTION_RANKS];	//[aaid][rank]
 std::map<uint32, SendAA_Struct*>aas_send;
 std::map<uint32, std::map<uint32, AA_Ability> > aa_effects;	//stores the effects from the aa_effects table in memory
 std::map<uint32, AALevelCost_Struct> AARequiredLevelAndCost;
-
 
 int Client::GetAATimerID(aaID activate)
 {
@@ -1158,6 +1155,7 @@ uint32 Client::GetAA(uint32 aa_id) const {
 	}
 	return(0);
 }
+
 bool Client::SetAA(uint32 aa_id, uint32 new_value) {
 	aa_points[aa_id] = new_value;
 	uint32 cur;

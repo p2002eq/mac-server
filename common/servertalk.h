@@ -173,6 +173,7 @@
 #define ServerOP_CZSetEntityVariableByNPCTypeID		0x5018
 #define ServerOP_QSPlayerAARateHourly				0x5019
 #define ServerOP_QSPlayerAAPurchase					0x5020
+#define ServerOP_QSPlayerDeathBy					0x5021
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1054,6 +1055,15 @@ struct QSPlayerAAPurchase_Struct {
 	uint32 cost;
 	uint32 zone_id;
 	int32 instance_id;
+};
+
+struct QSPlayerDeathBy_Struct {
+	uint32 id;
+	uint32 zone_id;
+	int32 instance_id;
+	char killed_by[128];
+	uint16 spell;
+	uint32 damage;
 };
 
 struct QSGeneralQuery_Struct {

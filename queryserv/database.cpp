@@ -383,8 +383,6 @@ void Database::LogPlayerAAPurchase(QSPlayerAAPurchase_Struct* QS, uint32 items)
 		return;
 	}
 
-	Log.Out(Logs::General, Logs::QS_Server, "Entering values for aa purchase.");
-
 	std::string query = StringFormat(
 		"INSERT INTO `qs_player_aa_purchase_log` SET "
 			"`char_id` = '%i', "
@@ -406,7 +404,37 @@ void Database::LogPlayerAAPurchase(QSPlayerAAPurchase_Struct* QS, uint32 items)
 	auto results = QueryDatabase(query);
 	if (!results.Success())
 	{
-		Log.Out(Logs::General, Logs::QS_Server, "Failed AA Purchase Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
+		Log.Out(Logs::Detail, Logs::QS_Server, "Failed AA Purchase Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
+	}
+}
+
+void Database::LogPlayerDeathBy(QSPlayerDeathBy_Struct* QS, uint32 items)
+{
+	if (items == 0)
+	{
+		return;
+	}
+
+	std::string query = StringFormat(
+		"INSERT INTO `qs_player_killed_by_log` SET "
+		"`char_id` = '%i', "
+		"`zone_id` = '%i', "
+		"`instance_id` = '%i', "
+		"`killed_by` = '%s', "
+		"`spell` = '%i', "
+		"`damage` = '%i', "
+		"`time` = now()",
+		QS->id,
+		QS->zone_id,
+		QS->instance_id,
+		QS->killed_by,
+		QS->spell,
+		QS->damage);
+
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Failed Death Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
 	}
 }
 

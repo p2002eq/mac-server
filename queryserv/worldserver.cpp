@@ -115,6 +115,12 @@ void WorldServer::Process()
 				database.LogPlayerAAPurchase(QS, Items);
 				break;
 			}
+			case ServerOP_QSPlayerDeathBy: {
+				QSPlayerDeathBy_Struct *QS = (QSPlayerDeathBy_Struct*)pack->pBuffer;
+				uint32 Items = QS->id;
+				database.LogPlayerDeathBy(QS, Items);
+				break;
+			}
 			case ServerOP_QueryServGeneric: {
 				/* 
 					The purpose of ServerOP_QueryServerGeneric is so that we don't have to add code to world just to relay packets

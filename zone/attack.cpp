@@ -24,7 +24,6 @@
 #include "../common/skills.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
-#include "queryserv.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
@@ -36,7 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern QueryServ* QServ;
 extern WorldServer worldserver;
 
 #ifdef _WINDOWS
@@ -1362,11 +1360,25 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	GoToDeath();
 
 	/* QS: PlayerLogDeaths */
-	if (RuleB(QueryServ, PlayerLogDeaths)){
-		const char * killer_name = "";
-		if (killerMob && killerMob->GetCleanName()){ killer_name = killerMob->GetCleanName(); }
-		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
-		QServ->PlayerLogEvent(Player_Log_Deaths, this->CharacterID(), event_desc);
+	if (RuleB(QueryServ, PlayerLogDeaths))
+	{
+		char killer_name[128];
+		if (killerMob && killerMob->GetCleanName()) { strncpy(killer_name, killerMob->GetCleanName(), 128); }
+
+		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerDeathBy, sizeof(QSPlayerDeathBy_Struct));
+		QSPlayerDeathBy_Struct* QS = (QSPlayerDeathBy_Struct*)pack->pBuffer;
+		QS->id = this->CharacterID();
+		QS->zone_id = this->GetZoneID();
+		QS->instance_id = this->GetInstanceID();
+		strncpy(QS->killed_by, killer_name, 128);
+		QS->spell = spell;
+		QS->damage = damage;
+		pack->Deflate();
+		if (worldserver.Connected())
+		{
+			worldserver.SendPacket(pack);
+		}
+		safe_delete(pack);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
