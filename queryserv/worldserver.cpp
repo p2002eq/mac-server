@@ -109,6 +109,12 @@ void WorldServer::Process()
 				database.LogPlayerAARateHourly(QS, Items);
 				break;
 			}
+			case ServerOP_QSPlayerAAPurchase: {
+				QSPlayerAAPurchase_Struct *QS = (QSPlayerAAPurchase_Struct*)pack->pBuffer;
+				uint32 Items = QS->id;
+				database.LogPlayerAAPurchase(QS, Items);
+				break;
+			}
 			case ServerOP_QueryServGeneric: {
 				/* 
 					The purpose of ServerOP_QueryServerGeneric is so that we don't have to add code to world just to relay packets

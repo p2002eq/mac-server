@@ -30,9 +30,42 @@ bool Database::DBSetup()
 	{
 		return false;
 	}
+	if (!DBSetup_PlayerAAPurchase())
+	{
+		return false;
+	}
 	return true;
 }
 
+bool Database::DBSetup_PlayerAAPurchase()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_aa_purchase_log'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create aa purchase table.");
+		std::string query2 = StringFormat(
+			"CREATE TABLE `qs_player_aa_purchase_log` ( "
+			"`char_id` int(11) DEFAULT '0', "
+			"`aa_type` varchar(255) DEFAULT '0', "
+			"`aa_name` varchar(255) DEFAULT '0', "
+			"`aa_id` int(11) DEFAULT '0', "
+			"`aa_cost` int(11) DEFAULT '0', "
+			"`zone_id` int(11) DEFAULT '0', "
+			"`instance_id` int(11) DEFAULT '0', "
+			"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+			") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+		auto results2 = QueryDatabase(query2);
+		if (!results2.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_aa_purchase_log. \n%s", query2.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+
+#pragma region Legacy Setup
 #pragma region Trade Tables
 bool Database::Check_Trade_Tables()
 {
@@ -889,3 +922,4 @@ bool Database::DBSetup_CheckLegacy()
 	Log.Out(Logs::General, Logs::QS_Server, "End of DBSetup_CheckLegacy migration.");
 	return true;
 }
+#pragma endregion

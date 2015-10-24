@@ -172,6 +172,7 @@
 #define ServerOP_CZSignalNPC						0x5017
 #define ServerOP_CZSetEntityVariableByNPCTypeID		0x5018
 #define ServerOP_QSPlayerAARateHourly				0x5019
+#define ServerOP_QSPlayerAAPurchase					0x5020
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1043,6 +1044,16 @@ struct QSMerchantLogTransaction_Struct {
 struct QSPlayerAARateHourly_Struct {
 	uint32 id;
 	uint32 add_points;
+};
+
+struct QSPlayerAAPurchase_Struct {
+	uint32 id;
+	char aatype[8];
+	char aaname[128];
+	uint32 aaid;
+	uint32 cost;
+	uint32 zone_id;
+	int32 instance_id;
 };
 
 struct QSGeneralQuery_Struct {

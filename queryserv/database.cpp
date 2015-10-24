@@ -376,6 +376,40 @@ void Database::LogPlayerAARateHourly(QSPlayerAARateHourly_Struct* QS, uint32 ite
 	}
 }
 
+void Database::LogPlayerAAPurchase(QSPlayerAAPurchase_Struct* QS, uint32 items)
+{
+	if (items == 0)
+	{
+		return;
+	}
+
+	Log.Out(Logs::General, Logs::QS_Server, "Entering values for aa purchase.");
+
+	std::string query = StringFormat(
+		"INSERT INTO `qs_player_aa_purchase_log` SET "
+			"`char_id` = '%i', "
+			"`aa_type` = '%s', "
+			"`aa_name` = '%s', "
+			"`aa_id` = '%i', "
+			"`aa_cost` = '%i', "
+			"`zone_id` = '%i', "
+			"`instance_id` = '%i', "
+			"`time` = now()",
+			QS->id,
+			QS->aatype,
+			QS->aaname,
+			QS->aaid,
+			QS->cost,
+			QS->zone_id,
+			QS->instance_id);
+
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::General, Logs::QS_Server, "Failed AA Purchase Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
+	}
+}
+
 void Database::GeneralQueryReceive(ServerPacket *pack)
 {
 	/*
