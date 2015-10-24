@@ -38,6 +38,10 @@ bool Database::DBSetup()
 	{
 		return false;
 	}
+	if (!DBSetup_PlayerTSEvents())
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -90,6 +94,35 @@ bool Database::DBSetup_PlayerDeathBy()
 		if (!results2.Success())
 		{
 			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_killed_by_log. \n%s", query2.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Database::DBSetup_PlayerTSEvents()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_ts_event_log'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create player deaths table.");
+		std::string query2 = StringFormat(
+			"CREATE TABLE `qs_player_ts_event_log` ( "
+			"`char_id` int(11) DEFAULT '0', "
+			"`zone_id` int(11) DEFAULT '0', "
+			"`instance_id` int(11) DEFAULT '0', "
+			"`results` varchar(255) DEFAULT NULL, "
+			"`recipe_id` int(11) DEFAULT '0', "
+			"`tradeskill` int(11) DEFAULT '0', "
+			"`trivial` int(11) DEFAULT '0', "
+			"`chance` float(0) DEFAULT '0', "
+			"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+			") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+		auto results2 = QueryDatabase(query2);
+		if (!results2.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_ts_event_log. \n%s", query2.c_str());
 			return false;
 		}
 	}

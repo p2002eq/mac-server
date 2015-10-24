@@ -245,12 +245,12 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 			Note: AA exp is stored differently than normal exp.
 			Exp points are only stored in m_pp.expAA until you
 			gain a full AA point, once you gain it, a point is
-			added to m_pp.aapoints and the ammount needed to gain
+			added to m_pp.aapoints and the amount needed to gain
 			that point is subtracted from m_pp.expAA
 
 			then, once they spend an AA point, it is subtracted from
 			m_pp.aapoints. In theory it then goes into m_pp.aapoints_spent,
-			but im not sure if we have that in the right spot.
+			but I'm not sure if we have that in the right spot.
 		*/
 		//record how many points we have
 		uint32 last_unspentAA = m_pp.aapoints;

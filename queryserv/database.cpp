@@ -438,6 +438,40 @@ void Database::LogPlayerDeathBy(QSPlayerDeathBy_Struct* QS, uint32 items)
 	}
 }
 
+void Database::LogPlayerTSEvents(QSPlayerTSEvents_Struct* QS, uint32 items)
+{
+	if (items == 0)
+	{
+		return;
+	}
+
+	std::string query = StringFormat(
+		"INSERT INTO `qs_player_ts_event_log` SET "
+			"`char_id` = '%i', "
+			"`zone_id` = '%i', "
+			"`instance_id` = '%i', "
+			"`results` = '%s', "
+			"`recipe_id` = '%i', "
+			"`tradeskill` = '%i', "
+			"`trivial` = '%i', "
+			"`chance` = '%f', "
+			"`time` = now()",
+			QS->id,
+			QS->zone_id,
+			QS->instance_id,
+			QS->results,
+			QS->recipe_id,
+			QS->tradeskill,
+			QS->trivial,
+			QS->chance);
+
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Failed TS Event Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
+	}
+}
+
 void Database::GeneralQueryReceive(ServerPacket *pack)
 {
 	/*

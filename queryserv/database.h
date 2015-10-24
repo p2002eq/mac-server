@@ -46,6 +46,7 @@ public:
 	void LogPlayerAARateHourly(QSPlayerAARateHourly_Struct* QS, uint32 items);
 	void LogPlayerAAPurchase(QSPlayerAAPurchase_Struct* QS, uint32 items);
 	void LogPlayerDeathBy(QSPlayerDeathBy_Struct* QS, uint32 items);
+	void LogPlayerTSEvents(QSPlayerTSEvents_Struct* QS, uint32 items);
 	void LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 DetailCount);
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);
 	void LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 Members);
@@ -63,6 +64,7 @@ public:
 	bool DBSetup_CheckLegacy();
 	bool DBSetup_PlayerAAPurchase();
 	bool DBSetup_PlayerDeathBy();
+	bool DBSetup_PlayerTSEvents();
 
 	bool Check_Trade_Tables();
 	bool Create_Trade_Table();

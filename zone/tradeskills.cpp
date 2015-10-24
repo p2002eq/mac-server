@@ -29,12 +29,13 @@
 #include "../common/string_util.h"
 
 #include "queryserv.h"
+#include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "titles.h"
 #include "zonedb.h"
 
-extern QueryServ* QServ;
+extern WorldServer worldserver;
 
 static const SkillUseTypes TradeskillUnknown = Skill1HBlunt; /* an arbitrary non-tradeskill */
 
@@ -583,7 +584,29 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		Message_StringID(CC_Blue, TRADESKILL_SUCCEED, spec->name.c_str());
 
-		Log.Out(Logs::Detail, Logs::Tradeskills, "Tradeskill success");
+		Log.Out(Logs::Detail, Logs::Tradeskills, "Trade skill success");
+
+		/* QS: Player_Log_Trade_Skill_Events */
+		if (RuleB(QueryServ, PlayerLogTradeSkillEvents))
+		{
+			char results[8];
+			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerTSEvents, sizeof(QSPlayerTSEvents_Struct));
+			QSPlayerTSEvents_Struct* QS = (QSPlayerTSEvents_Struct*)pack->pBuffer;
+			QS->id = this->CharacterID();
+			QS->zone_id = this->GetZoneID();
+			QS->instance_id = this->GetInstanceID();
+			strncpy(QS->results, "Success", 8);
+			QS->recipe_id = spec->recipe_id;
+			QS->tradeskill = spec->tradeskill;
+			QS->trivial = spec->trivial;
+			QS->chance = chance;
+			pack->Deflate();
+			if (worldserver.Connected())
+			{
+				worldserver.SendPacket(pack);
+			}
+			safe_delete(pack);
+		}
 
 		itr = spec->onsuccess.begin();
 		while(itr != spec->onsuccess.end() && !spec->quest) {
@@ -598,7 +621,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		return(true);
 	}
-	/* Tradeskill Fail */
+	/* Trade skill Fail */
 	else 
 	{
 		if(over_trivial < 0)
@@ -606,7 +629,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		Message_StringID(CC_Blue,TRADESKILL_FAILED);
 
-		Log.Out(Logs::Detail, Logs::Tradeskills, "Tradeskill failed");
+		Log.Out(Logs::Detail, Logs::Tradeskills, "Trade skill failed");
 			if (this->GetGroup())
 		{
 			entity_list.MessageGroup(this,true,MT_Skills,"%s was unsuccessful in %s tradeskill attempt.",GetName(),this->GetGender() == 0 ? "his" : this->GetGender() == 1 ? "her" : "its");
@@ -614,9 +637,25 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		}
 
 		/* QS: Player_Log_Trade_Skill_Events */
-		if (RuleB(QueryServ, PlayerLogTradeSkillEvents)){
-			std::string event_desc = StringFormat("Failed :: recipe_id:%i tskillid:%i trivial:%i chance:%4.2f  in zoneid:%i instid:%i", spec->recipe_id, spec->tradeskill, spec->trivial, chance, this->GetZoneID(), this->GetInstanceID());
-			QServ->PlayerLogEvent(Player_Log_Trade_Skill_Events, this->CharacterID(), event_desc);
+		if (RuleB(QueryServ, PlayerLogTradeSkillEvents))
+		{
+			char results[8];
+			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerTSEvents, sizeof(QSPlayerTSEvents_Struct));
+			QSPlayerTSEvents_Struct* QS = (QSPlayerTSEvents_Struct*)pack->pBuffer;
+			QS->id = this->CharacterID();
+			QS->zone_id = this->GetZoneID();
+			QS->instance_id = this->GetInstanceID();
+			strncpy(QS->results, "Failed", 8);
+			QS->recipe_id = spec->recipe_id;
+			QS->tradeskill = spec->tradeskill;
+			QS->trivial = spec->trivial;
+			QS->chance = chance;
+			pack->Deflate();
+			if (worldserver.Connected())
+			{
+				worldserver.SendPacket(pack);
+			}
+			safe_delete(pack);
 		}
 
 		itr = spec->onfail.begin();
@@ -630,7 +669,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 		// Rolls on each item, is possible to return everything
 		int SalvageChance = aabonuses.SalvageChance + itembonuses.SalvageChance + spellbonuses.SalvageChance;
-		// Skip check if not a normal TS or if a quest recipe these should be nofail, but check amyways
+		// Skip check if not a normal TS or if a quest recipe these should be nofail, but check anyways
 		if(SalvageChance && spec->tradeskill != 75 && !spec->quest) {
 			itr = spec->salvage.begin();
 			uint8 sc = 0;

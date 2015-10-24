@@ -174,6 +174,7 @@
 #define ServerOP_QSPlayerAARateHourly				0x5019
 #define ServerOP_QSPlayerAAPurchase					0x5020
 #define ServerOP_QSPlayerDeathBy					0x5021
+#define ServerOP_QSPlayerTSEvents					0x5022
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1064,6 +1065,17 @@ struct QSPlayerDeathBy_Struct {
 	char killed_by[128];
 	uint16 spell;
 	uint32 damage;
+};
+
+struct QSPlayerTSEvents_Struct {
+	uint32 id;
+	uint32 zone_id;
+	int32 instance_id;
+	char results[8];
+	uint32 recipe_id;
+	uint32 tradeskill;
+	uint16 trivial;
+	float chance;
 };
 
 struct QSGeneralQuery_Struct {
