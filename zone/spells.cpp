@@ -4897,10 +4897,7 @@ void Mob::Stun(int duration, Mob* attacker)
 		return;
 
 	if(IsValidSpell(casting_spell_id) && !spells[casting_spell_id].uninterruptable) {
-		int persistent_casting = spellbonuses.PersistantCasting + itembonuses.PersistantCasting + aabonuses.PersistantCasting;
-
-		if(zone->random.Int(0,99) > persistent_casting)
-			InterruptSpell();
+		InterruptSpell();
 	}
 
 	if(duration > 0)
@@ -4913,11 +4910,6 @@ void Mob::Stun(int duration, Mob* attacker)
 			SendPosition();
 		}
 	}
-
-	//if(attacker)
-	//{
-	//	CombatPush(attacker, RuleR(Combat, PushBackAmount));
-	//}
 }
 
 void Mob::UnStun() {
