@@ -523,6 +523,7 @@ bool Client::Process() {
 			DoManaRegen();
 			DoEnduranceRegen();
 			BuffProcess();
+			RefreshSpellIcon();
 
 			if(stamina_timer.Check()) 
 			{

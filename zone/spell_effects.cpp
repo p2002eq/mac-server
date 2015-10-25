@@ -1619,25 +1619,27 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Model Size: %d%%", effect_value);
 #endif
-				float basesize = GetBaseSize();
 
-				// Check for an illusion
-				if (GetRace() != GetBaseRace())
-				{
-					basesize = GetPlayerHeight(GetRace());
-				}
-
-				// Allow only 1 growth change, or 2 shrinks for large races and 1 for everybody else.
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
-				float maxModAmount = basesize * modifyAmount;
-				if(basesize >= 7 && modifyAmount < 1)
-					maxModAmount *= modifyAmount;
+				float newsize = GetSize() * modifyAmount;
 
-				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
-					(GetSize() >= basesize && GetSize() < maxModAmount))
+				if(modifyAmount < 1)
 				{
-					ChangeSize(GetSize() * modifyAmount, true);
+					if(newsize >= 1.98)
+					{
+						Log.Out(Logs::General, Logs::Spells, "Shrink successful from %0.2f to %0.2f.", GetSize(), newsize);
+						ChangeSize(newsize, true);
+					}
 				}
+				else
+				{
+					if(newsize <= 11.98)
+					{
+						Log.Out(Logs::General, Logs::Spells, "Growth successful from %0.2f to %0.2f.", GetSize(), newsize);
+						ChangeSize(newsize, true);
+					}
+				}
+
 				break;
 			}
 
