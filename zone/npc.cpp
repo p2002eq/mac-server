@@ -2372,7 +2372,7 @@ int32 NPC::GetHPRegen()
 	if((GetHP() < GetMaxHP()) && !IsPet()) 
 	{
 		// OOC
-		if(!IsEngaged()) 
+		if(!IsEngaged())
 		{
 			return(GetNPCHPRegen() + bonus); // hp_regen + spell/item regen + sitting bonus
 		// In Combat
@@ -2383,7 +2383,7 @@ int32 NPC::GetHPRegen()
 	// Pet
 	else if(GetHP() < GetMaxHP() && GetOwnerID() !=0) 
 	{
-		if(!IsEngaged())
+		if (!IsEngaged() && !IsCharmed() && !IsDireCharmed())
 			return(GetNPCHPRegen() + bonus + (GetLevel()/5));
 		else
 			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen));

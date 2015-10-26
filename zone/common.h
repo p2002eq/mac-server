@@ -316,7 +316,6 @@ struct StatBonuses {
 	bool	AntiGate;							// spell effect that prevents gating
 	bool	MagicWeapon;						// spell effect that makes weapon magical
 	int32	IncreaseBlockChance;				// overall block chance modifier
-	uint32	PersistantCasting;					// chance to continue casting through a stun
 	int	XPRateMod;							//i
 	int		HPPercCap[2];						//Spell effect that limits you to being healed/regening beyond a % of your max
 	int		ManaPercCap[2];						// ^^ 0 = % Cap 1 = Flat Amount Cap
@@ -407,7 +406,6 @@ struct StatBonuses {
 	int32	ShieldEquipHateMod;					// Hate mod when shield equiped.
 	int32	ShieldEquipDmgMod[2];				// Damage mod when shield equiped. 0 = damage modifier 1 = Unknown
 	bool	TriggerOnValueAmount;				// Triggers off various different conditions, bool to check if client has effect.
-	int8	StunBashChance;						// chance to stun with bash.	
 	int8	IncreaseChanceMemwipe;				// increases chance to memory wipe
 	int8	CriticalMend;						// chance critical monk mend
 	int32	ImprovedReclaimEnergy;				// Modifies amount of mana returned from reclaim energy
