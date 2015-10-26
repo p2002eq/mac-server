@@ -9,3 +9,7 @@ INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('11'
 INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('1', 'QueryServ:PlayerLogTradeSkillEvents', 'false');
 INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('2', 'QueryServ:PlayerLogTradeSkillEvents', 'false');
 INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('11', 'QueryServ:PlayerLogTradeSkillEvents', 'false');
+
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('1', 'QueryServ:PlayerLogQGlobalUpdate', 'false');
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('2', 'QueryServ:PlayerLogQGlobalUpdate', 'false');
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('11', 'QueryServ:PlayerLogQGlobalUpdate', 'false');

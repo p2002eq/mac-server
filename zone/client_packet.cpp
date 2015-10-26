@@ -73,7 +73,7 @@ extern PetitionList petition_list;
 extern EntityList entity_list;
 typedef void (Client::*ClientPacketProc)(const EQApplicationPacket *app);
 
-//Use a map for connecting opcodes since it dosent get used a lot and is sparse
+//Use a map for connecting opcodes since it doesn't get used a lot and is sparse
 std::map<uint32, ClientPacketProc> ConnectingOpcodes;
 //Use a static array for connected, for speed
 ClientPacketProc ConnectedOpcodes[_maxEmuOpcode];
@@ -7295,35 +7295,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	// stacking purchases not supported at this time - entire process will need some work to catch them properly
 	if (RuleB(QueryServ, PlayerLogMerchantTransactions))
 	{
-		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct));
-		QSMerchantLogTransaction_Struct* QS = (QSMerchantLogTransaction_Struct*)pack->pBuffer;
-
-		QS->char_id = character_id;
-		QS->char_slot = freeslotid == INVALID_INDEX ? 0 : freeslotid;
-		QS->item_id = item->ID;
-		QS->charges = mpo->quantity;
-		QS->zone_id = zone->GetZoneID();
-		QS->merchant_id = tmp->CastToNPC()->MerchantType;
-		QS->merchant_money.platinum = 0;
-		QS->merchant_money.gold = 0;
-		QS->merchant_money.silver = 0;
-		QS->merchant_money.copper = 0;
-		QS->merchant_count = 1;
-		QS->char_money.platinum = (mpo->price / 1000);
-		QS->char_money.gold = (mpo->price / 100) % 10;
-		QS->char_money.silver = (mpo->price / 10) % 10;
-		QS->char_money.copper = mpo->price % 10;
-		QS->char_count = 0;
-
-		if (freeslotid == INVALID_INDEX) {
-		}
-
-		pack->Deflate();
-		if (worldserver.Connected())
-		{
-			worldserver.SendPacket(pack);
-		}
-		safe_delete(pack);
+		QServ->QSMerchantTransactions(character_id, zone->GetZoneID(), freeslotid == INVALID_INDEX ? 0 : freeslotid,
+			item->ID, mpo->quantity, tmp->CastToNPC()->MerchantType, 0, 0, 0, 0, 1,
+			mpo->price / 1000, (mpo->price / 100) % 10, (mpo->price / 10) % 10, mpo->price % 10, 0);
 	}
 	// end QS code
 
@@ -7436,32 +7410,9 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	// start QS code
 	if (RuleB(QueryServ, PlayerLogMerchantTransactions))
 	{
-		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct));
-		QSMerchantLogTransaction_Struct* QS = (QSMerchantLogTransaction_Struct*)pack->pBuffer;
-
-		QS->char_id = character_id;
-		QS->char_slot = mp->itemslot;
-		QS->item_id = itemid;
-		QS->charges = charges;
-		QS->zone_id = zone->GetZoneID();
-		QS->merchant_id = vendor->CastToNPC()->MerchantType;
-		QS->merchant_money.platinum = (price / 1000);
-		QS->merchant_money.gold = (price / 100) % 10;
-		QS->merchant_money.silver = (price / 10) % 10;
-		QS->merchant_money.copper = price % 10;
-		QS->merchant_count = 0;
-		QS->char_money.platinum = 0;
-		QS->char_money.gold = 0;
-		QS->char_money.silver = 0;
-		QS->char_money.copper = 0;
-		QS->char_count = 1;
-
-		pack->Deflate();
-		if (worldserver.Connected())
-		{
-			worldserver.SendPacket(pack);
-		}
-		safe_delete(pack);
+		QServ->QSMerchantTransactions(character_id, zone->GetZoneID(), mp->itemslot,
+			itemid, charges, vendor->CastToNPC()->MerchantType, price / 1000, (price / 100) % 10,
+			(price / 10) % 10, price % 10, 0, 0, 0, 0, 0, 1);
 	}
 	// end QS code
 

@@ -109,7 +109,7 @@ void Database::LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 detailCount)
 				"`char2_gp` = '%i', "
 				"`char2_sp` = '%i', "
 				"`char2_cp` = '%i', "
-				"`char2_items` = '%i'"
+				"`char2_items` = '%i', "
 				"`from_id` = '%i', "
 				"`from_slot` = '%i', "
 				"`to_id` = '%i', "
@@ -209,8 +209,8 @@ void Database::LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 members)
 	for (uint32 i = 0; i < members; i++)
 	{
 		std::string query = StringFormat(
-			"INSERT INTO `qs_player_npc_kill_record_entries` SET "
-				"`char_id` = '%i'"
+			"INSERT INTO `qs_player_npc_kill_log` SET "
+				"`char_id` = '%i', "
 				"`npc_id` = '%i', "
 				"`type` = '%i', "
 				"`zone_id` = '%i', "
@@ -365,7 +365,7 @@ void Database::LogPlayerAARateHourly(QSPlayerAARateHourly_Struct* QS, uint32 ite
 			"(%i, %i, UNIX_TIMESTAMP() - MOD(UNIX_TIMESTAMP(), 3600)) "
 			"ON DUPLICATE KEY UPDATE "
 			"`aa_count` = `aa_count` + %i",
-			QS->id,
+			QS->charid,
 			QS->add_points,
 			QS->add_points);
 
@@ -393,7 +393,7 @@ void Database::LogPlayerAAPurchase(QSPlayerAAPurchase_Struct* QS, uint32 items)
 			"`zone_id` = '%i', "
 			"`instance_id` = '%i', "
 			"`time` = now()",
-			QS->id,
+			QS->charid,
 			QS->aatype,
 			QS->aaname,
 			QS->aaid,
@@ -424,7 +424,7 @@ void Database::LogPlayerDeathBy(QSPlayerDeathBy_Struct* QS, uint32 items)
 		"`spell` = '%i', "
 		"`damage` = '%i', "
 		"`time` = now()",
-		QS->id,
+		QS->charid,
 		QS->zone_id,
 		QS->instance_id,
 		QS->killed_by,
@@ -456,7 +456,7 @@ void Database::LogPlayerTSEvents(QSPlayerTSEvents_Struct* QS, uint32 items)
 			"`trivial` = '%i', "
 			"`chance` = '%f', "
 			"`time` = now()",
-			QS->id,
+			QS->charid,
 			QS->zone_id,
 			QS->instance_id,
 			QS->results,
@@ -469,6 +469,36 @@ void Database::LogPlayerTSEvents(QSPlayerTSEvents_Struct* QS, uint32 items)
 	if (!results.Success())
 	{
 		Log.Out(Logs::Detail, Logs::QS_Server, "Failed TS Event Log Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
+	}
+}
+
+void Database::LogPlayerQGlobalUpdates(QSPlayerQGlobalUpdate_Struct* QS, uint32 items)
+{
+	if (items == 0)
+	{
+		return;
+	}
+
+	std::string query = StringFormat(
+		"INSERT INTO `qs_player_qglobal_updates_log` SET "
+			"`char_id` = '%i', "
+			"`action` = '%s', "
+			"`zone_id` = '%i', "
+			"`instance_id` = '%i', "
+			"`varname` = '%s', "
+			"`newvalue` = '%s', "
+			"`time` = now()",
+			QS->charid,
+			QS->action,
+			QS->zone_id,
+			QS->instance_id,
+			QS->varname,
+			QS->newvalue);
+
+	auto results = QueryDatabase(query);
+	if (!results.Success())
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Failed QGlobal Update Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
 	}
 }
 

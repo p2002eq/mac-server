@@ -27,12 +27,10 @@
 #include "raids.h"
 
 #include "queryserv.h"
-#include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 
 extern QueryServ* QServ;
-extern WorldServer worldserver;
 
 float Mob::GetBaseEXP()
 {
@@ -276,16 +274,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		/* QS: PlayerLogAARate */
 		if (RuleB(QueryServ, PlayerLogAARate))
 		{
-			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerAARateHourly, sizeof(QSPlayerAARateHourly_Struct));
-			QSPlayerAARateHourly_Struct* QS = (QSPlayerAARateHourly_Struct*)pack->pBuffer;
-			QS->id = this->CharacterID();
-			QS->add_points = m_pp.aapoints - last_unspentAA;
-			pack->Deflate();
-			if (worldserver.Connected())
-			{
-				worldserver.SendPacket(pack);
-			}
-			safe_delete(pack);
+			QServ->QSAARate(this->CharacterID(), m_pp.aapoints, last_unspentAA);
 		}
 		//Message(CC_Yellow, "You now have %d skill points available to spend.", m_pp.aapoints);
 	}

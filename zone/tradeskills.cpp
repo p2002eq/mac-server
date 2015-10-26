@@ -29,13 +29,12 @@
 #include "../common/string_util.h"
 
 #include "queryserv.h"
-#include "worldserver.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "titles.h"
 #include "zonedb.h"
 
-extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 static const SkillUseTypes TradeskillUnknown = Skill1HBlunt; /* an arbitrary non-tradeskill */
 
@@ -589,23 +588,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		/* QS: Player_Log_Trade_Skill_Events */
 		if (RuleB(QueryServ, PlayerLogTradeSkillEvents))
 		{
-			char results[8];
-			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerTSEvents, sizeof(QSPlayerTSEvents_Struct));
-			QSPlayerTSEvents_Struct* QS = (QSPlayerTSEvents_Struct*)pack->pBuffer;
-			QS->id = this->CharacterID();
-			QS->zone_id = this->GetZoneID();
-			QS->instance_id = this->GetInstanceID();
-			strncpy(QS->results, "Success", 8);
-			QS->recipe_id = spec->recipe_id;
-			QS->tradeskill = spec->tradeskill;
-			QS->trivial = spec->trivial;
-			QS->chance = chance;
-			pack->Deflate();
-			if (worldserver.Connected())
-			{
-				worldserver.SendPacket(pack);
-			}
-			safe_delete(pack);
+			QServ->QSTSEvents(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), "Success", spec->recipe_id, spec->tradeskill, spec->trivial, chance);
 		}
 
 		itr = spec->onsuccess.begin();
@@ -639,23 +622,7 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 		/* QS: Player_Log_Trade_Skill_Events */
 		if (RuleB(QueryServ, PlayerLogTradeSkillEvents))
 		{
-			char results[8];
-			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerTSEvents, sizeof(QSPlayerTSEvents_Struct));
-			QSPlayerTSEvents_Struct* QS = (QSPlayerTSEvents_Struct*)pack->pBuffer;
-			QS->id = this->CharacterID();
-			QS->zone_id = this->GetZoneID();
-			QS->instance_id = this->GetInstanceID();
-			strncpy(QS->results, "Failed", 8);
-			QS->recipe_id = spec->recipe_id;
-			QS->tradeskill = spec->tradeskill;
-			QS->trivial = spec->trivial;
-			QS->chance = chance;
-			pack->Deflate();
-			if (worldserver.Connected())
-			{
-				worldserver.SendPacket(pack);
-			}
-			safe_delete(pack);
+			QServ->QSTSEvents(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), "Failed", spec->recipe_id, spec->tradeskill, spec->trivial, chance);
 		}
 
 		itr = spec->onfail.begin();

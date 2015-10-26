@@ -175,6 +175,7 @@
 #define ServerOP_QSPlayerAAPurchase					0x5020
 #define ServerOP_QSPlayerDeathBy					0x5021
 #define ServerOP_QSPlayerTSEvents					0x5022
+#define ServerOP_QSPlayerQGlobalUpdates				0x5023
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1044,12 +1045,12 @@ struct QSMerchantLogTransaction_Struct {
 };
 
 struct QSPlayerAARateHourly_Struct {
-	uint32 id;
+	uint32 charid;
 	uint32 add_points;
 };
 
 struct QSPlayerAAPurchase_Struct {
-	uint32 id;
+	uint32 charid;
 	char aatype[8];
 	char aaname[128];
 	uint32 aaid;
@@ -1059,7 +1060,7 @@ struct QSPlayerAAPurchase_Struct {
 };
 
 struct QSPlayerDeathBy_Struct {
-	uint32 id;
+	uint32 charid;
 	uint32 zone_id;
 	int32 instance_id;
 	char killed_by[128];
@@ -1068,7 +1069,7 @@ struct QSPlayerDeathBy_Struct {
 };
 
 struct QSPlayerTSEvents_Struct {
-	uint32 id;
+	uint32 charid;
 	uint32 zone_id;
 	int32 instance_id;
 	char results[8];
@@ -1076,6 +1077,15 @@ struct QSPlayerTSEvents_Struct {
 	uint32 tradeskill;
 	uint16 trivial;
 	float chance;
+};
+
+struct QSPlayerQGlobalUpdate_Struct {
+	uint32 charid;
+	char action[8];
+	uint32 zone_id;
+	int32 instance_id;
+	char varname[32];
+	char newvalue[32];
 };
 
 struct QSGeneralQuery_Struct {

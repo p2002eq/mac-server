@@ -105,26 +105,32 @@ void WorldServer::Process()
 			}
 			case ServerOP_QSPlayerAARateHourly: {
 				QSPlayerAARateHourly_Struct *QS = (QSPlayerAARateHourly_Struct*)pack->pBuffer;
-				uint32 Items = QS->id;
+				uint32 Items = QS->charid;
 				database.LogPlayerAARateHourly(QS, Items);
 				break;
 			}
 			case ServerOP_QSPlayerAAPurchase: {
 				QSPlayerAAPurchase_Struct *QS = (QSPlayerAAPurchase_Struct*)pack->pBuffer;
-				uint32 Items = QS->id;
+				uint32 Items = QS->charid;
 				database.LogPlayerAAPurchase(QS, Items);
 				break;
 			}
 			case ServerOP_QSPlayerDeathBy: {
 				QSPlayerDeathBy_Struct *QS = (QSPlayerDeathBy_Struct*)pack->pBuffer;
-				uint32 Items = QS->id;
+				uint32 Items = QS->charid;
 				database.LogPlayerDeathBy(QS, Items);
 				break;
 			}
 			case ServerOP_QSPlayerTSEvents: {
 				QSPlayerTSEvents_Struct *QS = (QSPlayerTSEvents_Struct*)pack->pBuffer;
-				uint32 Items = QS->id;
+				uint32 Items = QS->charid;
 				database.LogPlayerTSEvents(QS, Items);
+				break;
+			}
+			case ServerOP_QSPlayerQGlobalUpdates: {
+				QSPlayerQGlobalUpdate_Struct *QS = (QSPlayerQGlobalUpdate_Struct*)pack->pBuffer;
+				uint32 Items = QS->charid;
+				database.LogPlayerQGlobalUpdates(QS, Items);
 				break;
 			}
 			case ServerOP_QueryServGeneric: {

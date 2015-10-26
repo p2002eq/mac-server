@@ -27,6 +27,7 @@
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
+#include "queryserv.h"
 #include "worldserver.h"
 #include "zone.h"
 #include "remote_call_subscribe.h"
@@ -36,6 +37,7 @@
 #include <stdlib.h>
 
 extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -1364,21 +1366,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	{
 		char killer_name[128];
 		if (killerMob && killerMob->GetCleanName()) { strncpy(killer_name, killerMob->GetCleanName(), 128); }
-
-		ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerDeathBy, sizeof(QSPlayerDeathBy_Struct));
-		QSPlayerDeathBy_Struct* QS = (QSPlayerDeathBy_Struct*)pack->pBuffer;
-		QS->id = this->CharacterID();
-		QS->zone_id = this->GetZoneID();
-		QS->instance_id = this->GetInstanceID();
-		strncpy(QS->killed_by, killer_name, 128);
-		QS->spell = spell;
-		QS->damage = damage;
-		pack->Deflate();
-		if (worldserver.Connected())
-		{
-			worldserver.SendPacket(pack);
-		}
-		safe_delete(pack);
+		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
@@ -1436,7 +1424,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	else if (equipment[MainSecondary])
 		weapon = database.GetItem(equipment[MainSecondary]);
 
-	//We dont factor much from the weapon into the attack.
+	//We don't factor much from the weapon into the attack.
 	//Just the skill type so it doesn't look silly using punching animations and stuff while wielding weapons
 	if(weapon) {
 		Log.Out(Logs::Detail, Logs::Combat, "Attacking with weapon: %s (%d) (too bad im not using it for much)", weapon->Name, weapon->ID);

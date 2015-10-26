@@ -29,13 +29,13 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 #include "corpse.h"
 #include "groups.h"
 #include "mob.h"
-#include "worldserver.h"
+#include "queryserv.h"
 #include "raids.h"
 #include "string_ids.h"
 #include "titles.h"
 #include "zonedb.h"
 
-extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 AA_DBAction AA_Actions[aaHighestID][MAX_AA_ACTION_RANKS];	//[aaid][rank]
 std::map<uint32, SendAA_Struct*>aas_send;
@@ -1041,21 +1041,7 @@ void Client::BuyAA(AA_Action* action)
 		/* QS: Player_Log_AA_Purchases */
 		if (RuleB(QueryServ, PlayerLogAAPurchases))
 		{
-			ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerAAPurchase, sizeof(QSPlayerAAPurchase_Struct));
-			QSPlayerAAPurchase_Struct* QS = (QSPlayerAAPurchase_Struct*)pack->pBuffer;
-			QS->id = this->CharacterID();
-			strncpy(QS->aatype, aa_type, 8);
-			strncpy(QS->aaname, aa2->name, 128);
-			QS->aaid = aa2->id;
-			QS->cost = real_cost;
-			QS->zone_id = this->GetZoneID();
-			QS->instance_id = this->GetInstanceID();
-			pack->Deflate();
-			if (worldserver.Connected())
-			{
-				worldserver.SendPacket(pack);
-			}
-			safe_delete(pack);
+			QServ->QSAAPurchases(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), aa_type, aa2->name, aa2->id, real_cost);
 		}
 
 		SendAAStats();
