@@ -226,7 +226,7 @@ public:
 		CastAction_type &CastAction, bool isproc = false);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
-	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster);
+	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster, bool isProc = false);
 	virtual float GetAOERange(uint16 spell_id);
 	void InterruptSpell(uint16 spellid = SPELL_UNKNOWN);
 	void InterruptSpell(uint16, uint16, uint16 spellid = SPELL_UNKNOWN, bool fizzle = false);
@@ -750,7 +750,7 @@ public:
 	void StartEnrage();
 	void ProcessEnrage();
 	bool IsEnraged();
-	void Taunt(NPC* who, bool always_succeed, float chance_bonus = 0);
+	void Taunt(NPC* who, bool always_succeed = false);
 
 	virtual void AI_Init();
 	virtual void AI_Start(uint32 iMoveDelay = 0);

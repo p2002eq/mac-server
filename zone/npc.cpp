@@ -117,7 +117,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	qglobal_purge_timer(30000),
 	sendhpupdate_timer(1000),
 	enraged_timer(1000),
-	taunt_timer(TauntReuseTime * 1000),
+	taunt_timer((TauntReuseTime + 1) * 1000),		// pet taunt timer should be 6 seconds
 	m_SpawnPoint(position),
 	m_GuardPoint(-1,-1,-1,0),
 	m_GuardPointSaved(0,0,0,0)

@@ -1306,6 +1306,11 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool 
 		}
 	}
 
+	// procs and clickables capped at 400
+	// damage aggro is still added later, so procs like the SoD's anarchy still do more than 400
+	if (isproc && AggroAmount > 400)
+		AggroAmount = 400;
+
 	if (GetClass() == BARD)
 	{
 		if (damage > 0)
@@ -1331,10 +1336,6 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob* target, int32 &jolthate, bool 
 	{
 		AggroAmount += damage;
 	}
-
-	// procs and clickables capped at 400
-	if (isproc && AggroAmount > 400)
-		AggroAmount = 400;
 
 	if (spells[spell_id].HateAdded > 0)
 		AggroAmount = spells[spell_id].HateAdded;

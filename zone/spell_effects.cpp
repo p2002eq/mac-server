@@ -2425,17 +2425,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_Taunt:
-			{
-				if (IsNPC()){
-					caster->Taunt(this->CastToNPC(), false, static_cast<float>(spell.base[i]));
-					
-					if (spell.base2[i] > 0)
-						CastToNPC()->SetHate(caster, (CastToNPC()->GetHateAmount(caster) + spell.base2[i]));
-				}
-				break;
-			}
-
 			case SE_AttackSpeed:
 				if (spell.base[i] < 100)
 					SlowMitigation(caster);
@@ -2454,42 +2443,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_AttackSpeed4:
 				SlowMitigation(caster);
 				break;
-
-			case SE_AddHatePct:
-			{
-				if (IsNPC()){
-					int32 new_hate = CastToNPC()->GetHateAmount(caster) * (100 + spell.base[i]) / 100;
-					if (new_hate <= 0)
-						new_hate = 1;
-
-					CastToNPC()->SetHate(caster, new_hate);
-				}
-				break;
-			}
-
-			case SE_Hate:{
-
-				if (buffslot >= 0)
-					break;
-
-				if(caster){
-					if(effect_value > 0){
-						if(caster){
-							if(caster->IsClient() && !caster->CastToClient()->GetFeigned())
-								AddToHateList(caster, effect_value);
-							else if(!caster->IsClient())
-								AddToHateList(caster, effect_value);
-						}
-					}else{
-						int32 newhate = GetHateAmount(caster) + effect_value;
-						if (newhate < 1)
-							SetHate(caster,1);
-						else
-							SetHate(caster,newhate);
-						}
-				}
-				break;
-			}
 
 			case SE_InterruptCasting:{
 				if (buffslot >= 0)
@@ -3276,29 +3229,6 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 				break;
 			}
 
-			case SE_Hate:{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level);
-				if(caster){
-					if(effect_value > 0){
-						if(caster){
-							if(caster->IsClient() && !caster->CastToClient()->GetFeigned()){
-								AddToHateList(caster, effect_value);
-							}
-							else if(!caster->IsClient())
-								AddToHateList(caster, effect_value);
-						}
-					}else{
-						int32 newhate = GetHateAmount(caster) + effect_value;
-						if (newhate < 1) {
-							SetHate(caster,1);
-						} else {
-							SetHate(caster,newhate);
-						}
-					}
-				}
-				break;
-			}
-
 			case SE_WipeHateList:
 			{
 				if (IsMezSpell(spell_id))
@@ -3465,19 +3395,6 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					break;
 				}
 			}
-
-			case SE_AddHateOverTimePct:
-			{				
-				if (IsNPC()){
-					int32 new_hate = CastToNPC()->GetHateAmount(caster) * (100 + spell.base[i]) / 100;
-					if (new_hate <= 0)
-						new_hate = 1;
-					
-					CastToNPC()->SetHate(caster, new_hate);
-				}
-				break;
-			}
-
 
 			default:
 			{
