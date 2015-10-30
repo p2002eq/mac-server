@@ -1177,11 +1177,16 @@ bool ZoneServer::Process() {
 			case ServerOP_QSSendQuery:
 			case ServerOP_QueryServGeneric:
 			case ServerOP_Speech:
+			case ServerOP_QSPlayerAARateHourly:
+			case ServerOP_QSPlayerAAPurchase:
+			case ServerOP_QSPlayerDeathBy:
+			case ServerOP_QSPlayerTSEvents:
+			case ServerOP_QSPlayerQGlobalUpdates:
 			case ServerOP_QSPlayerLogTrades:
 			case ServerOP_QSPlayerLogHandins:
 			case ServerOP_QSPlayerLogNPCKills:
-			case ServerOP_QSPlayerLogDeletes:
-			case ServerOP_QSPlayerLogMoves:
+			case ServerOP_QSPlayerLogItemDeletes:
+			case ServerOP_QSPlayerLogItemMoves:
 			case ServerOP_QSPlayerLogMerchantTransactions:
 			{
 				QSLink.SendPacket(pack);
