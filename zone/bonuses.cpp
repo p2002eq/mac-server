@@ -632,9 +632,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_Fearless:
 				newbon->Fearless = true;
 				break;
-			case SE_PersistantCasting:
-				newbon->PersistantCasting += base1;
-				break;
 			case SE_FrontalStunResist:
 				newbon->FrontalStunResist += base1;
 				break;
@@ -1028,10 +1025,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				}
 				break;
 			}
-
-			case SE_StunBashChance:
-				newbon->StunBashChance += base1;
-				break;
 
 			case SE_IncreaseChanceMemwipe:
 				newbon->IncreaseChanceMemwipe += base1;
@@ -2043,10 +2036,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->IncreaseBlockChance += effect_value;
 				break;
 
-			case SE_PersistantCasting:
-				new_bonus->PersistantCasting += effect_value;
-				break;
-
 			case SE_LimitHPPercent:
 			{
 				if(new_bonus->HPPercCap[0] != 0 && new_bonus->HPPercCap[0] > effect_value){
@@ -2362,10 +2351,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_TwoHandBluntBlock:
 				new_bonus->TwoHandBluntBlock += effect_value;
-				break;
-
-			case SE_StunBashChance:
-				new_bonus->StunBashChance += effect_value;
 				break;
 
 			case SE_IncreaseChanceMemwipe:

@@ -171,12 +171,12 @@ void Mob::ApplySpecialAttackMod(SkillUseTypes skill, int32 &dmg, int32 &mindmg) 
 	}
 }
 
-void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage, int32 min_damage, int32 hate_override,int ReuseTime, 
+void Mob::DoSpecialAttackDamage(Mob *defender, SkillUseTypes skill, int32 max_damage, int32 min_damage, int32 hate_override,int ReuseTime, 
 								bool HitChance, bool CanAvoid) {
 	//this really should go through the same code as normal melee damage to
 	//pick up all the special behavior there
 
-	if (!who)
+	if (!defender)
 		return;
 
 	int32 hate = max_damage;
@@ -208,17 +208,17 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 
 	if (damage > 0 && CanAvoid)
 	{
-		who->AvoidDamage(this, damage, noRiposte);
+		defender->AvoidDamage(this, damage, noRiposte);
 	}
 
-	if (damage > 0 && HitChance && !who->AvoidanceCheck(this, skill))
+	if (damage > 0 && HitChance && !defender->AvoidanceCheck(this, skill))
 	{
 		damage = 0;
 	}
 
 	if (damage > 0)
 	{
-		int roll = RollD20(GetOffense(skill), who->GetMitigation());
+		int roll = RollD20(GetOffense(skill), defender->GetMitigation());
 		int di1k = 1;
 
 		// SE_MinDamageModifier for disciplines: Fellstrike, Innerflame, Duelist, Beastial Rage
@@ -252,11 +252,118 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 			damage = 1;
 		}
 
-		CommonOutgoingHitSuccess(who, damage, skill);
+		CommonOutgoingHitSuccess(defender, damage, skill);
+
+		// handle bash and kick stuns.  Stuns hit even through runes
+		// both PC and NPC kicks stun starting at 55
+		if ((skill == SkillBash
+			|| (skill == SkillKick && (GetClass() == WARRIOR || GetClass() == WARRIORGM) && GetLevel() >= 55)
+			|| (skill == SkillDragonPunch && IsClient() && CastToClient()->HasInstantDisc(skill)))
+			&& !defender->GetSpecialAbility(UNSTUNABLE))
+		{
+			// this is precise for the vast majority of NPCs
+			// at some point around level 61, base stun chance goes from 45 to 40.  not sure why
+			int stun_chance = 45;
+			int levelDiff = GetLevel() - defender->GetLevel();
+
+			if (GetLevel() > 60)
+				stun_chance = 40;
+
+			if (levelDiff < 0)
+			{
+				stun_chance -= levelDiff * levelDiff / 2;
+			}
+			else
+			{
+				stun_chance += levelDiff * levelDiff / 2;
+			}
+			if (stun_chance < 2)
+				stun_chance = 2;
+
+			if (defender->IsNPC() && defender->GetLevel() > RuleI(Spells, BaseImmunityLevel))
+				stun_chance = 0;
+
+			if (stun_chance && zone->random.Roll(stun_chance))
+			{
+				Log.Out(Logs::Detail, Logs::Combat, "Stun passed, checking resists. Was %d chance.", stun_chance);
+
+				int stun_resist = 0;
+				int frontal_stun_resist = 0;
+
+				if (defender->IsClient())
+				{
+					stun_resist = defender->aabonuses.StunResist;						// Stalwart Endurance AA
+					frontal_stun_resist = defender->aabonuses.FrontalStunResist;		// don't think we have anything that uses this
+
+					if (defender->GetBaseRace() == OGRE)
+						frontal_stun_resist = 100;
+				}
+
+				if ((frontal_stun_resist && zone->random.Roll(frontal_stun_resist)) &&
+					!BehindMob(defender, GetX(), GetY()))
+				{
+					Log.Out(Logs::Detail, Logs::Combat, "Frontal stun resisted. %d chance.", frontal_stun_resist);
+				}
+				else
+				{
+					if (stun_resist && zone->random.Roll(stun_resist))
+					{
+						defender->Message_StringID(MT_DefaultText, AVOID_STUN);
+						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
+					}
+					else
+					{
+						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);
+						defender->Stun(2000, this);	// bash/kick stun is always 2 seconds
+					}
+				}
+			}
+			else
+			{
+				Log.Out(Logs::Detail, Logs::Combat, "Stun failed. %d chance.", stun_chance);
+
+				// most non-stunning bashes still interrupt
+				// the calculcation Sony uses to determine the interrupt chance is entirely unknown 
+				// on Live, the chance is rather high (90% perhaps) for NPCs, even for greens/greys
+				// some parsed AK logs had my paladin's bash interrupt 15 times out of 35 attempts (not counting misses) on level 60ish NPCs
+				// but his skill wasn't anywhere near the cap.  skill may have zero affect on interrupt chance however, who knows (beyond missing)
+
+				// This is a guess based on the above and comments from an AK user and is probably not terribly accurate
+				int interruptChance = 100;
+
+				if (IsNPC())
+				{
+					if (GetLevel() < defender->GetLevel())
+						interruptChance = 90;
+				}
+				else if (defender->IsNPC())
+				{
+					int levelDiff = GetLevel() - defender->GetLevel();
+
+					if (levelDiff < 0)
+						interruptChance += levelDiff * 10;
+
+					if (defender->GetLevel() > 55)
+						interruptChance /= 2;
+					else if (defender->GetLevel() > 50)
+						interruptChance = 3 * interruptChance / 4;
+				}
+
+				if (zone->random.Roll(interruptChance))
+				{
+					if (IsValidSpell(defender->casting_spell_targetid) && !spells[defender->casting_spell_targetid].uninterruptable)
+					{
+						Log.Out(Logs::Detail, Logs::Combat, "Non-stunning bash or kick interrupted spell.");
+						defender->InterruptSpell();
+					}
+				}
+			}
+
+		}
 	}
 
-	who->AddToHateList(this, hate, 0);
-	who->Damage(this, damage, SPELL_UNKNOWN, skill, false);
+	defender->AddToHateList(this, hate, 0);
+	defender->Damage(this, damage, SPELL_UNKNOWN, skill, false);
 
 	//Make sure 'this' has not killed the target and 'this' is not dead (Damage shield ect).
 	if(!GetTarget())return;
@@ -268,17 +375,17 @@ void Mob::DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage,
 		kb_chance += kb_chance*(100-aabonuses.SpecialAttackKBProc[0])/100;
 
 		if (zone->random.Roll(kb_chance))
-			SpellFinished(904, who, 10, 0, -1, spells[904].ResistDiff);
-			//who->Stun(100); Kayen: This effect does not stun on live, it only moves the NPC.
+			SpellFinished(904, defender, 10, 0, -1, spells[904].ResistDiff);
+			//defender->Stun(100); Kayen: This effect does not stun on live, it only moves the NPC.
 	}
 
 	if (damage > 0 && IsNPC())
 	{
-		TrySpellProc(nullptr, nullptr, who);		// NPC innate procs can proc on special attacks
+		TrySpellProc(nullptr, nullptr, defender);		// NPC innate procs can proc on special attacks
 	}
 
-	if(damage == -3 && !who->HasDied())
-		DoRiposte(who);
+	if(damage == -3 && !defender->HasDied())
+		DoRiposte(defender);
 }
 
 bool Client::HasRacialAbility(const CombatAbility_Struct* ca_atk)
@@ -1492,11 +1599,21 @@ void NPC::DoClassAttacks(Mob *target) {
 		knightattack_timer.Start(knightreuse);
 	}
 
-	//general stuff, for all classes....
-	//only gets used when their primary ability get used too
-	if (taunting && HasOwner() && target->IsNPC() && target->GetBodyType() != BT_Undead && taunt_time) {
-		this->GetOwner()->Message_StringID(MT_PetResponse, PET_TAUNTING);
-		Taunt(target->CastToNPC(), false);
+	// pet taunt
+	if (taunting && HasOwner() && !IsCharmed() && target->IsNPC() && target->GetBodyType() != BT_Undead && taunt_time)
+	{
+		// pet taunt is 6 seconds with a chance at not working.  easily seen in logs
+		// most times it's 6 seconds between 'taunting attacker master', sometimes 12, somtimes 18, etc
+		// mage pets seem to taunt ~66%.  Enchanter pets ~40%
+		int tauntChance = 66;
+		if (this->GetOwner()->GetClass() == ENCHANTER || this->GetOwner()->GetClass() == SHAMAN)
+			tauntChance = 40;
+
+		if (zone->random.Roll(tauntChance))
+		{
+			this->GetOwner()->Message_StringID(MT_PetResponse, PET_TAUNTING);
+			Taunt(target->CastToNPC(), false);
+		}
 	}
 
 	if(!ca_time)
@@ -1532,8 +1649,10 @@ void NPC::DoClassAttacks(Mob *target) {
 			break;
 		}
 		case WARRIOR: case WARRIORGM:{
-			if(level >= RuleI(Combat, NPCBashKickLevel)){
-				if(zone->random.Roll(75)) { //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
+			if(level >= RuleI(Combat, NPCBashKickLevel))
+			{
+				if(zone->random.Roll(33))			// kick chance is 33%
+				{
 					DoAnim(Animation::Kick);
 
 					if(GetWeaponDamage(target, (const Item_Struct*)nullptr) <= 0){
@@ -1784,12 +1903,17 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 	}
 }
 
-void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
+void Mob::Taunt(NPC* who, bool always_succeed) {
 
 	if (who == nullptr)
 		return;
 
-	if(DivineAura())
+	// charmed NPCs don't seem to taunt
+	if(DivineAura() || (IsNPC() && IsCharmed()))
+		return;
+
+	// summoned pets don't seem to taunt level 50+ targets (might be a little lower than that even)
+	if (IsPet() && who->GetLevel() >= 50)
 		return;
 
 	if(!CombatRange(who))
@@ -1798,66 +1922,70 @@ void Mob::Taunt(NPC* who, bool always_succeed, float chance_bonus) {
 	if(!always_succeed && IsClient())
 		CastToClient()->CheckIncreaseSkill(SkillTaunt, who, zone->skill_difficulty[SkillTaunt].difficulty);
 
-	Mob *hate_top = who->GetHateMost();
+	Mob *hate_top = who->GetHateMost(false);
 
-	int level_difference = GetLevel() - who->GetLevel();
-	bool Success = false;
+	int levelDifference = GetLevel() - who->GetLevel();
 
 	//Support for how taunt worked pre 2000 on LIVE - Can not taunt NPC over your level.
-	if ((RuleB(Combat,TauntOverLevel) == false) && (level_difference < 0) || who->GetSpecialAbility(IMMUNE_TAUNT)){
+	if (((RuleB(Combat, TauntOverLevel) == false) && (levelDifference < 0)) || who->GetSpecialAbility(IMMUNE_TAUNT)){
 		//Message_StringID(MT_SpellFailure,FAILED_TAUNT);
 		return;
 	}
 
-	//All values used based on live parses after taunt was updated in 2006.
-	int32 newhate = 0;
-	float tauntchance = 50.0f;
+	int tauntChance = 50;
 
-	if(always_succeed)
-		tauntchance = 101.0f;
-
+	if (always_succeed)
+	{
+		tauntChance = 100;
+	}
 	else
 	{
-		if (level_difference < 0)
+		/* This is not how Sony did it.  This is a guess that fits the very limited data available.
+		 * Low level players with maxed taunt for their level taunted about 50% on white cons.
+		 * A 65 ranger with 150 taunt skill (max) taunted about 50% on level 60 and under NPCs.
+		 * A 65 warrior with maxed taunt (230) was taunting around 50% on SSeru NPCs.		*/
+
+		/* Rashere in 2006: "your taunt skill was irrelevant if you were above level 60 and taunting
+		 * something that was also above level 60."
+		 * Also: "The chance to taunt an NPC higher level than yourself dropped off at double the rate
+		 * if you were above level 60 than if you were below level 60 making it very hard to taunt creature
+		 * higher level than yourself if you were above level 60."
+		 * 
+		 * See http://www.elitegamerslounge.com/home/soearchive/viewtopic.php?t=81156 */
+		if (GetLevel() >= 60 && levelDifference < 0)
 		{
-			tauntchance += static_cast<float>(level_difference)*3.0f;
-			if (tauntchance < 20)
-				tauntchance = 20.0f;
+			if (levelDifference < -5)
+				tauntChance = 0;
+			else if (levelDifference == -5)
+				tauntChance = 10;
+			else
+				tauntChance = 50 + levelDifference * 10;
 		}
 		else
 		{
-			tauntchance += static_cast<float>(level_difference)*5.0f;
-			if (tauntchance > 65)
-				tauntchance = 65.0f;
+			// this will make the skill difference between the tank classes actually affect success rates
+			// but only for NPCs near the player's level.  Mid to low blues will start to taunt at 50%
+			// even with lower skill
+			tauntChance = 50 * GetSkill(SkillTaunt) / (who->GetLevel() * 5 + 5);
+			tauntChance += levelDifference * 5;
+
+			if (tauntChance > 50)
+				tauntChance = 50;
+			else if (tauntChance < 10)
+				tauntChance = 10;
 		}
 	}
 
-	//TauntSkillFalloff rate is not based on any real data. Default of 33% gives a reasonable result.
-	if (IsClient() && !always_succeed)
-		tauntchance -= (RuleR(Combat,TauntSkillFalloff) * (CastToClient()->MaxSkill(SkillTaunt) - GetSkill(SkillTaunt)));
-
-	//From SE_Taunt (Does a taunt with a chance modifier)
-	if (chance_bonus)
-		tauntchance += tauntchance*chance_bonus/100.0f;
-
-	if (tauntchance < 1)
-		tauntchance = 1.0f;
-
-	tauntchance /= 100.0f;
-
-	if (tauntchance > zone->random.Real(0, 1))
+	if (zone->random.Roll(tauntChance))
 	{
 		if (hate_top && hate_top != this)
 		{
-			newhate = (who->GetNPCHate(hate_top, false) - who->GetNPCHate(this, false));
-			if (newhate > 0)
-			{
-				who->CastToNPC()->AddToHateList(this, newhate);
-			}
-			Success = true;
+			who->SetHate(this, who->GetNPCHate(hate_top, false));
 		}
-		else
-			who->CastToNPC()->AddToHateList(this,12);
+		else if (!who->IsOnHatelist(this))
+		{
+			who->CastToNPC()->AddToHateList(this, 20);
+		}
 
 		if (who->CanTalk())
 			who->Say_StringID(SUCCESSFUL_TAUNT,GetCleanName());

@@ -3652,7 +3652,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	// but we need to check special cases and resists
 
 	// check immunities
-	if(spelltar->IsImmuneToSpell(spell_id, this))
+	if(spelltar->IsImmuneToSpell(spell_id, this, isproc))
 	{
 		//the above call does the message to the client if needed
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d can't take hold due to immunity %s -> %s", spell_id, GetName(), spelltar->GetName());
@@ -4147,7 +4147,7 @@ void Mob::BuffFadeByEffect(int effectid, int skipslot)
 
 // checks if 'this' can be affected by spell_id from caster
 // returns true if the spell should fail, false otherwise
-bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
+bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster, bool isProc)
 {
 	int effect_index;
 
@@ -4173,7 +4173,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNMEZABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Mez spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_MEZ);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4200,7 +4200,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to Slow spells.");
 		caster->Message_StringID(MT_Shout, IMMUNE_ATKSPEED);
-		int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+		int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 		if(aggro > 0) {
 			AddToHateList(caster, aggro);
 		} else {
@@ -4218,7 +4218,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Fear spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4234,7 +4234,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		else if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4258,7 +4258,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Charm spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_CHARM);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4298,7 +4298,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNSNAREABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Snare spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_MOVEMENT);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4894,10 +4894,7 @@ void Mob::Stun(int duration, Mob* attacker)
 		return;
 
 	if(IsValidSpell(casting_spell_id) && !spells[casting_spell_id].uninterruptable) {
-		int persistent_casting = spellbonuses.PersistantCasting + itembonuses.PersistantCasting + aabonuses.PersistantCasting;
-
-		if(zone->random.Int(0,99) > persistent_casting)
-			InterruptSpell();
+		InterruptSpell();
 	}
 
 	if(duration > 0)
@@ -4910,11 +4907,6 @@ void Mob::Stun(int duration, Mob* attacker)
 			SendPosition();
 		}
 	}
-
-	//if(attacker)
-	//{
-	//	CombatPush(attacker, RuleR(Combat, PushBackAmount));
-	//}
 }
 
 void Mob::UnStun() {

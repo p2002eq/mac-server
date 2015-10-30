@@ -24,10 +24,10 @@
 #include "../common/skills.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
-#include "queryserv.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
+#include "queryserv.h"
 #include "worldserver.h"
 #include "zone.h"
 #include "remote_call_subscribe.h"
@@ -36,8 +36,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern QueryServ* QServ;
 extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -1362,11 +1362,11 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	GoToDeath();
 
 	/* QS: PlayerLogDeaths */
-	if (RuleB(QueryServ, PlayerLogDeaths)){
-		const char * killer_name = "";
-		if (killerMob && killerMob->GetCleanName()){ killer_name = killerMob->GetCleanName(); }
-		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
-		QServ->PlayerLogEvent(Player_Log_Deaths, this->CharacterID(), event_desc);
+	if (RuleB(QueryServ, PlayerLogDeaths))
+	{
+		char killer_name[128];
+		if (killerMob && killerMob->GetCleanName()) { strncpy(killer_name, killerMob->GetCleanName(), 128); }
+		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
@@ -1424,7 +1424,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	else if (equipment[MainSecondary])
 		weapon = database.GetItem(equipment[MainSecondary]);
 
-	//We dont factor much from the weapon into the attack.
+	//We don't factor much from the weapon into the attack.
 	//Just the skill type so it doesn't look silly using punching animations and stuff while wielding weapons
 	if(weapon) {
 		Log.Out(Logs::Detail, Logs::Combat, "Attacking with weapon: %s (%d) (too bad im not using it for much)", weapon->Name, weapon->ID);
@@ -3197,70 +3197,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		if (IsMezzed() && attacker) {
 			Log.Out(Logs::Detail, Logs::Combat, "Breaking mez due to attack.");
 			BuffFadeByEffect(SE_Mez);
-		}
-
-		//check stun chances if bashing
-		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
-			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
-		{
-			// NPCs can stun with their bash/kick as soon as they receive it.
-			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
-			// Clients have a chance to stun if the mob is 56+
-
-			// Calculate the chance to stun
-			int stun_chance = 0;
-			if (!GetSpecialAbility(UNSTUNABLE)) {
-				if (attacker->IsNPC()) {
-					stun_chance = RuleI(Combat, NPCBashKickStunChance);
-				} else if (attacker->IsClient()) {
-					// Less than base immunity
-					// Client vs. Client always uses the chance
-					if (!IsClient() && GetLevel() <= RuleI(Spells, BaseImmunityLevel)) {
-						if (skill_used == SkillBash) // Bash always will
-							stun_chance = 100;
-						else if (attacker->GetLevel() >= RuleI(Combat, ClientStunLevel))
-							stun_chance = 100; // only if you're over level 55 and using kick
-					} else { // higher than base immunity or Client vs. Client
-						// not sure on this number, use same as NPC for now
-						if (skill_used == SkillKick && attacker->GetLevel() < RuleI(Combat, ClientStunLevel))
-							stun_chance = RuleI(Combat, NPCBashKickStunChance);
-						else if (skill_used == SkillBash)
-							stun_chance = RuleI(Combat, NPCBashKickStunChance) +
-								attacker->spellbonuses.StunBashChance +
-								attacker->itembonuses.StunBashChance +
-								attacker->aabonuses.StunBashChance;
-					}
-				}
-			}
-
-			if (stun_chance && zone->random.Roll(stun_chance)) {
-				// Passed stun, try to resist now
-				int stun_resist = itembonuses.StunResist + spellbonuses.StunResist;
-				int frontal_stun_resist = itembonuses.FrontalStunResist + spellbonuses.FrontalStunResist;
-
-				Log.Out(Logs::Detail, Logs::Combat, "Stun passed, checking resists. Was %d chance.", stun_chance);
-				if (IsClient()) {
-					stun_resist += aabonuses.StunResist;
-					frontal_stun_resist += aabonuses.FrontalStunResist;
-				}
-
-				// frontal stun check for ogres/bonuses
-				if (((GetBaseRace() == OGRE && IsClient()) ||
-						(frontal_stun_resist && zone->random.Roll(frontal_stun_resist))) &&
-						!attacker->BehindMob(this, attacker->GetX(), attacker->GetY())) {
-					Log.Out(Logs::Detail, Logs::Combat, "Frontal stun resisted. %d chance.", frontal_stun_resist);
-				} else {
-					// Normal stun resist check.
-					if (stun_resist && zone->random.Roll(stun_resist)) {
-						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
-					} else {
-						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);
-						Stun(zone->random.Int(0, 2) * 1000, attacker); // 0-2 seconds
-					}
-				}
-			} else {
-				Log.Out(Logs::Detail, Logs::Combat, "Stun failed. %d chance.", stun_chance);
-			}
 		}
 
 		if(spell_id != SPELL_UNKNOWN && !iBuffTic) {

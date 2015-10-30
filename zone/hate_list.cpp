@@ -174,6 +174,10 @@ void HateList::Set(Mob* other, uint32 in_hate, uint32 in_dam)
 		if(in_hate > 0)
 			p->hate = in_hate;
 	}
+	else
+	{
+		Add(other, in_hate, in_dam);
+	}
 }
 
 Mob* HateList::GetDamageTop(Mob* hater)

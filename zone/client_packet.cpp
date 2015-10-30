@@ -73,7 +73,7 @@ extern PetitionList petition_list;
 extern EntityList entity_list;
 typedef void (Client::*ClientPacketProc)(const EQApplicationPacket *app);
 
-//Use a map for connecting opcodes since it dosent get used a lot and is sparse
+//Use a map for connecting opcodes since it doesn't get used a lot and is sparse
 std::map<uint32, ClientPacketProc> ConnectingOpcodes;
 //Use a static array for connected, for speed
 ClientPacketProc ConnectedOpcodes[_maxEmuOpcode];
@@ -7293,34 +7293,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	// start QS code
 	// stacking purchases not supported at this time - entire process will need some work to catch them properly
-	if (RuleB(QueryServ, PlayerLogMerchantTransactions)) {
-		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
-		QSMerchantLogTransaction_Struct* qsaudit = (QSMerchantLogTransaction_Struct*)qspack->pBuffer;
-
-		qsaudit->zone_id = zone->GetZoneID();
-		qsaudit->merchant_id = tmp->CastToNPC()->MerchantType;
-		qsaudit->merchant_money.platinum = 0;
-		qsaudit->merchant_money.gold = 0;
-		qsaudit->merchant_money.silver = 0;
-		qsaudit->merchant_money.copper = 0;
-		qsaudit->merchant_count = 1;
-		qsaudit->char_id = character_id;
-		qsaudit->char_money.platinum = (mpo->price / 1000);
-		qsaudit->char_money.gold = (mpo->price / 100) % 10;
-		qsaudit->char_money.silver = (mpo->price / 10) % 10;
-		qsaudit->char_money.copper = mpo->price % 10;
-		qsaudit->char_count = 0;
-
-		qsaudit->items[0].char_slot = freeslotid == INVALID_INDEX ? 0 : freeslotid;
-		qsaudit->items[0].item_id = item->ID;
-		qsaudit->items[0].charges = mpo->quantity;
-
-		if (freeslotid == INVALID_INDEX) {
-		}
-
-		qspack->Deflate();
-		if (worldserver.Connected()) { worldserver.SendPacket(qspack); }
-		safe_delete(qspack);
+	if (RuleB(QueryServ, PlayerLogMerchantTransactions))
+	{
+		QServ->QSMerchantTransactions(character_id, zone->GetZoneID(), freeslotid == INVALID_INDEX ? 0 : freeslotid,
+			item->ID, mpo->quantity, tmp->CastToNPC()->MerchantType, 0, 0, 0, 0, 1,
+			mpo->price / 1000, (mpo->price / 100) % 10, (mpo->price / 10) % 10, mpo->price % 10, 0);
 	}
 	// end QS code
 
@@ -7431,31 +7408,11 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	}
 
 	// start QS code
-	if (RuleB(QueryServ, PlayerLogMerchantTransactions)) {
-		ServerPacket* qspack = new ServerPacket(ServerOP_QSPlayerLogMerchantTransactions, sizeof(QSMerchantLogTransaction_Struct) + sizeof(QSTransactionItems_Struct));
-		QSMerchantLogTransaction_Struct* qsaudit = (QSMerchantLogTransaction_Struct*)qspack->pBuffer;
-
-		qsaudit->zone_id = zone->GetZoneID();
-		qsaudit->merchant_id = vendor->CastToNPC()->MerchantType;
-		qsaudit->merchant_money.platinum = (price / 1000);
-		qsaudit->merchant_money.gold = (price / 100) % 10;
-		qsaudit->merchant_money.silver = (price / 10) % 10;
-		qsaudit->merchant_money.copper = price % 10;
-		qsaudit->merchant_count = 0;
-		qsaudit->char_id = character_id;
-		qsaudit->char_money.platinum = 0;
-		qsaudit->char_money.gold = 0;
-		qsaudit->char_money.silver = 0;
-		qsaudit->char_money.copper = 0;
-		qsaudit->char_count = 1;
-
-		qsaudit->items[0].char_slot = mp->itemslot;
-		qsaudit->items[0].item_id = itemid;
-		qsaudit->items[0].charges = charges;
-
-		qspack->Deflate();
-		if (worldserver.Connected()) { worldserver.SendPacket(qspack); }
-		safe_delete(qspack);
+	if (RuleB(QueryServ, PlayerLogMerchantTransactions))
+	{
+		QServ->QSMerchantTransactions(character_id, zone->GetZoneID(), mp->itemslot,
+			itemid, charges, vendor->CastToNPC()->MerchantType, price / 1000, (price / 100) % 10,
+			(price / 10) % 10, price % 10, 0, 0, 0, 0, 0, 1);
 	}
 	// end QS code
 
@@ -8182,27 +8139,27 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 
 					event_entry._detail_count = event_details.size();
 
-					ServerPacket* qs_pack = new ServerPacket(ServerOP_QSPlayerLogTrades, sizeof(QSPlayerLogTrade_Struct) + (sizeof(QSTradeItems_Struct)* event_entry._detail_count));
-					QSPlayerLogTrade_Struct* qs_buf = (QSPlayerLogTrade_Struct*)qs_pack->pBuffer;
+					ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogTrades, sizeof(QSPlayerLogTrade_Struct) + (sizeof(QSTradeItems_Struct)* event_entry._detail_count));
+					QSPlayerLogTrade_Struct* QS = (QSPlayerLogTrade_Struct*)pack->pBuffer;
 
-					memcpy(qs_buf, &event_entry, sizeof(QSPlayerLogTrade_Struct));
+					memcpy(QS, &event_entry, sizeof(QSPlayerLogTrade_Struct));
 
 					int offset = 0;
 
 					for (std::list<void*>::iterator iter = event_details.begin(); iter != event_details.end(); ++iter, ++offset) {
 						QSTradeItems_Struct* detail = reinterpret_cast<QSTradeItems_Struct*>(*iter);
-						qs_buf->items[offset] = *detail;
+						QS->items[offset] = *detail;
 						safe_delete(detail);
 					}
 
 					event_details.clear();
 
-					qs_pack->Deflate();
+					pack->Deflate();
 
 					if (worldserver.Connected())
-						worldserver.SendPacket(qs_pack);
+						worldserver.SendPacket(pack);
 
-					safe_delete(qs_pack);
+					safe_delete(pack);
 					// end QS code
 				}
 				else {
@@ -8249,10 +8206,10 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 
 				event_entry._detail_count = event_details.size();
 
-				ServerPacket* qs_pack = new ServerPacket(ServerOP_QSPlayerLogHandins, sizeof(QSPlayerLogHandin_Struct) + (sizeof(QSHandinItems_Struct)* event_entry._detail_count));
-				QSPlayerLogHandin_Struct* qs_buf = (QSPlayerLogHandin_Struct*)qs_pack->pBuffer;
+				ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLogHandins, sizeof(QSPlayerLogHandin_Struct) + (sizeof(QSHandinItems_Struct)* event_entry._detail_count));
+				QSPlayerLogHandin_Struct* QS = (QSPlayerLogHandin_Struct*)pack->pBuffer;
 
-				memcpy(qs_buf, &event_entry, sizeof(QSPlayerLogHandin_Struct));
+				memcpy(QS, &event_entry, sizeof(QSPlayerLogHandin_Struct));
 
 				int offset = 0;
 
@@ -8261,19 +8218,19 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 					QSHandinItems_Struct* detail = reinterpret_cast<QSHandinItems_Struct*>(*iter);
 					if (detail != nullptr)
 					{
-						qs_buf->items[offset] = *detail;
+						QS->items[offset] = *detail;
 						safe_delete(detail);
 					}
 				}
 
 				event_details.clear();
 
-				qs_pack->Deflate();
+				pack->Deflate();
 
 				if (worldserver.Connected())
-					worldserver.SendPacket(qs_pack);
+					worldserver.SendPacket(pack);
 
-				safe_delete(qs_pack);
+				safe_delete(pack);
 			}
 			else {
 				FinishTrade(with->CastToNPC());

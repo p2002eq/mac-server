@@ -117,7 +117,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	qglobal_purge_timer(30000),
 	sendhpupdate_timer(1000),
 	enraged_timer(1000),
-	taunt_timer(TauntReuseTime * 1000),
+	taunt_timer((TauntReuseTime + 1) * 1000),		// pet taunt timer should be 6 seconds
 	m_SpawnPoint(position),
 	m_GuardPoint(-1,-1,-1,0),
 	m_GuardPointSaved(0,0,0,0)
@@ -2372,7 +2372,7 @@ int32 NPC::GetHPRegen()
 	if((GetHP() < GetMaxHP()) && !IsPet()) 
 	{
 		// OOC
-		if(!IsEngaged()) 
+		if(!IsEngaged())
 		{
 			return(GetNPCHPRegen() + bonus); // hp_regen + spell/item regen + sitting bonus
 		// In Combat
@@ -2383,7 +2383,7 @@ int32 NPC::GetHPRegen()
 	// Pet
 	else if(GetHP() < GetMaxHP() && GetOwnerID() !=0) 
 	{
-		if(!IsEngaged())
+		if (!IsEngaged() && !IsCharmed() && !IsDireCharmed())
 			return(GetNPCHPRegen() + bonus + (GetLevel()/5));
 		else
 			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen));
