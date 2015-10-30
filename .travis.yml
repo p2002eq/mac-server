@@ -9,6 +9,7 @@ addons:
     - libboost-dev
     - liblua5.1-0-dev
     - zlib1g-dev
+	- uuid-dev
 script:
   - cmake -G "Unix Makefiles" -DEQEMU_BUILD_TESTS=OFF
   - make
