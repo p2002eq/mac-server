@@ -935,7 +935,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 								}
 								else if (RuleB(NPC, ReturnNonQuestItems)) 
 								{
-									SummonItem(baginst->GetID(), baginst->GetCharges(), false, MainQuest);
+									SummonItem(baginst->GetID(), baginst->GetCharges(), false, MainQuest, true);
 									if(npc->CanTalk())
 										npc->Say_StringID(NO_NEED_FOR_ITEM, GetName());
 								}
@@ -964,7 +964,7 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 				else if (RuleB(NPC, ReturnNonQuestItems)) 
 				{
 					DeleteItemInInventory(i);
-					SummonItem(inst->GetID(), inst->GetCharges(), false, MainQuest);
+					SummonItem(inst->GetID(), inst->GetCharges(), false, MainQuest, true);
 					if(npc->CanTalk())
 						npc->Say_StringID(NO_NEED_FOR_ITEM, GetName());
 				}

@@ -5499,7 +5499,7 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 		bool si = SwapItem(mi);
 		if (!si)
 		{
-			Log.Out(Logs::Detail, Logs::Inventory, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", SwapItem(mi), IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
+			Log.Out(Logs::Detail, Logs::Inventory, "WTF Some shit failed. SwapItem: %i, IsValidSlot (from): %i, IsValidSlot (to): %i", si, IsValidSlot(mi->from_slot), IsValidSlot(mi->to_slot));
 			SwapItemResync(mi);
 
 			bool error = false;
@@ -8221,6 +8221,14 @@ void Client::Handle_OP_TradeAcceptClick(const EQApplicationPacket *app)
 	}
 	// Trading with a Mob object that is not a Client.
 	else if (with) {
+
+		if(with->IsNPC() && with->IsEngaged())
+		{
+			SendCancelTrade(with);
+			Log.Out(Logs::General, Logs::Trading, "Cancelled in-progress trade due to %s being in combat.", with->GetCleanName());
+			return;
+		}
+
 		EQApplicationPacket* outapp = new EQApplicationPacket(OP_FinishTrade, 0);
 		QueuePacket(outapp);
 		safe_delete(outapp);
@@ -8514,10 +8522,22 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 	TradeRequest_Struct* msg = (TradeRequest_Struct*)app->pBuffer;
 	Mob* tradee = entity_list.GetMob(msg->to_mob_id);
 
-	if (tradee && tradee->IsClient()) {
+	if (tradee && tradee->IsClient()) 
+	{
 		tradee->CastToClient()->QueuePacket(app);
 	}
-	else if (tradee && tradee->IsNPC()) {
+	else if (tradee && tradee->IsNPC()) 
+	{
+		
+		if(tradee->IsEngaged())
+		{
+			EQApplicationPacket* outapp = new EQApplicationPacket(OP_CancelTrade, sizeof(CancelTrade_Struct));
+			CancelTrade_Struct* ct = (CancelTrade_Struct*) outapp->pBuffer;
+			ct->fromid = tradee->GetID();
+			FastQueuePacket(&outapp);
+			Log.Out(Logs::General, Logs::Trading, "Cancelled trade request due to %s being in combat.", tradee->GetCleanName());
+			return;
+		}
 
 		//npcs always accept
 		trade->Start(msg->to_mob_id);

@@ -964,6 +964,7 @@ public:
 	void SendMerchantEnd();
 	float GetPortHeading(uint16 newx, uint16 newy);
 	void RefreshSpellIcon(bool disableslot = false);
+	void SendCancelTrade(Mob* with);
 
 protected:
 	friend class Mob;

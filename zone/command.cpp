@@ -5899,14 +5899,23 @@ void command_summonitem(Client *c, const Seperator *sep){
 
 		int16 charges = 0;
 		if (sep->argnum<2 || !sep->IsNumber(2))
-			charges = 0;
+		{
+			if(item && database.ItemQuantityType(itemid) == Quantity_Charges)
+			{
+				charges = item->MaxCharges;
+			}
+			else
+			{
+				charges = 0;
+			}
+		}
 		else
 			charges = atoi(sep->arg[2]);
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
 		else
-			c->SummonItem(itemid, charges);
+			c->SummonItem(itemid, charges, false, 0, true);
 	}
 }
 
@@ -5931,14 +5940,23 @@ void command_giveitem(Client *c, const Seperator *sep){
 
 		int16 charges = 0;
 		if (sep->argnum<2 || !sep->IsNumber(2))
-			charges = 0;
+		{
+			if(item && database.ItemQuantityType(itemid) == Quantity_Charges)
+			{
+				charges = item->MaxCharges;
+			}
+			else
+			{
+				charges = 0;
+			}
+		}
 		else
 			charges = atoi(sep->arg[2]);
 
 		if (item_status > c->Admin())
 			c->Message(CC_Red, "Error: Insufficient status to summon this item.");
 		else
-			t->SummonItem(itemid, charges);
+			t->SummonItem(itemid, charges, false, 0, true);
 	}
 }
 

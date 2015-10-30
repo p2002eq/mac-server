@@ -205,11 +205,12 @@ bool Client::SummonItem(uint32 item_id, int16 quantity, bool attuned, uint16 to_
 
 	// validation passed..so, set the quantity and create the actual item
 
-	//Todo: Figure out if we still need this, or if we are good with just using 0.
 	if(quantity < 0)
+	{
 		quantity = 1;
-
-	else if (quantity == 0){
+	}
+	else if (quantity == 0)
+	{
 		if(database.ItemQuantityType(item_id) == Quantity_Normal)
 		{ 
 			quantity = 1;
@@ -1283,13 +1284,24 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			Log.Out(Logs::Detail, Logs::Inventory, "Trading item no on cursor.");
 			return false;
 		}
-		if (with) {
+		if (with) 
+		{
 			Log.Out(Logs::Detail, Logs::Inventory, "Trade item move from slot %d to slot %d (trade with %s)", src_slot_id, dst_slot_id, with->GetName());
 			// Fill Trade list with items from cursor
 			if (!m_inv[MainCursor]) {
 				Message(CC_Red, "Error: Cursor item not located on server!");
 				Log.Out(Logs::Detail, Logs::Inventory, "Error: Cursor item not located on server!");
 				return false;
+			}
+
+			if(with->IsNPC() && with->IsEngaged())
+			{
+				if(RuleB(QueryServ, PlayerLogMoves)) { QSSwapItemAuditor(move_in); } // QS Audit
+				trade->AddEntity(dst_slot_id, move_in->number_in_stack);
+
+				SendCancelTrade(with);
+				Log.Out(Logs::General, Logs::Trading, "Cancelled in-progress trade due to %s being in combat.", with->GetCleanName());
+				return true;
 			}
 
 			// Add cursor item to trade bucket
