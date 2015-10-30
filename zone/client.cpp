@@ -361,6 +361,21 @@ void Client::SendLogoutPackets() {
 	FastQueuePacket(&outapp);
 }
 
+void Client::SendCancelTrade(Mob* with) {
+
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_CancelTrade, sizeof(CancelTrade_Struct));
+	CancelTrade_Struct* ct = (CancelTrade_Struct*) outapp->pBuffer;
+	ct->fromid = with->GetID();
+	FastQueuePacket(&outapp);
+
+	outapp = new EQApplicationPacket(OP_TradeReset, 0);
+	QueuePacket(outapp);
+	safe_delete(outapp);
+
+	FinishTrade(this);
+	trade->Reset();
+}
+
 void Client::ReportConnectingState() {
 	switch(conn_state) {
 	case NoPacketsReceived:		//havent gotten anything
