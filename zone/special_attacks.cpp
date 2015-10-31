@@ -259,7 +259,7 @@ void Mob::DoSpecialAttackDamage(Mob *defender, SkillUseTypes skill, int32 max_da
 		if ((skill == SkillBash
 			|| (skill == SkillKick && (GetClass() == WARRIOR || GetClass() == WARRIORGM) && GetLevel() >= 55)
 			|| (skill == SkillDragonPunch && IsClient() && CastToClient()->HasInstantDisc(skill)))
-			&& !defender->GetSpecialAbility(UNSTUNABLE))
+			&& !defender->GetSpecialAbility(UNSTUNABLE)	&& !defender->DivineAura() && !defender->GetInvul())
 		{
 			// this is precise for the vast majority of NPCs
 			// at some point around level 61, base stun chance goes from 45 to 40.  not sure why
@@ -379,7 +379,7 @@ void Mob::DoSpecialAttackDamage(Mob *defender, SkillUseTypes skill, int32 max_da
 			//defender->Stun(100); Kayen: This effect does not stun on live, it only moves the NPC.
 	}
 
-	if (damage > 0 && IsNPC())
+	if (damage > 0 && IsNPC() && !defender->GetSpellBonuses().MeleeRune[0])
 	{
 		TrySpellProc(nullptr, nullptr, defender);		// NPC innate procs can proc on special attacks
 	}

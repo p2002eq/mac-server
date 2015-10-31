@@ -181,7 +181,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 					case SpellType_Escape:
 					{
-						if (!roamer && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
+						if (roambox_distance == 0 && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
 							&& DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) > 40000)
 						{
 							entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
@@ -1803,16 +1803,16 @@ void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
 	if (IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) {
-		ClearFeignMemory();
+		if (zone->random.Roll(95))		// FD is not guaranteed for static NPCs, but chance is very high
+			ClearFeignMemory();			// patch notes from nov. 1999 confirm this
 
 		// this wipes hate list when NPC returns home after outdistancing hated players
-		if (IsEngaged() && zone->random.Int(0, 100) < 10)		// random delay before wiping hate list
+		if (IsEngaged())
 		{
 			WipeHateList();
 		}
 		walksp = 0.0f;
 	} else if (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false)) {
-		ClearFeignMemory();
 		walksp = 0.0f;
 	}
 
@@ -1949,9 +1949,6 @@ void NPC::AI_DoMovement() {
 					else
 						doMove = false;
 
-					// wipe feign memory since we reached our first waypoint
-					if(cur_wp == 1)
-						ClearFeignMemory();
 				}
 				if (doMove)
 				{	// not at waypoint yet or at 0 pause WP, so keep moving
@@ -2021,7 +2018,8 @@ void NPC::AI_DoMovement() {
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				if (m_GuardPoint == m_Position) {
-					ClearFeignMemory();
+					if (zone->random.Roll(95))
+						ClearFeignMemory();
 					if (IsEngaged())
 					{
 						WipeHateList();

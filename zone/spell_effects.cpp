@@ -495,7 +495,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				break;
 			}
-			case SE_GateCastersBindpoint: //Shin: Used on Teleport Bind.
 			case SE_Teleport:	// gates, rings, circles, etc
 			case SE_Teleport2:
 			{
@@ -527,17 +526,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 				}
 
-				if (effect == SE_GateCastersBindpoint && caster->IsClient())
-				{ //Shin: Teleport Bind uses caster's bind point
-					x = caster->CastToClient()->GetBindX();
-					y = caster->CastToClient()->GetBindY();
-					z = caster->CastToClient()->GetBindZ();
-					heading = caster->CastToClient()->GetBindHeading();
-					//target_zone = caster->CastToClient()->GetBindZoneId(); target_zone doesn't work due to const char
-					CastToClient()->MovePC(caster->CastToClient()->GetBindZoneID(), 0, x, y, z, heading);
-					break;
-				}
-
 #ifdef SPELL_EFFECT_SPAM
 				const char *efstr = "Teleport";
 				if(effect == SE_Teleport)
@@ -552,16 +540,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					efstr, x, y, z, heading, target_zone ? target_zone : "same zone"
 				);
 #endif
+				// teleports are not supposed to move NPCs.  Pets were used to kill the Seru earring NPCs, and Dain
 				if(IsClient())
 				{
 					if(!target_zone)
 						CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading);
 					else
 						CastToClient()->MovePC(target_zone, x, y, z, heading);
-				}
-				else{
-					if(!target_zone)
-						GMMove(x, y, z, heading);
 				}
 				break;
 			}
@@ -1247,30 +1232,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_MitigateMeleeDamage:
-			{
-				buffs[buffslot].melee_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_MeleeThresholdGuard:
-			{
-				buffs[buffslot].melee_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_SpellThresholdGuard:
-			{
-				buffs[buffslot].magic_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_MitigateSpellDamage:
-			{
-				buffs[buffslot].magic_rune = spells[spell_id].max[i];
-				break;
-			}
-
 			case SE_MitigateDotDamage:
 			{
 				buffs[buffslot].dot_rune = spells[spell_id].max[i];
@@ -1733,16 +1694,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					AddProcToWeapon(procid, false, 100, spell_id);
 				else
 					AddProcToWeapon(procid, false, spells[spell_id].base2[i]+100, spell_id);
-				break;
-			}
-
-			case SE_NegateAttacks:
-			{
-#ifdef SPELL_EFFECT_SPAM
-				snprintf(effect_desc, _EDLEN, "Melee Negate Attack Rune: %+i", effect_value);
-#endif
-				if(buffslot >= 0)
-					buffs[buffslot].numhits = effect_value;
 				break;
 			}
 
@@ -5981,47 +5932,6 @@ void Mob::ResourceTap(int32 damage, uint16 spellid){
 
 			if (spells[spellid].base2[i] == 2 && IsClient())  //Endurance Tap
 				CastToClient()->SetEndurance(CastToClient()->GetEndurance() + damage);
-		}
-	}
-}
-
-void Mob::TryTriggerThreshHold(int32 damage, int effect_id,  Mob* attacker){
-	
-	if (damage <= 0)
-		return;
-
-	if ((SE_TriggerMeleeThreshold == effect_id) && !spellbonuses.TriggerMeleeThreshold )
-		return;
-	else if ((SE_TriggerSpellThreshold == effect_id) && !spellbonuses.TriggerSpellThreshold)
-		return;
-
-	int buff_count = GetMaxTotalSlots();
-
-	for(int slot = 0; slot < buff_count; slot++) {
-
-		if(IsValidSpell(buffs[slot].spellid)){
-
-			for(int i = 0; i < EFFECT_COUNT; i++){
-
-				if (spells[buffs[slot].spellid].effectid[i] == effect_id){
-
-					uint16 spell_id = spells[buffs[slot].spellid].base[i];
-
-					if (damage > spells[buffs[slot].spellid].base2[i]){
-					
-						BuffFadeBySlot(slot);
-
-						if (IsValidSpell(spell_id)) {
-
-							if (IsBeneficialSpell(spell_id)) 
-								SpellFinished(spell_id, this, 10, 0, -1, spells[spell_id].ResistDiff);
-						
-							else if(attacker) 
-								SpellFinished(spell_id, attacker, 10, 0, -1, spells[spell_id].ResistDiff);
-						}
-					}
-				}
-			}
 		}
 	}
 }

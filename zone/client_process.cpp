@@ -313,7 +313,7 @@ bool Client::Process() {
 					}
 
 					//triple attack: rangers, monks, warriors over level 60
-					if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER)
+					if((((GetClass() == MONK || GetClass() == WARRIOR)
 						&& GetLevel() >= 60) || GetSpecialAbility(SPECATK_TRIPLE))
 						&& CheckDoubleAttack(true))
 					{

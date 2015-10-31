@@ -330,15 +330,9 @@ struct StatBonuses {
 	uint32	FocusEffects[HIGHEST_FOCUS+1];		// Stores the focus effectid for each focustype you have.
 	bool	NegateEffects;						// Check if you contain a buff with negate effect. (only spellbonuses)
 	int32	SkillDamageAmount2[HIGHEST_SKILL+2];	// Adds skill specific damage
-	uint32	NegateAttacks[3];					// 0 = bool HasEffect 1 = Buff Slot 2 = Max damage absorbed per hit
 	uint32	MitigateMeleeRune[4];				// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per hit 3 = Rune Amt
-	uint32	MeleeThresholdGuard[3];				// 0 = Mitigation value 1 = Buff Slot 2 = Min damage to trigger.
-	uint32	SpellThresholdGuard[3];				// 0 = Mitigation value 1 = Buff Slot 2 = Min damage to trigger.
 	uint32	MitigateSpellRune[4];				// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per spell 3 = Rune Amt
 	uint32	MitigateDotRune[4];					// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per tick 3 = Rune Amt
-	bool	TriggerMeleeThreshold;				// Has Melee Threshhold
-	bool	TriggerSpellThreshold;				// Has Spell Threshhold
-	uint32	ManaAbsorbPercentDamage[2];			// 0 = Mitigation value 1 = Buff Slot
 	int32	ShieldBlock;						// Chance to Shield Block
 	int32	BlockBehind;						// Chance to Block Behind (with our without shield)
 	bool	CriticalRegenDecay;					// increase critical regen chance, decays based on spell level cast

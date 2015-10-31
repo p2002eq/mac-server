@@ -4619,6 +4619,11 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				{
 					resist_modifier += 20 * (leveldiff + leveldiff);
 				}
+				else
+				{
+					resist_modifier -= level_mod;		// cancel out the level_mod, as it was already applied
+														// in the first check
+				}
 				Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
 			}
 		}

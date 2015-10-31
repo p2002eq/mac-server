@@ -447,7 +447,7 @@ int Mob::RollD20(int32 offense, int32 mitigation)
 	{
 		mean = diff / mitigation * 15;
 	}
-	double stddev = 8.7;	// standard deviation adjusts the height of the bell
+	double stddev = 8.8;	// standard deviation adjusts the height of the bell
 							// again, trial and error to find what fit best
 	double theta = 2 * M_PI * zone->random.Real(0.0, 1.0);
 	double rho = sqrt(-2 * log(1 - zone->random.Real(0.0, 1.0)));
@@ -463,7 +463,7 @@ int Mob::RollD20(int32 offense, int32 mitigation)
 		d = 9.5;
 	}
 	d = d + 11;
-	return static_cast<int8>(d);
+	return static_cast<int>(d);
 }
 
 //Returns the weapon damage against the input mob
@@ -1648,11 +1648,13 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	if (!GetTarget())
 		return true; //We killed them
 
-	if(!bRiposte && !other->HasDied())
+	if(!other->HasDied())
 	{
-		TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
+		// innate procs proc on rips, weapon procs don't
+		if (!bRiposte)
+			TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
 
-		if (damage > 0)			// NPCs only proc innate procs on a hit
+		if (damage > 0 && !other->GetSpellBonuses().MeleeRune[0])			// NPCs only proc innate procs on a hit
 		{
 			TrySpellProc(nullptr, weapon, other, Hand);
 		}
@@ -2757,79 +2759,6 @@ int32 Mob::ReduceDamage(int32 damage)
 		return damage;
 
 	int32 slot = -1;
-	bool DisableMeleeRune = false;
-
-	if (spellbonuses.NegateAttacks[0]){
-		slot = spellbonuses.NegateAttacks[1];
-		if(slot >= 0) {
-			if(--buffs[slot].numhits == 0) {
-
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot , true);
-			}
-
-			if (spellbonuses.NegateAttacks[2] && (damage > spellbonuses.NegateAttacks[2]))
-				damage -= spellbonuses.NegateAttacks[2];
-			else
-				return -6;
-		}
-	}
-
-	//Only mitigate if damage is above the minimium specified.
-	if (spellbonuses.MeleeThresholdGuard[0]){
-		slot = spellbonuses.MeleeThresholdGuard[1];
-
-		if (slot >= 0 && (damage > spellbonuses.MeleeThresholdGuard[2]))
-		{
-			DisableMeleeRune = true;
-			int damage_to_reduce = damage * spellbonuses.MeleeThresholdGuard[0] / 100;
-			if(damage_to_reduce >= buffs[slot].melee_rune)
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MeleeThresholdGuard %d damage negated, %d"
-					" damage remaining, fading buff.", damage_to_reduce, buffs[slot].melee_rune);
-				damage -= buffs[slot].melee_rune;
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot);
-			}
-			else
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MeleeThresholdGuard %d damage negated, %d"
-					" damage remaining.", damage_to_reduce, buffs[slot].melee_rune);
-				buffs[slot].melee_rune = (buffs[slot].melee_rune - damage_to_reduce);
-				damage -= damage_to_reduce;
-			}
-		}
-	}
-
-	if (spellbonuses.MitigateMeleeRune[0] && !DisableMeleeRune){
-		slot = spellbonuses.MitigateMeleeRune[1];
-		if(slot >= 0)
-		{
-			int damage_to_reduce = damage * spellbonuses.MitigateMeleeRune[0] / 100;
-
-			if (spellbonuses.MitigateMeleeRune[2] && (damage_to_reduce > spellbonuses.MitigateMeleeRune[2]))
-					damage_to_reduce = spellbonuses.MitigateMeleeRune[2];
-
-			if(spellbonuses.MitigateMeleeRune[3] && (damage_to_reduce >= buffs[slot].melee_rune))
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MitigateMeleeDamage %d damage negated, %d"
-					" damage remaining, fading buff.", damage_to_reduce, buffs[slot].melee_rune);
-				damage -= buffs[slot].melee_rune;
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot);
-			}
-			else
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MitigateMeleeDamage %d damage negated, %d"
-					" damage remaining.", damage_to_reduce, buffs[slot].melee_rune);
-
-				if (spellbonuses.MitigateMeleeRune[3])
-					buffs[slot].melee_rune = (buffs[slot].melee_rune - damage_to_reduce);
-
-				damage -= damage_to_reduce;
-			}
-		}
-	}
 
 	if(damage < 1)
 		return -6;
@@ -2850,23 +2779,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 
 	bool DisableSpellRune = false;
 	int32 slot = -1;
-
-	// See if we block the spell outright first
-	if (!iBuffTic && spellbonuses.NegateAttacks[0]){
-		slot = spellbonuses.NegateAttacks[1];
-		if(slot >= 0) {
-			if(--buffs[slot].numhits == 0) {
-
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot , true);
-			}
-
-			if (spellbonuses.NegateAttacks[2] && (damage > spellbonuses.NegateAttacks[2]))
-				damage -= spellbonuses.NegateAttacks[2];
-			else
-				return 0;
-		}
-	}
 
 	// If this is a DoT, use DoT Shielding...
 	if(iBuffTic) {
@@ -2903,30 +2815,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 	{
 		// Reduce damage by the Spell Shielding first so that the runes don't take the raw damage.
 		damage -= (damage * itembonuses.SpellShield / 100);
-
-
-		//Only mitigate if damage is above the minimium specified.
-		if (spellbonuses.SpellThresholdGuard[0]){
-			slot = spellbonuses.SpellThresholdGuard[1];
-
-			if (slot >= 0 && (damage > spellbonuses.MeleeThresholdGuard[2]))
-			{
-				DisableSpellRune = true;
-				int damage_to_reduce = damage * spellbonuses.SpellThresholdGuard[0] / 100;
-				if(damage_to_reduce >= buffs[slot].magic_rune)
-				{
-					damage -= buffs[slot].magic_rune;
-					if(!TryFadeEffect(slot))
-						BuffFadeBySlot(slot);
-				}
-				else
-				{
-					buffs[slot].melee_rune = (buffs[slot].magic_rune - damage_to_reduce);
-					damage -= damage_to_reduce;
-				}
-			}
-		}
-
 
 		// Do runes now.
 		if (spellbonuses.MitigateSpellRune[0] && !DisableSpellRune){
@@ -2973,25 +2861,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 			return 0;
 	}
 	return damage;
-}
-
-int32 Mob::ReduceAllDamage(int32 damage)
-{
-	if(damage <= 0)
-		return damage;
-
-	if(spellbonuses.ManaAbsorbPercentDamage[0]) {
-		int32 mana_reduced =  damage * spellbonuses.ManaAbsorbPercentDamage[0] / 100;
-		if (GetMana() >= mana_reduced){
-			damage -= mana_reduced;
-			SetMana(GetMana() - mana_reduced);
-			TryTriggerOnValueAmount(false, true);
-		}
-	}
-
-	CheckNumHitsRemaining(NUMHIT_IncomingDamage);
-
-	return(damage);
 }
 
 bool Mob::HasProcs() const
@@ -3141,8 +3010,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		if(spell_id == SPELL_UNKNOWN) {
 			damage = ReduceDamage(damage);
 			Log.Out(Logs::Detail, Logs::Combat, "Melee Damage reduced to %d", damage);
-			damage = ReduceAllDamage(damage);
-			TryTriggerThreshHold(damage, SE_TriggerMeleeThreshold, attacker);
 		} else {
 			int32 origdmg = damage;
 			damage = AffectMagicalDamage(damage, spell_id, iBuffTic, attacker);
@@ -3154,8 +3021,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				//Kayen: Probably need to add a filter for this - Not sure if this msg is correct but there should be a message for spell negate/runes.
 				Message(263, "%s tries to cast on YOU, but YOUR magical skin absorbs the spell.",attacker->GetCleanName());
 			}
-			damage = ReduceAllDamage(damage);
-			TryTriggerThreshHold(damage, SE_TriggerSpellThreshold, attacker);
 		}
 
 		if (skill_used)

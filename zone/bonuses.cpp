@@ -2109,60 +2109,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_NegateAttacks:
-			{
-				if (!new_bonus->NegateAttacks[0] || 
-					((new_bonus->NegateAttacks[0] && new_bonus->NegateAttacks[2]) && (new_bonus->NegateAttacks[2] < max))){
-					new_bonus->NegateAttacks[0] = 1;
-					new_bonus->NegateAttacks[1] = buffslot;
-					new_bonus->NegateAttacks[2] = max;
-				}
-				break;
-			}
-
-			case SE_MitigateMeleeDamage:
-			{
-				if (new_bonus->MitigateMeleeRune[0] < effect_value){
-					new_bonus->MitigateMeleeRune[0] = effect_value;
-					new_bonus->MitigateMeleeRune[1] = buffslot;
-					new_bonus->MitigateMeleeRune[2] = base2;
-					new_bonus->MitigateMeleeRune[3] = max;
-				}
-				break;
-			}
-
-			
-			case SE_MeleeThresholdGuard:
-			{
-				if (new_bonus->MeleeThresholdGuard[0] < effect_value){
-					new_bonus->MeleeThresholdGuard[0] = effect_value;
-					new_bonus->MeleeThresholdGuard[1] = buffslot;
-					new_bonus->MeleeThresholdGuard[2] = base2;
-				}
-				break;
-			}
-
-			case SE_SpellThresholdGuard:
-			{
-				if (new_bonus->SpellThresholdGuard[0] < effect_value){
-					new_bonus->SpellThresholdGuard[0] = effect_value;
-					new_bonus->SpellThresholdGuard[1] = buffslot;
-					new_bonus->SpellThresholdGuard[2] = base2;
-				}
-				break;
-			}
-
-			case SE_MitigateSpellDamage:
-			{
-				if (new_bonus->MitigateSpellRune[0] < effect_value){
-					new_bonus->MitigateSpellRune[0] = effect_value;
-					new_bonus->MitigateSpellRune[1] = buffslot;
-					new_bonus->MitigateSpellRune[2] = base2;
-					new_bonus->MitigateSpellRune[3] = max;
-				}
-				break;
-			}
-
 			case SE_MitigateDotDamage:
 			{
 				if (new_bonus->MitigateDotRune[0] < effect_value){
@@ -2173,23 +2119,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				}
 				break;
 			}
-
-			case SE_ManaAbsorbPercentDamage:
-			{
-				if (new_bonus->ManaAbsorbPercentDamage[0] < effect_value){
-					new_bonus->ManaAbsorbPercentDamage[0] = effect_value;
-					new_bonus->ManaAbsorbPercentDamage[1] = buffslot;
-				}
-				break;
-			}
-
-			case SE_TriggerMeleeThreshold:
-				new_bonus->TriggerMeleeThreshold = true;
-				break;
-
-			case SE_TriggerSpellThreshold:
-				new_bonus->TriggerSpellThreshold = true;
-				break;
 
 			case SE_ShieldBlock:
 				new_bonus->ShieldBlock += effect_value;
