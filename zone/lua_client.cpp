@@ -405,6 +405,11 @@ void Lua_Client::IncreaseSkill(int skill_id, int value) {
 	self->IncreaseSkill(skill_id, value);
 }
 
+void Lua_Client::SetRace(int in) {
+	Lua_Safe_Call_Void();
+	self->SendIllusionPacket(in);
+}
+
 void Lua_Client::IncreaseLanguageSkill(int skill_id) {
 	Lua_Safe_Call_Void();
 	self->IncreaseLanguageSkill(skill_id);
@@ -1319,7 +1324,8 @@ luabind::scope lua_register_client() {
 		.def("QuestReward", (void(Lua_Client::*)(Lua_Mob,uint32,uint32,uint32,uint32))&Lua_Client::QuestReward)
 		.def("QuestReward", (void(Lua_Client::*)(Lua_Mob,uint32,uint32,uint32,uint32,uint32))&Lua_Client::QuestReward)
 		.def("QuestReward", (void(Lua_Client::*)(Lua_Mob,uint32,uint32,uint32,uint32,uint32,uint32))&Lua_Client::QuestReward)
-		.def("QuestReward", (void(Lua_Client::*)(Lua_Mob,uint32,uint32,uint32,uint32,uint32,uint32,bool))&Lua_Client::QuestReward);
+		.def("QuestReward", (void(Lua_Client::*)(Lua_Mob,uint32,uint32,uint32,uint32,uint32,uint32,bool))&Lua_Client::QuestReward)
+        .def("SetRace", (void(Lua_Client::*)(int))&Lua_Client::SetRace);
 }
 
 luabind::scope lua_register_inventory_where() {
