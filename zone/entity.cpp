@@ -4563,7 +4563,7 @@ void EntityList::SendMerchantEnd(Mob* merchant)
 	return;
 }
 
-void EntityList::SendMerchantInventory(Mob* merchant)
+void EntityList::SendMerchantInventory(Mob* merchant, int32 slotid, bool isdelete)
 {
 
 	if(!merchant || !merchant->IsNPC())
@@ -4578,7 +4578,21 @@ void EntityList::SendMerchantInventory(Mob* merchant)
 
 		if(c->GetMerchantSession() == merchant->GetID())
 		{
-			c->BulkSendMerchantInventory(merchant->CastToNPC()->MerchantType, merchant->GetNPCTypeID());
+			if(!isdelete)
+			{
+				c->BulkSendMerchantInventory(merchant->CastToNPC()->MerchantType, merchant->GetNPCTypeID());
+			}
+			else
+			{
+				EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
+				Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
+				delitem->itemslot = slotid;
+				delitem->npcid = merchant->GetID();
+				delitem->playerid = c->GetID();
+				delitempacket->priority = 6;
+				c->QueuePacket(delitempacket);
+				safe_delete(delitempacket);
+			}
 		}
 		++it;
 	}

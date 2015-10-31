@@ -1057,12 +1057,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 	delitem->npcid = entityid;
 	delitem->playerid = GetID();
 	delitempacket->priority = 6;
-
-	if(merch)
-		entity_list.QueueClients(merch, delitempacket); //que for anyone that could be using the merchant so they see the update
-	else
-		QueuePacket(delitempacket);
-
+	QueuePacket(delitempacket);
 	safe_delete(delitempacket);
 	Log.Out(Logs::General, Logs::Trading, "Cleared last merchant slot %d", lastslot);
 
