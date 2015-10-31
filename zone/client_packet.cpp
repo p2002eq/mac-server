@@ -7126,14 +7126,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (!item){
 		//error finding item, client didnt get the update packet for whatever reason, roleplay a tad
 		Message(CC_Default, "%s tells you 'Sorry, that item is for display purposes only.' as they take the item off the shelf.", tmp->GetCleanName());
-		EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
-		Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
-		delitem->itemslot = mp->itemslot;
-		delitem->npcid = mp->npcid;
-		delitem->playerid = mp->playerid;
-		delitempacket->priority = 6;
-		entity_list.QueueCloseClients(tmp, delitempacket); //que for anyone that could be using the merchant so they see the update
-		safe_delete(delitempacket);
+		entity_list.SendMerchantInventory(tmp, mp->itemslot, true);
 		return;
 	}
 	if (CheckLoreConflict(item))
@@ -7270,14 +7263,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		if ((database.ItemQuantityType(item_id) == Quantity_Charges && new_quantity < 0) ||
 			(database.ItemQuantityType(item_id) != Quantity_Charges && new_charges <= 0))
 		{
-			EQApplicationPacket* delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
-			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
-			delitem->itemslot = mp->itemslot;
-			delitem->npcid = mp->npcid;
-			delitem->playerid = mp->playerid;
-			delitempacket->priority = 6;
-			entity_list.QueueClients(tmp, delitempacket); //que for anyone that could be using the merchant so they see the update
-			safe_delete(delitempacket);
+			entity_list.SendMerchantInventory(tmp, mp->itemslot, true);
 		}
 		else 
 		{

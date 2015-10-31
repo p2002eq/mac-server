@@ -1492,7 +1492,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				safe_delete(outapp);
 			}
 			safe_delete(token_inst);
-			Message(14, "Source slot %i resynchronized.", move_slots->from_slot);
+			Message(CC_LightGreen, "Source slot %i resynchronized.", move_slots->from_slot);
 		}
 		else { Message(CC_Red, "Could not resynchronize source slot %i.", move_slots->from_slot); }
 	}
@@ -1507,7 +1507,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				SendItemPacket(resync_slot, m_inv[resync_slot], ItemPacketTrade);
 
 				safe_delete(token_inst);
-				Message(14, "Source slot %i resynchronized.", move_slots->from_slot);
+				Message(CC_LightGreen, "Source slot %i resynchronized.", move_slots->from_slot);
 			}
 			else { Message(CC_Red, "Could not resynchronize source slot %i.", move_slots->from_slot); }
 		}
@@ -1534,7 +1534,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				safe_delete(outapp);
 			}
 			safe_delete(token_inst);
-			Message(14, "Destination slot %i resynchronized.", move_slots->to_slot);
+			Message(CC_LightGreen, "Destination slot %i resynchronized.", move_slots->to_slot);
 		}
 		else { Message(CC_Red, "Could not resynchronize destination slot %i.", move_slots->to_slot); }
 	}
@@ -1549,7 +1549,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 				SendItemPacket(resync_slot, m_inv[resync_slot], ItemPacketTrade);
 
 				safe_delete(token_inst);
-				Message(14, "Destination slot %i resynchronized.", move_slots->to_slot);
+				Message(CC_LightGreen, "Destination slot %i resynchronized.", move_slots->to_slot);
 			}
 			else { Message(CC_Red, "Could not resynchronize destination slot %i.", move_slots->to_slot); }
 		}
