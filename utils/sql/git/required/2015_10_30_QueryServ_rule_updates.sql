@@ -18,4 +18,8 @@ INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('1',
 INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('2', 'QueryServ:PlayerLogMerchantTransactions', 'false');
 INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('11', 'QueryServ:PlayerLogMerchantTransactions', 'false');
 
-DELETE FROM `rule_values` WHERE `rule_name`='QueryServ:MerchantLogTransactions'
+DELETE FROM `rule_values` WHERE `rule_name`='QueryServ:MerchantLogTransactions';
+
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('1', 'QueryServ:PlayerLogLoot', 'false');
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('2', 'QueryServ:PlayerLogLoot', 'false');
+INSERT INTO `rule_values` (`ruleset_id`, `rule_name`, `rule_value`) VALUES ('11', 'QueryServ:PlayerLogLoot', 'false');

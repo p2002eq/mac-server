@@ -46,6 +46,10 @@ bool Database::DBSetup()
 	{
 		return false;
 	}
+	if (!DBSetup_PlayerLootRecords())
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -154,6 +158,38 @@ bool Database::DBSetup_PlayerQGlobalUpdates()
 		if (!results2.Success())
 		{
 			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_qglobal_updates_log. \n%s", query2.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Database::DBSetup_PlayerLootRecords()
+{
+	std::string check_query1 = StringFormat("SHOW TABLES LIKE 'qs_player_loot_records_log'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		Log.Out(Logs::Detail, Logs::QS_Server, "Attempting to create loot records table.");
+		std::string query2 = StringFormat(
+			"CREATE TABLE `qs_player_loot_records_log` ( "
+			"`char_id` int(11) DEFAULT '0', "
+			"`corpse_name` varchar(255) DEFAULT NULL, "
+			"`type` varchar(255) DEFAULT NULL, "
+			"`zone_id` int(11) DEFAULT '0', "
+			"`item_id` int(11) DEFAULT '0', "
+			"`item_name` varchar(255) DEFAULT NULL, "
+			"`charges` mediumint(7) DEFAULT '0', "
+			"`platinum` int(11) DEFAULT '0', "
+			"`gold` int(11) DEFAULT '0', "
+			"`silver` int(11) DEFAULT '0', "
+			"`copper` int(11) DEFAULT '0', "
+			"`time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP "
+			") ENGINE = InnoDB DEFAULT CHARSET = utf8;");
+		auto results2 = QueryDatabase(query2);
+		if (!results2.Success())
+		{
+			Log.Out(Logs::General, Logs::QS_Server, "Error creating qs_player_loot_records_log. \n%s", query2.c_str());
 			return false;
 		}
 	}

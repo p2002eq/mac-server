@@ -1192,6 +1192,11 @@ bool ZoneServer::Process() {
 				QSLink.SendPacket(pack);
 				break;
 			}
+			case ServerOP_QSPlayerLootRecords:
+			{
+				QSLink.SendPacket(pack);
+				break;
+			}
 			/*case ServerOP_WIRemoteCallResponse:
 			case ServerOP_WIClientSession:
 			case ServerOP_WIRemoteCallToClient:
