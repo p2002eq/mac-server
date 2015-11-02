@@ -45,11 +45,31 @@ public:
 
 	void LogPlayerTrade(QSPlayerLogTrade_Struct* QS, uint32 DetailCount);
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);
-	void LogPlayerNPCKill(QSPlayerLogNPCKill_Struct* QS, uint32 Members);
-	void LogPlayerDelete(QSPlayerLogDelete_Struct* QS, uint32 Items);
-	void LogPlayerMove(QSPlayerLogMove_Struct* QS, uint32 Items);
-	void LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint32 Items);
+	void LogPlayerItemDelete(QSPlayerLogItemDelete_Struct* QS, uint32 Items);
+	void LogPlayerItemMove(QSPlayerLogItemMove_Struct* QS, uint32 Items);
+	void LogPlayerLootRecords(QSPlayerLootRecords_struct* QS, uint32 Items);
+
 	void GeneralQueryReceive(ServerPacket *pack);
+	void LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
+
+	/*
+	 * Database Setup for bootstraps only.
+	 */
+	bool DBSetup();
+	bool DBSetup_CheckLegacy();
+	bool DBSetup_PlayerAAPurchase();
+	bool DBSetup_PlayerDeathBy();
+	bool DBSetup_PlayerTSEvents();
+	bool DBSetup_PlayerQGlobalUpdates();
+	bool DBSetup_PlayerLootRecords();
+
+	bool Check_Trade_Tables();
+	bool Create_Trade_Table();
+	bool Copy_Trade_Record();
+
+	bool Check_Handin_Tables();
+	bool Create_Handin_Table();
+	bool Copy_Handin_Record();
 
 	void LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
 

@@ -171,6 +171,12 @@
 #define ServerOP_QSSendQuery						0x5016
 #define ServerOP_CZSignalNPC						0x5017
 #define ServerOP_CZSetEntityVariableByNPCTypeID		0x5018
+#define ServerOP_QSPlayerAARateHourly				0x5019
+#define ServerOP_QSPlayerAAPurchase					0x5020
+#define ServerOP_QSPlayerDeathBy					0x5021
+#define ServerOP_QSPlayerTSEvents					0x5022
+#define ServerOP_QSPlayerQGlobalUpdates				0x5023
+#define ServerOP_QSPlayerLootRecords				0x5024
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1024,6 +1030,17 @@ struct QSMerchantLogTransaction_Struct {
 	MoneyUpdate_Struct		char_money;
 	uint16					char_count;
 	QSTransactionItems_Struct items[0];
+};
+
+struct QSPlayerLootRecords_struct {
+	uint32 charid;
+	char corpse_name[64];
+	char type[12];
+	uint32 zone_id;
+	uint32 item_id;
+	char item_name[64];
+	int8 charges;
+	MoneyUpdate_Struct money;
 };
 
 struct QSGeneralQuery_Struct {
