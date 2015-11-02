@@ -2195,7 +2195,7 @@ bool Mob::HateSummon() {
 			entity_list.MessageClose(this, true, 500, MT_Say, "%s says,'You will not evade me, %s!' ", GetCleanName(), target->GetCleanName() );
 
 			if (target->IsClient()) {
-				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Position.x, m_Position.y, m_Position.z, target->GetHeading(), 0, SummonPC);
+				target->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Position.x, m_Position.y, m_Position.z, target->GetHeading() * 2, 0, SummonPC);
 			}
 			else {
 				target->GMMove(m_Position.x, m_Position.y, m_Position.z, target->GetHeading());

@@ -313,7 +313,7 @@ bool Client::Process() {
 					}
 
 					//triple attack: rangers, monks, warriors over level 60
-					if((((GetClass() == MONK || GetClass() == WARRIOR || GetClass() == RANGER)
+					if((((GetClass() == MONK || GetClass() == WARRIOR)
 						&& GetLevel() >= 60) || GetSpecialAbility(SPECATK_TRIPLE))
 						&& CheckDoubleAttack(true))
 					{
@@ -1057,12 +1057,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid)
 	delitem->npcid = entityid;
 	delitem->playerid = GetID();
 	delitempacket->priority = 6;
-
-	if(merch)
-		entity_list.QueueClients(merch, delitempacket); //que for anyone that could be using the merchant so they see the update
-	else
-		QueuePacket(delitempacket);
-
+	QueuePacket(delitempacket);
 	safe_delete(delitempacket);
 	Log.Out(Logs::General, Logs::Trading, "Cleared last merchant slot %d", lastslot);
 
