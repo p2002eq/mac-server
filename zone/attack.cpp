@@ -1365,7 +1365,10 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	if (RuleB(QueryServ, PlayerLogDeaths))
 	{
 		char killer_name[128];
-		if (killerMob && killerMob->GetCleanName()) { strncpy(killer_name, killerMob->GetCleanName(), 128); }
+		if (killerMob && killerMob->GetCleanName())
+		{
+			strncpy(killer_name, killerMob->GetCleanName(), 128);
+		}
 		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 

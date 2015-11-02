@@ -133,6 +133,12 @@ void WorldServer::Process()
 				database.LogPlayerQGlobalUpdates(QS, Items);
 				break;
 			}
+			case ServerOP_QSPlayerLootRecords: {
+				QSPlayerLootRecords_struct *QS = (QSPlayerLootRecords_struct*)pack->pBuffer;
+				uint32 Items = QS->charid;
+				database.LogPlayerLootRecords(QS, Items);
+				break;
+			}
 			case ServerOP_QueryServGeneric: {
 				/* 
 					The purpose of ServerOP_QueryServerGeneric is so that we don't have to add code to world just to relay packets

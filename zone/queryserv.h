@@ -36,6 +36,7 @@ class QueryServ {
 		void QSMerchantTransactions(uint32 char_id, uint32 zone_id, int16 slot_id, uint32 item_id, uint8 charges,
 			uint32 merchant_id, int32 merchant_plat, int32 merchant_gold, int32 merchant_silver, int32 merchant_copper, uint16 merchant_count,
 			int32 char_plat, int32 char_gold, int32 char_silver, int32 char_copper, uint16 char_count);
+		void QSLootRecords(uint32 char_id, const char* corpsename, const char* type, uint32 zone_id, uint32 item_id, const char* item_name, int16 charges, int32 platinum, int32 gold, int32 silver, int32 copper);
 		void QSNPCKills();
 		void QSTradeItems();
 		void QSHandinItems();

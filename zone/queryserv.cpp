@@ -174,6 +174,29 @@ void QueryServ::QSMerchantTransactions(uint32 char_id, uint32 zone_id, int16 slo
 	safe_delete(pack);
 }
 
+void QueryServ::QSLootRecords(uint32 char_id, const char* corpsename, const char* type, uint32 zone_id, uint32 item_id, const char* item_name, int16 charges, int32 platinum, int32 gold, int32 silver, int32 copper)
+{
+	ServerPacket* pack = new ServerPacket(ServerOP_QSPlayerLootRecords, sizeof(QSPlayerLootRecords_struct));
+	QSPlayerLootRecords_struct* QS = (QSPlayerLootRecords_struct*)pack->pBuffer;
+	QS->charid = char_id;
+	strncpy(QS->corpse_name, corpsename, 64);
+	strncpy(QS->type, type, 12),
+	QS->zone_id = zone_id;
+	QS->item_id = item_id;
+	strncpy(QS->item_name, item_name, 64);
+	QS->charges = charges;
+	QS->money.platinum = platinum;
+	QS->money.gold = gold;
+	QS->money.silver = silver;
+	QS->money.copper = copper;
+	pack->Deflate();
+	if (worldserver.Connected())
+	{
+		worldserver.SendPacket(pack);
+	}
+	safe_delete(pack);
+}
+
 //TODO: Needs to cover raid/group and solo. Have to figure out how to pass that all into this function.
 void QueryServ::QSNPCKills() {}
 

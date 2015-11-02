@@ -57,6 +57,7 @@ public:
 	void LogPlayerHandin(QSPlayerLogHandin_Struct* QS, uint32 DetailCount);
 	void LogPlayerItemDelete(QSPlayerLogItemDelete_Struct* QS, uint32 Items);
 	void LogPlayerItemMove(QSPlayerLogItemMove_Struct* QS, uint32 Items);
+	void LogPlayerLootRecords(QSPlayerLootRecords_struct* QS, uint32 Items);
 
 	void GeneralQueryReceive(ServerPacket *pack);
 	void LoadLogSettings(EQEmuLogSys::LogSettings* log_settings);
@@ -70,6 +71,7 @@ public:
 	bool DBSetup_PlayerDeathBy();
 	bool DBSetup_PlayerTSEvents();
 	bool DBSetup_PlayerQGlobalUpdates();
+	bool DBSetup_PlayerLootRecords();
 
 	bool Check_Trade_Tables();
 	bool Create_Trade_Table();

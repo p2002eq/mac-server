@@ -176,6 +176,7 @@
 #define ServerOP_QSPlayerDeathBy					0x5021
 #define ServerOP_QSPlayerTSEvents					0x5022
 #define ServerOP_QSPlayerQGlobalUpdates				0x5023
+#define ServerOP_QSPlayerLootRecords				0x5024
 
 #define ServerOP_WIRemoteCall 0x5001
 #define ServerOP_WIRemoteCallResponse 0x5002
@@ -1086,6 +1087,17 @@ struct QSPlayerQGlobalUpdate_Struct {
 	int32 instance_id;
 	char varname[32];
 	char newvalue[32];
+};
+
+struct QSPlayerLootRecords_struct {
+	uint32 charid;
+	char corpse_name[64];
+	char type[12];
+	uint32 zone_id;
+	uint32 item_id;
+	char item_name[64];
+	int8 charges;
+	MoneyUpdate_Struct money;
 };
 
 struct QSGeneralQuery_Struct {
