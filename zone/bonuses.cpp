@@ -793,25 +793,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 					newbon->HitChanceEffect[base2] += base1;
 			}
 
-			case SE_ProcOnKillShot:
-				for(int i = 0; i < MAX_SPELL_TRIGGER*3; i+=3)
-				{
-					if(!newbon->SpellOnKill[i] || ((newbon->SpellOnKill[i] == base2) && (newbon->SpellOnKill[i+1] < base1)))
-					{
-						//base1 = chance, base2 = SpellID to be triggered, base3 = min npc level
-						newbon->SpellOnKill[i] = base2;
-						newbon->SpellOnKill[i+1] = base1;
-
-						if (GetLevel() > 15)
-							newbon->SpellOnKill[i+2] = GetLevel() - 15; //AA specifiy "non-trivial"
-						else
-							newbon->SpellOnKill[i+2] = 0;
-
-						break;
-					}
-				}
-			break;
-
 			case SE_SpellOnDeath:
 				for(int i = 0; i < MAX_SPELL_TRIGGER*2; i+=2)
 				{
@@ -820,22 +801,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 						// base1 = SpellID to be triggered, base2 = chance to fire
 						newbon->SpellOnDeath[i] = base1;
 						newbon->SpellOnDeath[i+1] = base2;
-						break;
-					}
-				}
-			break;
-
-			case SE_TriggerOnCast:
-
-				for(int i = 0; i < MAX_SPELL_TRIGGER; i++)
-				{
-					if (newbon->SpellTriggers[i] == aaid)
-						break;
-
-					if(!newbon->SpellTriggers[i])
-					{
-						//Save the 'aaid' of each triggerable effect to an array
-						newbon->SpellTriggers[i] = aaid;
 						break;
 					}
 				}
@@ -1906,19 +1871,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_TriggerOnCast:
-			{
-				for(int e = 0; e < MAX_SPELL_TRIGGER; e++)
-				{
-					if(!new_bonus->SpellTriggers[e])
-					{
-						new_bonus->SpellTriggers[e] = spell_id;
-						break;
-					}
-				}
-				break;
-			}
-
 			case SE_SpellCritChance:
 				new_bonus->CriticalSpellChance += effect_value;
 				break;
@@ -1963,22 +1915,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 			case SE_CriticalDoTChance:
 				new_bonus->CriticalDoTChance += effect_value;
 				break;
-
-			case SE_ProcOnKillShot:
-			{
-				for(int e = 0; e < MAX_SPELL_TRIGGER*3; e+=3)
-				{
-					if(!new_bonus->SpellOnKill[e])
-					{
-						// Base2 = Spell to fire | Base1 = % chance | Base3 = min level
-						new_bonus->SpellOnKill[e] = base2;
-						new_bonus->SpellOnKill[e+1] = effect_value;
-						new_bonus->SpellOnKill[e+2] = max;
-						break;
-					}
-				}
-				break;
-			}
 
 			case SE_SpellOnDeath:
 			{

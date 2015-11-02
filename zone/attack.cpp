@@ -391,7 +391,7 @@ bool Mob::AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte, bool isRange
 	}
 
 	// dodge
-	if (CanThisClassDodge() && (InFront || GetClass() == MONK))
+	if (CanThisClassDodge() && InFront)
 	{
 		if (IsClient())
 			CastToClient()->CheckIncreaseSkill(SkillDodge, attacker, zone->skill_difficulty[SkillDodge].difficulty);

@@ -432,8 +432,9 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
+		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target)
+			&& (!IsHarmonySpell(spell_id) || spells[spell_id].targettype == ST_AETarget)	// harmony and wake of tranq require LoS
+			&& !IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_User_SpellFailure,spell_id);
@@ -1182,12 +1183,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	if(IsClient()) {
 		CheckNumHitsRemaining(NUMHIT_MatchingSpells);
-		TrySympatheticProc(target, spell_id);
 	}
-
-	TryTwincast(this, target, spell_id);
-
-	TryTriggerOnCast(spell_id, 0);
 
 	// we're done casting, now try to apply the spell
 	if (!SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust, castFromInv))

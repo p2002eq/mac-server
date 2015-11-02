@@ -1061,7 +1061,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 				Log.Out(Logs::Detail, Logs::Spells, "Attempting to cast a detrimental AE spell/song on a player.");
 				continue;
 			}
-			if (!center->CheckLosFN(curmob))
+			if (!caster->CheckLosFN(curmob))
 				continue;
 		}
 		else { // check to stop casting beneficial ae buffs (to wit: bard songs) on enemies...

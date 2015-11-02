@@ -191,8 +191,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	if (!IsPowerDistModSpell(spell_id))
 		SetSpellPowerDistanceMod(0);
 		
-	bool SE_SpellTrigger_HasCast = false;	
-
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
 	{
@@ -1435,7 +1433,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				{
 					// the spinning is handled by the client
 					// Stun duration is based on the effect_value, not the buff duration(alot don't have buffs)
-					Stun(effect_value, caster);
+					// spin stuns have a random duration.  value in the DB is in ticks
+					Stun(effect_value * zone->random.Int(1000, 6000), caster);
 					if(!IsClient()) {
 						Spin();
 						spun_timer.Start(100); // spins alittle every 100 ms
@@ -2427,15 +2426,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_SpellTrigger: {
-
-				if (!SE_SpellTrigger_HasCast) {
-					if (caster && caster->TrySpellTrigger(this, spell_id, i))
-						SE_SpellTrigger_HasCast = true;
-				}
-				break;
-			}
-			
 			case SE_MovementSpeed: {
 				if (IsNPC() && IsSpeedBuff(spell_id) && RuleB(NPC, CheckSoWBuff))
 					SetRunning(true);
@@ -3215,6 +3205,23 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 				break;
 			}
 
+			case SE_Lull: {
+				/* Lulls have a chance to end early.  Chance is not affected by MR or charisma.
+				   On Live, fade chance per tick was about 2% per tick on white cons.
+				   A mob -5 levels below the caster had no lulls fade early.
+				   Scaling this by 0.4% per level starting at -4 levels under caster until more data is available.
+				*/
+				int fadeChance = GetLevel() - caster_level + 5;
+				fadeChance *= 4;
+
+				if (zone->random.Int(0, 999) < fadeChance)
+				{
+					if (!TryFadeEffect(slot))
+						BuffFadeBySlot(slot);
+				}
+				break;
+			}
+
 			case SE_Root: {
 				/* Root formula derived from extensive personal live parses - Kayen
 				ROOT has a 70% chance to do a resist check to break.
@@ -3774,7 +3781,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 			}
 		}
 		// Our spell has worn off another NPC or client.
-		else if (p != this && !p->IsPet() && !IsBeneficialSpell(buffs[slot].spellid))
+		// Lulls/harmonies don't show message
+		else if (p != this && !p->IsPet() && !IsBeneficialSpell(buffs[slot].spellid) && !IsCrowdControlSpell(buffs[slot].spellid))
 		{
 			p->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
@@ -3889,7 +3897,7 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 		when the next valid focus effect is found.
 		*/
 
-		if (IsFocusEffect(0, 0, true,effect) || (effect == SE_TriggerOnCast)){
+		if (IsFocusEffect(0, 0, true,effect)){
 			FocusCount++;
 			//If limit found on prior check next, else end loop.
 			if (FocusCount > 1){
@@ -4188,17 +4196,6 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 					value = base1 / 1000;
 				break;
 
-			case SE_TriggerOnCast:
-				if(type == focusTriggerOnCast){
-					if(zone->random.Roll(base1)) {
-						value = base2;
-					} else {
-						value = 0;
-						LimitFailure = true;
-					}
-				break;
-				}
-
 			case SE_FcSpellVulnerability:
 				if(type == focusSpellVulnerability)
 					value = base1;
@@ -4210,17 +4207,6 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 						value = 1;
 				}
 				break;
-
-			case SE_FcTwincast:
-				if(type == focusTwincast)
-					value = base1;
-				break;
-
-			//Note if using these as AA, make sure this is first focus used.
- 			case SE_SympatheticProc:
-				if(type == focusSympatheticProc) 
-					value = base2;
- 				break;
 
 			case SE_FcDamageAmt:
 				if(type == focusFcDamageAmt)
@@ -4632,15 +4618,6 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 				value = focus_spell.base[i] / 1000;
 			break;
 
-		case SE_TriggerOnCast:
-			if(type == focusTriggerOnCast){
-				if(zone->random.Roll(focus_spell.base[i]))
-					value = focus_spell.base2[i];
-				else
-					value = 0;
-			}
-			break;
-
 		case SE_BlockNextSpellFocus:
 			if(type == focusBlockNextSpell){
 				if(zone->random.Roll(focus_spell.base[i]))
@@ -4648,19 +4625,8 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 			}
 			break;
 
-		case SE_SympatheticProc:
-			if(type == focusSympatheticProc) {
-				value = focus_id;
-			}
-			break;
-
 		case SE_FcSpellVulnerability:
 			if(type == focusSpellVulnerability)
-				value = focus_spell.base[i];
-			break;
-
-		case SE_FcTwincast:
-			if(type == focusTwincast)
 				value = focus_spell.base[i];
 			break;
 
