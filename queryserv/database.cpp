@@ -308,49 +308,7 @@ void Database::LogMerchantTransaction(QSMerchantLogTransaction_Struct* QS, uint3
 
 }
 
-void Database::LogPlayerLootRecords(QSPlayerLootRecords_struct* QS, uint32 items)
-{
-	if (items == 0)
-	{
-		return;
-	}
-
-	Log.Out(Logs::General, Logs::QS_Server, "Inserting loot record");
-	std::string query = StringFormat(
-		"INSERT INTO `qs_player_loot_records_log` SET "
-		"`char_id` = '%i', "
-		"`corpse_name` = '%s', "
-		"`type` = '%s', "
-		"`zone_id` = '%i', "
-		"`item_id` = '%i', "
-		"`item_name` = '%s', "
-		"`charges` = '%i', "
-		"`platinum` = '%i', "
-		"`gold` = '%i', "
-		"`silver` = '%i', "
-		"`copper` = '%i', "
-		"`time` = now()",
-		QS->charid,
-		QS->corpse_name,
-		QS->type,
-		QS->zone_id,
-		QS->item_id,
-		QS->item_name,
-		QS->charges,
-		QS->money.platinum,
-		QS->money.gold,
-		QS->money.silver,
-		QS->money.copper);
-
-	auto results = QueryDatabase(query);
-	if (!results.Success())
-	{
-		Log.Out(Logs::General, Logs::QS_Server, "Failed Loot Record Insert: %s\n%s", results.ErrorMessage().c_str(), query.c_str());
-	}
-}
-
-void Database::GeneralQueryReceive(ServerPacket *pack)
-{
+void Database::GeneralQueryReceive(ServerPacket *pack) {
 	/*
 		These are general queries passed from anywhere in zone instead of packing structures and breaking them down again and again
 	*/
