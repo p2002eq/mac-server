@@ -1433,8 +1433,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				{
 					// the spinning is handled by the client
 					// Stun duration is based on the effect_value, not the buff duration(alot don't have buffs)
-					// spin stuns have a random duration.  value in the DB is in ticks
-					Stun(effect_value * zone->random.Int(1000, 6000), caster);
+					// AK had 7500 milisecond spinstuns.  Confirmed in logs.  The effect values should be 7500
+					Stun(effect_value, caster);
 					if(!IsClient()) {
 						Spin();
 						spun_timer.Start(100); // spins alittle every 100 ms
