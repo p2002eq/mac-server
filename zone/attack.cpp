@@ -24,10 +24,10 @@
 #include "../common/skills.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
-#include "queryserv.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
+#include "queryserv.h"
 #include "worldserver.h"
 #include "zone.h"
 #include "remote_call_subscribe.h"
@@ -36,8 +36,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern QueryServ* QServ;
 extern WorldServer worldserver;
+extern QueryServ* QServ;
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -391,7 +391,7 @@ bool Mob::AvoidDamage(Mob* attacker, int32 &damage, bool noRiposte, bool isRange
 	}
 
 	// dodge
-	if (CanThisClassDodge() && (InFront || GetClass() == MONK))
+	if (CanThisClassDodge() && InFront)
 	{
 		if (IsClient())
 			CastToClient()->CheckIncreaseSkill(SkillDodge, attacker, zone->skill_difficulty[SkillDodge].difficulty);
@@ -447,7 +447,7 @@ int Mob::RollD20(int32 offense, int32 mitigation)
 	{
 		mean = diff / mitigation * 15;
 	}
-	double stddev = 8.7;	// standard deviation adjusts the height of the bell
+	double stddev = 8.8;	// standard deviation adjusts the height of the bell
 							// again, trial and error to find what fit best
 	double theta = 2 * M_PI * zone->random.Real(0.0, 1.0);
 	double rho = sqrt(-2 * log(1 - zone->random.Real(0.0, 1.0)));
@@ -463,7 +463,7 @@ int Mob::RollD20(int32 offense, int32 mitigation)
 		d = 9.5;
 	}
 	d = d + 11;
-	return static_cast<int8>(d);
+	return static_cast<int>(d);
 }
 
 //Returns the weapon damage against the input mob
@@ -1362,11 +1362,14 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes att
 	GoToDeath();
 
 	/* QS: PlayerLogDeaths */
-	if (RuleB(QueryServ, PlayerLogDeaths)){
-		const char * killer_name = "";
-		if (killerMob && killerMob->GetCleanName()){ killer_name = killerMob->GetCleanName(); }
-		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
-		QServ->PlayerLogEvent(Player_Log_Deaths, this->CharacterID(), event_desc);
+	if (RuleB(QueryServ, PlayerLogDeaths))
+	{
+		char killer_name[128];
+		if (killerMob && killerMob->GetCleanName())
+		{
+			strncpy(killer_name, killerMob->GetCleanName(), 128);
+		}
+		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
@@ -1424,7 +1427,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	else if (equipment[MainSecondary])
 		weapon = database.GetItem(equipment[MainSecondary]);
 
-	//We dont factor much from the weapon into the attack.
+	//We don't factor much from the weapon into the attack.
 	//Just the skill type so it doesn't look silly using punching animations and stuff while wielding weapons
 	if(weapon) {
 		Log.Out(Logs::Detail, Logs::Combat, "Attacking with weapon: %s (%d) (too bad im not using it for much)", weapon->Name, weapon->ID);
@@ -1648,11 +1651,13 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	if (!GetTarget())
 		return true; //We killed them
 
-	if(!bRiposte && !other->HasDied())
+	if(!other->HasDied())
 	{
-		TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
+		// innate procs proc on rips, weapon procs don't
+		if (!bRiposte)
+			TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
 
-		if (damage > 0)			// NPCs only proc innate procs on a hit
+		if (damage > 0 && !other->GetSpellBonuses().MeleeRune[0])			// NPCs only proc innate procs on a hit
 		{
 			TrySpellProc(nullptr, weapon, other, Hand);
 		}
@@ -2757,79 +2762,6 @@ int32 Mob::ReduceDamage(int32 damage)
 		return damage;
 
 	int32 slot = -1;
-	bool DisableMeleeRune = false;
-
-	if (spellbonuses.NegateAttacks[0]){
-		slot = spellbonuses.NegateAttacks[1];
-		if(slot >= 0) {
-			if(--buffs[slot].numhits == 0) {
-
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot , true);
-			}
-
-			if (spellbonuses.NegateAttacks[2] && (damage > spellbonuses.NegateAttacks[2]))
-				damage -= spellbonuses.NegateAttacks[2];
-			else
-				return -6;
-		}
-	}
-
-	//Only mitigate if damage is above the minimium specified.
-	if (spellbonuses.MeleeThresholdGuard[0]){
-		slot = spellbonuses.MeleeThresholdGuard[1];
-
-		if (slot >= 0 && (damage > spellbonuses.MeleeThresholdGuard[2]))
-		{
-			DisableMeleeRune = true;
-			int damage_to_reduce = damage * spellbonuses.MeleeThresholdGuard[0] / 100;
-			if(damage_to_reduce >= buffs[slot].melee_rune)
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MeleeThresholdGuard %d damage negated, %d"
-					" damage remaining, fading buff.", damage_to_reduce, buffs[slot].melee_rune);
-				damage -= buffs[slot].melee_rune;
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot);
-			}
-			else
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MeleeThresholdGuard %d damage negated, %d"
-					" damage remaining.", damage_to_reduce, buffs[slot].melee_rune);
-				buffs[slot].melee_rune = (buffs[slot].melee_rune - damage_to_reduce);
-				damage -= damage_to_reduce;
-			}
-		}
-	}
-
-	if (spellbonuses.MitigateMeleeRune[0] && !DisableMeleeRune){
-		slot = spellbonuses.MitigateMeleeRune[1];
-		if(slot >= 0)
-		{
-			int damage_to_reduce = damage * spellbonuses.MitigateMeleeRune[0] / 100;
-
-			if (spellbonuses.MitigateMeleeRune[2] && (damage_to_reduce > spellbonuses.MitigateMeleeRune[2]))
-					damage_to_reduce = spellbonuses.MitigateMeleeRune[2];
-
-			if(spellbonuses.MitigateMeleeRune[3] && (damage_to_reduce >= buffs[slot].melee_rune))
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MitigateMeleeDamage %d damage negated, %d"
-					" damage remaining, fading buff.", damage_to_reduce, buffs[slot].melee_rune);
-				damage -= buffs[slot].melee_rune;
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot);
-			}
-			else
-			{
-				Log.Out(Logs::Detail, Logs::Spells, "Mob::ReduceDamage SE_MitigateMeleeDamage %d damage negated, %d"
-					" damage remaining.", damage_to_reduce, buffs[slot].melee_rune);
-
-				if (spellbonuses.MitigateMeleeRune[3])
-					buffs[slot].melee_rune = (buffs[slot].melee_rune - damage_to_reduce);
-
-				damage -= damage_to_reduce;
-			}
-		}
-	}
 
 	if(damage < 1)
 		return -6;
@@ -2850,23 +2782,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 
 	bool DisableSpellRune = false;
 	int32 slot = -1;
-
-	// See if we block the spell outright first
-	if (!iBuffTic && spellbonuses.NegateAttacks[0]){
-		slot = spellbonuses.NegateAttacks[1];
-		if(slot >= 0) {
-			if(--buffs[slot].numhits == 0) {
-
-				if(!TryFadeEffect(slot))
-					BuffFadeBySlot(slot , true);
-			}
-
-			if (spellbonuses.NegateAttacks[2] && (damage > spellbonuses.NegateAttacks[2]))
-				damage -= spellbonuses.NegateAttacks[2];
-			else
-				return 0;
-		}
-	}
 
 	// If this is a DoT, use DoT Shielding...
 	if(iBuffTic) {
@@ -2903,30 +2818,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 	{
 		// Reduce damage by the Spell Shielding first so that the runes don't take the raw damage.
 		damage -= (damage * itembonuses.SpellShield / 100);
-
-
-		//Only mitigate if damage is above the minimium specified.
-		if (spellbonuses.SpellThresholdGuard[0]){
-			slot = spellbonuses.SpellThresholdGuard[1];
-
-			if (slot >= 0 && (damage > spellbonuses.MeleeThresholdGuard[2]))
-			{
-				DisableSpellRune = true;
-				int damage_to_reduce = damage * spellbonuses.SpellThresholdGuard[0] / 100;
-				if(damage_to_reduce >= buffs[slot].magic_rune)
-				{
-					damage -= buffs[slot].magic_rune;
-					if(!TryFadeEffect(slot))
-						BuffFadeBySlot(slot);
-				}
-				else
-				{
-					buffs[slot].melee_rune = (buffs[slot].magic_rune - damage_to_reduce);
-					damage -= damage_to_reduce;
-				}
-			}
-		}
-
 
 		// Do runes now.
 		if (spellbonuses.MitigateSpellRune[0] && !DisableSpellRune){
@@ -2973,25 +2864,6 @@ int32 Mob::AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTi
 			return 0;
 	}
 	return damage;
-}
-
-int32 Mob::ReduceAllDamage(int32 damage)
-{
-	if(damage <= 0)
-		return damage;
-
-	if(spellbonuses.ManaAbsorbPercentDamage[0]) {
-		int32 mana_reduced =  damage * spellbonuses.ManaAbsorbPercentDamage[0] / 100;
-		if (GetMana() >= mana_reduced){
-			damage -= mana_reduced;
-			SetMana(GetMana() - mana_reduced);
-			TryTriggerOnValueAmount(false, true);
-		}
-	}
-
-	CheckNumHitsRemaining(NUMHIT_IncomingDamage);
-
-	return(damage);
 }
 
 bool Mob::HasProcs() const
@@ -3141,8 +3013,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		if(spell_id == SPELL_UNKNOWN) {
 			damage = ReduceDamage(damage);
 			Log.Out(Logs::Detail, Logs::Combat, "Melee Damage reduced to %d", damage);
-			damage = ReduceAllDamage(damage);
-			TryTriggerThreshHold(damage, SE_TriggerMeleeThreshold, attacker);
 		} else {
 			int32 origdmg = damage;
 			damage = AffectMagicalDamage(damage, spell_id, iBuffTic, attacker);
@@ -3154,8 +3024,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				//Kayen: Probably need to add a filter for this - Not sure if this msg is correct but there should be a message for spell negate/runes.
 				Message(263, "%s tries to cast on YOU, but YOUR magical skin absorbs the spell.",attacker->GetCleanName());
 			}
-			damage = ReduceAllDamage(damage);
-			TryTriggerThreshHold(damage, SE_TriggerSpellThreshold, attacker);
 		}
 
 		if (skill_used)
@@ -3197,70 +3065,6 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 		if (IsMezzed() && attacker) {
 			Log.Out(Logs::Detail, Logs::Combat, "Breaking mez due to attack.");
 			BuffFadeByEffect(SE_Mez);
-		}
-
-		//check stun chances if bashing
-		if (damage > 0 && attacker && (skill_used == SkillBash || skill_used == SkillKick || 
-			(skill_used == SkillDragonPunch && attacker-IsClient() && attacker->CastToClient()->HasInstantDisc(skill_used)))) 
-		{
-			// NPCs can stun with their bash/kick as soon as they receive it.
-			// Clients can stun mobs under level 56 with their kick when they get level 55 or greater.
-			// Clients have a chance to stun if the mob is 56+
-
-			// Calculate the chance to stun
-			int stun_chance = 0;
-			if (!GetSpecialAbility(UNSTUNABLE)) {
-				if (attacker->IsNPC()) {
-					stun_chance = RuleI(Combat, NPCBashKickStunChance);
-				} else if (attacker->IsClient()) {
-					// Less than base immunity
-					// Client vs. Client always uses the chance
-					if (!IsClient() && GetLevel() <= RuleI(Spells, BaseImmunityLevel)) {
-						if (skill_used == SkillBash) // Bash always will
-							stun_chance = 100;
-						else if (attacker->GetLevel() >= RuleI(Combat, ClientStunLevel))
-							stun_chance = 100; // only if you're over level 55 and using kick
-					} else { // higher than base immunity or Client vs. Client
-						// not sure on this number, use same as NPC for now
-						if (skill_used == SkillKick && attacker->GetLevel() < RuleI(Combat, ClientStunLevel))
-							stun_chance = RuleI(Combat, NPCBashKickStunChance);
-						else if (skill_used == SkillBash)
-							stun_chance = RuleI(Combat, NPCBashKickStunChance) +
-								attacker->spellbonuses.StunBashChance +
-								attacker->itembonuses.StunBashChance +
-								attacker->aabonuses.StunBashChance;
-					}
-				}
-			}
-
-			if (stun_chance && zone->random.Roll(stun_chance)) {
-				// Passed stun, try to resist now
-				int stun_resist = itembonuses.StunResist + spellbonuses.StunResist;
-				int frontal_stun_resist = itembonuses.FrontalStunResist + spellbonuses.FrontalStunResist;
-
-				Log.Out(Logs::Detail, Logs::Combat, "Stun passed, checking resists. Was %d chance.", stun_chance);
-				if (IsClient()) {
-					stun_resist += aabonuses.StunResist;
-					frontal_stun_resist += aabonuses.FrontalStunResist;
-				}
-
-				// frontal stun check for ogres/bonuses
-				if (((GetBaseRace() == OGRE && IsClient()) ||
-						(frontal_stun_resist && zone->random.Roll(frontal_stun_resist))) &&
-						!attacker->BehindMob(this, attacker->GetX(), attacker->GetY())) {
-					Log.Out(Logs::Detail, Logs::Combat, "Frontal stun resisted. %d chance.", frontal_stun_resist);
-				} else {
-					// Normal stun resist check.
-					if (stun_resist && zone->random.Roll(stun_resist)) {
-						Log.Out(Logs::Detail, Logs::Combat, "Stun Resisted. %d chance.", stun_resist);
-					} else {
-						Log.Out(Logs::Detail, Logs::Combat, "Stunned. %d resist chance.", stun_resist);
-						Stun(zone->random.Int(0, 2) * 1000, attacker); // 0-2 seconds
-					}
-				}
-			} else {
-				Log.Out(Logs::Detail, Logs::Combat, "Stun failed. %d chance.", stun_chance);
-			}
 		}
 
 		if(spell_id != SPELL_UNKNOWN && !iBuffTic) {
