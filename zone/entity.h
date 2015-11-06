@@ -406,7 +406,7 @@ public:
 	uint8 GetClientCountByBoatID(uint32 boatid);
 	bool TransferPrimaryAggro(Mob* other);
 	void SendMerchantEnd(Mob* merchant);
-	void SendMerchantInventory(Mob* merchant);
+	void SendMerchantInventory(Mob* merchant, int32 slotid = -1, bool isdelete = false);
 
 
 protected:

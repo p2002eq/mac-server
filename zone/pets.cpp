@@ -650,7 +650,6 @@ void NPC::SetPetState(SpellBuff_Struct *pet_buffs, uint32 *items) {
 						break;
 					case SE_Charm:
 					case SE_Rune:
-					case SE_NegateAttacks:
 					case SE_Illusion:
 						buffs[j1].spellid = SPELL_UNKNOWN;
 						pet_buffs[j1].spellid = SPELLBOOK_UNKNOWN;

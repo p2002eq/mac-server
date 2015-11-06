@@ -632,9 +632,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_Fearless:
 				newbon->Fearless = true;
 				break;
-			case SE_PersistantCasting:
-				newbon->PersistantCasting += base1;
-				break;
 			case SE_FrontalStunResist:
 				newbon->FrontalStunResist += base1;
 				break;
@@ -1028,10 +1025,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				}
 				break;
 			}
-
-			case SE_StunBashChance:
-				newbon->StunBashChance += base1;
-				break;
 
 			case SE_IncreaseChanceMemwipe:
 				newbon->IncreaseChanceMemwipe += base1;
@@ -2043,10 +2036,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				new_bonus->IncreaseBlockChance += effect_value;
 				break;
 
-			case SE_PersistantCasting:
-				new_bonus->PersistantCasting += effect_value;
-				break;
-
 			case SE_LimitHPPercent:
 			{
 				if(new_bonus->HPPercCap[0] != 0 && new_bonus->HPPercCap[0] > effect_value){
@@ -2120,60 +2109,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_NegateAttacks:
-			{
-				if (!new_bonus->NegateAttacks[0] || 
-					((new_bonus->NegateAttacks[0] && new_bonus->NegateAttacks[2]) && (new_bonus->NegateAttacks[2] < max))){
-					new_bonus->NegateAttacks[0] = 1;
-					new_bonus->NegateAttacks[1] = buffslot;
-					new_bonus->NegateAttacks[2] = max;
-				}
-				break;
-			}
-
-			case SE_MitigateMeleeDamage:
-			{
-				if (new_bonus->MitigateMeleeRune[0] < effect_value){
-					new_bonus->MitigateMeleeRune[0] = effect_value;
-					new_bonus->MitigateMeleeRune[1] = buffslot;
-					new_bonus->MitigateMeleeRune[2] = base2;
-					new_bonus->MitigateMeleeRune[3] = max;
-				}
-				break;
-			}
-
-			
-			case SE_MeleeThresholdGuard:
-			{
-				if (new_bonus->MeleeThresholdGuard[0] < effect_value){
-					new_bonus->MeleeThresholdGuard[0] = effect_value;
-					new_bonus->MeleeThresholdGuard[1] = buffslot;
-					new_bonus->MeleeThresholdGuard[2] = base2;
-				}
-				break;
-			}
-
-			case SE_SpellThresholdGuard:
-			{
-				if (new_bonus->SpellThresholdGuard[0] < effect_value){
-					new_bonus->SpellThresholdGuard[0] = effect_value;
-					new_bonus->SpellThresholdGuard[1] = buffslot;
-					new_bonus->SpellThresholdGuard[2] = base2;
-				}
-				break;
-			}
-
-			case SE_MitigateSpellDamage:
-			{
-				if (new_bonus->MitigateSpellRune[0] < effect_value){
-					new_bonus->MitigateSpellRune[0] = effect_value;
-					new_bonus->MitigateSpellRune[1] = buffslot;
-					new_bonus->MitigateSpellRune[2] = base2;
-					new_bonus->MitigateSpellRune[3] = max;
-				}
-				break;
-			}
-
 			case SE_MitigateDotDamage:
 			{
 				if (new_bonus->MitigateDotRune[0] < effect_value){
@@ -2184,23 +2119,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				}
 				break;
 			}
-
-			case SE_ManaAbsorbPercentDamage:
-			{
-				if (new_bonus->ManaAbsorbPercentDamage[0] < effect_value){
-					new_bonus->ManaAbsorbPercentDamage[0] = effect_value;
-					new_bonus->ManaAbsorbPercentDamage[1] = buffslot;
-				}
-				break;
-			}
-
-			case SE_TriggerMeleeThreshold:
-				new_bonus->TriggerMeleeThreshold = true;
-				break;
-
-			case SE_TriggerSpellThreshold:
-				new_bonus->TriggerSpellThreshold = true;
-				break;
 
 			case SE_ShieldBlock:
 				new_bonus->ShieldBlock += effect_value;
@@ -2362,10 +2280,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_TwoHandBluntBlock:
 				new_bonus->TwoHandBluntBlock += effect_value;
-				break;
-
-			case SE_StunBashChance:
-				new_bonus->StunBashChance += effect_value;
 				break;
 
 			case SE_IncreaseChanceMemwipe:
