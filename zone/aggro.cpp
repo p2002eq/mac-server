@@ -1524,9 +1524,25 @@ bool Mob::PassCharismaCheck(Mob* caster, uint16 spell_id) {
 	else
 	{
 		// Assume this is a harmony/pacify spell
-		// If 'Lull' spell resists, do a second resist check with a charisma modifier AND regular resist checks. If resists agian you gain aggro.
-		resist_check = ResistSpell(spells[spell_id].resisttype, spell_id, caster, false,0,true);
-		if (resist_check == 100)
+
+		/*	Data this is based on:
+
+			Level 50 Enchanter with 159 Charisma casting Pacify on Test Fifty:
+			1482 casts; 1365 hits; 117 resists (7.89%)
+			Aggros on resists: 52 (44.44% of resists, 3.5% of casts)
+
+			Level 50 Enchanter with 255 Charisma casting Pacify on Test Fifty:
+			1865 casts; 1722 hits; 143 resists (7.66%)
+			Aggros on resists: 36 (25.17% of resists, 1.93% of casts)
+
+			Dev comment stated that this check is entirely charisma based
+		*/
+		int cha = caster->GetCHA();
+		if (cha > 250)					// capping this at 25% until I get data to prove it wrong
+			cha = 250;
+		int aggroChance = 75 - cha / 5;
+		
+		if (!zone->random.Roll(aggroChance))
 			return true;
 	}
 

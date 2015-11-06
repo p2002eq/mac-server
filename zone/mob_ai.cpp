@@ -229,7 +229,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 					case SpellType_Dispel: {
-						if(zone->random.Roll(15))
+						if(zone->random.Roll(10))
 						{
 							if(!checked_los) {
 								if(!CheckLosFN(tar))

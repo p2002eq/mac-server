@@ -583,12 +583,7 @@ public:
 	bool TryDeathSave();
 	bool TryDivineSave();
 	void DoBuffWearOffEffect(uint32 index);
-	void TryTriggerOnCast(uint32 spell_id, bool aa_trigger);
-	void TriggerOnCast(uint32 focus_spell, uint32 spell_id, bool aa_trigger);
-	bool TrySpellTrigger(Mob *target, uint32 spell_id, int effect);
 	void TryTriggerOnValueAmount(bool IsHP = false, bool IsMana = false, bool IsEndur = false, bool IsPet = false);
-	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
-	void TrySympatheticProc(Mob *target, uint32 spell_id);
 	bool TryFadeEffect(int slot);
 	uint16 GetSpellEffectResistChance(uint16 spell_id);
 	int16 GetHealRate(uint16 spell_id, Mob* caster = nullptr);
