@@ -3054,7 +3054,7 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 			continue;
 		}
 		if (zone->random.Roll(50))		// heals and other beneficial spells can fail a 'witness check' and do zero hate
-		{								// the chance seems to scale by level.  formula unknown.  pulling 15% out of my ass for now
+		{
 			++it;
 			continue;
 		}

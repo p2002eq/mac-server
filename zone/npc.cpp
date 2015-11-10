@@ -273,6 +273,15 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 		skills[r] = database.GetSkillCap(GetClass(),(SkillUseTypes)r,moblevel);
 	}
 
+	if (GetSpecialAbility(USE_WARRIOR_SKILLS))
+	{
+		skills[SkillRiposte] = database.GetSkillCap(WARRIOR, SkillRiposte, moblevel);
+		skills[SkillParry] = database.GetSkillCap(WARRIOR, SkillParry, moblevel);
+		skills[SkillDodge] = database.GetSkillCap(WARRIOR, SkillDodge, moblevel);
+		skills[SkillBash] = database.GetSkillCap(WARRIOR, SkillBash, moblevel);
+		skills[SkillKick] = database.GetSkillCap(WARRIOR, SkillKick, moblevel);
+	}
+
 	reface_timer = new Timer(15000);
 	reface_timer->Disable();
 	qGlobals = nullptr;

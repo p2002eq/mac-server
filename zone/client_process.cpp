@@ -641,11 +641,11 @@ bool Client::Process() {
 			LinkDead();
 		}
 	}
-	// Feign Death 2 minutes and zone forgets you
+	// Repurposed the two minute timer into a 10 minute forget timer
+	// because our hate lists don't have feigned players, unlike Sony's
 	if (forget_timer.Check()) {
 		forget_timer.Disable();
 		entity_list.ClearZoneFeignAggro(this);
-		//Message(CC_Default,"Your enemies have forgotten you!");
 	}
 
 	return ret;

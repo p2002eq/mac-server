@@ -3101,7 +3101,9 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 					effect_value = caster->CastToClient()->GetActDoTDamage(spell_id, effect_value, this);
 
-					if (!caster->CastToClient()->GetFeigned())
+					if (!caster->CastToClient()->GetFeigned()
+						&& (!GetOwner() || !GetOwner()->IsClient())
+					)
 						AddToHateList(caster, -effect_value);
 				}
 
@@ -3111,7 +3113,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					{
 						if(!caster->IsClient()){
 
-							if (!IsClient()) //Allow NPC's to generate hate if casted on other NPC's.
+							if (!IsClient() && !GetOwner()) //Allow NPC's to generate hate if casted on other NPC's.
 								AddToHateList(caster, -effect_value);
 						}
 
@@ -3207,14 +3209,12 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 			case SE_Lull: {
 				/* Lulls have a chance to end early.  Chance is not affected by MR or charisma.
-				   On Live, fade chance per tick was about 2% per tick on white cons.
-				   A mob -5 levels below the caster had no lulls fade early.
-				   Scaling this by 0.4% per level starting at -4 levels under caster until more data is available.
+				   On Live, fade chance per tick was about 2% per tick on white cons, 7% on a +5
+				  a red con, 0% on a -5 blue, and 1% on a -1 blue.
 				*/
-				int fadeChance = GetLevel() - caster_level + 5;
-				fadeChance *= 4;
+				int fadeChance = GetLevel() - caster_level + 2;
 
-				if (zone->random.Int(0, 999) < fadeChance)
+				if (zone->random.Roll(fadeChance))
 				{
 					if (!TryFadeEffect(slot))
 						BuffFadeBySlot(slot);
