@@ -190,6 +190,8 @@ RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
 RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
 RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
+RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, false) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 
 
@@ -319,7 +321,6 @@ RULE_INT ( Combat, MeleeBaseCritChance, 0 ) //The base crit chance for non warri
 RULE_INT ( Combat, WarBerBaseCritChance, 3 ) //The base crit chance for warriors and berserkers, only applies to clients
 RULE_INT ( Combat, BerserkBaseCritChance, 6 ) //The bonus base crit chance you get when you're berserk
 RULE_INT ( Combat, NPCBashKickLevel, 6 ) //The level that npcs can KICK/BASH
-RULE_INT ( Combat, NPCBashKickStunChance, 15 ) //Percent chance that a bash/kick will stun
 RULE_INT ( Combat, RogueCritThrowingChance, 25) //Rogue throwing crit bonus
 RULE_INT ( Combat, RogueDeadlyStrikeChance, 80) //Rogue chance throwing from behind crit becomes a deadly strike
 RULE_INT ( Combat, RogueDeadlyStrikeMod, 2) //Deadly strike modifier to crit damage
@@ -331,7 +332,6 @@ RULE_REAL ( Combat, FleeMultiplier, 3.25) // Determines how quickly a NPC will s
 RULE_BOOL ( Combat, FleeIfNotAlone, false) // If false, mobs won't flee if other mobs are in combat with it.
 RULE_BOOL ( Combat, AdjustSpecialProcPerMinute, true)  //Set PPM for special abilities like HeadShot (Live does this as of 4-14)
 RULE_REAL ( Combat, AvgSpecialProcsPerMinute, 2.0) //Unclear what best value is atm.
-RULE_REAL ( Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
 RULE_REAL ( Combat, ArcheryHitPenalty, 0.25) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
 RULE_INT ( Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL ( Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
@@ -358,9 +358,7 @@ RULE_REAL ( Combat, DefProcPerMinAgiContrib, 0.075) //How much agility contribut
 RULE_INT ( Combat, SpecialAttackACBonus, 15) //Percent amount of damage per AC gained for certain special attacks (damage = AC*SpecialAttackACBonus/100).
 RULE_INT ( Combat, NPCFlurryChance, 20) // Chance for NPC to flurry.
 RULE_BOOL (Combat,TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
-RULE_REAL (Combat,TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
 RULE_BOOL (Combat,EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
-RULE_INT ( Combat, ClientStunLevel, 55) //This is the level where client kicks and bashes can stun the target
 RULE_INT ( Combat, QuiverWRHasteDiv, 3) //Weight Reduction is divided by this to get haste contribution for quivers
 RULE_BOOL ( Combat, UseArcheryBonusRoll, false) //Make the 51+ archery bonus require an actual roll
 RULE_INT ( Combat, ArcheryBonusChance, 50)
@@ -485,8 +483,9 @@ RULE_BOOL( QueryServ, PlayerLogKeyringAddition, false) // Log PLayer Keyring add
 RULE_BOOL( QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL( QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL( QueryServ, PlayerLogIssuedCommandes, false ) // Log Player Issued Commands
-RULE_BOOL( QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
-RULE_BOOL( QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
+RULE_BOOL(QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
+RULE_BOOL(QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Player Alternate Currency Transactions
+RULE_BOOL(QueryServ, PlayerLogLoot, false) // Log Player Looting cash/Items
 RULE_CATEGORY_END()
 
 RULE_CATEGORY( Groundspawns )

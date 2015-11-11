@@ -316,7 +316,6 @@ struct StatBonuses {
 	bool	AntiGate;							// spell effect that prevents gating
 	bool	MagicWeapon;						// spell effect that makes weapon magical
 	int32	IncreaseBlockChance;				// overall block chance modifier
-	uint32	PersistantCasting;					// chance to continue casting through a stun
 	int	XPRateMod;							//i
 	int		HPPercCap[2];						//Spell effect that limits you to being healed/regening beyond a % of your max
 	int		ManaPercCap[2];						// ^^ 0 = % Cap 1 = Flat Amount Cap
@@ -331,15 +330,9 @@ struct StatBonuses {
 	uint32	FocusEffects[HIGHEST_FOCUS+1];		// Stores the focus effectid for each focustype you have.
 	bool	NegateEffects;						// Check if you contain a buff with negate effect. (only spellbonuses)
 	int32	SkillDamageAmount2[HIGHEST_SKILL+2];	// Adds skill specific damage
-	uint32	NegateAttacks[3];					// 0 = bool HasEffect 1 = Buff Slot 2 = Max damage absorbed per hit
 	uint32	MitigateMeleeRune[4];				// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per hit 3 = Rune Amt
-	uint32	MeleeThresholdGuard[3];				// 0 = Mitigation value 1 = Buff Slot 2 = Min damage to trigger.
-	uint32	SpellThresholdGuard[3];				// 0 = Mitigation value 1 = Buff Slot 2 = Min damage to trigger.
 	uint32	MitigateSpellRune[4];				// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per spell 3 = Rune Amt
 	uint32	MitigateDotRune[4];					// 0 = Mitigation value 1 = Buff Slot 2 = Max mitigation per tick 3 = Rune Amt
-	bool	TriggerMeleeThreshold;				// Has Melee Threshhold
-	bool	TriggerSpellThreshold;				// Has Spell Threshhold
-	uint32	ManaAbsorbPercentDamage[2];			// 0 = Mitigation value 1 = Buff Slot
 	int32	ShieldBlock;						// Chance to Shield Block
 	int32	BlockBehind;						// Chance to Block Behind (with our without shield)
 	bool	CriticalRegenDecay;					// increase critical regen chance, decays based on spell level cast
@@ -407,7 +400,6 @@ struct StatBonuses {
 	int32	ShieldEquipHateMod;					// Hate mod when shield equiped.
 	int32	ShieldEquipDmgMod[2];				// Damage mod when shield equiped. 0 = damage modifier 1 = Unknown
 	bool	TriggerOnValueAmount;				// Triggers off various different conditions, bool to check if client has effect.
-	int8	StunBashChance;						// chance to stun with bash.	
 	int8	IncreaseChanceMemwipe;				// increases chance to memory wipe
 	int8	CriticalMend;						// chance critical monk mend
 	int32	ImprovedReclaimEnergy;				// Modifies amount of mana returned from reclaim energy

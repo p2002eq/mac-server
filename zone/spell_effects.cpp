@@ -191,8 +191,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 	if (!IsPowerDistModSpell(spell_id))
 		SetSpellPowerDistanceMod(0);
 		
-	bool SE_SpellTrigger_HasCast = false;	
-
 	// iterate through the effects in the spell
 	for (i = 0; i < EFFECT_COUNT; i++)
 	{
@@ -495,7 +493,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				break;
 			}
-			case SE_GateCastersBindpoint: //Shin: Used on Teleport Bind.
 			case SE_Teleport:	// gates, rings, circles, etc
 			case SE_Teleport2:
 			{
@@ -527,17 +524,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					}
 				}
 
-				if (effect == SE_GateCastersBindpoint && caster->IsClient())
-				{ //Shin: Teleport Bind uses caster's bind point
-					x = caster->CastToClient()->GetBindX();
-					y = caster->CastToClient()->GetBindY();
-					z = caster->CastToClient()->GetBindZ();
-					heading = caster->CastToClient()->GetBindHeading();
-					//target_zone = caster->CastToClient()->GetBindZoneId(); target_zone doesn't work due to const char
-					CastToClient()->MovePC(caster->CastToClient()->GetBindZoneID(), 0, x, y, z, heading);
-					break;
-				}
-
 #ifdef SPELL_EFFECT_SPAM
 				const char *efstr = "Teleport";
 				if(effect == SE_Teleport)
@@ -552,16 +538,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					efstr, x, y, z, heading, target_zone ? target_zone : "same zone"
 				);
 #endif
+				// teleports are not supposed to move NPCs.  Pets were used to kill the Seru earring NPCs, and Dain
 				if(IsClient())
 				{
 					if(!target_zone)
 						CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading);
 					else
 						CastToClient()->MovePC(target_zone, x, y, z, heading);
-				}
-				else{
-					if(!target_zone)
-						GMMove(x, y, z, heading);
 				}
 				break;
 			}
@@ -1247,30 +1230,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_MitigateMeleeDamage:
-			{
-				buffs[buffslot].melee_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_MeleeThresholdGuard:
-			{
-				buffs[buffslot].melee_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_SpellThresholdGuard:
-			{
-				buffs[buffslot].magic_rune = spells[spell_id].max[i];
-				break;
-			}
-
-			case SE_MitigateSpellDamage:
-			{
-				buffs[buffslot].magic_rune = spells[spell_id].max[i];
-				break;
-			}
-
 			case SE_MitigateDotDamage:
 			{
 				buffs[buffslot].dot_rune = spells[spell_id].max[i];
@@ -1474,6 +1433,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				{
 					// the spinning is handled by the client
 					// Stun duration is based on the effect_value, not the buff duration(alot don't have buffs)
+					// AK had 7500 milisecond spinstuns.  Confirmed in logs.  The effect values should be 7500
 					Stun(effect_value, caster);
 					if(!IsClient()) {
 						Spin();
@@ -1733,16 +1693,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					AddProcToWeapon(procid, false, 100, spell_id);
 				else
 					AddProcToWeapon(procid, false, spells[spell_id].base2[i]+100, spell_id);
-				break;
-			}
-
-			case SE_NegateAttacks:
-			{
-#ifdef SPELL_EFFECT_SPAM
-				snprintf(effect_desc, _EDLEN, "Melee Negate Attack Rune: %+i", effect_value);
-#endif
-				if(buffslot >= 0)
-					buffs[buffslot].numhits = effect_value;
 				break;
 			}
 
@@ -2425,17 +2375,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_Taunt:
-			{
-				if (IsNPC()){
-					caster->Taunt(this->CastToNPC(), false, static_cast<float>(spell.base[i]));
-					
-					if (spell.base2[i] > 0)
-						CastToNPC()->SetHate(caster, (CastToNPC()->GetHateAmount(caster) + spell.base2[i]));
-				}
-				break;
-			}
-
 			case SE_AttackSpeed:
 				if (spell.base[i] < 100)
 					SlowMitigation(caster);
@@ -2454,42 +2393,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 			case SE_AttackSpeed4:
 				SlowMitigation(caster);
 				break;
-
-			case SE_AddHatePct:
-			{
-				if (IsNPC()){
-					int32 new_hate = CastToNPC()->GetHateAmount(caster) * (100 + spell.base[i]) / 100;
-					if (new_hate <= 0)
-						new_hate = 1;
-
-					CastToNPC()->SetHate(caster, new_hate);
-				}
-				break;
-			}
-
-			case SE_Hate:{
-
-				if (buffslot >= 0)
-					break;
-
-				if(caster){
-					if(effect_value > 0){
-						if(caster){
-							if(caster->IsClient() && !caster->CastToClient()->GetFeigned())
-								AddToHateList(caster, effect_value);
-							else if(!caster->IsClient())
-								AddToHateList(caster, effect_value);
-						}
-					}else{
-						int32 newhate = GetHateAmount(caster) + effect_value;
-						if (newhate < 1)
-							SetHate(caster,1);
-						else
-							SetHate(caster,newhate);
-						}
-				}
-				break;
-			}
 
 			case SE_InterruptCasting:{
 				if (buffslot >= 0)
@@ -2523,15 +2426,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				break;
 			}
 
-			case SE_SpellTrigger: {
-
-				if (!SE_SpellTrigger_HasCast) {
-					if (caster && caster->TrySpellTrigger(this, spell_id, i))
-						SE_SpellTrigger_HasCast = true;
-				}
-				break;
-			}
-			
 			case SE_MovementSpeed: {
 				if (IsNPC() && IsSpeedBuff(spell_id) && RuleB(NPC, CheckSoWBuff))
 					SetRunning(true);
@@ -3276,29 +3170,6 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 				break;
 			}
 
-			case SE_Hate:{
-				effect_value = CalcSpellEffectValue(spell_id, i, caster_level);
-				if(caster){
-					if(effect_value > 0){
-						if(caster){
-							if(caster->IsClient() && !caster->CastToClient()->GetFeigned()){
-								AddToHateList(caster, effect_value);
-							}
-							else if(!caster->IsClient())
-								AddToHateList(caster, effect_value);
-						}
-					}else{
-						int32 newhate = GetHateAmount(caster) + effect_value;
-						if (newhate < 1) {
-							SetHate(caster,1);
-						} else {
-							SetHate(caster,newhate);
-						}
-					}
-				}
-				break;
-			}
-
 			case SE_WipeHateList:
 			{
 				if (IsMezSpell(spell_id))
@@ -3331,6 +3202,23 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					BuffFadeByEffect(SE_Charm);
 				}
 
+				break;
+			}
+
+			case SE_Lull: {
+				/* Lulls have a chance to end early.  Chance is not affected by MR or charisma.
+				   On Live, fade chance per tick was about 2% per tick on white cons.
+				   A mob -5 levels below the caster had no lulls fade early.
+				   Scaling this by 0.4% per level starting at -4 levels under caster until more data is available.
+				*/
+				int fadeChance = GetLevel() - caster_level + 5;
+				fadeChance *= 4;
+
+				if (zone->random.Int(0, 999) < fadeChance)
+				{
+					if (!TryFadeEffect(slot))
+						BuffFadeBySlot(slot);
+				}
 				break;
 			}
 
@@ -3465,19 +3353,6 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					break;
 				}
 			}
-
-			case SE_AddHateOverTimePct:
-			{				
-				if (IsNPC()){
-					int32 new_hate = CastToNPC()->GetHateAmount(caster) * (100 + spell.base[i]) / 100;
-					if (new_hate <= 0)
-						new_hate = 1;
-					
-					CastToNPC()->SetHate(caster, new_hate);
-				}
-				break;
-			}
-
 
 			default:
 			{
@@ -3906,7 +3781,8 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 			}
 		}
 		// Our spell has worn off another NPC or client.
-		else if (p != this && !p->IsPet() && !IsBeneficialSpell(buffs[slot].spellid))
+		// Lulls/harmonies don't show message
+		else if (p != this && !p->IsPet() && !IsBeneficialSpell(buffs[slot].spellid) && !IsCrowdControlSpell(buffs[slot].spellid))
 		{
 			p->Message_StringID(MT_WornOff, SPELL_WORN_OFF, spellname);
 		}
@@ -4021,7 +3897,7 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 		when the next valid focus effect is found.
 		*/
 
-		if (IsFocusEffect(0, 0, true,effect) || (effect == SE_TriggerOnCast)){
+		if (IsFocusEffect(0, 0, true,effect)){
 			FocusCount++;
 			//If limit found on prior check next, else end loop.
 			if (FocusCount > 1){
@@ -4320,17 +4196,6 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 					value = base1 / 1000;
 				break;
 
-			case SE_TriggerOnCast:
-				if(type == focusTriggerOnCast){
-					if(zone->random.Roll(base1)) {
-						value = base2;
-					} else {
-						value = 0;
-						LimitFailure = true;
-					}
-				break;
-				}
-
 			case SE_FcSpellVulnerability:
 				if(type == focusSpellVulnerability)
 					value = base1;
@@ -4342,17 +4207,6 @@ int16 Client::CalcAAFocus(focusType type, uint32 aa_ID, uint16 spell_id)
 						value = 1;
 				}
 				break;
-
-			case SE_FcTwincast:
-				if(type == focusTwincast)
-					value = base1;
-				break;
-
-			//Note if using these as AA, make sure this is first focus used.
- 			case SE_SympatheticProc:
-				if(type == focusSympatheticProc) 
-					value = base2;
- 				break;
 
 			case SE_FcDamageAmt:
 				if(type == focusFcDamageAmt)
@@ -4764,15 +4618,6 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 				value = focus_spell.base[i] / 1000;
 			break;
 
-		case SE_TriggerOnCast:
-			if(type == focusTriggerOnCast){
-				if(zone->random.Roll(focus_spell.base[i]))
-					value = focus_spell.base2[i];
-				else
-					value = 0;
-			}
-			break;
-
 		case SE_BlockNextSpellFocus:
 			if(type == focusBlockNextSpell){
 				if(zone->random.Roll(focus_spell.base[i]))
@@ -4780,19 +4625,8 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 			}
 			break;
 
-		case SE_SympatheticProc:
-			if(type == focusSympatheticProc) {
-				value = focus_id;
-			}
-			break;
-
 		case SE_FcSpellVulnerability:
 			if(type == focusSpellVulnerability)
-				value = focus_spell.base[i];
-			break;
-
-		case SE_FcTwincast:
-			if(type == focusTwincast)
 				value = focus_spell.base[i];
 			break;
 
@@ -6064,47 +5898,6 @@ void Mob::ResourceTap(int32 damage, uint16 spellid){
 
 			if (spells[spellid].base2[i] == 2 && IsClient())  //Endurance Tap
 				CastToClient()->SetEndurance(CastToClient()->GetEndurance() + damage);
-		}
-	}
-}
-
-void Mob::TryTriggerThreshHold(int32 damage, int effect_id,  Mob* attacker){
-	
-	if (damage <= 0)
-		return;
-
-	if ((SE_TriggerMeleeThreshold == effect_id) && !spellbonuses.TriggerMeleeThreshold )
-		return;
-	else if ((SE_TriggerSpellThreshold == effect_id) && !spellbonuses.TriggerSpellThreshold)
-		return;
-
-	int buff_count = GetMaxTotalSlots();
-
-	for(int slot = 0; slot < buff_count; slot++) {
-
-		if(IsValidSpell(buffs[slot].spellid)){
-
-			for(int i = 0; i < EFFECT_COUNT; i++){
-
-				if (spells[buffs[slot].spellid].effectid[i] == effect_id){
-
-					uint16 spell_id = spells[buffs[slot].spellid].base[i];
-
-					if (damage > spells[buffs[slot].spellid].base2[i]){
-					
-						BuffFadeBySlot(slot);
-
-						if (IsValidSpell(spell_id)) {
-
-							if (IsBeneficialSpell(spell_id)) 
-								SpellFinished(spell_id, this, 10, 0, -1, spells[spell_id].ResistDiff);
-						
-							else if(attacker) 
-								SpellFinished(spell_id, attacker, 10, 0, -1, spells[spell_id].ResistDiff);
-						}
-					}
-				}
-			}
 		}
 	}
 }

@@ -174,6 +174,10 @@ void HateList::Set(Mob* other, uint32 in_hate, uint32 in_dam)
 		if(in_hate > 0)
 			p->hate = in_hate;
 	}
+	else
+	{
+		Add(other, in_hate, in_dam);
+	}
 }
 
 Mob* HateList::GetDamageTop(Mob* hater)
@@ -220,15 +224,25 @@ Mob* HateList::GetDamageTop(Mob* hater)
 	return current;
 }
 
-Mob* HateList::GetClosest(Mob *hater) {
+Mob* HateList::GetClosest(Mob *hater)
+{
 	Mob* close_entity = nullptr;
 	float close_distance = 99999.9f;
 	float this_distance;
 
+	if (!hater && owner)
+		hater = owner;
+
+	if (!hater)
+		return nullptr;
+
 	auto iterator = list.begin();
-	while(iterator != list.end()) {
+	while(iterator != list.end())
+	{
 		this_distance = DistanceSquaredNoZ((*iterator)->ent->GetPosition(), hater->GetPosition());
-		if((*iterator)->ent != nullptr && this_distance <= close_distance) {
+
+		if((*iterator)->ent != nullptr && this_distance <= close_distance)
+		{
 			close_distance = this_distance;
 			close_entity = (*iterator)->ent;
 		}
@@ -465,12 +479,13 @@ Mob *HateList::GetTop()
 			float distX = hateEntryPosition.x - owner->GetX();
 			float distY = hateEntryPosition.y - owner->GetY();
 			float distSquared = distX * distX + distY * distY;
-			float distance = 0.0f;
+
+			float ignoreDistance = 0.0f;
 			if(owner->IsNPC())
-				distance = owner->CastToNPC()->GetIgnoreDistance();
+				ignoreDistance = owner->CastToNPC()->GetIgnoreDistance();
 
 			// ignore players farther away than distance specified in the database.
-			if (!rememberDistantMobs && distance > 0 && distSquared > distance*distance
+			if (!rememberDistantMobs && ignoreDistance > 0 && distSquared > ignoreDistance*ignoreDistance
 				// exception for damaged summoning NPCs
 				&& (!owner->GetSpecialAbility(SPECATK_SUMMON) || owner->GetHPRatio() > 90))
 			{
@@ -526,6 +541,12 @@ Mob *HateList::GetTop()
 					hateClientTypeInRange = currentHate;
 					topClientTypeInRange = cur->ent;
 				}
+			}
+			else if (cur->ent->IsPet() && cur->ent->IsCharmed() && !RuleB(AlKabor, AllowCharmPetRaidTanks))
+			{
+				// this makes NPCs ignore charmed pets if more than X players+pets get on the hate list
+				if (list.size() > RuleI(AlKabor, MaxEntitiesCharmTanks))
+					currentHate = 0;
 			}
 
 			if (currentHate > topHate)

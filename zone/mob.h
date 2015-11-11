@@ -226,7 +226,7 @@ public:
 		CastAction_type &CastAction, bool isproc = false);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
-	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster);
+	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster, bool isProc = false);
 	virtual float GetAOERange(uint16 spell_id);
 	void InterruptSpell(uint16 spellid = SPELL_UNKNOWN);
 	void InterruptSpell(uint16, uint16, uint16 spellid = SPELL_UNKNOWN, bool fizzle = false);
@@ -235,7 +235,6 @@ public:
 	bool DoCastingChecks();
 	bool TryDispel(uint8 caster_level, uint8 buff_level, int level_modifier);
 	void ResourceTap(int32 damage, uint16 spell_id);
-	void TryTriggerThreshHold(int32 damage, int effect_id, Mob* attacker);
 	bool CheckSpellCategory(uint16 spell_id, int category_id, int effect_id);
 	bool CancelMagicIsAllowedOnTarget(Mob* spelltar);
 	bool CancelMagicShouldAggro(uint16 spell_id, Mob* spelltar);
@@ -584,12 +583,7 @@ public:
 	bool TryDeathSave();
 	bool TryDivineSave();
 	void DoBuffWearOffEffect(uint32 index);
-	void TryTriggerOnCast(uint32 spell_id, bool aa_trigger);
-	void TriggerOnCast(uint32 focus_spell, uint32 spell_id, bool aa_trigger);
-	bool TrySpellTrigger(Mob *target, uint32 spell_id, int effect);
 	void TryTriggerOnValueAmount(bool IsHP = false, bool IsMana = false, bool IsEndur = false, bool IsPet = false);
-	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
-	void TrySympatheticProc(Mob *target, uint32 spell_id);
 	bool TryFadeEffect(int slot);
 	uint16 GetSpellEffectResistChance(uint16 spell_id);
 	int16 GetHealRate(uint16 spell_id, Mob* caster = nullptr);
@@ -735,9 +729,8 @@ public:
 
 	int32 ReduceDamage(int32 damage);
 	int32 AffectMagicalDamage(int32 damage, uint16 spell_id, const bool iBuffTic, Mob* attacker);
-	int32 ReduceAllDamage(int32 damage);
 
-	virtual void DoSpecialAttackDamage(Mob *who, SkillUseTypes skill, int32 max_damage, int32 min_damage = 1, int32 hate_override = -1, int ReuseTime = 10, bool HitChance=false, bool CanAvoid=true);
+	virtual void DoSpecialAttackDamage(Mob *defender, SkillUseTypes skill, int32 max_damage, int32 min_damage = 1, int32 hate_override = -1, int ReuseTime = 10, bool HitChance=false, bool CanAvoid=true);
 	virtual void DoThrowingAttackDmg(Mob* other, const ItemInst* RangeWeapon=nullptr, const Item_Struct* item=nullptr, uint16 weapon_damage=0, int16 chance_mod=0,int16 focus=0, int ReuseTime=0);
 	virtual void DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon=nullptr, const ItemInst* Ammo=nullptr, uint16 weapon_damage=0, int16 chance_mod=0, int16 focus=0, int ReuseTime=0);
 	bool CanDoSpecialAttack(Mob *other);
@@ -750,7 +743,7 @@ public:
 	void StartEnrage();
 	void ProcessEnrage();
 	bool IsEnraged();
-	void Taunt(NPC* who, bool always_succeed, float chance_bonus = 0);
+	void Taunt(NPC* who, bool always_succeed = false);
 
 	virtual void AI_Init();
 	virtual void AI_Start(uint32 iMoveDelay = 0);

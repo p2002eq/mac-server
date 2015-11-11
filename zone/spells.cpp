@@ -432,8 +432,9 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && 
-		!IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
+		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target)
+			&& (!IsHarmonySpell(spell_id) || spells[spell_id].targettype == ST_AETarget)	// harmony and wake of tranq require LoS
+			&& !IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
 			InterruptSpell(CANT_SEE_TARGET,CC_User_SpellFailure,spell_id);
@@ -1182,12 +1183,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 
 	if(IsClient()) {
 		CheckNumHitsRemaining(NUMHIT_MatchingSpells);
-		TrySympatheticProc(target, spell_id);
 	}
-
-	TryTwincast(this, target, spell_id);
-
-	TryTriggerOnCast(spell_id, 0);
 
 	// we're done casting, now try to apply the spell
 	if (!SpellFinished(spell_id, spell_target, slot, mana_used, inventory_slot, resist_adjust, castFromInv))
@@ -3652,7 +3648,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	// but we need to check special cases and resists
 
 	// check immunities
-	if(spelltar->IsImmuneToSpell(spell_id, this))
+	if(spelltar->IsImmuneToSpell(spell_id, this, isproc))
 	{
 		//the above call does the message to the client if needed
 		Log.Out(Logs::Detail, Logs::Spells, "Spell %d can't take hold due to immunity %s -> %s", spell_id, GetName(), spelltar->GetName());
@@ -4149,7 +4145,7 @@ void Mob::BuffFadeByEffect(int effectid, int skipslot)
 
 // checks if 'this' can be affected by spell_id from caster
 // returns true if the spell should fail, false otherwise
-bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
+bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster, bool isProc)
 {
 	int effect_index;
 
@@ -4175,7 +4171,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNMEZABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Mez spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_MEZ);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4202,7 +4198,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 	{
 		Log.Out(Logs::Detail, Logs::Spells, "We are immune to Slow spells.");
 		caster->Message_StringID(MT_Shout, IMMUNE_ATKSPEED);
-		int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+		int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 		if(aggro > 0) {
 			AddToHateList(caster, aggro);
 		} else {
@@ -4220,7 +4216,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Fear spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_FEAR);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4236,7 +4232,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		else if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Level is %d, cannot be feared by this spell.", GetLevel());
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if (aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4260,7 +4256,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Charm spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_CHARM);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4300,7 +4296,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 		if(GetSpecialAbility(UNSNAREABLE)) {
 			Log.Out(Logs::Detail, Logs::Spells, "We are immune to Snare spells.");
 			caster->Message_StringID(MT_Shout, IMMUNE_MOVEMENT);
-			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate);
+			int32 aggro = caster->CheckAggroAmount(spell_id, this, jolthate, isProc);
 			if(aggro > 0) {
 				AddToHateList(caster, aggro);
 			} else {
@@ -4621,6 +4617,11 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 				{
 					resist_modifier += 20 * (leveldiff + leveldiff);
 				}
+				else
+				{
+					resist_modifier -= level_mod;		// cancel out the level_mod, as it was already applied
+														// in the first check
+				}
 				Log.Out(Logs::Detail, Logs::Spells, "ResistSpell(): Spell: %d  Charisma check. resist_modifier is: %i", spell_id, resist_modifier);
 			}
 		}
@@ -4896,10 +4897,7 @@ void Mob::Stun(int duration, Mob* attacker)
 		return;
 
 	if(IsValidSpell(casting_spell_id) && !spells[casting_spell_id].uninterruptable) {
-		int persistent_casting = spellbonuses.PersistantCasting + itembonuses.PersistantCasting + aabonuses.PersistantCasting;
-
-		if(zone->random.Int(0,99) > persistent_casting)
-			InterruptSpell();
+		InterruptSpell();
 	}
 
 	if(duration > 0)
@@ -4912,11 +4910,6 @@ void Mob::Stun(int duration, Mob* attacker)
 			SendPosition();
 		}
 	}
-
-	//if(attacker)
-	//{
-	//	CombatPush(attacker, RuleR(Combat, PushBackAmount));
-	//}
 }
 
 void Mob::UnStun() {

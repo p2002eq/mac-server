@@ -178,7 +178,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 					case SpellType_Escape:
 					{
-						if (!roamer && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
+						if (roambox_distance == 0 && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
 							&& DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) > 40000)
 						{
 							entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
@@ -213,7 +213,8 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							else
 								AIDoSpellCast(i, tar, 0);
 						}
-						else if (mana_cost == 0 || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+						else if (mana_cost == 0	|| spells[AIspells[i].spellid].buffduration == 0
+							|| tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
 							if(!checked_los) {
 								if (!CheckLosFN(tar))
@@ -228,7 +229,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 					case SpellType_Dispel: {
-						if(zone->random.Roll(15))
+						if(zone->random.Roll(10))
 						{
 							if(!checked_los) {
 								if(!CheckLosFN(tar))
@@ -360,7 +361,7 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 		SendPosition();
 		SetMoving(false);
 	}
-	return CastSpell(AIspells[i].spellid, tar->GetID(), 1, AIspells[i].manacost == -2 ? 0 : -1, mana_cost, oDontDoAgainBefore, -1, -1, 0, 0, &(AIspells[i].resist_adjust));
+	return CastSpell(AIspells[i].spellid, tar->GetID(), 1, spells[AIspells[i].spellid].cast_time, mana_cost, oDontDoAgainBefore, -1, -1, 0, 0, &(AIspells[i].resist_adjust));
 }
 
 bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint16 iSpellTypes) {
@@ -1801,16 +1802,16 @@ void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
 	if (IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) {
-		ClearFeignMemory();
+		if (zone->random.Roll(95))		// FD is not guaranteed for static NPCs, but chance is very high
+			ClearFeignMemory();			// patch notes from nov. 1999 confirm this
 
 		// this wipes hate list when NPC returns home after outdistancing hated players
-		if (IsEngaged() && zone->random.Int(0, 100) < 10)		// random delay before wiping hate list
+		if (IsEngaged())
 		{
 			WipeHateList();
 		}
 		walksp = 0.0f;
 	} else if (AIwalking_timer->Enabled() && !AIwalking_timer->Check(false)) {
-		ClearFeignMemory();
 		walksp = 0.0f;
 	}
 
@@ -1947,9 +1948,6 @@ void NPC::AI_DoMovement() {
 					else
 						doMove = false;
 
-					// wipe feign memory since we reached our first waypoint
-					if(cur_wp == 1)
-						ClearFeignMemory();
 				}
 				if (doMove)
 				{	// not at waypoint yet or at 0 pause WP, so keep moving
@@ -2019,7 +2017,8 @@ void NPC::AI_DoMovement() {
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				if (m_GuardPoint == m_Position) {
-					ClearFeignMemory();
+					if (zone->random.Roll(95))
+						ClearFeignMemory();
 					if (IsEngaged())
 					{
 						WipeHateList();
