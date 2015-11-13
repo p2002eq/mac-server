@@ -3566,7 +3566,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 				SetOwnerID(0);
 				if(tempmob)
 				{
-					if(tempmob->GetTarget() && tempmob->GetTarget() == this)
+					if(tempmob->IsNPC() && tempmob->GetTarget() && tempmob->GetTarget() == this)
 						tempmob->SetTarget(nullptr);
 
 					tempmob->SetPet(0);
@@ -3596,7 +3596,6 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					ps->command = 0;
 					entity_list.QueueClients(this, app);
 					safe_delete(app);
-					tempmob->SetTarget(this);
 				}
 				if(IsClient())
 				{
