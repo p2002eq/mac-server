@@ -2537,7 +2537,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (GetHeading() * 2.0f);	// just some random number
+			action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3449,7 +3449,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->level = caster_level;	// caster level, for animation only
 	action->type = 231;	// 231 means a spell
 	action->spell = spell_id;
-	action->sequence = (GetHeading() * 2);	// just some random number
+	action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
@@ -3902,6 +3902,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		else
 		{
 			action->buff_unknown = 4;
+			action->sequence = spelltar ? CalculateHeadingToTarget(spelltar->GetX(), spelltar->GetY())/256.0f*511.0f: GetHeading()/256.0f*511.0f;
 			float push_back = spells[spell_id].pushback;
 			if (push_back < 0)
 				push_back = -push_back;
@@ -3911,7 +3912,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			{
 				// z pushup will be translated into client as z += (force * sine(pushup_angle))
 				float ratio = push_up / push_back;
-				float angle = atanf(ratio);
+				float angle = atanf(ratio) / 6.283184 * 511.0f;
 				action->pushup_angle = angle;
 			}
 		}
