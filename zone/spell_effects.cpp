@@ -841,7 +841,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						action->source = caster ? caster->GetID() : GetID();
 						action->level = 65;
 						action->instrument_mod = 10;
-						action->sequence = ((GetHeading() * 12345 / 2));
+						action->sequence = ((GetHeading() * 511.0f / 256.0f));
 						action->type = 231;
 						action->spell = spell_id;
 						action->buff_unknown = 4;
@@ -893,7 +893,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 								action->source = caster ? caster->GetID() : GetID();
 								action->level = 65;
 								action->instrument_mod = 10;
-								action->sequence = ((GetHeading() * 12345 / 2));
+								action->sequence = (GetHeading() * 511.0f / 256.0f);
 								action->type = 231;
 								action->spell = spell_id;
 								action->buff_unknown = 4;
@@ -929,7 +929,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							action->source = caster ? caster->GetID() : GetID();
 							action->level = 65;
 							action->instrument_mod = 10;
-							action->sequence = ((GetHeading() * 12345 / 2));
+							action->sequence = ((GetHeading() * 511.0f / 256.0f));
 							action->type = 231;
 							action->spell = spell_id;
 							action->buff_unknown = 4;
@@ -1863,6 +1863,45 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Toss Up: %d", effect_value);
 #endif
 				double toss_amt = (double)spells[spell_id].base[i];
+				if(IsClient())
+				{
+					float push_back = spells[spell_id].pushback;
+					float angle = 0.0f;
+					if (push_back < 0)
+						push_back = -push_back;
+					float push_up = spells[spell_id].pushup;
+					if (push_up > 0 && push_back > 0)
+					{
+						float ratio = push_up / push_back;
+						angle = atanf(ratio) / 6.283184f * 511.0f;
+					}
+					CastToClient()->SetKnockBackExemption(true);
+					EQApplicationPacket *action_packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
+					Action_Struct* action = (Action_Struct*) action_packet->pBuffer;
+					action->target = GetID();
+					action->source = caster ? caster->GetID() : GetID();
+					action->level = caster_level;
+					action->instrument_mod = 10;
+					action->sequence = caster ? caster->CalculateHeadingToTarget(GetX(), GetY())/256.0f*511.0f: GetHeading()/256.0f*511.0f;
+					action->type = 231;
+					action->spell = spell_id;
+					action->buff_unknown = 4;
+					action->force = toss_amt;
+					action->pushup_angle = angle;
+					CastToClient()->QueuePacket(action_packet);
+
+					if(caster && caster->IsClient() && caster != this)
+					{
+						caster->CastToClient()->QueuePacket(action_packet);
+					}
+						
+					entity_list.QueueCloseClients(this, action_packet, true, 200, caster == this ? caster : 0, true, FilterPCSpells);
+					safe_delete(action_packet);
+					break;
+				}
+
+
+
 				if(toss_amt < 0)
 					toss_amt = -toss_amt;
 
