@@ -235,6 +235,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	HasAISpell = false;
 	HasAISpellEffects = false;
 	innateProcSpellId = 0;
+	hasZeroPrioritySpells = false;
 
 	SpellFocusDMG = 0;
 	SpellFocusHeal = 0;

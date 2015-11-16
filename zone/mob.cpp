@@ -309,6 +309,7 @@ Mob::Mob(const char* in_name,
 	SetPetID(0);
 	SetOwnerID(0);
 	typeofpet = petCharmed;		//default to charmed...
+	summonerid = 0;
 	petpower = 0;
 	held = false;
 	nocast = false;
@@ -1863,8 +1864,8 @@ Mob* Mob::GetOwnerOrSelf() {
 
 Mob* Mob::GetOwner() {
 	Mob* owner = entity_list.GetMob(this->GetOwnerID());
-	if (owner && owner->GetPetID() == this->GetID()) {
-
+	if (owner)
+	{
 		return owner;
 	}
 	if(IsNPC() && CastToNPC()->GetSwarmInfo()){

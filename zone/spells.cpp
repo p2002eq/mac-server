@@ -3347,7 +3347,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		return false;
 	}
 
-	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
+	if (IsEffectInSpell(spell_id, SE_CancelMagic))
+	{
 		if (!CancelMagicIsAllowedOnTarget(spelltar))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Cancel Magic failure.");
@@ -3357,13 +3358,20 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 	else if(IsCharmSpell(spell_id))
 	{
-		if(spelltar->IsPet() || (IsClient() && spelltar->IsClient()) || spelltar->IsCorpse() || GetPet() != nullptr)
+		if ((IsClient() && (spelltar->IsClient() || (spelltar->IsPet() && spelltar->IsCharmed()))) || spelltar->IsCorpse())
 		{
 			Message_StringID(MT_SpellFailure, CANNOT_CHARM);
 			return false;
 		}
+
+		if (IsClient() && GetPet() != nullptr)
+		{
+			Message_StringID(MT_SpellFailure, ONLY_ONE_PET);
+			return false;
+		}
 	}
-	else{
+	else
+	{
 		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
 		{
 			if(!IsClient() || !CastToClient()->GetGM()) {

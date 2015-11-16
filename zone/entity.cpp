@@ -1435,14 +1435,14 @@ void EntityList::ReplaceWithTarget(Mob *pOldMob, Mob *pNewTarget)
 	}
 }
 
-void EntityList::RemoveFromTargets(Mob *mob)
+void EntityList::RemoveFromTargets(Mob *mob, bool aiOnly)
 {
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		Mob *m = it->second;
 		++it;
 
-		if (!m)
+		if (!m || (aiOnly && m->IsClient() && !m->IsAIControlled()))
 			continue;
 
 		m->RemoveFromHateList(mob);
@@ -3575,6 +3575,20 @@ bool EntityList::GetZommPet(Mob *owner, NPC* &pet)
 		++it;
 	}
 	return false;
+}
+
+uint16 EntityList::GetSummonedPetID(Mob *summoner)
+{
+	auto it = npc_list.begin();
+	while (it != npc_list.end())
+	{
+		if (it->second->GetSummonerID() == summoner->GetID())
+		{
+			return it->second->GetID();
+		}
+		++it;
+	}
+	return 0;
 }
 
 void EntityList::AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy)
