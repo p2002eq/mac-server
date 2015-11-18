@@ -2239,8 +2239,6 @@ void Mob::FaceTarget(Mob* MobToFace) {
 
 bool Mob::RemoveFromHateList(Mob* mob)
 {
-	if (!IsAIControlled())
-		return false;
 	SetRunAnimSpeed(0);
 	bool bFound = false;
 	if(IsEngaged())
