@@ -606,7 +606,6 @@ public:
 	virtual int GetToHit(int hand = MainPrimary);
 	virtual int GetMitigation();
 	virtual int GetAvoidance();
-	int16 GetCritDmgMob(uint16 skill);
 	int16 GetMeleeDamageMod_SE(uint16 skill);
 	int16 GetMeleeMinDamageMod_SE(uint16 skill);
 	int16 GetCrippBlowChance();

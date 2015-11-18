@@ -2239,6 +2239,8 @@ void Mob::FaceTarget(Mob* MobToFace) {
 
 bool Mob::RemoveFromHateList(Mob* mob)
 {
+	if (!IsAIControlled())
+		return false;
 	SetRunAnimSpeed(0);
 	bool bFound = false;
 	if(IsEngaged())
@@ -3772,20 +3774,6 @@ bool Mob::TrySpellOnDeath()
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result
 	//in death because the heal will not register before the script kills you.
-}
-
-int16 Mob::GetCritDmgMob(uint16 skill)
-{
-	int critDmg_mod = 0;
-
-	// All skill dmg mod + Skill specific
-	critDmg_mod += itembonuses.CritDmgMob[HIGHEST_SKILL+1] + spellbonuses.CritDmgMob[HIGHEST_SKILL+1] + aabonuses.CritDmgMob[HIGHEST_SKILL+1] +
-					itembonuses.CritDmgMob[skill] + spellbonuses.CritDmgMob[skill] + aabonuses.CritDmgMob[skill];
-
-	if(critDmg_mod < -100)
-		critDmg_mod = -100;
-
-	return critDmg_mod;
 }
 
 void Mob::SetGrouped(bool v)

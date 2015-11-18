@@ -841,7 +841,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 						action->source = caster ? caster->GetID() : GetID();
 						action->level = 65;
 						action->instrument_mod = 10;
-						action->sequence = ((GetHeading() * 12345 / 2));
+						action->sequence = ((GetHeading() * 511.0f / 256.0f));
 						action->type = 231;
 						action->spell = spell_id;
 						action->buff_unknown = 4;
@@ -893,7 +893,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 								action->source = caster ? caster->GetID() : GetID();
 								action->level = 65;
 								action->instrument_mod = 10;
-								action->sequence = ((GetHeading() * 12345 / 2));
+								action->sequence = (GetHeading() * 511.0f / 256.0f);
 								action->type = 231;
 								action->spell = spell_id;
 								action->buff_unknown = 4;
@@ -929,7 +929,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 							action->source = caster ? caster->GetID() : GetID();
 							action->level = 65;
 							action->instrument_mod = 10;
-							action->sequence = ((GetHeading() * 12345 / 2));
+							action->sequence = ((GetHeading() * 511.0f / 256.0f));
 							action->type = 231;
 							action->spell = spell_id;
 							action->buff_unknown = 4;
@@ -1863,6 +1863,45 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				snprintf(effect_desc, _EDLEN, "Toss Up: %d", effect_value);
 #endif
 				double toss_amt = (double)spells[spell_id].base[i];
+				if(IsClient())
+				{
+					float push_back = spells[spell_id].pushback;
+					float angle = 0.0f;
+					if (push_back < 0)
+						push_back = -push_back;
+					float push_up = spells[spell_id].pushup;
+					if (push_up > 0 && push_back > 0)
+					{
+						float ratio = push_up / push_back;
+						angle = atanf(ratio) / 6.283184f * 511.0f;
+					}
+					CastToClient()->SetKnockBackExemption(true);
+					EQApplicationPacket *action_packet = new EQApplicationPacket(OP_Action, sizeof(Action_Struct));
+					Action_Struct* action = (Action_Struct*) action_packet->pBuffer;
+					action->target = GetID();
+					action->source = caster ? caster->GetID() : GetID();
+					action->level = caster_level;
+					action->instrument_mod = 10;
+					action->sequence = caster ? caster->CalculateHeadingToTarget(GetX(), GetY())/256.0f*511.0f: GetHeading()/256.0f*511.0f;
+					action->type = 231;
+					action->spell = spell_id;
+					action->buff_unknown = 4;
+					action->force = toss_amt;
+					action->pushup_angle = angle;
+					CastToClient()->QueuePacket(action_packet);
+
+					if(caster && caster->IsClient() && caster != this)
+					{
+						caster->CastToClient()->QueuePacket(action_packet);
+					}
+						
+					entity_list.QueueCloseClients(this, action_packet, true, 200, caster == this ? caster : 0, true, FilterPCSpells);
+					safe_delete(action_packet);
+					break;
+				}
+
+
+
 				if(toss_amt < 0)
 					toss_amt = -toss_amt;
 
@@ -3101,7 +3140,9 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 					effect_value = caster->CastToClient()->GetActDoTDamage(spell_id, effect_value, this);
 
-					if (!caster->CastToClient()->GetFeigned())
+					if (!caster->CastToClient()->GetFeigned()
+						&& (!GetOwner() || !GetOwner()->IsClient())
+					)
 						AddToHateList(caster, -effect_value);
 				}
 
@@ -3111,7 +3152,7 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 					{
 						if(!caster->IsClient()){
 
-							if (!IsClient()) //Allow NPC's to generate hate if casted on other NPC's.
+							if (!IsClient() && !GetOwner()) //Allow NPC's to generate hate if casted on other NPC's.
 								AddToHateList(caster, -effect_value);
 						}
 
@@ -3207,14 +3248,12 @@ void Mob::DoBuffTic(uint16 spell_id, int slot, uint32 ticsremaining, uint8 caste
 
 			case SE_Lull: {
 				/* Lulls have a chance to end early.  Chance is not affected by MR or charisma.
-				   On Live, fade chance per tick was about 2% per tick on white cons.
-				   A mob -5 levels below the caster had no lulls fade early.
-				   Scaling this by 0.4% per level starting at -4 levels under caster until more data is available.
+				   On Live, fade chance per tick was about 2% per tick on white cons, 7% on a +5
+				  a red con, 0% on a -5 blue, and 1% on a -1 blue.
 				*/
-				int fadeChance = GetLevel() - caster_level + 5;
-				fadeChance *= 4;
+				int fadeChance = GetLevel() - caster_level + 2;
 
-				if (zone->random.Int(0, 999) < fadeChance)
+				if (zone->random.Roll(fadeChance))
 				{
 					if (!TryFadeEffect(slot))
 						BuffFadeBySlot(slot);
@@ -3566,7 +3605,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 				SetOwnerID(0);
 				if(tempmob)
 				{
-					if(tempmob->GetTarget() && tempmob->GetTarget() == this)
+					if(tempmob->IsNPC() && tempmob->GetTarget() && tempmob->GetTarget() == this)
 						tempmob->SetTarget(nullptr);
 
 					tempmob->SetPet(0);
@@ -3596,7 +3635,6 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					ps->command = 0;
 					entity_list.QueueClients(this, app);
 					safe_delete(app);
-					tempmob->SetTarget(this);
 				}
 				if(IsClient())
 				{

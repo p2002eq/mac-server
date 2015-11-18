@@ -1080,7 +1080,7 @@ void Mob::DoArcheryAttackDmg(Mob* other, const ItemInst* RangeWeapon, const Item
 		// mitigation roll
 		int roll = RollD20(offense, mitigation);
 
-		damage = (roll * combinedDmg * 10 + 5) / 100;
+		damage = (roll * combinedDmg * 10 + 5) / 200;		// archery d20 rolls do 1x weapon damage, unlike melee
 		if (IsClient())
 		{
 			damage = damage * CastToClient()->RollDamageMultiplier(GetOffense(SkillArchery)) / 100;
@@ -1627,7 +1627,11 @@ void NPC::DoClassAttacks(Mob *target) {
 	int32 dmg = 0;
 
 	//class specific stuff...
-	switch(GetClass()) {
+	uint8 myClass = GetClass();
+	if (GetSpecialAbility(USE_WARRIOR_SKILLS) && myClass != ROGUE && myClass != ROGUEGM && myClass != MONK && myClass != MONKGM)
+		myClass = WARRIOR;
+
+	switch(myClass) {
 		case ROGUE: case ROGUEGM:
 			if(level >= 10) {
 				reuse = BackstabReuseTime * 1000;

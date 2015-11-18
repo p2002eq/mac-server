@@ -190,7 +190,7 @@ RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
 RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
 RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
-RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, false) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
 RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 

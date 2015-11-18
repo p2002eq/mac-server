@@ -1803,8 +1803,7 @@ void NPC::AI_DoMovement() {
 	float walksp = GetMovespeed();
 
 	if (IsGuarding() && (m_Position == m_GuardPoint) && roambox_distance == 0 && !roamer) {
-		if (zone->random.Roll(95))		// FD is not guaranteed for static NPCs, but chance is very high
-			ClearFeignMemory();			// patch notes from nov. 1999 confirm this
+		ClearFeignMemory();
 
 		// this wipes hate list when NPC returns home after outdistancing hated players
 		if (IsEngaged())
@@ -2018,8 +2017,7 @@ void NPC::AI_DoMovement() {
 			if(moved) {
 				Log.Out(Logs::Detail, Logs::AI, "Reached guard point (%.3f,%.3f,%.3f)", m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z);
 				if (m_GuardPoint == m_Position) {
-					if (zone->random.Roll(95))
-						ClearFeignMemory();
+					ClearFeignMemory();
 					if (IsEngaged())
 					{
 						WipeHateList();

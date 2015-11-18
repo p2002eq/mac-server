@@ -12,7 +12,7 @@ addons:
     - uuid-dev
 script:
   - cmake -G "Unix Makefiles" -DEQEMU_BUILD_TESTS=OFF
-  - make
+  - make -j8
 branches:
   only:
     - master
