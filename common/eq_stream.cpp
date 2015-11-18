@@ -2100,8 +2100,9 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 
 			if(app->size && app->pBuffer)
 			{
+				EmuOpcode app_opcode = (*OpMgr)->EQToEmu(app->opcode);
+
 				if (Log.log_settings[Logs::Server_Client_Packet].is_category_enabled == 1){
-					EmuOpcode app_opcode = (*OpMgr)->EQToEmu(app->opcode);
 					if (app_opcode != OP_SpecialMesg && 
 						(!RuleB(EventLog, SkipCommonPacketLogging) ||
 						(RuleB(EventLog, SkipCommonPacketLogging) && app_opcode != OP_MobHealth && app_opcode != OP_MobUpdate && app_opcode != OP_ClientUpdate))){
@@ -2110,7 +2111,6 @@ void EQOldStream::MakeEQPacket(EQProtocolPacket* app, bool ack_req)
 				}
 
 				if (Log.log_settings[Logs::Server_Client_Packet_With_Dump].is_category_enabled == 1){
-					EmuOpcode app_opcode = (*OpMgr)->EQToEmu(app->opcode);
 					if (app_opcode != OP_SpecialMesg && 
 						(!RuleB(EventLog, SkipCommonPacketLogging) ||
 						(RuleB(EventLog, SkipCommonPacketLogging) && app_opcode != OP_MobHealth && app_opcode != OP_MobUpdate && app_opcode != OP_ClientUpdate))){
