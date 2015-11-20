@@ -767,9 +767,17 @@ void Mob::RogueBackstab(Mob* defender, bool doMinDmg, int ReuseTime)
 
 	if (IsNPC())
 	{
-		// this is wrong, but what this replaced was also wrong
-		min_hit = CastToNPC()->GetMinDMG() + GetLevel();
-		max_hit = GetLevel() * 5 + min_hit;
+		if (IsPet() && GetPetType() != petCharmed)
+		{
+			min_hit = CastToNPC()->GetMinDMG() + GetLevel();
+			max_hit = CastToNPC()->GetMaxDMG() * 3;
+		}
+		else
+		{
+			// this is wrong, but what this replaced was also wrong
+			min_hit = CastToNPC()->GetMinDMG() + GetLevel();
+			max_hit = GetLevel() * 5 + min_hit;
+		}
 		DoSpecialAttackDamage(defender, SkillBackstab, max_hit, min_hit, max_hit / 2, 0, true);
 		DoAnim(Animation::Piercing);
 

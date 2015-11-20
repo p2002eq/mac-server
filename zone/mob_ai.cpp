@@ -2293,15 +2293,15 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot)
 						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (recast_delay * 1000) + cast_variance;
 				}
 				else if (recast_delay == -1)
-					// editor default; no variance added
-					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+					// editor default; add variance
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time + cast_variance;
 
 				else if (recast_delay == -2)
 					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime();
 
 				else
-					// 0; add variance
-					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time + cast_variance;
+					// 0; no variance
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
 			}
 			if (recovery_time < AIautocastspell_timer->GetSetAtTrigger())
 				recovery_time = AIautocastspell_timer->GetSetAtTrigger();
@@ -2325,7 +2325,8 @@ bool NPC::AI_EngagedCastCheck() {
 		// prioritize raid boss spells (spells with priority == 0) first, with no detrimental roll
 		if (hasZeroPrioritySpells)
 		{
-			AICastSpell(GetTarget(), 100, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root, true);
+			if (AICastSpell(GetTarget(), 100, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root, true))
+				return(true);
 		}
 
 		// try casting a heal or gate
