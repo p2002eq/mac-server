@@ -1435,14 +1435,14 @@ void EntityList::ReplaceWithTarget(Mob *pOldMob, Mob *pNewTarget)
 	}
 }
 
-void EntityList::RemoveFromTargets(Mob *mob, bool aiOnly)
+void EntityList::RemoveFromTargets(Mob *mob)
 {
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {
 		Mob *m = it->second;
 		++it;
 
-		if (!m || (aiOnly && m->IsClient() && !m->IsAIControlled()))
+		if (!m)
 			continue;
 
 		m->RemoveFromHateList(mob);

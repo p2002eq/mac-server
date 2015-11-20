@@ -430,9 +430,10 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 
 	Mob *spell_target = entity_list.GetMob(target_id);
 	// check line of sight to target if it's a detrimental spell
-	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
+	if (spell_target && target_id != this->GetID()
+		&& spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if (!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !spells[spell_id].npc_no_los
+		if (!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !spells[spell_id].npc_no_los && !CheckLosFN(spell_target)
 			&& (!IsHarmonySpell(spell_id) || spells[spell_id].targettype == ST_AETarget)	// harmony and wake of tranq require LoS
 			&& !IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
@@ -2537,7 +2538,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (GetHeading() * 2.0f);	// just some random number
+			action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3338,7 +3339,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 
 	// Casting on an entity in a different region silently fails after letting the spell be cast
-	if(!CheckRegion(spelltar))
+	if((IsClient() || IsPet()) && !CheckRegion(spelltar))
 	{
 		if(IsClient() && spelltar->IsClient())
 		{
@@ -3457,7 +3458,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->level = caster_level;	// caster level, for animation only
 	action->type = 231;	// 231 means a spell
 	action->spell = spell_id;
-	action->sequence = (GetHeading() * 2);	// just some random number
+	action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
@@ -3910,6 +3911,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		else
 		{
 			action->buff_unknown = 4;
+			action->sequence = spelltar ? CalculateHeadingToTarget(spelltar->GetX(), spelltar->GetY())/256.0f*511.0f: GetHeading()/256.0f*511.0f;
 			float push_back = spells[spell_id].pushback;
 			if (push_back < 0)
 				push_back = -push_back;
@@ -3919,7 +3921,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			{
 				// z pushup will be translated into client as z += (force * sine(pushup_angle))
 				float ratio = push_up / push_back;
-				float angle = atanf(ratio);
+				float angle = atanf(ratio) / 6.283184 * 511.0f;
 				action->pushup_angle = angle;
 			}
 		}

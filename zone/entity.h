@@ -282,7 +282,7 @@ public:
 	void	DuelMessage(Mob* winner, Mob* loser, bool flee);
 	void	QuestJournalledSayClose(Mob *sender, Client *QuestIntiator, float dist, const char* mobname, const char* message);
 	void	GroupMessage(uint32 gid, const char *from, const char *message);
-	void	RemoveFromTargets(Mob* mob, bool aiOnly = false);
+	void	RemoveFromTargets(Mob* mob);
 	void	InterruptTargeted(Mob* mob);
 	void	ReplaceWithTarget(Mob* pOldMob, Mob*pNewTarget);
 	void	QueueCloseClients(Mob* sender, const EQApplicationPacket* app, bool ignore_sender=false, float dist=200, Mob* SkipThisMob = 0, bool ackreq = true,eqFilterType filter=FilterNone);

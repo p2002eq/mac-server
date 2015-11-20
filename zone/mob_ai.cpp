@@ -110,14 +110,16 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 					<< ", cancast[" << AIspells[i].time_cancast << "]<=" << Timer::GetCurrentTime()
 					<< ", type=" << AIspells[i].type << std::endl;
 #endif
-				
-				switch (AIspells[i].type) {
-					case SpellType_Heal: {
+				switch (AIspells[i].type)
+				{
+					case SpellType_Heal:
+					{
 						if (
 							(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
 							&& tar->DontHealMeBefore() < Timer::GetCurrentTime()
 							&& !(tar->IsPet() && tar->GetOwner()->IsClient())	//no buffing PC's pets
-							) {
+						)
+						{
 							uint8 hpr = (uint8)tar->GetHPRatio();
 
 							if(hpr <= 50 || (tar->IsClient() && hpr <= 99)) {
@@ -129,7 +131,8 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 						}
 						break;
 					}
-					case SpellType_Root: {
+					case SpellType_Root:
+					{
 						Mob *rootee = GetHateRandom();
 						if (rootee && !rootee->IsRooted() && (zone->random.Roll(50) || AIspells[i].priority == 0)
 							&& rootee->DontRootMeBefore() < Timer::GetCurrentTime()
@@ -154,11 +157,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 							&& !(tar->IsPet() && tar->GetOwner()->IsClient() && this != tar)	//no buffing PC's pets, but they can buff themself
 							)
 						{
-							if(!checkedTargetLoS) {
-								if(!CheckLosFN(tar))
-									return(false);
-								checkedTargetLoS = true;
-							}
 							uint32 tempTime = 0;
 							AIDoSpellCast(i, tar, mana_cost, &tempTime);
 							tar->SetDontBuffMeBefore(tempTime);
@@ -194,11 +192,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 							&& DistanceSquared(m_Position, debuffee->GetPosition()) < spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 							&& debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
-							if (!CheckLosFN(debuffee) && !spells[AIspells[i].spellid].targettype == ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
-								break;
-
-							AIDoSpellCast(i, debuffee, mana_cost);
-							return true;
+							if (spells[AIspells[i].spellid].targettype == ST_AECaster || spells[AIspells[i].spellid].npc_no_los || CheckLosFN(debuffee))
+							{
+								AIDoSpellCast(i, debuffee, mana_cost);
+								return true;
+							}
 						}
 						break;
 					}
@@ -209,11 +207,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 							&& DistanceSquared(m_Position, debuffee->GetPosition()) < spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 							&& debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
-							if (!CheckLosFN(debuffee) && !spells[AIspells[i].spellid].targettype == ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
-								break;
-
-							AIDoSpellCast(i, debuffee, mana_cost);
-							return true;
+							if (spells[AIspells[i].spellid].targettype == ST_AECaster || spells[AIspells[i].spellid].npc_no_los || CheckLosFN(debuffee))
+							{
+								AIDoSpellCast(i, debuffee, mana_cost);
+								return true;
+							}
 						}
 						break;
 					}
@@ -232,34 +230,42 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 							return true;
 						}
 
-						if (AIspells[i].priority != 0 && zone->random.Roll(60))
-							break;
-
-						if (mana_cost == 0 || spells[AIspells[i].spellid].buffduration == 0
+						if ((AIspells[i].priority == 0 || zone->random.Roll(40))
+							&& (mana_cost == 0 || spells[AIspells[i].spellid].buffduration == 0)
 							|| tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
 						{
-							if(!checkedTargetLoS)
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
 							{
-								if (!CheckLosFN(tar) && !spells[AIspells[i].spellid].targettype == ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
+								if (!checkedTargetLoS)
 								{
-									return false;
+									if (!CheckLosFN(tar))
+									{
+										return false;
+									}
+									checkedTargetLoS = true;
 								}
-								checkedTargetLoS = true;
 							}
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
 						break;
 					}
-					case SpellType_Dispel: {
+					case SpellType_Dispel:
+					{
 						if (zone->random.Roll(10) || AIspells[i].priority == 0)
 						{
-							if(!checkedTargetLoS) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checkedTargetLoS = true;
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
+							{
+								if (!checkedTargetLoS)
+								{
+									if (!CheckLosFN(tar))
+									{
+										return false;
+									}
+									checkedTargetLoS = true;
+								}
 							}
-							if(tar->CountDispellableBuffs() > 0)
+							if (tar->CountDispellableBuffs() > 0)
 							{
 								AIDoSpellCast(i, tar, mana_cost);
 								return true;
@@ -267,7 +273,8 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 						}
 						break;
 					}
-					case SpellType_Mez: {
+					case SpellType_Mez:
+					{
 						if (zone->random.Roll(20) || AIspells[i].priority == 0)
 						{
 							Mob * mezTar = nullptr;
@@ -289,11 +296,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 							Mob * chrmTar = GetHateRandom();
 							if (chrmTar && DistanceSquared(m_Position, chrmTar->GetPosition()) < spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range)
 							{
-								if (!CheckLosFN(chrmTar) && !spells[AIspells[i].spellid].targettype == ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
-									break;
-
-								AIDoSpellCast(i, chrmTar, mana_cost);
-								return true;
+								if (spells[AIspells[i].spellid].targettype == ST_AECaster || spells[AIspells[i].spellid].npc_no_los || CheckLosFN(chrmTar))
+								{
+									AIDoSpellCast(i, chrmTar, mana_cost);
+									return true;
+								}
 							}
 						}
 						break;
@@ -307,32 +314,48 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 						}
 						break;
 					}
-					case SpellType_Lifetap: {
+					case SpellType_Lifetap:
+					{
 						if (GetHPRatio() <= 95
 							&& (zone->random.Roll(50) || AIspells[i].priority == 0)
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(!checkedTargetLoS) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checkedTargetLoS = true;
+						)
+						{
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
+							{
+								if (!checkedTargetLoS)
+								{
+									if (!CheckLosFN(tar))
+									{
+										return false;
+									}
+									checkedTargetLoS = true;
+								}
 							}
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
 						break;
 					}
-					case SpellType_Snare: {
+					case SpellType_Snare:
+					{
 						if (
 							!tar->IsRooted()
 							&& (zone->random.Roll(50) || AIspells[i].priority == 0)
 							&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(!checkedTargetLoS) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checkedTargetLoS = true;
+						)
+						{
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
+							{
+								if (!checkedTargetLoS)
+								{
+									if (!CheckLosFN(tar))
+									{
+										return false;
+									}
+									checkedTargetLoS = true;
+								}
 							}
 							uint32 tempTime = 0;
 							AIDoSpellCast(i, tar, mana_cost, &tempTime);
@@ -341,16 +364,24 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 						}
 						break;
 					}
-					case SpellType_DOT: {
+					case SpellType_DOT:
+					{
 						if (
 							(zone->random.Roll(60) || AIspells[i].priority == 0)
 							&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(!checkedTargetLoS) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checkedTargetLoS = true;
+						)
+						{
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !spells[AIspells[i].spellid].npc_no_los)
+							{
+								if (!checkedTargetLoS)
+								{
+									if (!CheckLosFN(tar))
+									{
+										return false;
+									}
+									checkedTargetLoS = true;
+								}
 							}
 							uint32 tempTime = 0;
 							AIDoSpellCast(i, tar, mana_cost, &tempTime);

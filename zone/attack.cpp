@@ -3148,7 +3148,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				a->force = 0.0f;
 			}
 			if (a->force> 0.0f)
-				a->sequence = attacker->GetHeading() * 2.0f;
+				a->sequence = attacker->GetHeading() * 511.0f / 256.0f;
 
 			if (IsNPC())
 			{
