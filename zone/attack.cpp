@@ -1120,6 +1120,9 @@ void Mob::AggroPet(Mob* attacker)
 		Mob *pet = GetPet();
 		if (pet && !pet->IsFamiliar() && !pet->GetSpecialAbility(IMMUNE_AGGRO) && !pet->IsEngaged() && attacker && attacker != this && !attacker->IsCorpse())
 		{
+			if (attacker->IsClient() && attacker->CastToClient()->GetFeigned())
+				return;
+
 			if (!pet->IsHeld()) {
 				Log.Out(Logs::Detail, Logs::Combat, "Sending pet %s into battle due to attack.", pet->GetName());
 				pet->AddToHateList(attacker, 1);
@@ -2072,11 +2075,9 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	return true;
 }
 
-void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic) {
-
-	assert(other != nullptr);
-
-	if (other == this)
+void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp, bool bFrenzy, bool iBuffTic)
+{
+	if (!other || other == this)
 		return;
 
 	if(damage < 0){
@@ -2924,7 +2925,8 @@ bool Client::CheckDoubleRangedAttack() {
 void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, const SkillUseTypes skill_used, bool &avoidable, const int8 buffslot, const bool iBuffTic) {
 
 	// Agro pet someone tried to damage me
-	AggroPet(attacker);
+	if (!iBuffTic)
+		AggroPet(attacker);
 
 	if(!IsSelfConversionSpell(spell_id))
 		CommonBreakInvisible();
@@ -2958,7 +2960,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 
 	if(attacker){
 		if(attacker->IsClient()){
-			if(!RuleB(Combat, EXPFromDmgShield)) {
+			if (!RuleB(Combat, EXPFromDmgShield)) {
 			// Damage shield damage shouldn't count towards who gets EXP
 				if(!attacker->CastToClient()->GetFeigned() && !FromDamageShield)
 					AddToHateList(attacker, 0, damage, true, false, iBuffTic);
@@ -3146,7 +3148,7 @@ void Mob::CommonDamage(Mob* attacker, int32 &damage, const uint16 spell_id, cons
 				a->force = 0.0f;
 			}
 			if (a->force> 0.0f)
-				a->sequence = attacker->GetHeading() * 2.0f;
+				a->sequence = attacker->GetHeading() * 511.0f / 256.0f;
 
 			if (IsNPC())
 			{
@@ -3536,7 +3538,7 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 
 		if(zone->random.Roll(critChance))
 		{
-			uint32 critMod = 200;
+			uint32 critMod = 165;
 			bool crip_success = false;
 			int32 CripplingBlowChance = GetCrippBlowChance();
 
@@ -3548,12 +3550,11 @@ void Mob::TryCriticalHit(Mob *defender, uint16 skill, int32 &damage, ExtraAttack
 					critChance *= float(CripplingBlowChance)/100.0f;
 
 				if ((IsBerserk() || IsBerskerSPA) || zone->random.Roll(critChance)) {
-					critMod = 400;
+					critMod = 280;
 					crip_success = true;
 				}
 			}
 
-			critMod += GetCritDmgMob(skill) * 2; // To account for base crit mod being 200 not 100
 			damage = damage * critMod / 100;
 
 			bool deadlySuccess = false;
@@ -3617,6 +3618,15 @@ void Mob::DoRiposte(Mob* defender) {
 
 	if (!defender)
 		return;
+
+	if (defender->IsClient())
+	{
+		if (defender->CastToClient()->IsUnconscious() || defender->IsStunned() || defender->CastToClient()->IsSitting()
+			|| defender->GetAppearance() == eaDead || defender->GetAppearance() == eaCrouching
+		)
+			return;
+	}
+
 
 	defender->Attack(this, MainPrimary, true);
 	if (HasDied()) return;

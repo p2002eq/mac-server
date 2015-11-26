@@ -1132,7 +1132,7 @@ private:
 	Timer shield_timer;
 	Timer fishing_timer;
 	Timer endupkeep_timer;
-	Timer forget_timer; // our 2 min everybody forgets you timer
+	Timer forget_timer; // 10 min feign forget timer since hate lists don't have feigned players
 	Timer autosave_timer;
 	Timer scanarea_timer;
 	Timer	proximity_timer;

@@ -105,7 +105,7 @@ RULE_BOOL ( Skills, UseLimitTradeskillSearchSkillDiff, true )
 RULE_INT ( Skills, MaxTradeskillSearchSkillDiff, 50 )
 RULE_INT ( Skills, MaxTrainSpecializations, 50 )	// Max level a GM trainer will train casting specializations
 RULE_INT ( Skills, LangSkillUpModifier, 70) //skill ups for skills with value under 100
-RULE_REAL ( Skills, TradeskillSkillUpModifier, 1.0) //1.0 is stock EQEmu lower is more skillups.
+RULE_REAL ( Skills, TradeskillSkillUpModifier, 0) //0 was the setting for takp rule.
 RULE_REAL ( Skills, SkillUpModifier, 1.0)
 RULE_REAL ( Skills, HighStatSkillUpModifier, 0.75)
 RULE_CATEGORY_END()
@@ -190,7 +190,7 @@ RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
 RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
 RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
 RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
-RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, false) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
 RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 

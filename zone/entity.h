@@ -243,6 +243,7 @@ public:
 	void	DestroyTempPets(Mob *owner);
 	int16	CountTempPets(Mob *owner);
 	bool	GetZommPet(Mob *owner, NPC* &pet);
+	uint16	GetSummonedPetID(Mob *summoner);
 	void	AddTempPetsToHateList(Mob *owner, Mob* other, bool bFrenzy = false);
 	Entity *GetEntityMob(uint16 id);
 	Entity *GetEntityMerc(uint16 id);

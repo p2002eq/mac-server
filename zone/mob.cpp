@@ -309,6 +309,7 @@ Mob::Mob(const char* in_name,
 	SetPetID(0);
 	SetOwnerID(0);
 	typeofpet = petCharmed;		//default to charmed...
+	summonerid = 0;
 	petpower = 0;
 	held = false;
 	nocast = false;
@@ -1863,8 +1864,8 @@ Mob* Mob::GetOwnerOrSelf() {
 
 Mob* Mob::GetOwner() {
 	Mob* owner = entity_list.GetMob(this->GetOwnerID());
-	if (owner && owner->GetPetID() == this->GetID()) {
-
+	if (owner)
+	{
 		return owner;
 	}
 	if(IsNPC() && CastToNPC()->GetSwarmInfo()){
@@ -2254,7 +2255,7 @@ bool Mob::RemoveFromHateList(Mob* mob)
 			}
 		}
 	}
-	if(GetTarget() == mob)
+	if(GetTarget() == mob && (!IsClient() || IsAIControlled()))
 	{
 		SetTarget(hate_list.GetTop());
 	}
@@ -3772,20 +3773,6 @@ bool Mob::TrySpellOnDeath()
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result
 	//in death because the heal will not register before the script kills you.
-}
-
-int16 Mob::GetCritDmgMob(uint16 skill)
-{
-	int critDmg_mod = 0;
-
-	// All skill dmg mod + Skill specific
-	critDmg_mod += itembonuses.CritDmgMob[HIGHEST_SKILL+1] + spellbonuses.CritDmgMob[HIGHEST_SKILL+1] + aabonuses.CritDmgMob[HIGHEST_SKILL+1] +
-					itembonuses.CritDmgMob[skill] + spellbonuses.CritDmgMob[skill] + aabonuses.CritDmgMob[skill];
-
-	if(critDmg_mod < -100)
-		critDmg_mod = -100;
-
-	return critDmg_mod;
 }
 
 void Mob::SetGrouped(bool v)

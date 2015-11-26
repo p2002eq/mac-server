@@ -259,7 +259,7 @@ Mob* HateList::GetClosest(Mob *hater)
 // a few comments added, rearranged code for readability
 void HateList::Add(Mob *ent, int32 in_hate, int32 in_dam, bool bFrenzy, bool iAddIfNotExist)
 {
-	if(!ent)
+	if(!ent || ent == owner)
 		return;
 
 	if(ent->IsCorpse())
@@ -398,7 +398,24 @@ int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange, bool firstInRa
 
 	if (entry->bFrenzy || entry->ent->GetMaxHP() != 0 && ((entry->ent->GetHP() * 100 / entry->ent->GetMaxHP()) < 20))
 	{
-		bonus += lowHealthBonus;
+		if (distSquared == -1.0f)
+		{
+			float distX = entry->ent->GetX() - owner->GetX();
+			float distY = entry->ent->GetY() - owner->GetY();
+			distSquared = distX * distX + distY * distY;
+		}
+
+		if (distSquared > 10000.0f)
+		{
+			float dist = sqrtf(distSquared);
+
+			// taper bonus after 100 distance to target
+			bonus += lowHealthBonus * (100.0f / dist);
+		}
+		else
+		{
+			bonus += lowHealthBonus;
+		}
 	}
 
 	// if nobody in melee range but entry is nearby, apply a bonus that scales with distance to target
@@ -414,7 +431,7 @@ int32 HateList::GetHateBonus(tHateEntry *entry, bool combatRange, bool firstInRa
 
 		if (distSquared < 10000.0f)
 		{
-			int32 dist = sqrtf(distSquared);
+			float dist = sqrtf(distSquared);
 			if (dist < 100 && dist > 0)
 			{
 				bonus += combatRangeBonus * static_cast<int32>(100.0f - dist) / 100;

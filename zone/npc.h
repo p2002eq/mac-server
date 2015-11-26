@@ -444,7 +444,7 @@ protected:
 	uint32*	pDontCastBefore_casting_spell;
 	std::vector<AISpells_Struct> AIspells;
 	bool HasAISpell;
-	virtual bool AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes);
+	virtual bool AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPriorityOnly = false);
 	virtual bool AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgainBefore = 0);
 	AISpellsVar_Struct AISpellVar;
 
@@ -506,6 +506,7 @@ protected:
 	QGlobalCache *qGlobals;
 
 	bool raid_target;
+	bool hasZeroPrioritySpells;
 	float ignore_distance;
 	uint8 base_texture;
 
