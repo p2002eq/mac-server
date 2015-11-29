@@ -176,7 +176,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes, bool zeroPrio
 
 					case SpellType_Escape:
 					{
-						if (roambox_distance == 0 && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
+						if (roambox_distance == 0 && !IsPet() && GetHPRatio() <= 10.0f && zone->GetZoneExpansion() != ClassicEQ
 							&& DistanceSquared(CastToNPC()->GetSpawnPoint(), GetPosition()) > 40000)
 						{
 							entity_list.MessageClose_StringID(this, true, 200, MT_Spells, BEGIN_GATE, this->GetCleanName());
