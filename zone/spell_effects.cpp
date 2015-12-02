@@ -3633,7 +3633,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 
 				if(owner)
 				{
-					if (owner->GetTarget() && owner->GetTarget() == this && (!owner->IsClient() || owner->IsAIControlled()))
+					if (owner->GetTarget() && owner->GetTarget() == this)
 						owner->SetTarget(nullptr);
 
 					if (!GetSummonerID())
@@ -3664,6 +3664,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					ps->command = 0;
 					entity_list.QueueClients(this, app);
 					safe_delete(app);
+					owner->SetTarget(this);
 				}
 				if (IsClient())
 				{
