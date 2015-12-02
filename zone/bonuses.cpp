@@ -1008,10 +1008,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 				newbon->Vampirism += base1;
 				break;			
 
-			case SE_FrenziedDevastation:
-				newbon->FrenziedDevastation += base2;
-				break;
-
 			case SE_Berserk:
 				newbon->BerserkSPA = true;
 				break;
@@ -2275,10 +2271,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_DistanceRemoval:
 				new_bonus->DistanceRemoval = true;
-				break;
-
-			case SE_FrenziedDevastation:
-				new_bonus->FrenziedDevastation += base2;
 				break;
 
 			case SE_Root:

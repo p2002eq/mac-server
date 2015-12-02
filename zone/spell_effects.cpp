@@ -725,8 +725,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 					dire_charmed = true;
 				}
 
-				caster->SetTarget(nullptr);
-
 				if(IsNPC())
 				{
 					CastToNPC()->SaveGuardSpotCharm();
@@ -738,7 +736,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				WipeHateList();
 
 				Mob *my_pet = GetPet();
-				if(my_pet)
+				if(my_pet && IsClient())
 				{
 					my_pet->Kill();
 				}
@@ -762,17 +760,15 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 				{
 					CastToClient()->AI_Start();
 					SendAppearancePacket(14, 100, true, true);
-				} else if(IsNPC()) {
-					CastToNPC()->SetPetSpellID(0);	//not a pet spell.
-				}
 
-				if(IsClient())
-				{
 					if(buffs[buffslot].ticsremaining > RuleI(Character, MaxCharmDurationForPlayerCharacter))
 						buffs[buffslot].ticsremaining = RuleI(Character, MaxCharmDurationForPlayerCharacter);
 				}
-
-				caster->SetTarget(this);
+				if (caster->IsNPC())
+				{
+					AddToHateList(caster->GetHateRandom(), 20);
+					AddToHateList(caster->GetHateTop(), 1);
+				}
 
 				break;
 			}
@@ -1160,7 +1156,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Summon %s: %s", (effect==SE_Familiar)?"Familiar":"Pet", spell.teleport_zone);
 #endif
-				if(GetPet())
+				if(GetPet() || entity_list.GetSummonedPetID(this))
 				{
 					Message_StringID(MT_Shout, ONLY_ONE_PET);
 				}
@@ -1169,6 +1165,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
                     //Message(CC_Red, "MakePet");
 					MakePet(spell_id, spell.teleport_zone);
 				}
+
+				entity_list.AddHealAggro(this, this, 10);		// making pets adds a small amount of hate, like casting a buff
 				break;
 			}
 			case SE_DivineAura:
@@ -3601,14 +3599,45 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					CastToNPC()->RestoreNPCFactionID();
 				}
 
-				Mob* tempmob = GetOwner();
-				SetOwnerID(0);
-				if(tempmob)
-				{
-					if(tempmob->GetTarget() && tempmob->GetTarget() == this)
-						tempmob->SetTarget(nullptr);
+				Mob* owner = GetOwner();
 
-					tempmob->SetPet(0);
+				if (GetSummonerID())
+				{
+					Mob* summoner = entity_list.GetMobID(GetSummonerID());
+
+					if (summoner && !summoner->GetPet())
+					{
+						SetOwnerID(GetSummonerID());
+						summoner->SetPetID(this->GetID());
+
+						EQApplicationPacket *app = new EQApplicationPacket(OP_Charm, sizeof(Charm_Struct));
+						Charm_Struct *ps = (Charm_Struct*)app->pBuffer;
+						ps->owner_id = summoner->GetID();
+						ps->pet_id = this->GetID();
+						ps->command = 1;
+						entity_list.QueueClients(this, app);
+						safe_delete(app);
+
+						SetPetOrder(SPO_Follow);
+					}
+					else
+					{
+						// summer is gone or he somehow got another pet; depop this
+						SetOwnerID(0);
+					}
+				}
+				else
+				{
+					SetOwnerID(0);
+				}
+
+				if(owner)
+				{
+					if (owner->GetTarget() && owner->GetTarget() == this && (!owner->IsClient() || owner->IsAIControlled()))
+						owner->SetTarget(nullptr);
+
+					if (!GetSummonerID())
+						owner->SetPet(0);
 				}
 				if (IsAIControlled())
 				{
@@ -3616,28 +3645,27 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 					entity_list.InterruptTargeted(this);
 					entity_list.RemoveFromTargets(this);
 					WipeHateList();
-					if(tempmob)
+					if (owner && owner->IsClient() && !GetSummonerID())
 					{
 						int32 charmBreakHate = GetMaxHP() / 8;
 						if (charmBreakHate > 2400) charmBreakHate = 2400;
 						if (charmBreakHate < 50) charmBreakHate = 50;
 
-						AddToHateList(tempmob, charmBreakHate, 0);
+						AddToHateList(owner, charmBreakHate, 0);
 					}
 					SendAppearancePacket(AT_Anim, ANIM_STAND);
 				}
-				if(tempmob && tempmob->IsClient())
+				if (owner && owner->IsClient())
 				{
 					EQApplicationPacket *app = new EQApplicationPacket(OP_Charm, sizeof(Charm_Struct));
 					Charm_Struct *ps = (Charm_Struct*)app->pBuffer;
-					ps->owner_id = tempmob->GetID();
+					ps->owner_id = owner->GetID();
 					ps->pet_id = this->GetID();
 					ps->command = 0;
 					entity_list.QueueClients(this, app);
 					safe_delete(app);
-					tempmob->SetTarget(this);
 				}
-				if(IsClient())
+				if (IsClient())
 				{
 					InterruptSpell();
 					if (this->CastToClient()->IsLD())
@@ -3648,6 +3676,14 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool message)
 						if(!feared)
 							CastToClient()->AI_Stop();
 					}
+				}
+				if (owner && owner->IsNPC())
+				{
+					// NPCs can have multiple pets, but can only control one for now (multi pet assist needs to be implemented)
+					// set NPC's pet id to summoned pet so it doesn't end up not assisting in case the charmed pet was the pet id
+					uint16 summonedPetID = entity_list.GetSummonedPetID(owner);
+					if (summonedPetID)
+						owner->SetPetID(summonedPetID);
 				}
 				break;
 			}

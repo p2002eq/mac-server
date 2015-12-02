@@ -671,6 +671,7 @@ public:
 	Mob* GetUltimateOwner();
 	void SetPetID(uint16 NewPetID);
 	inline uint16 GetPetID() const { return petid; }
+	inline uint16 GetSummonerID() const { return summonerid; }
 	inline PetType GetPetType() const { return typeofpet; }
 	void SetPetType(PetType p) { typeofpet = p; }
 	inline int16 GetPetPower() const { return (petpower < 0) ? 0 : petpower; }
@@ -1027,6 +1028,7 @@ protected:
 	StatBonuses aabonuses;
 	uint16 petid;
 	uint16 ownerid;
+	uint16 summonerid;		// if pet is summoned pet, store caster's ID so we can return pet to owner after charm
 	PetType typeofpet;
 	int16 petpower;
 	uint32 follow;

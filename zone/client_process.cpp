@@ -1173,6 +1173,8 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 			SetEXP((GetEXP() + PendingRezzXP), GetAAXP(), true);
 		}
 
+		entity_list.RemoveFromTargets(this);
+
 		//Was sending the packet back to initiate client zone...
 		//but that could be abusable, so lets go through proper channels
 		MovePC(ZoneID, InstanceID, x, y, z, GetHeading(), 0, ZoneSolicited);

@@ -982,6 +982,9 @@ bool Mob::CombatRange(Mob* other)
 	float size_mod = GetSize();
 	float other_size_mod = other->GetSize();
 
+	// race 49 == 'Lava Dragon' (Lord Nagafen, Lady Vox, All VP dragons, Klandicar, etc)
+	// race 158 == Wurms
+	// race 196 == 'Ghost Dragon' (Jaled`Dar's shade)
 	if(GetRace() == 49 || GetRace() == 158 || GetRace() == 196) //For races with a fixed size
 		size_mod = 60.0f;
 	else if (size_mod < 6.0)
@@ -1053,7 +1056,6 @@ bool Mob::CheckLosFN(Mob* other) {
 		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ(), other->GetSize());
 
 	SetLastLosState(Result);
-	
 	return Result;
 }
 
