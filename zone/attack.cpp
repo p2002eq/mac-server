@@ -1746,7 +1746,8 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 		Log.Out(Logs::Detail, Logs::Attack, "%s Mobs currently Aggro %i", __FUNCTION__, zone->MobsAggroCount());
 	}
 	SetHP(0);
-	SetPet(0);
+	DepopPet();		// NPC pets should stay alive when the owner dies.  Pets should be fixed to keep attacking
+					// after the master's death and this method call removed when somebody gets around to it
 
 	if (GetSwarmOwner()){
 		Mob* owner = entity_list.GetMobID(GetSwarmOwner());
