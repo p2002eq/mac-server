@@ -2255,7 +2255,7 @@ bool Mob::RemoveFromHateList(Mob* mob)
 			}
 		}
 	}
-	if(GetTarget() == mob && (!IsClient() || IsAIControlled()))
+	if(GetTarget() == mob)
 	{
 		SetTarget(hate_list.GetTop());
 	}

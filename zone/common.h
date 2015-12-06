@@ -38,10 +38,6 @@
 #define CON_YELLOW		15
 #define CON_RED			13
 
-//Spell specialization parameters, not sure of a better place for them
-#define SPECIALIZE_FIZZLE 11		//% fizzle chance reduce at 200 specialized
-#define SPECIALIZE_MANA_REDUCE 12	//% mana cost reduction at 200 specialized
-
 //these are large right now because the x,y,z coords of the zone
 //lines do not make a lot of sense
 //Maximum distance from a zone point given that the request didnt
@@ -343,7 +339,6 @@ struct StatBonuses {
 	bool	DistanceRemoval;					// Check if Cancle if Moved effect is present
 	int32	ImprovedTaunt[3];					// 0 = Max Level 1 = Aggro modifier 2 = buffid
 	int8	Root[2];							// The lowest buff slot a root can be found. [0] = Bool if has root [1] = buff slot
-	int32	FrenziedDevastation;				// base1= AArank(used) base2= chance increase spell criticals + all DD spells 2x mana.
 	uint32	AbsorbMagicAtt[2];					// 0 = magic rune value 1 = buff slot
 	uint32	MeleeRune[2];						// 0 = rune value 1 = buff slot
 	bool	NegateIfCombat;						// Bool Drop buff if cast or melee

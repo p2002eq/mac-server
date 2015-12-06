@@ -549,13 +549,24 @@ void Mob::SetPet(Mob* newpet) {
 	}
 }
 
-void Mob::DepopPet(){
+void Mob::DepopPet()
+{
 	if (HasPet())
 	{
 		Mob* mypet = GetPet();
 		SetPet(nullptr);
 		if (!mypet->IsCharmed())
 			mypet->CastToNPC()->Depop();
+	}
+
+	// kill summoned pet even if charmed
+	uint16 petID = entity_list.GetSummonedPetID(this);
+	if (petID)
+	{
+		Mob* pet = entity_list.GetMobID(petID);
+
+		if (pet)
+			pet->SetOwnerID(0);
 	}
 }
 
