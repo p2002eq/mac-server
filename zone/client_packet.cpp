@@ -1398,8 +1398,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	sze->size = base_size;
 	sze->width = base_size;
 	
-	sze->NPC = IsBecomeNPC() ? 1 : 0;
-	sze->invis = invisible;
+	sze->NPC = IsBecomeNPC() ? 1 : 10;
+	sze->invis = invisible ? 1 : 0;
 	sze->sneaking = sneaking;
 	sze->animation = animation;
 	
@@ -1424,6 +1424,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 	}
 	sze->AFK = AFK;
+	sze->anon = m_pp.anon;
 	sze->title = 0;
 	sze->anim_type = 0x64;
 	sze->bodytexture = texture;
@@ -1436,7 +1437,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		sze->helm = 0;
 	}
 
-	sze->GM = GetGM();
+	sze->GM = GetGM() ? 1 : 0;
 	sze->GuildID = GuildID();
 	if(sze->GuildID == 0)
 		sze->GuildID = 0xFFFF;
