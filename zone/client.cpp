@@ -4302,7 +4302,7 @@ FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_ra
 		return FACTION_INDIFFERENT;
 	if (tnpc && tnpc->GetOwnerID() != 0) // pets con amiably to owner and indiff to rest
 	{
-		if (tnpc->GetOwner()->IsClient() && char_id == tnpc->GetOwner()->CastToClient()->CharacterID())
+		if (tnpc->GetOwner() && tnpc->GetOwner()->IsClient() && char_id == tnpc->GetOwner()->CastToClient()->CharacterID())
 			return FACTION_AMIABLE;
 		else
 			return FACTION_INDIFFERENT;
