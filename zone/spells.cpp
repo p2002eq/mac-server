@@ -430,9 +430,10 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 
 	Mob *spell_target = entity_list.GetMob(target_id);
 	// check line of sight to target if it's a detrimental spell
-	if(spell_target && spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
+	if (spell_target && target_id != this->GetID()
+		&& spells[spell_id].targettype != ST_TargetOptional && spells[spell_id].targettype != ST_Self && spells[spell_id].targettype != ST_AECaster)
 	{
-		if(!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target)
+		if (!zone->SkipLoS() && IsDetrimentalSpell(spell_id) && !spells[spell_id].npc_no_los && !CheckLosFN(spell_target)
 			&& (!IsHarmonySpell(spell_id) || spells[spell_id].targettype == ST_AETarget)	// harmony and wake of tranq require LoS
 			&& !IsBindSightSpell(spell_id) && !IsAllianceSpellLine(spell_id))
 		{
@@ -695,82 +696,84 @@ bool Client::CheckFizzle(uint16 spell_id)
 	if (spells[spell_id].classes[GetClass()-1] < no_fizzle_level)
 		return true;
 
-	//is there any sort of focus that affects fizzling?
 
-	int par_skill;
-	int act_skill;
+	/* Much of the following is based on this data: http://thedruidsgrove.org/archive/eq/t-3871.html
+	 * Things to note: Most spells level 44 and under have a fizzle adjust, while most spells level
+	 * 49+ do not.  However fizzle rates are not crazy for spells under 49, which is why I removed 
+	 * the base fizzle rate of 20% and capped spell difficulty at 255 instead of 235, which in effect
+	 * grants 49+ spells extra difficulty since spell skills cap at 235.
+	 * 
+	 * This is not precise.  It's a model that tries to fit the limited data available.
+	 */
+	int spellDifficulty = spells[spell_id].classes[GetClass() - 1] * 5;
+	if (spellDifficulty > 255)
+		spellDifficulty = 255;
 
-	par_skill = spells[spell_id].classes[GetClass()-1] * 5 - 10;//IIRC even if you are lagging behind the skill levels you don't fizzle much
-	if (par_skill > 235)
-		par_skill = 235;
+	int casterSkill;
+	int casterLevel = GetLevel();
+	// intellectual superiority -- not sure how this works exactly, but the spell description says reduced fizzles
+	int effectiveCastingLevel = itembonuses.effective_casting_level + spellbonuses.effective_casting_level + aabonuses.effective_casting_level;
 
-	par_skill += spells[spell_id].classes[GetClass()-1]; // maximum of 270 for level 65 spell
-
-	act_skill = GetSkill(spells[spell_id].skill);
-	act_skill += GetLevel(); // maximum of whatever the client can cheat
+	casterSkill = GetSkill(spells[spell_id].skill);
+	casterSkill += effectiveCastingLevel * 5;
 
 	//spell specialization
-	float specialize = GetSpecializeSkillValue(spell_id);
-	if(specialize > 0) {
-		switch(GetAA(aaSpellCastingMastery)){
+	float specializeSkill = GetSpecializeSkillValue(spell_id);
+	float specializeReduction = 0.0f;
+
+	if (specializeSkill > 0.0f)
+	{
+		switch(GetAA(aaSpellCastingMastery))
+		{
 		case 1:
-			specialize = specialize * 1.05;
+			specializeSkill = specializeSkill * 1.05;
 			break;
 		case 2:
-			specialize = specialize * 1.15;
+			specializeSkill = specializeSkill * 1.15;
 			break;
 		case 3:
-			specialize = specialize * 1.3;
+			specializeSkill = specializeSkill * 1.3;
 			break;
 		}
-		if(((specialize/6.0f) + 15.0f) < zone->random.Real(0, 100)) {
-			specialize *= SPECIALIZE_FIZZLE / 200.0f;
-		} else {
-			specialize = 0.0f;
-		}
+
+		specializeReduction = specializeSkill / 10.0f;
 	}
 
-	// == 0 --> on par
-	// > 0 --> skill is lower, higher chance of fizzle
-	// < 0 --> skill is better, lower chance of fizzle
-	// the max that diff can be is +- 235
-	float diff = par_skill + static_cast<float>(spells[spell_id].basediff) - act_skill;
+	float primeStatReduction = 0.0f;
 
-	// if you have high int/wis you fizzle less, you fizzle more if you are stupid
 	if(GetClass() == BARD)
 	{
-		diff -= (GetCHA() - 110) / 20.0;
+		primeStatReduction = ((GetCHA() > GetDEX() ? GetCHA() : GetDEX()) - 75) / 10.0;
 	}
 	else if (GetCasterClass() == 'W')
 	{
-		diff -= (GetWIS() - 125) / 20.0;
+		primeStatReduction = (GetWIS() - 75) / 10.0;
 	}
 	else if (GetCasterClass() == 'I')
 	{
-		diff -= (GetINT() - 125) / 20.0;
+		primeStatReduction = (GetINT() - 75) / 10.0;
 	}
+	
+	if (primeStatReduction > 12.5f)
+		primeStatReduction = 12.5f;
 
-	// base fizzlechance is lets say 5%, we can make it lower for AA skills or whatever
-	float basefizzle = RuleI(Spells, BaseFizzleChance);
-	float fizzlechance = basefizzle - specialize + diff / 5.0;
+	float diff = spellDifficulty - casterSkill;
+	float spellFizzleAdj = static_cast<float>(spells[spell_id].basediff);
+	//float baseFizzle = RuleI(Spells, BaseFizzleChance);		// default is 20
 
-	// always at least 1% chance to fail or 5% to succeed
-	fizzlechance = fizzlechance < 1 ? 1 : (fizzlechance > 95 ? 95 : fizzlechance);
+	float fizzleChance = diff + spellFizzleAdj - primeStatReduction - specializeReduction;
+	if (fizzleChance > 95.0f)
+		fizzleChance = 95.0f;
+	else if (fizzleChance < 2.0f)
+		fizzleChance = 2.0f;
 
-	/*
-	if(IsBardSong(spell_id))
-	{
-		//This was a channel chance modifier - no evidence for fizzle reduction
-		fizzlechance -= GetAA(aaInternalMetronome) * 1.5f;
-	}
-	*/
+	float fizzleRoll = zone->random.Real(0, 100);
 
-	float fizzle_roll = zone->random.Real(0, 100);
+	Log.Out(Logs::Detail, Logs::Spells, "Check Fizzle %s  spell %d  fizzleChance: %0.2f%%   diff: %0.2f  roll: %0.2f", GetName(), spell_id, fizzleChance, diff, fizzleRoll);
 
-	Log.Out(Logs::Detail, Logs::Spells, "Check Fizzle %s  spell %d  fizzlechance: %0.2f%%   diff: %0.2f  roll: %0.2f", GetName(), spell_id, fizzlechance, diff, fizzle_roll);
-
-	if(fizzle_roll > fizzlechance)
+	if(fizzleRoll > fizzleChance)
 		return(true);
+
 	return(false);
 }
 
@@ -2537,7 +2540,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			action->source = caster->GetID();
 			action->target = GetID();
 			action->spell = spell_id;
-			action->sequence = (GetHeading() * 2.0f);	// just some random number
+			action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 			action->instrument_mod = caster->GetInstrumentMod(spell_id);
 			action->buff_unknown = 0;
 			action->level = buffs[buffs_i].casterlevel;
@@ -3338,7 +3341,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 
 	// Casting on an entity in a different region silently fails after letting the spell be cast
-	if(!CheckRegion(spelltar))
+	if((IsClient() || IsPet()) && !CheckRegion(spelltar))
 	{
 		if(IsClient() && spelltar->IsClient())
 		{
@@ -3347,7 +3350,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		return false;
 	}
 
-	if (IsEffectInSpell(spell_id, SE_CancelMagic)){
+	if (IsEffectInSpell(spell_id, SE_CancelMagic))
+	{
 		if (!CancelMagicIsAllowedOnTarget(spelltar))
 		{
 			Log.Out(Logs::Detail, Logs::Spells, "Cancel Magic failure.");
@@ -3357,13 +3361,20 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	}
 	else if(IsCharmSpell(spell_id))
 	{
-		if(spelltar->IsPet() || (IsClient() && spelltar->IsClient()) || spelltar->IsCorpse() || GetPet() != nullptr)
+		if ((IsClient() && (spelltar->IsClient() || (spelltar->IsPet() && spelltar->IsCharmed()))) || spelltar->IsCorpse())
 		{
 			Message_StringID(MT_SpellFailure, CANNOT_CHARM);
 			return false;
 		}
+
+		if (IsClient() && GetPet() != nullptr)
+		{
+			Message_StringID(MT_SpellFailure, ONLY_ONE_PET);
+			return false;
+		}
 	}
-	else{
+	else
+	{
 		if(IsDetrimentalSpell(spell_id) && !IsAttackAllowed(spelltar, true, spell_id) && !IsResurrectionEffects(spell_id))
 		{
 			if(!IsClient() || !CastToClient()->GetGM()) {
@@ -3377,7 +3388,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	//We have to check for Gate failure before its cast, because the client resolves on its own.
 	if(IsGateSpell(spell_id))
 	{
-		if (zone->random.Roll(RuleI(Spells, SuccorFailChance)))
+		if (zone->random.Roll(RuleR(Spells, SuccorFailChance)))
 		{
 			InterruptSpell(GATE_FAIL,CC_Red,spell_id);
 			return false;
@@ -3386,8 +3397,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
 	if(IsSuccorSpell(spell_id))
 	{
-		//2% Fail chance by default
-		if(zone->random.Roll(RuleI(Spells, SuccorFailChance))) 
+		//.5 % Fail chance by default
+		if(zone->random.Roll(RuleR(Spells, SuccorFailChance))) 
 		{ 
 			InterruptSpell(SUCCOR_FAIL,CC_Red,spell_id);
 			return false;
@@ -3449,7 +3460,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 	action->level = caster_level;	// caster level, for animation only
 	action->type = 231;	// 231 means a spell
 	action->spell = spell_id;
-	action->sequence = (GetHeading() * 2);	// just some random number
+	action->sequence = (GetHeading() * 511.0f / 256.0f);	// just some random number
 	action->instrument_mod = GetInstrumentMod(spell_id);
 	action->buff_unknown = 0;
 
@@ -3904,6 +3915,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		else
 		{
 			action->buff_unknown = 4;
+			action->sequence = spelltar ? CalculateHeadingToTarget(spelltar->GetX(), spelltar->GetY())/256.0f*511.0f: GetHeading()/256.0f*511.0f;
 			float push_back = spells[spell_id].pushback;
 			if (push_back < 0)
 				push_back = -push_back;
@@ -3913,7 +3925,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 			{
 				// z pushup will be translated into client as z += (force * sine(pushup_angle))
 				float ratio = push_up / push_back;
-				float angle = atanf(ratio);
+				float angle = atanf(ratio) / 6.283184 * 511.0f;
 				action->pushup_angle = angle;
 			}
 		}

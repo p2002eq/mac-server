@@ -309,6 +309,7 @@ Mob::Mob(const char* in_name,
 	SetPetID(0);
 	SetOwnerID(0);
 	typeofpet = petCharmed;		//default to charmed...
+	summonerid = 0;
 	petpower = 0;
 	held = false;
 	nocast = false;
@@ -1393,8 +1394,8 @@ void Mob::MakeSpawnUpdateNoDelta(SpawnPositionUpdate_Struct *spu)
 	memset(spu,0xff,sizeof(SpawnPositionUpdate_Struct));
 
 	spu->spawn_id	= GetID();
-	spu->x_pos = static_cast<int16>(m_Position.x);
-	spu->y_pos = static_cast<int16>(m_Position.y);
+	spu->x_pos = static_cast<int16>(m_Position.x + 0.5f);
+	spu->y_pos = static_cast<int16>(m_Position.y + 0.5f);
 	spu->z_pos = static_cast<int16>((m_Position.z)*10);
 	spu->heading	= static_cast<int8>(m_Position.w);
 
@@ -1426,8 +1427,8 @@ void Mob::MakeSpawnUpdate(SpawnPositionUpdate_Struct* spu)
 	auto currentloc = glm::vec4(GetX(), GetY(), GetZ(), GetHeading());
 
 	spu->spawn_id	= GetID();
-	spu->x_pos = static_cast<int16>(m_Position.x);
-	spu->y_pos = static_cast<int16>(m_Position.y);
+	spu->x_pos = static_cast<int16>(m_Position.x + 0.5f);
+	spu->y_pos = static_cast<int16>(m_Position.y + 0.5f);
 	spu->z_pos = static_cast<int16>(10.0f * m_Position.z);
 	spu->heading	= static_cast<int8>(currentloc.w);
 
@@ -1863,8 +1864,8 @@ Mob* Mob::GetOwnerOrSelf() {
 
 Mob* Mob::GetOwner() {
 	Mob* owner = entity_list.GetMob(this->GetOwnerID());
-	if (owner && owner->GetPetID() == this->GetID()) {
-
+	if (owner)
+	{
 		return owner;
 	}
 	if(IsNPC() && CastToNPC()->GetSwarmInfo()){
@@ -3772,20 +3773,6 @@ bool Mob::TrySpellOnDeath()
 	//You should not be able to use this effect and survive (ALWAYS return false),
 	//attempting to place a heal in these effects will still result
 	//in death because the heal will not register before the script kills you.
-}
-
-int16 Mob::GetCritDmgMob(uint16 skill)
-{
-	int critDmg_mod = 0;
-
-	// All skill dmg mod + Skill specific
-	critDmg_mod += itembonuses.CritDmgMob[HIGHEST_SKILL+1] + spellbonuses.CritDmgMob[HIGHEST_SKILL+1] + aabonuses.CritDmgMob[HIGHEST_SKILL+1] +
-					itembonuses.CritDmgMob[skill] + spellbonuses.CritDmgMob[skill] + aabonuses.CritDmgMob[skill];
-
-	if(critDmg_mod < -100)
-		critDmg_mod = -100;
-
-	return critDmg_mod;
 }
 
 void Mob::SetGrouped(bool v)

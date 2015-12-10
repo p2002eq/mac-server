@@ -641,11 +641,11 @@ bool Client::Process() {
 			LinkDead();
 		}
 	}
-	// Feign Death 2 minutes and zone forgets you
+	// Repurposed the two minute timer into a 10 minute forget timer
+	// because our hate lists don't have feigned players, unlike Sony's
 	if (forget_timer.Check()) {
 		forget_timer.Disable();
 		entity_list.ClearZoneFeignAggro(this);
-		//Message(CC_Default,"Your enemies have forgotten you!");
 	}
 
 	return ret;
@@ -1172,6 +1172,8 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 		else if (spells[SpellID].base[0] == 100 && PendingRezzXP > 0) {
 			SetEXP((GetEXP() + PendingRezzXP), GetAAXP(), true);
 		}
+
+		entity_list.RemoveFromTargets(this);
 
 		//Was sending the packet back to initiate client zone...
 		//but that could be abusable, so lets go through proper channels

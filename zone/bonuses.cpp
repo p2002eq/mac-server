@@ -815,16 +815,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			}
 			break;
 
-			case SE_CriticalDamageMob:
-			{
-				// base1 = effect value, base2 = skill restrictions(-1 for all)
-				if(base2 == -1)
-					newbon->CritDmgMob[HIGHEST_SKILL+1] += base1;
-				else
-					newbon->CritDmgMob[base2] += base1;
-				break;
-			}
-
 			case SE_CriticalSpellChance:
 			{
 				newbon->CriticalSpellChance += base1;
@@ -1017,10 +1007,6 @@ void Client::ApplyAABonuses(uint32 aaid, uint32 slots, StatBonuses* newbon)
 			case SE_Vampirism:
 				newbon->Vampirism += base1;
 				break;			
-
-			case SE_FrenziedDevastation:
-				newbon->FrenziedDevastation += base2;
-				break;
 
 			case SE_Berserk:
 				newbon->BerserkSPA = true;
@@ -1931,15 +1917,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 				break;
 			}
 
-			case SE_CriticalDamageMob:
-			{
-				if(base2 == -1)
-					new_bonus->CritDmgMob[HIGHEST_SKILL+1] += effect_value;
-				else
-					new_bonus->CritDmgMob[base2] += effect_value;
-				break;
-			}
-
 			case SE_ReduceSkillTimer:
 			{
 				if(new_bonus->SkillReuseTime[base2] < effect_value)
@@ -2294,10 +2271,6 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* ne
 
 			case SE_DistanceRemoval:
 				new_bonus->DistanceRemoval = true;
-				break;
-
-			case SE_FrenziedDevastation:
-				new_bonus->FrenziedDevastation += base2;
 				break;
 
 			case SE_Root:

@@ -474,6 +474,7 @@ Pet::Pet(NPCType *type_data, Mob *owner, PetType type, uint16 spell_id, int16 po
 	petpower = power;
 	SetOwnerID(owner->GetID());
 	SetPetSpellID(spell_id);
+	summonerid = owner->GetID();
 	taunting = true;
 
 	// Class should use npc constructor to set light properties
@@ -534,7 +535,7 @@ Mob* Mob::GetPet() {
 
 void Mob::SetPet(Mob* newpet) {
 	Mob* oldpet = GetPet();
-	if (oldpet) {
+	if (oldpet && IsClient()) {
 		oldpet->SetOwnerID(0);
 	}
 	if (newpet == nullptr) {
@@ -542,19 +543,30 @@ void Mob::SetPet(Mob* newpet) {
 	} else {
 		SetPetID(newpet->GetID());
 		Mob* oldowner = entity_list.GetMob(newpet->GetOwnerID());
-		if (oldowner)
+		if (oldowner && oldowner->IsClient())
 			oldowner->SetPetID(0);
 		newpet->SetOwnerID(this->GetID());
 	}
 }
 
-void Mob::DepopPet(){
+void Mob::DepopPet()
+{
 	if (HasPet())
 	{
 		Mob* mypet = GetPet();
 		SetPet(nullptr);
 		if (!mypet->IsCharmed())
 			mypet->CastToNPC()->Depop();
+	}
+
+	// kill summoned pet even if charmed
+	uint16 petID = entity_list.GetSummonedPetID(this);
+	if (petID)
+	{
+		Mob* pet = entity_list.GetMobID(petID);
+
+		if (pet)
+			pet->SetOwnerID(0);
 	}
 }
 
