@@ -2052,7 +2052,7 @@ namespace Mac {
 		memcpy(eq->name, emu->name, 64);
 		eq->deity = emu->deity;
 		if ((emu->race == 42 || emu->race == 120) && emu->gender == 2)
-			eq->size = emu->size + 4.0f;
+			eq->size = emu->size + 3.0f;
 		else
 			eq->size = emu->size;
 		eq->NPC = emu->NPC;
