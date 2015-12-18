@@ -1710,7 +1710,7 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill, uint8 killedby) {
 	Log.Out(Logs::Detail, Logs::Combat, "Fatal blow dealt by %s with %d damage, spell %d, skill %d", killerMob->GetName(), damage, spell, attack_skill);
     if(this->raid_target == 1) {
-        std::string notification = StringFormat("%s was just killed by %s", this->GetName(), killerMob->GetName());
+        std::string notification = StringFormat("%s was just killed by %s", this->GetCleanName(), killerMob->GetCleanName();
         Slack::SendMessageTo("csr", notification.c_str());
     }
 	bool MadeCorpse = false;
