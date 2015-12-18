@@ -23,6 +23,7 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #else
 #include <pthread.h>
 #endif
+#include <curl/curl.h>
 
 #ifdef _WINDOWS
 	#define snprintf	_snprintf
@@ -38,6 +39,7 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include "entity.h"
 #include "petitions.h"
 #include "worldserver.h"
+#include "slack.h"
 
 PetitionList petition_list;
 
@@ -244,11 +246,13 @@ void ZoneDatabase::InsertPetitionToDB(Petition* wpet)
                                     petitiontext, wpet->GetZone(), wpet->GetUrgency(), wpet->GetCharClass(),
                                     wpet->GetCharRace(), wpet->GetCharLevel(), wpet->GetCheckouts(), wpet->GetUnavails(),
                                     wpet->CheckedOut()? 1: 0, wpet->GetSentTime(), wpet->GetGMText());
-    safe_delete_array(petitiontext);
     auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return;
 	}
+    std::string notification = StringFormat("New Petition Created: http://api.p2002.com:8080/petitions/%i - %s: %s", wpet->GetID(), wpet->GetCharName(), petitiontext);
+    Slack::SendMessageTo("#csr", notification.c_str());
+    safe_delete_array(petitiontext);
 
 #if EQDEBUG >= 5
 		Log.Out(Logs::General, Logs::None, "New petition created");
