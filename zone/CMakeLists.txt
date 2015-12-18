@@ -118,6 +118,7 @@ SET(zone_sources
 	zone_config.cpp
 	zonedb.cpp
 	zoning.cpp
+    slack.cpp
 )
 
 SET(zone_headers
@@ -204,6 +205,7 @@ SET(zone_headers
 	zone_config.h
 	zonedb.h
 	zonedump.h
+    slack.h
 )
 
 IF(EQEMU_DEPOP_INVALIDATES_CACHE)
@@ -216,7 +218,7 @@ INSTALL(TARGETS zone RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 ADD_DEFINITIONS(-DZONE)
 
-TARGET_LINK_LIBRARIES(zone common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY})
+TARGET_LINK_LIBRARIES(zone common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY} ${CURL_LIBRARY})
 
 IF(EQEMU_BUILD_PERL)
 	TARGET_LINK_LIBRARIES(zone ${PERL_LIBRARY})

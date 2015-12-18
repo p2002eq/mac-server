@@ -296,7 +296,7 @@ RULE_BOOL ( Spells, UseCHAScribeHack, false) //ScribeSpells and TrainDiscs quest
 RULE_BOOL ( Spells, BuffLevelRestrictions, true) //Buffs will not land on low level toons like live
 RULE_INT ( Spells, RootBreakCheckChance, 70) //Determines chance for a root break check to occur each buff tick.
 RULE_INT ( Spells, FearBreakCheckChance, 70) //Determines chance for a fear break check to occur each buff tick.
-RULE_REAL (Spells, SuccorFailChance, 0.5) //Determines chance for a succor spell not to teleport an invidual player
+RULE_REAL (Spells, SuccorFailChance, 0.005) //Determines chance for a succor spell not to teleport an invidual player. 0.5% is the default
 RULE_BOOL ( Spells, FocusCombatProcs, false) //Allow all combat procs to receive focus effects.
 RULE_INT ( Spells, BaseFizzleChance, 20) //Base percentage you will fizzle. The chance then is modified by skill to go up or down.
 RULE_BOOL ( Spells, PreNerfBardAEDoT, false) //Allow bard AOE dots to damage targets when moving.
