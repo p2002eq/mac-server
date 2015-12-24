@@ -166,10 +166,10 @@ int command_init(void){
 		command_add("close_shop", nullptr, 250, command_merchantcloseshop) ||
 		command_add("connectworld", nullptr, 85, command_connectworldserver) ||
 		command_add("connectworldserver", "- Make zone attempt to connect to worldserver.", 85, command_connectworldserver) ||
-#ifdef WIN32
-#else
-		command_add("coredump", "Dumps a core log of any existing cores to view on web page.", 180, command_coredump) ||
-#endif
+//#ifdef WIN32
+//#else
+		//command_add("coredump", "Dumps a core log of any existing cores to view on web page.", 180, command_coredump) ||
+//#endif
 		command_add("corpse", "- Manipulate corpses, use with no arguments for help.", 90, command_corpse) ||
 		command_add("crashtest", "- Crash the zoneserver.", 250, command_crashtest) ||
 		command_add("cvs", "- Summary of client versions currently online.", 180, command_cvs) ||
@@ -404,7 +404,7 @@ int command_init(void){
 		command_add("suspend", "[name][days][reason] - Suspend by character name and for specificed number of days.", 90, command_suspend) ||
 		command_add("synctod", "- Send a time of day update to every client in zone.", 100, command_synctod) ||
 
-		command_add("testcopy", "Sends a copy of the targets loginserver/game account/characters to a backup file.", 250, command_testcopy) ||
+		//command_add("testcopy", "Sends a copy of the targets loginserver/game account/characters to a backup file.", 250, command_testcopy) ||
 		command_add("testspawn", "[memloc] [value] - spawns a NPC for you only, with the specified values set in the spawn struct.", 180, command_testspawn) ||
 		command_add("testspawnkill", "- Sends an OP_Death packet for spawn made with #testspawn.", 180, command_testspawnkill) ||
 		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment.", 250, command_texture) ||
@@ -415,7 +415,7 @@ int command_init(void){
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title.", 95, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix.", 255, command_titlesuffix) ||
 		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
-		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
+		command_add("undeletechar", "- Undelete a character that was previously deleted.", 150, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots.", 255, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target.", 160, command_unfreeze) ||
 		command_add("unlock", "- Unlock the worldserver.", 250, command_unlock) ||
@@ -423,7 +423,7 @@ int command_init(void){
 		command_add("unmemspells", "- Clear out your or your player target's spell gems.", 170, command_unmemspells) ||
 		command_add("unscribespell", "[spellid] - Unscribe specified spell from your target's spell book.", 170, command_unscribespell) ||
 		command_add("unscribespells", "- Clear out your or your player target's spell book.", 170, command_unscribespells) ||
-		command_add("update", "Handles all server updates/reboots. Use with no args or 'help' for how to use.", 200, command_update) ||
+		//command_add("update", "Handles all server updates/reboots. Use with no args or 'help' for how to use.", 200, command_update) ||
 		command_add("uptime", "[zone server id] - Get uptime of worldserver, or zone server if argument provided.", 95, command_uptime) ||
 
 		command_add("version", "- Display current version of EQEmu server.", 180, command_version) ||
@@ -786,35 +786,35 @@ void command_serversidename(Client *c, const Seperator *sep){
 		c->Message(CC_Default, "Error: no target");
 }
 
-void command_testcopy(Client *c, const Seperator *sep)
-{
-	if (c->GetTarget() == nullptr)
-	{
-		c->Message(CC_Red, "You must target a player.");
-	}
-	else if (!c->GetTarget()->IsClient())
-	{
-		c->Message(CC_Red, "You can only save backups of players.");
-	}
-	else if (c->GetTarget() && c->GetTarget()->IsClient())
-	{
-		Client* client = c->GetTarget()->CastToClient();
-		int targetLSID = client->LSAccountID();
-		int targetID = client->CharacterID();
-		auto targetAcctID = database.GetAccountIDByChar(targetID);
-		const char* targetName = client->GetName();
-		c->Message(CC_Default, "Backing up targetName: %s, targetLSID: %i, targetID: %i, targetAcctID: %i", targetName, targetLSID, targetAcctID, targetID);
+//void command_testcopy(Client *c, const Seperator *sep)
+//{
+	//if (c->GetTarget() == nullptr)
+	//{
+		//c->Message(CC_Red, "You must target a player.");
+	//}
+	//else if (!c->GetTarget()->IsClient())
+	//{
+		//c->Message(CC_Red, "You can only save backups of players.");
+	//}
+	//else if (c->GetTarget() && c->GetTarget()->IsClient())
+	//{
+		//Client* client = c->GetTarget()->CastToClient();
+		//int targetLSID = client->LSAccountID();
+		//int targetID = client->CharacterID();
+		//auto targetAcctID = database.GetAccountIDByChar(targetID);
+		//const char* targetName = client->GetName();
+		//c->Message(CC_Default, "Backing up targetName: %s, targetLSID: %i, targetID: %i, targetAcctID: %i", targetName, targetLSID, targetAcctID, targetID);
 
-		char String[255];
+		//char String[255];
 
-#ifdef _WINDOWS
-		sprintf(String, "tak_testcopy.bat %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
-#else
-		sprintf(String, "./tak_testcopy %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
-#endif
-		system(String);
-	}
-}
+//#ifdef _WINDOWS
+		//sprintf(String, "tak_testcopy.bat %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
+//#else
+		//sprintf(String, "./tak_testcopy %s %i %i %i", targetName, targetLSID, targetAcctID, targetID);
+//#endif
+		//system(String);
+	//}
+//}
 
 void command_testspawnkill(Client *c, const Seperator *sep){
 	/*	EQApplicationPacket* outapp = new EQApplicationPacket(OP_Death, sizeof(Death_Struct));
@@ -10360,121 +10360,121 @@ void command_questerrors(Client *c, const Seperator *sep)
 	}
 }
 
-void command_update(Client *c, const Seperator *sep)
-{
-	int admin = c->Admin();
-	std::string help0 = "Update commands usage:";
-	std::string help1 = "  #update quests - Updates all zone quests on the server from svn - Does not reload quests.";
-	std::string help2 = "  #update source - Fires off a 10 min shutdown warning, takes down server,";
-	std::string help3 = "					downloads current git and compiles then restarts the server.";
-	std::string help4 = "  #update reboot - Fires off a 10 min shutdown warning and restarts the server without updates.";
-	std::string help5 = "  #update rebootNOW - Restarts the server without updates immediately.";
+//void command_update(Client *c, const Seperator *sep)
+//{
+	//int admin = c->Admin();
+	//std::string help0 = "Update commands usage:";
+	//std::string help1 = "  #update quests - Updates all zone quests on the server from svn - Does not reload quests.";
+	//std::string help2 = "  #update source - Fires off a 10 min shutdown warning, takes down server,";
+	//std::string help3 = "					downloads current git and compiles then restarts the server.";
+	//std::string help4 = "  #update reboot - Fires off a 10 min shutdown warning and restarts the server without updates.";
+	//std::string help5 = "  #update rebootNOW - Restarts the server without updates immediately.";
 
-	std::string help[] = { help0, help1, help2, help3, help4, help5 };
+	//std::string help[] = { help0, help1, help2, help3, help4, help5 };
 
-	if (strcasecmp(sep->arg[1], "help") == 0)
-	{
-		int size = sizeof(help) / sizeof(std::string);
-		for (int i = 0; i < size; i++)
-		{
-			c->Message(CC_Default, help[i].c_str());
-		}
-	}
-	else if (strcasecmp(sep->arg[1], "quests") == 0)
-	{
-		FILE *fp;
-#ifdef _WINDOWS
-		char buf[1024];
-		fp = _popen("svn update quests", "r");
+	//if (strcasecmp(sep->arg[1], "help") == 0)
+	//{
+		//int size = sizeof(help) / sizeof(std::string);
+		//for (int i = 0; i < size; i++)
+		//{
+			//c->Message(CC_Default, help[i].c_str());
+		//}
+	//}
+	//else if (strcasecmp(sep->arg[1], "quests") == 0)
+	//{
+		//FILE *fp;
+//#ifdef _WINDOWS
+		//char buf[1024];
+		//fp = _popen("svn update quests", "r");
 
-		while (fgets(buf, 1024, fp))
-		{
-			const char * output = (const char *)buf;
-			c->Message(CC_Default, "%s", output);
-		}
-		fclose(fp);
-#else
-		char* buf = NULL;
-		size_t len = 0;
-		fflush(NULL);
-		fp = popen("svn update quests", "r");
+		//while (fgets(buf, 1024, fp))
+		//{
+			//const char * output = (const char *)buf;
+			//c->Message(CC_Default, "%s", output);
+		//}
+		//fclose(fp);
+//#else
+		//char* buf = NULL;
+		//size_t len = 0;
+		//fflush(NULL);
+		//fp = popen("svn update quests", "r");
 
-		while (getline(&buf, &len, fp) != -1)
-		{
-			const char * output = (const char *)buf;
-			c->Message(CC_Default, "%s", output);
-		}
-		free(buf);
-		fflush(fp);
-#endif
-		c->Message(CC_Default, "Quests are updated.");
-	}
-	else if (strcasecmp(sep->arg[1], "source") == 0)
-	{
-		if (admin >= 205)
-		{
-#ifdef _WINDOWS
-			// TODO: Add same functionality for windows from the following command.
-			c->Message(CC_Default, "Not yet implemented for windows.");
-#else
-			c->Message(CC_Default, "Server will be going down and building, 10 min warning issued.");
-			system("./EQServer.sh update");
-#endif
-		}
-		else
-			c->Message(CC_Default, "Your access level is not high enough to use this command.");
-	}
-	else if (strcasecmp(sep->arg[1], "reboot") == 0)
-	{
-		if (admin >= 205)
-		{
-#ifdef _WINDOWS
-			// TODO: Add same functionality for windows from the following command.
-			c->Message(CC_Default, "Not yet implemented for windows.");
-#else
-			c->Message(CC_Default, "Server will be going down for reboot, 10 min warning issued.");
-			system("./EQServer.sh reboot");
-#endif
-		}
-		else
-			c->Message(CC_Default, "Your access level is not high enough to use this command.");
-	}
-	else if (strcasecmp(sep->arg[1], "rebootNOW") == 0)
-	{
-		if (admin >= 250)
-		{
-#ifdef _WINDOWS
-			// TODO: Add same functionality for windows from the following command.
-			c->Message(CC_Default, "Not yet implemented for windows.");
-#else
-			c->Message(CC_Default, "Server will be going down for reboot.");
-			system("./EQServer.sh rebootNOW");
-#endif
-		}
-		else
-			c->Message(CC_Default, "Your access level is not high enough to use this command.");
-	}
-	else
-	{
-		int size = sizeof(help) / sizeof(std::string);
-		for (int i = 0; i < size; i++)
-		{
-			c->Message(CC_Default, help[i].c_str());
-		}
-	}
-}
+		//while (getline(&buf, &len, fp) != -1)
+		//{
+			//const char * output = (const char *)buf;
+			//c->Message(CC_Default, "%s", output);
+		//}
+		//free(buf);
+		//fflush(fp);
+//#endif
+		//c->Message(CC_Default, "Quests are updated.");
+	//}
+	//else if (strcasecmp(sep->arg[1], "source") == 0)
+	//{
+		//if (admin >= 205)
+		//{
+//#ifdef _WINDOWS
+             //TODO: Add same functionality for windows from the following command.
+			//c->Message(CC_Default, "Not yet implemented for windows.");
+//#else
+			//c->Message(CC_Default, "Server will be going down and building, 10 min warning issued.");
+			//system("./EQServer.sh update");
+//#endif
+		//}
+		//else
+			//c->Message(CC_Default, "Your access level is not high enough to use this command.");
+	//}
+	//else if (strcasecmp(sep->arg[1], "reboot") == 0)
+	//{
+		//if (admin >= 205)
+		//{
+//#ifdef _WINDOWS
+             //TODO: Add same functionality for windows from the following command.
+			//c->Message(CC_Default, "Not yet implemented for windows.");
+//#else
+			//c->Message(CC_Default, "Server will be going down for reboot, 10 min warning issued.");
+			//system("./EQServer.sh reboot");
+//#endif
+		//}
+		//else
+			//c->Message(CC_Default, "Your access level is not high enough to use this command.");
+	//}
+	//else if (strcasecmp(sep->arg[1], "rebootNOW") == 0)
+	//{
+		//if (admin >= 250)
+		//{
+//#ifdef _WINDOWS
+             //TODO: Add same functionality for windows from the following command.
+			//c->Message(CC_Default, "Not yet implemented for windows.");
+//#else
+			//c->Message(CC_Default, "Server will be going down for reboot.");
+			//system("./EQServer.sh rebootNOW");
+//#endif
+		//}
+		//else
+			//c->Message(CC_Default, "Your access level is not high enough to use this command.");
+	//}
+	//else
+	//{
+		//int size = sizeof(help) / sizeof(std::string);
+		//for (int i = 0; i < size; i++)
+		//{
+			//c->Message(CC_Default, help[i].c_str());
+		//}
+	//}
+//}
 
-void command_coredump(Client *c, const Seperator *sep)
-{
-#ifdef _WINDOWS
-	// TODO: Add same functionality for windows from the following command.
-	// Maybe have a batch file spit logs to a web folder?
-	c->Message(CC_Default, "Not yet implemented for windows.");
-#else
-	system("./dump");
-	c->Message(CC_Default, "core dumped.");
-#endif
-}
+//void command_coredump(Client *c, const Seperator *sep)
+//{
+//#ifdef _WINDOWS
+//     TODO: Add same functionality for windows from the following command.
+//     Maybe have a batch file spit logs to a web folder?
+	//c->Message(CC_Default, "Not yet implemented for windows.");
+//#else
+	//system("./dump");
+	//c->Message(CC_Default, "core dumped.");
+//#endif
+//}
 
 void command_enablerecipe(Client *c, const Seperator *sep){
 	uint32 recipe_id = 0;
