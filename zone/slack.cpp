@@ -27,3 +27,26 @@ void Slack::SendMessageTo(const char* channel, const char* message)
     }
     curl_global_cleanup();
 }
+
+void Slack::SendError(const char* message)
+{
+    CURL* curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    std::string payload = StringFormat("error=\"%s\"", message);
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, "http://p2002.com/errors/index.php");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+        res = curl_easy_perform(curl);
+        /* Check for errors */
+        if(res != CURLE_OK) {
+#if EQDEBUG >= 5
+        Log.Out(Logs::General, Logs::None, "New quest error webhook failed");
+#endif
+        }
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+}

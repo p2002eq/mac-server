@@ -13,5 +13,6 @@ class Slack
         Slack();
         ~Slack();
         static void SendMessageTo(const char* channel, const char* message);
+        static void SendError(const char* message);
 };
 #endif

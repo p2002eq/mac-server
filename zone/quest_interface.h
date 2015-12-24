@@ -82,13 +82,12 @@ public:
 	}
 
 	virtual void AddError(std::string error) {
-        Slack::SendMessageTo("#quests", error.c_str());
+        Slack::SendError(error.c_str());
 		errors_.push_back(error);
 		if(errors_.size() > 30) {
 			errors_.pop_front();
 		}
 	}
-	
 protected:
 	std::list<std::string> errors_;
 };
