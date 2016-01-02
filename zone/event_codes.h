@@ -74,6 +74,7 @@ typedef enum {
 	EVENT_UNHANDLED_OPCODE,
 	EVENT_BOARD_BOAT,
 	EVENT_LEAVE_BOAT,
+	EVENT_TICK,
 
 	_LargestEventID
 } QuestEventID;
