@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 SET(common_sources
+    slack.cpp
 	base_packet.cpp
 	classes.cpp
 	condition.cpp
@@ -89,6 +90,7 @@ SET(common_sources
 )
 
 SET(common_headers
+    slack.h
 	any.h
 	base_packet.h
 	base_data.h
@@ -275,7 +277,8 @@ SOURCE_GROUP(TinyXML FILES
 
 INCLUDE_DIRECTORIES(Patches SocketLib StackWalker TinyXML)
 
-ADD_LIBRARY(common ${common_sources} ${common_headers})
+ADD_LIBRARY(common ${common_sources} ${common_headers} ${CURL_LIBRARY})
+TARGET_LINK_LIBRARIES(common ${CURL_LIBRARY})
 
 IF(UNIX)
 	ADD_DEFINITIONS(-fPIC)

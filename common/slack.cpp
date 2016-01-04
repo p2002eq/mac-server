@@ -5,6 +5,9 @@
 #include "../common/string_util.h"
 #include <curl/curl.h>
 #include "slack.h"
+const char *Slack::RAID_MOB_INFO = "#raid_mob_info";
+const char *Slack::CSR = "#csr";
+const char *Slack::OPS = "#ops";
 void Slack::SendMessageTo(const char* channel, const char* message)
 {
     CURL* curl;

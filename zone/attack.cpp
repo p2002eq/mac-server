@@ -24,7 +24,7 @@
 #include "../common/skills.h"
 #include "../common/spdat.h"
 #include "../common/string_util.h"
-#include "slack.h"
+#include "../common/slack.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
@@ -1709,10 +1709,6 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, SkillUseTypes attack
 
 bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack_skill, uint8 killedby) {
 	Log.Out(Logs::Detail, Logs::Combat, "Fatal blow dealt by %s with %d damage, spell %d, skill %d", killerMob->GetName(), damage, spell, attack_skill);
-    if(this->raid_target == 1) {
-        std::string notification = StringFormat("%s was just killed by %s", this->GetCleanName(), killerMob->GetCleanName());
-        Slack::SendMessageTo("csr", notification.c_str());
-    }
 	bool MadeCorpse = false;
 	uint16 OrigEntID = this->GetID();
 	Mob *oos = nullptr;
@@ -1761,6 +1757,17 @@ bool NPC::Death(Mob* killerMob, int32 damage, uint16 spell, SkillUseTypes attack
 	}
 
 	Mob* killer = GetHateDamageTop(this);
+    // If Raid target notify slack
+    if(this->raid_target == 1) {
+        std::string notification;
+        std::string killer_name = killer->GetCleanName();
+        if (killer->IsPet()) {
+            Mob* _owner = killer->GetOwner();
+            killer_name = _owner->GetCleanName();
+        }
+        notification = StringFormat("%s was just killed by %s", this->GetCleanName(), killer_name.c_str());
+        Slack::SendMessageTo(Slack::RAID_MOB_INFO, notification.c_str());
+    }
 
 	entity_list.RemoveFromTargets(this);
 

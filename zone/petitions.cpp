@@ -39,7 +39,7 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include "entity.h"
 #include "petitions.h"
 #include "worldserver.h"
-#include "slack.h"
+#include "../common/slack.h"
 
 PetitionList petition_list;
 
@@ -250,8 +250,9 @@ void ZoneDatabase::InsertPetitionToDB(Petition* wpet)
 	if (!results.Success()) {
 		return;
 	}
-    std::string notification = StringFormat("New Petition Created: http://api.p2002.com:8080/petitions/%i - %s: %s", wpet->GetID(), wpet->GetCharName(), petitiontext);
-    Slack::SendMessageTo("#csr", notification.c_str());
+    uint32 last_insert_id = results.LastInsertedID();
+    std::string notification = StringFormat("New Petition Created: http://api.p2002.com:8080/petitions/%i - %s: %s", last_insert_id, wpet->GetCharName(), petitiontext);
+    Slack::SendMessageTo(Slack::CSR, notification.c_str());
     safe_delete_array(petitiontext);
 
 #if EQDEBUG >= 5

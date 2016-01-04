@@ -118,7 +118,6 @@ SET(zone_sources
 	zone_config.cpp
 	zonedb.cpp
 	zoning.cpp
-    slack.cpp
 )
 
 SET(zone_headers
@@ -205,7 +204,6 @@ SET(zone_headers
 	zone_config.h
 	zonedb.h
 	zonedump.h
-    slack.h
 )
 
 IF(EQEMU_DEPOP_INVALIDATES_CACHE)

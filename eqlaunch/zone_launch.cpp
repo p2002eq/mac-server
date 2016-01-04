@@ -19,8 +19,10 @@
 #include "../common/global_define.h"
 #include "../common/eqemu_logsys.h"
 #include "../common/eqemu_config.h"
+#include "../common/slack.h"
 #include "zone_launch.h"
 #include "worldserver.h"
+#include <string.h>
 
 //static const uint32 ZONE_RESTART_DELAY = 10000;
 //static const uint32 ZONE_TERMINATE_WAIT = 10000;
@@ -223,6 +225,7 @@ bool ZoneLaunch::Process() {
 //called when the process actually dies off...
 void ZoneLaunch::OnTerminate(const ProcLauncher::ProcRef &ref, const ProcLauncher::Spec *spec) {
 	s_running--;
+    std::string notification;
 
 	switch(m_state) {
 	case StateStartPending:
@@ -233,6 +236,8 @@ void ZoneLaunch::OnTerminate(const ProcLauncher::ProcRef &ref, const ProcLaunche
 	case StateStarted:
 		//something happened to our happy process...
 		Log.Out(Logs::Detail, Logs::Launcher, "Zone %s has gone down. Restart timer started.", m_zone.c_str());
+        notification = StringFormat("Zone %s just went down, restarting...", m_zone.c_str());
+        Slack::SendMessageTo(Slack::OPS, notification.c_str());
 		m_state = StateStartPending;
 		m_timer.Start(m_config->RestartWait);
 		break;

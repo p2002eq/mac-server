@@ -20,6 +20,7 @@
 
 #include "../common/proc_launcher.h"
 #include "../common/timer.h"
+#include "../common/slack.h"
 #include <string>
 
 class WorldServer;

@@ -22,7 +22,7 @@
 #include "../common/types.h"
 #include "../common/any.h"
 #include "event_codes.h"
-#include "slack.h"
+#include "../common/slack.h"
 
 class ItemInst;
 class Client;
@@ -82,7 +82,7 @@ public:
 	}
 
 	virtual void AddError(std::string error) {
-        Slack::SendError(error.c_str());
+        //Slack::SendError(error.c_str());
 		errors_.push_back(error);
 		if(errors_.size() > 30) {
 			errors_.pop_front();

@@ -25,7 +25,7 @@
 
 #include "client.h"
 #include "zonedb.h"
-#include "slack.h"
+#include "../common/slack.h"
 
 class Client;
 
