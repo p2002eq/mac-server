@@ -17,6 +17,7 @@
 */
 #include "../common/global_define.h"
 #include "../common/eqemu_logsys.h"
+#include "../common/slack.h"
 #include "clientlist.h"
 #include "zoneserver.h"
 #include "zonelist.h"
@@ -30,6 +31,9 @@
 #include "../common/packet_dump.h"
 #include "wguild_mgr.h"
 #include "../zone/string_ids.h"
+#include <boost/algorithm/string/join.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
 #include <set>
 
@@ -254,6 +258,30 @@ void ClientList::DisconnectByIP(uint32 iIP) {
 		}
 		iterator.Advance();
 	}
+}
+
+void ClientList::CheckAndNotifyLoggedinAccounts(uint32 iIP) {
+	ClientListEntry* countCLEIPs = 0;
+    LinkedListIterator<ClientListEntry*> iterator(clientlist);
+	iterator.Reset();
+	int IPInstances = 0;
+    std::vector<std::string> AccountNames;
+    while(iterator.MoreElements()) {
+		countCLEIPs = iterator.GetData();
+		if (countCLEIPs != nullptr && countCLEIPs->GetIP() == iIP) {
+            IPInstances++;
+            AccountNames.push_back(countCLEIPs->AccountName());
+        }
+		iterator.Advance();
+    }
+    // If we are > 3 they are in trouble
+    if (IPInstances > 3) {
+        boost::erase_all(AccountNames, boost::unique<boost::return_next_end>(AccountNames));
+        std::string joinedString = boost::algorithm::join(AccountNames, ", ");
+        std::string notification = StringFormat("Accounts: %s are logged in from the same IP more then 3 times", joinedString.c_str());
+        Slack::SendMessageTo(Slack::CSR, notification.c_str());
+    }
+
 }
 
 bool ClientList::CheckIPLimit(uint32 iAccID, uint32 iIP, uint16 admin, ClientListEntry* cle) {
