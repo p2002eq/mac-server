@@ -458,7 +458,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	if(GetSessionLimit())
 		return false;
 
-    client_list.CheckAndNotifyLoggedinAccounts(GetIP());
+    //client_list.CheckAndNotifyLoggedinAccounts(GetIP());
 	if (RuleI(World, MaxClientsPerIP) >= 0 && !client_list.CheckIPLimit(GetAccountID(), GetIP(), GetAdmin(), cle))
 		return false;
 
