@@ -2216,8 +2216,15 @@ void Mob::AddToHateList(Mob* other, int32 hate, int32 damage, bool iYellForHelp,
 		entity_list.AddTempPetsToHateList(other, this, bFrenzy);
 
 	if (!wasengaged) {
-		if(IsNPC() && other->IsClient() && other->CastToClient())
-			parse->EventNPC(EVENT_AGGRO, this->CastToNPC(), other, "", 0);
+		if(IsNPC() && other->IsClient() && other->CastToClient()) {
+            NPC *npc = this->CastToNPC();
+			parse->EventNPC(EVENT_AGGRO, npc, other, "", 0);
+            // Notifiy GM's of engagment
+            if(npc->IsRaidTarget()) {
+                std::string notification = StringFormat("%s was engaged by %s", npc->GetCleanName(), other->GetCleanName());
+                Slack::SendMessageTo(Slack::RAID_MOB_INFO, notification.c_str());
+            }
+        }
 		AI_Event_Engaged(other, iYellForHelp);
 	}
 }
