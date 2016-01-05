@@ -777,33 +777,33 @@ bool Group::Process() {
 	return true;
 }
 
-void Group::SendUpdate(uint32 type, Mob* member)
-{
-	if(!member->IsClient())
-		return;
+//void Group::SendUpdate(uint32 type, Mob* member)
+//{
+	//if(!member->IsClient())
+		//return;
 
-	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupUpdate_Struct));
-	GroupUpdate_Struct* gu = (GroupUpdate_Struct*)outapp->pBuffer;
-	gu->action = type;
-	strcpy(gu->yourname,member->GetName());
+	//EQApplicationPacket* outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupUpdate_Struct));
+	//GroupUpdate_Struct* gu = (GroupUpdate_Struct*)outapp->pBuffer;
+	//gu->action = type;
+	//strcpy(gu->yourname,member->GetName());
 
-	int x = 0;
+	//int x = 0;
 
-	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
-		if((members[i] != nullptr) && IsLeader(members[i]))
-		{
-			strcpy(gu->leadersname, members[i]->GetName());
-			break;
-		}
+	//for (uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
+		//if((members[i] != nullptr) && IsLeader(members[i]))
+		//{
+			//strcpy(gu->leadersname, members[i]->GetName());
+			//break;
+		//}
 
-	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
-		if (members[i] != nullptr && members[i] != member)
-			strcpy(gu->membername[x++], members[i]->GetName());
+	//for (uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
+		//if (members[i] != nullptr && members[i] != member)
+			//strcpy(gu->membername[x++], members[i]->GetName());
 
-	member->CastToClient()->QueuePacket(outapp);
+	//member->CastToClient()->QueuePacket(outapp);
 
-	safe_delete(outapp);
-}
+	//safe_delete(outapp);
+//}
 
 uint8 Group::GroupCount() {
 

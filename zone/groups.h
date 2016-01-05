@@ -56,7 +56,7 @@ public:
 
 	bool	AddMember(Mob* newmember, const char* NewMemberName = nullptr, uint32 CharacterID = 0);
 	void	AddMember(const char* NewMemberName);
-	void	SendUpdate(uint32 type,Mob* member);
+	//void	SendUpdate(uint32 type,Mob* member);
 	void	SendWorldGroup(uint32 zone_id,Mob* zoningmember);
 	bool	DelMemberOOZ(const char *Name, bool checkleader);
 	bool	DelMember(Mob* oldmember,bool ignoresender = false);

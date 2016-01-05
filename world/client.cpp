@@ -75,7 +75,7 @@ Client::Client(EQStreamInterface* ieqs)
 {
 
 	// Live does not send datarate as of 3/11/2005
-	//eqs->SetDataRate(7);
+    //eqs->SetDataRate(7);
 	ip = eqs->GetRemoteIP();
 	port = ntohs(eqs->GetRemotePort());
 
