@@ -889,7 +889,7 @@ Zone::~Zone() {
 bool Zone::Init(bool iStaticZone) {
 	SetStaticZone(iStaticZone);
 
-	zone->update_range = 1000.0f;
+	zone->update_range = 500.0f;
 
 	Log.Out(Logs::General, Logs::Status, "Loading spawn conditions...");
 	if(!spawn_conditions.LoadSpawnConditions(short_name, instanceid)) {
