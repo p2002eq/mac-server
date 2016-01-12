@@ -1469,7 +1469,7 @@ void Client::SwapItemResync(MoveItem_Struct* move_slots) {
 	// re sync the 'from' and 'to' slots on an as-needed basis
 	// Not as effective as the full process, but less intrusive to game play -U
 	Log.Out(Logs::Detail, Logs::Inventory, "Inventory desynchronization. (charname: %s, source: %i, destination: %i)", GetName(), move_slots->from_slot, move_slots->to_slot);
-	Message(CC_Yellow, "Inventory Desynchronization detected: Resending slot data...");
+	Message(CC_Yellow, "Inventory Desynchronization detected: Resending slot data... Please stop what you are doing and logout and back in");
 
 	if((move_slots->from_slot >= EmuConstants::EQUIPMENT_BEGIN && move_slots->from_slot <= EmuConstants::CURSOR_BAG_END) || move_slots->from_slot == MainPowerSource) {
 		int16 resync_slot = (Inventory::CalcSlotId(move_slots->from_slot) == INVALID_INDEX) ? move_slots->from_slot : Inventory::CalcSlotId(move_slots->from_slot);
