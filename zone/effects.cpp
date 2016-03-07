@@ -728,7 +728,7 @@ bool Client::CastDiscipline(uint8 disc_id, uint8 level_to_use)
 
 			break;
 		case disc_thunderkick:
-			reuse_timer = 420 - (current_level - level_to_use) * 60;
+			reuse_timer = 540 - (current_level - level_to_use) * 60;
 			spellid = 4511;
 			string = DISCIPLINE_THUNDERKICK;
 
@@ -885,6 +885,11 @@ bool Client::CastDiscipline(uint8 disc_id, uint8 level_to_use)
 			Log.Out(Logs::General, Logs::Discs, "Invalid disc id %d was passed to CastDiscipline.", disc_id);
 			return false;
 	}
+
+    // Minimum reuse on discs should be 3 minutes 54 seconds -- Taian 02/11/2016
+    if(reuse_timer < 234)
+        reuse_timer = 234;
+
 
 	if(string > 0 && IsDisc(spellid))
 	{
