@@ -888,8 +888,9 @@ bool Client::CastDiscipline(uint8 disc_id, uint8 level_to_use)
 
     // Minimum reuse on discs should be 3 minutes 54 seconds -- Taian 02/11/2016
     if(reuse_timer < 234)
+    {
         reuse_timer = 234;
-
+    }
 
 	if(string > 0 && IsDisc(spellid))
 	{
