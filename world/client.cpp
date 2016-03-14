@@ -286,19 +286,8 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	}
 
 	snprintf(char_name, 64, "%s", (char*)app->pBuffer);
-    int race = app->pBuffer[64];
-	int clas = app->pBuffer[68];
 
-    if (race < 0 || race > 255) {
-        Log.Out(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket Race was less then zero or over 255");
-        return false;
-    }
-    if (clas < 0 || clas > 255) {
-        Log.Out(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket Class was less then zero or over 255");
-        return false;
-    }
-
-    Log.Out(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket: Name approval request. Name=%s, race=%s, class=%s", char_name, GetRaceName(race), GetEQClassName(clas));
+    Log.Out(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket: Name approval request. Name=%s" , char_name);
 
 	EQApplicationPacket *outapp;
 	outapp = new EQApplicationPacket;
