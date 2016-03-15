@@ -185,7 +185,6 @@ void WorldServer::Process()
 				break;
 			}
 		}
-		safe_delete(pack);
 	} 
 	safe_delete(pack);
 	return;

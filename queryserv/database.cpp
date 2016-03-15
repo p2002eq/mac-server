@@ -508,6 +508,8 @@ void Database::LogPlayerLootRecords(QSPlayerLootRecords_struct* QS, uint32 items
 	{
 		return;
 	}
+    std::string item_name = EscapeString(QS->item_name);
+    std::string corpse_name = EscapeString(QS->corpse_name);
 
 	Log.Out(Logs::General, Logs::QS_Server, "Inserting loot record");
 	std::string query = StringFormat(
@@ -525,11 +527,11 @@ void Database::LogPlayerLootRecords(QSPlayerLootRecords_struct* QS, uint32 items
 		"`copper` = '%i', "
 		"`time` = now()",
 		QS->charid,
-		QS->corpse_name,
+		corpse_name.c_str(),
 		QS->type,
 		QS->zone_id,
 		QS->item_id,
-		QS->item_name,
+		item_name.c_str(),
 		QS->charges,
 		QS->money.platinum,
 		QS->money.gold,
