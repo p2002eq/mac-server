@@ -3932,7 +3932,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 		}
 	}
 
-	if(spelltar->IsClient() && spelltar->CastToClient()->GetFeigned() && IsDetrimentalSpell(spell_id))
+	if(spelltar->IsClient() && spelltar->CastToClient()->GetFeigned() && IsDetrimentalSpell(spell_id) && spell_effectiveness > 0)
 	{
 		spelltar->CastToClient()->SetFeigned(false);
 	}
