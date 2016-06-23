@@ -1370,6 +1370,7 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, Mob* target, uint32 heal_possib
 		switch (spells[spell_id].effectid[o])
 		{
 			case SE_CurrentHP:
+            case SE_PercentalHeal:
 			{
 				int val = CalcSpellEffectValue_formula(spells[spell_id].formula[o], spells[spell_id].base[o], spells[spell_id].max[o], slevel, spell_id);
 				if (val > 0)
