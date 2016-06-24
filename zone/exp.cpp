@@ -82,11 +82,9 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 		return;
 
 	uint32 add_exp = in_add_exp;
-    Message(CC_Yellow, "addexp1:  %d", add_exp);
 
 	if(!resexp && (XPRate != 0))
 		add_exp = static_cast<uint32>(in_add_exp * (static_cast<float>(XPRate) / 100.0f));
-    Message(CC_Yellow, "addexp2:  %d", add_exp);
 
 	if (m_epp.perAA<0 || m_epp.perAA>100)
 		m_epp.perAA=0;	// stop exploit with sanity check
@@ -100,17 +98,13 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 		add_aaxp = add_exp * m_epp.perAA / 100;
 		//take that amount away from regular exp
 		add_exp -= add_aaxp;
-        Message(CC_Yellow, "addexp3:  %d", add_exp);
 
 		float totalmod = 1.0;
 		if(RuleR(Character, ExpMultiplier) >= 0){
 			totalmod *= RuleR(Character, ExpMultiplier);
 		}
-        Message(CC_Yellow, "totalmod:  %4.2f", totalmod);
 
-        Message(CC_Yellow, "addexp4:  %d", add_exp);
 		add_exp = uint32(float(add_exp) * totalmod);
-        Message(CC_Yellow, "addexp5:  %d", add_exp);
 	}
 
 	if(RuleB(Zone, LevelBasedEXPMods)){
@@ -119,14 +113,12 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 			add_aaxp *= zone->level_exp_mod[GetLevel()].AAExpMod;
 		}
 	}
-    Message(CC_Yellow, "addexp6:  %d", add_exp);
 
 	uint32 requiredxp = GetEXPForLevel(GetLevel() + 1) - GetEXPForLevel(GetLevel());
 	float xp_cap = (float)requiredxp * 0.13f; //13% of total XP is our cap
 
 	if(add_exp > xp_cap)
 		add_exp = xp_cap;
-    Message(CC_Yellow, "addexp7:  %d", add_exp);
 
 	if(add_aaxp > xp_cap)
 		add_aaxp = xp_cap;
