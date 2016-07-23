@@ -679,7 +679,12 @@ bool EmuTCPConnection::ProcessReceivedDataAsOldPackets(char* errbuf) {
 			}*/
 			if (pack->size > 0) {
 				pack->pBuffer = new uchar[pack->size];
-				memcpy(pack->pBuffer, &buffer[4], pack->size);
+                if (sizeof(&buffer[4]) > pack->size) {
+                    safe_delete(pack);
+				    return false;
+                } else {
+				    memcpy(pack->pBuffer, &buffer[4], pack->size);
+                }
 			}
 			if (pack->opcode == 0) {
 				// keepalive, no need to process
