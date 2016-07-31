@@ -194,49 +194,9 @@ void Trade::LogTrade()
 		return; // Should never happen
 
 	Client* trader = owner->CastToClient();
-	bool logtrade = false;
+	bool logtrade = true;
 	int admin_level = 0;
 	uint8 item_count = 0;
-
-	if (zone->tradevar != 0) {
-		for (uint16 i = EmuConstants::TRADE_BEGIN; i <= EmuConstants::TRADE_END; i++) {
-			if (trader->GetInv().GetItem(i))
-				item_count++;
-		}
-
-		if (((this->cp + this->sp + this->gp + this->pp)>0) || (item_count>0))
-			admin_level = trader->Admin();
-		else
-			admin_level = 999;
-
-		if (zone->tradevar == 7) {
-			logtrade = true;
-		}
-		else if ((admin_level>=10) && (admin_level<20)) {
-			if ((zone->tradevar<8) && (zone->tradevar>5))
-				logtrade = true;
-		}
-		else if (admin_level<=20) {
-			if ((zone->tradevar<8) && (zone->tradevar>4))
-				logtrade = true;
-		}
-		else if (admin_level<=80) {
-			if ((zone->tradevar<8) && (zone->tradevar>3))
-				logtrade = true;
-		}
-		else if (admin_level<=100){
-			if ((zone->tradevar<9) && (zone->tradevar>2))
-				logtrade = true;
-		}
-		else if (admin_level<=150){
-			if (((zone->tradevar<8) && (zone->tradevar>1)) || (zone->tradevar==9))
-				logtrade = true;
-		}
-		else if (admin_level<=255){
-			if ((zone->tradevar<8) && (zone->tradevar>0))
-				logtrade = true;
-		}
-	}
 
 	if (logtrade == true) {
 		char logtext[1000] = {0};
